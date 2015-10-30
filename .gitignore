@@ -1,0 +1,15 @@
+#IntelliJ
+*.iml
+.idea
+
+#Eclipse
+.project
+.settings
+.classpath
+
+#Maven
+target
+
+#Other
+*.swp
+.DS_Store
