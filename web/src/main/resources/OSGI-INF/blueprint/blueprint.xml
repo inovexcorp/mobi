@@ -1,0 +1,25 @@
+<blueprint default-activation="eager"
+           xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+
+    <bean id="resourceMapping"
+          class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+        <property name="alias" value="/" />
+        <property name="path" value="build" />
+    </bean>
+
+    <bean id="welcomeFile"
+          class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultWelcomeFileMapping">
+        <property name="redirect" value="true" />
+        <property name="welcomeFiles">
+            <array>
+                <value>index.html</value>
+            </array>
+        </property>
+    </bean>
+
+    <service id="resources" ref="resourceMapping"
+             interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping" />
+
+    <service id="welcomeFileService" ref="welcomeFile"
+             interface="org.ops4j.pax.web.extender.whiteboard.WelcomeFileMapping" />
+</blueprint>

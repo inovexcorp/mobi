@@ -1,0 +1,46 @@
+/* General page spacing */
+body {
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    &.left-nav {
+        &.show-words > .view-container {
+            padding-left: 140px;
+        }
+        > .view-container {
+            padding-left: 75px;
+        }
+    }
+
+    &:not(.left-nav) > .view-container {
+        padding-top: 64px;
+    }
+
+    > .view-container {
+        height: 100%;
+        padding: 15px;
+    }
+}
+
+/* Icons to change the nav menu layout */
+.nav-layout-options {
+    bottom: 0;
+    float: right;
+    position: absolute;
+    right: 0;
+
+    .fa {
+        display: inline-block;
+        cursor: pointer;
+        opacity: .25;
+        padding: 10px;
+        text-decoration: none;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+}

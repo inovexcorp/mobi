@@ -1,0 +1,316 @@
+<!-- ontology-editor.html -->
+<div class="ontology-editor clearfix" ng-controller="OntologyEditorController as vm">
+    <div class="row">
+        <!-- navigation structure -->
+        <aside class="col-md-3 col-sm-4 col-xs-6">
+            <div class="tree-container">
+                <!-- tab view -->
+                <div class="btn-group btn-group-justified" role="group">
+                    <a class="btn btn-primary"
+                       ng-class="{'active': vm.tab == 'everything'}"
+                       ng-click="vm.changeTab('everything');"><small>Tree</small></a>
+                    <a class="btn btn-primary"
+                       ng-class="{'active': vm.tab == 'class'}"
+                       ng-click="vm.changeTab('class');"><small>Class</small></a>
+                    <a class="btn btn-primary"
+                       ng-class="{'active': vm.tab == 'object'}"
+                       ng-click="vm.changeTab('object');"><small>Object</small></a>
+                    <a class="btn btn-primary"
+                       ng-class="{'active': vm.tab == 'datatype'}"
+                       ng-click="vm.changeTab('datatype');"><small>Data</small></a>
+                </div>
+
+                <!-- tree showing ontologies, classes, and properties -->
+                <div ng-show="vm.tab == 'everything'" class="tree everything-tree">
+                    <!-- tree view -->
+                    <strong>Everything</strong>
+                    <!-- start ontologies -->
+                    <ul ng-repeat="(oi, ontology) in vm.ontologies">
+                        <li>
+                            <a ng-click="vm.edit($index);"
+                               ng-class="{'active': vm.current.ontologyIndex == $index && vm.current.classIndex == undefined}">
+                                <i class="fa fa-fw"
+                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
+                                   ng-click="opened = !opened; $event.stopPropagation();"></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                            </a>
+                        </li>
+                        <li class="container" ng-show="opened">
+                            <!-- start classes -->
+                            <ul ng-repeat="(ci, class) in ontology.classes">
+                                <li>
+                                    <a ng-click="vm.edit(oi, $index);"
+                                       ng-class="{'active': vm.current.ontologyIndex == oi && vm.current.classIndex == $index && vm.current.propertyIndex == undefined}">
+                                        <i class="fa fa-fw"
+                                           ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
+                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>{{class['rdfs:label'] || class['@id']}}
+                                    </a>
+                                </li>
+                                <li class="container" ng-show="subOpened">
+                                    <!-- start properties -->
+                                    <ul ng-repeat="property in class.properties">
+                                        <li>
+                                            <a ng-click="vm.editProperty(ontology, class, property);"
+                                               ng-class="{'active': vm.state['everything'].selected == property}">
+                                                <i class="fa fa-font fa-fw"></i>{{property['rdfs:label'] || property['@id']}}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                    <div class="creator">
+                                        <a ng-click="vm.createProperty(ontology, class)"
+                                           ng-class="{'active': vm.state['everything'].selected == 'create-property' && vm.state['everything'].class == class}">
+                                            <i class="fa fa-plus fa-fw"></i>New Property
+                                        </a>
+                                    </div>
+                                    <!-- end properties -->
+                                </li>
+                            </ul>
+                            <div class="creator">
+                                <a ng-click="vm.edit(oi, -1)"
+                                   ng-class="{'active': vm.current.ontologyIndex == oi && vm.current.classIndex == -1}">
+                                    <i class="fa fa-plus fa-fw"></i>New Class
+                                </a>
+                            </div>
+                            <!-- end classes -->
+                        </li>
+                    </ul>
+                    <div class="creator">
+                        <a ng-click="vm.edit(-1)"
+                           ng-class="{'active': vm.current.ontologyIndex == -1}">
+                            <i class="fa fa-plus fa-fw"></i>New Ontology
+                        </a>
+                    </div>
+                    <!-- end ontologies -->
+                </div>
+
+                <!-- tree showing classes -->
+                <div ng-show="vm.tab == 'class'" class="tree class-tree">
+                    <!-- class view -->
+                    <strong>Classes</strong>
+                    <ul ng-repeat="ontology in vm.ontologies">
+                        <li>
+                            <a ng-click="opened = !opened; $event.stopPropagation();">
+                                <i class="fa fa-fw"
+                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
+                                   ></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                            </a>
+                        </li>
+                        <li class="container" ng-show="opened">
+                            <ul><!--
+                                --><li ng-repeat="class in ontology.classes">
+                                    <a class="text-only"
+                                       ng-click="vm.editClass(ontology, class);"
+                                       ng-class="{'active': vm.state['class'].selected == class}">
+                                        {{class['rdfs:label'] || class['@id']}}
+                                    </a>
+                                </li><!--
+                            --></ul>
+                            <div class="creator">
+                                <a ng-click="vm.createClass(ontology)"
+                                   ng-class="{'active': vm.state['class'].selected == 'create-class' && vm.state['class'].ontology == ontology}">
+                                    <i class="fa fa-plus fa-fw"></i>New Class
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- tree showing object properties -->
+                <div ng-show="vm.tab == 'object'" class="tree object-tree">
+                    <!-- property view -->
+                    <strong>Object Properties</strong>
+                    <ul ng-repeat="ontology in vm.ontologies">
+                        <li>
+                            <a ng-click="opened = !opened; $event.stopPropagation();">
+                                <i class="fa fa-fw"
+                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
+                                        ></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                            </a>
+                        </li>
+                        <li class="container" ng-show="opened">
+                            <ul ng-repeat="class in ontology.classes"><!--
+                                --><li ng-repeat="property in class.properties" ng-if="property['@type'] == 'owl:ObjectProperty'">
+                                    <a class="text-only"
+                                       ng-click="vm.editProperty(ontology, class, property);"
+                                       ng-class="{'active': vm.state['object'].selected == property}">
+                                        {{property['rdfs:label'] || property['@id']}}
+                                    </a>
+                                </li><!--
+                            --></ul>
+                            <div class="creator">
+                                <a ng-click="vm.createProperty(ontology, ontology.classes[$index])"
+                                   ng-class="{'active': vm.state['object'].selected == 'create-property' && vm.class == class}">
+                                    <i class="fa fa-plus fa-fw"></i>New Object Property
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- tree showing dataType properties -->
+                <div ng-show="vm.tab == 'datatype'" class="tree datatype-tree">
+                    <!-- property view -->
+                    <strong>DataType Properties</strong>
+                    <ul ng-repeat="ontology in vm.ontologies">
+                        <li>
+                            <a ng-click="opened = !opened; $event.stopPropagation();">
+                                <i class="fa fa-fw"
+                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
+                                        ></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                            </a>
+                        </li>
+                        <li class="container" ng-show="opened">
+                            <ul ng-repeat="class in ontology.classes"><!--
+                                --><li ng-repeat="property in class.properties" ng-if="property['@type'] == 'owl:DataTypeProperty'">
+                                    <a class="text-only"
+                                       ng-click="vm.editProperty(ontology, class, property);"
+                                       ng-class="{'active': vm.state['datatype'].selected == property}">
+                                        {{property['rdfs:label'] || property['@id']}}
+                                    </a>
+                                </li><!--
+                            --></ul>
+                            <div class="creator">
+                                <a ng-click="vm.createProperty(ontology, ontology.classes[$index])"
+                                   ng-class="{'active': vm.state['datatype'].selected == 'create-property' && vm.state['datatype'].class == class}">
+                                    <i class="fa fa-plus fa-fw"></i>New DataType Property
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- edit/create form section -->
+        <section class="col-md-9 col-sm-8 col-xs-6">
+            <div class="editor">
+                <!-- default -->
+                <div ng-show="vm.shown == 'default'">
+                    <p class="lead">Welcome to the Ontology Editor!</p>
+                    <p>You simply need to click the item in the left pane which you want to edit. This pane will then update accordingly.</p>
+                </div>
+
+                <!-- title -->
+                <h4 ng-show="vm.shown != 'default'">{{vm.current}}</h4>
+
+                <!-- success message -->
+                <p ng-show="vm.success" class="text-success"><i class="fa fa-check fa-fw"></i>Success</p>
+
+                <!-- ontology editor -->
+                <form name="vm.ontologyForm" class="clearfix" novalidate
+                      ng-submit="vm.submitOntology(vm.ontologyForm.$valid)"
+                      ng-show="vm.shown == 'ontology-editor'">
+                    <!-- warning message -->
+                    <p ng-show="vm.ontology.isDirty || (vm.ontologyForm.$dirty && !vm.ontologyForm.$submitted)" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Unsaved Changes</p>
+                    <!-- iri -->
+                    <div class="form-group">
+                        <label class="control-label" for="ontology-iri">Ontology IRI</label>
+                        <input type="text" class="form-control" id="ontology-iri" placeholder="@id" name="iri" ng-model="vm.ontology['@id']" ng-trim="false">
+                    </div>
+                    <!-- label -->
+                    <div class="form-group">
+                        <label class="control-label" for="ontology-label">Label</label>
+                        <input type="text" class="form-control" id="ontology-label" placeholder="rdfs:label" name="label" ng-model="vm.ontology['rdfs:label']" ng-trim="false">
+                    </div>
+                    <!-- comments -->
+                    <div class="form-group">
+                        <label class="control-label" for="ontology-comments">Comments</label>
+                        <textarea class="form-control" id="ontology-comments" placeholder="rdfs:comment" name="comments" ng-model="vm.ontology['rdfs:comment']"></textarea>
+                    </div>
+                    <!-- buttons -->
+                    <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.ontologyForm.$invalid">{{vm.isEdit ? vm.editText : vm.createText}}</button>
+                </form>
+
+                <!-- class editor -->
+                <form name="vm.classForm" class="clearfix" novalidate
+                      ng-submit="vm.submitClass(vm.classForm.$valid)"
+                      ng-show="vm.shown == 'class-editor'">
+                    <!-- identifier -->
+                    <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid }" class="form-group">
+                        <label class="control-label" for="class-iri">Identifier</label>
+                        <div class="input-group">
+                            <div class="input-group-addon">{{vm.ontology['@id']}}</div>
+                            <input type="text" class="form-control" id="class-iri" placeholder="@id" name="iri" ng-model="vm.class['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
+                        </div>
+                        <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
+                        <strong ng-if="vm.classForm.iri.$invalid && !vm.classForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
+                    </div>
+                    <!-- name -->
+                    <div class="form-group">
+                        <label class="control-label" for="class-name">Name</label>
+                        <input type="text" class="form-control" id="class-name" placeholder="rdfs:label" name="name" ng-model="vm.class['rdfs:label']" ng-trim="false">
+                    </div>
+                    <!-- TODO:add auto complete based on all classes available -->
+                    <!-- base class -->
+                    <!--div class="form-group">
+                        <label class=control-label for="class-base">Base Class</label>
+                        <input type="text" class="form-control" id="class-base" placeholder="rdfs:????" name="base" ng-model="vm.class.base">
+                    </div-->
+                    <!-- comments -->
+                    <div class="form-group">
+                        <label class="control-label" for="class-comments">Comments</label>
+                        <textarea class="form-control" id="class-comments" placeholder="rdfs:comment" name="comments" ng-model="vm.class['rdfs:comment']"></textarea>
+                    </div>
+                    <!-- buttons -->
+                    <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid">{{vm.isEdit ? vm.editText : vm.createText}}</button>
+                </form>
+
+                <!-- property editor -->
+                <form name="vm.propertyForm" class="clearfix" novalidate
+                      ng-submit="vm.submitProperty(vm.propertyForm.$valid)"
+                      ng-show="vm.shown == 'property-editor'">
+                    <!-- success message -->
+                    <!-- identifier -->
+                    <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid }" class="form-group">
+                        <label class="control-label" for="property-iri">Identifier</label>
+                        <div class="input-group">
+                            <div class="input-group-addon">{{vm.ontology['@id']}}</div>
+                            <input type="text" class="form-control" id="property-iri" placeholder="@id" name="iri" ng-model="vm.property['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
+                        </div>
+                        <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
+                        <strong ng-if="vm.propertyForm.iri.$invalid && !vm.propertyForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
+                    </div>
+                    <!-- name -->
+                    <div class="form-group">
+                        <label class="control-label" for="property-name">Name</label>
+                        <input type="text" class="form-control" id="property-name" placeholder="Name" name="name" ng-model="vm.property['rdfs:label']">
+                    </div>
+                    <!-- comments -->
+                    <div class="form-group">
+                        <label class="control-label" for="property-comments">Comments</label>
+                        <textarea class="form-control" id="property-comments" placeholder="rdfs:comment" name="comments" ng-model="vm.property['rdfs:comment']"></textarea>
+                    </div>
+                    <!-- TODO:figure out the property options -->
+                    <!-- single or multi value property -->
+                    <!--div class="radio">
+                        <label class=control-label>
+                            <input type="radio" name="value" ng-model="vm.property.value" value="single">
+                            Single value
+                        </label>
+                    </div>
+                    <div class="radio">
+                        <label class=control-label>
+                            <input type="radio" name="value" ng-model="vm.property.value" value="multi">
+                            Multi value
+                        </label>
+                    </div-->
+                    <!-- type -->
+                    <!--div class="form-group">
+                        <label class=control-label for="property-type">Type</label>
+                        <select id="property-type" class="form-control" name="type" ng-model="vm.property.type">
+                            <option value="Boolean">Boolean</option>
+                            <option value="Date">Date</option>
+                            <option value="DateTime">DateTime</option>
+                            <option value="Double">Double</option>
+                            <option value="Integer">Integer</option>
+                            <option value="String">String</option>
+                            <option value="Time">Time</option>
+                        </select>
+                    </div-->
+                    <!-- buttons -->
+                    <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.propertyForm.$invalid">{{vm.isEdit ? vm.editText : vm.createText}}</button>
+                </form>
+            </div>
+        </section>
+    </div>
+    <pre>{{vm.state | json}}</pre>
+</div>

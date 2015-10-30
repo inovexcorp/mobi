@@ -1,0 +1,131 @@
+/* Core variables */
+@import "./src/main/resources/public/css/vendor/bootstrap/variables";
+
+.ontology-editor {
+    height: 100%;
+
+    /* Makes everything height 100% */
+    .row,
+    .row > aside,
+    .row > section,
+    .tree-container,
+    .editor {
+        height: 100%;
+    }
+
+    .tree-container,
+    .editor {
+        border: 1px solid $gray-dark;
+    }
+
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .btn-group-justified {
+        margin: -1px;
+        width: auto;
+    }
+
+    .btn-group > .btn {
+        border-radius: 0;
+    }
+
+    /* Styles for the left side of the screen */
+    .tree {
+        padding: 10px;
+
+        /* Anchor inherits the color of parent and fills container completely */
+        a {
+            color: inherit;
+            cursor: pointer;
+            display: inline-block;
+            text-decoration: none;
+            padding: 3px 4px;
+            width: 100%;
+
+            /* Increases the padding for links without icons */
+            &.text-only {
+                padding: 3px 10px;
+            }
+
+            &:hover,
+            &.active {
+                /* Hover changes color and background color */
+                background-color: $brand-primary;
+                color: #fff;
+            }
+
+            > .fa.fa-fw {
+                margin-right: 2px;
+            }
+        }
+
+        /* The create links are a different color by default so need their own styles */
+        .creator a {
+            color: $brand-primary;
+
+            /* Changes color to white on hover */
+            &:hover,
+            &.active {
+                color: #fff;
+            }
+        }
+
+        /* General styles for the ul elements */
+        ul {
+            /* Padding to match the width of the icons */
+            ul,
+            .creator {
+                margin-left: 1.28571429em;
+            }
+
+            /* Puts in some text to tell the user that there is nothing within that tree node */
+            ul:first-child:empty {
+                border-left: 0;
+                padding: 3px 10px;
+
+                &:before {
+                    content: 'None for this ontology';
+                    color: $gray-light;
+                    font-style: italic;
+                }
+            }
+
+            /* The list items which contain an anchor for all of the items in the tree */
+            li {
+                width: 100%;
+
+                /* Class identifying that it contains a <ul> element */
+                &.container {
+                    margin: 0;
+                    padding: 0;
+                }
+            }
+        }
+    }
+
+    /* Styles for the right side of the page */
+    .editor {
+        padding: 15px;
+
+        /* Styles the header for each of the editing panels */
+        h4 {
+            background-color: $brand-primary;
+            color: #fff;
+            margin: -16px -16px 10px;
+            padding: 10px 16px 10px;
+
+            small {
+                color: inherit;
+            }
+        }
+
+        /* Only lets the user resize textareas vertically */
+        form textarea {
+            resize: vertical;
+        }
+    }
+}

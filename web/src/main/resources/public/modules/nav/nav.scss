@@ -1,0 +1,113 @@
+// Core variables
+@import "./src/main/resources/public/css/vendor/bootstrap/variables";
+
+/* Style to show the words for the nav menu */
+.show-words {
+    &.left-nav nav {
+        width: 125px;
+    }
+    .nav .icon-container li a .name {
+        display: inline-block;
+    }
+}
+
+/* Default styles - top nav layout */
+/* Adding color to the background */
+.nav {
+    background-color: $gray;
+
+    /* Removing the list style from the element */
+    .icon-container {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+
+        /* Adding the proper spacing to the icons */
+        li {
+            color: #fff;
+            display: inline-block;
+
+            /* Styles the icon itself */
+            a {
+                color: inherit;
+                cursor: pointer;
+                display: inline-block;
+                padding: 10px;
+                text-decoration: none;
+
+                /* Changes the color of the icons as you hover over them. */
+                &:hover {
+                    color: $gray-light;
+                }
+
+                /* The words that appear next to the icon */
+                .name {
+                    display: none;
+                    line-height: 2em;
+                    padding-left: 10px;
+                    vertical-align: top;
+                }
+            }
+        }
+    }
+
+    /* Adds bar for the different perspective options */
+    .perspectives li a {
+        border-top: 4px solid transparent;
+        margin-right: 2px;
+        padding-top: 6px;
+
+        /* Style to show which perspective you are currently viewing */
+        &.active {
+            border-color: $brand-info;
+        }
+    }
+}
+
+/* Left Nav styles */
+.left-nav {
+    nav {
+        background-color: $gray;
+        height: 100%;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 60px;
+
+        .nav {
+            background-color: transparent;
+            margin: 0;
+
+            /* Removing the list style from the element */
+            .icon-container li {
+                width: 100%;
+
+                /* Styles the icon itself */
+                a {
+                    padding: 10px;
+                    width: 100%;
+                }
+            }
+
+            /* Adds bar for the different perspective options */
+            .perspectives li a {
+                border-left: 5px solid transparent;
+                border-top: 0;
+                padding-left: 5px;
+
+                /* Style to show which perspective you are currently viewing */
+                &.active {
+                    border-color: $brand-info;
+                }
+            }
+        }
+    }
+}
+
+/* Positions the right side for the top nav layout */
+body:not(.left-nav) nav {
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}

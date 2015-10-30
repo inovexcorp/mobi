@@ -1,0 +1,30 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "The web bundle for MatOnto.",
+  "main": "index.html",
+  "devDependencies": {
+    "del": "^2.0.2",
+    "event-stream": "^3.3.1",
+    "gulp": "^3.9.0",
+    "gulp-cache": "^0.3.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-cssmin": "^0.1.7",
+    "gulp-filelog": "^0.4.1",
+    "gulp-flatten": "^0.2.0",
+    "gulp-ignore": "^2.0.1",
+    "gulp-imagemin": "^2.3.0",
+    "gulp-inject": "^3.0.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^2.0.4",
+    "gulp-uglify": "^1.4.1"
+  },
+  "scripts": {
+    "dev": "gulp",
+    "prod": "gulp prod",
+    "clean": "gulp clean",
+    "prepare-for-bundle": "gulp prepare-for-bundle"
+  },
+  "author": "Jordan Lewis",
+  "license": "UNLICENSED"
+}

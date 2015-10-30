@@ -1,0 +1,25 @@
+{
+  "name": "MatOnto Bower",
+  "version": "1.0.0",
+  "description": "Testing bower and gulp out",
+  "dependencies": {
+    "angular": "~1.4.6",
+    "angular-ui-router": "~0.2.15",
+    "font-awesome": "~4.4.0"
+  },
+  "moduleType": [
+    "node"
+  ],
+  "authors": [
+    "Jordan Lewis"
+  ],
+  "license": "MIT",
+  "homepage": "index.html",
+  "devDependencies": {
+    "angular-ui-router": "~0.2.15",
+    "bootstrap-sass": "~3.3.5",
+    "font-awesome": "~4.4.0",
+    "d3": "~3.5.6",
+    "jsonld": "~0.4.2"
+  }
+}
