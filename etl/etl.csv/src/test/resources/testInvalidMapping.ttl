@@ -1,0 +1,16 @@
+@prefix csv-data: <http://matonto.org/data/csv#> .
+@prefix csv: <http://matonto.org/ontologies/csv/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
+
+csv-data:csvmap csv:prefix		"http://matonto.org/data#" ;
+
+csv-data:col2 	rdf:type 		uhtc:Material ;
+				csv:hasProperty	csv-data:col3 ;
+				csv:hasProperty csv-data:col4 .
+
+csv-data:col3	csv:hasTitle	"Crystal structure" ;
+				csv:mapsTo		uhtc:crystalStructure .
+
+csv-data:col4	csv:hasTitle	"Lattice parameter" ;
+				csv:mapsTo		uhtc:latticeParameter .

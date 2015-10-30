@@ -1,0 +1,4 @@
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix exterms: <http://www.example.org/terms/>.
+
+<http://www.example.org/index.html> exterms:creation-date "August 16, 1999".

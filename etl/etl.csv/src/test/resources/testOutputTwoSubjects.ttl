@@ -1,0 +1,77 @@
+<http://matonto.org/data#HfB2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3380" .
+
+<http://matonto.org/data#Hexagonal> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "3.142" .
+
+<http://matonto.org/data#HfC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3900" .
+
+<http://matonto.org/data#FCC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.638" .
+
+<http://matonto.org/data#HfN> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3385" .
+
+<http://matonto.org/data#FCC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.525" .
+
+<http://matonto.org/data#ZrB2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3245" .
+
+<http://matonto.org/data#Hexagonal> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "3.169" .
+
+<http://matonto.org/data#ZrC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3400" .
+
+<http://matonto.org/data#FCC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.693" .
+
+<http://matonto.org/data#ZrN> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "2950" .
+
+<http://matonto.org/data#FCC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.578" .
+
+<http://matonto.org/data#TiB2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3225" .
+
+<http://matonto.org/data#Hexagonal> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "3.03" .
+
+<http://matonto.org/data#TiC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3100" .
+
+<http://matonto.org/data#Cubic> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.327" .
+
+<http://matonto.org/data#TiN> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "2950" .
+
+<http://matonto.org/data#FCC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.242" .
+
+<http://matonto.org/data#TaB2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3040" .
+
+<http://matonto.org/data#Hexagonal> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "3.098" .
+
+<http://matonto.org/data#TaC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "3800" .
+
+<http://matonto.org/data#Cubic> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.455" .
+
+<http://matonto.org/data#TaN> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "2700" .
+
+<http://matonto.org/data#Cubic> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "4.33" .
+
+<http://matonto.org/data#SiC> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/Material> ;
+ <http://matonto.org/ontologies/uhtc/Density> "2820" .
+
+<http://matonto.org/data#Polymorphic> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://matonto.org/ontologies/uhtc/CrystalStructure> ;
+ <http://matonto.org/ontologies/uhtc/latticeParameter> "�" .

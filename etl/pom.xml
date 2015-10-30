@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>parent</artifactId>
+        <groupId>org.matonto</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.matonto.etl</groupId>
+    <artifactId>etl-parent</artifactId>
+    <packaging>pom</packaging>
+
+    <name>${project.groupId}.${project.artifactId}</name>
+    <modules>
+        <module>api</module>
+        <module>etl.csv</module>
+        <module>etl.rdf</module>
+        <module>etl.cli</module>
+    </modules>
+
+    <properties>
+        <etl.openrdf.version>2.8.6</etl.openrdf.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-runtime-osgi</artifactId>
+                <version>${etl.openrdf.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.gpars</groupId>
+            <artifactId>gpars</artifactId>
+        </dependency>
+    </dependencies>
+</project>
