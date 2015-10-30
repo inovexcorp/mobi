@@ -9,7 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>persistence</artifactId>
+    <groupId>org.matonto.persistence</groupId>
+    <artifactId>persistence-parent</artifactId>
     <packaging>pom</packaging>
     <modules>
         <module>rdf</module>
