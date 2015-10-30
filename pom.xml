@@ -9,6 +9,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <modules>
         <module>persistence</module>
+        <module>ontology</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -25,12 +26,20 @@
         <sonar.jdbc.url>jdbc:mysql://10.1.9.146:3306/sonar?useUnicode=true&amp;characterEncoding=utf8</sonar.jdbc.url>
 
         <bnd-maven.version>3.0.0</bnd-maven.version>
+        <bndlib.version>3.0.0</bndlib.version>
         <openrdf.version>4.0.0</openrdf.version>
         <commons-lang3.version>3.4</commons-lang3.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>biz.aQute.bndlib</artifactId>
+                <version>${bndlib.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.spockframework</groupId>
                 <artifactId>spock-core</artifactId>
@@ -53,6 +62,12 @@
                     <groupId>biz.aQute.bnd</groupId>
                     <artifactId>bnd-maven-plugin</artifactId>
                     <version>${bnd-maven.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>2.5.4</version>
+                    <extensions>true</extensions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
