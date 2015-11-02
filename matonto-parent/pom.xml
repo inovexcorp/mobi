@@ -29,6 +29,9 @@
 
         <openrdf.version>4.0.0</openrdf.version>
         <etl.openrdf.version>2.8.6</etl.openrdf.version>
+        <ontology.openrdf.version>2.8.6</ontology.openrdf.version>
+
+        <owlapi.version>4.0.2</owlapi.version>
     </properties>
 
     <dependencyManagement>
@@ -43,6 +46,11 @@
                 <artifactId>etl.api</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>org.matonto</groupId>
+                <artifactId>ontology.core</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.openrdf.sesame</groupId>
@@ -53,6 +61,12 @@
                 <groupId>org.openrdf.sesame</groupId>
                 <artifactId>sesame-runtime-osgi</artifactId>
                 <version>${openrdf.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sourceforge.owlapi</groupId>
+                <artifactId>owlapi-osgidistribution</artifactId>
+                <version>${owlapi.version}</version>
             </dependency>
 
             <dependency>
@@ -69,6 +83,19 @@
             </dependency>
 
             <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>1.2.17</version>
+            </dependency>
+
+            <!-- Test Deps -->
+            <dependency>
                 <groupId>org.spockframework</groupId>
                 <artifactId>spock-core</artifactId>
                 <version>1.0-groovy-2.4</version>
@@ -79,12 +106,6 @@
                 <artifactId>gpars</artifactId>
                 <version>1.2.1</version>
                 <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-                <version>1.2.17</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

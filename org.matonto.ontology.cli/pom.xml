@@ -3,16 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>ontology-parent</artifactId>
-        <groupId>org.matonto.ontology</groupId>
+        <artifactId>matonto-parent</artifactId>
+        <groupId>org.matonto</groupId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>cli</artifactId>
-    <packaging>bundle</packaging>
+    <artifactId>ontology.cli</artifactId>
 
     <name>${project.groupId}.${project.artifactId}</name>
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
@@ -25,13 +26,13 @@
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.matonto.ontology</groupId>
-            <artifactId>core</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
+            <version>${ontology.openrdf.version}</version>
         </dependency>
     </dependencies>
 
