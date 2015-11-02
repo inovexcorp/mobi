@@ -3,38 +3,30 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>etl-parent</artifactId>
-        <groupId>org.matonto.etl</groupId>
+        <artifactId>matonto-parent</artifactId>
+        <groupId>org.matonto</groupId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>csv</artifactId>
-    <name>${project.groupId}.${project.artifactId}</name>
+    <artifactId>etl.cli</artifactId>
     <packaging>bundle</packaging>
+
+    <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>3.5</version>
-        </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
+            <groupId>org.matonto</groupId>
+            <artifactId>etl.api</artifactId>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto.etl</groupId>
-            <artifactId>api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -49,7 +41,7 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Import-Package>*</Import-Package>
-                        <Export-Package>org.matonto.etl.api.csv</Export-Package>
+                        <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>
