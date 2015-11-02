@@ -186,9 +186,13 @@
         }
 
         // sets the current state of the page
-        function _setState(oi, ci, pi) {
-            var arr, item, unique;
+        function _setState() {
+            var arr, item, unique, oi, ci, pi;
             vm.current = vm.state[vm.tab];
+            oi = vm.current.ontologyIndex;
+            ci = vm.current.classIndex;
+            pi = vm.current.propertyIndex;
+
             // if property index is specified, they are working with a property
             if(pi != undefined) {
                 vm.shown = 'property-editor';
@@ -215,13 +219,21 @@
                 _setState();
             } else {
                 vm.shown = 'default';
+                vm.current = {};
             }
         }
 
         // sets the state to edit the selected object and saves the previous state that they just left
         function edit(oi, ci, pi) {
             _saveState(oi, ci, pi);
-            _setState(oi, ci, pi);
+            _setState();
+        }
+
+        // submits the form
+        function submit(isValid) {
+            if(isValid) {
+
+            }
         }
     }
 })();

@@ -27,31 +27,31 @@
                     <!-- start ontologies -->
                     <ul ng-repeat="(oi, ontology) in vm.ontologies">
                         <li>
-                            <a ng-click="vm.edit($index);"
+                            <a ng-click="vm.edit($index)"
                                ng-class="{'active': vm.current.ontologyIndex == $index && vm.current.classIndex == undefined}">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                   ng-click="opened = !opened; $event.stopPropagation();"></i>{{ontology['rdfs:label'] || ontology['@id'] || 'N/A'}}
+                                   ng-click="opened = !opened; $event.stopPropagation();"></i>{{ontology['rdfs:label'] || ontology['@id']}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
                             <!-- start classes -->
                             <ul ng-repeat="(ci, class) in ontology.classes">
                                 <li>
-                                    <a ng-click="vm.edit(oi, $index);"
+                                    <a ng-click="vm.edit(oi, $index)"
                                        ng-class="{'active': vm.current.ontologyIndex == oi && vm.current.classIndex == $index && vm.current.propertyIndex == undefined}">
                                         <i class="fa fa-fw"
                                            ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
-                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>{{class['rdfs:label'] || class['@id'] || 'N/A'}}
+                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>{{class['rdfs:label'] || class['@id']}}
                                     </a>
                                 </li>
                                 <li class="container" ng-show="subOpened">
                                     <!-- start properties -->
                                     <ul ng-repeat="property in class.properties">
                                         <li>
-                                            <a ng-click="vm.edit(oi, ci, $index);"
+                                            <a ng-click="vm.edit(oi, ci, $index)"
                                                ng-class="{'active': vm.current.ontologyIndex == oi && vm.current.classIndex == ci && vm.current.propertyIndex == $index}">
-                                                <i class="fa fa-font fa-fw"></i>{{property['rdfs:label'] || property['@id'] || 'N/A'}}
+                                                <i class="fa fa-font fa-fw"></i>{{property['rdfs:label'] || property['@id']}}
                                             </a>
                                         </li>
                                     </ul>
@@ -86,7 +86,7 @@
                 <div ng-show="vm.tab == 'class'" class="tree class-tree">
                     <!-- class view -->
                     <strong>Classes</strong>
-                    <ul ng-repeat="ontology in vm.ontologies">
+                    <ul ng-repeat="(oi, ontology) in vm.ontologies">
                         <li>
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
@@ -98,15 +98,15 @@
                             <ul><!--
                                 --><li ng-repeat="class in ontology.classes">
                                 <a class="text-only"
-                                   ng-click="vm.edit(ontology, class);"
-                                   ng-class="{'active': vm.state['class'].selected == class}">
+                                   ng-click="vm.edit(oi, $index)"
+                                   ng-class="{'active': vm.current.ontologyIndex == oi && vm.current.classIndex == $index && vm.current.propertyIndex == undefined}">
                                     {{class['rdfs:label'] || class['@id']}}
                                 </a>
                             </li><!--
                             --></ul>
                             <div class="creator">
-                                <a ng-click="vm.createClass(ontology)"
-                                   ng-class="{'active': vm.state['class'].selected == 'create-class' && vm.state['class'].ontology == ontology}">
+                                <a ng-click="vm.edit(oi, -1)"
+                                   ng-class="{'active': vm.current.ontologyIndex == oi && vm.current.classIndex == -1}">
                                     <i class="fa fa-plus fa-fw"></i>New Class
                                 </a>
                             </div>
@@ -130,7 +130,7 @@
                             <ul ng-repeat="class in ontology.classes"><!--
                                 --><li ng-repeat="property in class.properties" ng-if="property['@type'] == 'owl:ObjectProperty'">
                                 <a class="text-only"
-                                   ng-click="vm.edit(ontology, class, property);"
+                                   ng-click="vm.edit(ontology, class, property)"
                                    ng-class="{'active': vm.state['object'].selected == property}">
                                     {{property['rdfs:label'] || property['@id']}}
                                 </a>
@@ -312,5 +312,5 @@
             </div>
         </section>
     </div>
-    <!--pre>{{vm.newItems | json}}</pre-->
+    <pre>{{vm.state | json}}</pre>
 </div>
