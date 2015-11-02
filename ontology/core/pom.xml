@@ -69,10 +69,8 @@
                         <Bundle-Name>MatOnto Ontology Service - Core</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            !org.openrdf.rio.*,
                             org.matonto.ontology.core.api,
-                            org.matonto.ontology.core.utils,
-                            org.matonto.ontology.exception
+                            org.matonto.ontology.core.utils
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <_metatype>*</_metatype>

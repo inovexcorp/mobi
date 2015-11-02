@@ -29,11 +29,6 @@
         <dependencies>
             <dependency>
                 <groupId>org.openrdf.sesame</groupId>
-                <artifactId>sesame-model</artifactId>
-                <version>${ontology.openrdf.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.openrdf.sesame</groupId>
                 <artifactId>sesame-runtime-osgi</artifactId>
                 <version>${ontology.openrdf.version}</version>
             </dependency>

@@ -99,8 +99,8 @@
                         <Bundle-Name>MatOnto Ontology Service - Rest</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Import-Package>
-                            org.openrdf.*;version="${openrdf.version}",
-                            org.matonto.ontology.core.api;version="[0.0,1)",
+                            org.openrdf.*;version="${ontology.openrdf.version}",
+                            org.matonto.ontology.core.api;version="[1.0,2)",
                             org.json.*,
                             org.slf4j.*,
                             javax.ws.rs.*,
@@ -113,7 +113,6 @@
                         <Webapp-Context>matonto</Webapp-Context>
                         <_wab>src/main/webapp</_wab>
                         <Service-Component>*</Service-Component>
-                        <_metatype>*</_metatype>
                     </instructions>
                 </configuration>
             </plugin>
