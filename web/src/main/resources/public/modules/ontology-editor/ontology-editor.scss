@@ -2,16 +2,16 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .ontology-editor {
-    height: 100%;
+    /*height: 100%;*/
 
     /* Makes everything height 100% */
-    .row,
+    /*.row,
     .row > aside,
     .row > section,
     .tree-container,
     .editor {
         height: 100%;
-    }
+    }*/
 
     .tree-container,
     .editor {
@@ -79,12 +79,12 @@
             /* Padding to match the width of the icons */
             ul,
             .creator {
+                border-left: 1px solid $gray-lighter;
                 margin-left: 1.28571429em;
             }
 
             /* Puts in some text to tell the user that there is nothing within that tree node */
             ul:first-child:empty {
-                border-left: 0;
                 padding: 3px 10px;
 
                 &:before {
@@ -126,6 +126,39 @@
         /* Only lets the user resize textareas vertically */
         form textarea {
             resize: vertical;
+        }
+
+        /* Adds the padding to the input instead and makes it relative for the add button */
+        #prefix-table {
+            tr.danger td {
+                padding: 8px;
+            }
+
+            td {
+                padding: 0;
+                position: relative;
+
+                /* Removes all input styles to make the table look better */
+                input {
+                    background-color: transparent;
+                    border: 0;
+                    padding: 8px;
+                    width: 100%;
+                }
+
+                /* The plus button in the prefix table to add new rows */
+                .add {
+                    bottom: 0px;
+                    padding: 7px 12px;
+                    position: absolute;
+                    right: 0px;
+                }
+            }
+        }
+
+        /* Adds some spacing between the buttons */
+        .btn-container .btn {
+            margin-left: 10px;
         }
     }
 }
