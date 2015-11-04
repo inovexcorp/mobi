@@ -2,16 +2,15 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .ontology-editor {
-    /*height: 100%;*/
+    min-height: 400px;
 
-    /* Makes everything height 100% */
-    /*.row,
+    /* Makes everything have a min height of 400px */
     .row > aside,
     .row > section,
     .tree-container,
     .editor {
-        height: 100%;
-    }*/
+        min-height: 400px;
+    }
 
     .tree-container,
     .editor {
@@ -130,10 +129,6 @@
 
         /* Adds the padding to the input instead and makes it relative for the add button */
         #prefix-table {
-            tr.danger td {
-                padding: 8px;
-            }
-
             td {
                 padding: 0;
                 position: relative;
@@ -147,13 +142,19 @@
                 }
 
                 /* The plus button in the prefix table to add new rows */
-                .add {
+                .add,
+                .remove {
                     bottom: 0px;
                     padding: 7px 12px;
                     position: absolute;
                     right: 0px;
                 }
             }
+        }
+
+        /* Adds the alignment for the table error message */
+        .table-warning {
+            margin-top: -20px;
         }
 
         /* Adds some spacing between the buttons */

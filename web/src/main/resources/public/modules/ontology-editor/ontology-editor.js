@@ -25,18 +25,19 @@
         vm.newValue = '';
         vm.propertyDefault = { '@id': '' };
         vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [] };
-        vm.ontologyDefault = { '@id': '', '@type': 'owl:Ontology', delimiter: '#', classes: [] };
+        vm.ontologyDefault = { '@id': '', '@type': 'owl:Ontology', delimiter: '#', classes: [], context: [] };
         vm.edit = edit;
         vm.reset = reset;
         vm.submit = submit;
         vm.addPrefix = addPrefix;
+        vm.removePrefix = removePrefix;
         vm.changeTab = changeTab;
         vm.versions = [];
         vm.ontologies = [];
         vm.state = {};
         vm.current = {};
-        vm.selected = {};
         vm.newItems = {};
+        vm.selected = {};
 
         activate();
 
@@ -64,9 +65,9 @@
         }
 
         // takes the flattened JSON-LD data and creates our custom tree structure
-        function _parseOntologies(flattened) {
+        function _parseOntologies(flattened, context) {
             // TODO: figure out how to handle the @graph and @context because @context is a 1-1 to the prefix story for this sprint.
-            var obj, type, domain, j, classObj, property, ontology,
+            var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
                 classes = [],
                 properties = [],
                 list = angular.copy(flattened['@graph']),
@@ -85,10 +86,24 @@
                         obj.properties = [];
                         classes.push(obj);
                         break;
-                    case 'owl:DataTypeProperty':
+                    case 'owl:DatatypeProperty':
                     case 'owl:ObjectProperty':
                         properties.push(obj);
                         break;
+                }
+            }
+
+            // adds the property to the class
+            addToClass = function(id, property) {
+                j = classes.length;
+                while(j--) {
+                    classObj = classes[j];
+                    if(classObj['@id'] === id) {
+                        property.prefix = _stripPrefix(property['@id']);
+                        property['@id'] = property['@id'].replace(property.prefix, '');
+                        classObj.properties.push(property);
+                        break;
+                    }
                 }
             }
 
@@ -96,20 +111,38 @@
             i = properties.length;
             while(i--) {
                 property = properties[i];
-                domain = property['rdfs:domain']['@id'];
-                // iterates over all the classes to find matching @id
-                j = classes.length;
-                while(j--) {
-                    classObj = classes[j];
-                    if(classObj['@id'] === domain) {
-                        classObj.properties.push(property);
-                        break;
+                domain = property['rdfs:domain'];
+                if(Object.prototype.toString.call(domain) === '[object Array]') {
+                    k = domain.length;
+                    while(k--) {
+                        addToClass(domain[k]['@id'], property);
                     }
+                } else {
+                    addToClass(domain['@id'], property);
                 }
+            }
+
+            // updates the classes prefix property
+            i = classes.length;
+            while(i--) {
+                classes[i].prefix = _stripPrefix(classes[i]['@id']);
+                classes[i]['@id'] = classes[i]['@id'].replace(classes[i].prefix, '');
             }
 
             // adds the classes to the ontology object
             ontology.classes = angular.copy(classes);
+            ontology.context = angular.copy(vm.context);
+            len = ontology['@id'].length;
+            delimiter = ontology['@id'].charAt(len - 1);
+
+            // checks to see if the ontology has a delimiter specified already
+            if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
+                ontology.delimiter = delimiter;
+                ontology.identifier = ontology['@id'].substring(0, len - 1);
+            } else {
+                ontology.delimiter = '#';
+                ontology.identifier = ontology['@id'];
+            }
 
             // makes it an array because it will be later
             vm.ontologies.push(ontology);
@@ -123,20 +156,27 @@
         function _getOntologies() {
             // array format to work better with dual binding and updates
             vm.context = [
-                { key: 'owl', value: 'http://www.w3.org/2002/07/owl#' },
-                { key: 'rdf', value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' },
-                { key: 'rdfs', value: 'http://www.w3.org/2000/01/rdf-schema#' }
+                {key: 'owl', value: 'http://www.w3.org/2002/07/owl#'},
+                {key: 'rdf', value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
+                {key: 'rdfs', value: 'http://www.w3.org/2000/01/rdf-schema#'}
             ];
 
             // variable for the json-ld function
-            var context = contextArrToObj();
+            var ontology,
+                context = contextArrToObj();
+            $http.jsonp('http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.test.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK')
+                .success(function(data) {
+                    ontology = JSON.parse(data.ontology);
+                    jsonld.flatten(ontology, context, function(err, flattened) {
+                        _parseOntologies(flattened, vm.context);
+                    });
+                });
 
-            // TODO: make a call to get the list of ontologies from some service
             $http.get('/example.json')
                 .then(function(obj) {
                     // flatten the ontologies
                     jsonld.flatten(obj.data, context, function(err, flattened) {
-                        _parseOntologies(flattened);
+                        _parseOntologies(flattened, vm.context);
                     });
                 });
         }
@@ -188,11 +228,11 @@
             else {
                 var item = arr[index];
                 // if they don't have the prefix already found, find and set it
-                if(!item.hasOwnProperty('prefix')) {
+                /*if(!item.hasOwnProperty('prefix')) {
                     item.prefix = _stripPrefix(item['@id']);
                     item['@id'] = item['@id'].replace(item.prefix, '');
-                }
-                vm.selected = item;
+                }*/
+                vm.selected = arr[index];
             }
         }
 
@@ -299,6 +339,7 @@
                 } else {
                     changed = angular.copy(vm.ontologies[oi]);
                     delete changed.classes;
+                    changed['@id'] = changed.identifier + changed.delimiter;
                     latest = angular.merge(latest, changed);
                 }
                 vm.versions[oi].push({time: new Date(), ontology: latest});
@@ -319,7 +360,7 @@
             }
             // if not a duplicate and not empty, add it and reset the fields
             if(!duplicate && !empty) {
-                vm.context.push({ key: vm.newPrefix, value: vm.newValue });
+                vm.selected.context.push({ key: vm.newPrefix, value: vm.newValue });
                 vm.newPrefix = '';
                 vm.newValue = '';
                 vm.showDuplicateMessage = false;
@@ -328,13 +369,16 @@
             // else, let them know that it is a duplicate of something
             else if(duplicate) {
                 vm.showDuplicateMessage = true;
-                vm.showEmptyMessage = false;
             }
             // else, let them know that they need to fill them in
             else {
-                vm.showDuplicateMessage = false;
                 vm.showEmptyMessage = true;
             }
+        }
+
+        // removes the prefix from the ontology
+        function removePrefix(index) {
+            vm.selected.context.splice(index, 1);
         }
 
         // create context object from context array

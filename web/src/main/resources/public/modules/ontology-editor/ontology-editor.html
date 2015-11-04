@@ -199,20 +199,31 @@
                 <form name="vm.ontologyForm" class="clearfix" novalidate
                       ng-submit="vm.submit(vm.ontologyForm.$valid)"
                       ng-show="vm.shown == 'ontology-editor'">
-                    <!-- iri -->
-                    <div class="form-group">
-                        <label class="control-label" for="ontology-iri">Ontology IRI</label>
-                        <input type="text" class="form-control" id="ontology-iri" placeholder="@id" name="iri" ng-model="vm.selected['@id']" ng-trim="false">
+                    <div class="row">
+                        <!-- identifier -->
+                        <div class="form-group col-xs-9">
+                            <label class="control-label" for="ontology-identifier">Identifier</label>
+                            <input type="text" class="form-control" id="ontology-identifier" name="iri" ng-model="vm.selected.identifier" ng-trim="false">
+                        </div>
+                        <!-- delimiter -->
+                        <div class="form-group col-xs-3">
+                            <label class="control-label" for="ontology-delimiter">Delimiter</label>
+                            <select class="form-control" id="ontology-delimiter" ng-model="vm.selected.delimiter">
+                                <option value="#">#</option>
+                                <option value="/">/</option>
+                                <option value=":">:</option>
+                            </select>
+                        </div>
                     </div>
                     <!-- label -->
                     <div class="form-group">
                         <label class="control-label" for="ontology-label">Label</label>
-                        <input type="text" class="form-control" id="ontology-label" placeholder="rdfs:label" name="label" ng-model="vm.selected['rdfs:label']" ng-trim="false">
+                        <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected['rdfs:label']" ng-trim="false">
                     </div>
                     <!-- comments -->
                     <div class="form-group">
                         <label class="control-label" for="ontology-comments">Comments</label>
-                        <textarea class="form-control" id="ontology-comments" placeholder="rdfs:comment" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
+                        <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
                     </div>
                     <!-- prefixes -->
                     <table id="prefix-table" class="table table-bordered">
@@ -225,27 +236,28 @@
                         <tbody>
                             <tr ng-repeat="item in vm.selected.context track by $index">
                                 <td><input type="text" value="{{key}}" ng-model="vm.selected.context[$index].key" /></td>
-                                <td><input type="text" value="{{value}}" ng-model="vm.selected.context[$index].value" /></td>
+                                <td>
+                                    <input type="text" value="{{value}}" ng-model="vm.selected.context[$index].value" />
+                                    <button type="button" class="btn btn-link remove" ng-click="vm.removePrefix($index)"><i class="fa fa-minus"></i></button>
+                                </td>
                             </tr>
                             <tr>
-                                <td><input type="text" placeholder="Prefix" ng-model="vm.newPrefix" /></td>
+                                <td><input type="text" ng-model="vm.newPrefix" placeholder="Enter new prefix..." /></td>
                                 <td>
-                                    <input type="text" placeholder="Value" ng-model="vm.newValue" />
+                                    <input type="text" ng-model="vm.newValue" placeholder="Enter new value..." />
                                     <button type="button" class="btn btn-link add" ng-click="vm.addPrefix()"><i class="fa fa-plus"></i></button>
                                 </td>
                             </tr>
-                            <tr class="danger" ng-show="vm.showDuplicateMessage">
-                                <td colspan="2">Both prefix and value must be unique.</td>
-                            </tr>
-                            <tr class="danger" ng-show="vm.showEmptyMessage">
-                                <td colspan="2">Both prefix and value must be provided.</td>
-                            </tr>
                         </tbody>
                     </table>
+                    <div class="has-warning table-warning clearfix" ng-if="vm.showDuplicateMessage || vm.showEmptyMessage">
+                        <strong ng-if="vm.showDuplicateMessage" class="help-block">Both prefix and value must be unique.</strong>
+                        <strong ng-if="vm.showEmptyMessage" class="help-block">Both prefix and value must be provided.</strong>
+                    </div>
                     <!-- buttons -->
                     <div class="btn-container">
                         <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.ontologyForm.$invalid">Save</button>
-                        <button type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
+                        <button ng-if="vm.current.oi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
                     </div>
                 </form>
 
@@ -257,8 +269,8 @@
                     <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid }" class="form-group">
                         <label class="control-label" for="class-iri">Identifier</label>
                         <div class="input-group">
-                            <div class="input-group-addon">{{vm.ontologies[vm.current.oi]['@id']}}</div>
-                            <input type="text" class="form-control" id="class-iri" placeholder="@id" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
+                            <div class="input-group-addon">{{vm.selected.prefix}}</div>
+                            <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
                         </div>
                         <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
                         <strong ng-if="vm.classForm.iri.$invalid && !vm.classForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
@@ -266,23 +278,23 @@
                     <!-- name -->
                     <div class="form-group">
                         <label class="control-label" for="class-name">Name</label>
-                        <input type="text" class="form-control" id="class-name" placeholder="rdfs:label" name="name" ng-model="vm.selected['rdfs:label']" ng-trim="false">
+                        <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected['rdfs:label']" ng-trim="false">
                     </div>
                     <!-- TODO:add auto complete based on all classes available -->
                     <!-- base class -->
                     <!--div class="form-group">
                         <label class=control-label for="class-base">Base Class</label>
-                        <input type="text" class="form-control" id="class-base" placeholder="rdfs:????" name="base" ng-model="vm.class.base">
+                        <input type="text" class="form-control" id="class-base" name="base" ng-model="vm.class.base">
                     </div-->
                     <!-- comments -->
                     <div class="form-group">
                         <label class="control-label" for="class-comments">Comments</label>
-                        <textarea class="form-control" id="class-comments" placeholder="rdfs:comment" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
+                        <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
                     </div>
                     <!-- buttons -->
                     <div class="btn-container">
                         <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid">Save</button>
-                        <button type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
+                        <button ng-if="vm.current.ci != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
                     </div>
                 </form>
 
@@ -294,8 +306,8 @@
                     <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid }" class="form-group">
                         <label class="control-label" for="property-iri">Identifier</label>
                         <div class="input-group">
-                            <div class="input-group-addon">{{vm.ontologies[vm.current.oi]['@id']}}</div>
-                            <input type="text" class="form-control" id="property-iri" placeholder="@id" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
+                            <div class="input-group-addon">{{vm.selected.prefix}}</div>
+                            <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
                         </div>
                         <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
                         <strong ng-if="vm.propertyForm.iri.$invalid && !vm.propertyForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
@@ -303,12 +315,12 @@
                     <!-- name -->
                     <div class="form-group">
                         <label class="control-label" for="property-name">Name</label>
-                        <input type="text" class="form-control" id="property-name" placeholder="Name" name="name" ng-model="vm.selected['rdfs:label']">
+                        <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected['rdfs:label']">
                     </div>
                     <!-- comments -->
                     <div class="form-group">
                         <label class="control-label" for="property-comments">Comments</label>
-                        <textarea class="form-control" id="property-comments" placeholder="rdfs:comment" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
+                        <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
                     </div>
                     <!-- TODO:figure out the property options -->
                     <!-- single or multi value property -->
@@ -340,11 +352,19 @@
                     <!-- buttons -->
                     <div class="btn-container">
                         <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.propertyForm.$invalid">Save</button>
-                        <button type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
+                        <button ng-if="vm.current.pi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
                     </div>
                 </form>
             </div>
         </section>
     </div>
-    <pre>{{vm.context | json}}</pre>
+    <!--div class="row">
+        <div class="col-xs-6">
+            <pre>{{vm.context | json}}</pre>
+        </div>
+        <div class="col-xs-6">
+            <pre>{{vm.selected.context | json}}</pre>
+        </div>
+    </div-->
+    <pre>{{vm.ontologies | json}}</pre>
 </div>
