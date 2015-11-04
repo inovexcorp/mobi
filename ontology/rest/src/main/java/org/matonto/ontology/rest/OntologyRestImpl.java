@@ -172,8 +172,12 @@ public class OntologyRestImpl {
 				else if(rdfFormat.equalsIgnoreCase("owl/xml"))
 					outputStream = ontology.get().asOwlXml();
 				
-				else
+				else if(rdfFormat.equalsIgnoreCase("turtle"))
 					outputStream = ontology.get().asTurtle();
+				
+				else {
+					outputStream = ontology.get().asJsonLD();
+				}
 			}
 			
 			String content = "";
@@ -226,8 +230,12 @@ public class OntologyRestImpl {
 				else if(rdfFormat.equalsIgnoreCase("owl/xml"))
 					outputStream = ontology.get().asOwlXml();
 				
-				else
+				else if(rdfFormat.equalsIgnoreCase("turtle"))
 					outputStream = ontology.get().asTurtle();
+				
+				else {
+					outputStream = ontology.get().asJsonLD();
+				}
 			}
 			
 			

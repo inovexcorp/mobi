@@ -16,7 +16,10 @@ import org.openrdf.model.Resource;
 import org.openrdf.model.impl.LinkedHashModel;
 
 import org.openrdf.model.util.Models;
+import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -215,6 +218,19 @@ public class SimpleOntology implements Ontology {
 	public OutputStream asOwlXml() 
 	{
 		return getOntologyDocument(new OWLXMLDocumentFormat());
+	}
+	
+	
+	@Override
+	public OutputStream asJsonLD()
+	{
+		OutputStream outputStream = new ByteArrayOutputStream();
+		try {
+			Rio.write(asModel(), outputStream, RDFFormat.JSONLD);
+		} catch (RDFHandlerException e) {
+			e.printStackTrace();
+		}
+		return outputStream;
 	}
 	
 

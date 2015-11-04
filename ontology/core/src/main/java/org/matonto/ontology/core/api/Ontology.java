@@ -18,6 +18,8 @@ public interface Ontology {
 	
 	OutputStream asOwlXml();
 	
+	OutputStream asJsonLD();
+	
 	Resource getOntologyId();
 	
 	boolean importOntology(InputStream inputStream, Resource ontologyId);
