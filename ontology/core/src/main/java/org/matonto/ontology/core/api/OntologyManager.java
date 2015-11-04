@@ -3,6 +3,7 @@ package org.matonto.ontology.core.api;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Map;
 import java.util.Optional;
 
 import org.openrdf.model.Resource;
@@ -22,5 +23,7 @@ public interface OntologyManager {
 	boolean storeOntology(Ontology ontology);
 	
 	boolean deleteOntology(Resource ontologyId);
+
+	Optional<Map<Resource, String>> getOntologyRegistry();
 	
 }

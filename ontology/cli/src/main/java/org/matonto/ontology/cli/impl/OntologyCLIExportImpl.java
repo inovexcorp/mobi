@@ -70,6 +70,9 @@ public class OntologyCLIExportImpl  extends OsgiCommandSupport
 	@Override
 	protected Object doExecute() throws Exception 
 	{
+		if(manager == null)
+			throw new IllegalStateException("Ontology manager is null");
+
 		boolean exported = false;
 		exported = exportOntology();
 		

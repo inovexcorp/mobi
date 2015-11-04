@@ -61,6 +61,9 @@ public class OntologyCLIImportImpl extends OsgiCommandSupport
 	@Override
 	protected Object doExecute() throws Exception 
 	{	
+		if(manager == null)
+			throw new IllegalStateException("Ontology manager is null");
+
 		boolean persisted = false;
 		persisted = importOntology();
 		

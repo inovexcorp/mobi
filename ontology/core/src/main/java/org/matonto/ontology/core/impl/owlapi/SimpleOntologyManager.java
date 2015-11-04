@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.matonto.ontology.core.api.Ontology;
@@ -15,6 +17,7 @@ import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
+import org.openrdf.repository.http.HTTPRepository;
 
 import info.aduna.iteration.Iterations;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -38,10 +41,13 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 
 
+
 @Component (immediate=true)
 public class SimpleOntologyManager implements OntologyManager {
 	
-	private Repository repository;
+	private static Repository repository;
+	private static Optional<Map<Resource, String>> ontologyRegistry = Optional.ofNullable(new HashMap<>());
+	private static String location;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
 	
 	public SimpleOntologyManager() {}
@@ -50,6 +56,7 @@ public class SimpleOntologyManager implements OntologyManager {
     public void activate() 
     {
         LOG.info("Activating the SimpleOntologyManager");
+        this.initOntologyRegistry();
     }
  
     @Deactivate
@@ -60,7 +67,7 @@ public class SimpleOntologyManager implements OntologyManager {
     
 
 	@Reference
-	protected void setRepo(final Repository repository) 
+	private void setRepo(final Repository repository) 
 	{
 	    this.repository = repository;
 	}
@@ -68,6 +75,14 @@ public class SimpleOntologyManager implements OntologyManager {
 	protected void unsetRepo(final Repository repository) 
 	{
 	    this.repository = null;
+	}
+	
+	
+	
+	@Override
+	public Optional<Map<Resource, String>> getOntologyRegistry() 
+	{
+		return ontologyRegistry;
 	}
 	
 
@@ -110,39 +125,9 @@ public class SimpleOntologyManager implements OntologyManager {
 	{
 	   	if(repository == null)
 	   		throw new IllegalStateException("Repository is null");
-	   	 
-	    RepositoryResult<Resource> contextIds = null;
-
-	    RepositoryConnection conn = null;
-	     
-	    try
-		{		
-			conn = repository.getConnection();
-	    	//Get context ids
-		    contextIds = conn.getContextIDs();
-	
-		    while (contextIds.hasNext()) {
-		    	Resource contextId = contextIds.next();
-		    	if (contextId.equals(ontologyId)) 
-		    		return true;
-		    }
-	    	 
-	    } catch (RepositoryException e) {
-	    	 e.printStackTrace();
-	    	 
-	    } finally {
-	    	try {
-	    		if(contextIds != null) 
-	            	contextIds.close();
-	    		if(conn != null)
-	    			conn.close();
-	             
-	         } catch (RepositoryException e) {
-	        	 e.printStackTrace();
-	         }
-	     }
-
-	     return false;
+	   	
+	   	else
+	   		return ontologyRegistry.get().containsKey(ontologyId);
 	}
 	
 	
@@ -247,9 +232,9 @@ public class SimpleOntologyManager implements OntologyManager {
 		try
 		{		
 			conn = repository.getConnection();
-			
-			conn.add(ontology.asModel(), ontologyId);
-			
+			Model model = ontology.asModel();
+			conn.add(model, ontologyId);
+			ontologyRegistry.get().put(ontologyId, location);
 			persisted = true;
 			
 		} catch (RepositoryException e) {
@@ -295,7 +280,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			conn = repository.getConnection();
 			//Execute Update query 
 			conn.clear(ontologyId);
-		
+			ontologyRegistry.get().remove(ontologyId, location);
 			deleted = true;
 			
 		} catch (RepositoryException e) {
@@ -315,4 +300,60 @@ public class SimpleOntologyManager implements OntologyManager {
 	}
 	
 
+	/**
+	 * The ontology registry facilitates the list of the association of ontologies 
+	 * stored in different repositories. When the registry is initialized (loaded) when
+	 * an instance of SimpleOntologyManager is created.  
+	 * 
+	 * @throws IllegalStateException - if the repository is null
+	 */
+	private void initOntologyRegistry()
+	{
+		LOG.info("Initiating the ontology registry");
+		
+		if(repository == null)
+			throw new IllegalStateException("Repository is null");
+		
+		if(repository instanceof HTTPRepository)
+			location = ((HTTPRepository) repository).getRepositoryURL();
+		else {
+			if(repository.getDataDir() != null)
+				location = repository.getDataDir().getAbsolutePath();
+			else
+				location = "default in-memory store";
+		}
+		
+		RepositoryConnection conn = null;
+		RepositoryResult<Resource> contextIds = null;
+		
+		Map<Resource, String> ontologies = new HashMap<>();
+		
+		try
+		{		
+			conn = repository.getConnection();
+			contextIds = conn.getContextIDs();
+			
+			while (contextIds.hasNext()) {
+				Resource contextId = contextIds.next();
+			    ontologies.put(contextId, location);
+			}
+			
+			ontologyRegistry = Optional.of(ontologies);
+				
+		} catch (RepositoryException e) {
+			e.printStackTrace();
+
+		} finally {
+			try {
+				if(contextIds != null) 
+	            	contextIds.close();
+	    		if(conn != null)
+	    			conn.close();
+			} catch (RepositoryException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
 }

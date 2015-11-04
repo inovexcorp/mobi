@@ -179,6 +179,10 @@ public class SimpleOntology implements Ontology {
 			RDFHandler rdfHandler = new StatementCollector(sesameModel); 
 		    RioRenderer renderer = new RioRenderer(tempOntology, rdfHandler, parsedFormat);
 	   
+//			OWLDocumentFormat parsedFormat = manager.getOntologyFormat(ontology);
+//			RDFHandler rdfHandler = new StatementCollector(sesameModel); 
+//		    RioRenderer renderer = new RioRenderer(ontology, rdfHandler, parsedFormat);
+			
 			renderer.render();
 		} catch (IOException e) {
 			e.printStackTrace();
