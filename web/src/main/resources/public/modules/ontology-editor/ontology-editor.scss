@@ -2,11 +2,7 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .ontology-editor {
-    min-height: 400px;
-
     /* Makes everything have a min height of 400px */
-    .row > aside,
-    .row > section,
     .tree-container,
     .editor {
         min-height: 400px;
@@ -82,17 +78,6 @@
                 margin-left: 1.28571429em;
             }
 
-            /* Puts in some text to tell the user that there is nothing within that tree node */
-            ul:first-child:empty {
-                padding: 3px 10px;
-
-                &:before {
-                    content: 'None for this ontology';
-                    color: $gray-light;
-                    font-style: italic;
-                }
-            }
-
             /* The list items which contain an anchor for all of the items in the tree */
             li {
                 width: 100%;
@@ -108,7 +93,10 @@
 
     /* Styles for the right side of the page */
     .editor {
-        padding: 15px;
+        /* Pads the outside of the tab elements */
+        .tab {
+            padding: 15px 15px 0;
+        }
 
         /* Styles the header for each of the editing panels */
         h4 {
@@ -157,9 +145,14 @@
             margin-top: -20px;
         }
 
-        /* Adds some spacing between the buttons */
-        .btn-container .btn {
-            margin-left: 10px;
+        /* Matches the padding with the rest of the page */
+        .btn-container {
+            padding: 0 15px 15px;
+
+            /* Adds some spacing between the buttons */
+            .btn {
+                margin-left: 10px;
+            }
         }
     }
 }

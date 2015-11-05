@@ -64,12 +64,37 @@
             }
         }
 
+        // determines which image should be shown depending on the type of property
+        function _chooseIcon(property) {
+            var icon = '',
+                range = property['rdfs:range'];
+            // TODO: figure out what to do if there isn't a range
+            if(range) {
+                switch(range['@id']) {
+                    case 'xsd:string':
+                        icon = 'fa-font';
+                        break;
+                    // TODO: pick a better icon for this
+                    case 'rdfs:Literal':
+                        icon = 'fa-bolt';
+                        break;
+                    default:
+                        icon = 'fa-code-fork fa-rotate-90';
+                        break;
+                }
+            } else {
+                console.log(property['@id'] + ' does not have a range');
+            }
+            return icon;
+        }
+
         // takes the flattened JSON-LD data and creates our custom tree structure
         function _parseOntologies(flattened, context) {
             // TODO: figure out how to handle the @graph and @context because @context is a 1-1 to the prefix story for this sprint.
             var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
                 classes = [],
                 properties = [],
+                noDomains = [],
                 list = angular.copy(flattened['@graph']),
                 i = list.length;
 
@@ -88,6 +113,7 @@
                         break;
                     case 'owl:DatatypeProperty':
                     case 'owl:ObjectProperty':
+                        obj.icon = _chooseIcon(obj);
                         properties.push(obj);
                         break;
                 }
@@ -108,17 +134,26 @@
             }
 
             // iterates over all properties to find domain
+            // TODO: check if you actually need this part
             i = properties.length;
             while(i--) {
                 property = properties[i];
                 domain = property['rdfs:domain'];
-                if(Object.prototype.toString.call(domain) === '[object Array]') {
-                    k = domain.length;
-                    while(k--) {
-                        addToClass(domain[k]['@id'], property);
+                // TODO: figure out what to do if it doesn't have a domain specified
+                if(domain) {
+                    if(Object.prototype.toString.call(domain) === '[object Array]') {
+                        console.log('here in the array section');
+                        k = domain.length;
+                        while(k--) {
+                            addToClass(domain[k]['@id'], property);
+                        }
+                    } else {
+                        addToClass(domain['@id'], property);
                     }
                 } else {
-                    addToClass(domain['@id'], property);
+                    property.prefix = _stripPrefix(property['@id']);
+                    property['@id'] = property['@id'].replace(property.prefix, '');
+                    noDomains.push(property);
                 }
             }
 
@@ -129,13 +164,16 @@
                 classes[i]['@id'] = classes[i]['@id'].replace(classes[i].prefix, '');
             }
 
-            // adds the classes to the ontology object
-            ontology.classes = angular.copy(classes);
+            // adds the classes, context and properties without domains to the ontology
+            ontology.classes = classes;
+            ontology.noDomains = noDomains;
             ontology.context = angular.copy(vm.context);
+
+            // checks to see if the ontology has a delimiter specified already
             len = ontology['@id'].length;
             delimiter = ontology['@id'].charAt(len - 1);
 
-            // checks to see if the ontology has a delimiter specified already
+            // if it does, remove it from the identifier part
             if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
                 ontology.delimiter = delimiter;
                 ontology.identifier = ontology['@id'].substring(0, len - 1);
@@ -158,19 +196,28 @@
             vm.context = [
                 {key: 'owl', value: 'http://www.w3.org/2002/07/owl#'},
                 {key: 'rdf', value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
-                {key: 'rdfs', value: 'http://www.w3.org/2000/01/rdf-schema#'}
+                {key: 'rdfs', value: 'http://www.w3.org/2000/01/rdf-schema#'},
+                {key: 'xsd', value: 'http://www.w3.org/2001/XMLSchema#'}
             ];
 
             // variable for the json-ld function
             var ontology,
-                context = contextArrToObj();
-            $http.jsonp('http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.test.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK')
-                .success(function(data) {
-                    ontology = JSON.parse(data.ontology);
-                    jsonld.flatten(ontology, context, function(err, flattened) {
-                        _parseOntologies(flattened, vm.context);
+                context = contextArrToObj(),
+                arr = [
+                    'http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.test.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK',
+                    'http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK'
+                ],
+                i = arr.length;
+
+            while(i--) {
+                $http.jsonp(arr[i])
+                    .success(function(data) {
+                        ontology = JSON.parse(data.ontology);
+                        jsonld.flatten(ontology, context, function(err, flattened) {
+                            _parseOntologies(flattened, vm.context);
+                        });
                     });
-                });
+            }
 
             $http.get('/example.json')
                 .then(function(obj) {
@@ -248,7 +295,11 @@
             if(pi != undefined) {
                 vm.shown = 'property-editor';
                 unique = vm.tab + oi + ci + pi;
-                _editOrCreate(vm.ontologies[oi].classes[ci].properties, pi, unique);
+                if(ci != undefined) {
+                    _editOrCreate(vm.ontologies[oi].classes[ci].properties, pi, unique);
+                } else {
+                    _editOrCreate(vm.ontologies[oi].noDomains, pi, unique);
+                }
                 vm.propertyForm.$setPristine();
             }
             // else, if class index is specified, they are working with a class
