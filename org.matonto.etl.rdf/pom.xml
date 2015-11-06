@@ -3,36 +3,39 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>ontology-parent</artifactId>
-        <groupId>org.matonto.ontology</groupId>
+        <artifactId>matonto-parent</artifactId>
+        <groupId>org.matonto</groupId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>cli</artifactId>
-    <packaging>bundle</packaging>
+    <artifactId>etl.rdf</artifactId>
 
     <name>${project.groupId}.${project.artifactId}</name>
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.karaf.shell</groupId>
-            <artifactId>org.apache.karaf.shell.console</artifactId>
-            <version>2.2.11</version>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-runtime-osgi</artifactId>
+            <version>${etl.openrdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.matonto.ontology</groupId>
-            <artifactId>core</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <scope>provided</scope>
+            <groupId>org.matonto</groupId>
+            <artifactId>etl.api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
         </dependency>
     </dependencies>
 
@@ -45,14 +48,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto Ontology Service - CLI</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
-                        <Import-Package>
-                            org.openrdf.*;version="${ontology.openrdf.version}",
-                            org.matonto.ontology.core.api;version="[1.0,2)",
-                            *
-                        </Import-Package>
+                        <Import-Package>*</Import-Package>
+                        <Export-Package>org.matonto.etl.api.rdf</Export-Package>
+                        <Export-Service>org.matonto.etl.api.rdf.RDFExportService;org.matonto.api.rdf.RDFImportService</Export-Service>
                         <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>
