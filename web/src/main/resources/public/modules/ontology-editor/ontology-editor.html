@@ -338,7 +338,7 @@
                         <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid }" class="form-group">
                             <label class="control-label" for="class-iri">Identifier</label>
                             <div class="input-group">
-                                <div class="input-group-addon">{{(vm.selected.prefix == vm.ontologies[vm.current.oi]['@id']) ? (vm.ontologies[vm.current.oi].identifier + vm.ontologies[vm.current.oi].delimiter) : vm.selected.prefix}}</div>
+                                <div class="input-group-addon">{{(vm.selected.prefix == vm.ontologies[vm.current.oi]['@id'] || !vm.selected.prefix) ? (vm.ontologies[vm.current.oi].identifier + vm.ontologies[vm.current.oi].delimiter) : vm.selected.prefix}}</div>
                                 <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
                             </div>
                             <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
@@ -387,7 +387,7 @@
                         <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid }" class="form-group">
                             <label class="control-label" for="property-iri">Identifier</label>
                             <div class="input-group">
-                                <div class="input-group-addon">{{(vm.selected.prefix == vm.ontologies[vm.current.oi]['@id']) ? (vm.ontologies[vm.current.oi].identifier + vm.ontologies[vm.current.oi].delimiter) : vm.selected.prefix}}</div>
+                                <div class="input-group-addon">{{(vm.selected.prefix == vm.ontologies[vm.current.oi]['@id'] || !vm.selected.prefix) ? (vm.ontologies[vm.current.oi].identifier + vm.ontologies[vm.current.oi].delimiter) : vm.selected.prefix}}</div>
                                 <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
                             </div>
                             <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
@@ -441,13 +441,13 @@
             </div>
         </section>
     </div>
-    <div class="row">
+    <!--div class="row">
         <div class="col-xs-6">
             <pre>{{vm.ontologies[0] | json}}</pre>
         </div>
         <div class="col-xs-6">
             <pre>{{vm.versions[0][vm.versions[0].length - 1].ontology | json}}</pre>
         </div>
-    </div>
-    <pre>{{vm.selected | json}}</pre>
+    </div-->
+    <pre>{{vm.newItems | json}}</pre>
 </div>

@@ -139,6 +139,7 @@
             while(i--) {
                 property = properties[i];
                 domain = property['rdfs:domain'];
+
                 // TODO: figure out what to do if it doesn't have a domain specified
                 if(domain) {
                     if(Object.prototype.toString.call(domain) === '[object Array]') {
@@ -202,21 +203,15 @@
 
             // variable for the json-ld function
             var ontology,
-                context = contextArrToObj(),
-                arr = [
-                    'http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK'
-                ],
-                i = arr.length;
+                context = contextArrToObj();
 
-            /*while(i--) {
-                $http.jsonp(arr[i])
-                    .success(function(data) {
-                        ontology = JSON.parse(data.ontology);
-                        jsonld.flatten(ontology, context, function(err, flattened) {
-                            _parseOntologies(flattened, vm.context);
-                        });
+            $http.jsonp('http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK')
+                .success(function(data) {
+                    ontology = JSON.parse(data.ontology);
+                    jsonld.flatten(ontology, context, function(err, flattened) {
+                        _parseOntologies(flattened, vm.context);
                     });
-            }*/
+                });
 
             $http.get('/example.json')
                 .then(function(obj) {
@@ -252,6 +247,7 @@
                 hash = id.indexOf('#'),
                 slash = id.lastIndexOf('/'),
                 colon = id.lastIndexOf(':');
+
             if(hash !== -1) {
                 result = id.substring(0, hash + 1);
             } else if(slash !== -1) {
@@ -263,21 +259,15 @@
         }
 
         // finds out whether they are editing or creating an object
-        function _editOrCreate(arr, index, unique) {
+        function _editOrCreate(arr, index, unique, base) {
             // if they are creating
             if(index === -1) {
                 // checks to see if they were already editing this node
-                if(!vm.newItems.hasOwnProperty(unique)) vm.newItems[unique] = angular.copy(vm.propertyDefault);
+                if(!vm.newItems.hasOwnProperty(unique)) vm.newItems[unique] = angular.copy(base);
                 vm.selected = vm.newItems[unique];
             }
             // else, they are editing
             else {
-                var item = arr[index];
-                // if they don't have the prefix already found, find and set it
-                /*if(!item.hasOwnProperty('prefix')) {
-                    item.prefix = _stripPrefix(item['@id']);
-                    item['@id'] = item['@id'].replace(item.prefix, '');
-                }*/
                 vm.selected = arr[index];
             }
         }
@@ -295,9 +285,9 @@
                 vm.shown = 'property-editor';
                 unique = vm.tab + oi + ci + pi;
                 if(ci != undefined) {
-                    _editOrCreate(vm.ontologies[oi].classes[ci].properties, pi, unique);
+                    _editOrCreate(vm.ontologies[oi].classes[ci].properties, pi, unique, vm.propertyDefault);
                 } else {
-                    _editOrCreate(vm.ontologies[oi].noDomains, pi, unique);
+                    _editOrCreate(vm.ontologies[oi].noDomains, pi, unique, vm.propertyDefault);
                 }
                 vm.propertyForm.$setPristine();
             }
@@ -305,13 +295,14 @@
             else if(ci != undefined) {
                 vm.shown = 'class-editor';
                 unique = vm.tab + oi + ci;
-                _editOrCreate(vm.ontologies[oi].classes, ci, unique);
+                _editOrCreate(vm.ontologies[oi].classes, ci, unique, vm.classDefault);
                 vm.classForm.$setPristine();
             }
             // else, they have to be working with an ontology
             else {
                 vm.shown = 'ontology-editor';
-                vm.selected = (oi === -1) ? vm.ontologyDefault : vm.ontologies[oi];
+                unique = vm.tab + oi;
+                _editOrCreate(vm.ontologies, oi, unique, vm.ontologyDefault);
                 vm.ontologyForm.$setPristine();
             }
         }
@@ -358,6 +349,7 @@
                 pi = vm.current.pi,
                 lastSaved = vm.versions[oi][vm.versions[oi].length - 1].ontology,
                 current = vm.ontologies[oi];
+
             // if property index is specified, they are working with a property
             if(pi != undefined) {
                 _revert(current.classes[ci].properties[pi], lastSaved.classes[ci].properties[pi], '', true);
@@ -394,11 +386,15 @@
                     else {
                         vm.ontologies[oi].classes[ci].properties.push(changed);
                         latest.classes[ci].properties.push(changed);
+                        delete vm.newItems[vm.tab + oi + ci + pi];
+                        vm.current = { oi: oi, ci: ci, pi: vm.ontologies[oi].classes[ci].properties.length - 1 };
                     }
                 }
 
                 // a class is being submitted
                 else if(ci != undefined) {
+                    // there is an ontology defined for the class being edited/created
+                    latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
                     // if ci != -1, an existing class is being edited
                     if(ci != -1) {
                         latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
@@ -409,6 +405,8 @@
                     else {
                         vm.ontologies[oi].classes.push(changed);
                         latest.classes.push(changed);
+                        delete vm.newItems[vm.tab + oi + ci];
+                        vm.current = { oi: oi, ci: vm.ontologies[oi].classes.length - 1, pi: undefined };
                     }
                 }
 
@@ -421,18 +419,19 @@
                     latest = angular.merge(latest, changed);
                 }
                 // otherwise, an ontology is being created
-                else {
-
-                }
+                // do nothing since we have already copied vm.selected
 
                 // if an ontology is not being created, add this version to the versions list
                 // note: this will only be false whenever they are creating a new ontology
                 if(oi != -1) {
-                    vm.versions[oi].push({time: new Date(), ontology: latest});
+                    vm.versions[oi].push({ time: new Date(), ontology: latest });
                 }
                 // otherwise, add a new entry to versions with this new ontology
                 else {
-                    vm.versions.push([{time: new Date(), ontology: latest}]);
+                    vm.ontologies.push(changed);
+                    vm.versions.push([{ time: new Date(), ontology: changed }]);
+                    delete vm.newItems[vm.tab + oi];
+                    vm.current = { oi: vm.ontologies.length - 1, ci: undefined, pi: undefined };
                 }
             }
         }
