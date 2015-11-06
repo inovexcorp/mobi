@@ -28,6 +28,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.core</artifactId>
+   	    <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
@@ -48,6 +49,11 @@
                         <Bundle-Name>MatOnto Ontology Service - CLI</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package></Export-Package>
+			<Import-Package>
+			    org.openrdf.*;version="${ontology.openrdf.version}",
+			    org.matonto.ontology.core.api;version="[1.0,2)",
+			    *
+			</Import-Package>
                         <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>

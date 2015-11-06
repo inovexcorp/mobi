@@ -24,7 +24,6 @@
 
         <bnd-maven.version>3.0.0</bnd-maven.version>
         <bndlib.version>3.0.0</bndlib.version>
-        <openrdf.version>4.0.0</openrdf.version>
         <commons-lang3.version>3.4</commons-lang3.version>
 
         <openrdf.version>4.0.0</openrdf.version>
