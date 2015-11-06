@@ -67,14 +67,14 @@ public class SimpleOntologyManager implements OntologyManager {
     
 
 	@Reference
-	public void setRepo(final Repository repository) 
+	public void setRepo(final Repository repo) 
 	{
-	    this.repository = repository;
+	    repository = repo;
 	}
 	
-	protected void unsetRepo(final Repository repository) 
+	protected void unsetRepo(final Repository repo) 
 	{
-	    this.repository = null;
+	    repository = null;
 	}
 	
 	
