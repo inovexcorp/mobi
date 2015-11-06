@@ -79,11 +79,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             org.matonto.ontology.core.api,
-<<<<<<< HEAD:ontology/core/pom.xml
                             org.matonto.ontology.core.utils
-=======
-                            org.matonto.ontology.core.utils,
->>>>>>> develop:org.matonto.ontology.core/pom.xml
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <_metatype>*</_metatype>
