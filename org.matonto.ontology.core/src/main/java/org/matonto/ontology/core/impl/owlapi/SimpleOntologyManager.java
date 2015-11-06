@@ -67,7 +67,7 @@ public class SimpleOntologyManager implements OntologyManager {
     
 
 	@Reference
-	public void setRepo(final Repository repo) 
+	protected void setRepo(final Repository repo) 
 	{
 	    repository = repo;
 	}
