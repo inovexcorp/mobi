@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="
+           http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+
+    <!-- to setup camel servlet with OSGi HttpService -->
+    <reference id="httpService" interface="org.osgi.service.http.HttpService"/>
+
+    <bean class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"
+          init-method="register"
+          destroy-method="unregister">
+        <property name="alias" value="/etl/rest"/>
+        <property name="httpService" ref="httpService"/>
+        <property name="servlet" ref="etlServlet"/>
+        <!--<property name="servlet" ref="swaggerServlet"/>-->
+    </bean>
+
+    <bean id="etlServlet" class="org.apache.camel.component.servlet.CamelHttpTransportServlet">
+    </bean>
+
+    <!--<bean id="swaggerServlet" class="org.apache.camel.swagger.servlet.RestSwaggerServlet">-->
+        <!--<property name="apiContextIdListing" value="true"/>-->
+    <!--</bean>-->
+
+
+    <!-- a bean for user services -->
+    <bean id="restService" class="org.matonto.etl.rest.Rest"/>
+
+    <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="etl-context">
+
+        <!-- configure rest to use the camel-servlet component, and use json binding mode -->
+        <!-- and tell to output json in pretty print mode -->
+        <!-- setup context path and port number that Apache Tomcat will deploy this application with,
+             as we use the servlet component, then we need to aid Camel to tell it these details so Camel
+             knows the url to the REST services.
+             Notice: This is optional, but needed if the RestRegistry should enlist accurate information.
+             You can access the RestRegistry from JMX at runtime -->
+        <restConfiguration component="servlet" bindingMode="json" contextPath="/etl/rest"
+                           port="8181" >
+            <dataFormatProperty key="prettyPrint" value="true"/>
+        </restConfiguration>
+
+        <!-- defines the rest services using the context-path /user -->
+        <rest path="/csv" consumes="application/json" produces="application/json">
+            <description>User rest service</description>
+
+            <!-- this is a rest GET to view an user by the given id -->
+            <get uri="/uuid" outType="String">
+                <description>Find user by id</description>
+                <to uri="bean:restService?method=generateUUID"/>
+            </get>
+
+
+        </rest>
+
+    </camelContext>
+
+</blueprint>

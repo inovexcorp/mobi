@@ -19,6 +19,7 @@
         <module>etl.csv</module>
         <module>etl.rdf</module>
         <module>etl.cli</module>
+        <module>etl.rest</module>
     </modules>
 
     <properties>
