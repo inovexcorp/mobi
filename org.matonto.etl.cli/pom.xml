@@ -3,21 +3,30 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>etl-parent</artifactId>
-        <groupId>org.matonto.etl</groupId>
+        <artifactId>matonto-parent</artifactId>
+        <groupId>org.matonto</groupId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>api</artifactId>
+    <artifactId>etl.cli</artifactId>
     <packaging>bundle</packaging>
 
     <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>etl.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
         </dependency>
     </dependencies>
 
@@ -29,9 +38,11 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>org.matonto.etl.api*</Export-Package>
+                        <Import-Package>*</Import-Package>
+                        <Export-Package></Export-Package>
+                        <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>
             </plugin>
