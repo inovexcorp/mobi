@@ -8,15 +8,15 @@ import java.io.OutputStream;
 import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.felix.gogo.commands.Argument;
-import org.apache.felix.gogo.commands.Command;
-import org.apache.karaf.shell.console.OsgiCommandSupport;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Action;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -26,9 +26,9 @@ import aQute.bnd.annotation.component.Reference;
 
 @Component (immediate=true)
 @Command(scope = "matonto", name = "exportOntology", description="Exports ontology from a repository")
-public class OntologyCLIExportImpl  extends OsgiCommandSupport
+public class OntologyCLIExportImpl  implements Action
 {
-	private OntologyManager manager;
+	private static OntologyManager manager;
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyCLIExportImpl.class);
 	
 	
@@ -45,9 +45,19 @@ public class OntologyCLIExportImpl  extends OsgiCommandSupport
     }
     
 	@Reference
-	protected void setOntologyManager(OntologyManager manager)
+	protected void setOntologyManager(final OntologyManager ontoManager)
 	{
-		this.manager = manager;
+		manager = ontoManager;
+	}
+	
+	protected void unsetOntologyManager(final OntologyManager ontoManager)
+	{
+		manager = null;
+	}
+	
+	protected OntologyManager getOntologyManager()
+	{
+		return manager;
 	}
 	
 	//Command Line Arguments and Options	
@@ -68,7 +78,7 @@ public class OntologyCLIExportImpl  extends OsgiCommandSupport
 	
 	
 	@Override
-	protected Object doExecute() throws Exception 
+	public Object execute() throws Exception 
 	{
 		if(manager == null)
 			throw new IllegalStateException("Ontology manager is null");

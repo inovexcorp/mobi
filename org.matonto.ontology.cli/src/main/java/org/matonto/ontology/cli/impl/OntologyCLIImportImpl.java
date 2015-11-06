@@ -1,9 +1,11 @@
 package org.matonto.ontology.cli.impl;
 
 import java.io.File;
-import org.apache.felix.gogo.commands.Argument;
-import org.apache.felix.gogo.commands.Command;
-import org.apache.karaf.shell.console.OsgiCommandSupport;
+
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Action;
+
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 
@@ -20,9 +22,9 @@ import aQute.bnd.annotation.component.Reference;
 
 @Component (immediate=true)
 @Command(scope = "matonto", name = "importOntology", description = "Imports ontology to a repository")
-public class OntologyCLIImportImpl extends OsgiCommandSupport
+public class OntologyCLIImportImpl implements Action
 {
-	private OntologyManager manager;
+	private static OntologyManager manager;
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyCLIImportImpl.class);
 	
     @Activate
@@ -38,9 +40,19 @@ public class OntologyCLIImportImpl extends OsgiCommandSupport
     }
 	
 	@Reference
-	protected void setOntologyManager(OntologyManager manager)
+	protected void setOntologyManager(final OntologyManager ontoManager)
 	{
-		this.manager = manager;
+		manager = ontoManager;
+	}
+	
+	protected void unsetOntologyManager(final OntologyManager ontoManager)
+	{
+		manager = null;
+	}
+	
+	protected OntologyManager getOntologyManager()
+	{
+		return manager;
 	}
 
 	
@@ -59,7 +71,7 @@ public class OntologyCLIImportImpl extends OsgiCommandSupport
 	
 	
 	@Override
-	protected Object doExecute() throws Exception 
+	public Object execute() throws Exception 
 	{	
 		if(manager == null)
 			throw new IllegalStateException("Ontology manager is null");
