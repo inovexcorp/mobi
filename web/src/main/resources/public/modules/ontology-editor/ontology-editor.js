@@ -204,12 +204,11 @@
             var ontology,
                 context = contextArrToObj(),
                 arr = [
-                    'http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.test.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK',
                     'http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK'
                 ],
                 i = arr.length;
 
-            while(i--) {
+            /*while(i--) {
                 $http.jsonp(arr[i])
                     .success(function(data) {
                         ontology = JSON.parse(data.ontology);
@@ -217,7 +216,7 @@
                             _parseOntologies(flattened, vm.context);
                         });
                     });
-            }
+            }*/
 
             $http.get('/example.json')
                 .then(function(obj) {
@@ -375,25 +374,66 @@
 
         // submits the form
         function submit(isValid) {
+            // if all angular validation passes
             if(isValid) {
-                var changed,
+                var latest,
                     oi = vm.current.oi,
                     ci = vm.current.ci,
                     pi = vm.current.pi,
-                    latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
+                    changed = angular.copy(vm.selected);
+
+                // a property is being submitted
                 if(pi != undefined) {
-                    latest.classes[ci].properties[pi] = angular.merge(latest.classes[ci].properties[pi], angular.copy(vm.ontologies[oi].classes[ci].properties[pi]));
-                } else if(ci != undefined) {
-                    changed = angular.copy(vm.ontologies[oi].classes[ci]);
-                    delete changed.properties;
-                    latest.classes[ci] = angular.merge(latest.classes[ci], changed);
-                } else {
-                    changed = angular.copy(vm.ontologies[oi]);
+                    // there is an ontology defined for the property being edited/created
+                    latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
+                    // if pi != -1, an existing property is being edited
+                    if(pi != -1) {
+                        latest.classes[ci].properties[pi] = angular.merge(latest.classes[ci].properties[pi], changed);
+                    }
+                    // otherwise, a property is being created
+                    else {
+                        vm.ontologies[oi].classes[ci].properties.push(changed);
+                        latest.classes[ci].properties.push(changed);
+                    }
+                }
+
+                // a class is being submitted
+                else if(ci != undefined) {
+                    // if ci != -1, an existing class is being edited
+                    if(ci != -1) {
+                        latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
+                        delete changed.properties;
+                        latest.classes[ci] = angular.merge(latest.classes[ci], changed);
+                    }
+                    // otherwise, a class is being created
+                    else {
+                        vm.ontologies[oi].classes.push(changed);
+                        latest.classes.push(changed);
+                    }
+                }
+
+                // an ontology is being submitted
+                // if oi != -1, an existing ontology is being edited
+                else if(oi != -1) {
+                    latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
                     delete changed.classes;
                     changed['@id'] = changed.identifier + changed.delimiter;
                     latest = angular.merge(latest, changed);
                 }
-                vm.versions[oi].push({time: new Date(), ontology: latest});
+                // otherwise, an ontology is being created
+                else {
+
+                }
+
+                // if an ontology is not being created, add this version to the versions list
+                // note: this will only be false whenever they are creating a new ontology
+                if(oi != -1) {
+                    vm.versions[oi].push({time: new Date(), ontology: latest});
+                }
+                // otherwise, add a new entry to versions with this new ontology
+                else {
+                    vm.versions.push([{time: new Date(), ontology: latest}]);
+                }
             }
         }
 

@@ -235,7 +235,7 @@
                 <p ng-show="vm.success" class="text-success"><i class="fa fa-check fa-fw"></i>Success</p>
 
                 <!-- ontology editor -->
-                <form name="vm.ontologyForm" class="clearfix" novalidate
+                <form name="vm.ontologyForm" class="clearfix" novalidate autocomplete="off"
                       ng-submit="vm.submit(vm.ontologyForm.$valid)"
                       ng-show="vm.shown == 'ontology-editor'">
 
@@ -321,8 +321,8 @@
                 </form>
 
                 <!-- class editor -->
-                <form name="vm.classForm" class="clearfix" novalidate
-                      ng-submit="vm.submitClass(vm.classForm.$valid)"
+                <form name="vm.classForm" class="clearfix" novalidate autocomplete="off"
+                      ng-submit="vm.submit(vm.classForm.$valid)"
                       ng-show="vm.shown == 'class-editor'">
 
                     <!-- class editor tabs -->
@@ -363,15 +363,15 @@
                     </div>
 
                     <!-- buttons -->
-                    <div class="btn-container">
+                    <div class="btn-container clearfix">
                         <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid">Save</button>
                         <button ng-if="vm.current.ci != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
                     </div>
                 </form>
 
                 <!-- property editor -->
-                <form name="vm.propertyForm" class="clearfix" novalidate
-                      ng-submit="vm.submitProperty(vm.propertyForm.$valid)"
+                <form name="vm.propertyForm" class="clearfix" novalidate autocomplete="off"
+                      ng-submit="vm.submit(vm.propertyForm.$valid)"
                       ng-show="vm.shown == 'property-editor'">
 
                     <!-- property editor tabs -->
@@ -433,7 +433,7 @@
                     </div>
 
                     <!-- buttons -->
-                    <div class="btn-container">
+                    <div class="btn-container clearfix">
                         <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.propertyForm.$invalid">Save</button>
                         <button ng-if="vm.current.pi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
                     </div>
@@ -441,13 +441,13 @@
             </div>
         </section>
     </div>
-    <!--div class="row">
+    <div class="row">
         <div class="col-xs-6">
-            <pre>{{vm.context | json}}</pre>
+            <pre>{{vm.ontologies[0] | json}}</pre>
         </div>
         <div class="col-xs-6">
-            <pre>{{vm.selected.context | json}}</pre>
+            <pre>{{vm.versions[0][vm.versions[0].length - 1].ontology | json}}</pre>
         </div>
-    </div-->
-    <pre>{{vm.ontologies[vm.current.oi] | json}}</pre>
+    </div>
+    <pre>{{vm.selected | json}}</pre>
 </div>
