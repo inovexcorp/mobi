@@ -96,6 +96,11 @@
         /* Pads the outside of the tab elements */
         .tab {
             padding: 15px 15px 0;
+
+            // if the buttons being shown are inside the tab, remove the left and right padding
+            .btn-container {
+                padding: 0 0 15px;
+            }
         }
 
         /* Styles the header for each of the editing panels */
@@ -152,6 +157,20 @@
             /* Adds some spacing between the buttons */
             .btn {
                 margin-left: 10px;
+            }
+        }
+
+        /* Annotation styles */
+        .annotation {
+            padding-right: 30px;
+            position: relative;
+
+            /* Places the button in the top right corner */
+            button {
+                padding: 5px;
+                position: absolute;
+                right: 0;
+                top: 0;
             }
         }
     }

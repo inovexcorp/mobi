@@ -32,8 +32,11 @@
         vm.addPrefix = addPrefix;
         vm.removePrefix = removePrefix;
         vm.changeTab = changeTab;
+        vm.addAnnotation = addAnnotation;
+        vm.removeAnnotation = removeAnnotation;
         vm.versions = [];
         vm.ontologies = [];
+        vm.annotations = [];
         vm.state = {};
         vm.current = {};
         vm.newItems = {};
@@ -43,6 +46,48 @@
 
         function activate() {
             _getOntologies();
+            _setAnnotations();
+        }
+
+        // removes the annotation
+        function removeAnnotation(item) {
+            var i = vm.selected.annotations.length;
+            // remove it from the annotations list
+            while(i--) {
+                if(item == vm.selected.annotations[i]) {
+                    vm.selected.annotations.splice(i, 1);
+                }
+            }
+            // removes it from the object itself
+            delete vm.selected[item];
+        }
+
+        // adds the annotation that the user is editing
+        function addAnnotation() {
+            // adds the item to the actual object
+            vm.selected[vm.selected.currentAnnotation] = vm.selected.currentAnnotationValue;
+            // adds the annotation to the list of items used to determine which is shown in the drop down
+            if(vm.selected.annotations) {
+                vm.selected.annotations.push(vm.selected.currentAnnotation);
+            } else {
+                vm.selected.annotations = [vm.selected.currentAnnotation];
+            }
+            // resets the value
+            vm.selected.currentAnnotation = 'default';
+            vm.selected.currentAnnotationValue = '';
+        }
+
+        // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
+        function _setAnnotations() {
+            vm.annotations = [
+                'rdfs:seeAlso',
+                'rdfs:isDefinedBy',
+                'owl:deprecated',
+                'owl:versionInfo',
+                'owl:priorVersion',
+                'owl:backwardCompatibleWith',
+                'owl:incompatibleWith'
+            ];
         }
 
         // if the uri of the ontology changes, this function will update the rest of the ids to match
@@ -83,7 +128,7 @@
                         break;
                 }
             } else {
-                console.log(property['@id'] + ' does not have a range');
+                // console.log(property['@id'] + ' does not have a range');
             }
             return icon;
         }
@@ -143,7 +188,6 @@
                 // TODO: figure out what to do if it doesn't have a domain specified
                 if(domain) {
                     if(Object.prototype.toString.call(domain) === '[object Array]') {
-                        console.log('here in the array section');
                         k = domain.length;
                         while(k--) {
                             addToClass(domain[k]['@id'], property);
@@ -265,10 +309,14 @@
                 // checks to see if they were already editing this node
                 if(!vm.newItems.hasOwnProperty(unique)) vm.newItems[unique] = angular.copy(base);
                 vm.selected = vm.newItems[unique];
+                // selects the default annotation
+                vm.selected.currentAnnotation = 'default';
             }
             // else, they are editing
             else {
                 vm.selected = arr[index];
+                // checks to see if the current annotation has been selected yet.
+                if(!vm.selected.currentAnnotation) vm.selected.currentAnnotation = 'default';
             }
         }
 
