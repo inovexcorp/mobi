@@ -14,7 +14,6 @@
         <property name="alias" value="/etl/rest"/>
         <property name="httpService" ref="httpService"/>
         <property name="servlet" ref="etlServlet"/>
-        <!--<property name="servlet" ref="swaggerServlet"/>-->
     </bean>
 
     <bean id="etlServlet" class="org.apache.camel.component.servlet.CamelHttpTransportServlet">
