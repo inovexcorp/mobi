@@ -10,16 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>persistence.api</artifactId>
+    <artifactId>api</artifactId>
 
     <name>${project.groupId}.${project.artifactId}</name>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>api</artifactId>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>

@@ -16,25 +16,23 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!--<sonar.language>java</sonar.language>-->
-        <!--<sonar.host.url>http://10.1.9.146</sonar.host.url>-->
-        <!--<sonar.jdbc.username>sonar</sonar.jdbc.username>-->
-        <!--<sonar.jdbc.password>sonar</sonar.jdbc.password>-->
-        <!--<sonar.jdbc.url>jdbc:mysql://10.1.9.146:3306/sonar?useUnicode=true&amp;characterEncoding=utf8</sonar.jdbc.url>-->
-
         <bnd-maven.version>3.0.0</bnd-maven.version>
         <bndlib.version>3.0.0</bndlib.version>
         <commons-lang3.version>3.4</commons-lang3.version>
-
         <openrdf.version>4.0.0</openrdf.version>
         <etl.openrdf.version>2.8.6</etl.openrdf.version>
         <ontology.openrdf.version>2.8.6</ontology.openrdf.version>
-
         <owlapi.version>4.0.2</owlapi.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- MatOnto Part Dependencies -->
+            <dependency>
+                <groupId>org.matonto</groupId>
+                <artifactId>api</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.api</artifactId>
@@ -51,6 +49,7 @@
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
 
+            <!-- Sesame Dependencies -->
             <dependency>
                 <groupId>org.openrdf.sesame</groupId>
                 <artifactId>sesame-model</artifactId>
@@ -62,18 +61,21 @@
                 <version>${openrdf.version}</version>
             </dependency>
 
+            <!-- OWLAPI Dependencies -->
             <dependency>
                 <groupId>net.sourceforge.owlapi</groupId>
                 <artifactId>owlapi-osgidistribution</artifactId>
                 <version>${owlapi.version}</version>
             </dependency>
 
+            <!-- Karaf Dependencies -->
             <dependency>
                 <groupId>org.apache.karaf.shell</groupId>
                 <artifactId>org.apache.karaf.shell.console</artifactId>
                 <version>4.0.2</version>
             </dependency>
 
+            <!-- OSGi Dependencies -->
             <dependency>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>biz.aQute.bndlib</artifactId>
@@ -81,19 +83,19 @@
                 <scope>provided</scope>
             </dependency>
 
+            <!-- Other Dependencies -->
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.4</version>
             </dependency>
-
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
             </dependency>
 
-            <!-- Test Deps -->
+            <!-- Test Dependencies -->
             <dependency>
                 <groupId>org.spockframework</groupId>
                 <artifactId>spock-core</artifactId>
