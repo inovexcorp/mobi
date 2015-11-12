@@ -1,4 +1,4 @@
-package org.matonto.rdf.core.api;
+package org.matonto.rdf.api;
 
 public interface BNode extends Resource {
 

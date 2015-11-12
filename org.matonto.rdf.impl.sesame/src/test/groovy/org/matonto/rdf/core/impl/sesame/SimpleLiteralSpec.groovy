@@ -1,6 +1,6 @@
 package org.matonto.rdf.core.impl.sesame
 
-import org.matonto.rdf.core.api.ValueFactory
+import org.matonto.rdf.api.ValueFactory
 import org.matonto.rdf.core.utils.LiteralUtils
 import org.openrdf.model.vocabulary.RDF
 import org.openrdf.model.vocabulary.XMLSchema

@@ -18,7 +18,7 @@
         <!--<module>web</module>-->
         <!--<module>etl</module>-->
         <module>matonto-parent</module>
-        <module>org.matonto.rdf.api</module>
+        <module>org.matonto.persistence.api</module>
         <module>org.matonto.rdf.impl.sesame</module>
         <module>org.matonto.etl.api</module>
         <module>org.matonto.etl.cli</module>

@@ -1,4 +1,4 @@
-package org.matonto.rdf.core.api;
+package org.matonto.rdf.api;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;

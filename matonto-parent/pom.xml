@@ -37,7 +37,7 @@
         <dependencies>
             <dependency>
                 <groupId>org.matonto</groupId>
-                <artifactId>rdf.api</artifactId>
+                <artifactId>persistence.api</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>

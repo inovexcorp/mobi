@@ -1,4 +1,4 @@
-package org.matonto.rdf.core.api;
+package org.matonto.rdf.api;
 
 /**
  * A namespace, consisting of a namespace name and a prefix that has been assigned to it.

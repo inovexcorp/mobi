@@ -1,4 +1,4 @@
-package org.matonto.rdf.core.api;
+package org.matonto.rdf.api;
 
 /**
  * An Internationalized Resource Identifier (IRI). IRIs may contain characters from the Universal Character Set
