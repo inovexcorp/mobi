@@ -17,7 +17,6 @@ public class User {
         this.name = name;
     }
 
-    @ApiModelProperty(value = "RAWR RAWR RAWR", required = true)
     public int getId() {
         return id;
     }

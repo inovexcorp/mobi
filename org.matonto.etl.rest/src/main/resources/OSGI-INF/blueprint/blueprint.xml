@@ -22,7 +22,16 @@
     <!-- to setup camel servlet with OSGi HttpService -->
     <reference id="httpService" interface="org.osgi.service.http.HttpService"/>
 
-    <bean class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"
+
+    <!--<bean id="swaggerBean" class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"-->
+          <!--init-method="register"-->
+          <!--destroy-method="unregister">-->
+        <!--<property name="alias" value="/api-docs"/>-->
+        <!--<property name="httpService" ref="httpService"/>-->
+        <!--<property name="servlet" ref="swaggerServlet"/>-->
+    <!--</bean>-->
+
+    <bean id="camelBean" class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"
           init-method="register"
           destroy-method="unregister">
         <property name="alias" value="/rest"/>
@@ -30,24 +39,43 @@
         <property name="servlet" ref="camelServlet"/>
     </bean>
 
-    <bean class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"
-          init-method="register"
-          destroy-method="unregister">
-        <property name="alias" value="/api-docs"/>
-        <property name="httpService" ref="httpService"/>
-        <property name="servlet" ref="swaggerServlet"/>
+
+    <!--<service interface="javax.servlet.http.HttpServlet">-->
+        <!--<service-properties>-->
+            <!--<entry key="alias" value="/rest"/>-->
+            <!--<entry key="load-on-startup" value="1"/>-->
+        <!--</service-properties>-->
+        <!--<bean class="org.apache.camel.component.servlet.CamelHttpTransportServlet"/>-->
+    <!--</service>-->
+
+    <service interface="javax.servlet.http.HttpServlet">
+        <service-properties>
+            <entry key="alias" value="/api-docs"/>
+            <entry key="base.path" value="rest"/>
+            <entry key="api.path" value="api-docs"/>
+            <entry key="load-on-startup" value="2"/>
+            <entry key="apiContextIdListing" value="true"/>
+
+        </service-properties>
+        <bean class="org.apache.camel.swagger.servlet.RestSwaggerServlet"/>
+    </service>
+
+
+    <bean id="camelServlet" class="org.apache.camel.component.servlet.CamelHttpTransportServlet">
+        <property name="servletName" value="ETLServlet"/>
     </bean>
-
-
-    <bean id="camelServlet" class="org.apache.camel.component.servlet.CamelHttpTransportServlet"/>
 
 
     <!-- a bean for user services -->
     <bean id="userService" class="org.matonto.etl.rest.UserService"/>
+    <bean id="testService" class="org.matonto.etl.rest.Test"/>
 
-    <bean id="swaggerServlet" class="org.apache.camel.swagger.servlet.RestSwaggerServlet"/>
+    <!--<bean id="swaggerServlet" class="org.apache.camel.swagger.servlet.RestSwaggerServlet">-->
+        <!--&lt;!&ndash;<property name="apiContextIdListing" value="true"/>&ndash;&gt;-->
 
-    <camelContext xmlns="http://camel.apache.org/schema/blueprint">
+    <!--</bean>-->
+
+    <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="etl-context">
 
         <!-- configure rest to use the camel-servlet component, and use json binding mode -->
         <!-- and tell to output json in pretty print mode -->
@@ -56,7 +84,7 @@
              knows the url to the REST services.
              Notice: This is optional, but needed if the RestRegistry should enlist accurate information.
              You can access the RestRegistry from JMX at runtime -->
-        <restConfiguration component="servlet" bindingMode="json" contextPath="/rest"
+        <restConfiguration component="servlet" bindingMode="json" contextPath="/"
                            port="8181">
             <dataFormatProperty key="prettyPrint" value="true"/>
         </restConfiguration>
@@ -84,6 +112,23 @@
             </get>
 
         </rest>
+        <rest path="/test" consumes="application/json" produces="application/json">
+            <description>Test Rest Stuff</description>
+            <get uri="uuid" outType="String">
+                <description>Get random uuid</description>
+                <responseMessage message="The random uuid"/>
+                <route>
+                    <to uri="bean:testService?method=generateUUID()"/>
+                    <filter>
+                        <simple>${body} == null</simple>
+                        <setHeader headerName="Exchange.HTTP_RESPONSE_CODE">
+                            <constant>404</constant>
+                        </setHeader>
+                    </filter>
+                </route>
+            </get>
+        </rest>
+
 
     </camelContext>
 
