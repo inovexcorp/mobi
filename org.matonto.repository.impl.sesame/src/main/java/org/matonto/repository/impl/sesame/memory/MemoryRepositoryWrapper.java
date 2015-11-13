@@ -5,6 +5,7 @@ import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.base.RepositoryWrapper;
+import org.matonto.repository.config.RepositoryConfigException;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
@@ -54,7 +55,9 @@ public class MemoryRepositoryWrapper extends RepositoryWrapper {
 
         if (props.containsKey("dataDir")) {
             if (config.dataDir().equals(""))
-                throw new IllegalArgumentException("Repository property 'dataDir' cannot be empty.");
+                throw new RepositoryConfigException(
+                        new IllegalArgumentException("Repository property 'dataDir' cannot be empty.")
+                );
         }
     }
 }

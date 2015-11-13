@@ -1,3 +1,4 @@
-Bundle-SymbolicName: org.matonto.rdf.api
-Bundle-Name: MatOnto RDF API
-Export-Package: org.matonto.rdf.core.api
+Bundle-SymbolicName: org.matonto.persistence.api
+Bundle-Name: MatOnto Persistence API
+Export-Package: org.matonto.rdf*,org.matonto.repository*
+-metatype: *

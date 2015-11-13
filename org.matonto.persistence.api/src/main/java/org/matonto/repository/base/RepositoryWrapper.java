@@ -4,6 +4,7 @@ import aQute.bnd.annotation.metatype.Configurable;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.config.RepositoryConfig;
+import org.matonto.repository.config.RepositoryConfigException;
 import org.matonto.repository.exception.RepositoryException;
 
 import java.util.Map;
@@ -104,8 +105,12 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
         RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, props);
 
         if (config.id().equals(""))
-            throw new IllegalArgumentException("Repository property 'id' cannot be empty.");
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository property 'id' cannot be empty.")
+            );
         if (config.title().equals(""))
-            throw new IllegalArgumentException("Repository property 'title' cannot be empty.");
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository property 'title' cannot be empty.")
+            );
     }
 }
