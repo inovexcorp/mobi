@@ -77,6 +77,7 @@
             vm.selected.currentAnnotationValue = '';
         }
 
+        // TODO: check the annotaions
         // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
         function _setAnnotations() {
             vm.annotations = [
