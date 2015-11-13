@@ -10,7 +10,7 @@ public interface RepositoryIDConfig extends RepositoryConfig {
 
     public void setTitle(String title);
 
-    public RepositoryImplConfig getImplConfig();
+    public RepositoryServiceConfig getImplConfig();
 
-    public void setImplConfig(RepositoryImplConfig config);
+    public void setImplConfig(RepositoryServiceConfig config);
 }

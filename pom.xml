@@ -30,6 +30,7 @@
         <module>org.matonto.web</module>
         <module>org.matonto.api</module>
         <module>org.matonto.repository.memory</module>
+        <module>org.matonto.semantic.service</module>
     </modules>
 
     <build>

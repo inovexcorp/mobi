@@ -48,11 +48,31 @@
                 <artifactId>ontology.core</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>org.matonto</groupId>
+                <artifactId>semantic.service</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
 
             <!-- Sesame Dependencies -->
             <dependency>
                 <groupId>org.openrdf.sesame</groupId>
                 <artifactId>sesame-model</artifactId>
+                <version>${openrdf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-repository-api</artifactId>
+                <version>${openrdf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-repository-sail</artifactId>
+                <version>${openrdf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-sail-memory</artifactId>
                 <version>${openrdf.version}</version>
             </dependency>
             <dependency>
