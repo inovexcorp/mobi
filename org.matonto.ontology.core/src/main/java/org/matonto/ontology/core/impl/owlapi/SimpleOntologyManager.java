@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -35,6 +34,8 @@ import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Optional;
+
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
@@ -46,7 +47,7 @@ import aQute.bnd.annotation.component.Reference;
 public class SimpleOntologyManager implements OntologyManager {
 	
 	private static Repository repository;
-	private static Optional<Map<Resource, String>> ontologyRegistry = Optional.ofNullable(new HashMap<>());
+	private static Optional<Map<SimpleOntologyId, String>> ontologyRegistry = Optional.fromNullable(new HashMap<>());
 	private static String location;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
 	
@@ -80,35 +81,35 @@ public class SimpleOntologyManager implements OntologyManager {
 	
 	
 	@Override
-	public Optional<Map<Resource, String>> getOntologyRegistry() 
+	public Optional<Map<SimpleOntologyId, String>> getOntologyRegistry() 
 	{
 		return ontologyRegistry;
 	}
 	
 
 	@Override
-	public Ontology createOntology(Resource ontologyId) 
+	public Ontology createOntology(SimpleOntologyId ontologyId) 
 	{
 		return new SimpleOntology(ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(File file, Resource ontologyId) 
+	public Ontology createOntology(File file, SimpleOntologyId ontologyId) 
 	{
 		return new SimpleOntology(file, ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(URL url, Resource ontologyId) 
+	public Ontology createOntology(URL url, SimpleOntologyId ontologyId) 
 	{
 		return new SimpleOntology(url, ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(InputStream inputStream, Resource ontologyId) 
+	public Ontology createOntology(InputStream inputStream, SimpleOntologyId ontologyId) 
 	{	
 		return new SimpleOntology(inputStream, ontologyId);
 	}
@@ -121,7 +122,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @return True if given context id exists in the repository, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
-	public boolean ontologyExists(Resource ontologyId)
+	public boolean ontologyExists(SimpleOntologyId ontologyId)
 	{
 	   	if(repository == null)
 	   		throw new IllegalStateException("Repository is null");
@@ -141,13 +142,13 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public Optional<Ontology> retrieveOntology(Resource ontologyId) 
+	public Optional<Ontology> retrieveOntology(SimpleOntologyId ontologyId) 
 	{	
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
 		if(!ontologyExists(ontologyId))
-			return Optional.empty();
+			return Optional.absent();
 
 		SimpleOntology ontology = new SimpleOntology();
 		OWLOntologyManager mgr = OWLManager.createOWLOntologyManager();
@@ -159,7 +160,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		try
 		{		
 			conn = repository.getConnection();
-	    	Model model = Iterations.addAll(conn.getStatements(null, null, null, false, ontologyId), new LinkedHashModel());
+	    	Model model = Iterations.addAll(conn.getStatements(null, null, null, false, ontologyId.getContextId()), new LinkedHashModel());
 				
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
@@ -179,16 +180,16 @@ public class SimpleOntologyManager implements OntologyManager {
 
 		} catch (OWLOntologyStorageException e) {
 			e.printStackTrace();
-			return Optional.empty();
+			return Optional.absent();
 		} catch (OWLOntologyCreationException e) {
 			e.printStackTrace();
-			return Optional.empty();
+			return Optional.absent();
 		} catch (IOException e) {
 			e.printStackTrace();
-			return Optional.empty();
+			return Optional.absent();
 		} catch (RepositoryException e) {
 			e.printStackTrace();
-			return Optional.empty();
+			return Optional.absent();
 		} finally {
 			try {
 				if(conn != null)
@@ -201,7 +202,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		ontology.setOntologyId(ontologyId);
 		ontology.setOntology(onto);
 		ontology.setOntologyManager(mgr);
-		ontology.setIRI(iri);
+		ontology.setIRI(SimpleIRI.matontoIRI(iri));
 		
 		return Optional.of(ontology);
 	}
@@ -222,7 +223,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
-		Resource ontologyId = ontology.getOntologyId();
+		SimpleOntologyId ontologyId = ontology.getOntologyId();
 		if(ontologyExists(ontologyId))
 			return false;
 		
@@ -233,7 +234,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		{		
 			conn = repository.getConnection();
 			Model model = ontology.asModel();
-			conn.add(model, ontologyId);
+			conn.add(model, ontologyId.getContextId());
 			ontologyRegistry.get().put(ontologyId, location);
 			persisted = true;
 			
@@ -264,7 +265,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public boolean deleteOntology(Resource ontologyId)
+	public boolean deleteOntology(SimpleOntologyId ontologyId)
 	{
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
@@ -279,7 +280,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		{		
 			conn = repository.getConnection();
 			//Execute Update query 
-			conn.clear(ontologyId);
+			conn.clear(ontologyId.getContextId());
 			ontologyRegistry.get().remove(ontologyId, location);
 			deleted = true;
 			
@@ -326,7 +327,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		RepositoryConnection conn = null;
 		RepositoryResult<Resource> contextIds = null;
 		
-		Map<Resource, String> ontologies = new HashMap<>();
+		Map<SimpleOntologyId, String> ontologyMap = new HashMap<>();
 		
 		try
 		{		
@@ -335,10 +336,10 @@ public class SimpleOntologyManager implements OntologyManager {
 			
 			while (contextIds.hasNext()) {
 				Resource contextId = contextIds.next();
-			    ontologies.put(contextId, location);
+			    ontologyMap.put(createOntologyId(contextId), location);
 			}
 			
-			ontologyRegistry = Optional.of(ontologies);
+			ontologyRegistry = Optional.of(ontologyMap);
 				
 		} catch (RepositoryException e) {
 			e.printStackTrace();
@@ -355,5 +356,12 @@ public class SimpleOntologyManager implements OntologyManager {
 		}
 		
 	}
+	
+	
+	public static SimpleOntologyId createOntologyId(Resource contextId)
+	{
+		return new SimpleOntologyId(contextId);
+	}
+
 	
 }

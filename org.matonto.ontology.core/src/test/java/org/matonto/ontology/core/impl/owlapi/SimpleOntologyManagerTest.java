@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Optional;
 
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -18,6 +17,8 @@ import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
+
+import com.google.common.base.Optional;
 
 public class SimpleOntologyManagerTest 
 {
@@ -52,34 +53,34 @@ public class SimpleOntologyManagerTest
     	SimpleOntology ontology1 = null;
     	boolean stored1 = false;
     	try {
-			ontology1 = new SimpleOntology(new URL("http://protege.cim3.net/file/pub/ontologies/travel/travel.owl"), contextId);
+			ontology1 = new SimpleOntology(new URL("http://protege.cim3.net/file/pub/ontologies/travel/travel.owl"), SimpleOntologyManager.createOntologyId(contextId));
 			stored1 = manager.storeOntology(ontology1);
     	} catch (MalformedURLException e) {
     		System.out.println("Malformed URL Exception caught");
 		}
-    	Resource ontologyId1 = ontology1.getOntologyId();
+    	SimpleOntologyId ontologyId1 = ontology1.getOntologyId();
     	
     	
     	SimpleOntology ontology2 = null;
     	boolean stored2 = false;
     	try {
-			ontology2 = new SimpleOntology(ttlRes.getFile(), ttlRes.getContextId());
+			ontology2 = new SimpleOntology(ttlRes.getFile(), SimpleOntologyManager.createOntologyId(ttlRes.getContextId()));
 			stored2 = manager.storeOntology(ontology2);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
-    	Resource ontologyId2 = ontology2.getOntologyId();
+    	SimpleOntologyId ontologyId2 = ontology2.getOntologyId();
     	
     	
     	SimpleOntology ontology3 = null;
     	boolean stored3 = false;
     	try {
-			ontology3 = new SimpleOntology(bookRes.getFile(), bookRes.getContextId());
+			ontology3 = new SimpleOntology(bookRes.getFile(), SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
 			stored3 = manager.storeOntology(ontology3);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
-    	Resource ontologyId3 = ontology3.getOntologyId();
+    	SimpleOntologyId ontologyId3 = ontology3.getOntologyId();
     	
     	
     	assertNotNull(ontology1);
@@ -91,22 +92,23 @@ public class SimpleOntologyManagerTest
 
 		URI contextId2 = new URIImpl("http://protege.cim3.net/file/pub/ontologies/travel#travel");
 
-		Optional<Ontology> ontology4 = manager.retrieveOntology(contextId2);
+		Optional<Ontology> ontology4 = manager.retrieveOntology(SimpleOntologyManager.createOntologyId(contextId2));
 
-		Optional<Ontology> ontology5 = manager.retrieveOntology(ttlRes.getContextId());
+		Optional<Ontology> ontology5 = manager.retrieveOntology(SimpleOntologyManager.createOntologyId(ttlRes.getContextId()));
 
-		Optional<Ontology> ontology6 = manager.retrieveOntology(bookRes.getContextId());
+		Optional<Ontology> ontology6 = manager.retrieveOntology(SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
 
-		assertNotEquals(Optional.empty(), ontology4);
-		assertNotEquals(Optional.empty(), ontology5);
-		assertNotEquals(Optional.empty(), ontology6);
+		assertNotEquals(Optional.absent(), ontology4);
+		assertNotEquals(Optional.absent(), ontology5);
+		assertNotEquals(Optional.absent(), ontology6);
 
-		URI contextId1 = new URIImpl("http://protege.cim3.net/file/pub/ontologies/travel#travel");
+		URI uri = new URIImpl("http://protege.cim3.net/file/pub/ontologies/travel#travel");
+		SimpleOntologyId contextId1 = SimpleOntologyManager.createOntologyId(uri);
 		boolean result1 = manager.deleteOntology(contextId1);
 		Optional<Ontology> ontology = manager.retrieveOntology(contextId1);
 
 		assertTrue(result1);
 		assertFalse(manager.ontologyExists(contextId1));
-		assertEquals(Optional.empty(), ontology);
+		assertEquals(Optional.absent(), ontology);
     }
 }

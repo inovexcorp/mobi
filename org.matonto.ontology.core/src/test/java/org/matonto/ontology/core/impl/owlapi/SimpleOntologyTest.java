@@ -32,11 +32,11 @@ public class SimpleOntologyTest
     public void importFileTest() throws IOException
     {
     	SimpleOntology so1 = new SimpleOntology();
-    	so1.importOntology(bookRes.getFile(), bookRes.getContextId());
+    	so1.importOntology(bookRes.getFile(), SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
     	SimpleOntology so2 = new SimpleOntology();
-    	so2.importOntology(travelRes.getFile(), travelRes.getContextId());
+    	so2.importOntology(travelRes.getFile(), SimpleOntologyManager.createOntologyId(travelRes.getContextId()));
     	SimpleOntology so3 = new SimpleOntology();
-    	so3.importOntology(ttlRes.getFile(), ttlRes.getContextId());
+    	so3.importOntology(ttlRes.getFile(), SimpleOntologyManager.createOntologyId(ttlRes.getContextId()));
     	OutputStream os1 = null;
     	OutputStream os2 = null;
     	OutputStream os3 = null;
@@ -85,11 +85,11 @@ public class SimpleOntologyTest
     public void importInputStreamTest() throws IOException
     {
     	SimpleOntology so1 = new SimpleOntology();
-    	so1.importOntology(bookRes.getInputStream(), bookRes.getContextId());
+    	so1.importOntology(bookRes.getInputStream(), SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
     	SimpleOntology so2 = new SimpleOntology();
-    	so2.importOntology(travelRes.getInputStream(), travelRes.getContextId());
+    	so2.importOntology(travelRes.getInputStream(), SimpleOntologyManager.createOntologyId(travelRes.getContextId()));
     	SimpleOntology so3 = new SimpleOntology();
-    	so3.importOntology(ttlRes.getInputStream(), ttlRes.getContextId());
+    	so3.importOntology(ttlRes.getInputStream(), SimpleOntologyManager.createOntologyId(ttlRes.getContextId()));
     	OutputStream os1 = null;
     	OutputStream os2 = null;
     	OutputStream os3 = null;
@@ -138,12 +138,12 @@ public class SimpleOntologyTest
     public void importURLTest() throws IOException
     {
     	SimpleOntology so1 = new SimpleOntology();
-    	so1.importOntology(bookRes.getURL(), bookRes.getContextId());
+    	so1.importOntology(bookRes.getURL(), SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
     	SimpleOntology so2 = new SimpleOntology();
     	URI contextId = new URIImpl("http://protege.cim3.net/file/pub/ontologies/travel#travel");
-    	so2.importOntology(new URL("http://protege.cim3.net/file/pub/ontologies/travel/travel.owl"), contextId);
+    	so2.importOntology(new URL("http://protege.cim3.net/file/pub/ontologies/travel/travel.owl"), SimpleOntologyManager.createOntologyId(contextId));
     	SimpleOntology so3 = new SimpleOntology();
-    	so3.importOntology(ttlRes.getURL(), ttlRes.getContextId());
+    	so3.importOntology(ttlRes.getURL(), SimpleOntologyManager.createOntologyId(ttlRes.getContextId()));
     	OutputStream os1 = null;
     	OutputStream os2 = null;
     	OutputStream os3 = null;
@@ -193,15 +193,15 @@ public class SimpleOntologyTest
     public void asModelTest() throws IOException
     {
     	SimpleOntology so1 = new SimpleOntology();
-    	so1.importOntology(bookRes.getFile(), bookRes.getContextId());
+    	so1.importOntology(bookRes.getFile(), SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
     	Model model1 = so1.asModel();
     	Set<Resource> resources1 = model1.contexts();
     	SimpleOntology so2 = new SimpleOntology();
-    	so2.importOntology(travelRes.getFile(), travelRes.getContextId());
+    	so2.importOntology(travelRes.getFile(), SimpleOntologyManager.createOntologyId(travelRes.getContextId()));
     	Model model2 = so2.asModel();
     	Set<Resource> resources2 = model2.contexts();
     	SimpleOntology so3 = new SimpleOntology();
-    	so3.importOntology(ttlRes.getFile(), ttlRes.getContextId());
+    	so3.importOntology(ttlRes.getFile(), SimpleOntologyManager.createOntologyId(ttlRes.getContextId()));
     	Model model3 = so3.asModel();
     	Set<Resource> resources3 = model3.contexts();
     	SimpleOntology so4 = new SimpleOntology();

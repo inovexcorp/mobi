@@ -7,12 +7,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
+import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
 import org.openrdf.model.impl.LinkedHashModel;
 
 import org.openrdf.model.util.Models;
@@ -26,7 +29,7 @@ import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -40,29 +43,31 @@ import org.slf4j.LoggerFactory;
 public class SimpleOntology implements Ontology {
 
 	private OWLOntology ontology;
-	private OWLOntologyManager manager;
-	private IRI iri;
-	private Resource ontologyId;
+	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+	private OntologyIRI iri;
+	private SimpleOntologyId ontologyId;
+	private Set<SimpleAxiom> axioms;
+	private List<Annotation> annotations;
+	private List<OWLOntology> imports;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
 	
 	protected SimpleOntology()
 	{
-		manager = OWLManager.createOWLOntologyManager();
 		try {
 			ontology = manager.createOntology();
-			iri = manager.getOntologyDocumentIRI(ontology);
+			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
 			
 		} catch (OWLOntologyCreationException e) {		
 			e.printStackTrace();
 		}
+		
 	}
 	
-	public SimpleOntology(Resource ontologyId)
+	public SimpleOntology(SimpleOntologyId ontologyId)
 	{
-		manager = OWLManager.createOWLOntologyManager();
 		try {
 			ontology = manager.createOntology();
-			iri = manager.getOntologyDocumentIRI(ontology);
+			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
 			this.ontologyId = ontologyId;
 			
 		} catch (OWLOntologyCreationException e) {
@@ -71,12 +76,11 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	public SimpleOntology(InputStream inputStream, Resource ontologyId)
+	public SimpleOntology(InputStream inputStream, SimpleOntologyId ontologyId)
 	{
-		manager = OWLManager.createOWLOntologyManager();
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
-			iri = manager.getOntologyDocumentIRI(ontology);
+			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
 			this.ontologyId = ontologyId;
 			
 		} catch (OWLOntologyCreationException e) {
@@ -87,12 +91,11 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	public SimpleOntology(File file, Resource ontologyId)
+	public SimpleOntology(File file, SimpleOntologyId ontologyId)
 	{
-		manager = OWLManager.createOWLOntologyManager();
-		iri = IRI.create(file);
+		iri = SimpleIRI.create(file);
 		try {
-			ontology = manager.loadOntologyFromOntologyDocument(iri);
+			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
 			
 		} catch (OWLOntologyCreationException e) {
@@ -101,12 +104,11 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	public SimpleOntology(URL url, Resource ontologyId)
+	public SimpleOntology(URL url, SimpleOntologyId ontologyId)
 	{
-		manager = OWLManager.createOWLOntologyManager();
-		iri = IRI.create(url);
+		iri = SimpleIRI.create(url);
 		try {
-			ontology = manager.loadOntologyFromOntologyDocument(iri);
+			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
 			
 		} catch (OWLOntologyCreationException e) {
@@ -139,25 +141,25 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	protected IRI getIRI()
+	protected OntologyIRI getIRI()
 	{
 		return iri;
 	}
 	
 	
-	protected void setIRI(IRI iri)
+	protected void setIRI(OntologyIRI iri)
 	{
 		this.iri = iri;
 	}
 	
 	
-	protected void setOntologyId(Resource ontologyId)
+	protected void setOntologyId(SimpleOntologyId ontologyId)
 	{
 		this.ontologyId = ontologyId;
 	}
 	
 
-	public Resource getOntologyId() 
+	public SimpleOntologyId getOntologyId() 
 	{
 		return ontologyId;
 	}
@@ -181,10 +183,6 @@ public class SimpleOntology implements Ontology {
 			OWLDocumentFormat parsedFormat = tempManager.getOntologyFormat(tempOntology);
 			RDFHandler rdfHandler = new StatementCollector(sesameModel); 
 		    RioRenderer renderer = new RioRenderer(tempOntology, rdfHandler, parsedFormat);
-	   
-//			OWLDocumentFormat parsedFormat = manager.getOntologyFormat(ontology);
-//			RDFHandler rdfHandler = new StatementCollector(sesameModel); 
-//		    RioRenderer renderer = new RioRenderer(ontology, rdfHandler, parsedFormat);
 			
 			renderer.render();
 		} catch (IOException e) {
@@ -236,11 +234,11 @@ public class SimpleOntology implements Ontology {
 
 
 	@Override
-	public boolean importOntology(InputStream inputStream, Resource ontologyId) 
+	public boolean importOntology(InputStream inputStream, SimpleOntologyId ontologyId) 
 	{
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
-			iri = manager.getOntologyDocumentIRI(ontology);
+			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
 			this.ontologyId = ontologyId;
 			return true;
 			
@@ -255,11 +253,11 @@ public class SimpleOntology implements Ontology {
 	
 	
 	@Override
-	public boolean importOntology(File file, Resource ontologyId) 
+	public boolean importOntology(File file, SimpleOntologyId ontologyId) 
 	{
 		try {
-			iri = IRI.create(file);
-			ontology = manager.loadOntologyFromOntologyDocument(iri);
+			iri = SimpleIRI.create(file);
+			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
 			return true;
 			
@@ -272,11 +270,11 @@ public class SimpleOntology implements Ontology {
 	
 
 	@Override
-	public boolean importOntology(URL url, Resource ontologyId) 
+	public boolean importOntology(URL url, SimpleOntologyId ontologyId) 
 	{
 		try {
-			iri = IRI.create(url);
-			ontology = manager.loadOntologyFromOntologyDocument(iri);
+			iri = SimpleIRI.create(url);
+			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
 			return true;
 			
@@ -296,7 +294,7 @@ public class SimpleOntology implements Ontology {
         }
         if (o instanceof SimpleOntology) {
         	SimpleOntology simpleOntology = (SimpleOntology) o;
-        	Resource oId = simpleOntology.getOntologyId();
+        	SimpleOntologyId oId = simpleOntology.getOntologyId();
         	if(oId.equals(ontologyId))
         		return Models.isomorphic(this.asModel(), simpleOntology.asModel());
         }

@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 
+import org.matonto.ontology.core.impl.owlapi.SimpleOntologyId;
 import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
 
 public interface Ontology {
 	
@@ -20,13 +20,13 @@ public interface Ontology {
 	
 	OutputStream asJsonLD();
 	
-	Resource getOntologyId();
+	SimpleOntologyId getOntologyId();
 	
-	boolean importOntology(InputStream inputStream, Resource ontologyId);
+	boolean importOntology(InputStream inputStream, SimpleOntologyId ontologyId);
 	
-	boolean importOntology(File file, Resource ontologyId);
+	boolean importOntology(File file, SimpleOntologyId ontologyId);
 	
-	boolean importOntology(URL url, Resource ontologyId);
+	boolean importOntology(URL url, SimpleOntologyId ontologyId);
 	
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 
