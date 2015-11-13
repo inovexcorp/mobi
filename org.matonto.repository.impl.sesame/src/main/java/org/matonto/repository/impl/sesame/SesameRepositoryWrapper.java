@@ -1,4 +1,4 @@
-package org.matonto.repository.memory;
+package org.matonto.repository.impl.sesame;
 
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.exception.RepositoryException;
@@ -7,9 +7,9 @@ public class SesameRepositoryWrapper implements Repository {
 
     org.openrdf.repository.Repository sesameRepository;
 
-    protected SesameRepositoryWrapper() {}
+    public SesameRepositoryWrapper() {}
 
-    protected SesameRepositoryWrapper(org.openrdf.repository.Repository repository) {
+    public SesameRepositoryWrapper(org.openrdf.repository.Repository repository) {
         setDelegate(repository);
     }
 

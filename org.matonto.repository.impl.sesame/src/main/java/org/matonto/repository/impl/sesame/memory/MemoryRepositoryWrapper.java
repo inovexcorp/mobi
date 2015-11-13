@@ -1,10 +1,11 @@
-package org.matonto.repository.memory;
+package org.matonto.repository.impl.sesame.memory;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.base.RepositoryWrapper;
+import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
