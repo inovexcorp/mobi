@@ -1,3 +1,6 @@
+/* Core variables */
+@import "./src/main/resources/public/css/vendor/bootstrap/variables";
+
 /* General page spacing */
 body {
     bottom: 0;
@@ -24,6 +27,13 @@ body {
     }
 }
 
+/* clears out ul styles */
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
 /* Icons to change the nav menu layout */
 .nav-layout-options {
     bottom: 0;
@@ -41,5 +51,160 @@ body {
         &:hover {
             opacity: 1;
         }
+    }
+}
+
+/* standard box style and height */
+.boxed {
+    border: 1px solid $gray-dark;
+    min-height: 400px;
+}
+
+/* Overlay styles */
+.overlay {
+    background-color: rgba(0,0,0,.5);
+    bottom: 0;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+
+    /* small sized overlay */
+    &.sm .content {
+        width: 350px;
+    }
+
+    /* large sized overlay */
+    &.lg .content {
+        width: 750px;
+    }
+
+    /* overlay content styles */
+    .content {
+        background: #fff;
+        border: 1px solid #fff;
+        border-radius: 5px;
+        left: 0;
+        margin: 100px auto 0;
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 500px;
+
+        /* header text style */
+        h6 {
+            background-color: $brand-primary;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            color: #fff;
+            font-size: 1.05em;
+            margin: -10px -10px 10px;
+            padding: 10px;
+        }
+    }
+}
+
+/* button styles */
+.btn-container {
+    .checkbox {
+        margin-bottom: 6px;
+        margin-top: 7px;
+    }
+
+    .btn {
+        &.pull-left {
+            margin-right: 10px;
+        }
+        &.pull-right {
+            margin-left: 10px;
+        }
+    }
+}
+
+/* tree styles */
+/* Styles for the left side of the screen */
+.tree {
+    padding: 10px;
+
+    /* Anchor inherits the color of parent and fills container completely */
+    a {
+        color: inherit;
+        cursor: pointer;
+        display: inline-block;
+        text-decoration: none;
+        padding: 3px 4px;
+        width: 100%;
+
+        /* Increases the padding for links without icons */
+        &.text-only {
+            padding: 3px 10px;
+        }
+
+        &:hover,
+        &.active {
+            /* Hover changes color and background color */
+            background-color: $brand-primary;
+            color: #fff;
+        }
+
+        > .fa.fa-fw {
+            margin-right: 2px;
+        }
+    }
+
+    /* The create links are a different color by default so need their own styles */
+    .creator a {
+        color: $brand-primary;
+
+        /* Changes color to white on hover */
+        &:hover,
+        &.active {
+            color: #fff;
+        }
+    }
+
+    /* General styles for the ul elements */
+    ul {
+        /* Padding to match the width of the icons */
+        ul,
+        .creator {
+            border-left: 1px solid $gray-lighter;
+            margin-left: 1.28571429em;
+        }
+
+        /* The list items which contain an anchor for all of the items in the tree */
+        li {
+            width: 100%;
+
+            /* Class identifying that it contains a <ul> element */
+            &.container {
+                margin: 0;
+                padding: 0;
+            }
+        }
+    }
+}
+
+/* table with inputs */
+.input-table > tbody > tr > td {
+    padding: 0;
+    position: relative;
+
+    /* Removes all input styles to make the table look better */
+    input {
+        background-color: transparent;
+        border: 0;
+        padding: 8px;
+        width: 100%;
+    }
+
+    /* The plus button in the prefix table to add new rows */
+    .add,
+    .remove {
+        bottom: 0px;
+        padding: 7px 12px;
+        position: absolute;
+        right: 0px;
     }
 }

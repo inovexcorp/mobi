@@ -249,12 +249,15 @@
             var ontology,
                 context = contextArrToObj();
 
+            // NOTE: if you click away from this page and then come back, this ontology will not be there because of the JSONP callback issue which will not be an issue once API is bundled up
             $http.jsonp('http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK')
                 .success(function(data) {
-                    ontology = JSON.parse(data.ontology);
-                    jsonld.flatten(ontology, context, function(err, flattened) {
-                        _parseOntologies(flattened, vm.context);
-                    });
+                    if(data.ontology) {
+                        ontology = JSON.parse(data.ontology);
+                        jsonld.flatten(ontology, context, function(err, flattened) {
+                            _parseOntologies(flattened, vm.context);
+                        });
+                    }
                 });
 
             $http.get('/example.json')

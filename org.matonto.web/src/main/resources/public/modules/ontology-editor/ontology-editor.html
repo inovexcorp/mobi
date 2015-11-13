@@ -3,7 +3,7 @@
     <div class="row">
         <!-- navigation structure -->
         <aside class="col-md-3 col-sm-4 col-xs-6">
-            <div class="tree-container">
+            <div class="tree-container boxed">
                 <!-- tab view -->
                 <div class="btn-group btn-group-justified" role="group">
                     <a class="btn btn-primary"
@@ -224,11 +224,11 @@
 
         <!-- edit/create form section -->
         <section class="col-md-9 col-sm-8 col-xs-6">
-            <div class="editor">
+            <div class="editor boxed">
                 <!-- default -->
                 <div ng-show="vm.shown == 'default'" class="tab">
                     <p class="lead">Welcome to the Ontology Editor!</p>
-                    <p>You simply need to click the item in the left pane which you want to edit. This pane will then update accordingly.</p>
+                    <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
                 </div>
 
                 <!-- success message -->
@@ -312,7 +312,7 @@
                     <!-- prefix tab -->
                     <div ng-show="vm.ontologies[vm.current.oi].tab == 'prefix'" class="tab clearfix">
                         <!-- prefixes -->
-                        <table id="prefix-table" class="table table-bordered">
+                        <table class="table table-bordered input-table">
                             <thead>
                             <tr>
                                 <th>Prefix</th>

@@ -1,0 +1,37 @@
+/* Core variables */
+@import "./src/main/resources/public/css/vendor/bootstrap/variables";
+
+.mapper {
+    .list {
+        padding: 10px;
+    }
+
+    .viewer {
+        font-size: 12px;
+
+        .default {
+            padding: 15px;
+        }
+    }
+
+    .highlight-columns {
+        overflow: hidden;
+
+        td,
+        th {
+            position: relative;
+        }
+
+        td.highlight::after,
+        th.highlight::after {
+            content: '';
+            position: absolute;
+            background-color: $gray-lighter;
+            left: 0;
+            top: -5000px;
+            height: 10000px;
+            width: 100%;
+            z-index: -1;
+        }
+    }
+}

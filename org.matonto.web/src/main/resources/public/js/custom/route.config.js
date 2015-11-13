@@ -63,6 +63,14 @@
                         templateUrl: 'modules/ontology-editor/ontology-editor.html'
                     }
                 }
+            })
+            .state('root.mapper', {
+                url: '/mapper',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/mapper/mapper.html'
+                    }
+                }
             });
     }
 })();

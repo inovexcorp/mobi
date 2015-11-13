@@ -2,23 +2,6 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .ontology-editor {
-    /* Makes everything have a min height of 400px */
-    .tree-container,
-    .editor {
-        min-height: 400px;
-    }
-
-    .tree-container,
-    .editor {
-        border: 1px solid $gray-dark;
-    }
-
-    ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
     .btn-group-justified {
         margin: -1px;
         width: auto;
@@ -26,69 +9,6 @@
 
     .btn-group > .btn {
         border-radius: 0;
-    }
-
-    /* Styles for the left side of the screen */
-    .tree {
-        padding: 10px;
-
-        /* Anchor inherits the color of parent and fills container completely */
-        a {
-            color: inherit;
-            cursor: pointer;
-            display: inline-block;
-            text-decoration: none;
-            padding: 3px 4px;
-            width: 100%;
-
-            /* Increases the padding for links without icons */
-            &.text-only {
-                padding: 3px 10px;
-            }
-
-            &:hover,
-            &.active {
-                /* Hover changes color and background color */
-                background-color: $brand-primary;
-                color: #fff;
-            }
-
-            > .fa.fa-fw {
-                margin-right: 2px;
-            }
-        }
-
-        /* The create links are a different color by default so need their own styles */
-        .creator a {
-            color: $brand-primary;
-
-            /* Changes color to white on hover */
-            &:hover,
-            &.active {
-                color: #fff;
-            }
-        }
-
-        /* General styles for the ul elements */
-        ul {
-            /* Padding to match the width of the icons */
-            ul,
-            .creator {
-                border-left: 1px solid $gray-lighter;
-                margin-left: 1.28571429em;
-            }
-
-            /* The list items which contain an anchor for all of the items in the tree */
-            li {
-                width: 100%;
-
-                /* Class identifying that it contains a <ul> element */
-                &.container {
-                    margin: 0;
-                    padding: 0;
-                }
-            }
-        }
     }
 
     /* Styles for the right side of the page */
@@ -120,31 +40,6 @@
             resize: vertical;
         }
 
-        /* Adds the padding to the input instead and makes it relative for the add button */
-        #prefix-table {
-            td {
-                padding: 0;
-                position: relative;
-
-                /* Removes all input styles to make the table look better */
-                input {
-                    background-color: transparent;
-                    border: 0;
-                    padding: 8px;
-                    width: 100%;
-                }
-
-                /* The plus button in the prefix table to add new rows */
-                .add,
-                .remove {
-                    bottom: 0px;
-                    padding: 7px 12px;
-                    position: absolute;
-                    right: 0px;
-                }
-            }
-        }
-
         /* Adds the alignment for the table error message */
         .table-warning {
             margin-top: -20px;
@@ -153,11 +48,6 @@
         /* Matches the padding with the rest of the page */
         .btn-container {
             padding: 0 15px 15px;
-
-            /* Adds some spacing between the buttons */
-            .btn {
-                margin-left: 10px;
-            }
         }
 
         /* Annotation styles */

@@ -24,7 +24,7 @@
                 { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' },
                 { icon: 'desktop', sref: 'root.webtop', isActive: $state.is('root.webtop'), name: 'Webtop' },
                 { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Editor'},
-                { icon: 'map-o', sref: 'root.map', isActive: $state.is('root.map'), name: 'Map' }
+                { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Map' }
             ];
         }
     }
