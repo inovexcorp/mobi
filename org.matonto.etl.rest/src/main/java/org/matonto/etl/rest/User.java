@@ -2,7 +2,9 @@ package org.matonto.etl.rest;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.ws.rs.Path;
 
+@Path("/etl")
 @ApiModel(description = "Represents an user of the system")
 public class User {
 
@@ -25,7 +27,7 @@ public class User {
         this.id = id;
     }
 
-    @ApiModelProperty(value = "The name of the user", required = true)
+    @ApiModelProperty(value = "Boo!!!", required = true)
     public String getName() {
         return name;
     }

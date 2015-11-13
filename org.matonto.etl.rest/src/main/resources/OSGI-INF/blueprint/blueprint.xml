@@ -22,42 +22,30 @@
     <!-- to setup camel servlet with OSGi HttpService -->
     <reference id="httpService" interface="org.osgi.service.http.HttpService"/>
 
-
-    <!--<bean id="swaggerBean" class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"-->
-          <!--init-method="register"-->
-          <!--destroy-method="unregister">-->
-        <!--<property name="alias" value="/api-docs"/>-->
-        <!--<property name="httpService" ref="httpService"/>-->
-        <!--<property name="servlet" ref="swaggerServlet"/>-->
-    <!--</bean>-->
-
     <bean id="camelBean" class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"
           init-method="register"
           destroy-method="unregister">
-        <property name="alias" value="/rest"/>
+        <property name="alias" value="/etl"/>
+        <property name="matchOnUriPrefix" value="true"/>
         <property name="httpService" ref="httpService"/>
         <property name="servlet" ref="camelServlet"/>
     </bean>
 
-
-    <!--<service interface="javax.servlet.http.HttpServlet">-->
-        <!--<service-properties>-->
-            <!--<entry key="alias" value="/rest"/>-->
-            <!--<entry key="load-on-startup" value="1"/>-->
-        <!--</service-properties>-->
-        <!--<bean class="org.apache.camel.component.servlet.CamelHttpTransportServlet"/>-->
-    <!--</service>-->
-
     <service interface="javax.servlet.http.HttpServlet">
         <service-properties>
             <entry key="alias" value="/api-docs"/>
-            <entry key="base.path" value="rest"/>
-            <entry key="api.path" value="api-docs"/>
-            <entry key="load-on-startup" value="2"/>
+            <entry key="init.base.path" value="etl"/>
+            <entry key="host" value="http://localhost:8181/etl/"/>
             <entry key="apiContextIdListing" value="true"/>
-
+            <entry key="init.api.description" value="MatOnto ETL Rest Endpoint"/>
+            <entry key="init.api.title" value="MatOnto ETL"/>
+            <entry key="init.api.contact.url" value="http://matonto.org"/>
+            <entry key="init.api.contact.email" value="dev-team@matonto.org"/>
+            <entry key="init.api.contact.name" value="The MatOnto Development Team"/>
         </service-properties>
-        <bean class="org.apache.camel.swagger.servlet.RestSwaggerServlet"/>
+        <bean class="org.apache.camel.swagger.servlet.RestSwaggerServlet">
+            <property name="apiContextIdListing" value="true"/>
+        </bean>
     </service>
 
 
@@ -65,17 +53,20 @@
         <property name="servletName" value="ETLServlet"/>
     </bean>
 
+    <!-- Reference to the csvConverter -->
+    <reference id="csvConverterBean"
+               interface="org.matonto.etl.api.csv.CSVConverter"
+               availability="optional">
+    </reference>
 
     <!-- a bean for user services -->
     <bean id="userService" class="org.matonto.etl.rest.UserService"/>
     <bean id="testService" class="org.matonto.etl.rest.Test"/>
+    <bean id="csvService" class="org.matonto.etl.rest.CSV">
+        <property name="csvConverter" ref="csvConverterBean"/>
+    </bean>
 
-    <!--<bean id="swaggerServlet" class="org.apache.camel.swagger.servlet.RestSwaggerServlet">-->
-        <!--&lt;!&ndash;<property name="apiContextIdListing" value="true"/>&ndash;&gt;-->
-
-    <!--</bean>-->
-
-    <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="etl-context">
+    <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="etl-context"  allowUseOriginalMessage="true">
 
         <!-- configure rest to use the camel-servlet component, and use json binding mode -->
         <!-- and tell to output json in pretty print mode -->
@@ -84,9 +75,10 @@
              knows the url to the REST services.
              Notice: This is optional, but needed if the RestRegistry should enlist accurate information.
              You can access the RestRegistry from JMX at runtime -->
-        <restConfiguration component="servlet" bindingMode="json" contextPath="/"
-                           port="8181">
+        <restConfiguration component="servlet" bindingMode="json" contextPath="http://localhost:8181/etl/"
+                           port="8181" host="http:localhost:8181/etl">
             <dataFormatProperty key="prettyPrint" value="true"/>
+            <dataFormatProperty key="allowMultipartParsing" value="true"/>
         </restConfiguration>
 
         <!-- defines the rest services using the context-path /user -->
@@ -128,6 +120,35 @@
                 </route>
             </get>
         </rest>
+
+        <rest path="/csv" consumes="application/json" produces="application/json">
+            <description>CSV Test</description>
+            <get uri="test" outType="String">
+                <description>A simple test</description>
+                <responseMessage message="A test message"/>
+                <route>
+                    <to uri="bean:csvService?method=test()"/>
+                    <filter>
+                        <simple>${body} == null</simple>
+                        <setHeader headerName="Exchange.HTTP_RESPONSE_CODE">
+                            <constant>404</constant>
+                        </setHeader>
+                    </filter>
+                </route>
+            </get>
+        </rest>
+
+        <!--<rest path="/csv" >-->
+            <!--<description>CSV ETL Tools</description>-->
+            <!--&lt;!&ndash;<post type="String" consumes="multipart/form-data">&ndash;&gt;-->
+
+                <!--&lt;!&ndash;<description>Convert CSV</description>&ndash;&gt;-->
+                <!--&lt;!&ndash;<param name="csv" type="form" description="The binary CSV File"/>&ndash;&gt;-->
+                <!--&lt;!&ndash;<param name="mapping" type="body" description="The mapping file"/>&ndash;&gt;-->
+                <!--&lt;!&ndash;<responseMessage message="CSV mapped to RDF"/>&ndash;&gt;-->
+                <!--&lt;!&ndash;<to uri="bean:csvService?method=etlCSV(${header.mapping}, ${header.csv})"/>&ndash;&gt;-->
+            <!--&lt;!&ndash;</post>&ndash;&gt;-->
+        <!--</rest>-->
 
 
     </camelContext>
