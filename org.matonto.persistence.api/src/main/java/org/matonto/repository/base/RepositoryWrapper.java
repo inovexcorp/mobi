@@ -3,11 +3,14 @@ package org.matonto.repository.base;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.config.RepositoryConfig;
 import org.matonto.repository.config.RepositoryConfigException;
 import org.matonto.repository.exception.RepositoryException;
 
+import java.io.File;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class RepositoryWrapper implements DelegatingRepository {
 
@@ -92,8 +95,23 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
     protected abstract Repository getRepo(Map<String, Object> props);
 
     @Override
+    public RepositoryConnection getConnection() throws RepositoryException {
+        return delegate.getConnection();
+    }
+
+    @Override
+    public Optional<File> getDataDir() {
+        return delegate.getDataDir();
+    }
+
+    @Override
     public void initialize() {
         throw new UnsupportedOperationException("A shared service cannot be initialized by a third party");
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return delegate.isInitialized();
     }
 
     @Override
