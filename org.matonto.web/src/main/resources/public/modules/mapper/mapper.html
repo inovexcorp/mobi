@@ -25,14 +25,45 @@
                 </div>
                 <!-- mapping form -->
                 <form ng-show="vm.mapping != 'default' && vm.mapping != 'new'">
-                    <strong>Class Mapping Details</strong>
-                    <!-- add new detail -->
-                    <a type="button" class="btn btn-link" ng-click="vm.showPropertyOverlay = true; vm.another = true;"><i class="fa fa-plus fa-fw"></i>New Class Mapping Property</a>
-
-                    <!-- buttons -->
-                    <div class="btn-container clearfix">
-                        <button type="submit" class="btn btn-primary pull-right">Save</button>
-                    </div>
+                    <!-- add new data property -->
+                    <strong>Data Properties</strong>
+                    <table class="table table-bordered" ng-show="vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:dataProperty'].length">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Column</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="property in vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:dataProperty']">
+                                <td>{{property['@id']}}</td>
+                                <td>{{property.temp['delim:columnIndex']}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <a type="button" class="btn btn-link btn-block" ng-click="vm.initProperty('delim:dataProperty');">
+                        <i class="fa fa-plus fa-fw"></i>New Data Property
+                    </a>
+                    <!-- add new object property -->
+                    <strong>Object Properties</strong>
+                    <table class="table table-bordered" ng-show="vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:objectProperty'].length">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Class Mapping</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="property in vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:objectProperty']">
+                                <td>{{property['@id']}}</td>
+                                <td>{{property.temp['delim:classMapping']}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- add new object property -->
+                    <a type="button" class="btn btn-link btn-block" ng-click="vm.initProperty('delim:objectProperty');">
+                        <i class="fa fa-plus fa-fw"></i>New Object Property
+                    </a>
                 </form>
             </div>
         </aside>
@@ -88,16 +119,31 @@
     <!-- add mapping overlay -->
     <div class="overlay sm" ng-show="vm.showMappingOverlay">
         <!-- content container -->
-        <form class="content clearfix">
+        <form class="content clearfix" name="vm.mappingForm">
             <h6>New Class Mapping</h6>
             <!-- name -->
             <div class="form-group">
                 <label for="mapping-name">Name</label>
-                <input type="text" class="form-control" id="mapping-name" ng-model="vm.mappingName">
+                <input type="text" class="form-control" id="mapping-name" ng-model="vm.mappingName" required>
+            </div>
+            <!-- delim:hasPrefix -->
+            <div class="form-group">
+                <label for="hasPrefix">Prefix</label>
+                <input type="text" class="form-control" id="hasPrefix" ng-model="vm.new['delim:hasPrefix']" required>
+            </div>
+            <!-- delim:localName -->
+            <div class="form-group">
+                <label for="localName">Local Name</label>
+                <input type="text" class="form-control" id="localName" ng-model="vm.new['delim:localName']" required>
+            </div>
+            <!-- delim:mapsTo -->
+            <div class="form-group">
+                <label for="mapsTo">Maps To</label>
+                <input type="text" class="form-control" id="mapsTo" ng-model="vm.new['delim:mapsTo']" required>
             </div>
             <!-- buttons -->
             <div class="btn-container clearfix">
-                <button type="submit" class="btn btn-primary pull-right" ng-click="vm.addMapping();" ng-disabled="!vm.mappingName">Add</button>
+                <button type="submit" class="btn btn-primary pull-right" ng-click="vm.addMapping();" ng-disabled="vm.mappingForm.$invalid">Add</button>
                 <button type="button" class="btn btn-default pull-right" ng-click="vm.cancelMapping();">Cancel</button>
             </div>
         </form>
@@ -109,26 +155,14 @@
         <form class="content clearfix" name="vm.form" novalidate>
             <h6>New Class Mapping Property</h6>
             <!-- type -->
-            <div class="form-group">
+            <!--div class="form-group">
                 <label class="control-label" for="type">Type</label>
                 <select class="form-control"  id="type" name="type" ng-model="vm.new.type" ng-change="vm.clearNew();">
                     <option value="default">Please select a Type</option>
-                    <option value="delim:hasPrefix" ng-show="!vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:hasPrefix']">Prefix</option>
-                    <option value="delim:localName" ng-show="!vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:localName']">Local Name</option>
-                    <option value="delim:mapsTo" ng-show="!vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:mapsTo']">Maps To</option>
                     <option value="delim:dataProperty">Data Property</option>
                     <option value="delim:objectProperty">Object Property</option>
                 </select>
-            </div>
-
-            <!-- hasPrefix or localName -->
-            <div ng-show="vm.new.type == 'delim:hasPrefix' || vm.new.type == 'delim:localName' || vm.new.type == 'delim:mapsTo'">
-                <!-- name -->
-                <div class="form-group">
-                    <label for="value">Value</label>
-                    <input type="text" class="form-control" id="value" ng-model="vm.new.value" ng-required="vm.new.type == 'delim:hasPrefix' || vm.new.type == 'delim:localName' || vm.new.type == 'delim:mapsTo'">
-                </div>
-            </div>
+            </div-->
 
             <!-- data property -->
             <div ng-show="vm.new.type == 'delim:dataProperty'">
@@ -164,7 +198,7 @@
                     <label for="class-mapping">Class (another class mapping)</label>
                     <select class="form-control"  id="class-mapping" name="class-mapping" ng-model="vm.new['delim:classMapping']" ng-required="vm.new.type == 'delim:objectProperty'" ng-pattern="/^(?!^default$).*$/">
                         <option value="default">Please select a Class Mapping</option>
-                        <option ng-repeat="item in vm.dataSets[vm.selected].mappings" value="{{$index}}" ng-show="item.mapping['@id'] != vm.dataSets[vm.selected].mappings[vm.mapping].mapping['@id']">{{item.name}}</option>
+                        <option ng-repeat="item in vm.dataSets[vm.selected].mappings" value="{{item.name}}" ng-show="item.mapping['@id'] != vm.dataSets[vm.selected].mappings[vm.mapping].mapping['@id']">{{item.name}}</option>
                     </select>
                 </div>
                 <!-- has property -->
@@ -188,7 +222,7 @@
         </form>
     </div>
 
-    <pre>{{vm.new | json}}</pre>
+    <!--pre>{{vm.new | json}}</pre>
     <pre>{{vm.dataSets[vm.selected].mappings[vm.mapping].mapping | json}}</pre>
-    <pre>{{vm.dataSets[vm.selected].mappings | json}}</pre>
+    <pre>{{vm.dataSets[vm.selected].mappings | json}}</pre-->
 </div>

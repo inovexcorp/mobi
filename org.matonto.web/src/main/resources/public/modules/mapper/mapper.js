@@ -27,6 +27,7 @@
         vm.addProperty = addProperty;
         vm.cancelProperty = cancelProperty;
         vm.clearNew = clearNew;
+        vm.initProperty = initProperty;
 
         activate();
 
@@ -101,6 +102,11 @@
                     mapping: {
                         '@id': 'delim-data:' + vm.mappingName,
                         '@type': 'delim:ClassMapping',
+                        'delim:hasPrefix': vm.new['delim:hasPrefix'],
+                        'delim:mapsTo': {
+                            '@id': vm.new['delim:mapsTo']
+                        },
+                        'delim:localName': vm.new['delim:localName'],
                         'delim:dataProperty': [],
                         'delim:objectProperty': []
                     }
@@ -141,42 +147,38 @@
         // adds the mapping property to the mapping object
         function addProperty() {
             // gets the current mapping object
-            var mapping = vm.dataSets[vm.selected].mappings[vm.mapping].mapping,
+            var prop,
+                temp = {},
+                mapping = vm.dataSets[vm.selected].mappings[vm.mapping].mapping,
                 type = vm.new.type;
-            // determines what to do based on which property is selected
-            switch(type) {
-                case 'delim:mapsTo':
-                    mapping[type] = { '@id': vm.new.value };
-                    break;
-                case 'delim:hasPrefix':
-                case 'delim:localName':
-                    mapping[type] = vm.new.value;
-                    break;
-                case 'delim:dataProperty':
-                case 'delim:objectProperty':
-                    var prop,
-                        temp = {};
-                    for(prop in vm.new) {
-                        if(vm.new.hasOwnProperty(prop) && prop != 'type' && prop != 'name') {
-                            temp[prop] = vm.new[prop];
-                        }
-                    }
-                    mapping[type].push({
-                        '@id': vm.new.name,
-                        'temp': temp
-                    });
-                    break;
+            for(prop in vm.new) {
+                if(vm.new.hasOwnProperty(prop) && prop != 'type' && prop != 'name') {
+                    temp[prop] = vm.new[prop];
+                }
             }
-            cancelProperty(vm.another);
+            mapping[type].push({
+                '@id': vm.new.name,
+                'temp': temp
+            });
+            cancelProperty(vm.another, type);
         }
 
         // closes the mapping property modal
-        function cancelProperty(addAnother) {
-            // hides the overlay if you don't want to add another
-            if(!addAnother) vm.showPropertyOverlay = false;
-
+        function cancelProperty(addAnother, type) {
             // sets the new property details to the default value
             vm.new = { type: 'default' };
+
+            // hides the overlay if you don't want to add another
+            if(!addAnother) {
+                vm.showPropertyOverlay = false;
+            } else {
+                vm.new.type = type;
+                if(type == 'delim:objectProperty') {
+                    vm.new['delim:classMapping'] = 'default';
+                } else {
+                    vm.new['delim:columnIndex'] = 'default';
+                }
+            }
         }
 
         // removes all of the properties except type
@@ -194,6 +196,18 @@
                 vm.new['delim:columnIndex'] = 'default';
             } else if(vm.new.type == 'delim:objectProperty') {
                 vm.new['delim:hasProperty'] = {};
+                vm.new['delim:classMapping'] = 'default';
+            }
+        }
+
+        // initialize property overlay
+        function initProperty(type) {
+            vm.new.type = type;
+            vm.showPropertyOverlay = true;
+            vm.another = true;
+            if(type == 'delim:dataProperty') {
+                vm.new['delim:columnIndex'] = 'default';
+            } else {
                 vm.new['delim:classMapping'] = 'default';
             }
         }
