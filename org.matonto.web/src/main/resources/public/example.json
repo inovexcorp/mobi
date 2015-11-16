@@ -3,44 +3,60 @@
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "owl": "http://www.w3.org/2002/07/owl#",
-    "express": "http://example.com/express#",
-    "defines": {
-      "@reverse": "rdfs:isDefinedBy"
-    },
-    "propertyOf": {
-      "@id": "rdfs:domain",
-      "@type": "@id"
-    },
-    "propertyOn": {
-      "@id": "rdfs:range",
-      "@type": "@id"
-    }
+    "express": "http://example.com/express#"
   },
-  "@id": "express:",
-  "@type": "owl:Ontology",
-  "defines": [{
-    "@id": "express:send",
-    "@type": "owl:ObjectProperty",
-    "rdfs:label": "Send to",
-    "rdfs:comment": "Send very very fast to the specified company",
-    "propertyOf": "express:Product",
-    "propertyOn": "express:Company"
-  }, {
-    "@id": "express:receive",
-    "@type": "owl:ObjectProperty",
-    "rdfs:label": "Receive product",
-    "rdfs:comment": "Receive the specified product very very fast",
-    "propertyOf": "express:Company",
-    "propertyOn": "express:Product"
-  }, {
-    "@id": "express:Company",
-    "@type": "owl:Class",
-    "rdfs:label": "Company",
-    "rdfs:comment": "A company or organization that might order products"
-  }, {
-    "@id": "express:Product",
-    "@type": "owl:Class",
-    "rdfs:label": "Product",
-    "rdfs:comment": "A product that may be sent to a company"
-  }]
+  "@graph": [
+    {
+      "@id": "http://example.com/express#",
+      "@type": "owl:Ontology"
+    },
+    {
+      "@id": "express:Company",
+      "@type": "owl:Class",
+      "rdfs:comment": "A company or organization that might order products",
+      "rdfs:isDefinedBy": {
+        "@id": "http://example.com/express#"
+      },
+      "rdfs:label": "Company"
+    },
+    {
+      "@id": "express:Product",
+      "@type": "owl:Class",
+      "rdfs:comment": "A product that may be sent to a company",
+      "rdfs:isDefinedBy": {
+        "@id": "http://example.com/express#"
+      },
+      "rdfs:label": "Product"
+    },
+    {
+      "@id": "express:receive",
+      "@type": "owl:ObjectProperty",
+      "rdfs:comment": "Receive the specified product very very fast",
+      "rdfs:domain": {
+        "@id": "express:Company"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "http://example.com/express#"
+      },
+      "rdfs:label": "Receive product",
+      "rdfs:range": {
+        "@id": "express:Product"
+      }
+    },
+    {
+      "@id": "express:send",
+      "@type": "owl:ObjectProperty",
+      "rdfs:comment": "Send very very fast to the specified company",
+      "rdfs:domain": {
+        "@id": "express:Product"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "http://example.com/express#"
+      },
+      "rdfs:label": "Send to",
+      "rdfs:range": {
+        "@id": "express:Company"
+      }
+    }
+  ]
 }

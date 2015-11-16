@@ -11,7 +11,7 @@
         var temp,
             vm = this;
 
-        vm.another = true;
+        vm.another = false;
         vm.data = {};
         vm.selected = 'default';
         vm.mapping = 'default';
@@ -204,7 +204,7 @@
         function initProperty(type) {
             vm.new.type = type;
             vm.showPropertyOverlay = true;
-            vm.another = true;
+            vm.another = false;
             if(type == 'delim:dataProperty') {
                 vm.new['delim:columnIndex'] = 'default';
             } else {

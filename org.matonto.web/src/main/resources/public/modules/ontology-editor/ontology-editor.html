@@ -31,7 +31,7 @@
                                ng-class="{'active': vm.current.oi == $index && vm.current.ci == undefined}">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                   ng-click="opened = !opened; $event.stopPropagation();"></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                                   ng-click="opened = !opened; $event.stopPropagation();"></i>{{ontology[ontology.rdfs + 'label'] || ontology['@id']}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -42,7 +42,7 @@
                                        ng-class="{'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
                                         <i class="fa fa-fw"
                                            ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
-                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>{{class['rdfs:label'] || class['@id']}}
+                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>{{class[ontology.rdfs + 'label'] || class['@id']}}
                                     </a>
                                 </li>
                                 <li class="container" ng-show="subOpened">
@@ -51,7 +51,7 @@
                                         <li ng-repeat="property in class.properties">
                                             <a ng-click="vm.edit(oi, ci, $index)"
                                                ng-class="{'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                                <i class="fa fa-fw {{property.icon}}"></i>{{property['rdfs:label'] || property['@id']}}
+                                                <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                             </a>
                                         </li>
                                     </ul>
@@ -84,7 +84,7 @@
                                         <li ng-repeat="property in ontology.noDomains">
                                             <a ng-click="vm.edit(oi, undefined, $index)"
                                                ng-class="{'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                                <i class="fa fa-fw {{property.icon}}"></i>{{property['rdfs:label'] || property['@id']}}
+                                                <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                             </a>
                                         </li>
                                     </ul>
@@ -111,7 +111,7 @@
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                        ></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                                        ></i>{{ontology[ontology.rdfs + 'label'] || ontology['@id']}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -120,7 +120,7 @@
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, $index)"
                                        ng-class="{'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
-                                        {{class['rdfs:label'] || class['@id']}}
+                                        {{class[ontology.rdfs + 'label'] || class['@id']}}
                                     </a>
                                 </li>
                             </ul>
@@ -143,27 +143,27 @@
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                        ></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                                        ></i>{{ontology[ontology.rdfs + 'label'] || ontology['@id']}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
                             <!-- properties associated with classes -->
                             <ul ng-repeat="(ci, class) in ontology.classes">
-                                <li ng-repeat="property in class.properties" ng-if="property['@type'] == 'owl:ObjectProperty'">
+                                <li ng-repeat="property in class.properties" ng-if="property['@type'] == ontology.owl + 'ObjectProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, ci, $index)"
                                        ng-class="{'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property['rdfs:label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                     </a>
                                 </li>
                             </ul>
                             <!-- properties not associated with classes -->
                             <ul>
-                                <li ng-repeat="property in ontology.noDomains" ng-if="property['@type'] == 'owl:ObjectProperty'">
+                                <li ng-repeat="property in ontology.noDomains" ng-if="property['@type'] == ontology.owl + 'ObjectProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, undefined, $index)"
                                        ng-class="{'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property['rdfs:label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                     </a>
                                 </li>
                             </ul>
@@ -186,27 +186,27 @@
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                        ></i>{{ontology['rdfs:label'] || ontology['@id']}}
+                                        ></i>{{ontology[ontology.rdfs + 'label'] || ontology['@id']}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
                             <!-- properties associated with classes -->
                             <ul ng-repeat="(ci, class) in ontology.classes">
-                                <li ng-repeat="property in class.properties" ng-if="property['@type'] == 'owl:DataTypeProperty' || property['@type'] == 'owl:DatatypeProperty'">
+                                <li ng-repeat="property in class.properties" ng-if="property['@type'] == ontology.owl + 'DataTypeProperty' || property['@type'] == ontology.owl + 'DatatypeProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, ci, $index);"
                                        ng-class="{'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property['rdfs:label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                     </a>
                                 </li>
                             </ul>
                             <!-- properties not associated with classes -->
                             <ul>
-                                <li ng-repeat="property in ontology.noDomains" ng-if="property['@type'] == 'owl:DataTypeProperty' || property['@type'] == 'owl:DatatypeProperty'">
+                                <li ng-repeat="property in ontology.noDomains" ng-if="property['@type'] == ontology.owl + 'DataTypeProperty' || property['@type'] == ontology.owl + 'DatatypeProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, undefined, $index)"
                                        ng-class="{'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property['rdfs:label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                     </a>
                                 </li>
                             </ul>
@@ -264,7 +264,7 @@
                             <!-- delimiter -->
                             <div class="form-group col-xs-3">
                                 <label class="control-label" for="ontology-delimiter">Delimiter</label>
-                                <select class="form-control" id="ontology-delimiter" ng-model="vm.selected.delimiter">
+                                <select class="form-control" id="ontology-delimiter" ng-model="vm.selected.delimiter" ng-change="vm.newDelimiter('{{vm.selected.identifier}}{{vm.selected.delimiter}}');">
                                     <option value="#">#</option>
                                     <option value="/">/</option>
                                     <option value=":">:</option>
@@ -274,12 +274,12 @@
                         <!-- label -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-label">rdfs:label</label>
-                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected['rdfs:label']" ng-trim="false">
+                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-comments">rdfs:comment</label>
-                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
+                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']"></textarea>
                         </div>
                     </div>
 
@@ -320,10 +320,10 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <tr ng-repeat="item in vm.selected.context track by $index">
-                                <td><input type="text" value="{{key}}" ng-model="vm.selected.context[$index].key" /></td>
+                            <tr ng-repeat="(key, value) in vm.selected.context track by $index">
+                                <td><input type="text" value="{{key}}" /></td>
                                 <td>
-                                    <input type="text" value="{{value}}" ng-model="vm.selected.context[$index].value" />
+                                    <input type="text" value="{{value}}" />
                                     <button type="button" class="btn btn-link remove" ng-click="vm.removePrefix($index)"><i class="fa fa-minus"></i></button>
                                 </td>
                             </tr>
@@ -379,7 +379,7 @@
                         <!-- name -->
                         <div class="form-group">
                             <label class="control-label" for="class-name">rdfs:label</label>
-                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected['rdfs:label']" ng-trim="false">
+                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false">
                         </div>
                         <!-- TODO:add auto complete based on all classes available -->
                         <!-- base class -->
@@ -390,7 +390,7 @@
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="class-comments">rdfs:comment</label>
-                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
+                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']"></textarea>
                         </div>
                     </div>
 
@@ -457,12 +457,12 @@
                         <!-- name -->
                         <div class="form-group">
                             <label class="control-label" for="property-name">rdfs:label</label>
-                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected['rdfs:label']">
+                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="property-comments">rdfs:comment</label>
-                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected['rdfs:comment']"></textarea>
+                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']"></textarea>
                         </div>
                         <!-- TODO:figure out the property options -->
                         <!-- single or multi value property -->

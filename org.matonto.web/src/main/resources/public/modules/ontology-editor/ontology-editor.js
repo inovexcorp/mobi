@@ -15,7 +15,8 @@
     OntologyEditorController.$inject = ['$scope', '$http', '$timeout'];
 
     function OntologyEditorController($scope, $http, $timeout) {
-        var _currentEdits = {},
+        var owl, rdfs,
+            _currentEdits = {},
             vm = this;
 
         vm.success = false;
@@ -34,6 +35,7 @@
         vm.changeTab = changeTab;
         vm.addAnnotation = addAnnotation;
         vm.removeAnnotation = removeAnnotation;
+        vm.newDelimiter = newDelimiter;
         vm.versions = [];
         vm.ontologies = [];
         vm.annotations = [];
@@ -105,43 +107,52 @@
                 } else if(typeof obj[prop] === 'object') {
                     _updateRefs(obj[prop], old, fresh);
                 } else if(obj[prop].indexOf(old) !== -1) {
-                    obj[prop] = fresh + _stripPrefix(obj[prop]);
+                    // remove the old prefix and replace it with the new
+                    obj[prop] = fresh + obj[prop].replace(old, '');
                 }
             }
+        }
+
+        // update the prefix because the delimiter was selected
+        function newDelimiter(old) {
+            console.log('old', old);
+            var fresh = vm.selected.identifier + vm.selected.delimiter;
+            _updateRefs(vm.selected, old, fresh);
         }
 
         // determines which image should be shown depending on the type of property
         function _chooseIcon(property) {
             var icon = '',
-                range = property['rdfs:range'];
-            // TODO: figure out what to do if there isn't a range
+                range = property[rdfs + 'range'];
             if(range) {
                 switch(range['@id']) {
                     case 'xsd:string':
                         icon = 'fa-font';
                         break;
-                    // TODO: pick a better icon for this
-                    case 'rdfs:Literal':
-                        icon = 'fa-bolt';
+                    // TODO: pick another better icon for this
+                    case rdfs + 'Literal':
+                        icon = 'fa-i-cursor';
                         break;
                     default:
                         icon = 'fa-code-fork fa-rotate-90';
                         break;
                 }
             } else {
+                // TODO: figure out what to do if there isn't a range
                 // console.log(property['@id'] + ' does not have a range');
+                icon = 'fa-question';
             }
             return icon;
         }
 
         // takes the flattened JSON-LD data and creates our custom tree structure
-        function _parseOntologies(flattened, context) {
+        function _parseOntologies(flattened, context, owl, rdfs) {
             // TODO: figure out how to handle the @graph and @context because @context is a 1-1 to the prefix story for this sprint.
             var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
                 classes = [],
                 properties = [],
                 noDomains = [],
-                list = angular.copy(flattened['@graph']),
+                list = flattened['@graph'] ? angular.copy(flattened['@graph']) : angular.copy(flattened),
                 i = list.length;
 
             // seperating the types out
@@ -150,15 +161,15 @@
                 type = obj['@type'];
 
                 switch(type) {
-                    case 'owl:Ontology':
+                    case owl + 'Ontology':
                         ontology = obj;
                         break;
-                    case 'owl:Class':
+                    case owl + 'Class':
                         obj.properties = [];
                         classes.push(obj);
                         break;
-                    case 'owl:DatatypeProperty':
-                    case 'owl:ObjectProperty':
+                    case owl + 'DatatypeProperty':
+                    case owl + 'ObjectProperty':
                         obj.icon = _chooseIcon(obj);
                         properties.push(obj);
                         break;
@@ -184,7 +195,7 @@
             i = properties.length;
             while(i--) {
                 property = properties[i];
-                domain = property['rdfs:domain'];
+                domain = property[rdfs + 'domain'];
 
                 // TODO: figure out what to do if it doesn't have a domain specified
                 if(domain) {
@@ -213,7 +224,9 @@
             // adds the classes, context and properties without domains to the ontology
             ontology.classes = classes;
             ontology.noDomains = noDomains;
-            ontology.context = angular.copy(vm.context);
+            ontology.context = context;
+            ontology.owl = owl;
+            ontology.rdfs = rdfs;
 
             // checks to see if the ontology has a delimiter specified already
             len = ontology['@id'].length;
@@ -236,36 +249,70 @@
             $scope.$apply();
         }
 
+        // checks the context for owl or rdfs prefixes
+        function _checkContext(context) {
+            // property variable needed
+            var prop,
+                result = {
+                    owl: 'http://www.w3.org/2002/07/owl#',
+                    rdfs: 'http://www.w3.org/2000/01/rdf-schema#'
+                };
+            // checks through all of the prefixes and replaces the owl/rdfs prefix used in the code here
+            for(prop in context) {
+                // setup owl prefix
+                if(context.hasOwnProperty(prop) && context[prop] == 'http://www.w3.org/2002/07/owl#') {
+                    result.owl = prop + ':';
+                }
+                // setup rdfs prefix
+                if(context.hasOwnProperty(prop) && context[prop] == 'http://www.w3.org/2000/01/rdf-schema#') {
+                    result.rdfs = prop + ':';
+                }
+            }
+            return result;
+        }
+
         // gets the ontologies and flattens them
         function _getOntologies() {
             // array format to work better with dual binding and updates
-            vm.context = [
+            /*vm.context = [
                 {key: 'owl', value: 'http://www.w3.org/2002/07/owl#'},
                 {key: 'rdf', value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
                 {key: 'rdfs', value: 'http://www.w3.org/2000/01/rdf-schema#'},
                 {key: 'xsd', value: 'http://www.w3.org/2001/XMLSchema#'}
-            ];
+            ];*/
 
             // variable for the json-ld function
             var ontology,
-                context = contextArrToObj();
+                context = {};
 
             // NOTE: if you click away from this page and then come back, this ontology will not be there because of the JSONP callback issue which will not be an issue once API is bundled up
             $http.jsonp('http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK')
                 .success(function(data) {
+                    // TODO: remove this check later
                     if(data.ontology) {
+                        var temp = {};
+                        // parse the ontology
                         ontology = JSON.parse(data.ontology);
+                        // sets the context if the ontology has it
+                        if(ontology['@context']) {
+                            context = ontology['@context'];
+                        }
+                        temp = _checkContext(context);
                         jsonld.flatten(ontology, context, function(err, flattened) {
-                            _parseOntologies(flattened, vm.context);
+                            console.log('jsonp: owl -> ', temp.owl, ' rdfs -> ', temp.rdfs);
+                            _parseOntologies(flattened, context, temp.owl, temp.rdfs);
                         });
                     }
                 });
 
             $http.get('/example.json')
                 .then(function(obj) {
+                    var temp = {};
                     // flatten the ontologies
-                    jsonld.flatten(obj.data, context, function(err, flattened) {
-                        _parseOntologies(flattened, vm.context);
+                    jsonld.flatten(obj.data, obj.data['@context'], function(err, flattened) {
+                        temp = _checkContext(obj.data['@context']);
+                        console.log('get: owl -> ', temp.owl, ' rdfs -> ', temp.rdfs);
+                        _parseOntologies(flattened, obj.data['@context'], temp.owl, temp.rdfs);
                     });
                 });
         }
@@ -521,18 +568,6 @@
         // removes the prefix from the ontology
         function removePrefix(index) {
             vm.selected.context.splice(index, 1);
-        }
-
-        // create context object from context array
-        function contextArrToObj() {
-            var item,
-                temp = {},
-                i = vm.context.length;
-            while(i--) {
-                item = vm.context[i];
-                temp[item.key] = item.value;
-            }
-            return temp;
         }
     }
 })();
