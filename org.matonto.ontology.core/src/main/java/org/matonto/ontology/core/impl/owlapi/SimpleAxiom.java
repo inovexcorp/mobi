@@ -1,27 +1,32 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.matonto.ontology.core.api.Annotation;
 
 import org.matonto.ontology.core.api.Axiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
 
 public abstract class SimpleAxiom implements Axiom {
 
-	private List<Annotation> annotations = new ArrayList<>();
+	private Set<Annotation> annotations;
+	private SimpleAxiomType axiomType;
 	
-	public SimpleAxiom(List<Annotation> annotations)
+	public SimpleAxiom(Set<Annotation> annotations)
 	{
-		this.annotations = annotations;
+		if(annotations.isEmpty())
+			this.annotations = Collections.emptySet();
+		else
+			this.annotations = annotations;
 	}
 	
 	@Override
-	public List<Annotation> getAnnotations() 
+	public Set<Annotation> getAnnotations() 
 	{
 	    if (annotations.isEmpty()) 
-	    	return Collections.emptyList();
+	    	return Collections.emptySet();
 	    
 	    return annotations;
 	}
@@ -31,11 +36,17 @@ public abstract class SimpleAxiom implements Axiom {
 	{
 		return !annotations.isEmpty();
 	}
+	
+	
+	public SimpleAxiomType getAxiomType()
+	{
+		return axiomType;
+	}
 
 	
-	protected List<Annotation> mergeAnnos(List<Annotation> annos)
+	protected Set<Annotation> mergeAnnos(Set<Annotation> annos)
 	{
-		List<Annotation> merged = annos;
+		Set<Annotation> merged = new HashSet<Annotation>(annos);
 		merged.addAll(annotations);
 		return merged;
 	}
@@ -47,21 +58,26 @@ public abstract class SimpleAxiom implements Axiom {
 		if (this == obj) {
 		    return true;
 		}
-		if ((obj == null) || (hashCode() != obj.hashCode())) {
-			return false;
-		}
-		if (!(obj instanceof Axiom)) {
-			return false;
+		
+		if (obj instanceof SimpleAxiom) {
+			SimpleAxiom other = (SimpleAxiom)obj;			 
+			return annotations.equals(other.getAnnotations());
 		}
 		
-		Axiom other = (Axiom)obj;
-		 
-		if ((other instanceof SimpleAxiom))
-		{
-			return annotations.equals(annotations);
-		}
-		
-		return getAnnotations().equals(other.getAnnotations());
+		return false;
+	}
+	
+	/*
+	 * MUST Implement!!!!!!!
+	 */
+	public OWLAxiom owlapiAxiom(Axiom matontoAxiom)
+	{
+		return null;
+	}
+	
+	public Axiom matontoAxiom(OWLAxiom owlapiAxiom)
+	{
+		return null;
 	}
 
 }

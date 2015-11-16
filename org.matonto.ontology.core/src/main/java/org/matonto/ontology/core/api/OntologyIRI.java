@@ -2,10 +2,12 @@ package org.matonto.ontology.core.api;
 
 import com.google.common.base.Optional;
 
-public interface OntologyIRI {
+public interface OntologyIRI extends AnnotationValue {
 
 	public String getNamespace();
 	
 	public Optional<String> getLocalName();
+	
+	public boolean equals(Object obj);
 	
 }

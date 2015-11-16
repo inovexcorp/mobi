@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.Set;
 
 import org.matonto.ontology.core.impl.owlapi.SimpleOntologyId;
 import org.openrdf.model.Model;
@@ -21,6 +22,12 @@ public interface Ontology {
 	OutputStream asJsonLD();
 	
 	SimpleOntologyId getOntologyId();
+	
+	Set<Annotation> getAnnotations();
+	
+//	Set<Axiom> getAxioms();
+	
+	Set<OntologyIRI> getDirectImportsDocuments();
 	
 	boolean importOntology(InputStream inputStream, SimpleOntologyId ontologyId);
 	

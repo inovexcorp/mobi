@@ -5,4 +5,5 @@ public interface DeclarationAxiom extends Axiom {
 	public Entity getEntity();
 	
 	public DeclarationAxiom getAxiomWithoutAnnotations();
+	
 }

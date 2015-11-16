@@ -7,11 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.Axiom;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
@@ -29,6 +31,8 @@ import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -42,13 +46,15 @@ import org.slf4j.LoggerFactory;
 
 public class SimpleOntology implements Ontology {
 
-	private OWLOntology ontology;
-	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 	private OntologyIRI iri;
 	private SimpleOntologyId ontologyId;
-	private Set<SimpleAxiom> axioms;
-	private List<Annotation> annotations;
-	private List<OWLOntology> imports;
+	private Set<OWLAxiom> axioms;
+	private Set<Annotation> annotations;
+	private Set<OntologyIRI> directImportIris;
+	
+	//Owlapi variables
+	private OWLOntology ontology;
+	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
 	
 	protected SimpleOntology()
@@ -82,7 +88,9 @@ public class SimpleOntology implements Ontology {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
 			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
 			this.ontologyId = ontologyId;
-			
+			getOntologyAnnotations();
+			getOntologyDirectImportsIris();
+			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
 			e.printStackTrace();
 		} finally {
@@ -97,7 +105,9 @@ public class SimpleOntology implements Ontology {
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
-			
+			getOntologyAnnotations();
+			getOntologyDirectImportsIris();
+			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
 			e.printStackTrace();
 		}
@@ -110,7 +120,9 @@ public class SimpleOntology implements Ontology {
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
-			
+			getOntologyAnnotations();
+			getOntologyDirectImportsIris();
+			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
 			e.printStackTrace();
 		}
@@ -159,9 +171,49 @@ public class SimpleOntology implements Ontology {
 	}
 	
 
+	@Override
 	public SimpleOntologyId getOntologyId() 
 	{
 		return ontologyId;
+	}
+	
+	
+	protected void setAnnotations() 
+	{
+		getOntologyAnnotations();
+	}
+	
+	
+	@Override
+	public Set<Annotation> getAnnotations()
+	{
+		return new HashSet<Annotation>(annotations);
+	}
+	
+	
+	protected void setAxioms()
+	{
+		getOntologyAxioms();
+	}
+
+	
+//	@Override
+	public Set<OWLAxiom> getAxioms() 
+	{
+		return new HashSet<OWLAxiom>(axioms);
+	}
+	
+	
+	protected void setDirectImportsDocuments()
+	{
+		getOntologyDirectImportsIris();
+	}
+	
+	
+	@Override
+	public Set<OntologyIRI> getDirectImportsDocuments() 
+	{
+		return directImportIris;
 	}
 	
 
@@ -240,6 +292,9 @@ public class SimpleOntology implements Ontology {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
 			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
 			this.ontologyId = ontologyId;
+			getOntologyAnnotations();
+			getOntologyDirectImportsIris();
+			getOntologyAxioms();
 			return true;
 			
 		} catch (OWLOntologyCreationException e) {
@@ -259,6 +314,9 @@ public class SimpleOntology implements Ontology {
 			iri = SimpleIRI.create(file);
 			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
+			getOntologyAnnotations();
+			getOntologyDirectImportsIris();
+			getOntologyAxioms();
 			return true;
 			
 		} catch (OWLOntologyCreationException e) {
@@ -276,6 +334,9 @@ public class SimpleOntology implements Ontology {
 			iri = SimpleIRI.create(url);
 			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
 			this.ontologyId = ontologyId;
+			getOntologyAnnotations();
+			getOntologyDirectImportsIris();
+			getOntologyAxioms();
 			return true;
 			
 		} catch (OWLOntologyCreationException e) {
@@ -335,6 +396,34 @@ public class SimpleOntology implements Ontology {
 			return os;
 		
 	}
+	
+	private void getOntologyAnnotations()
+	{
+		if(ontology != null) {
+			Set<OWLAnnotation> owlAnnos = ontology.getAnnotations();
+			for(OWLAnnotation owlAnno : owlAnnos) {
+				annotations.add(SimpleAnnotation.matontoAnnotation(owlAnno));
+			}
+		}			
+	}
 
+
+	private void getOntologyDirectImportsIris()
+	{
+		if(ontology != null) {
+			Set<IRI> owlIris = ontology.getDirectImportsDocuments();
+			for(IRI owlIri : owlIris) {
+				directImportIris.add(SimpleIRI.matontoIRI(owlIri));
+			}
+		}
+	}
+	
+	
+	private void getOntologyAxioms()
+	{
+		if(ontology != null) 
+			axioms = ontology.getAxioms();
+	}
+	
 
 }

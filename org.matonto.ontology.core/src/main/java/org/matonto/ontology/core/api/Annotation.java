@@ -9,6 +9,8 @@ public interface Annotation {
 	
 	public AnnotationValue getValue();
 	
-	public abstract Set<Annotation> getAnnotations();
+	public Set<Annotation> getAnnotations();
+	
+	public boolean isAnnotated();
 	
 }

@@ -12,45 +12,45 @@ import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationPropertyImpl;
 
 public class SimpleAnnotationProperty implements AnnotationProperty {
 
-	private static OntologyIRI ontologyIri = null;
+	private static OntologyIRI iri = null;
 	
 	
 	public SimpleAnnotationProperty(OntologyIRI iri)	
 	{
-		ontologyIri = Preconditions.checkNotNull(iri, "simpleIri cannot be null");
+		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
 	}
 		
 	@Override
 	public OntologyIRI getIRI()
 	{
-		return ontologyIri;
+		return iri;
 	}
 	
 	
 	@Override
 	public String toString()
 	{
-		return ontologyIri.toString();
+		return iri.toString();
 	}
 	
 	
 	@Override
 	public boolean isComment() 
 	{
-		return SimpleIRI.owlapiIRI(ontologyIri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
+		return SimpleIRI.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
 	}
 
 	
 	@Override
 	public boolean isLabel() 
 	{
-		return SimpleIRI.owlapiIRI(ontologyIri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
+		return SimpleIRI.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
 	}
 	
 	
-	public EntityType<?> getEntityType()
+	public SimpleEntityType getEntityType()
 	{
-		return EntityType.ANNOTATION_PROPERTY;
+		return SimpleEntityType.ANNOTATION_PROPERTY;
 	}
 
 	
@@ -63,6 +63,21 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 	public static SimpleAnnotationProperty MatontoAnnotationProperty(OWLAnnotationProperty oap)
 	{
 		return new SimpleAnnotationProperty(SimpleIRI.matontoIRI(oap.getIRI()));
+	}
+	
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(obj == this)
+			return true;
+		
+		if(obj instanceof SimpleAnnotationProperty) {
+			SimpleAnnotationProperty other = (SimpleAnnotationProperty) obj;
+			return iri.equals(other.getIRI());
+		}
+		
+		return false;
 	}
 	
 }

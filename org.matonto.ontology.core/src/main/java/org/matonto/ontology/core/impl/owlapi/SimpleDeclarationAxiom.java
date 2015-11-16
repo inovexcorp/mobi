@@ -1,10 +1,14 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import org.matonto.ontology.core.api.DeclarationAxiom;
 import org.matonto.ontology.core.api.Entity;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
+
+import com.google.common.base.Preconditions;
+
 import org.matonto.ontology.core.api.Annotation;
 
 
@@ -13,17 +17,14 @@ public class SimpleDeclarationAxiom
 	implements DeclarationAxiom {
 
 	private Entity entity;
-	private List<Annotation> NO_ANNOTATIONS = Collections.emptyList();
+	private Set<Annotation> NO_ANNOTATIONS = Collections.emptySet();
+	private SimpleAxiomType axiomType;
 	
-	public SimpleDeclarationAxiom(List<Annotation> annotations) 
+	
+	public SimpleDeclarationAxiom(Entity entity, Set<Annotation> annotations) 
 	{
 		super(annotations);
-	}
-	
-	public SimpleDeclarationAxiom(Entity entity, List<Annotation> annotations) 
-	{
-		super(annotations);
-		this.entity = entity;
+		this.entity = Preconditions.checkNotNull(entity, "entity cannot be null");
 	}
 
 	@Override
@@ -41,11 +42,12 @@ public class SimpleDeclarationAxiom
 		return new SimpleDeclarationAxiom(getEntity(), NO_ANNOTATIONS);
 	}
 	
-	public DeclarationAxiom getAnnotatedAxiom(List<Annotation> annotations) 
+	
+	public DeclarationAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
 	{
 		return new SimpleDeclarationAxiom(getEntity(), mergeAnnos(annotations));
 	}
-	
+		
 	
 	@Override
 	public boolean equals(Object obj)
@@ -54,16 +56,29 @@ public class SimpleDeclarationAxiom
 		    return true;
 		}
 	
-		if ((obj instanceof SimpleDeclarationAxiom)) {
-			SimpleDeclarationAxiom other = (SimpleDeclarationAxiom)obj;
-				if(this.getAnnotations().equals(other.getAnnotations())) {
-					return this.getEntity().equals(other.getEntity());
+		if ((obj instanceof DeclarationAxiom)) {
+			DeclarationAxiom other = (DeclarationAxiom)obj;
+				if(getAnnotations().equals(other.getAnnotations())) {
+					return getEntity().equals(other.getEntity());
 				}
 		}
 		
 		return false;
 	}
 	
-
+	
+	/*
+	 * MUST Implement!!!
+	 */
+	public static DeclarationAxiom matonotoDeclarationAxiom(OWLDeclarationAxiom owlapiAxiom)
+	{
+		return null;
+	}
+	
+	
+	public static OWLDeclarationAxiom owlapiDeclarationAxiom(DeclarationAxiom matontoAxiom)
+	{
+		return null;
+	}
 
 }

@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.matonto.ontology.core.api.AnnotationProperty;
 import org.matonto.ontology.core.api.AnnotationValue;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
@@ -13,8 +14,9 @@ import org.semanticweb.owlapi.io.XMLUtils;
 import org.semanticweb.owlapi.model.IRI;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
-public class SimpleIRI implements OntologyIRI, AnnotationValue {
+public class SimpleIRI implements OntologyIRI {
 
 	private static String namespace;
 	private static String localName;
@@ -22,7 +24,7 @@ public class SimpleIRI implements OntologyIRI, AnnotationValue {
 
 	protected SimpleIRI(String ns, String ln) 
 	{
-		namespace = ns;
+		namespace = Preconditions.checkNotNull(ns, "namespace cannot be null");
 		localName = ln;
 		iri = IRI.create(namespace, localName);
 	}
@@ -115,6 +117,20 @@ public class SimpleIRI implements OntologyIRI, AnnotationValue {
 	public Optional<AnonymousIndividual> asAnonymousIndividual() 
 	{
 		return Optional.absent();
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(obj == this)
+			return true;
+		
+		if(obj instanceof SimpleIRI) {
+			SimpleIRI other = (SimpleIRI) obj;
+			return (localName.equals(other.getLocalName().get())) && (namespace.equals(other.getNamespace())) && (iri.equals(other.getOwlapiIRI()));
+		}
+		
+		return false;
 	}
 
 }

@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.openrdf.model.Model;
@@ -23,6 +26,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -203,7 +207,9 @@ public class SimpleOntologyManager implements OntologyManager {
 		ontology.setOntology(onto);
 		ontology.setOntologyManager(mgr);
 		ontology.setIRI(SimpleIRI.matontoIRI(iri));
-		
+		ontology.setAnnotations();
+		ontology.setDirectImportsDocuments();
+		ontology.setAxioms();
 		return Optional.of(ontology);
 	}
 

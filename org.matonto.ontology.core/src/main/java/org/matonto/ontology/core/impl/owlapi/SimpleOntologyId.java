@@ -2,6 +2,7 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.openrdf.model.Resource;
+import org.openrdf.model.impl.URIImpl;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
@@ -20,7 +21,7 @@ public class SimpleOntologyId {
 	}
 	
 	
-	public SimpleOntologyId(Resource contextId, Optional<SimpleIRI> iri, Optional<SimpleIRI> versionIri)
+	public SimpleOntologyId(Resource contextId, Optional<OntologyIRI> iri, Optional<OntologyIRI> versionIri)
 	{
 		this.contextId = contextId;
 		Optional<IRI> owlIri = Optional.absent();
@@ -94,6 +95,28 @@ public class SimpleOntologyId {
 	public int hashCode()
 	{
 		return ontologyId.hashCode();
+	}
+	
+	
+	public static OWLOntologyID owlapiOntologyId(SimpleOntologyId simpleId)
+	{
+		return simpleId.getOntologyId();
+	}
+	
+	
+	public static SimpleOntologyId matontoOntologyId(OWLOntologyID owlId)
+	{
+		Resource cid = new URIImpl(owlId.getOntologyIRI().get().toString());
+		Optional<OntologyIRI> iri = Optional.absent();
+		Optional<OntologyIRI> versionIri = Optional.absent();
+		
+		if(owlId.getOntologyIRI().isPresent()) 
+			iri = Optional.of(SimpleIRI.matontoIRI(owlId.getOntologyIRI().get()));
+		
+		if(owlId.getVersionIRI().isPresent())
+			versionIri = Optional.of(SimpleIRI.matontoIRI(owlId.getVersionIRI().get()));
+		
+		return new SimpleOntologyId(cid, iri, versionIri);
 	}
 		
 }

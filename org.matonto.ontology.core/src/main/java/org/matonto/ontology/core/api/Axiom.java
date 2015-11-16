@@ -1,17 +1,16 @@
 package org.matonto.ontology.core.api;
 
-import java.util.List;
-
+import java.util.Set;
 
 public interface Axiom {
 
-	public List<Annotation> getAnnotations();
+	public Set<Annotation> getAnnotations();
 	
 	public boolean isAnnotated();
 	
 	public Axiom getAxiomWithoutAnnotations();
 	
-	public boolean equals(Object o);
+	public boolean equals(Object obj);
 	
 	public int hashCode();
 }
