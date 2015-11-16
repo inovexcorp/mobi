@@ -22,11 +22,17 @@ public class SesameRepositoryWrapper implements Repository {
     }
 
     public RepositoryConnection getConnection() throws RepositoryException {
-        return null;
+        try {
+            return new SesameRepositoryConnectionWrapper(sesameRepository.getConnection());
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        }
     }
 
     public Optional<File> getDataDir() {
-        return null;
+        File file = sesameRepository.getDataDir();
+
+        return file == null ? Optional.empty() : Optional.of(file);
     }
 
     @Override
@@ -39,7 +45,7 @@ public class SesameRepositoryWrapper implements Repository {
     }
 
     public boolean isInitialized() {
-        return false;
+        return sesameRepository.isInitialized();
     }
 
     @Override

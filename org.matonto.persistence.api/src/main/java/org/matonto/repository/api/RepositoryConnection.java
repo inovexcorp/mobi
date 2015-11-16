@@ -33,4 +33,6 @@ public interface RepositoryConnection extends AutoCloseable {
      * because the repository is not writable.
      */
     void clear(Resource... contexts) throws RepositoryException;
+
+    void close() throws RepositoryException;
 }
