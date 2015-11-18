@@ -15,10 +15,6 @@ class SesameRepositoryWrapperSpec extends Specification {
     def memRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
     def persistedMemRepo
 
-    def setup() {
-
-    }
-
     def "initialize() and shutdown() do not throw exceptions"() {
         when:
         memRepo.initialize()

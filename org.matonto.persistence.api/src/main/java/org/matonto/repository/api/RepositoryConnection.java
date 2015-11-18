@@ -3,6 +3,7 @@ package org.matonto.repository.api;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
+import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 
 public interface RepositoryConnection extends AutoCloseable {
@@ -35,4 +36,16 @@ public interface RepositoryConnection extends AutoCloseable {
     void clear(Resource... contexts) throws RepositoryException;
 
     void close() throws RepositoryException;
+
+    /**
+     * Returns the number of (explicit) statements that are in the specified contexts in this repository.
+     *
+     * @param contexts - The context(s) to get the data from. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are supplied the method operates on the entire repository.
+     * @return The number of explicit statements from the specified contexts in this repository.
+     */
+    long size(Resource... contexts) throws RepositoryException;
+
+    RepositoryResult getStatements(Resource subj, IRI pred, Value obj, Resource... contexts)
+            throws RepositoryException;
 }
