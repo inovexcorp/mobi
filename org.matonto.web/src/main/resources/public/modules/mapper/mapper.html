@@ -77,7 +77,7 @@
                     <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
                 </div>
                 <!-- dataset viewer -->
-                <table ng-show="vm.selected != undefined" class="table highlight-columns">
+                <table ng-show="vm.selected != undefined" class="table">
                     <thead>
                         <tr>
                             <th ng-repeat="(key, value) in vm.dataSets[vm.selected].dataSet[0]">{{key}}</th>
