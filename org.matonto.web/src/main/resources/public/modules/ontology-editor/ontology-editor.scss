@@ -2,22 +2,25 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .ontology-editor {
+    /* aligns the buttons with the box corners */
     .btn-group-justified {
-        margin: -1px;
-        width: auto;
+        z-index: 1;
     }
 
+    /* removes the rounded corners so it fits in the box provided */
     .btn-group > .btn {
         border-radius: 0;
     }
 
     /* Styles for the right side of the page */
     .editor {
+        height: 100%;
+
         /* Pads the outside of the tab elements */
         .tab {
-            padding: 15px 15px 0;
+            padding: 15px;
 
-            // if the buttons being shown are inside the tab, remove the left and right padding
+            /* if the buttons being shown are inside the tab, remove the left and right padding */
             .btn-container {
                 padding: 0 0 15px;
             }
@@ -35,9 +38,22 @@
             }
         }
 
-        /* Only lets the user resize textareas vertically */
-        form textarea {
-            resize: vertical;
+        /* Stops the user from resizing the textarea */
+        form {
+            height: 100%;
+
+            /* styles for scrollable tab */
+            .tab {
+                height: 100%;
+                margin-top: -33px;
+                overflow-y: auto;
+                padding: 48px 15px 15px;
+                z-index: -1;
+            }
+
+            textarea {
+                resize: none;
+            }
         }
 
         /* Adds the alignment for the table error message */

@@ -16,17 +16,30 @@
 
     function OntologyEditorController($scope, $http, $timeout) {
         var owl, rdfs,
-            _currentEdits = {},
+            defaultRdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
+            defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
+            defaultOwl = 'http://www.w3.org/2002/07/owl#',
             vm = this;
 
+        // public default variables
         vm.success = false;
         vm.shown = 'default';
         vm.tab = 'everything';
         vm.newPrefix = '';
         vm.newValue = '';
-        vm.propertyDefault = { '@id': '' };
-        vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [] };
-        vm.ontologyDefault = { '@id': '', '@type': 'owl:Ontology', delimiter: '#', classes: [], context: [] };
+        vm.propertyDefault = { '@id': '', annotations: [] };
+        vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [], annotations: [] };
+        vm.ontologyDefault = _setOntologyDefault();
+        vm.versions = [];
+        vm.ontologies = [];
+        vm.annotations = [];
+        vm.state = {};
+        vm.current = {};
+        vm.newItems = {};
+        vm.selected = {};
+
+        // public functions
         vm.edit = edit;
         vm.reset = reset;
         vm.submit = submit;
@@ -36,19 +49,30 @@
         vm.addAnnotation = addAnnotation;
         vm.removeAnnotation = removeAnnotation;
         vm.newDelimiter = newDelimiter;
-        vm.versions = [];
-        vm.ontologies = [];
-        vm.annotations = [];
-        vm.state = {};
-        vm.current = {};
-        vm.newItems = {};
-        vm.selected = {};
+        vm.editPrefix = editPrefix;
 
         activate();
 
         function activate() {
             _getOntologies();
-            _setAnnotations();
+        }
+
+        // creates the default ontology object used when creating a new ontology
+        function _setOntologyDefault() {
+            return {
+                '@id': '',
+                '@type': 'owl:Ontology',
+                delimiter: '#',
+                classes: [],
+                context: [],
+                annotations: [],
+                context: {
+                    rdf: defaultRdf,
+                    rdfs: defaultRdfs,
+                    xsd: defaultXsd,
+                    owl: defaultOwl
+                }
+            };
         }
 
         // removes the annotation
@@ -81,15 +105,15 @@
 
         // TODO: check the annotaions
         // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
-        function _setAnnotations() {
-            vm.annotations = [
-                'rdfs:seeAlso',
-                'rdfs:isDefinedBy',
-                'owl:deprecated',
-                'owl:versionInfo',
-                'owl:priorVersion',
-                'owl:backwardCompatibleWith',
-                'owl:incompatibleWith'
+        function _setAnnotations(rdfs, owl) {
+            return [
+                rdfs + 'seeAlso',
+                rdfs + 'isDefinedBy',
+                owl + 'deprecated',
+                owl + 'versionInfo',
+                owl + 'priorVersion',
+                owl + 'backwardCompatibleWith',
+                owl + 'incompatibleWith'
             ];
         }
 
@@ -99,15 +123,25 @@
 
             // iterates over all of the properties of the object
             for(prop in obj) {
-                if(Object.prototype.toString.call(obj[prop]) === '[object Array]') {
+                // don't do anything if it is the context array
+                if(prop === 'context') { }
+                // iterates through the array and recursively calls this function
+                else if(Object.prototype.toString.call(obj[prop]) === '[object Array]') {
                     i = obj[prop].length;
                     while(i--) {
                         _updateRefs(obj[prop][i], old, fresh);
                     }
-                } else if(typeof obj[prop] === 'object') {
+                }
+                // recursively call this function
+                else if(typeof obj[prop] === 'object') {
                     _updateRefs(obj[prop], old, fresh);
-                } else if(obj[prop].indexOf(old) !== -1) {
-                    // remove the old prefix and replace it with the new
+                }
+                // sets the prefix value for this object
+                else if(prop === '@id' && obj['@type'] === vm.ontologies[vm.current.oi].owl + 'Ontology') {
+                    obj.prefix = fresh;
+                }
+                // remove the old prefix and replace it with the new
+                else if(obj[prop].indexOf(old) !== -1 && prop !== fresh.replace(':', '')) {
                     obj[prop] = fresh + obj[prop].replace(old, '');
                 }
             }
@@ -115,7 +149,6 @@
 
         // update the prefix because the delimiter was selected
         function newDelimiter(old) {
-            console.log('old', old);
             var fresh = vm.selected.identifier + vm.selected.delimiter;
             _updateRefs(vm.selected, old, fresh);
         }
@@ -139,7 +172,6 @@
                 }
             } else {
                 // TODO: figure out what to do if there isn't a range
-                // console.log(property['@id'] + ' does not have a range');
                 icon = 'fa-question';
             }
             return icon;
@@ -151,6 +183,7 @@
             var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
                 classes = [],
                 properties = [],
+                annotations = [],
                 noDomains = [],
                 list = flattened['@graph'] ? angular.copy(flattened['@graph']) : angular.copy(flattened),
                 i = list.length;
@@ -172,6 +205,9 @@
                     case owl + 'ObjectProperty':
                         obj.icon = _chooseIcon(obj);
                         properties.push(obj);
+                        break;
+                    case owl + 'AnnotationProperty':
+                        annotations.push(obj);
                         break;
                 }
             }
@@ -223,10 +259,21 @@
 
             // adds the classes, context and properties without domains to the ontology
             ontology.classes = classes;
+            ontology.annotations = annotations;
             ontology.noDomains = noDomains;
-            ontology.context = context;
+            ontology.context = objToArr(context);
             ontology.owl = owl;
             ontology.rdfs = rdfs;
+            ontology.annotationList = _setAnnotations(rdfs, owl);
+
+            // checks to see if the initial context contains the ontology id already
+            i = ontology.context.length;
+            while(i--) {
+                if(ontology.context[i].value === ontology['@id']) {
+                    ontology.prefix = ontology.context[i].key + ':';
+                    break;
+                }
+            }
 
             // checks to see if the ontology has a delimiter specified already
             len = ontology['@id'].length;
@@ -254,17 +301,17 @@
             // property variable needed
             var prop,
                 result = {
-                    owl: 'http://www.w3.org/2002/07/owl#',
-                    rdfs: 'http://www.w3.org/2000/01/rdf-schema#'
+                    owl: defaultOwl,
+                    rdfs: defaultRdfs
                 };
             // checks through all of the prefixes and replaces the owl/rdfs prefix used in the code here
             for(prop in context) {
                 // setup owl prefix
-                if(context.hasOwnProperty(prop) && context[prop] == 'http://www.w3.org/2002/07/owl#') {
+                if(context.hasOwnProperty(prop) && context[prop] == defaultOwl) {
                     result.owl = prop + ':';
                 }
                 // setup rdfs prefix
-                if(context.hasOwnProperty(prop) && context[prop] == 'http://www.w3.org/2000/01/rdf-schema#') {
+                else if(context.hasOwnProperty(prop) && context[prop] == defaultRdfs) {
                     result.rdfs = prop + ':';
                 }
             }
@@ -275,9 +322,9 @@
         function _getOntologies() {
             // array format to work better with dual binding and updates
             /*vm.context = [
-                {key: 'owl', value: 'http://www.w3.org/2002/07/owl#'},
+                {key: 'owl', value: defaultOwl},
                 {key: 'rdf', value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
-                {key: 'rdfs', value: 'http://www.w3.org/2000/01/rdf-schema#'},
+                {key: 'rdfs', value: defaultRdfs},
                 {key: 'xsd', value: 'http://www.w3.org/2001/XMLSchema#'}
             ];*/
 
@@ -299,7 +346,6 @@
                         }
                         temp = _checkContext(context);
                         jsonld.flatten(ontology, context, function(err, flattened) {
-                            console.log('jsonp: owl -> ', temp.owl, ' rdfs -> ', temp.rdfs);
                             _parseOntologies(flattened, context, temp.owl, temp.rdfs);
                         });
                     }
@@ -311,7 +357,6 @@
                     // flatten the ontologies
                     jsonld.flatten(obj.data, obj.data['@context'], function(err, flattened) {
                         temp = _checkContext(obj.data['@context']);
-                        console.log('get: owl -> ', temp.owl, ' rdfs -> ', temp.rdfs);
                         _parseOntologies(flattened, obj.data['@context'], temp.owl, temp.rdfs);
                     });
                 });
@@ -342,7 +387,7 @@
                 hash = id.indexOf('#'),
                 slash = id.lastIndexOf('/'),
                 colon = id.lastIndexOf(':');
-
+            // gets the result based on the delimiter present
             if(hash !== -1) {
                 result = id.substring(0, hash + 1);
             } else if(slash !== -1) {
@@ -359,6 +404,14 @@
             if(index === -1) {
                 // checks to see if they were already editing this node
                 if(!vm.newItems.hasOwnProperty(unique)) vm.newItems[unique] = angular.copy(base);
+                // adds the updated prefix to the created element if present
+                if(vm.ontologies[vm.current.oi].hasOwnProperty('prefix')) {
+                    vm.newItems[unique].prefix = vm.ontologies[vm.current.oi].prefix;
+                }
+                // else, just uses the ontology's id if nothing is set
+                else if(!vm.newItems[unique].hasOwnProperty('prefix')) {
+                    vm.newItems[unique].prefix = vm.ontologies[vm.current.oi].identifier + vm.ontologies[vm.current.oi].delimiter;
+                }
                 vm.selected = vm.newItems[unique];
                 // selects the default annotation
                 vm.selected.currentAnnotation = 'default';
@@ -383,18 +436,24 @@
             if(pi != undefined) {
                 vm.shown = 'property-editor';
                 unique = vm.tab + oi + ci + pi;
+                // if has a domain associated with it (it is in the class.properties array)
                 if(ci != undefined) {
                     _editOrCreate(vm.ontologies[oi].classes[ci].properties, pi, unique, vm.propertyDefault);
-                } else {
+                }
+                // else, it is in the noDomains array
+                else {
                     _editOrCreate(vm.ontologies[oi].noDomains, pi, unique, vm.propertyDefault);
                 }
+                // cleans form validations
                 vm.propertyForm.$setPristine();
             }
             // else, if class index is specified, they are working with a class
             else if(ci != undefined) {
                 vm.shown = 'class-editor';
                 unique = vm.tab + oi + ci;
+                // checks if editing or creating
                 _editOrCreate(vm.ontologies[oi].classes, ci, unique, vm.classDefault);
+                // cleans form validations
                 vm.classForm.$setPristine();
             }
             // else, they have to be working with an ontology
@@ -535,25 +594,61 @@
             }
         }
 
+        // converts the context object into an array
+        function objToArr(context) {
+            var prop,
+                temp = [];
+            for(prop in context) {
+                if(context.hasOwnProperty(prop)) {
+                    temp.push({key: prop, value: context[prop]});
+                }
+            }
+            return temp;
+        }
+
+        // converts the context array into an object
+        function arrToObj(context) {
+            var temp = {},
+                i = context.length;
+            while(i--) {
+                temp[context[i].key] = context[i].value;
+            }
+            return temp;
+        }
+
         // adds a prefix to the context object
         function addPrefix() {
-            var duplicate = false,
+            var /*prop,*/
+                duplicate = false,
                 empty = !vm.newPrefix.length || !vm.newValue.length,
-                i = vm.context.length;
-            // checks to make sure that it is unique
+                i = vm.selected.context;
+            // checks to make sure that it is unique - OBJECT VERSION
+            /*for(prop in vm.selected.context) {
+                if(vm.selected.context.hasOwnProperty(prop) && (prop == vm.newPrefix || vm.selected[prop] == vm.newValue)) {
+                    duplicate = true;
+                    break;
+                }
+            }*/
+            // checks to make sure that it is unique - ARRAY VERSION
             while(i--) {
-                if(vm.context[i].key == vm.newPrefix || vm.context[i].value == vm.newValue) {
+                if(vm.selected.context[i].key == vm.newPrefix || vm.selected.context[i].value == vm.newValue) {
                     duplicate = true;
                     break;
                 }
             }
             // if not a duplicate and not empty, add it and reset the fields
             if(!duplicate && !empty) {
-                vm.selected.context.push({ key: vm.newPrefix, value: vm.newValue });
+                // vm.selected.context[vm.newPrefix] = vm.newValue; - OBJECT VERSION
+                vm.selected.context.push({key: vm.newPrefix, value: vm.newValue}); // - ARRAY VERSION
+                // replaces the value anywhere in the object if present
+                _updateRefs(vm.ontologies[vm.current.oi], vm.newValue, vm.newPrefix + ':');
+                // resets the input values
                 vm.newPrefix = '';
                 vm.newValue = '';
+                // clears messages that were shown
                 vm.showDuplicateMessage = false;
                 vm.showEmptyMessage = false;
+                console.log('phase', $scope.$$phase);
             }
             // else, let them know that it is a duplicate of something
             else if(duplicate) {
@@ -566,8 +661,40 @@
         }
 
         // removes the prefix from the ontology
-        function removePrefix(index) {
-            vm.selected.context.splice(index, 1);
+        function removePrefix(key) {
+            _updateRefs(vm.ontologies[vm.current.oi], key + ':', vm.selected.context[key]);
+            // delete vm.selected.context[key]; - OBJECT VERSION
+            var i = vm.ontologies[vm.current.oi].context.length;
+            while(i--) {
+                if(vm.ontologies[vm.current.oi].context[i].key == key) {
+                    vm.ontologies[vm.current.oi].context.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
+        // saves the edits made to the prefix for the ontology
+        function editPrefix(edit, old, index, value) {
+            var input = document.getElementById('prefix-' + index);
+            if(edit) {
+                console.log('old:', old, 'fresh:', input.value, 'value:', value);
+                // updates the values in the ontology object
+                _updateRefs(vm.ontologies[vm.current.oi], old + ':', input.value + ':');
+                // adds the new property
+                // vm.ontologies[vm.current.oi].context[input.value] = value; - OBJECT VERSION
+                // removes the old property
+                // delete vm.ontologies[vm.current.oi].context[old]; - OBJECT VERSION
+                var i = vm.ontologies[vm.current.oi].context.length;
+                while(i--) {
+                    if(vm.ontologies[vm.current.oi].context[i].key == old) {
+                        vm.ontologies[vm.current.oi].context[i].key = input.value;
+                        break;
+                    }
+                }
+            } else {
+                // focuses the newly editable input
+                input.focus();
+            }
         }
     }
 })();
