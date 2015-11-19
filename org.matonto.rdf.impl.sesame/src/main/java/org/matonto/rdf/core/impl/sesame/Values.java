@@ -9,6 +9,16 @@ public class Values {
 
     private Values() {}
 
+    public static org.openrdf.model.Statement sesameStatement(Statement statement) {
+        if (statement.getContext().isPresent()) {
+            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameIRI(statement.getPredicate()),
+                    sesameValue(statement.getObject()), sesameResource(statement.getContext().get()));
+        } else {
+            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameIRI(statement.getPredicate()),
+                    sesameValue(statement.getObject()));
+        }
+    }
+
     public static org.openrdf.model.Resource sesameResource(Resource resource) {
         if (resource == null) {
             return null;

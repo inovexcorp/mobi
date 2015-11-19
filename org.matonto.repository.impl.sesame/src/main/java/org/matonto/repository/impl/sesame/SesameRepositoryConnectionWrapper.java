@@ -1,8 +1,7 @@
 package org.matonto.repository.impl.sesame;
 
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.*;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.impl.sesame.Values;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
@@ -20,6 +19,29 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
         this.sesameConn = conn;
     }
 
+    @Override
+    public void add(Statement stmt, Resource... contexts) throws RepositoryException {
+        try {
+            if (contexts.length > 0) {
+                sesameConn.add(Values.sesameStatement(stmt), Values.sesameResources(contexts));
+            } else {
+                sesameConn.add(Values.sesameStatement(stmt));
+            }
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        }
+    }
+
+    @Override
+    public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        if (contexts.length > 0) {
+            statements.forEach(stmt -> add(stmt, contexts));
+        } else {
+            statements.forEach(this::add);
+        }
+    }
+
+    @Override
     public void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
         try {
             if (contexts.length <= 0) {
@@ -33,6 +55,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
         }
     }
 
+    @Override
     public void clear(Resource... contexts) throws RepositoryException {
         try {
             if (contexts.length > 0) {
@@ -45,6 +68,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
         }
     }
 
+    @Override
     public void close() throws RepositoryException {
         try {
             sesameConn.close();
@@ -80,5 +104,10 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
+    }
+
+    @Override
+    public ValueFactory getValueFactory() {
+        return SimpleValueFactory.getInstance();
     }
 }

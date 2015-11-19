@@ -1,12 +1,38 @@
 package org.matonto.repository.api;
 
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.*;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 
 public interface RepositoryConnection extends AutoCloseable {
+
+    /**
+     * Adds the supplied statement to this repository, optionally to one or more named contexts.
+     *
+     * @param stmt -  The statement to add.
+     * @param contexts - The contexts to add the statements to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statement is added to any context specified
+     *                 in each statement, or if the statement contains no context, it is added without context.
+     *                 If one or more contexts are specified the statement is added to these contexts, ignoring
+     *                 any context information in the statement itself.
+     * @throws RepositoryException - If the statement could not be added to the repository, for example because
+     * the repository is not writable.
+     */
+    void add(Statement stmt, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Adds the supplied statements to this repository, optionally to one or more named contexts.
+     *
+     * @param statements - The statements that should be added.
+     * @param contexts - The contexts to add the statements to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, each statement is added to any context specified
+     *                 in the statement, or if the statement contains no context, it is added without context.
+     *                 If one or more contexts are specified each statement is added to these contexts, ignoring
+     *                 any context information in the statement itself.
+     * @throws RepositoryException - If the statements could not be added to the repository, for example because
+     * the repository is not writable.
+     */
+    void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
 
     /**
      * Adds a statement with the specified subject, predicate and object to this repository, optionally
@@ -68,4 +94,11 @@ public interface RepositoryConnection extends AutoCloseable {
      */
     RepositoryResult getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
             throws RepositoryException;
+
+    /**
+     * Gets a ValueFactory for this RepositoryConnection.
+     *
+     * @return A repository-specific ValueFactory.
+     */
+    ValueFactory getValueFactory();
 }

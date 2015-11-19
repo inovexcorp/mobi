@@ -1,5 +1,6 @@
 package org.matonto.repository.impl.sesame
 
+import org.matonto.rdf.api.ValueFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.repository.api.RepositoryConnection
@@ -61,7 +62,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         conn.size() == 1
     }
 
-    def "add() increases the size of the repository with and without context"() {
+    def "add(s, p, o[, c]) increases the size of the repository with and without context"() {
         setup:
         def s = vf.createIRI("http://test.com/s")
         def p = vf.createIRI("http://test.com/p")
@@ -72,6 +73,81 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
 
         expect:
         conn.size() == 2
+    }
+
+    def "add(stmt) increments the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def c = vf.createIRI("http://test.com/c")
+        conn.add(vf.createStatement(s, p, o))
+        conn.add(vf.createStatement(s, p, o, c))
+
+        expect:
+        conn.size() == 2
+    }
+
+    def "add(stmt, c) increments the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def o2 = vf.createIRI("http://test.com/o2")
+        def c = vf.createIRI("http://test.com/c")
+        def c2 = vf.createIRI("http://test.com/c2")
+        conn.add(vf.createStatement(s, p, o), c2)
+        conn.add(vf.createStatement(s, p, o, c), c2)
+        conn.add(vf.createStatement(s, p, o2, c), c2)
+
+        def factory = new LinkedHashModelFactory()
+        def results = RepositoryResults.asModel(conn.getStatements(null, null, null, c2), factory)
+
+        expect:
+        conn.size() == 2
+        results.size() == 2
+    }
+
+    def "add(model) increments the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def c = vf.createIRI("http://test.com/c")
+
+        def factory = new LinkedHashModelFactory()
+        def model = factory.createEmptyModel()
+        model.add(s, p, o)
+        model.add(s, p, o, c)
+
+        conn.add(model)
+
+        expect:
+        conn.size() == 2
+    }
+
+    def "add(model, c) increments the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def o2 = vf.createIRI("http://test.com/o2")
+        def c = vf.createIRI("http://test.com/c")
+        def c2 = vf.createIRI("http://test.com/c2")
+
+        def factory = new LinkedHashModelFactory()
+        def model = factory.createEmptyModel()
+        model.add(s, p, o)
+        model.add(s, p, o, c)
+        model.add(s, p, o2)
+
+        conn.add(model, c2)
+
+        def results = RepositoryResults.asModel(conn.getStatements(null, null, null, c2), factory)
+
+        expect:
+        conn.size() == 2
+        results.size() == 2
     }
 
     def "size() on empty repository returns 0"() {
@@ -222,5 +298,10 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         result3.size() == 2
         result4.size() == 4
         result5.size() == 1
+    }
+
+    def "getValueFactory() returns a ValueFactory"() {
+        expect:
+        conn.getValueFactory() instanceof ValueFactory
     }
 }
