@@ -76,7 +76,7 @@
                 <responseMessage message="CSV mapped to RDF"/>
                 <route>
                     <to uri="bean:csvService?method=setFileName(${headers.File-Name})"/>
-                    <to uri="bean:csvService?method=test"/>
+                    <to uri="bean:csvService?method=upload"/>
                 </route>
             </post>
 
