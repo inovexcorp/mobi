@@ -66,8 +66,15 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public RepositoryResult getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
             throws RepositoryException {
         try {
-            org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> sesameResults =
-                    sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate), Values.sesameValue(object));
+            org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> sesameResults;
+
+            if (contexts.length > 0) {
+                sesameResults = sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
+                        Values.sesameValue(object), Values.sesameResources(contexts));
+            } else {
+                 sesameResults = sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
+                         Values.sesameValue(object));
+            }
 
             return new SesameRepositoryResult(sesameResults);
         } catch (org.openrdf.repository.RepositoryException e) {

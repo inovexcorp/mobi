@@ -35,6 +35,11 @@ public interface RepositoryConnection extends AutoCloseable {
      */
     void clear(Resource... contexts) throws RepositoryException;
 
+    /**
+     * Closes the connection, freeing resources.
+     *
+     * @throws RepositoryException - If the connection could not be closed.
+     */
     void close() throws RepositoryException;
 
     /**
@@ -46,6 +51,21 @@ public interface RepositoryConnection extends AutoCloseable {
      */
     long size(Resource... contexts) throws RepositoryException;
 
-    RepositoryResult getStatements(Resource subj, IRI pred, Value obj, Resource... contexts)
+    /**
+     * Gets all statements with a specific subject, predicate and/or object from the repository. The result is
+     * optionally restricted to the specified set of named contexts. If the repository supports inferencing,
+     * inferred statements will be included in the result.
+     *
+     * @param subject - A Resource specifying the subject, or null for a wildcard.
+     * @param predicate - A URI specifying the predicate, or null for a wildcard.
+     * @param object - A Value specifying the object, or null for a wildcard.
+     * @param contexts - The context(s) to get the data from. Note that this parameter is a vararg and as such is
+     *                 optional. If no contexts are supplied the method operates on the entire repository.
+     * @return The statements matching the specified pattern. The result object is a RepositoryResult object, a lazy
+     * Iterator-like object containing Statements and optionally throwing a RepositoryException when an error
+     * when a problem occurs during retrieval.
+     * @throws RepositoryException when a problem occurs during retrieval.
+     */
+    RepositoryResult getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
             throws RepositoryException;
 }
