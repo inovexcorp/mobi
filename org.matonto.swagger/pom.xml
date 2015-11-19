@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>etl.rest</artifactId>
+    <artifactId>swagger</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
@@ -35,30 +35,6 @@
             <artifactId>camel-swagger-java</artifactId>
             <version>2.16.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-swagger</artifactId>
-            <version>2.16.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto.etl</groupId>
-            <artifactId>api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>3.5</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.3.1</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -73,7 +49,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
-                        <Import-Package>*,org.apache.camel*</Import-Package>
+                        <Import-Package>*</Import-Package>
                         <Embed-Transitive>true</Embed-Transitive>
                     </instructions>
                 </configuration>

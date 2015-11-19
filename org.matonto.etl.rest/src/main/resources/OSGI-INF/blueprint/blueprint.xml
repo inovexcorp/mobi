@@ -31,23 +31,6 @@
         <property name="servlet" ref="camelServlet"/>
     </bean>
 
-    <service interface="javax.servlet.http.HttpServlet">
-        <service-properties>
-            <entry key="alias" value="/api-docs"/>
-            <entry key="init.base.path" value="etl"/>
-            <entry key="host" value="http://localhost:8181/etl/"/>
-            <entry key="apiContextIdListing" value="true"/>
-            <entry key="init.api.description" value="MatOnto ETL Rest Endpoint"/>
-            <entry key="init.api.title" value="MatOnto ETL"/>
-            <entry key="init.api.contact.url" value="http://matonto.org"/>
-            <entry key="init.api.contact.email" value="dev-team@matonto.org"/>
-            <entry key="init.api.contact.name" value="The MatOnto Development Team"/>
-        </service-properties>
-        <bean class="org.apache.camel.swagger.servlet.RestSwaggerServlet">
-            <property name="apiContextIdListing" value="true"/>
-        </bean>
-    </service>
-
 
     <bean id="camelServlet" class="org.apache.camel.component.servlet.CamelHttpTransportServlet">
         <property name="servletName" value="ETLServlet"/>
