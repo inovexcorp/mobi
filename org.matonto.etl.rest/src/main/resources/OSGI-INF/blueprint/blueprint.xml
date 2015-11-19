@@ -88,13 +88,12 @@
                 </route>
             </post>
 
-            <get uri="/rows/{document.name}/{row.start}/{row.end}">
+            <get uri="/preview/{document.name}">
                 <description>Gather rows from a document</description>
                 <param name="document.name" type="path" description="The document name"/>
-                <param name="row.start" type="path" description="The starting row to return"/>
-                <param name="row.end" type="path" description="The ending row to return"/>
+                <param name="row.count" type="header"/>
                 <route>
-                    <to uri="bean:csvService?method=getRows(${header.document.name},${header.row.start},${header.row.end})"/>
+                    <to uri="bean:csvService?method=getRows(${header.document.name},${header.row.count})"/>
                 </route>
             </get>
         </rest>

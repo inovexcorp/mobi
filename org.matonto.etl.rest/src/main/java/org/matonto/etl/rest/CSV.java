@@ -24,7 +24,7 @@ public class CSV{
         try{
            OutputStream out = new FileOutputStream(fileName + ".csv");
 
-// Transfer bytes from in to out
+        // Transfer bytes from in to out
             byte[] buf = new byte[1024];
             int len;
             while ((len = inputStream.read(buf)) > 0) {
@@ -33,7 +33,7 @@ public class CSV{
             inputStream.close();
             out.close();
         }catch(Exception e){
-            throw new RuntimeException("You know the saying Shit Happens? Well... Shit happened");
+            throw new RuntimeException("Error Saving Document");
         }
         logger.info(s.toString());
         return s.toString();
@@ -45,22 +45,22 @@ public class CSV{
 
     }
 
-    public String getRows(String fileName, int rowStart, int rowEnd){
+    public String getRows(String fileName, int rowEnd){
         File file = new File(fileName);
         String json = "";
-        logger.info("File: " + fileName + " Start: " + rowStart + " End: " + rowEnd);
+        logger.info("File: " + fileName + " End: " + rowEnd);
         try {
             CSVReader reader = new CSVReader(new FileReader(file));
             List<String[]> csvRows = reader.readAll();
             List<String[]> returnRows = new ArrayList<String[]>();
-            for(int i = rowStart; i <= rowEnd; i ++){
+            for(int i = 0; i <= rowEnd; i ++){
                 returnRows.add(i, csvRows.get(i));
             }
 
             Gson gson = new GsonBuilder().create();
             json = gson.toJson(returnRows);
         }catch(Exception e){
-            throw new RuntimeException("You know the saying Shit Happens? Well... Shit happened");
+            throw new RuntimeException("Error Loading Document");
         }
         return json;
     }
