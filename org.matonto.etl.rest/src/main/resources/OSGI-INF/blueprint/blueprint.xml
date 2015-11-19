@@ -60,11 +60,13 @@
     </reference>
 
     <!-- a bean for user services -->
-    <bean id="userService" class="org.matonto.etl.rest.UserService"/>
-    <bean id="testService" class="org.matonto.etl.rest.Test"/>
     <bean id="csvService" class="org.matonto.etl.rest.CSV">
         <property name="csvConverter" ref="csvConverterBean"/>
     </bean>
+
+    <bean id="myCSV" class="org.apache.camel.model.dataformat.CsvDataFormat">
+    </bean>
+
 
     <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="etl-context"  allowUseOriginalMessage="true">
 
@@ -75,81 +77,44 @@
              knows the url to the REST services.
              Notice: This is optional, but needed if the RestRegistry should enlist accurate information.
              You can access the RestRegistry from JMX at runtime -->
-        <restConfiguration component="servlet" bindingMode="json" contextPath="http://localhost:8181/etl/"
-                           port="8181" host="http:localhost:8181/etl">
+        <restConfiguration component="servlet" bindingMode="off" contextPath="etl/"
+                           port="8181" host="localhost">
             <dataFormatProperty key="prettyPrint" value="true"/>
-            <dataFormatProperty key="allowMultipartParsing" value="true"/>
+            <dataFormatProperty key="json.in.mustBeJAXBElement" value="false"/>
+            <dataFormatProperty key="bindingMode" value="off"/>
+            <!--<dataFormatProperty key="allowMultipartParsing" value="true"/>-->
         </restConfiguration>
 
-        <!-- defines the rest services using the context-path /user -->
-        <rest path="/user" consumes="application/json" produces="application/json">
-            <description>User rest service</description>
 
-            <!-- this is a rest GET to view an user by the given id -->
-            <get uri="/{id}" outType="org.matonto.etl.rest.User">
-                <description>Find user by id</description>
-                <to uri="bean:userService?method=getUser(${header.id})"/>
-            </get>
-
-            <!-- this is a rest PUT to create/update an user -->
-            <put type="org.matonto.etl.rest.User">
-                <description>Updates or create a user</description>
-                <to uri="bean:userService?method=updateUser"/>
-            </put>
-
-            <!-- this is a rest GET to find all users -->
-            <get uri="/findAll" outType="org.matonto.etl.rest.User[]">
-                <description>Find all users</description>
-                <to uri="bean:userService?method=listUsers"/>
-            </get>
-
-        </rest>
-        <rest path="/test" consumes="application/json" produces="application/json">
-            <description>Test Rest Stuff</description>
-            <get uri="uuid" outType="String">
-                <description>Get random uuid</description>
-                <responseMessage message="The random uuid"/>
+        <rest path="/csv" >
+            <description>CSV ETL Tools</description>
+            <post uri="upload">
+                <description>Upload CSV File. Send CSV as a binary file in the body. FileType and FileName are required.</description>
+                <responseMessage message="CSV mapped to RDF"/>
                 <route>
-                    <to uri="bean:testService?method=generateUUID()"/>
-                    <filter>
-                        <simple>${body} == null</simple>
-                        <setHeader headerName="Exchange.HTTP_RESPONSE_CODE">
-                            <constant>404</constant>
-                        </setHeader>
-                    </filter>
+                    <to uri="bean:csvService?method=setFileName(${headers.File-Name})"/>
+                    <to uri="bean:csvService?method=test"/>
+                </route>
+            </post>
+
+            <post uri="etl/{document.name}">
+                <description>ETL the document using the posted mapping file</description>
+                <route>
+                    <to uri="bean:csvService?method=setMappingFile"/>
+                    <to uri="bean:csvService?method=etlFile(${header.document.name})"/>
+                </route>
+            </post>
+
+            <get uri="/rows/{document.name}/{row.start}/{row.end}">
+                <description>Gather rows from a document</description>
+                <param name="document.name" type="path" description="The document name"/>
+                <param name="row.start" type="path" description="The starting row to return"/>
+                <param name="row.end" type="path" description="The ending row to return"/>
+                <route>
+                    <to uri="bean:csvService?method=getRows(${header.document.name},${header.row.start},${header.row.end})"/>
                 </route>
             </get>
         </rest>
-
-        <rest path="/csv" consumes="application/json" produces="application/json">
-            <description>CSV Test</description>
-            <get uri="test" outType="String">
-                <description>A simple test</description>
-                <responseMessage message="A test message"/>
-                <route>
-                    <to uri="bean:csvService?method=test()"/>
-                    <filter>
-                        <simple>${body} == null</simple>
-                        <setHeader headerName="Exchange.HTTP_RESPONSE_CODE">
-                            <constant>404</constant>
-                        </setHeader>
-                    </filter>
-                </route>
-            </get>
-        </rest>
-
-        <!--<rest path="/csv" >-->
-            <!--<description>CSV ETL Tools</description>-->
-            <!--&lt;!&ndash;<post type="String" consumes="multipart/form-data">&ndash;&gt;-->
-
-                <!--&lt;!&ndash;<description>Convert CSV</description>&ndash;&gt;-->
-                <!--&lt;!&ndash;<param name="csv" type="form" description="The binary CSV File"/>&ndash;&gt;-->
-                <!--&lt;!&ndash;<param name="mapping" type="body" description="The mapping file"/>&ndash;&gt;-->
-                <!--&lt;!&ndash;<responseMessage message="CSV mapped to RDF"/>&ndash;&gt;-->
-                <!--&lt;!&ndash;<to uri="bean:csvService?method=etlCSV(${header.mapping}, ${header.csv})"/>&ndash;&gt;-->
-            <!--&lt;!&ndash;</post>&ndash;&gt;-->
-        <!--</rest>-->
-
 
     </camelContext>
 

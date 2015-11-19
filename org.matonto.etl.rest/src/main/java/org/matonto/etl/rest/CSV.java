@@ -1,24 +1,68 @@
 package org.matonto.etl.rest;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.opencsv.CSVReader;
+import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
+import java.io.*;
+import java.util.*;
 
-import java.io.File;
-
-/**
- * Created by bryan on 11/13/15.
- */
-public class CSV {
+public class CSV{
 
     CSVConverter csvConverter;
 
     public CSVConverter getCsvConverter(){return csvConverter;}
     public void setCsvConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
-    public String test(){
-        try {
-            csvConverter.convert(new File(""), new File(""));
+    private static final Logger logger = Logger.getLogger(CSV.class);
+    private String fileName = "";
+
+
+    public String upload(ByteArrayInputStream inputStream){
+        File file = new File("data.csv");
+        StringBuilder s = new StringBuilder();
+        try{
+           OutputStream out = new FileOutputStream(fileName + ".csv");
+
+// Transfer bytes from in to out
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = inputStream.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            inputStream.close();
+            out.close();
         }catch(Exception e){
-            return e.getMessage();
+            throw new RuntimeException("You know the saying Shit Happens? Well... Shit happened");
         }
-        return "No exception. Strange";
+        logger.info(s.toString());
+        return s.toString();
     }
+
+    public void setFileName(String fileName){this.fileName = fileName;}
+
+    public void setMappingModel(String mappingJSON){
+
+    }
+
+    public String getRows(String fileName, int rowStart, int rowEnd){
+        File file = new File(fileName);
+        String json = "";
+        logger.info("File: " + fileName + " Start: " + rowStart + " End: " + rowEnd);
+        try {
+            CSVReader reader = new CSVReader(new FileReader(file));
+            List<String[]> csvRows = reader.readAll();
+            List<String[]> returnRows = new ArrayList<String[]>();
+            for(int i = rowStart; i <= rowEnd; i ++){
+                returnRows.add(i, csvRows.get(i));
+            }
+
+            Gson gson = new GsonBuilder().create();
+            json = gson.toJson(returnRows);
+        }catch(Exception e){
+            throw new RuntimeException("You know the saying Shit Happens? Well... Shit happened");
+        }
+        return json;
+    }
+
 }
