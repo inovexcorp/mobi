@@ -92,7 +92,7 @@ public interface RepositoryConnection extends AutoCloseable {
      * when a problem occurs during retrieval.
      * @throws RepositoryException when a problem occurs during retrieval.
      */
-    RepositoryResult getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
+    RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
             throws RepositoryException;
 
     /**

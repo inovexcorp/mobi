@@ -1,20 +1,17 @@
 package org.matonto.repository.impl.sesame;
 
-import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
-import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.rdf.core.impl.sesame.factory.SesameMatOntoValueFactory;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 
-public class SesameRepositoryResult extends RepositoryResult {
+public class SesameRepositoryResult<T, U> extends RepositoryResult<T> {
 
-    private static final ValueFactory VF = SimpleValueFactory.getInstance();
+    private org.openrdf.repository.RepositoryResult<U> sesameResults;
+    private SesameMatOntoValueFactory<T, U> factory;
 
-    private org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> sesameResults;
-
-    public SesameRepositoryResult(org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> results) {
+    public SesameRepositoryResult(org.openrdf.repository.RepositoryResult<U> results, SesameMatOntoValueFactory<T, U> factory) {
         this.sesameResults = results;
+        this.factory = factory;
     }
 
     @Override
@@ -27,23 +24,9 @@ public class SesameRepositoryResult extends RepositoryResult {
     }
 
     @Override
-    public Statement next() {
+    public T next() {
         try {
-            org.openrdf.model.Statement sesameStmt = sesameResults.next();
-            org.openrdf.model.Resource sesameCtx = sesameStmt.getContext();
-
-            if (sesameCtx == null) {
-                return VF.createStatement(
-                        Values.matontoResource(sesameStmt.getSubject()),
-                        Values.matontoIRI(sesameStmt.getPredicate()),
-                        Values.matontoValue(sesameStmt.getObject()));
-            } else {
-                return VF.createStatement(
-                        Values.matontoResource(sesameStmt.getSubject()),
-                        Values.matontoIRI(sesameStmt.getPredicate()),
-                        Values.matontoValue(sesameStmt.getObject()),
-                        Values.matontoResource(sesameCtx));
-            }
+            return factory.asMatOntoObject(sesameResults.next());
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }

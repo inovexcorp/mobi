@@ -1,7 +1,5 @@
 package org.matonto.repository.base;
 
-import org.matonto.rdf.api.Statement;
-
 import java.util.Iterator;
 
 /**
@@ -13,10 +11,10 @@ import java.util.Iterator;
  * A RepositoryResult needs to be closed after use to free up any resources (open connections, read locks, etc.)
  * it has on the underlying repository.
  */
-public abstract class RepositoryResult implements Iterable<Statement>, Iterator<Statement> {
+public abstract class RepositoryResult<T> implements Iterable<T>, Iterator<T> {
 
     @Override
-    public Iterator<Statement> iterator() {
+    public Iterator<T> iterator() {
         return this;
     }
 }
