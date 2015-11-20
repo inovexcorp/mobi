@@ -25,7 +25,7 @@ import java.util.Map;
 public class MemoryRepositoryWrapper extends RepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "memory";
-    protected static final String NAME = "com.inovexcorp.matonto.service.repository." + REPOSITORY_TYPE;
+    protected static final String NAME = "org.matonto.service.repository." + REPOSITORY_TYPE;
 
     @Override
     protected Repository getRepo(Map<String, Object> props) {

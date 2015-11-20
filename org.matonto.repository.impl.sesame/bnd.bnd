@@ -1,4 +1,4 @@
-Bundle-SymbolicName: org.matonto.repository.sesame.impl
+Bundle-SymbolicName: org.matonto.repository.impl.sesame
 Bundle-Name: MatOnto Repository Sesame Impl
 Export-Package: org.matonto.repository.impl.sesame*
 -metatype: *
