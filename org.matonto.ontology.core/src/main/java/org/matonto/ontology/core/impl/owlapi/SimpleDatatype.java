@@ -36,35 +36,41 @@ public class SimpleDatatype implements Datatype {
 		return owlDatatype.isString();
 	}
 
+	
 	@Override
 	public boolean isInteger() 
 	{
 		return owlDatatype.isInteger();
 	}
 
+	
 	@Override
 	public boolean isFloat() 	
 	{
 		return owlDatatype.isFloat();
 	}
 
+	
 	@Override
 	public boolean isDouble() 
 	{
 		return owlDatatype.isDouble();
 	}
 
+	
 	@Override
 	public boolean isBoolean() 
 	{
 		return owlDatatype.isBoolean();
 	}
 
+	
 	@Override
 	public boolean isRDFPlainLiteral() 
 	{
 		return owlDatatype.isRDFPlainLiteral();
 	}
+	
 	
 	@Override
 	public OntologyIRI getIRI()
@@ -73,6 +79,7 @@ public class SimpleDatatype implements Datatype {
 	}
 	
 	
+	@Override
 	public SimpleEntityType getEntityType()
 	{
 		return SimpleEntityType.DATATYPE;
@@ -114,6 +121,7 @@ public class SimpleDatatype implements Datatype {
 		return new OWLDatatypeImpl(SimpleIRI.owlapiIRI(datatype.getIRI()));
 	}
 	
+	
 	public static SimpleDatatype matontoDatatype(OWLDatatype owlDatatype)
 	{
 		if(owlDatatype instanceof OWLDatatypeImpl)
@@ -125,6 +133,7 @@ public class SimpleDatatype implements Datatype {
 		else
 			return null;
 	}
+	
 	
 	@Override
 	public boolean equals(Object obj)
@@ -145,6 +154,20 @@ public class SimpleDatatype implements Datatype {
 	public int hashCode()
 	{
 		return owlDatatype.hashCode();
+	}
+
+
+	@Override
+	public boolean isDatatype() 
+	{
+		return true;
+	}
+
+
+	@Override
+	public SimpleDataRangeType getDataRangeType() 
+	{
+		return SimpleDataRangeType.DATATYPE;
 	}
 	
 

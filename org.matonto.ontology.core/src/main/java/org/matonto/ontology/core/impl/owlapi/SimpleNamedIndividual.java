@@ -20,16 +20,20 @@ public class SimpleNamedIndividual implements NamedIndividual {
 		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
 	}
 	
+	
 	@Override
 	public OntologyIRI getIRI() 
 	{
 		return iri;
 	}
 	
+	
+	@Override
 	public SimpleEntityType getEntityType()
 	{
 		return SimpleEntityType.NAMED_INDIVIDUAL;
 	}
+	
 	
 	@Override
 	public boolean equals(Object obj)

@@ -1,5 +1,5 @@
 package org.matonto.ontology.core.api;
 
-public interface Property extends Entity {
+public interface Property extends Entity, PropertyExpression {
 
 }

@@ -139,7 +139,7 @@ public class SimpleAnnotation implements Annotation {
 		{
 			Set<OWLAnnotation> owlAnnos = owlAnno.getAnnotations();
 			if(owlAnnos.isEmpty()) {
-				SimpleAnnotationProperty property = SimpleAnnotationProperty.MatontoAnnotationProperty(owlAnno.getProperty());
+				SimpleAnnotationProperty property = SimpleAnnotationProperty.matontoAnnotationProperty(owlAnno.getProperty());
 				OWLAnnotationValue value = owlAnno.getValue();
 				if(value instanceof OWLLiteral){
 					OWLLiteral literal = (OWLLiteral) value;
@@ -170,7 +170,7 @@ public class SimpleAnnotation implements Annotation {
 					annos.add(SimpleAnnotation.matontoAnnotation(a));
 				}
 				
-				SimpleAnnotationProperty property = SimpleAnnotationProperty.MatontoAnnotationProperty(owlAnno.getProperty());
+				SimpleAnnotationProperty property = SimpleAnnotationProperty.matontoAnnotationProperty(owlAnno.getProperty());
 				OWLAnnotationValue value = owlAnno.getValue();
 				if(value instanceof OWLLiteral){
 					OWLLiteral literal = (OWLLiteral) value;

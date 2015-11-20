@@ -5,8 +5,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import org.matonto.ontology.core.api.AnnotationProperty;
-import org.matonto.ontology.core.api.AnnotationValue;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;

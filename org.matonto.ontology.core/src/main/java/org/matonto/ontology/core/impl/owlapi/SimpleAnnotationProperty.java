@@ -48,6 +48,7 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 	}
 	
 	
+	@Override
 	public SimpleEntityType getEntityType()
 	{
 		return SimpleEntityType.ANNOTATION_PROPERTY;
@@ -60,7 +61,7 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 	}
 	
 	
-	public static SimpleAnnotationProperty MatontoAnnotationProperty(OWLAnnotationProperty oap)
+	public static SimpleAnnotationProperty matontoAnnotationProperty(OWLAnnotationProperty oap)
 	{
 		return new SimpleAnnotationProperty(SimpleIRI.matontoIRI(oap.getIRI()));
 	}

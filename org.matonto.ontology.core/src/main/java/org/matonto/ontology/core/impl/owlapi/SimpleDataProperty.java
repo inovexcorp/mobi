@@ -1,14 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import org.matonto.ontology.core.api.DataProperty;
-import org.matonto.ontology.core.api.OClass;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 
 import com.google.common.base.Preconditions;
 
-import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataPropertyImpl;
 
 public class SimpleDataProperty implements DataProperty {
@@ -28,6 +26,7 @@ public class SimpleDataProperty implements DataProperty {
 	}
 	
 	
+	@Override
 	public SimpleEntityType getEntityType()
 	{
 		return SimpleEntityType.DATA_PROPERTY;
@@ -63,6 +62,12 @@ public class SimpleDataProperty implements DataProperty {
 		OntologyIRI matontoIri = matontoDataProperty.getIRI();
 		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
 		return new OWLDataPropertyImpl(owlapiIri);
+	}
+
+	@Override
+	public DataProperty asDataProperty() 
+	{
+		return this;
 	}
 
 }

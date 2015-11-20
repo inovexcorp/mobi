@@ -1,18 +1,18 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import org.matonto.ontology.core.api.DataProperty;
 import org.matonto.ontology.core.api.ObjectProperty;
 import org.matonto.ontology.core.api.OntologyIRI;
+
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
 
 import com.google.common.base.Preconditions;
 
-import uk.ac.manchester.cs.owl.owlapi.OWLDataPropertyImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
 
-public class SimpleObjectProperty implements ObjectProperty {
+public class SimpleObjectProperty 
+	extends SimpleObjectPropertyExpression
+	implements ObjectProperty {
 
 	
 	private OntologyIRI iri;
@@ -48,6 +48,12 @@ public class SimpleObjectProperty implements ObjectProperty {
 		}
 		
 		return false;
+	}
+	
+	
+	public ObjectProperty asObjectProperty() 
+	{
+		return this;
 	}
 	
 	

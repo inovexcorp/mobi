@@ -8,6 +8,4 @@ public interface OntologyIRI extends AnnotationValue {
 	
 	public Optional<String> getLocalName();
 	
-	public boolean equals(Object obj);
-	
 }

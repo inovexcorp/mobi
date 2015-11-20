@@ -12,7 +12,6 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 public abstract class SimpleAxiom implements Axiom {
 
 	private Set<Annotation> annotations;
-	private SimpleAxiomType axiomType;
 	
 	public SimpleAxiom(Set<Annotation> annotations)
 	{
@@ -35,12 +34,6 @@ public abstract class SimpleAxiom implements Axiom {
 	public boolean isAnnotated() 
 	{
 		return !annotations.isEmpty();
-	}
-	
-	
-	public SimpleAxiomType getAxiomType()
-	{
-		return axiomType;
 	}
 
 	

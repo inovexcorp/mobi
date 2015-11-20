@@ -50,37 +50,14 @@ public enum SimpleEntityType {
 	}
 	
 	
-	public static SimpleEntityType matontoEntityType(EntityType entityType)
+	public static SimpleEntityType matontoEntityType(EntityType<?> entityType)
 	{
-		SimpleEntityType simpleEntityType = null;
-		
-		switch(entityType.getName()) 
-		{
-			case "Class":
-				return SimpleEntityType.CLASS;
-			
-			case "ObjectProperty":
-				return SimpleEntityType.OBJECT_PROPERTY;
-				
-			case "DataProperty":
-				return SimpleEntityType.DATA_PROPERTY;
-				
-			case "AnnotationProperty":
-				return SimpleEntityType.ANNOTATION_PROPERTY;
-				
-			case "NamedIndividual":
-				return SimpleEntityType.NAMED_INDIVIDUAL;
-				
-			case "Datatype":
-				return SimpleEntityType.DATATYPE;						
-		}
-		
-		return simpleEntityType;
+		return SimpleEntityType.valueOf(entityType.getName());
 	}
 	
-	public static EntityType owlapiEntityType(SimpleEntityType simpleEntityType)
+	public static EntityType<?> owlapiEntityType(SimpleEntityType simpleEntityType)
 	{
-		EntityType entityType = null;
+		EntityType<?> entityType = null;
 		
 		switch(simpleEntityType.getName()) 
 		{

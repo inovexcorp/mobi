@@ -1,6 +1,6 @@
 package org.matonto.ontology.core.api;
 
-public interface Datatype extends Entity {
+public interface Datatype extends Entity, DataRange {
 
 	  public boolean isString();
 	  

@@ -1,5 +1,9 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.matonto.ontology.core.api.ClassExpression;
 import org.matonto.ontology.core.api.OClass;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.model.IRI;
@@ -44,6 +48,7 @@ public class SimpleClass implements OClass {
 	}
 	
 	
+	@Override
 	public SimpleEntityType getEntityType()
 	{
 		return SimpleEntityType.CLASS;
@@ -66,6 +71,38 @@ public class SimpleClass implements OClass {
 	}
 	
 	
+	@Override
+	public SimpleClassExpressionType getClassExpressionType() 
+	{
+		return SimpleClassExpressionType.OWL_CLASS;
+	}
+
+	
+	@Override
+	public Set<ClassExpression> asConjunctSet() 
+	{
+		Set<ClassExpression> result = new HashSet<ClassExpression>();
+		result.add(this);
+		return result;
+	}	
+	
+	
+	@Override
+	public boolean containsConjunct(ClassExpression ce)
+	{
+		return ce.equals(this);
+	}
+	
+	
+	@Override
+	public Set<ClassExpression> asDisjunctSet()
+	{
+		Set<ClassExpression> result = new HashSet<ClassExpression>();
+		result.add(this);
+		return result;
+	}
+	
+	
 	public static OClass matontoClass(OWLClass owlapiClass)
 	{
 		IRI owlapiIri = owlapiClass.getIRI();
@@ -80,6 +117,5 @@ public class SimpleClass implements OClass {
 		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
 		return new OWLClassImpl(owlapiIri);
 	}
-	
 
 }

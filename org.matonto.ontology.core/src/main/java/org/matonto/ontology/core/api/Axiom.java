@@ -2,6 +2,8 @@ package org.matonto.ontology.core.api;
 
 import java.util.Set;
 
+import org.matonto.ontology.core.impl.owlapi.SimpleAxiomType;
+
 public interface Axiom {
 
 	public Set<Annotation> getAnnotations();
@@ -10,7 +12,5 @@ public interface Axiom {
 	
 	public Axiom getAxiomWithoutAnnotations();
 	
-	public boolean equals(Object obj);
-	
-	public int hashCode();
+	public SimpleAxiomType getAxiomType();
 }
