@@ -5,6 +5,9 @@ import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Statement;
 import org.matonto.repository.base.RepositoryResult;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RepositoryResults {
 
     /**
@@ -18,5 +21,18 @@ public class RepositoryResults {
         Model model = factory.createEmptyModel();
         results.forEach(model::add);
         return model;
+    }
+
+    /**
+     * Returns the List containing all the Objects from a RepositoryResult.
+     *
+     * @param results - The RepositoryResult containing the Objects for the List
+     * @param <T> - The type of Objects contained in the RepositoryResult
+     * @return the List containing all the Objects from a RepositoryResult.
+     */
+    public static <T> List<T> asList(RepositoryResult<T> results) {
+        List<T> list = new ArrayList<>();
+        results.forEach(list::add);
+        return list;
     }
 }

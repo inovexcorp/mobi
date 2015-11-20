@@ -96,6 +96,15 @@ public interface RepositoryConnection extends AutoCloseable {
             throws RepositoryException;
 
     /**
+     * Gets all resources that are used as context identifiers. Care should be taken that the returned
+     * RepositoryResult is closed to free any resources that it keeps hold of.
+     *
+     * @return a RepositoryResult object containing Resources that are used as context identifiers.
+     * @throws RepositoryException
+     */
+    RepositoryResult<Resource> getContextIDs() throws RepositoryException;
+
+    /**
      * Gets a ValueFactory for this RepositoryConnection.
      *
      * @return A repository-specific ValueFactory.

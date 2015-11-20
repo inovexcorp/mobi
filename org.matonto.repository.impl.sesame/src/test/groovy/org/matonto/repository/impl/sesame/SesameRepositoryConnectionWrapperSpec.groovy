@@ -304,4 +304,29 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         expect:
         conn.getValueFactory() instanceof ValueFactory
     }
+
+    def "getContextIDs() returns correctly for empty repo"() {
+        expect:
+        !conn.getContextIDs().hasNext()
+    }
+
+    def "getContextIDs() returns correctly for non-empty repo"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def s2 = vf.createIRI("http://test.com/s2")
+        def p = vf.createIRI("http://test.com/p")
+        def p2 = vf.createIRI("http://test.com/p2")
+        def o = vf.createIRI("http://test.com/o")
+        def o2 = vf.createIRI("http://test.com/o2")
+        def c = vf.createIRI("http://test.com/c")
+        def c2 = vf.createIRI("http://test.com/c2")
+
+        conn.add(s, p, o)
+        conn.add(s, p, o, c)
+        conn.add(s2, p2, o2)
+        conn.add(s2, p2, o2, c2)
+
+        expect:
+        RepositoryResults.asList(conn.getContextIDs()).size() == 2
+    }
 }

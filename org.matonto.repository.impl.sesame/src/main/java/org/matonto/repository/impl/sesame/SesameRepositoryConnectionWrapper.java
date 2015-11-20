@@ -7,7 +7,7 @@ import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.impl.sesame.Values;
-import org.matonto.rdf.core.impl.sesame.factory.SesameMatOntoValueFactory;
+import org.matonto.rdf.core.impl.sesame.factory.ResourceValueFactory;
 import org.matonto.rdf.core.impl.sesame.factory.StatementValueFactory;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
@@ -107,6 +107,15 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             }
 
             return new SesameRepositoryResult<>(sesameResults, new StatementValueFactory());
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        }
+    }
+
+    @Override
+    public RepositoryResult<Resource> getContextIDs() throws RepositoryException {
+        try {
+            return new SesameRepositoryResult<>(sesameConn.getContextIDs(), new ResourceValueFactory());
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
