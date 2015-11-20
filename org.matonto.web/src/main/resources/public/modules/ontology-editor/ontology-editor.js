@@ -105,8 +105,10 @@
 
         // TODO: check the annotaions
         // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
-        function _setAnnotations(rdfs, owl) {
-            return [
+        function _setAnnotations(rdfs, owl, arr) {
+            // default owl2 annotations
+            var i = arr.length,
+                temp = [
                 rdfs + 'seeAlso',
                 rdfs + 'isDefinedBy',
                 owl + 'deprecated',
@@ -115,6 +117,14 @@
                 owl + 'backwardCompatibleWith',
                 owl + 'incompatibleWith'
             ];
+
+            // adds the ontology specific annotations
+            while(i-- && i !== 0) {
+                temp.push(arr[i]['@id']);
+            }
+
+            // returns the combined array
+            return temp;
         }
 
         // if the uri of the ontology changes, this function will update the rest of the ids to match
@@ -185,6 +195,7 @@
                 properties = [],
                 annotations = [],
                 noDomains = [],
+                findOwner = [],
                 list = flattened['@graph'] ? angular.copy(flattened['@graph']) : angular.copy(flattened),
                 i = list.length;
 
@@ -259,12 +270,12 @@
 
             // adds the classes, context and properties without domains to the ontology
             ontology.classes = classes;
-            ontology.annotations = annotations;
+            ontology.annotations = [];
             ontology.noDomains = noDomains;
             ontology.context = objToArr(context);
             ontology.owl = owl;
             ontology.rdfs = rdfs;
-            ontology.annotationList = _setAnnotations(rdfs, owl);
+            ontology.annotationList = _setAnnotations(rdfs, owl, annotations);
 
             // checks to see if the initial context contains the ontology id already
             i = ontology.context.length;
@@ -648,7 +659,6 @@
                 // clears messages that were shown
                 vm.showDuplicateMessage = false;
                 vm.showEmptyMessage = false;
-                console.log('phase', $scope.$$phase);
             }
             // else, let them know that it is a duplicate of something
             else if(duplicate) {
@@ -677,7 +687,6 @@
         function editPrefix(edit, old, index, value) {
             var input = document.getElementById('prefix-' + index);
             if(edit) {
-                console.log('old:', old, 'fresh:', input.value, 'value:', value);
                 // updates the values in the ontology object
                 _updateRefs(vm.ontologies[vm.current.oi], old + ':', input.value + ':');
                 // adds the new property
