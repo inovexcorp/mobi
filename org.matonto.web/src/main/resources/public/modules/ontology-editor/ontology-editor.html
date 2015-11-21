@@ -11,7 +11,13 @@
         <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.currentAnnotation">
             <option value="default">Please select an annotation to add</option>
             <option ng-repeat="annotation in vm.ontologies[vm.current.oi].annotationList" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
+            <option value="other">Add a new annotation</option>
         </select>
+    </div>
+    <!-- key, if new -->
+    <div ng-show="vm.selected.currentAnnotation === 'other'" class="form-group">
+        <label class="control-label" for="ontology-annotation-key">Name</label>
+        <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.currentAnnotationKey" />
     </div>
     <!-- value -->
     <div class="form-group">
@@ -21,7 +27,9 @@
     <!-- TODO: add a section here for comments -->
     <!-- annotation buttons -->
     <div class="btn-container clearfix">
-        <button type="button" class="btn btn-primary pull-right" ng-click="vm.addAnnotation()">Add annotation</button>
+        <button type="button" class="btn btn-primary pull-right"
+                ng-click="vm.addAnnotation()"
+                ng-disabled="!(((vm.selected.currentAnnotation === 'other' && vm.selected.currentAnnotationKey) || vm.selected.currentAnnotation) && vm.selected.currentAnnotationValue)">Add annotation</button>
     </div>
 </script>
 

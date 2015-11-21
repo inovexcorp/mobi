@@ -90,41 +90,21 @@
 
         // adds the annotation that the user is editing
         function addAnnotation() {
+            var add;
             // adds the item to the actual object
-            vm.selected[vm.selected.currentAnnotation] = vm.selected.currentAnnotationValue;
-            // adds the annotation to the list of items used to determine which is shown in the drop down
-            if(vm.selected.annotations) {
-                vm.selected.annotations.push(vm.selected.currentAnnotation);
+            if(vm.selected.currentAnnotation !== 'other') {
+                vm.selected[vm.selected.currentAnnotation] = vm.selected.currentAnnotationValue;
+                add = vm.selected.currentAnnotation;
             } else {
-                vm.selected.annotations = [vm.selected.currentAnnotation];
+                vm.selected[vm.selected.currentAnnotationKey] = vm.selected.currentAnnotationValue;
+                add = vm.selected.currentAnnotationKey;
             }
+            // adds the annotation to the list of items used to determine which is shown in the drop down
+            vm.selected.annotations.push(add);
             // resets the value
             vm.selected.currentAnnotation = 'default';
             vm.selected.currentAnnotationValue = '';
-        }
-
-        // TODO: check the annotaions
-        // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
-        function _setAnnotations(rdfs, owl, arr) {
-            // default owl2 annotations
-            var i = arr.length,
-                temp = [
-                rdfs + 'seeAlso',
-                rdfs + 'isDefinedBy',
-                owl + 'deprecated',
-                owl + 'versionInfo',
-                owl + 'priorVersion',
-                owl + 'backwardCompatibleWith',
-                owl + 'incompatibleWith'
-            ];
-
-            // adds the ontology specific annotations
-            while(i-- && i !== 0) {
-                temp.push(arr[i]['@id']);
-            }
-
-            // returns the combined array
-            return temp;
+            vm.selected.currentAnnotationKey = '';
         }
 
         // if the uri of the ontology changes, this function will update the rest of the ids to match
@@ -187,13 +167,68 @@
             return icon;
         }
 
+        // TODO: check the annotaions
+        // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
+        function _setAnnotations(rdfs, owl, arr) {
+            // default owl2 annotations
+            var item,
+                i = arr.length,
+                temp = [
+                    rdfs + 'seeAlso',
+                    rdfs + 'isDefinedBy',
+                    owl + 'deprecated',
+                    owl + 'versionInfo',
+                    owl + 'priorVersion',
+                    owl + 'backwardCompatibleWith',
+                    owl + 'incompatibleWith'
+                ];
+
+            // adds the ontology specific annotations
+            while(i--) {
+                temp.push(arr[i]['@id']);
+            }
+
+            // returns the combined array
+            return temp;
+        }
+
+        // add annotations to the list necessary
+        function _addAnnotationsTo(obj, rdfs, annotationList) {
+            var prop,
+                exclude = [
+                    rdfs + 'label',
+                    rdfs + 'comment',
+                    rdfs + 'isDefinedBy',
+                    rdfs + 'subClassOf',
+                    rdfs + 'disjointWith',
+                    rdfs + 'domain',
+                    rdfs + 'range',
+                    rdfs + 'subPropertyOf',
+                    rdfs + 'inverseOf',
+                    rdfs + 'equivalentClass',
+                    '@id',
+                    '@type',
+                    'annotations',
+                    'properties',
+                    'classes',
+                    'icon'
+                ];
+            obj.annotations = [];
+            // looks for all annotations not used elsewhere
+            for(prop in obj) {
+                // adds all the other non-rdfs:label
+                if(obj.hasOwnProperty(prop) && exclude.indexOf(prop) === -1) {
+                    obj.annotations.push(prop);
+                }
+            }
+        }
+
         // takes the flattened JSON-LD data and creates our custom tree structure
         function _parseOntologies(flattened, context, owl, rdfs) {
-            // TODO: figure out how to handle the @graph and @context because @context is a 1-1 to the prefix story for this sprint.
             var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
                 classes = [],
                 properties = [],
-                annotations = [],
+                annotationList = [],
                 noDomains = [],
                 findOwner = [],
                 list = flattened['@graph'] ? angular.copy(flattened['@graph']) : angular.copy(flattened),
@@ -218,13 +253,15 @@
                         properties.push(obj);
                         break;
                     case owl + 'AnnotationProperty':
-                        annotations.push(obj);
+                        annotationList.push(obj);
                         break;
                 }
+                // add all other properties to the annotation list
+                _addAnnotationsTo(obj, rdfs, annotationList);
             }
 
             // adds the property to the class
-            addToClass = function(id, property) {
+            var addToClass = function(id, property) {
                 j = classes.length;
                 while(j--) {
                     classObj = classes[j];
@@ -238,7 +275,6 @@
             }
 
             // iterates over all properties to find domain
-            // TODO: check if you actually need this part
             i = properties.length;
             while(i--) {
                 property = properties[i];
@@ -270,12 +306,11 @@
 
             // adds the classes, context and properties without domains to the ontology
             ontology.classes = classes;
-            ontology.annotations = [];
             ontology.noDomains = noDomains;
             ontology.context = objToArr(context);
             ontology.owl = owl;
             ontology.rdfs = rdfs;
-            ontology.annotationList = _setAnnotations(rdfs, owl, annotations);
+            ontology.annotationList = _setAnnotations(rdfs, owl, annotationList);
 
             // checks to see if the initial context contains the ontology id already
             i = ontology.context.length;
@@ -331,14 +366,6 @@
 
         // gets the ontologies and flattens them
         function _getOntologies() {
-            // array format to work better with dual binding and updates
-            /*vm.context = [
-                {key: 'owl', value: defaultOwl},
-                {key: 'rdf', value: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
-                {key: 'rdfs', value: defaultRdfs},
-                {key: 'xsd', value: 'http://www.w3.org/2001/XMLSchema#'}
-            ];*/
-
             // variable for the json-ld function
             var ontology,
                 context = {};
