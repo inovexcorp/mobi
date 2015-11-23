@@ -8,7 +8,7 @@
     <!-- annotation list -->
     <div class="form-group">
         <label class="control-label" for="ontology-annotation-list">Annotation</label>
-        <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.currentAnnotation">
+        <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.currentAnnotation" ng-change="vm.unsaved();">
             <option value="default">Please select an annotation to add</option>
             <option ng-repeat="annotation in vm.ontologies[vm.current.oi].annotationList" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
             <option value="other">Add a new annotation</option>
@@ -17,12 +17,12 @@
     <!-- key, if new -->
     <div ng-show="vm.selected.currentAnnotation === 'other'" class="form-group">
         <label class="control-label" for="ontology-annotation-key">Name</label>
-        <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.currentAnnotationKey" />
+        <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.currentAnnotationKey" ng-change="vm.unsaved();" />
     </div>
     <!-- value -->
     <div class="form-group">
         <label class="control-label" for="ontology-annotation-value">Value</label>
-        <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.currentAnnotationValue"></textarea>
+        <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.currentAnnotationValue" ng-change="vm.unsaved();"></textarea>
     </div>
     <!-- TODO: add a section here for comments -->
     <!-- annotation buttons -->
@@ -63,10 +63,12 @@
                     <ul ng-repeat="(oi, ontology) in vm.ontologies">
                         <li>
                             <a ng-click="vm.edit($index)"
-                               ng-class="{'active': vm.current.oi == $index && vm.current.ci == undefined}">
+                               ng-class="{'unsaved': ontology.unsaved, 'active': vm.current.oi == $index && vm.current.ci == undefined}">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                   ng-click="opened = !opened; $event.stopPropagation();"></i>{{ontology[ontology.rdfs + 'label'] || ontology['@id']}}
+                                   ng-click="opened = !opened; $event.stopPropagation();"></i>
+                                {{ontology[ontology.rdfs + 'label'] || ontology['identifier'] + ontology['delimiter']}}
+                                <i ng-show="ontology.unsaved" class="fa fa-circle pull-right"></i>
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -74,10 +76,12 @@
                             <ul ng-repeat="(ci, class) in ontology.classes">
                                 <li>
                                     <a ng-click="vm.edit(oi, $index)"
-                                       ng-class="{'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
+                                       ng-class="{'unsaved': class.unsaved, 'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
                                         <i class="fa fa-fw"
                                            ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
-                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>{{class[ontology.rdfs + 'label'] || class['@id']}}
+                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>
+                                        {{class[ontology.rdfs + 'label'] || class['@id']}}
+                                        <i ng-show="class.unsaved" class="fa fa-circle pull-right"></i>
                                     </a>
                                 </li>
                                 <li class="container" ng-show="subOpened">
@@ -85,8 +89,10 @@
                                     <ul>
                                         <li ng-repeat="property in class.properties">
                                             <a ng-click="vm.edit(oi, ci, $index)"
-                                               ng-class="{'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                                <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
+                                               ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
+                                                <i class="fa fa-fw {{property.icon}}"></i>
+                                                {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                                <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
                                             </a>
                                         </li>
                                     </ul>
@@ -118,8 +124,10 @@
                                     <ul>
                                         <li ng-repeat="property in ontology.noDomains">
                                             <a ng-click="vm.edit(oi, undefined, $index)"
-                                               ng-class="{'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                                <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
+                                               ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
+                                                <i class="fa fa-fw {{property.icon}}"></i>
+                                                {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                                <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
                                             </a>
                                         </li>
                                     </ul>
@@ -154,8 +162,9 @@
                                 <li ng-repeat="class in ontology.classes">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, $index)"
-                                       ng-class="{'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
+                                       ng-class="{'unsaved': class.unsaved, 'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
                                         {{class[ontology.rdfs + 'label'] || class['@id']}}
+                                        <i ng-show="class.unsaved" class="fa fa-circle pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -186,8 +195,10 @@
                                 <li ng-repeat="property in class.properties" ng-if="property['@type'] == ontology.owl + 'ObjectProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, ci, $index)"
-                                       ng-class="{'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
+                                       ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
+                                        <i class="fa fa-fw {{property.icon}}"></i>
+                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -196,8 +207,10 @@
                                 <li ng-repeat="property in ontology.noDomains" ng-if="property['@type'] == ontology.owl + 'ObjectProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, undefined, $index)"
-                                       ng-class="{'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
+                                       ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
+                                        <i class="fa fa-fw {{property.icon}}"></i>
+                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -228,8 +241,10 @@
                                 <li ng-repeat="property in class.properties" ng-if="property['@type'] == ontology.owl + 'DataTypeProperty' || property['@type'] == ontology.owl + 'DatatypeProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, ci, $index);"
-                                       ng-class="{'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
+                                       ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
+                                        <i class="fa fa-fw {{property.icon}}"></i>
+                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -238,8 +253,10 @@
                                 <li ng-repeat="property in ontology.noDomains" ng-if="property['@type'] == ontology.owl + 'DataTypeProperty' || property['@type'] == ontology.owl + 'DatatypeProperty'">
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, undefined, $index)"
-                                       ng-class="{'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
+                                       ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
+                                        <i class="fa fa-fw {{property.icon}}"></i>
+                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -292,7 +309,7 @@
                             <!-- identifier -->
                             <div class="form-group col-xs-9">
                                 <label class="control-label" for="ontology-identifier">Identifier</label>
-                                <input type="text" class="form-control" id="ontology-identifier" name="iri" ng-model="vm.selected.identifier" ng-trim="false">
+                                <input type="text" class="form-control" id="ontology-identifier" name="iri" ng-model="vm.selected.identifier" ng-trim="false" ng-change="vm.unsaved();">
                             </div>
                             <!-- delimiter -->
                             <div class="form-group col-xs-3">
@@ -307,12 +324,12 @@
                         <!-- label -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-label">{{vm.ontologies[vm.current.oi].rdfs}}label</label>
-                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false">
+                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false" ng-change="vm.unsaved();">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-comments">{{vm.ontologies[vm.current.oi].rdfs}}comment</label>
-                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']"></textarea>
+                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.unsaved();"></textarea>
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].tab != 'annotations'" class="btn-container clearfix">
@@ -338,23 +355,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!--tr ng-repeat="(key, value) in vm.selected.context track by $index">
-                                    <td>
-                                        <input id="prefix-{{$index}}" type="text" value="{{key}}" ng-readonly="!editKey" />
-                                        <button type="button" class="btn btn-link edit" ng-click="vm.editPrefix(editKey, key, $index, value); editKey = !editKey;">
-                                            <i class="fa fa-pencil" ng-class="{'fa-pencil': !editKey, 'fa-floppy-o': editKey}"></i>
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <input id="value-{{index}}" type="text" value="{{value}}" ng-readonly="!editValue" />
-                                        <button type="button" class="btn btn-link edit" ng-click="editValue = !editValue;">
-                                            <i class="fa fa-pencil" ng-class="{'fa-pencil': !editValue, 'fa-floppy-o': editValue}"></i>
-                                        </button>
-                                    </td>
-                                    <td class="action-button">
-                                        <button type="button" class="btn btn-link remove" ng-click="vm.removePrefix(key)"><i class="fa fa-minus"></i></button>
-                                    </td>
-                                </tr-->
                                 <tr ng-repeat="item in vm.selected.context track by $index">
                                     <td>
                                         <input id="prefix-{{$index}}" type="text" value="{{item.key}}" ng-readonly="!editKey" />
@@ -391,12 +391,6 @@
                             <strong ng-if="vm.showEmptyMessage" class="help-block">Both prefix and value must be provided.</strong>
                         </div>
                     </div>
-
-                    <!-- buttons -->
-                    <!--div ng-show="vm.ontologies[vm.current.oi].tab != 'annotations'" class="btn-container clearfix">
-                        <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.ontologyForm.$invalid">Save</button>
-                        <button ng-if="vm.current.oi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
-                    </div-->
                 </form>
 
                 <!-- class editor -->
@@ -421,7 +415,7 @@
                             <label class="control-label" for="class-iri">Identifier</label>
                             <div class="input-group">
                                 <div class="input-group-addon">{{vm.selected.prefix}}</div>
-                                <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
+                                <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" ng-change="vm.unsaved();" required>
                             </div>
                             <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
                             <strong ng-if="vm.classForm.iri.$invalid && !vm.classForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
@@ -429,12 +423,12 @@
                         <!-- name -->
                         <div class="form-group">
                             <label class="control-label" for="class-name">{{vm.ontologies[vm.current.oi].rdfs}}label</label>
-                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false">
+                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false" ng-change="vm.unsaved();">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="class-comments">{{vm.ontologies[vm.current.oi].rdfs}}comment</label>
-                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']"></textarea>
+                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.unsaved();"></textarea>
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].tab != 'annotations'" class="btn-container clearfix">
@@ -447,12 +441,6 @@
                     <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].tab == 'annotations'" class="tab clearfix">
                         <div ng-include="'annotations-template'"></div>
                     </div>
-
-                    <!-- buttons -->
-                    <!--div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].tab != 'annotations'" class="btn-container clearfix">
-                        <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid">Save</button>
-                        <button ng-if="vm.current.ci != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
-                    </div-->
                 </form>
 
                 <!-- property editor -->
@@ -477,7 +465,7 @@
                             <label class="control-label" for="property-iri">Identifier</label>
                             <div class="input-group">
                                 <div class="input-group-addon">{{vm.selected.prefix}}</div>
-                                <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required>
+                                <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required ng-change="vm.unsaved();">
                             </div>
                             <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
                             <strong ng-if="vm.propertyForm.iri.$invalid && !vm.propertyForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
@@ -485,12 +473,12 @@
                         <!-- name -->
                         <div class="form-group">
                             <label class="control-label" for="property-name">{{vm.ontologies[vm.current.oi].rdfs}}label</label>
-                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']">
+                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-change="vm.unsaved();">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="property-comments">{{vm.ontologies[vm.current.oi].rdfs}}comment</label>
-                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']"></textarea>
+                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.unsaved();"></textarea>
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab != 'annotations'" class="btn-container clearfix">
@@ -503,12 +491,6 @@
                     <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab == 'annotations'" class="tab clearfix">
                         <div ng-include="'annotations-template'"></div>
                     </div>
-
-                    <!-- buttons -->
-                    <!--div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab != 'annotations'" class="btn-container clearfix">
-                        <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.propertyForm.$invalid">Save</button>
-                        <button ng-if="vm.current.pi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
-                    </div-->
                 </form>
             </div>
         </section>

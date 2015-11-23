@@ -50,6 +50,7 @@
         vm.removeAnnotation = removeAnnotation;
         vm.newDelimiter = newDelimiter;
         vm.editPrefix = editPrefix;
+        vm.unsaved = unsaved;
 
         activate();
 
@@ -91,6 +92,7 @@
         // adds the annotation that the user is editing
         function addAnnotation() {
             var add;
+
             // adds the item to the actual object
             if(vm.selected.currentAnnotation !== 'other') {
                 vm.selected[vm.selected.currentAnnotation] = vm.selected.currentAnnotationValue;
@@ -99,22 +101,37 @@
                 vm.selected[vm.selected.currentAnnotationKey] = vm.selected.currentAnnotationValue;
                 add = vm.selected.currentAnnotationKey;
             }
+
             // adds the annotation to the list of items used to determine which is shown in the drop down
             vm.selected.annotations.push(add);
+
             // resets the value
             vm.selected.currentAnnotation = 'default';
             vm.selected.currentAnnotationValue = '';
             vm.selected.currentAnnotationKey = '';
+
+            // resets unsaved
+            vm.selected.unsaved = false;
         }
 
         // if the uri of the ontology changes, this function will update the rest of the ids to match
         function _updateRefs(obj, old, fresh) {
-            var prop, i, arr;
+            var prop, i, arr,
+                exclude = [
+                    '$$hashKey',
+                    'annotationList',
+                    'annotations',
+                    'context',
+                    'identifier',
+                    'unsaved'
+                ];
 
             // iterates over all of the properties of the object
             for(prop in obj) {
-                // don't do anything if it is the context array
-                if(prop === 'context') { }
+                // if anything in exclude list
+                if(exclude.indexOf(prop) !== -1) {
+                    // do nothing
+                }
                 // iterates through the array and recursively calls this function
                 else if(Object.prototype.toString.call(obj[prop]) === '[object Array]') {
                     i = obj[prop].length;
@@ -141,6 +158,9 @@
         function newDelimiter(old) {
             var fresh = vm.selected.identifier + vm.selected.delimiter;
             _updateRefs(vm.selected, old, fresh);
+
+            // sets selected as unsaved
+            unsaved();
         }
 
         // determines which image should be shown depending on the type of property
@@ -152,7 +172,7 @@
                     case 'xsd:string':
                         icon = 'fa-font';
                         break;
-                    // TODO: pick another better icon for this
+                    // TODO: pick better icon for this
                     case rdfs + 'Literal':
                         icon = 'fa-i-cursor';
                         break;
@@ -213,7 +233,10 @@
                     'classes',
                     'icon'
                 ];
+
+            // adds the annotations property to the object
             obj.annotations = [];
+
             // looks for all annotations not used elsewhere
             for(prop in obj) {
                 // adds all the other non-rdfs:label
@@ -571,11 +594,11 @@
                     changed = angular.copy(vm.selected);
 
                 // a property is being submitted
-                if(pi != undefined) {
+                if(pi !== undefined) {
                     // there is an ontology defined for the property being edited/created
                     latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
                     // if pi != -1, an existing property is being edited
-                    if(pi != -1) {
+                    if(pi !== -1) {
                         latest.classes[ci].properties[pi] = angular.merge(latest.classes[ci].properties[pi], changed);
                     }
                     // otherwise, a property is being created
@@ -588,11 +611,11 @@
                 }
 
                 // a class is being submitted
-                else if(ci != undefined) {
+                else if(ci !== undefined) {
                     // there is an ontology defined for the class being edited/created
                     latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
                     // if ci != -1, an existing class is being edited
-                    if(ci != -1) {
+                    if(ci !== -1) {
                         latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
                         delete changed.properties;
                         latest.classes[ci] = angular.merge(latest.classes[ci], changed);
@@ -608,7 +631,7 @@
 
                 // an ontology is being submitted
                 // if oi != -1, an existing ontology is being edited
-                else if(oi != -1) {
+                else if(oi !== -1) {
                     latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
                     delete changed.classes;
                     changed['@id'] = changed.identifier + changed.delimiter;
@@ -619,7 +642,7 @@
 
                 // if an ontology is not being created, add this version to the versions list
                 // note: this will only be false whenever they are creating a new ontology
-                if(oi != -1) {
+                if(oi !== -1) {
                     vm.versions[oi].push({ time: new Date(), ontology: latest });
                 }
                 // otherwise, add a new entry to versions with this new ontology
@@ -629,6 +652,17 @@
                     delete vm.newItems[vm.tab + oi];
                     vm.current = { oi: vm.ontologies.length - 1, ci: undefined, pi: undefined };
                 }
+
+                // updates context if ontology was changed for the case where the id has a prefix set
+                if(pi === undefined && ci === undefined && oi !== undefined) {
+                    var old = vm.versions[oi][vm.versions[oi].length - 2].ontology['@id'],
+                        fresh = changed['@id'];
+                    _updateRefs(vm.ontologies[oi].context, old, fresh);
+                    _updateRefs(vm.ontologies[oi], old, fresh);
+                }
+
+                // updates the selected item to be saved now
+                vm.selected.unsaved = false;
             }
         }
 
@@ -699,11 +733,12 @@
 
         // removes the prefix from the ontology
         function removePrefix(key) {
-            _updateRefs(vm.ontologies[vm.current.oi], key + ':', vm.selected.context[key]);
+            // _updateRefs(vm.ontologies[vm.current.oi], key + ':', vm.ontologies[vm.current.oi].context[key]); - OBJECT VERSION
             // delete vm.selected.context[key]; - OBJECT VERSION
             var i = vm.ontologies[vm.current.oi].context.length;
             while(i--) {
-                if(vm.ontologies[vm.current.oi].context[i].key == key) {
+                if(vm.ontologies[vm.current.oi].context[i].key === key) {
+                    _updateRefs(vm.ontologies[vm.current.oi], key + ':', vm.ontologies[vm.current.oi].context[i].value);
                     vm.ontologies[vm.current.oi].context.splice(i, 1);
                     break;
                 }
@@ -731,6 +766,11 @@
                 // focuses the newly editable input
                 input.focus();
             }
+        }
+
+        // marks the selected item as unsaved
+        function unsaved() {
+            vm.selected.unsaved = true;
         }
     }
 })();
