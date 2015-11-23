@@ -3,8 +3,17 @@ package org.matonto.etl.rest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.opencsv.CSVReader;
+import org.apache.camel.Exchange;
+import org.apache.camel.processor.loadbalancer.ExceptionFailureStatistics;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.openrdf.model.Model;
+import org.openrdf.model.Statement;
+import org.openrdf.model.impl.LinkedHashModel;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFWriter;
+import org.openrdf.rio.Rio;
+
 import java.io.*;
 import java.util.*;
 
@@ -17,10 +26,12 @@ public class CSV{
     private static final Logger logger = Logger.getLogger(CSV.class);
     private String fileName = "";
 
-
-    public String upload(ByteArrayInputStream inputStream){
+    /**
+     * Uploads a delimited document to the data/tmp/ directory.
+     * @param inputStream A ByteArrayInputStream of a delimited document
+     */
+    public void upload(ByteArrayInputStream inputStream){
         File file = new File("data.csv");
-        StringBuilder s = new StringBuilder();
         try{
            OutputStream out = new FileOutputStream("data/tmp/" + fileName);
 
@@ -35,16 +46,53 @@ public class CSV{
         }catch(Exception e){
             throw new RuntimeException("Error Saving Document");
         }
-        logger.info(s.toString());
-        return s.toString();
     }
 
-    public void setFileName(String fileName){this.fileName = fileName;}
+    /**
+     * ETL an uploaded file using a JSONLD Mapping File.
+     * @param mappingJSON the mapping file in JSONLD format
+     * @param fileName The name of the uploaded file
+     * @return A JSONLD String of the converted file
+     */
+    public String etlFile(ByteArrayInputStream mappingJSON, String fileName){
+        try{
+            OutputStream out = new FileOutputStream("data/tmp/mappingFile.jsonld");
 
-    public void setMappingModel(String mappingJSON){
+            // Transfer bytes from in to out
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = mappingJSON.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            mappingJSON.close();
+            out.close();
+        }catch(Exception e) {
+            throw new RuntimeException("Error Saving Document");
+        }
+        Model m = new LinkedHashModel();
+        try{
+            m = csvConverter.convert(new File("data/tmp/" + fileName),new File("data/tmp/mappingFile.jsonld"));
+        }catch(Exception e){
+            throw new RuntimeException(e);
+        }
+        StringWriter sw = new StringWriter();
+        Rio.write(m,sw, RDFFormat.JSONLD);
 
+        return sw.toString();
+//        StringBuilder sb = new StringBuilder();
+//        for(Statement s : m ) {
+//            sb.append(s.toString() + "\n");
+//        }
+//        return sb.toString();
     }
 
+    /**
+     * Return a preview of the given delimited file. File must be present in the data/tmp/ directory
+     * @param fileName The name of the file to preview
+     * @param rowEnd The number of lines to show in the preview
+     * @return A JSON Array. Each element in the array is a row in the document. The Row is an array of strings.
+     * The strings are each a cell in the row.
+     */
     public String getRows(String fileName, int rowEnd){
         File file = new File("data/tmp/" + fileName);
         String json = "";

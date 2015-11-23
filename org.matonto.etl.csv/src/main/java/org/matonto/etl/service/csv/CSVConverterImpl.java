@@ -286,7 +286,13 @@ public class CSVConverterImpl implements CSVConverter {
      * @throws IOException       Thrown if there is a problem reading the file.
      */
     private Model parseMapping(File mapping) throws RDFParseException, IOException {
-        RDFFormat mapFormat = Rio.getParserFormatForFileName(mapping.getName());
+        String extension = mapping.getName().split("\\.")[mapping.getName().split("\\.").length - 1];
+        logger.info("FileName = " + mapping.getName() + "\t Extension:" + extension);
+        RDFFormat mapFormat;
+        if(extension.equals("jsonld"))
+            mapFormat = RDFFormat.JSONLD;
+        else
+            mapFormat = Rio.getParserFormatForFileName(mapping.getName());
         FileReader r = new FileReader(mapping);
         Model m;
         m = Rio.parse(r, "", mapFormat);
