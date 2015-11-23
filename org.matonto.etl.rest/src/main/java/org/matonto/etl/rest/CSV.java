@@ -56,7 +56,7 @@ public class CSV{
             CSVReader reader = new CSVReader(new FileReader(file));
             List<String[]> csvRows = reader.readAll();
             List<String[]> returnRows = new ArrayList<String[]>();
-            for(int i = 0; i < rowEnd; i ++){
+            for(int i = 0; i < rowEnd && i < csvRows.size(); i ++){
                 returnRows.add(i, csvRows.get(i));
             }
 
