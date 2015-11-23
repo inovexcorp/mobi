@@ -82,6 +82,7 @@
 
             <post uri="etl/{document.name}">
                 <description>ETL the document using the posted mapping file</description>
+                <param name="document.name" type="header" description="The name of the document to etl"/>
                 <route>
                     <to uri="bean:csvService?method=setMappingFile"/>
                     <to uri="bean:csvService?method=etlFile(${header.document.name})"/>
@@ -91,9 +92,19 @@
             <get uri="/preview/{document.name}">
                 <description>Gather rows from a document</description>
                 <param name="document.name" type="path" description="The document name"/>
-                <param name="row.count" type="header"/>
+                <param name="Row-Count" type="header"/>
                 <route>
-                    <to uri="bean:csvService?method=getRows(${header.document.name},${header.row.count})"/>
+                    <choice>
+                        <when>
+                            <simple>${header.Row-Count} != null</simple>
+                            <to uri="bean:csvService?method=getRows(${header.document.name},${header.Row-Count})"/>
+                        </when>
+                        <when>
+                            <simple>${header.Row-Count} == null</simple>
+                            <to uri="bean:csvService?method=getRows(${header.document.name},10)"/>
+                        </when>
+                    </choice>
+
                 </route>
             </get>
         </rest>

@@ -22,7 +22,7 @@ public class CSV{
         File file = new File("data.csv");
         StringBuilder s = new StringBuilder();
         try{
-           OutputStream out = new FileOutputStream(fileName + ".csv");
+           OutputStream out = new FileOutputStream("data/tmp/" + fileName);
 
         // Transfer bytes from in to out
             byte[] buf = new byte[1024];
@@ -46,14 +46,17 @@ public class CSV{
     }
 
     public String getRows(String fileName, int rowEnd){
-        File file = new File(fileName);
+        File file = new File("data/tmp/" + fileName);
         String json = "";
         logger.info("File: " + fileName + " End: " + rowEnd);
+        if (rowEnd == 0) {
+            rowEnd = 10;
+        }
         try {
             CSVReader reader = new CSVReader(new FileReader(file));
             List<String[]> csvRows = reader.readAll();
             List<String[]> returnRows = new ArrayList<String[]>();
-            for(int i = 0; i <= rowEnd; i ++){
+            for(int i = 0; i < rowEnd; i ++){
                 returnRows.add(i, csvRows.get(i));
             }
 
