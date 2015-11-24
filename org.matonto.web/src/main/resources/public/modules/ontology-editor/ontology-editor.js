@@ -119,7 +119,6 @@
             var prop, i, arr,
                 exclude = [
                     '$$hashKey',
-                    'annotationList',
                     'annotations',
                     'context',
                     'identifier',
@@ -136,7 +135,14 @@
                 else if(Object.prototype.toString.call(obj[prop]) === '[object Array]') {
                     i = obj[prop].length;
                     while(i--) {
-                        _updateRefs(obj[prop][i], old, fresh);
+                        // means that it is the annotationList
+                        if(typeof obj[prop][i] === 'string') {
+                            obj[prop][i] = obj[prop][i].replace(old, fresh);
+                        }
+                        // else, something else
+                        else {
+                            _updateRefs(obj[prop][i], old, fresh);
+                        }
                     }
                 }
                 // recursively call this function
@@ -149,7 +155,7 @@
                 }
                 // remove the old prefix and replace it with the new
                 else if(obj[prop].indexOf(old) !== -1 && prop !== fresh.replace(':', '')) {
-                    obj[prop] = fresh + obj[prop].replace(old, '');
+                    obj[prop] = obj[prop].replace(old, fresh);
                 }
             }
         }
