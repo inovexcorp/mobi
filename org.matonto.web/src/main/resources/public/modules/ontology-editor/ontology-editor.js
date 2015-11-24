@@ -116,10 +116,9 @@
 
         // if the uri of the ontology changes, this function will update the rest of the ids to match
         function _updateRefs(obj, old, fresh) {
-            var prop, i, arr,
+            var temp, prop, i, arr,
                 exclude = [
                     '$$hashKey',
-                    'annotations',
                     'context',
                     'identifier',
                     'unsaved'
@@ -127,6 +126,16 @@
 
             // iterates over all of the properties of the object
             for(prop in obj) {
+                // checks to see if the property contains the old string
+                if(prop.indexOf(old) !== -1) {
+                    // copies current value
+                    temp = angular.copy(obj[prop]);
+                    // deletes property
+                    delete obj[prop];
+                    // adds new property name
+                    obj[prop.replace(old, fresh)] = temp;
+                }
+
                 // if anything in exclude list
                 if(exclude.indexOf(prop) !== -1) {
                     // do nothing
@@ -154,7 +163,7 @@
                     obj.prefix = fresh;
                 }
                 // remove the old prefix and replace it with the new
-                else if(obj[prop].indexOf(old) !== -1 && prop !== fresh.replace(':', '')) {
+                else if(obj[prop].indexOf(old) !== -1) {
                     obj[prop] = obj[prop].replace(old, fresh);
                 }
             }
