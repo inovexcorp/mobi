@@ -28,8 +28,8 @@
         vm.tab = 'everything';
         vm.newPrefix = '';
         vm.newValue = '';
-        vm.propertyDefault = { '@id': '', annotations: [] };
-        vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [], annotations: [] };
+        vm.propertyDefault = { '@id': '', annotations: []};
+        vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [], annotations: []};
         vm.ontologyDefault = _setOntologyDefault();
         vm.versions = [];
         vm.ontologies = [];
@@ -67,12 +67,10 @@
                 classes: [],
                 context: [],
                 annotations: [],
-                context: {
-                    rdf: defaultRdf,
-                    rdfs: defaultRdfs,
-                    xsd: defaultXsd,
-                    owl: defaultOwl
-                }
+                annotationList: _setAnnotations('rdfs:', 'owl:', []),
+                rdfs: 'rdfs:',
+                owl: 'owl:',
+                context: objToArr({ rdf: defaultRdf, rdfs: defaultRdfs, xsd: defaultXsd, owl: defaultOwl })
             };
         }
 
@@ -116,7 +114,7 @@
 
         // if the uri of the ontology changes, this function will update the rest of the ids to match
         function _updateRefs(obj, old, fresh) {
-            var temp, prop, i, arr,
+            var temp, prop, i, arr, excluded,
                 exclude = [
                     '$$hashKey',
                     'context',
@@ -126,19 +124,22 @@
 
             // iterates over all of the properties of the object
             for(prop in obj) {
+                excluded = exclude.indexOf(prop);
                 // checks to see if the property contains the old string
-                if(prop.indexOf(old) !== -1) {
+                if(prop.indexOf(old) !== -1 && excluded === -1) {
                     // copies current value
                     temp = angular.copy(obj[prop]);
                     // deletes property
                     delete obj[prop];
                     // adds new property name
-                    obj[prop.replace(old, fresh)] = temp;
+                    prop = prop.replace(old, fresh);
+                    obj[prop] = temp;
                 }
 
                 // if anything in exclude list
-                if(exclude.indexOf(prop) !== -1) {
+                if(excluded !== -1) {
                     // do nothing
+                    console.log('excluded', prop, obj[prop]);
                 }
                 // iterates through the array and recursively calls this function
                 else if(Object.prototype.toString.call(obj[prop]) === '[object Array]') {
@@ -479,14 +480,19 @@
             // if they are creating
             if(index === -1) {
                 // checks to see if they were already editing this node
-                if(!vm.newItems.hasOwnProperty(unique)) vm.newItems[unique] = angular.copy(base);
-                // adds the updated prefix to the created element if present
-                if(vm.ontologies[vm.current.oi].hasOwnProperty('prefix')) {
-                    vm.newItems[unique].prefix = vm.ontologies[vm.current.oi].prefix;
+                if(!vm.newItems.hasOwnProperty(unique)) {
+                    vm.newItems[unique] = angular.copy(base);
                 }
-                // else, just uses the ontology's id if nothing is set
-                else if(!vm.newItems[unique].hasOwnProperty('prefix')) {
-                    vm.newItems[unique].prefix = vm.ontologies[vm.current.oi].identifier + vm.ontologies[vm.current.oi].delimiter;
+                // makes sure it is not creating
+                if(vm.current.oi !== -1) {
+                    // adds the updated prefix to the created element if present
+                    if(vm.ontologies[vm.current.oi].hasOwnProperty('prefix')) {
+                        vm.newItems[unique].prefix = vm.ontologies[vm.current.oi].prefix;
+                    }
+                    // else, just uses the ontology's id if nothing is set
+                    else if(!vm.newItems[unique].hasOwnProperty('prefix')) {
+                        vm.newItems[unique].prefix = vm.ontologies[vm.current.oi].identifier + vm.ontologies[vm.current.oi].delimiter;
+                    }
                 }
                 vm.selected = vm.newItems[unique];
                 // selects the default annotation
@@ -602,12 +608,13 @@
         function submit(isValid) {
             // if all angular validation passes
             if(isValid) {
-                var latest,
+                var latest, temp,
                     oi = vm.current.oi,
                     ci = vm.current.ci,
                     pi = vm.current.pi,
                     changed = angular.copy(vm.selected);
-
+                // sets the changed item to saved now
+                changed.unsaved = false;
                 // a property is being submitted
                 if(pi !== undefined) {
                     // there is an ontology defined for the property being edited/created
@@ -621,7 +628,9 @@
                         vm.ontologies[oi].classes[ci].properties.push(changed);
                         latest.classes[ci].properties.push(changed);
                         delete vm.newItems[vm.tab + oi + ci + pi];
-                        vm.current = { oi: oi, ci: ci, pi: vm.ontologies[oi].classes[ci].properties.length - 1 };
+                        temp = vm.ontologies[oi].classes[ci].properties
+                        vm.current = { oi: oi, ci: ci, pi: temp.length - 1 };
+                        vm.selected = temp[temp.length - 1];
                     }
                 }
 
@@ -640,7 +649,9 @@
                         vm.ontologies[oi].classes.push(changed);
                         latest.classes.push(changed);
                         delete vm.newItems[vm.tab + oi + ci];
-                        vm.current = { oi: oi, ci: vm.ontologies[oi].classes.length - 1, pi: undefined };
+                        temp = vm.ontologies[oi].classes;
+                        vm.current = { oi: oi, ci: temp.length - 1, pi: undefined };
+                        vm.selected = temp[temp.length - 1];
                     }
                 }
 
@@ -665,18 +676,22 @@
                     vm.ontologies.push(changed);
                     vm.versions.push([{ time: new Date(), ontology: changed }]);
                     delete vm.newItems[vm.tab + oi];
-                    vm.current = { oi: vm.ontologies.length - 1, ci: undefined, pi: undefined };
+                    temp = vm.ontologies;
+                    vm.current = { oi: temp.length - 1, ci: undefined, pi: undefined };
+                    vm.selected = temp[temp.length - 1];
                 }
 
                 // updates context if ontology was changed for the case where the id has a prefix set
-                if(pi === undefined && ci === undefined && oi !== undefined) {
+                if(pi === undefined && ci === undefined && oi !== undefined && oi !== -1) {
                     var old = vm.versions[oi][vm.versions[oi].length - 2].ontology['@id'],
                         fresh = changed['@id'];
-                    _updateRefs(vm.ontologies[oi].context, old, fresh);
-                    _updateRefs(vm.ontologies[oi], old, fresh);
+                    if(old !== '') {
+                        _updateRefs(vm.ontologies[oi].context, old, fresh);
+                        _updateRefs(vm.ontologies[oi], old, fresh);
+                    }
                 }
 
-                // updates the selected item to be saved now
+                // it is now saved
                 vm.selected.unsaved = false;
             }
         }

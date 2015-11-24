@@ -10,7 +10,7 @@
         <label class="control-label" for="ontology-annotation-list">Annotation</label>
         <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.currentAnnotation" ng-change="vm.unsaved();">
             <option value="default">Please select an annotation to add</option>
-            <option ng-repeat="annotation in vm.ontologies[vm.current.oi].annotationList" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
+            <option ng-repeat="annotation in ((vm.current.oi === -1) ? vm.selected.annotationList : vm.ontologies[vm.current.oi].annotationList)" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
             <option value="other">Add a new annotation</option>
         </select>
     </div>
@@ -323,13 +323,13 @@
                         </div>
                         <!-- label -->
                         <div class="form-group">
-                            <label class="control-label" for="ontology-label">{{vm.ontologies[vm.current.oi].rdfs}}label</label>
-                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false" ng-change="vm.unsaved();">
+                            <label class="control-label" for="ontology-label">{{(vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs}}label</label>
+                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[((vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs) + 'label']" ng-trim="false" ng-change="vm.unsaved();">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
-                            <label class="control-label" for="ontology-comments">{{vm.ontologies[vm.current.oi].rdfs}}comment</label>
-                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.unsaved();"></textarea>
+                            <label class="control-label" for="ontology-comments">{{(vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs}}comment</label>
+                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[((vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs) + 'comment']" ng-change="vm.unsaved();"></textarea>
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].tab != 'annotations'" class="btn-container clearfix">
