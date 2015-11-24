@@ -55,6 +55,7 @@ public enum SimpleEntityType {
 		return SimpleEntityType.valueOf(entityType.getName());
 	}
 	
+	
 	public static EntityType<?> owlapiEntityType(SimpleEntityType simpleEntityType)
 	{
 		EntityType<?> entityType = null;

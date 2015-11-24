@@ -12,13 +12,15 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 public abstract class SimpleAxiom implements Axiom {
 
 	private Set<Annotation> annotations;
+	protected Set<Annotation> NO_ANNOTATIONS;
 	
 	public SimpleAxiom(Set<Annotation> annotations)
 	{
 		if(annotations.isEmpty())
 			this.annotations = Collections.emptySet();
+		
 		else
-			this.annotations = annotations;
+			this.annotations = new HashSet<Annotation>(annotations);
 	}
 	
 	@Override
@@ -48,12 +50,11 @@ public abstract class SimpleAxiom implements Axiom {
 	@Override
 	public boolean equals(Object obj)
 	{
-		if (this == obj) {
+		if (this == obj) 
 		    return true;
-		}
 		
-		if (obj instanceof SimpleAxiom) {
-			SimpleAxiom other = (SimpleAxiom)obj;			 
+		if (obj instanceof Axiom) {
+			Axiom other = (Axiom)obj;			 
 			return annotations.equals(other.getAnnotations());
 		}
 		

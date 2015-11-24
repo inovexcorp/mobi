@@ -12,5 +12,7 @@ public interface Axiom {
 	
 	public Axiom getAxiomWithoutAnnotations();
 	
+	public Axiom getAnnotatedAxiom(Set<Annotation> annotations);
+	
 	public SimpleAxiomType getAxiomType();
 }
