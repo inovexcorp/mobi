@@ -48,7 +48,7 @@ public class SimpleOntology implements Ontology {
 
 	private OntologyIRI iri;
 	private SimpleOntologyId ontologyId;
-	private Set<OWLAxiom> axioms;
+	private Set<Axiom> axioms;
 	private Set<Annotation> annotations;
 	private Set<OntologyIRI> directImportIris;
 	
@@ -198,9 +198,9 @@ public class SimpleOntology implements Ontology {
 
 	
 //	@Override
-	public Set<OWLAxiom> getAxioms() 
+	public Set<Axiom> getAxioms() 
 	{
-		return new HashSet<OWLAxiom>(axioms);
+		return new HashSet<Axiom>(axioms);
 	}
 	
 	
@@ -421,8 +421,8 @@ public class SimpleOntology implements Ontology {
 	
 	private void getOntologyAxioms()
 	{
-		if(ontology != null) 
-			axioms = ontology.getAxioms();
+//		if(ontology != null) 
+//			axioms = ontology.getAxioms();
 	}
 	
 
