@@ -10,7 +10,8 @@ import com.google.common.base.Preconditions;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 
-public class SimpleNamedIndividual implements NamedIndividual {
+public class SimpleNamedIndividual 
+	implements NamedIndividual {
 
 	private OntologyIRI iri;
 	
@@ -63,6 +64,20 @@ public class SimpleNamedIndividual implements NamedIndividual {
 		OntologyIRI matontoIri = ((SimpleNamedIndividual) matontoIndividual).getIRI();
 		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
 		return new OWLNamedIndividualImpl(owlapiIri);
+	}
+
+
+	@Override
+	public boolean isNamed() 
+	{
+		return true;
+	}
+
+
+	@Override
+	public boolean isAnonymous() 
+	{
+		return false;
 	}
 
 }

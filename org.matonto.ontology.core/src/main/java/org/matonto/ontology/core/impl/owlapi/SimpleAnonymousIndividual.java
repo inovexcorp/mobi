@@ -12,14 +12,18 @@ import com.google.common.base.Preconditions;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLAnonymousIndividualImpl;
 
-public class SimpleAnonymousIndividual implements AnonymousIndividual {
+public class SimpleAnonymousIndividual 
+	implements AnonymousIndividual {
 
+	
 	private NodeID nodeId;
+	
 	
 	public SimpleAnonymousIndividual(NodeID nodeId) 
 	{
 		this.nodeId = (NodeID)Preconditions.checkNotNull(nodeId,"nodeID cannot be null");
 	}
+	
 	
 	@Override 
 	public String getId() 
@@ -27,33 +31,39 @@ public class SimpleAnonymousIndividual implements AnonymousIndividual {
 		return nodeId.getID();
 	}
 	
+	
 	public NodeID getNodeID() 
 	{
 		return nodeId;
 	}
 
+	
 	@Override
 	public Optional<OntologyIRI> asIRI() 
 	{
 		return Optional.absent();
 	}
 
+	
 	@Override
 	public Optional<Literal> asLiteral() 
 	{
 		return Optional.absent();
 	}
 
+	
 	@Override
 	public Optional<AnonymousIndividual> asAnonymousIndividual() 
 	{
 		return Optional.of(this);
 	}
 	
+	
 	public static OWLAnonymousIndividual owlapiAnonymousIndividual(AnonymousIndividual individual)
 	{
 		return new OWLAnonymousIndividualImpl(NodeID.getNodeID(individual.getId()));
 	}
+	
 	
 	public static AnonymousIndividual matontoAnonymousIndividual(OWLAnonymousIndividual owlIndividual)
 	{
@@ -74,10 +84,25 @@ public class SimpleAnonymousIndividual implements AnonymousIndividual {
         return false;
 	}
 	
+	
 	@Override
 	public int hashCode()
 	{
 		return nodeId.hashCode();
+	}
+
+
+	@Override
+	public boolean isNamed() 
+	{
+		return false;
+	}
+
+
+	@Override
+	public boolean isAnonymous() 
+	{
+		return true;
 	}
 
 }
