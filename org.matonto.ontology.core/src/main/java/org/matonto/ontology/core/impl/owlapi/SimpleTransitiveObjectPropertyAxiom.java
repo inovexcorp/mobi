@@ -3,9 +3,7 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.Set;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.Axiom;
 import org.matonto.ontology.core.api.ObjectPropertyExpression;
-import org.matonto.ontology.core.api.ReflexiveObjectPropertyAxiom;
 import org.matonto.ontology.core.api.TransitiveObjectPropertyAxiom;
 
 import com.google.common.base.Preconditions;
