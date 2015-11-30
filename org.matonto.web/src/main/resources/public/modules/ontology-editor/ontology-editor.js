@@ -28,28 +28,27 @@
         vm.tab = 'everything';
         vm.newPrefix = '';
         vm.newValue = '';
-        vm.propertyDefault = { '@id': '', annotations: []};
-        vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [], annotations: []};
+        vm.propertyDefault = { '@id': '', annotations: [] };
+        vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [], annotations: [] };
         vm.ontologyDefault = _setOntologyDefault();
-        vm.versions = [];
-        vm.ontologies = [];
         vm.annotations = [];
-        vm.state = {};
+        vm.ontologies = [];
+        vm.versions = [];
         vm.current = {};
         vm.newItems = {};
         vm.selected = {};
+        vm.state = {};
 
         // public functions
+        vm.addAnnotation = addAnnotation;
+        vm.addPrefix = addPrefix;
+        vm.changeTab = changeTab;
         vm.edit = edit;
+        vm.editPrefix = editPrefix;
+        vm.removeAnnotation = removeAnnotation;
+        vm.removePrefix = removePrefix;
         vm.reset = reset;
         vm.submit = submit;
-        vm.addPrefix = addPrefix;
-        vm.removePrefix = removePrefix;
-        vm.changeTab = changeTab;
-        vm.addAnnotation = addAnnotation;
-        vm.removeAnnotation = removeAnnotation;
-        vm.newDelimiter = newDelimiter;
-        vm.editPrefix = editPrefix;
         vm.unsaved = unsaved;
 
         activate();
@@ -118,7 +117,9 @@
                 exclude = [
                     '$$hashKey',
                     'context',
+                    'currentAnnotation',
                     'identifier',
+                    'tab',
                     'unsaved'
                 ];
 
@@ -139,7 +140,6 @@
                 // if anything in exclude list
                 if(excluded !== -1) {
                     // do nothing
-                    console.log('excluded', prop, obj[prop]);
                 }
                 // iterates through the array and recursively calls this function
                 else if(Object.prototype.toString.call(obj[prop]) === '[object Array]') {
@@ -161,7 +161,12 @@
                 }
                 // sets the prefix value for this object
                 else if(prop === '@id' && obj['@type'] === vm.ontologies[vm.current.oi].owl + 'Ontology') {
-                    obj.prefix = fresh;
+                    obj.prefix = obj.prefix ? obj.prefix.replace(old, fresh) : fresh;
+                }
+                // saves the code from breaking by trying to find the indexOf some undefined property
+                // TODO: remove this console.warn for production as it is just used for testing
+                else if(!obj[prop]) {
+                    console.warn('*' + prop + '* is undefined ->', obj);
                 }
                 // remove the old prefix and replace it with the new
                 else if(obj[prop].indexOf(old) !== -1) {
@@ -170,40 +175,31 @@
             }
         }
 
-        // update the prefix because the delimiter was selected
-        function newDelimiter(old) {
-            var fresh = vm.selected.identifier + vm.selected.delimiter;
-            _updateRefs(vm.selected, old, fresh);
-
-            // sets selected as unsaved
-            unsaved();
-        }
-
         // determines which image should be shown depending on the type of property
-        function _chooseIcon(property) {
+        function _chooseIcon(property, rdfs, xsd) {
             var icon = '',
                 range = property[rdfs + 'range'];
+            // assigns the icon based on the range
             if(range) {
                 switch(range['@id']) {
-                    case 'xsd:string':
+                    // TODO: pick better icon for Literal? since it can be for Integers as well
+                    case xsd + 'string':
+                    case rdfs + 'Literal':
                         icon = 'fa-font';
                         break;
-                    // TODO: pick better icon for this
-                    case rdfs + 'Literal':
-                        icon = 'fa-i-cursor';
-                        break;
                     default:
-                        icon = 'fa-code-fork fa-rotate-90';
+                        icon = 'fa-link';
                         break;
                 }
-            } else {
-                // TODO: figure out what to do if there isn't a range
+            }
+            // TODO: figure out what to do if there isn't a range
+            else {
                 icon = 'fa-question';
             }
+            // return the class for an icon from Font Awesome
             return icon;
         }
 
-        // TODO: check the annotaions
         // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
         function _setAnnotations(rdfs, owl, arr) {
             // default owl2 annotations
@@ -229,25 +225,25 @@
         }
 
         // add annotations to the list necessary
-        function _addAnnotationsTo(obj, rdfs, annotationList) {
+        function _addAnnotationsTo(obj, rdfs, owl, annotationList) {
             var prop,
                 exclude = [
-                    rdfs + 'label',
+                    owl + 'disjointWith',
                     rdfs + 'comment',
-                    rdfs + 'isDefinedBy',
-                    rdfs + 'subClassOf',
-                    rdfs + 'disjointWith',
                     rdfs + 'domain',
-                    rdfs + 'range',
-                    rdfs + 'subPropertyOf',
-                    rdfs + 'inverseOf',
                     rdfs + 'equivalentClass',
+                    rdfs + 'inverseOf',
+                    rdfs + 'isDefinedBy',
+                    rdfs + 'label',
+                    rdfs + 'range',
+                    rdfs + 'subClassOf',
+                    rdfs + 'subPropertyOf',
                     '@id',
                     '@type',
                     'annotations',
-                    'properties',
                     'classes',
-                    'icon'
+                    'icon',
+                    'properties'
                 ];
 
             // adds the annotations property to the object
@@ -263,7 +259,7 @@
         }
 
         // takes the flattened JSON-LD data and creates our custom tree structure
-        function _parseOntologies(flattened, context, owl, rdfs) {
+        function _parseOntologies(flattened, context, owl, rdfs, xsd) {
             var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
                 classes = [],
                 properties = [],
@@ -288,7 +284,7 @@
                         break;
                     case owl + 'DatatypeProperty':
                     case owl + 'ObjectProperty':
-                        obj.icon = _chooseIcon(obj);
+                        obj.icon = _chooseIcon(obj, rdfs, xsd);
                         properties.push(obj);
                         break;
                     case owl + 'AnnotationProperty':
@@ -296,7 +292,7 @@
                         break;
                 }
                 // add all other properties to the annotation list
-                _addAnnotationsTo(obj, rdfs, annotationList);
+                _addAnnotationsTo(obj, rdfs, owl, annotationList);
             }
 
             // adds the property to the class
@@ -318,8 +314,7 @@
             while(i--) {
                 property = properties[i];
                 domain = property[rdfs + 'domain'];
-
-                // TODO: figure out what to do if it doesn't have a domain specified
+                // since it has a domain, put it with the proper class
                 if(domain) {
                     if(Object.prototype.toString.call(domain) === '[object Array]') {
                         k = domain.length;
@@ -329,7 +324,9 @@
                     } else {
                         addToClass(domain['@id'], property);
                     }
-                } else {
+                }
+                // adds it to the noDomains array for now
+                else {
                     property.prefix = _stripPrefix(property['@id']);
                     property['@id'] = property['@id'].replace(property.prefix, '');
                     noDomains.push(property);
@@ -387,17 +384,27 @@
             var prop,
                 result = {
                     owl: defaultOwl,
-                    rdfs: defaultRdfs
+                    rdfs: defaultRdfs,
+                    xsd: defaultXsd
                 };
             // checks through all of the prefixes and replaces the owl/rdfs prefix used in the code here
             for(prop in context) {
-                // setup owl prefix
-                if(context.hasOwnProperty(prop) && context[prop] == defaultOwl) {
-                    result.owl = prop + ':';
-                }
-                // setup rdfs prefix
-                else if(context.hasOwnProperty(prop) && context[prop] == defaultRdfs) {
-                    result.rdfs = prop + ':';
+                // makes sure it has the property
+                if(context.hasOwnProperty(prop)) {
+                    switch(context[prop]) {
+                        // sets the owl variable
+                        case defaultOwl:
+                            result.owl = prop + ':';
+                            break;
+                        // sets the rdfs variable
+                        case defaultRdfs:
+                            result.rdfs = prop + ':';
+                            break;
+                        // sets the xsd variable
+                        case defaultXsd:
+                            result.xsd = prop + ':';
+                            break;
+                    }
                 }
             }
             return result;
@@ -412,7 +419,6 @@
             // NOTE: if you click away from this page and then come back, this ontology will not be there because of the JSONP callback issue which will not be an issue once API is bundled up
             $http.jsonp('http://localhost:8284/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK')
                 .success(function(data) {
-                    // TODO: remove this check later
                     if(data.ontology) {
                         var temp = {};
                         // parse the ontology
@@ -423,7 +429,7 @@
                         }
                         temp = _checkContext(context);
                         jsonld.flatten(ontology, context, function(err, flattened) {
-                            _parseOntologies(flattened, context, temp.owl, temp.rdfs);
+                            _parseOntologies(flattened, context, temp.owl, temp.rdfs, temp.xsd);
                         });
                     }
                 });
@@ -434,7 +440,7 @@
                     // flatten the ontologies
                     jsonld.flatten(obj.data, obj.data['@context'], function(err, flattened) {
                         temp = _checkContext(obj.data['@context']);
-                        _parseOntologies(flattened, obj.data['@context'], temp.owl, temp.rdfs);
+                        _parseOntologies(flattened, obj.data['@context'], temp.owl, temp.rdfs, temp.xsd);
                     });
                 });
         }
@@ -565,42 +571,59 @@
         }
 
         // reverts the old and new objects and updates the id
-        function _revert(item, copy, exception, updateId) {
+        function _revert(item, copy, exceptions, updateId) {
             // updates the copy object to undo any additions that have been added
-            var prop;
+            var prop, excluded;
             for(prop in item) {
-                if(item.hasOwnProperty(prop) && !copy.hasOwnProperty(prop) && prop !== exception && prop !== 'prefix') {
+                // checks to see if it is one of the excluded properties
+                excluded = exceptions.indexOf(prop) !== -1;
+                // updates the object if needed
+                if(item.hasOwnProperty(prop) && !copy.hasOwnProperty(prop) && !excluded && prop !== 'prefix') {
                     copy[prop] = undefined;
-                } else if(prop === exception) {
+                } else if(excluded) {
                     delete copy[prop];
                 }
             }
             // merge the two to revert back to the original
             item = angular.merge(item, copy);
-            // strips out the prefix from the id of the restored item (if updateId is true)
-            if(updateId) item['@id'] = item['@id'].replace(item.prefix, '');
+            // strips out the prefix from the id of the restored item (if updateId is true which happens when you are working with classes or properties)
+            if(updateId) {
+                item['@id'] = item['@id'].replace(item.prefix, '');
+            }
+            // else, they are working with an ontology
+            else if(item.hasOwnProperty('classes') && item.classes.length) {
+                // update class and property prefixes
+                // console.log(item, copy);
+                _updateRefs(item, angular.copy(item.classes[0].prefix), item['@id']);
+            }
         }
 
         // resets the state to the latest saved version
         function reset() {
-            var copy,
+            // gets the next version
+            var copy, lastSaved,
                 oi = vm.current.oi,
                 ci = vm.current.ci,
                 pi = vm.current.pi,
-                lastSaved = vm.versions[oi][vm.versions[oi].length - 1].ontology,
+                temp = vm.versions[oi],
                 current = vm.ontologies[oi];
+            // removes latest version
+            temp.pop();
+            // gets the last version saved
+            lastSaved = temp[temp.length - 1].ontology;
+            console.log(lastSaved);
 
             // if property index is specified, they are working with a property
             if(pi != undefined) {
-                _revert(current.classes[ci].properties[pi], lastSaved.classes[ci].properties[pi], '', true);
+                _revert(current.classes[ci].properties[pi], angular.copy(lastSaved.classes[ci].properties[pi]), [], true);
             }
             // else, if class index is specified, they are working with a class
             else if(ci != undefined) {
-                _revert(current.classes[ci], angular.copy(lastSaved.classes[ci]), 'properties', true);
+                _revert(current.classes[ci], angular.copy(lastSaved.classes[ci]), ['properties'], true);
             }
             // else, they have to be working with an ontology
             else {
-                _revert(current, angular.copy(lastSaved), 'classes', false);
+                _revert(current, angular.copy(lastSaved), ['classes', 'context'], false);
             }
         }
 
@@ -656,25 +679,28 @@
                 }
 
                 // an ontology is being submitted
-                // if oi != -1, an existing ontology is being edited
-                else if(oi !== -1) {
-                    latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
-                    delete changed.classes;
+                else {
+                    // update the changed @id to combine the two fields that create it
                     changed['@id'] = changed.identifier + changed.delimiter;
-                    latest = angular.merge(latest, changed);
+                    // if oi != -1, an existing ontology is being edited
+                    if(oi !== -1) {
+                        latest = angular.copy(vm.versions[oi][vm.versions[oi].length - 1].ontology);
+                        delete changed.classes;
+                        latest = angular.merge(latest, changed);
+                        // updates the selected @id
+                        vm.selected['@id'] = vm.selected.identifier + vm.selected.delimiter;
+                    }
                 }
-                // otherwise, an ontology is being created
-                // do nothing since we have already copied vm.selected
 
                 // if an ontology is not being created, add this version to the versions list
                 // note: this will only be false whenever they are creating a new ontology
                 if(oi !== -1) {
-                    vm.versions[oi].push({ time: new Date(), ontology: latest });
+                    vm.versions[oi].push({ time: new Date(), ontology: angular.copy(latest) });
                 }
                 // otherwise, add a new entry to versions with this new ontology
                 else {
                     vm.ontologies.push(changed);
-                    vm.versions.push([{ time: new Date(), ontology: changed }]);
+                    vm.versions.push([{ time: new Date(), ontology: angular.copy(changed) }]);
                     delete vm.newItems[vm.tab + oi];
                     temp = vm.ontologies;
                     vm.current = { oi: temp.length - 1, ci: undefined, pi: undefined };
@@ -690,8 +716,7 @@
                         _updateRefs(vm.ontologies[oi], old, fresh);
                     }
                 }
-
-                // it is now saved
+                // it is now saved so, set unsaved to false
                 vm.selected.unsaved = false;
             }
         }
@@ -765,11 +790,12 @@
         function removePrefix(key) {
             // _updateRefs(vm.ontologies[vm.current.oi], key + ':', vm.ontologies[vm.current.oi].context[key]); - OBJECT VERSION
             // delete vm.selected.context[key]; - OBJECT VERSION
-            var i = vm.ontologies[vm.current.oi].context.length;
+            var temp = vm.ontologies[vm.current.oi],
+                i = temp.context.length;
             while(i--) {
-                if(vm.ontologies[vm.current.oi].context[i].key === key) {
-                    _updateRefs(vm.ontologies[vm.current.oi], key + ':', vm.ontologies[vm.current.oi].context[i].value);
-                    vm.ontologies[vm.current.oi].context.splice(i, 1);
+                if(temp.context[i].key === key) {
+                    _updateRefs(temp, key + ':', temp.context[i].value);
+                    temp.context.splice(i, 1);
                     break;
                 }
             }

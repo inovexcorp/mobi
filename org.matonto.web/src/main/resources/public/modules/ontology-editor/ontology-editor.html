@@ -314,7 +314,7 @@
                             <!-- delimiter -->
                             <div class="form-group col-xs-3">
                                 <label class="control-label" for="ontology-delimiter">Delimiter</label>
-                                <select class="form-control" id="ontology-delimiter" ng-model="vm.selected.delimiter" ng-change="vm.newDelimiter('{{vm.selected.identifier}}{{vm.selected.delimiter}}');">
+                                <select class="form-control" id="ontology-delimiter" ng-model="vm.selected.delimiter" ng-change="vm.unsaved();">
                                     <option value="#">#</option>
                                     <option value="/">/</option>
                                     <option value=":">:</option>
@@ -334,7 +334,7 @@
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].tab != 'annotations'" class="btn-container clearfix">
                             <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.ontologyForm.$invalid">Save</button>
-                            <button ng-if="vm.current.oi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
+                            <button ng-if="vm.current.oi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()" ng-disabled="vm.versions[vm.current.oi].length === 1">Undo</button>
                         </div>
                     </div>
 
@@ -433,7 +433,7 @@
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].tab != 'annotations'" class="btn-container clearfix">
                             <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid">Save</button>
-                            <button ng-if="vm.current.ci != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
+                            <button ng-if="vm.current.ci != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()" ng-disabled="vm.versions[vm.current.oi].length === 1">Undo</button>
                         </div>
                     </div>
 
@@ -483,7 +483,7 @@
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab != 'annotations'" class="btn-container clearfix">
                             <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.propertyForm.$invalid">Save</button>
-                            <button ng-if="vm.current.pi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()">Undo</button>
+                            <button ng-if="vm.current.pi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()" ng-disabled="vm.versions[vm.current.oi].length === 1">Undo</button>
                         </div>
                     </div>
 
@@ -495,13 +495,14 @@
             </div>
         </section>
     </div>
+    <!-- TODO: remove this before production since it is used for testing -->
     <!--div class="row">
         <div class="col-xs-6">
-            <pre>{{vm.ontologies[0] | json}}</pre>
+            <pre>{{vm.ontologies[vm.current.oi] | json}}</pre>
         </div>
         <div class="col-xs-6">
-            <pre>{{vm.versions[0][vm.versions[0].length - 1].ontology | json}}</pre>
+            <pre>{{vm.versions[vm.current.oi][vm.versions[vm.current.oi].length - 1].ontology | json}}</pre>
         </div>
     </div-->
-    <!--pre>{{vm.selected.currentAnnotation | json}}</pre-->
+    <!--pre>{{vm.selected | json}}</pre-->
 </div>
