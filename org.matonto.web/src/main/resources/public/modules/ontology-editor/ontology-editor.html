@@ -304,6 +304,9 @@
 
                     <!-- basic tab -->
                     <div ng-show="!vm.ontologies[vm.current.oi].tab || vm.ontologies[vm.current.oi].tab == 'basic'" class="tab clearfix">
+                        <!-- warning message -->
+                        <p ng-show="vm.selected.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
+
                         <!-- identifier and delimiter -->
                         <div class="row">
                             <!-- identifier -->
@@ -410,6 +413,9 @@
 
                     <!-- basic tab -->
                     <div ng-show="!vm.ontologies[vm.current.oi].classes[vm.current.ci].tab || vm.ontologies[vm.current.oi].classes[vm.current.ci].tab == 'basic'" class="tab clearfix">
+                        <!-- warning message -->
+                        <p ng-show="vm.selected.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
+
                         <!-- iri -->
                         <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid }" class="form-group">
                             <label class="control-label" for="class-iri">Identifier</label>
@@ -460,6 +466,9 @@
 
                     <!-- basic tab -->
                     <div ng-show="!vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab || vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab == 'basic'" class="tab clearfix">
+                        <!-- warning message -->
+                        <p ng-show="vm.selected.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
+
                         <!-- iri -->
                         <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid }" class="form-group">
                             <label class="control-label" for="property-iri">Identifier</label>

@@ -154,7 +154,7 @@ ul {
 
         /* The tree node changes are unsaved */
         &.unsaved .unsaved-icon {
-            color: $brand-primary;
+            color: $brand-danger;
             line-height: 19px;
             padding-left: 0;
             padding-right: 5px;
