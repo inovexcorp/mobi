@@ -29,6 +29,7 @@
         <module>org.matonto.repository.impl.sesame</module>
         <module>org.matonto.semantic.service</module>
         <module>org.matonto.itests</module>
+        <module>org.matonto.distribution</module>
     </modules>
 
     <properties>

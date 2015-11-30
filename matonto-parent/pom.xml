@@ -25,6 +25,7 @@
         <etl.openrdf.version>2.8.6</etl.openrdf.version>
         <ontology.openrdf.version>2.8.6</ontology.openrdf.version>
         <owlapi.version>4.0.2</owlapi.version>
+        <karaf.version>4.0.2</karaf.version>
     </properties>
 
     <dependencyManagement>
@@ -104,7 +105,7 @@
             <dependency>
                 <groupId>org.apache.karaf.shell</groupId>
                 <artifactId>org.apache.karaf.shell.console</artifactId>
-                <version>4.0.2</version>
+                <version>${karaf.version}</version>
             </dependency>
 
             <!-- OSGi Dependencies -->
