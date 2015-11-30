@@ -68,7 +68,7 @@
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
                                    ng-click="opened = !opened; $event.stopPropagation();"></i>
                                 {{ontology[ontology.rdfs + 'label'] || ontology['identifier'] + ontology['delimiter']}}
-                                <i ng-show="ontology.unsaved" class="fa fa-circle pull-right"></i>
+                                <i ng-show="ontology.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -81,7 +81,7 @@
                                            ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
                                            ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>
                                         {{class[ontology.rdfs + 'label'] || class['@id']}}
-                                        <i ng-show="class.unsaved" class="fa fa-circle pull-right"></i>
+                                        <i ng-show="class.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
                                 <li class="container" ng-show="subOpened">
@@ -92,7 +92,7 @@
                                                ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
                                                 <i class="fa fa-fw {{property.icon}}"></i>
                                                 {{property[ontology.rdfs + 'label'] || property['@id']}}
-                                                <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
+                                                <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                             </a>
                                         </li>
                                     </ul>
@@ -127,7 +127,7 @@
                                                ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
                                                 <i class="fa fa-fw {{property.icon}}"></i>
                                                 {{property[ontology.rdfs + 'label'] || property['@id']}}
-                                                <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
+                                                <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                             </a>
                                         </li>
                                     </ul>
@@ -164,7 +164,7 @@
                                        ng-click="vm.edit(oi, $index)"
                                        ng-class="{'unsaved': class.unsaved, 'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
                                         {{class[ontology.rdfs + 'label'] || class['@id']}}
-                                        <i ng-show="class.unsaved" class="fa fa-circle pull-right"></i>
+                                        <i ng-show="class.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -198,7 +198,7 @@
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
                                         <i class="fa fa-fw {{property.icon}}"></i>
                                         {{property[ontology.rdfs + 'label'] || property['@id']}}
-                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
+                                        <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -210,7 +210,7 @@
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
                                         <i class="fa fa-fw {{property.icon}}"></i>
                                         {{property[ontology.rdfs + 'label'] || property['@id']}}
-                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
+                                        <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -244,7 +244,7 @@
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
                                         <i class="fa fa-fw {{property.icon}}"></i>
                                         {{property[ontology.rdfs + 'label'] || property['@id']}}
-                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
+                                        <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
                             </ul>
@@ -256,7 +256,7 @@
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
                                         <i class="fa fa-fw {{property.icon}}"></i>
                                         {{property[ontology.rdfs + 'label'] || property['@id']}}
-                                        <i ng-show="property.unsaved" class="fa fa-circle pull-right"></i>
+                                        <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
                             </ul>

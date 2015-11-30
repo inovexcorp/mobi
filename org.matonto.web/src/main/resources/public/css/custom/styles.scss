@@ -153,7 +153,7 @@ ul {
         }
 
         /* The tree node changes are unsaved */
-        &.unsaved .fa-circle {
+        &.unsaved .unsaved-icon {
             color: $brand-primary;
             line-height: 19px;
             padding-left: 0;
@@ -163,8 +163,8 @@ ul {
         /* Hover changes color and background color */
         &:hover,
         &.active,
-        &.active .fa-circle,
-        &.unsaved:hover .fa-circle {
+        &.active .unsaved-icon,
+        &.unsaved:hover .unsaved-icon {
             background-color: $brand-primary;
             color: #fff;
         }
