@@ -30,6 +30,7 @@
         <module>org.matonto.semantic.service</module>
         <module>org.matonto.itests</module>
         <module>org.matonto.distribution</module>
+        <module>org.matonto.repository.impl.core</module>
     </modules>
 
     <properties>

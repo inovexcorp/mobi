@@ -11,7 +11,8 @@ public class SesameRepositoryWrapper implements Repository {
 
     org.openrdf.repository.Repository sesameRepository;
 
-    public SesameRepositoryWrapper() {}
+    public SesameRepositoryWrapper() {
+    }
 
     public SesameRepositoryWrapper(org.openrdf.repository.Repository repository) {
         setDelegate(repository);

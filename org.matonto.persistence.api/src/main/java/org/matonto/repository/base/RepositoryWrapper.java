@@ -64,6 +64,9 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
             e.printStackTrace();
         }
         setDelegate(repo);
+
+        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, props);
+        setRepositoryID(config.id());
     }
 
     protected void stop() {
@@ -75,21 +78,8 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
     }
 
     protected void modified(Map<String, Object> props) {
-        try {
-            getDelegate().shutDown();
-        } catch (RepositoryException e) {
-            throw new RuntimeException(e);
-        }
-
-        validateConfig(props);
-        Repository repo;
-        try {
-            repo = getRepo(props);
-            repo.initialize();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        setDelegate(repo);
+        stop();
+        start(props);
     }
 
     protected abstract Repository getRepo(Map<String, Object> props);

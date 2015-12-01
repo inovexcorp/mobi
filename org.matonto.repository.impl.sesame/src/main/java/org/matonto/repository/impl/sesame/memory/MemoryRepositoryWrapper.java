@@ -1,8 +1,8 @@
 package org.matonto.repository.impl.sesame.memory;
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.*;
 import aQute.bnd.annotation.metatype.Configurable;
+import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.base.RepositoryWrapper;
 import org.matonto.repository.config.RepositoryConfigException;
@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.Map;
 
 @Component(
-        provide = Repository.class,
+        provide = DelegatingRepository.class,
         name = MemoryRepositoryWrapper.NAME,
         configurationPolicy = ConfigurationPolicy.require,
         designateFactory = MemoryRepositoryConfig.class,
@@ -59,5 +59,20 @@ public class MemoryRepositoryWrapper extends RepositoryWrapper {
                         new IllegalArgumentException("Repository property 'dataDir' cannot be empty.")
                 );
         }
+    }
+
+    @Activate
+    protected void start(Map<String, Object> props) {
+        super.start(props);
+    }
+
+    @Deactivate
+    protected void stop() {
+        super.stop();
+    }
+
+    @Modified
+    protected void modified(Map<String, Object> props) {
+        super.modified(props);
     }
 }

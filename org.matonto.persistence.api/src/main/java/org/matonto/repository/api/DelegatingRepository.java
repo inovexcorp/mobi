@@ -15,4 +15,12 @@ public interface DelegatingRepository extends Repository {
      * @param delegate - The Repository to be wrapped by this DelegatingRepository.
      */
     void setDelegate(Repository delegate);
+
+
+    /**
+     * Returns the ID of this Repository Object.
+     *
+     * @return The String representing the ID of this Repository Object.
+     */
+    String getRepositoryID();
 }
