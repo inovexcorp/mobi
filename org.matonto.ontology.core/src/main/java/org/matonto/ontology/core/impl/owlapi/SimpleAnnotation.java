@@ -10,7 +10,7 @@ import org.matonto.ontology.core.api.AnnotationValue;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;
-import org.matonto.ontology.core.utils.MatontoRuntimeException;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
@@ -98,7 +98,7 @@ public class SimpleAnnotation implements Annotation {
 			}
 			
 			else
-				throw new MatontoRuntimeException("Invalid annotation value");
+				throw new MatontoOntologyException("Invalid annotation value");
 		}
 		
 		else {
@@ -128,7 +128,7 @@ public class SimpleAnnotation implements Annotation {
 			}
 			
 			else
-				throw new MatontoRuntimeException("Invalid annotation value");
+				throw new MatontoOntologyException("Invalid annotation value");
 			
 		}
 		

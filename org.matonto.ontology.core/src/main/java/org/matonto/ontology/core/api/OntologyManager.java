@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Resource;
 
 import com.google.common.base.Optional;
@@ -19,13 +20,13 @@ public interface OntologyManager {
 	
 	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId);
 	
-	public Optional<Ontology> retrieveOntology(OntologyId ontologyId); 
+	public Optional<Ontology> retrieveOntology(OntologyId ontologyId) throws MatontoOntologyException; 
 	
-	public boolean storeOntology(Ontology ontology);
+	public boolean storeOntology(Ontology ontology) throws MatontoOntologyException;
 	
-	public boolean deleteOntology(OntologyId ontologyId);
+	public boolean deleteOntology(OntologyId ontologyId) throws MatontoOntologyException;
 
-	public Optional<Map<OntologyId, String>> getOntologyRegistry();
+	public Optional<Map<OntologyId, String>> getOntologyRegistry() throws MatontoOntologyException;
 	
 	public OntologyId createOntologyId(Resource contextId);
 	

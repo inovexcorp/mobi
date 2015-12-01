@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Set;
 
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 
 public interface Ontology {
@@ -24,15 +25,19 @@ public interface Ontology {
 	
 	public Set<Annotation> getAnnotations();
 	
+	public void setOntologyId(OntologyId ontologyId);
+	
+	public void setAnnotations(Set<Annotation> annotations); 
+	
 //	public Set<Axiom> getAxioms();
 	
 	public Set<OntologyIRI> getDirectImportsDocuments();
 	
-	public boolean importOntology(InputStream inputStream, OntologyId ontologyId);
+	public boolean importOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public boolean importOntology(File file, OntologyId ontologyId);
+	public boolean importOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public boolean importOntology(URL url, OntologyId ontologyId);
+	public boolean importOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
 	
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 

@@ -24,6 +24,7 @@ import org.json.JSONObject;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
+
 
 @Component (immediate=true)
 @Path("/ontology")
@@ -120,16 +122,19 @@ public class OntologyRestImpl {
 				throw new IllegalStateException("Ontology manager is null");
 			
 			boolean persisted = false;
-
+			JSONObject json = new JSONObject();
 			URI uri = new URIImpl(namespace + "#" + localName);
 			Ontology ontology = manager.createOntology(fileInputStream, manager.createOntologyId(uri));
 
-			persisted = manager.storeOntology(ontology);
-			IOUtils.closeQuietly(fileInputStream);
+			try{
+				persisted = manager.storeOntology(ontology);
+			} catch(MatontoOntologyException ex) {
+				json.put("error", ex.getMessage());
+			} finally {	
+				IOUtils.closeQuietly(fileInputStream);
+			}
 			
-			JSONObject json = new JSONObject();
-			json.put("result", persisted);
-		
+			json.put("result", persisted);		
 			return Response.status(200).entity(json.toString()).build();
 		}
 		
@@ -161,10 +166,18 @@ public class OntologyRestImpl {
 			URI uri = new URIImpl(namespace + "#" + localName);
 
 			JSONObject json = new JSONObject();
-			Optional<Ontology> ontology = manager.retrieveOntology(manager.createOntologyId(uri));
-			OutputStream outputStream = null;
+			Optional<Ontology> ontology = Optional.absent();
+			String message = null;
+			
+			try{
+				ontology = manager.retrieveOntology(manager.createOntologyId(uri));
+			} catch(MatontoOntologyException ex) {
+				message = ex.getMessage();
+			} 
+			
 			
 			if(ontology.isPresent()) {
+				OutputStream outputStream = null;
 				
 				if(rdfFormat.equalsIgnoreCase("rdf/xml"))
 					outputStream = ontology.get().asRdfXml();
@@ -178,17 +191,22 @@ public class OntologyRestImpl {
 				else {
 					outputStream = ontology.get().asJsonLD();
 				}
-			}
 			
-			String content = "";
-			if(outputStream != null)
-				content = outputStream.toString();
+				String content = "";
+				if(outputStream != null)
+					content = outputStream.toString();
+					
+				IOUtils.closeQuietly(outputStream);	
+					
+				json.put("document format", rdfFormat);
+				json.put("ontology id", uri.stringValue());
+				json.put("ontology", content);
 				
-			IOUtils.closeQuietly(outputStream);	
-				
-			json.put("document format", rdfFormat);
-			json.put("ontology id", uri.stringValue());
-			json.put("ontology", content);
+			} else if(message == null) {
+				json.put("error", "OntologyId doesn't exist.");
+			} else {
+				json.put("error", message);
+			}
 			
 		  return Response.status(200).entity(json.toString()).build();
 		}
@@ -218,7 +236,15 @@ public class OntologyRestImpl {
 
 			
 			URI uri = new URIImpl(namespace + "#" + localName);
-			Optional<Ontology> ontology = manager.retrieveOntology(manager.createOntologyId(uri));
+			Optional<Ontology> ontology = Optional.absent();
+			String message = null;
+			
+			try {
+				ontology = manager.retrieveOntology(manager.createOntologyId(uri));
+			} catch(MatontoOntologyException ex) {
+				message = ex.getMessage();
+			} 
+			
 			OutputStream outputStream = null;
 			StreamingOutput stream = null;
 			
@@ -293,12 +319,16 @@ public class OntologyRestImpl {
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 
-
+			JSONObject json = new JSONObject();
 			URI uri = new URIImpl(namespace + "#" + localName);
 			boolean deleted = false;
-			deleted = manager.deleteOntology(manager.createOntologyId(uri));
+			
+			try{
+				deleted = manager.deleteOntology(manager.createOntologyId(uri));
+			} catch(MatontoOntologyException ex) {
+				json.put("error", ex.getMessage());
+			} 
 
-			JSONObject json = new JSONObject();
 			json.put("result", deleted);
 			  
 			return Response.ok(json.toString()).build();

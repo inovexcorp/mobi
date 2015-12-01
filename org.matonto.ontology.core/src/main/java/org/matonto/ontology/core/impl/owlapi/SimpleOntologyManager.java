@@ -10,6 +10,7 @@ import java.util.Map;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
 import org.openrdf.model.impl.LinkedHashModel;
@@ -147,7 +148,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public Optional<Ontology> retrieveOntology(OntologyId ontologyId) 
+	public Optional<Ontology> retrieveOntology(OntologyId ontologyId) throws MatontoOntologyException
 	{	
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
@@ -184,17 +185,13 @@ public class SimpleOntologyManager implements OntologyManager {
 	    	mgr.saveOntology(onto, owlxmlFormat, iri);
 
 		} catch (OWLOntologyStorageException e) {
-			e.printStackTrace();
-			return Optional.absent();
+			throw new MatontoOntologyException("Unable to save to an ontology object", e);
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
-			return Optional.absent();
+			throw new MatontoOntologyException("Unable to create an ontology object", e);
 		} catch (IOException e) {
-			e.printStackTrace();
-			return Optional.absent();
+			throw new MatontoOntologyException("Unable to create an ontology object", e);
 		} catch (RepositoryException e) {
-			e.printStackTrace();
-			return Optional.absent();
+			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
 			try {
 				if(conn != null)
@@ -208,7 +205,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		ontology.setOntology(onto);
 		ontology.setOwlapiOntologyManager(mgr);
 		ontology.setIRI(SimpleIRI.matontoIRI(iri));
-		ontology.setAnnotations();
+		ontology.getOntologyAnnotations();
 		ontology.setDirectImportsDocuments();
 		ontology.setAxioms();
 		return Optional.of(ontology);
@@ -225,14 +222,14 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public boolean storeOntology(Ontology ontology) 
+	public boolean storeOntology(Ontology ontology) throws MatontoOntologyException
 	{
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
 		OntologyId ontologyId = ontology.getOntologyId();
 		if(ontologyExists(ontologyId))
-			return false;
+			throw new MatontoOntologyException("Ontology with the ontology ID already exists.");
 		
 		boolean persisted = false;
 		RepositoryConnection conn = null;
@@ -246,8 +243,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			persisted = true;
 			
 		} catch (RepositoryException e) {
-			e.printStackTrace();
-			return persisted;
+			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
 			try {
 				if(conn != null)
@@ -272,14 +268,14 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public boolean deleteOntology(OntologyId ontologyId)
+	public boolean deleteOntology(OntologyId ontologyId) throws MatontoOntologyException
 	{
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
 		
 		boolean deleted = false;
 		if(!ontologyExists(ontologyId))
-			return false;
+			throw new MatontoOntologyException("Ontology ID doesn't exist.");
 		
 		RepositoryConnection conn = null;
 		
@@ -292,8 +288,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			deleted = true;
 			
 		} catch (RepositoryException e) {
-			e.printStackTrace();
-			return deleted;
+			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
 			try {
 				if(conn != null)
@@ -315,7 +310,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * 
 	 * @throws IllegalStateException - if the repository is null
 	 */
-	private void initOntologyRegistry()
+	private void initOntologyRegistry() throws MatontoOntologyException
 	{
 		LOG.info("Initiating the ontology registry");
 		
@@ -349,8 +344,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			ontologyRegistry = Optional.of(ontologyMap);
 				
 		} catch (RepositoryException e) {
-			e.printStackTrace();
-
+			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
 			try {
 				if(contextIds != null) 

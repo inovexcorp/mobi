@@ -18,6 +18,7 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 import org.openrdf.model.impl.LinkedHashModel;
 
@@ -58,19 +59,19 @@ public class SimpleOntology implements Ontology {
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
 	
-	protected SimpleOntology()
+	protected SimpleOntology() throws MatontoOntologyException
 	{
 		try {
 			ontology = manager.createOntology();
 			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
 			
 		} catch (OWLOntologyCreationException e) {		
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 		
 	}
 	
-	public SimpleOntology(OntologyId ontologyId)
+	public SimpleOntology(OntologyId ontologyId) throws MatontoOntologyException
 	{
 		try {
 			ontology = manager.createOntology();
@@ -78,12 +79,12 @@ public class SimpleOntology implements Ontology {
 			this.ontologyId = ontologyId;
 			
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 	
 	
-	public SimpleOntology(InputStream inputStream, OntologyId ontologyId)
+	public SimpleOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException
 	{
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
@@ -93,14 +94,14 @@ public class SimpleOntology implements Ontology {
 			getOntologyDirectImportsIris();
 			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		} finally {
 			IOUtils.closeQuietly(inputStream);
 		}
 	}
 	
 	
-	public SimpleOntology(File file, OntologyId ontologyId)
+	public SimpleOntology(File file, OntologyId ontologyId) throws MatontoOntologyException
 	{
 		iri = SimpleIRI.create(file);
 		try {
@@ -110,12 +111,12 @@ public class SimpleOntology implements Ontology {
 			getOntologyDirectImportsIris();
 			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 	
 	
-	public SimpleOntology(URL url, OntologyId ontologyId)
+	public SimpleOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException
 	{
 		iri = SimpleIRI.create(url);
 		try {
@@ -125,7 +126,7 @@ public class SimpleOntology implements Ontology {
 			getOntologyDirectImportsIris();
 			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 	
@@ -166,7 +167,8 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	protected void setOntologyId(OntologyId ontologyId)
+	@Override
+	public void setOntologyId(OntologyId ontologyId)
 	{
 		this.ontologyId = ontologyId;
 	}
@@ -179,9 +181,10 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	protected void setAnnotations() 
+	@Override
+	public void setAnnotations(Set<Annotation> annotations) 
 	{
-		getOntologyAnnotations();
+		mergeAnnos(annotations);
 	}
 	
 	
@@ -287,7 +290,7 @@ public class SimpleOntology implements Ontology {
 
 
 	@Override
-	public boolean importOntology(InputStream inputStream, OntologyId ontologyId) 
+	public boolean importOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException
 	{
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
@@ -299,17 +302,15 @@ public class SimpleOntology implements Ontology {
 			return true;
 			
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		} finally {
 			IOUtils.closeQuietly(inputStream);
 		}
-		
-		return false;
 	}
 	
 	
 	@Override
-	public boolean importOntology(File file, OntologyId ontologyId) 
+	public boolean importOntology(File file, OntologyId ontologyId)  throws MatontoOntologyException
 	{
 		try {
 			iri = SimpleIRI.create(file);
@@ -321,15 +322,13 @@ public class SimpleOntology implements Ontology {
 			return true;
 			
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
-		
-		return false;
 	}
 	
 
 	@Override
-	public boolean importOntology(URL url, OntologyId ontologyId) 
+	public boolean importOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException
 	{
 		try {
 			iri = SimpleIRI.create(url);
@@ -341,9 +340,8 @@ public class SimpleOntology implements Ontology {
 			return true;
 			
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
-		return false;
 	}
 
 	
@@ -398,7 +396,8 @@ public class SimpleOntology implements Ontology {
 		
 	}
 	
-	private void getOntologyAnnotations()
+	
+	protected void getOntologyAnnotations()
 	{
 		if(ontology != null) {
 			Set<OWLAnnotation> owlAnnos = ontology.getAnnotations();
@@ -406,6 +405,15 @@ public class SimpleOntology implements Ontology {
 				annotations.add(SimpleAnnotation.matontoAnnotation(owlAnno));
 			}
 		}			
+	}
+	
+	
+	private void mergeAnnos(Set<Annotation> annotations)
+	{
+		if(this.annotations.isEmpty())
+			this.annotations = new HashSet<Annotation>(annotations);
+		else
+			this.annotations.addAll(annotations);
 	}
 
 
