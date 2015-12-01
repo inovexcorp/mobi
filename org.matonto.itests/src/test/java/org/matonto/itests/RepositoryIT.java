@@ -25,9 +25,6 @@ public class RepositoryIT extends KarafTestSupport {
         installAndAssertFeature("obr");
         installAndAssertFeature("scr");
 
-//        System.out.println(executeCommand("obr:url-add http://obr.matonto.org:8181/cave/matonto-deps-repository.xml"));
-//        System.out.println(executeCommand("obr:url-add http://obr.matonto.org:8181/cave/matonto-releases-repository.xml"));
-//        System.out.println(executeCommand("obr:url-add http://obr.matonto.org:8181/cave/matonto-snapshots-repository.xml"));
         System.out.println(executeCommand("obr:url-add http://obr.matonto.org:8181/cave/matonto-deps-repository.xml"));
         System.out.println(executeCommand("obr:url-add http://obr.matonto.org:8181/cave/matonto-releases-repository.xml"));
         System.out.println(executeCommand("obr:url-add http://nexus.inovexcorp.com/nexus/content/shadows/matonto-snapshots-obr/.meta/obr.xml"));
@@ -37,7 +34,6 @@ public class RepositoryIT extends KarafTestSupport {
         installBundle("mvn:org.matonto/repository.impl.sesame/1.0.0-SNAPSHOT");
 
         System.out.println(executeCommand("obr:start org.matonto.repository.impl.sesame"));
-//        findBundleByName("com.inovexcorp.matonto.repository-service-core").start();
         System.out.println(executeCommand("bundle:list"));
 
         setUpIsDone = true;
