@@ -94,6 +94,8 @@
                         <Import-Package>
                             org.openrdf.*;version="${ontology.openrdf.version}",
                             org.matonto.ontology.core.api;version="[1.0,2)",
+                            com.google.common.base.*,
+                            org.apache.commons.io.*,
                             org.json.*,
                             org.slf4j.*,
                             javax.ws.rs.*,

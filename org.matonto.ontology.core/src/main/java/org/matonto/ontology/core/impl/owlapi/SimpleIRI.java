@@ -130,5 +130,12 @@ public class SimpleIRI implements OntologyIRI {
 		
 		return false;
 	}
+	
+	
+	@Override
+	public String toString()
+	{
+		return iri.toString();
+	}
 
 }

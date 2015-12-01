@@ -52,6 +52,7 @@
                         <Import-Package>
                             org.openrdf.*;version="${ontology.openrdf.version}",
                             org.matonto.ontology.core.api;version="[1.0,2)",
+                            com.google.common.base.*,
                             *
                         </Import-Package>
                         <Service-Component>*</Service-Component>

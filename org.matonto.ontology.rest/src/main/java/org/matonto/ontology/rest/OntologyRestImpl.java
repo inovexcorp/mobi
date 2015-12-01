@@ -22,10 +22,8 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
-import org.matonto.ontology.core.impl.owlapi.SimpleOntologyId;
-import org.matonto.ontology.core.impl.owlapi.SimpleOntologyManager;
-import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
 import org.slf4j.Logger;
@@ -84,12 +82,12 @@ public class OntologyRestImpl {
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 			
-			Optional<Map<SimpleOntologyId, String>> ontologyRegistry = manager.getOntologyRegistry();	
-			Map<SimpleOntologyId, String> ontologies = ontologyRegistry.get();
+			Optional<Map<OntologyId, String>> ontologyRegistry = manager.getOntologyRegistry();	
+			Map<OntologyId, String> ontologies = ontologyRegistry.get();
 			JSONObject json = new JSONObject();
 			
 			if(!ontologies.isEmpty()) {
-				for(SimpleOntologyId oid : ontologies.keySet()) {
+				for(OntologyId oid : ontologies.keySet()) {
 					String ontologyId = oid.getContextId().stringValue();
 					json.put(ontologyId, ontologies.get(oid));
 				}
@@ -124,7 +122,7 @@ public class OntologyRestImpl {
 			boolean persisted = false;
 
 			URI uri = new URIImpl(namespace + "#" + localName);
-			Ontology ontology = manager.createOntology(fileInputStream, SimpleOntologyManager.createOntologyId(uri));
+			Ontology ontology = manager.createOntology(fileInputStream, manager.createOntologyId(uri));
 
 			persisted = manager.storeOntology(ontology);
 			IOUtils.closeQuietly(fileInputStream);
@@ -163,7 +161,7 @@ public class OntologyRestImpl {
 			URI uri = new URIImpl(namespace + "#" + localName);
 
 			JSONObject json = new JSONObject();
-			Optional<Ontology> ontology = manager.retrieveOntology(SimpleOntologyManager.createOntologyId(uri));
+			Optional<Ontology> ontology = manager.retrieveOntology(manager.createOntologyId(uri));
 			OutputStream outputStream = null;
 			
 			if(ontology.isPresent()) {
@@ -220,7 +218,7 @@ public class OntologyRestImpl {
 
 			
 			URI uri = new URIImpl(namespace + "#" + localName);
-			Optional<Ontology> ontology = manager.retrieveOntology(SimpleOntologyManager.createOntologyId(uri));
+			Optional<Ontology> ontology = manager.retrieveOntology(manager.createOntologyId(uri));
 			OutputStream outputStream = null;
 			StreamingOutput stream = null;
 			
@@ -298,7 +296,7 @@ public class OntologyRestImpl {
 
 			URI uri = new URIImpl(namespace + "#" + localName);
 			boolean deleted = false;
-			deleted = manager.deleteOntology(SimpleOntologyManager.createOntologyId(uri));
+			deleted = manager.deleteOntology(manager.createOntologyId(uri));
 
 			JSONObject json = new JSONObject();
 			json.put("result", deleted);

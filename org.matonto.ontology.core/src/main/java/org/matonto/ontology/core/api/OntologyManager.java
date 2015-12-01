@@ -5,26 +5,28 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 
-import org.matonto.ontology.core.impl.owlapi.SimpleOntologyId;
+import org.openrdf.model.Resource;
 
 import com.google.common.base.Optional;
 
 public interface OntologyManager {
 	
-	Ontology createOntology(SimpleOntologyId ontologyId);
+	public Ontology createOntology(OntologyId ontologyId);
 	
-	Ontology createOntology(File file, SimpleOntologyId ontologyId);
+	public Ontology createOntology(File file, OntologyId ontologyId);
 	
-	Ontology createOntology(URL url, SimpleOntologyId ontologyId);
+	public Ontology createOntology(URL url, OntologyId ontologyId);
 	
-	Ontology createOntology(InputStream inputStream, SimpleOntologyId ontologyId);
+	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId);
 	
-	Optional<Ontology> retrieveOntology(SimpleOntologyId ontologyId); 
+	public Optional<Ontology> retrieveOntology(OntologyId ontologyId); 
 	
-	boolean storeOntology(Ontology ontology);
+	public boolean storeOntology(Ontology ontology);
 	
-	boolean deleteOntology(SimpleOntologyId ontologyId);
+	public boolean deleteOntology(OntologyId ontologyId);
 
-	Optional<Map<SimpleOntologyId, String>> getOntologyRegistry();
+	public Optional<Map<OntologyId, String>> getOntologyRegistry();
+	
+	public OntologyId createOntologyId(Resource contextId);
 	
 }

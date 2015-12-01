@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
@@ -17,6 +18,10 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.repository.http.HTTPRepository;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.model.URI;
+import org.openrdf.model.impl.URIImpl;
 
 import info.aduna.iteration.Iterations;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -47,7 +52,7 @@ import aQute.bnd.annotation.component.Reference;
 public class SimpleOntologyManager implements OntologyManager {
 	
 	private static Repository repository;
-	private static Optional<Map<SimpleOntologyId, String>> ontologyRegistry = Optional.fromNullable(new HashMap<>());
+	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.fromNullable(new HashMap<>());
 	private static String location;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
 	
@@ -81,35 +86,35 @@ public class SimpleOntologyManager implements OntologyManager {
 	
 	
 	@Override
-	public Optional<Map<SimpleOntologyId, String>> getOntologyRegistry() 
+	public Optional<Map<OntologyId, String>> getOntologyRegistry() 
 	{
 		return ontologyRegistry;
 	}
 	
 
 	@Override
-	public Ontology createOntology(SimpleOntologyId ontologyId) 
+	public Ontology createOntology(OntologyId ontologyId) 
 	{
 		return new SimpleOntology(ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(File file, SimpleOntologyId ontologyId) 
+	public Ontology createOntology(File file, OntologyId ontologyId) 
 	{
 		return new SimpleOntology(file, ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(URL url, SimpleOntologyId ontologyId) 
+	public Ontology createOntology(URL url, OntologyId ontologyId) 
 	{
 		return new SimpleOntology(url, ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(InputStream inputStream, SimpleOntologyId ontologyId) 
+	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId) 
 	{	
 		return new SimpleOntology(inputStream, ontologyId);
 	}
@@ -122,7 +127,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @return True if given context id exists in the repository, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
-	public boolean ontologyExists(SimpleOntologyId ontologyId)
+	public boolean ontologyExists(OntologyId ontologyId)
 	{
 	   	if(repository == null)
 	   		throw new IllegalStateException("Repository is null");
@@ -142,7 +147,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public Optional<Ontology> retrieveOntology(SimpleOntologyId ontologyId) 
+	public Optional<Ontology> retrieveOntology(OntologyId ontologyId) 
 	{	
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
@@ -201,7 +206,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		
 		ontology.setOntologyId(ontologyId);
 		ontology.setOntology(onto);
-		ontology.setOntologyManager(mgr);
+		ontology.setOwlapiOntologyManager(mgr);
 		ontology.setIRI(SimpleIRI.matontoIRI(iri));
 		ontology.setAnnotations();
 		ontology.setDirectImportsDocuments();
@@ -225,7 +230,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
-		SimpleOntologyId ontologyId = ontology.getOntologyId();
+		OntologyId ontologyId = ontology.getOntologyId();
 		if(ontologyExists(ontologyId))
 			return false;
 		
@@ -267,7 +272,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public boolean deleteOntology(SimpleOntologyId ontologyId)
+	public boolean deleteOntology(OntologyId ontologyId)
 	{
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
@@ -329,7 +334,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		RepositoryConnection conn = null;
 		RepositoryResult<Resource> contextIds = null;
 		
-		Map<SimpleOntologyId, String> ontologyMap = new HashMap<>();
+		Map<OntologyId, String> ontologyMap = new HashMap<>();
 		
 		try
 		{		
@@ -360,9 +365,33 @@ public class SimpleOntologyManager implements OntologyManager {
 	}
 	
 	
-	public static SimpleOntologyId createOntologyId(Resource contextId)
+	public OntologyId createOntologyId(Resource contextId)
 	{
 		return new SimpleOntologyId(contextId);
+	}
+	
+	
+	public static void main(String [] args)
+	{
+		SimpleOntologyManager manager = new SimpleOntologyManager();
+		Repository repo = null;
+		try {
+			repo = new SailRepository(new MemoryStore());
+			repo.initialize();
+
+		} catch (RepositoryException e) {
+			e.printStackTrace();
+		}
+		manager.setRepo(repo);
+		
+		URI fileId = new URIImpl("http://www.matonto.org/samples#Travel");
+		OntologyId ontologyId = manager.createOntologyId(fileId);
+		Ontology onto = new SimpleOntology();
+//		File file = new File("/Users/joyas/workspace/MatOnto/matonto/org.matonto.ontology.core/src/test/resources/travel.owl");
+		File file = new File("/Users/joyas/Documents/travel.owl");
+		onto.importOntology(file, ontologyId);
+		boolean stored = manager.storeOntology(onto);
+		System.out.println(stored);
 	}
 
 	

@@ -1,6 +1,7 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.ontology.core.api.OntologyId;
 import org.openrdf.model.Resource;
 import org.openrdf.model.impl.URIImpl;
 import org.semanticweb.owlapi.model.IRI;
@@ -8,7 +9,7 @@ import org.semanticweb.owlapi.model.OWLOntologyID;
 
 import com.google.common.base.Optional;
 
-public class SimpleOntologyId {
+public class SimpleOntologyId implements OntologyId {
 
 	private Resource contextId;
 	private OWLOntologyID ontologyId;
@@ -17,7 +18,9 @@ public class SimpleOntologyId {
 	public SimpleOntologyId(Resource contextId)
 	{
 		this.contextId = contextId;
-		ontologyId = new OWLOntologyID();
+		Optional<IRI> owlIri = Optional.of(SimpleIRI.owlapiIRI(new SimpleIRI(contextId.stringValue())));
+		Optional<IRI> owlVersionIri = Optional.absent();
+		ontologyId = new OWLOntologyID(owlIri, owlVersionIri);
 	}
 	
 	
@@ -36,7 +39,8 @@ public class SimpleOntologyId {
 		ontologyId = new OWLOntologyID(owlIri, owlVersionIri);
 	}
 		
-		
+	
+	@Override
 	public Optional<OntologyIRI> getOntologyIRI()
 	{	
 		if(!ontologyId.getOntologyIRI().isPresent())
@@ -47,6 +51,7 @@ public class SimpleOntologyId {
 	}
 	
 	
+	@Override
 	public Optional<OntologyIRI> getVersinIRI()
 	{
 		if(!ontologyId.getVersionIRI().isPresent())
@@ -63,7 +68,7 @@ public class SimpleOntologyId {
 	}
 	
 	
-	protected OWLOntologyID getOntologyId()
+	protected OWLOntologyID getOwlapiOntologyId()
 	{
 		return ontologyId;
 	}
@@ -72,7 +77,8 @@ public class SimpleOntologyId {
 	@Override
 	public String toString()
 	{
-		return ontologyId.toString();
+		Optional<IRI> iri = ontologyId.getOntologyIRI();
+		return (iri.isPresent()) ? iri.get().toString() : "";
 	}
 	
 	
@@ -84,7 +90,7 @@ public class SimpleOntologyId {
 		
 		if (obj instanceof SimpleOntologyId) {
 			SimpleOntologyId other = (SimpleOntologyId)obj;
-			if(ontologyId.equals(other.getOntologyId()))
+			if(ontologyId.equals(other.getOwlapiOntologyId()))
 				return contextId.equals(other.getContextId());
 		}
 		
@@ -100,7 +106,7 @@ public class SimpleOntologyId {
 	
 	public static OWLOntologyID owlapiOntologyId(SimpleOntologyId simpleId)
 	{
-		return simpleId.getOntologyId();
+		return simpleId.getOwlapiOntologyId();
 	}
 	
 	

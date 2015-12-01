@@ -6,34 +6,33 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Set;
 
-import org.matonto.ontology.core.impl.owlapi.SimpleOntologyId;
 import org.openrdf.model.Model;
 
 public interface Ontology {
 	
-	Model asModel();
+	public Model asModel();
 	
-	OutputStream asTurtle();
+	public OutputStream asTurtle();
 	
-	OutputStream asRdfXml();
+	public OutputStream asRdfXml();
 	
-	OutputStream asOwlXml();
+	public OutputStream asOwlXml();
 	
-	OutputStream asJsonLD();
+	public OutputStream asJsonLD();
 	
-	SimpleOntologyId getOntologyId();
+	public OntologyId getOntologyId();
 	
-	Set<Annotation> getAnnotations();
+	public Set<Annotation> getAnnotations();
 	
-//	Set<Axiom> getAxioms();
+//	public Set<Axiom> getAxioms();
 	
-	Set<OntologyIRI> getDirectImportsDocuments();
+	public Set<OntologyIRI> getDirectImportsDocuments();
 	
-	boolean importOntology(InputStream inputStream, SimpleOntologyId ontologyId);
+	public boolean importOntology(InputStream inputStream, OntologyId ontologyId);
 	
-	boolean importOntology(File file, SimpleOntologyId ontologyId);
+	public boolean importOntology(File file, OntologyId ontologyId);
 	
-	boolean importOntology(URL url, SimpleOntologyId ontologyId);
+	public boolean importOntology(URL url, OntologyId ontologyId);
 	
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 
@@ -50,8 +49,8 @@ public interface Ontology {
      *
      * @return true if the resource ids are equal and their RDF models are isomorphic.
 	 */
-	boolean equals(Object o);
+	public boolean equals(Object o);
 	
-	int hashCode();
+	public int hashCode();
 	
 }

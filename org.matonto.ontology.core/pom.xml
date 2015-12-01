@@ -81,6 +81,10 @@
                             org.matonto.ontology.core.api,
                             org.matonto.ontology.core.utils
                         </Export-Package>
+                        <Import-Package>
+                        	com.google.common.base.*,
+                        	*
+                        </Import-Package>
                         <Service-Component>*</Service-Component>
                         <_metatype>*</_metatype>
                     </instructions>

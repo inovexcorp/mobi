@@ -16,6 +16,7 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Axiom;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.openrdf.model.Model;
 import org.openrdf.model.impl.LinkedHashModel;
@@ -47,10 +48,10 @@ import org.slf4j.LoggerFactory;
 public class SimpleOntology implements Ontology {
 
 	private OntologyIRI iri;
-	private SimpleOntologyId ontologyId;
+	private OntologyId ontologyId;
 	private Set<Axiom> axioms;
-	private Set<Annotation> annotations;
-	private Set<OntologyIRI> directImportIris;
+	private Set<Annotation> annotations = new HashSet<Annotation>();
+	private Set<OntologyIRI> directImportIris = new HashSet<OntologyIRI>();
 	
 	//Owlapi variables
 	private OWLOntology ontology;
@@ -69,7 +70,7 @@ public class SimpleOntology implements Ontology {
 		
 	}
 	
-	public SimpleOntology(SimpleOntologyId ontologyId)
+	public SimpleOntology(OntologyId ontologyId)
 	{
 		try {
 			ontology = manager.createOntology();
@@ -82,7 +83,7 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	public SimpleOntology(InputStream inputStream, SimpleOntologyId ontologyId)
+	public SimpleOntology(InputStream inputStream, OntologyId ontologyId)
 	{
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
@@ -99,7 +100,7 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	public SimpleOntology(File file, SimpleOntologyId ontologyId)
+	public SimpleOntology(File file, OntologyId ontologyId)
 	{
 		iri = SimpleIRI.create(file);
 		try {
@@ -114,7 +115,7 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	public SimpleOntology(URL url, SimpleOntologyId ontologyId)
+	public SimpleOntology(URL url, OntologyId ontologyId)
 	{
 		iri = SimpleIRI.create(url);
 		try {
@@ -129,7 +130,7 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	protected OWLOntology getOntology()
+	protected OWLOntology getOwlapiOntology()
 	{
 		return this.ontology;
 	}
@@ -141,19 +142,19 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	protected OWLOntologyManager getOntologyManager()
+	protected OWLOntologyManager getOwlapiOntologyManager()
 	{
 		return this.manager;
 	}
 	
 	
-	protected void setOntologyManager(OWLOntologyManager manager)
+	protected void setOwlapiOntologyManager(OWLOntologyManager manager)
 	{
 		this.manager = manager;
 	}
 	
 	
-	protected OntologyIRI getIRI()
+	public OntologyIRI getIRI()
 	{
 		return iri;
 	}
@@ -165,14 +166,14 @@ public class SimpleOntology implements Ontology {
 	}
 	
 	
-	protected void setOntologyId(SimpleOntologyId ontologyId)
+	protected void setOntologyId(OntologyId ontologyId)
 	{
 		this.ontologyId = ontologyId;
 	}
 	
 
 	@Override
-	public SimpleOntologyId getOntologyId() 
+	public OntologyId getOntologyId() 
 	{
 		return ontologyId;
 	}
@@ -286,7 +287,7 @@ public class SimpleOntology implements Ontology {
 
 
 	@Override
-	public boolean importOntology(InputStream inputStream, SimpleOntologyId ontologyId) 
+	public boolean importOntology(InputStream inputStream, OntologyId ontologyId) 
 	{
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
@@ -308,7 +309,7 @@ public class SimpleOntology implements Ontology {
 	
 	
 	@Override
-	public boolean importOntology(File file, SimpleOntologyId ontologyId) 
+	public boolean importOntology(File file, OntologyId ontologyId) 
 	{
 		try {
 			iri = SimpleIRI.create(file);
@@ -328,7 +329,7 @@ public class SimpleOntology implements Ontology {
 	
 
 	@Override
-	public boolean importOntology(URL url, SimpleOntologyId ontologyId) 
+	public boolean importOntology(URL url, OntologyId ontologyId) 
 	{
 		try {
 			iri = SimpleIRI.create(url);
@@ -355,7 +356,7 @@ public class SimpleOntology implements Ontology {
         }
         if (o instanceof SimpleOntology) {
         	SimpleOntology simpleOntology = (SimpleOntology) o;
-        	SimpleOntologyId oId = simpleOntology.getOntologyId();
+        	OntologyId oId = simpleOntology.getOntologyId();
         	if(oId.equals(ontologyId))
         		return Models.isomorphic(this.asModel(), simpleOntology.asModel());
         }
