@@ -37,7 +37,7 @@
 
         /* Adds the selected file data to the temp variable */
         function readFile() {
-            // create the filereader to read the selected file
+            /*// create the filereader to read the selected file
             var reader = new FileReader();
 
             // onload of the file, do this action
@@ -48,12 +48,13 @@
                     wb = XLSX.parse_xlscfb(cfb);
 
                 // this assumes there is only one sheet we are working with
-                // TODO: determine if we will need to handle multi-sheet excel files
                 temp = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             }
 
             // read the file
-            reader.readAsBinaryString(vm.file);
+            reader.readAsBinaryString(vm.file);*/
+
+            console.warn('We are currently working on creating a service to handle these files');
         }
 
         // adds the selected file to the datasets displayed

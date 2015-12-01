@@ -668,6 +668,7 @@
                         latest.classes[ci] = angular.merge(latest.classes[ci], changed);
                     }
                     // otherwise, a class is being created
+                    // TODO: make sure that it has a unique iri
                     else {
                         vm.ontologies[oi].classes.push(changed);
                         latest.classes.push(changed);
