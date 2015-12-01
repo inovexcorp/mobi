@@ -417,14 +417,15 @@
                         <p ng-show="vm.selected.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
                         <!-- iri -->
-                        <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid }" class="form-group">
+                        <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid || vm.isTaken() }" class="form-group">
                             <label class="control-label" for="class-iri">Identifier</label>
                             <div class="input-group">
                                 <div class="input-group-addon">{{vm.selected.prefix}}</div>
-                                <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" ng-change="vm.unsaved();" required>
+                                <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" ng-change="vm.unsaved();" required>
                             </div>
                             <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
-                            <strong ng-if="vm.classForm.iri.$invalid && !vm.classForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
+                            <strong ng-if="vm.isTaken()" class="help-block">The entered value is already used elsewhere.</strong>
+                            <strong ng-if="vm.classForm.iri.$invalid && !vm.classForm.iri.$error.required" class="help-block">Please remove all whitespace, ':', '#', and '/' characters.</strong>
                         </div>
                         <!-- name -->
                         <div class="form-group">
@@ -438,7 +439,7 @@
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].tab != 'annotations'" class="btn-container clearfix">
-                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid">Save</button>
+                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid || vm.isTaken()">Save</button>
                             <!--button ng-if="vm.current.ci != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()" ng-disabled="vm.versions[vm.current.oi].length === 1">Undo</button-->
                         </div>
                     </div>
@@ -470,14 +471,15 @@
                         <p ng-show="vm.selected.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
                         <!-- iri -->
-                        <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid }" class="form-group">
+                        <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid || vm.isTaken() }" class="form-group">
                             <label class="control-label" for="property-iri">Identifier</label>
                             <div class="input-group">
                                 <div class="input-group-addon">{{vm.selected.prefix}}</div>
-                                <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:/#]+$/" ng-trim="false" required ng-change="vm.unsaved();">
+                                <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" required ng-change="vm.unsaved();">
                             </div>
                             <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
-                            <strong ng-if="vm.propertyForm.iri.$invalid && !vm.propertyForm.iri.$error.required" class="help-block">Please remove all space, ':', '#', and '/' characters.</strong>
+                            <strong ng-if="vm.isTaken()" class="help-block">The entered value is already used elsewhere.</strong>
+                            <strong ng-if="vm.propertyForm.iri.$invalid && !vm.propertyForm.iri.$error.required" class="help-block">Please remove all whitespace, ':', '#', and '/' characters.</strong>
                         </div>
                         <!-- name -->
                         <div class="form-group">
@@ -491,7 +493,7 @@
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab != 'annotations'" class="btn-container clearfix">
-                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.propertyForm.$invalid">Save</button>
+                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.propertyForm.$invalid || vm.isTaken()">Save</button>
                             <!--button ng-if="vm.current.pi != -1" type="button" class="btn btn-default pull-right" ng-click="vm.reset()" ng-disabled="vm.versions[vm.current.oi].length === 1">Undo</button-->
                         </div>
                     </div>
@@ -514,5 +516,5 @@
             <pre>{{vm.versions[vm.current.oi][vm.versions[vm.current.oi].length - 1].ontology | json}}</pre>
         </div>
     </div-->
-    <!--pre>{{vm.selected | json}}</pre-->
+    <pre>{{vm.selected | json}}</pre>
 </div>

@@ -28,6 +28,7 @@
         vm.tab = 'everything';
         vm.newPrefix = '';
         vm.newValue = '';
+        vm.original = '';
         vm.propertyDefault = { '@id': '', annotations: [] };
         vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [], annotations: [] };
         vm.ontologyDefault = _setOntologyDefault();
@@ -45,6 +46,7 @@
         vm.changeTab = changeTab;
         vm.edit = edit;
         vm.editPrefix = editPrefix;
+        vm.isTaken = isTaken;
         vm.removeAnnotation = removeAnnotation;
         vm.removePrefix = removePrefix;
         vm.reset = reset;
@@ -66,6 +68,7 @@
                 classes: [],
                 context: [],
                 annotations: [],
+                taken: [],
                 annotationList: _setAnnotations('rdfs:', 'owl:', []),
                 rdfs: 'rdfs:',
                 owl: 'owl:',
@@ -120,6 +123,7 @@
                     'currentAnnotation',
                     'identifier',
                     'tab',
+                    'taken',
                     'unsaved'
                 ];
 
@@ -261,6 +265,7 @@
         // takes the flattened JSON-LD data and creates our custom tree structure
         function _parseOntologies(flattened, context, owl, rdfs, xsd) {
             var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
+                taken = [],
                 classes = [],
                 properties = [],
                 annotationList = [],
@@ -281,14 +286,20 @@
                     case owl + 'Class':
                         obj.properties = [];
                         classes.push(obj);
+                        // adds the class name to the taken list
+                        taken.push(_getPrefixAndSuffix(obj['@id']).suffix);
                         break;
                     case owl + 'DatatypeProperty':
                     case owl + 'ObjectProperty':
                         obj.icon = _chooseIcon(obj, rdfs, xsd);
                         properties.push(obj);
+                        // adds the property name to the taken list
+                        taken.push(_getPrefixAndSuffix(obj['@id']).suffix);
                         break;
                     case owl + 'AnnotationProperty':
                         annotationList.push(obj);
+                        // adds the annotation name to the taken list
+                        taken.push(_getPrefixAndSuffix(obj['@id']).suffix);
                         break;
                 }
                 // add all other properties to the annotation list
@@ -301,7 +312,7 @@
                 while(j--) {
                     classObj = classes[j];
                     if(classObj['@id'] === id) {
-                        property.prefix = _stripPrefix(property['@id']);
+                        property.prefix = _getPrefixAndSuffix(property['@id']).prefix;
                         property['@id'] = property['@id'].replace(property.prefix, '');
                         classObj.properties.push(property);
                         break;
@@ -327,7 +338,7 @@
                 }
                 // adds it to the noDomains array for now
                 else {
-                    property.prefix = _stripPrefix(property['@id']);
+                    property.prefix = _getPrefixAndSuffix(property['@id']).prefix;
                     property['@id'] = property['@id'].replace(property.prefix, '');
                     noDomains.push(property);
                 }
@@ -336,7 +347,7 @@
             // updates the classes prefix property
             i = classes.length;
             while(i--) {
-                classes[i].prefix = _stripPrefix(classes[i]['@id']);
+                classes[i].prefix = _getPrefixAndSuffix(classes[i]['@id']).prefix;
                 classes[i]['@id'] = classes[i]['@id'].replace(classes[i].prefix, '');
             }
 
@@ -347,6 +358,7 @@
             ontology.owl = owl;
             ontology.rdfs = rdfs;
             ontology.annotationList = _setAnnotations(rdfs, owl, annotationList);
+            ontology.taken = taken;
 
             // checks to see if the initial context contains the ontology id already
             i = ontology.context.length;
@@ -465,18 +477,18 @@
         }
 
         // removes the beginning of the @id which is referenced here by the 'id'
-        function _stripPrefix(id) {
-            var result = '',
-                hash = id.indexOf('#'),
-                slash = id.lastIndexOf('/'),
-                colon = id.lastIndexOf(':');
+        function _getPrefixAndSuffix(id) {
+            var result = {},
+                hash = id.indexOf('#') + 1,
+                slash = id.lastIndexOf('/') + 1,
+                colon = id.lastIndexOf(':') + 1;
             // gets the result based on the delimiter present
-            if(hash !== -1) {
-                result = id.substring(0, hash + 1);
-            } else if(slash !== -1) {
-                result = id.substring(0, slash + 1);
-            } else if(colon !== -1) {
-                result = id.substring(0, colon + 1);
+            if(hash !== 0) {
+                result = { prefix: id.substring(0, hash), suffix: id.substring(hash) };
+            } else if(slash !== 0) {
+                result = { prefix: id.substring(0, slash), suffix: id.substring(slash) };
+            } else if(colon !== 0) {
+                result = { prefix: id.substring(0, colon), suffix: id.substring(colon) };
             }
             return result;
         }
@@ -519,14 +531,17 @@
             oi = vm.current.oi;
             ci = vm.current.ci;
             pi = vm.current.pi;
+            arr = vm.versions[oi];
 
             // if property index is specified, they are working with a property
-            if(pi != undefined) {
+            if(pi !== undefined) {
                 vm.shown = 'property-editor';
                 unique = vm.tab + oi + ci + pi;
                 // if has a domain associated with it (it is in the class.properties array)
-                if(ci != undefined) {
+                if(ci !== undefined) {
                     _editOrCreate(vm.ontologies[oi].classes[ci].properties, pi, unique, vm.propertyDefault);
+                    // finds what the current original value
+                    vm.original = (pi !== -1) ? arr[arr.length - 1].ontology.classes[ci].properties[pi]['@id'] : '';
                 }
                 // else, it is in the noDomains array
                 else {
@@ -536,11 +551,13 @@
                 vm.propertyForm.$setPristine();
             }
             // else, if class index is specified, they are working with a class
-            else if(ci != undefined) {
+            else if(ci !== undefined) {
                 vm.shown = 'class-editor';
                 unique = vm.tab + oi + ci;
                 // checks if editing or creating
                 _editOrCreate(vm.ontologies[oi].classes, ci, unique, vm.classDefault);
+                // finds what the current original value
+                vm.original = (ci !== -1) ? arr[arr.length - 1].ontology.classes[ci]['@id'] : '';
                 // cleans form validations
                 vm.classForm.$setPristine();
             }
@@ -549,6 +566,8 @@
                 vm.shown = 'ontology-editor';
                 unique = vm.tab + oi;
                 _editOrCreate(vm.ontologies, oi, unique, vm.ontologyDefault);
+                // resets vm.original
+                vm.original = '';
                 vm.ontologyForm.$setPristine();
             }
         }
@@ -593,7 +612,6 @@
             // else, they are working with an ontology
             else if(item.hasOwnProperty('classes') && item.classes.length) {
                 // update class and property prefixes
-                // console.log(item, copy);
                 _updateRefs(item, angular.copy(item.classes[0].prefix), item['@id']);
             }
         }
@@ -611,7 +629,6 @@
             temp.pop();
             // gets the last version saved
             lastSaved = temp[temp.length - 1].ontology;
-            console.log(lastSaved);
 
             // if property index is specified, they are working with a property
             if(pi != undefined) {
@@ -656,7 +673,6 @@
                         vm.selected = temp[temp.length - 1];
                     }
                 }
-
                 // a class is being submitted
                 else if(ci !== undefined) {
                     // there is an ontology defined for the class being edited/created
@@ -678,7 +694,6 @@
                         vm.selected = temp[temp.length - 1];
                     }
                 }
-
                 // an ontology is being submitted
                 else {
                     // update the changed @id to combine the two fields that create it
@@ -692,7 +707,20 @@
                         vm.selected['@id'] = vm.selected.identifier + vm.selected.delimiter;
                     }
                 }
-
+                // updates the taken array with the class/property changes
+                if(pi !== undefined || ci !== undefined) {
+                    // gets the array and index of current name
+                    var arr = vm.ontologies[oi].taken,
+                        index = arr.indexOf(vm.original),
+                        fresh = changed['@id'];
+                    // makes sure that the item is in the array already
+                    if(index !== -1) {
+                        // sets the taken array
+                        arr[index] = fresh;
+                        // sets the original to the new value
+                        vm.original = fresh;
+                    }
+                }
                 // if an ontology is not being created, add this version to the versions list
                 // note: this will only be false whenever they are creating a new ontology
                 if(oi !== -1) {
@@ -707,11 +735,12 @@
                     vm.current = { oi: temp.length - 1, ci: undefined, pi: undefined };
                     vm.selected = temp[temp.length - 1];
                 }
-
                 // updates context if ontology was changed for the case where the id has a prefix set
                 if(pi === undefined && ci === undefined && oi !== undefined && oi !== -1) {
+                    // sets up old and fresh for updateRefs function
                     var old = vm.versions[oi][vm.versions[oi].length - 2].ontology['@id'],
                         fresh = changed['@id'];
+                    // makes sure old is not empty string
                     if(old !== '') {
                         _updateRefs(vm.ontologies[oi].context, old, fresh);
                         _updateRefs(vm.ontologies[oi], old, fresh);
@@ -828,6 +857,24 @@
         // marks the selected item as unsaved
         function unsaved() {
             vm.selected.unsaved = true;
+        }
+
+        // checks to see if the string is already taken
+        function isTaken() {
+            // defaults the result to false
+            var arr, fresh,
+                result = false;
+            // if something is currently selected
+            if(Object.keys(vm.current).length && Object.keys(vm.selected).length && vm.current.oi !== -1) {
+                // gets array of taken names
+                arr = vm.ontologies[vm.current.oi].taken;
+                // gets the new name
+                fresh = vm.selected['@id'];
+                // sets the result to see if the value is already being used and isn't the one currently selected
+                result = arr.indexOf(fresh) !== -1 && vm.original !== fresh;
+            }
+            // returns the result
+            return result;
         }
     }
 })();
