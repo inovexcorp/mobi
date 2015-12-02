@@ -31,7 +31,6 @@
         <property name="servlet" ref="camelServlet"/>
     </bean>
 
-
     <bean id="camelServlet" class="org.apache.camel.component.servlet.CamelHttpTransportServlet">
         <property name="servletName" value="ETLServlet"/>
     </bean>
@@ -47,14 +46,9 @@
         <property name="csvConverter" ref="csvConverterBean"/>
     </bean>
 
-    <bean id="myCSV" class="org.apache.camel.model.dataformat.CsvDataFormat">
-    </bean>
-
-
     <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="etl-context"  allowUseOriginalMessage="true">
 
-        <!-- configure rest to use the camel-servlet component, and use json binding mode -->
-        <!-- and tell to output json in pretty print mode -->
+        <!-- configure rest to use the camel-servlet component -->
         <!-- setup context path and port number that Apache Tomcat will deploy this application with,
              as we use the servlet component, then we need to aid Camel to tell it these details so Camel
              knows the url to the REST services.
@@ -65,21 +59,21 @@
             <dataFormatProperty key="prettyPrint" value="true"/>
             <dataFormatProperty key="json.in.mustBeJAXBElement" value="false"/>
             <dataFormatProperty key="bindingMode" value="off"/>
-            <!--<dataFormatProperty key="allowMultipartParsing" value="true"/>-->
         </restConfiguration>
-
 
         <rest path="/csv" >
             <description>CSV ETL Tools</description>
+
+            <!--Upload a delimited document to be ETL'd-->
             <post uri="upload">
                 <description>Upload CSV File. Send CSV as a binary file in the body. FileType and FileName are required.</description>
                 <responseMessage message="CSV mapped to RDF"/>
                 <route>
-                    <to uri="bean:csvService?method=setFileName(${headers.File-Name})"/>
-                    <to uri="bean:csvService?method=upload"/>
+                    <to uri="bean:csvService?method=upload(${body}, ${headers.File-Name})"/>
                 </route>
             </post>
 
+            <!--ETL a document-->
             <post uri="etl/{document.name}">
                 <description>ETL the document using the posted mapping file</description>
                 <param name="document.name" type="header" description="The name of the document to etl"/>
@@ -88,12 +82,14 @@
                 </route>
             </post>
 
+            <!--Preview a delimited document-->
             <get uri="/preview/{document.name}">
                 <description>Gather rows from a document</description>
                 <param name="document.name" type="path" description="The document name"/>
                 <param name="Row-Count" type="header"/>
                 <route>
                     <choice>
+                        <!--Use a 10 row default when requesting a preview-->
                         <when>
                             <simple>${header.Row-Count} != null</simple>
                             <to uri="bean:csvService?method=getRows(${header.document.name},${header.Row-Count})"/>

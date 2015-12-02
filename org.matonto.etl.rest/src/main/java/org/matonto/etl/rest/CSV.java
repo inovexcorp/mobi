@@ -24,18 +24,19 @@ public class CSV{
     public CSVConverter getCsvConverter(){return csvConverter;}
     public void setCsvConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
     private static final Logger logger = Logger.getLogger(CSV.class);
-    private String fileName = "";
 
     /**
      * Uploads a delimited document to the data/tmp/ directory.
      * @param inputStream A ByteArrayInputStream of a delimited document
      */
-    public void upload(ByteArrayInputStream inputStream){
-        File file = new File("data.csv");
-        try{
-           OutputStream out = new FileOutputStream("data/tmp/" + fileName);
+    public void upload(ByteArrayInputStream inputStream, String fileName) {
 
-        // Transfer bytes from in to out
+
+        OutputStream out = null;
+        try {
+            out = new FileOutputStream("data/tmp/" + fileName);
+
+            // Transfer bytes from in to out
             byte[] buf = new byte[1024];
             int len;
             while ((len = inputStream.read(buf)) > 0) {
@@ -43,9 +44,12 @@ public class CSV{
             }
             inputStream.close();
             out.close();
-        }catch(Exception e){
-            throw new RuntimeException("Error Saving Document");
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Error writing file");
+        } catch(IOException e){
+            throw new RuntimeException("Error parsing file");
         }
+
     }
 
     /**
@@ -67,7 +71,7 @@ public class CSV{
             mappingJSON.close();
             out.close();
         }catch(Exception e) {
-            throw new RuntimeException("Error Saving Document");
+            throw new RuntimeException("Error Parsing Mapping File");
         }
         Model m = new LinkedHashModel();
         try{
@@ -79,11 +83,6 @@ public class CSV{
         Rio.write(m,sw, RDFFormat.JSONLD);
 
         return sw.toString();
-//        StringBuilder sb = new StringBuilder();
-//        for(Statement s : m ) {
-//            sb.append(s.toString() + "\n");
-//        }
-//        return sb.toString();
     }
 
     /**
