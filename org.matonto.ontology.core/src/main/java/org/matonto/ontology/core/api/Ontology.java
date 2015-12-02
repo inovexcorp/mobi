@@ -11,15 +11,15 @@ import org.openrdf.model.Model;
 
 public interface Ontology {
 	
-	public Model asModel();
+	public Model asModel() throws MatontoOntologyException;
 	
-	public OutputStream asTurtle();
+	public OutputStream asTurtle() throws MatontoOntologyException;
 	
-	public OutputStream asRdfXml();
+	public OutputStream asRdfXml() throws MatontoOntologyException;
 	
-	public OutputStream asOwlXml();
+	public OutputStream asOwlXml() throws MatontoOntologyException;
 	
-	public OutputStream asJsonLD();
+	public OutputStream asJsonLD() throws MatontoOntologyException;
 	
 	public OntologyId getOntologyId();
 	
@@ -30,6 +30,18 @@ public interface Ontology {
 	public void setAnnotations(Set<Annotation> annotations); 
 	
 //	public Set<Axiom> getAxioms();
+	
+	public void addAxiom(Axiom axiom);
+	
+	public void addAxioms(Set<Axiom> axioms);
+	
+	public void addAnnotation(Annotation annotation);
+	
+	public void addAnnotations(Set<Annotation> annotations);
+	
+	public void addDirectImport(OntologyIRI diIri);
+	
+	public void addDirectImports(Set<OntologyIRI> diIris);
 	
 	public Set<OntologyIRI> getDirectImportsDocuments();
 	

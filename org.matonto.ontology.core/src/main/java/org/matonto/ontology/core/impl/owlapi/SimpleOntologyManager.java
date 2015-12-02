@@ -94,28 +94,28 @@ public class SimpleOntologyManager implements OntologyManager {
 	
 
 	@Override
-	public Ontology createOntology(OntologyId ontologyId) 
+	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException
 	{
 		return new SimpleOntology(ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(File file, OntologyId ontologyId) 
+	public Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException
 	{
 		return new SimpleOntology(file, ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(URL url, OntologyId ontologyId) 
+	public Ontology createOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException
 	{
 		return new SimpleOntology(url, ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId) 
+	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException 
 	{	
 		return new SimpleOntology(inputStream, ontologyId);
 	}
@@ -365,28 +365,6 @@ public class SimpleOntologyManager implements OntologyManager {
 	}
 	
 	
-	public static void main(String [] args)
-	{
-		SimpleOntologyManager manager = new SimpleOntologyManager();
-		Repository repo = null;
-		try {
-			repo = new SailRepository(new MemoryStore());
-			repo.initialize();
-
-		} catch (RepositoryException e) {
-			e.printStackTrace();
-		}
-		manager.setRepo(repo);
-		
-		URI fileId = new URIImpl("http://www.matonto.org/samples#Travel");
-		OntologyId ontologyId = manager.createOntologyId(fileId);
-		Ontology onto = new SimpleOntology();
-//		File file = new File("/Users/joyas/workspace/MatOnto/matonto/org.matonto.ontology.core/src/test/resources/travel.owl");
-		File file = new File("/Users/joyas/Documents/travel.owl");
-		onto.importOntology(file, ontologyId);
-		boolean stored = manager.storeOntology(onto);
-		System.out.println(stored);
-	}
 
 	
 }

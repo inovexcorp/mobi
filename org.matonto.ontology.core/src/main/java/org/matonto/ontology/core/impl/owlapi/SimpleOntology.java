@@ -50,7 +50,7 @@ public class SimpleOntology implements Ontology {
 
 	private OntologyIRI iri;
 	private OntologyId ontologyId;
-	private Set<Axiom> axioms;
+	private Set<Axiom> axioms = new HashSet<Axiom>();
 	private Set<Annotation> annotations = new HashSet<Annotation>();
 	private Set<OntologyIRI> directImportIris = new HashSet<OntologyIRI>();
 	
@@ -225,7 +225,7 @@ public class SimpleOntology implements Ontology {
      * @return the unmodifiable sesame model that represents this Ontology
      */
 	@Override
-	public Model asModel() 
+	public Model asModel() throws MatontoOntologyException
 	{
 		Model sesameModel = new LinkedHashModel();
 		ByteArrayOutputStream bos = null;
@@ -241,10 +241,11 @@ public class SimpleOntology implements Ontology {
 		    RioRenderer renderer = new RioRenderer(tempOntology, rdfHandler, parsedFormat);
 			
 			renderer.render();
+			
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in Rio Rendering", e);
 		} catch (OWLOntologyCreationException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error in loading ontology document", e);
 		} finally {
 			IOUtils.closeQuietly(bos);
 			IOUtils.closeQuietly(is);
@@ -255,28 +256,28 @@ public class SimpleOntology implements Ontology {
 	
 	
 	@Override
-	public OutputStream asTurtle() 
+	public OutputStream asTurtle() throws MatontoOntologyException
 	{		
 		return getOntologyDocument(new TurtleDocumentFormat());		
 	}
 
 	
 	@Override
-	public OutputStream asRdfXml() 
+	public OutputStream asRdfXml() throws MatontoOntologyException
 	{
 		return getOntologyDocument(new RDFXMLDocumentFormat());		
 	}
 
 	
 	@Override
-	public OutputStream asOwlXml() 
+	public OutputStream asOwlXml() throws MatontoOntologyException
 	{
 		return getOntologyDocument(new OWLXMLDocumentFormat());
 	}
 	
 	
 	@Override
-	public OutputStream asJsonLD()
+	public OutputStream asJsonLD() throws MatontoOntologyException
 	{
 		OutputStream outputStream = new ByteArrayOutputStream();
 		try {
@@ -369,7 +370,7 @@ public class SimpleOntology implements Ontology {
     }
     
     
-	private OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat)
+	private OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat) throws MatontoOntologyException
 	{
 		OutputStream os = null;
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -383,7 +384,7 @@ public class SimpleOntology implements Ontology {
 			os = MatOntoStringUtils.replaceLanguageTag(outputStream);
 			
 		} catch (OWLOntologyStorageException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Unable to save to an ontology object", e);
 		} finally {
 			IOUtils.closeQuietly(outputStream);
 		}
@@ -432,6 +433,57 @@ public class SimpleOntology implements Ontology {
 	{
 //		if(ontology != null) 
 //			axioms = ontology.getAxioms();
+	}
+
+	
+	@Override
+	public void addAxiom(Axiom axiom) 
+	{
+		if(axiom!=null && !this.axioms.contains(axiom))
+			this.axioms.add(axiom);		
+	}
+	
+
+	@Override
+	public void addAxioms(Set<Axiom> axioms) 
+	{
+		if(axioms!=null)
+			for(Axiom axiom : axioms)
+				addAxiom(axiom);
+	}
+
+	
+	@Override
+	public void addAnnotation(Annotation annotation) 
+	{
+		if(annotation!=null && !this.annotations.contains(annotation))
+			this.annotations.add(annotation);
+	}
+
+	
+	@Override
+	public void addAnnotations(Set<Annotation> annotations) 
+	{
+		if(annotations!=null)
+			for(Annotation annotation : annotations)
+				addAnnotation(annotation);
+	}
+
+	
+	@Override
+	public void addDirectImport(OntologyIRI diIri) 
+	{
+		if(diIri!=null && !this.directImportIris.contains(diIri))
+			this.directImportIris.add(diIri);
+	}
+
+	
+	@Override
+	public void addDirectImports(Set<OntologyIRI> diIris) 
+	{
+		if(diIris!=null)
+			for(OntologyIRI diIri : diIris)
+				addDirectImport(diIri);
 	}
 	
 

@@ -12,13 +12,13 @@ import com.google.common.base.Optional;
 
 public interface OntologyManager {
 	
-	public Ontology createOntology(OntologyId ontologyId);
+	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public Ontology createOntology(File file, OntologyId ontologyId);
+	public Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public Ontology createOntology(URL url, OntologyId ontologyId);
+	public Ontology createOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId);
+	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
 	
 	public Optional<Ontology> retrieveOntology(OntologyId ontologyId) throws MatontoOntologyException; 
 	
