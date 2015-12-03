@@ -3,7 +3,7 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.Set;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.ClassAxiom;
+import org.matonto.ontology.core.api.axiom.ClassAxiom;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 public class SimpleClassAxiom extends SimpleAxiom implements ClassAxiom {

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.matonto.ontology.core.api.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;

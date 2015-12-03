@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.matonto.ontology.core.api.Annotation;
 
-import org.matonto.ontology.core.api.Axiom;
+import org.matonto.ontology.core.api.axiom.Axiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 public abstract class SimpleAxiom implements Axiom {

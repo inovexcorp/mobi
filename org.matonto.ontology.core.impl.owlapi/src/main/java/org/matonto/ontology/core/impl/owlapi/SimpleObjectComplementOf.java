@@ -3,8 +3,8 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.ObjectComplementOf;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.ObjectComplementOf;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;

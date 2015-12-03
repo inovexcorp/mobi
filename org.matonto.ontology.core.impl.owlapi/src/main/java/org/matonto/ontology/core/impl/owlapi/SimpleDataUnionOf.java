@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.matonto.ontology.core.api.DataRange;
-import org.matonto.ontology.core.api.DataUnionOf;
+import org.matonto.ontology.core.api.datarange.DataRange;
+import org.matonto.ontology.core.api.datarange.DataUnionOf;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.DataRangeType;

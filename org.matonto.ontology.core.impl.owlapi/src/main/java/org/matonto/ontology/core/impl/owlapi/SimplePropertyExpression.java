@@ -1,6 +1,6 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import org.matonto.ontology.core.api.PropertyExpression;
+import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 
 public class SimplePropertyExpression implements PropertyExpression {
 

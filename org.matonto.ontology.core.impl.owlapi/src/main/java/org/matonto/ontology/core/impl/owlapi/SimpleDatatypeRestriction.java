@@ -3,8 +3,8 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.Datatype;
-import org.matonto.ontology.core.api.DatatypeRestriction;
+import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.datarange.DatatypeRestriction;
 import org.matonto.ontology.core.api.FacetRestriction;
 
 import com.google.common.base.Preconditions;

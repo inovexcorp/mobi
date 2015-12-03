@@ -3,7 +3,7 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.Datatype;
+import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.DataRangeType;
 import org.matonto.ontology.core.api.types.EntityType;

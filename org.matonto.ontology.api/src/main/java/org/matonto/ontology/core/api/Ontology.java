@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Set;
 
+import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 

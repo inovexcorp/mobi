@@ -3,11 +3,11 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.ObjectExactCardinality;
-import org.matonto.ontology.core.api.ObjectMaxCardinality;
-import org.matonto.ontology.core.api.ObjectMinCardinality;
-import org.matonto.ontology.core.api.ObjectPropertyExpression;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.ObjectExactCardinality;
+import org.matonto.ontology.core.api.classexpression.ObjectMaxCardinality;
+import org.matonto.ontology.core.api.classexpression.ObjectMinCardinality;
+import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 public class SimpleObjectExactCardinality 

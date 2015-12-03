@@ -3,8 +3,8 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.Set;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.ClassAssertionAxiom;
-import org.matonto.ontology.core.api.ClassExpression;
+import org.matonto.ontology.core.api.axiom.ClassAssertionAxiom;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.Individual;
 
 import com.google.common.base.Preconditions;

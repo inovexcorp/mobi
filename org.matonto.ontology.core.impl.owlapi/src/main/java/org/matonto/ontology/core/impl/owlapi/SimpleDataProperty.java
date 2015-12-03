@@ -1,6 +1,6 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import org.matonto.ontology.core.api.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.semanticweb.owlapi.model.IRI;

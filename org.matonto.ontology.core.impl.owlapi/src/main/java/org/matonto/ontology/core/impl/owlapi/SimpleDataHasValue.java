@@ -3,9 +3,9 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.DataHasValue;
-import org.matonto.ontology.core.api.DataPropertyExpression;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.DataHasValue;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.Literal;
 
 import com.google.common.base.Preconditions;

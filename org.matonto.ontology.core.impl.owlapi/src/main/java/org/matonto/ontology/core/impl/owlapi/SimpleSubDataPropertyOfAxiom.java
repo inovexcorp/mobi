@@ -3,8 +3,8 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.Set;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.DataPropertyExpression;
-import org.matonto.ontology.core.api.SubDataPropertyOfAxiom;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
+import org.matonto.ontology.core.api.axiom.SubDataPropertyOfAxiom;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;

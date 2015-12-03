@@ -3,8 +3,8 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.OClass;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;

@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.AnnotationProperty;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.AnnotationValue;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
@@ -17,7 +17,6 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLProperty;
 import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.util.CollectionFactory;
 

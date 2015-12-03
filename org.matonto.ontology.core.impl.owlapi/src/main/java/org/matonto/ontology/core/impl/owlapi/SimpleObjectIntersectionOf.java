@@ -2,8 +2,8 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.Set;
 
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.ObjectIntersectionOf;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.ObjectIntersectionOf;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 

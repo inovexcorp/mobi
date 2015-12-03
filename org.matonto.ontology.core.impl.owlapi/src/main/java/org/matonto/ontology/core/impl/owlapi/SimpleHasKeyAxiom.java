@@ -5,11 +5,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.DataPropertyExpression;
-import org.matonto.ontology.core.api.HasKeyAxiom;
-import org.matonto.ontology.core.api.ObjectPropertyExpression;
-import org.matonto.ontology.core.api.PropertyExpression;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
+import org.matonto.ontology.core.api.axiom.HasKeyAxiom;
+import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
+import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;

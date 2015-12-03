@@ -1,7 +1,7 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import org.matonto.ontology.core.api.DataComplementOf;
-import org.matonto.ontology.core.api.DataRange;
+import org.matonto.ontology.core.api.datarange.DataComplementOf;
+import org.matonto.ontology.core.api.datarange.DataRange;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.DataRangeType;

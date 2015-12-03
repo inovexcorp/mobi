@@ -3,7 +3,7 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.DataOneOf;
+import org.matonto.ontology.core.api.datarange.DataOneOf;
 import org.matonto.ontology.core.api.Literal;
 
 import com.google.common.base.Preconditions;

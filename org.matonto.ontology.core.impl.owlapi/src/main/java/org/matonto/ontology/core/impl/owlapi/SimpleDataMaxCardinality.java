@@ -1,8 +1,8 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import org.matonto.ontology.core.api.DataMaxCardinality;
-import org.matonto.ontology.core.api.DataPropertyExpression;
-import org.matonto.ontology.core.api.DataRange;
+import org.matonto.ontology.core.api.classexpression.DataMaxCardinality;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
+import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 public class SimpleDataMaxCardinality 

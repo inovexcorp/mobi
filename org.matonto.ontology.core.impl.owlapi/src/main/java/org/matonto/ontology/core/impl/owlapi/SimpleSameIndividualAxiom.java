@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
-import org.matonto.ontology.core.api.SameIndividualAxiom;
+import org.matonto.ontology.core.api.axiom.SameIndividualAxiom;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;

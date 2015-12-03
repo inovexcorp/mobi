@@ -4,11 +4,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.DeclarationAxiom;
+import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
 import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.NamedIndividual;
-import org.matonto.ontology.core.api.OClass;
-import org.matonto.ontology.core.api.ObjectProperty;
+import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
@@ -25,9 +25,9 @@ import com.google.common.base.Preconditions;
 import uk.ac.manchester.cs.owl.owlapi.OWLDeclarationAxiomImpl;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.AnnotationProperty;
-import org.matonto.ontology.core.api.DataProperty;
-import org.matonto.ontology.core.api.Datatype;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.datarange.Datatype;
 
 
 public class SimpleDeclarationAxiom 

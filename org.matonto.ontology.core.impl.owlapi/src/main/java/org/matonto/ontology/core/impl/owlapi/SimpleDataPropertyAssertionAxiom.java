@@ -3,8 +3,8 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.Set;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.DataPropertyAssertionAxiom;
-import org.matonto.ontology.core.api.DataPropertyExpression;
+import org.matonto.ontology.core.api.axiom.DataPropertyAssertionAxiom;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.Literal;
 

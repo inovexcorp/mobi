@@ -3,12 +3,12 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.DataExactCardinality;
-import org.matonto.ontology.core.api.DataMaxCardinality;
-import org.matonto.ontology.core.api.DataMinCardinality;
-import org.matonto.ontology.core.api.DataPropertyExpression;
-import org.matonto.ontology.core.api.DataRange;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.DataExactCardinality;
+import org.matonto.ontology.core.api.classexpression.DataMaxCardinality;
+import org.matonto.ontology.core.api.classexpression.DataMinCardinality;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
+import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 

@@ -21,7 +21,7 @@ public enum AxiomType {
 	FUNCTIONAL_OBJECT_PROPERTY ("FunctionalObjectProperty", false, false, true), 
 	INVERSE_FUNCTIONAL_OBJECT_PROPERTY ("InverseFunctionalObjectProperty", false, false, true), 
 	SYMMETRIC_OBJECT_PROPERTY ("SymmetricObjectProperty", false, false, true), 
-	ASYMMETRIC_OBJECT_PROPERTY ("AsymmetricObjectProperty", true, true, true), 
+	ASYMMETRIC_OBJECT_PROPERTY ("AsymmetricObjectProperty", true, true, true),
 	TRANSITIVE_OBJECT_PROPERTY ("TransitiveObjectProperty", false, false, true), 
 	REFLEXIVE_OBJECT_PROPERTY ("ReflexiveObjectProperty", true, true, true), 
 	IRREFLEXIVE_OBJECT_PROPERTY ("IrrefexiveObjectProperty", true, true, true), 

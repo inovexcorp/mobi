@@ -5,8 +5,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.DisjointClassesAxiom;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.axiom.DisjointClassesAxiom;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;

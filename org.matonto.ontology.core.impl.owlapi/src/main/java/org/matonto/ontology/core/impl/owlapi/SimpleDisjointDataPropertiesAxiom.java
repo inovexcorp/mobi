@@ -5,8 +5,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.DataPropertyExpression;
-import org.matonto.ontology.core.api.DisjointDataPropertiesAxiom;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
+import org.matonto.ontology.core.api.axiom.DisjointDataPropertiesAxiom;
 
 import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;

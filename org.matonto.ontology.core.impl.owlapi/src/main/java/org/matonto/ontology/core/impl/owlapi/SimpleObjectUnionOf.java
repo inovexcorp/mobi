@@ -2,8 +2,8 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.Set;
 
-import org.matonto.ontology.core.api.ClassExpression;
-import org.matonto.ontology.core.api.ObjectUnionOf;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.ObjectUnionOf;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 public class SimpleObjectUnionOf 

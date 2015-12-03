@@ -1,5 +1,7 @@
 package org.matonto.ontology.core.api;
 
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
+
 import java.util.Set;
 
 
