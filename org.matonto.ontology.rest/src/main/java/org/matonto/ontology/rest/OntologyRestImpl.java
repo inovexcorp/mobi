@@ -124,9 +124,10 @@ public class OntologyRestImpl {
 			boolean persisted = false;
 			JSONObject json = new JSONObject();
 			URI uri = new URIImpl(namespace + "#" + localName);
-			Ontology ontology = manager.createOntology(fileInputStream, manager.createOntologyId(uri));
-
+			Ontology ontology;
+			
 			try{
+				ontology = manager.createOntology(fileInputStream, manager.createOntologyId(uri));
 				persisted = manager.storeOntology(ontology);
 			} catch(MatontoOntologyException ex) {
 				json.put("error", ex.getMessage());
