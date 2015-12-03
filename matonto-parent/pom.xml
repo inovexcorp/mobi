@@ -47,7 +47,7 @@
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
-                <artifactId>ontology.core</artifactId>
+                <artifactId>ontology.api</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
 

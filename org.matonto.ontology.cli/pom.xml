@@ -12,8 +12,8 @@
 
     <artifactId>ontology.cli</artifactId>
 
-    <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
+    <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
         <dependency>
@@ -25,10 +25,8 @@
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.matonto.ontology</groupId>
-            <artifactId>core</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <scope>provided</scope>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
@@ -52,9 +50,16 @@
                         <Import-Package>
                             org.openrdf.*;version="${ontology.openrdf.version}",
                             org.matonto.ontology.core.api;version="[1.0,2)",
+                            org.matonto.ontology.core.api.*;version="[1.0,2)",
+                            org.matonto.ontology.core.utils;version="[1.0,2)",
                             com.google.common.base.*,
+                            org.apache.commons.io.*,
+                            org.apache.felix.service.command,
+			              	org.apache.karaf.shell.commands,
+			              	org.apache.karaf.shell.console,
                             *
                         </Import-Package>
+                        <Karaf-Commands>*</Karaf-Commands>
                         <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>
