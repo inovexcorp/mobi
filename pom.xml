@@ -24,10 +24,11 @@
         <module>org.matonto.etl.cli</module>
         <module>org.matonto.etl.csv</module>
         <module>org.matonto.etl.rdf</module>
-        <module>org.matonto.ontology.core</module>
+        <module>org.matonto.ontology.api</module>
         <module>org.matonto.ontology.cli</module>
         <module>org.matonto.ontology.rest</module>
         <module>org.matonto.web</module>
+        <module>org.matonto.ontology.core.impl.owlapi</module>
     </modules>
 
     <build>
