@@ -6,6 +6,7 @@ import java.util.TreeSet;
 
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
+import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
 import org.matonto.ontology.core.api.AnnotationValue;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;

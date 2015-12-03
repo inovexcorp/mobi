@@ -2,6 +2,7 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.model.OWLLiteral;

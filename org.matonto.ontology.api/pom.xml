@@ -26,6 +26,8 @@
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${ontology.openrdf.version}</version>
         </dependency>
+        
+        <!-- Owlapi dependencies -->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-osgidistribution</artifactId>
@@ -44,14 +46,14 @@
                         <Bundle-Name>MatOnto Ontology Service - Core</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.ontology.core.api,
+                        	org.matonto.ontology.core.api,
+                            org.matonto.ontology.core.api.*,
                             org.matonto.ontology.core.utils
                         </Export-Package>
                         <Import-Package>
                         	com.google.common.base.*,
                         	*
                         </Import-Package>
-                        <Service-Component>*</Service-Component>
                         <_metatype>*</_metatype>
                     </instructions>
                 </configuration>
