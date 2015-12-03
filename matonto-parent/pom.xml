@@ -30,7 +30,7 @@
         <etl.openrdf.version>2.8.6</etl.openrdf.version>
         <ontology.openrdf.version>2.8.6</ontology.openrdf.version>
 
-        <owlapi.version>4.0.2</owlapi.version>
+        <owlapi.version>4.1.3</owlapi.version>
     </properties>
 
     <dependencyManagement>
@@ -47,7 +47,7 @@
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
-                <artifactId>ontology.core</artifactId>
+                <artifactId>ontology.api</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
 

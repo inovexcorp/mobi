@@ -26,8 +26,7 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>ontology.core</artifactId>
-	    <scope>provided</scope>	
+            <artifactId>ontology.api</artifactId>
         </dependency>
 
         <dependency>
@@ -94,6 +93,10 @@
                         <Import-Package>
                             org.openrdf.*;version="${ontology.openrdf.version}",
                             org.matonto.ontology.core.api;version="[1.0,2)",
+                            org.matonto.ontology.core.api.*;version="[1.0,2)",
+                            org.matonto.ontology.core.utils;version="[1.0,2)",
+                            com.google.common.base.*,
+                            org.apache.commons.io.*,
                             org.json.*,
                             org.slf4j.*,
                             javax.ws.rs.*,
@@ -106,7 +109,6 @@
                         <Webapp-Context>matonto</Webapp-Context>
                         <_wab>src/main/webapp</_wab>
                         <Service-Component>*</Service-Component>
-                        <_metatype>*</_metatype>
                     </instructions>
                 </configuration>
             </plugin>
