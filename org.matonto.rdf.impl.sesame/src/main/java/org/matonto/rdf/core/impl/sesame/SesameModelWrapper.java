@@ -1,12 +1,12 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.IRI;
-import org.matonto.rdf.core.api.Model;
-import org.matonto.rdf.core.api.Namespace;
-import org.matonto.rdf.core.api.Resource;
-import org.matonto.rdf.core.api.Statement;
-import org.matonto.rdf.core.api.Value;
-import org.matonto.rdf.core.api.ValueFactory;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Namespace;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.openrdf.model.util.Models;
 
 import java.util.*;

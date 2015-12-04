@@ -1,6 +1,6 @@
 package org.matonto.rdf.core.impl.sesame
 
-import org.matonto.rdf.core.api.Model
+import org.matonto.rdf.api.Model
 import spock.lang.Specification
 
 class LinkedHashModelFactorySpec extends Specification {

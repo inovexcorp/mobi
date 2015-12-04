@@ -1,6 +1,6 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.Namespace;
+import org.matonto.rdf.api.Namespace;
 
 public class SimpleNamespace extends org.openrdf.model.impl.SimpleNamespace implements Namespace {
 
