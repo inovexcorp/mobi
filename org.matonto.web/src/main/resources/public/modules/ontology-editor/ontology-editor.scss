@@ -19,6 +19,11 @@
         /* Pads the outside of the tab elements */
         .tab {
             padding: 15px;
+
+            /* Makes the prefix box shorter than the value box */
+            table thead .prefix-col {
+                width: 30%;
+            }
         }
 
         /* Styles the header for each of the editing panels */
@@ -50,11 +55,6 @@
             textarea {
                 resize: none;
             }
-        }
-
-        /* Adds the alignment for the table error message */
-        .table-warning {
-            margin-top: -20px;
         }
 
         /* Annotation styles */

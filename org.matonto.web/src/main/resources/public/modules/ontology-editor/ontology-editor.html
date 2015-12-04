@@ -352,7 +352,7 @@
                         <table class="table table-bordered input-table">
                             <thead>
                                 <tr>
-                                    <th>Prefix</th>
+                                    <th class="prefix-col">Prefix</th>
                                     <th>Value</th>
                                     <th class="action-button"></th>
                                 </tr>
@@ -389,7 +389,7 @@
                             </tbody>
                         </table>
                         <!-- error messages for empty or unique -->
-                        <div class="has-warning table-warning clearfix" ng-if="vm.showDuplicateMessage || vm.showEmptyMessage">
+                        <div class="has-warning clearfix" ng-if="vm.showDuplicateMessage || vm.showEmptyMessage">
                             <strong ng-if="vm.showDuplicateMessage" class="help-block">Both prefix and value must be unique.</strong>
                             <strong ng-if="vm.showEmptyMessage" class="help-block">Both prefix and value must be provided.</strong>
                         </div>
@@ -516,5 +516,5 @@
             <pre>{{vm.versions[vm.current.oi][vm.versions[vm.current.oi].length - 1].ontology | json}}</pre>
         </div>
     </div-->
-    <pre>{{vm.selected | json}}</pre>
+    <!--pre>{{vm.selected | json}}</pre-->
 </div>
