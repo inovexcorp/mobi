@@ -1,10 +1,9 @@
 package org.matonto.rdf.core.impl.sesame
 
-import org.matonto.rdf.core.api.ValueFactory
+import org.matonto.rdf.api.ValueFactory
 import org.openrdf.model.vocabulary.XMLSchema
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class SimpleStatementSpec extends Specification {
 

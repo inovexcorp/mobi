@@ -1,6 +1,6 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.*;
+import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.LiteralUtils;
 import org.openrdf.model.vocabulary.XMLSchema;
 
