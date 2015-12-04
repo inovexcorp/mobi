@@ -1,7 +1,7 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.Model;
-import org.matonto.rdf.core.api.ModelFactory;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 
 public class TreeModelFactory implements ModelFactory {
 

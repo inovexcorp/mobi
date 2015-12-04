@@ -1,3 +1,0 @@
-Bundle-SymbolicName: org.matonto.rdf.api
-Bundle-Name: MatOnto RDF API
-Export-Package: org.matonto.rdf.core.api
