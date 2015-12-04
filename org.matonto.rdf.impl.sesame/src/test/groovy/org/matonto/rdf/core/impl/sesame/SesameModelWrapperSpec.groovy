@@ -65,16 +65,16 @@ class SesameModelWrapperSpec extends Specification {
         model.size() == 2
     }
 
-    def "clear() returns boolean"() {
+    def "clear() clears model"() {
         setup:
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
         model.add(s, p, o)
+        model.clear()
 
         expect:
-        model.clear()
-        !model.clear()
+        model.size() == 0;
     }
 
     def "clear(c...) with one context returns boolean"() {

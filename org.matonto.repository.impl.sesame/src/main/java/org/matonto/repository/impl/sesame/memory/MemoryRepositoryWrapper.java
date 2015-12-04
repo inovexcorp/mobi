@@ -5,7 +5,7 @@ import aQute.bnd.annotation.metatype.Configurable;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.base.RepositoryWrapper;
-import org.matonto.repository.config.RepositoryConfigException;
+import org.matonto.repository.exception.RepositoryConfigException;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
