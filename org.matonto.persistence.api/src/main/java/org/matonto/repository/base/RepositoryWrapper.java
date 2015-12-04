@@ -5,7 +5,7 @@ import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.config.RepositoryConfig;
-import org.matonto.repository.config.RepositoryConfigException;
+import org.matonto.repository.exception.RepositoryConfigException;
 import org.matonto.repository.exception.RepositoryException;
 
 import java.io.File;
@@ -57,15 +57,16 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
 
     protected void start(Map<String, Object> props) {
         validateConfig(props);
+        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, props);
+
         Repository repo = getRepo(props);
         try {
             repo.initialize();
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            throw new RepositoryException("Could not initialize Repository \"" + config.id() + "\".", e);
         }
         setDelegate(repo);
 
-        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, props);
         setRepositoryID(config.id());
     }
 
@@ -73,7 +74,7 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
         try {
             getDelegate().shutDown();
         } catch (RepositoryException e) {
-            e.printStackTrace();
+            throw new RepositoryException("Could not shutdown Repository \"" + repositoryID + "\".", e);
         }
     }
 

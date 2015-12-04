@@ -1,4 +1,4 @@
-package org.matonto.repository.config;
+package org.matonto.repository.exception;
 
 import org.matonto.exception.MatOntoException;
 

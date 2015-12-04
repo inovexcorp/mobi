@@ -19,6 +19,16 @@ public class Values {
         }
     }
 
+    public static Statement matontoStatement(org.openrdf.model.Statement statement) {
+        if (statement.getContext() != null) {
+            return MATONTO_VF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
+                    matontoValue(statement.getObject()), matontoResource(statement.getContext()));
+        } else {
+            return MATONTO_VF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
+                    matontoValue(statement.getObject()));
+        }
+    }
+
     public static org.openrdf.model.Resource sesameResource(Resource resource) {
         if (resource == null) {
             return null;
