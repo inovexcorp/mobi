@@ -1,6 +1,9 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
 
 import java.util.Objects;
 import java.util.Optional;
