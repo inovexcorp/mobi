@@ -34,16 +34,6 @@
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${ontology.openrdf.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-queryresultio-api</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-queryresultio-binary</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>
 
         <!-- Owlapi dependencies -->
         <dependency>
@@ -80,7 +70,6 @@
                         <Bundle-Name>MatOnto Ontology Core OWLAPI Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Service-Component>*</Service-Component>
-                        <_metatype>*</_metatype>
                     </instructions>
                 </configuration>
             </plugin>
