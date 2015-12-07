@@ -2,26 +2,35 @@ package org.matonto.etl.service.rdf;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import org.matonto.etl.api.rdf.RDFImportService;
+import org.openrdf.model.Model;
 import org.openrdf.model.URI;
+import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.impl.URIImpl;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.Rio;
+import org.openrdf.repository.config.RepositoryConfigException;
+import org.openrdf.repository.manager.RepositoryManager;
+import org.openrdf.rio.*;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.openrdf.rio.helpers.StatementCollector;
 
 @Component(provide = RDFImportService.class, immediate = true)
 public class RDFImportServiceImpl implements RDFImportService {
+
+    private RepositoryManager repositoryManager;
 
     private Repository repository;
 
     private RepositoryConnection repConnect;
 
+
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager){this.repositoryManager = repositoryManager;}
 
     @Reference(target = "(repositorytype=memory)")
     public void setRepository(Repository repository) {
@@ -51,22 +60,34 @@ public class RDFImportServiceImpl implements RDFImportService {
 
         URI newURI = new URIImpl("<http://matonto.org/>");
 
-        repConnect = repository.getConnection();
-        if(repConnect == null){
-            throw new RepositoryException("Failed to connect to the repository.");
+        RDFParser parser = Rio.createParser(format);
+        Model m = new LinkedHashModel();
+        parser.setRDFHandler(new StatementCollector(m));
+        try {
+            parser.parse(new FileReader(file), "");
+        }catch(RDFHandlerException e){
+            throw new RDFParseException(e);
         }
-        System.out.println("Repository connected!");
-        // ASK ABOUT THE ADD METHOD
-        repConnect.add(file, newURI.toString(), format);
+
+        try {
+            RepositoryConnection repositoryConnection = repositoryManager.getRepository(repositoryID).getConnection();
+            repositoryConnection.add(m);
+        }catch(RepositoryConfigException e){
+            throw new RepositoryException(e);
+        }
 
 
-
-        repConnect.close();
-
-
-
-
-
+//        repConnect = repository.getConnection();
+//        if(repConnect == null){
+//            throw new RepositoryException("Failed to connect to the repository.");
+//        }
+//        System.out.println("Repository connected!");
+//        // ASK ABOUT THE ADD METHOD
+//        repConnect.add(file, newURI.toString(), format);
+//
+//
+//
+//        repConnect.close();
     }
 
     /**
@@ -91,16 +112,34 @@ public class RDFImportServiceImpl implements RDFImportService {
             }
         }
 
-        repConnect = repository.getConnection();
-        if(repConnect == null){
-            throw new RepositoryException("Failed to connect to the repository.");
+        RDFParser parser = Rio.createParser(format);
+        Model m = new LinkedHashModel();
+        parser.setRDFHandler(new StatementCollector(m));
+        try {
+            parser.parse(new FileReader(file), "");
+        }catch(RDFHandlerException e){
+            throw new RDFParseException(e);
         }
 
-        URI newURI = new URIImpl("<http://matonto.org/>");
+        try {
+            RepositoryConnection repositoryConnection = repositoryManager.getRepository(repositoryID).getConnection();
+            repositoryConnection.add(m);
+        }catch(RepositoryConfigException e){
+            throw new RepositoryException(e);
+        }
 
-        repConnect.add(file, newURI.toString(), format);
 
-        repConnect.close();
+//        repConnect = repository.getConnection();
+//        if(repConnect == null){
+//            throw new RepositoryException("Failed to connect to the repository.");
+//        }
+//        System.out.println("Repository connected!");
+//        // ASK ABOUT THE ADD METHOD
+//        repConnect.add(file, newURI.toString(), format);
+//
+//
+//
+//        repConnect.close();
 
     }
 
