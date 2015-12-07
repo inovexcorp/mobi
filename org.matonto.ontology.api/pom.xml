@@ -20,6 +20,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+
         <!-- Openrdf Sesame dependencies -->
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
