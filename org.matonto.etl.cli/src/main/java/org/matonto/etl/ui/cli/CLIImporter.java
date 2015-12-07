@@ -15,19 +15,7 @@ import org.openrdf.rio.RDFParseException;
 
 @Command(scope = "matonto", name = "import", description = "Imports objects to a repository")
 public class CLIImporter implements Action {
-
-    private static final Logger logger = Logger.getLogger(CLIImporter.class);
-
-    //Services Preparation
-    private RDFImportService importService;
-    private CSVConverter csvConverter;
-
-    public RDFImportService getImportService() {return importService;}
-    public CSVConverter getCsvConverter(){return csvConverter;}
-
-    public void setImportService(RDFImportService importService) {this.importService = importService;}
-    public void setCsvConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
-
+    
     //Command Line Arguments and Options
     @Argument(index = 0, name = "DataType", description = "The data type being imported. Supported data types are: RDF and CSV", required = true)
     String dataType = null;
@@ -46,14 +34,24 @@ public class CLIImporter implements Action {
 
     @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an error on a line.", required = false, multiValued = false)
     boolean continueOnError = false;
+    private static final Logger LOGGER = Logger.getLogger(CLIImporter.class);
 
+    //Services Preparation
+    private RDFImportService importService;
+    private CSVConverter csvConverter;
 
+    public RDFImportService getImportService() {return importService;}
+    public CSVConverter getCsvConverter(){return csvConverter;}
+
+    public void setImportService(RDFImportService importService) {this.importService = importService;}
+    public void setCsvConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
+    
     @Override
     public Object execute() throws Exception {
 
-        if(dataType.equalsIgnoreCase("rdf"))
+        if("rdf".equalsIgnoreCase(dataType))
             importRDF();
-        else if(dataType.equalsIgnoreCase("csv"))
+        else if("csv".equalsIgnoreCase(dataType))
             importCSV();
         else{
             System.out.println("Invalid Data Type Selection. Supported options are:\n csv\n rdf");
@@ -63,7 +61,7 @@ public class CLIImporter implements Action {
     }
 
     public void importRDF(){
-        System.out.println("Importing RDF");
+        LOGGER.info("Importing RDF");
         try{
             File newFile = new File(file);
             importService.importFile(repositoryId, newFile, continueOnError);
@@ -73,7 +71,7 @@ public class CLIImporter implements Action {
     }
 
     public void importCSV(){
-        System.out.println("Importing CSV");
+        LOGGER.info("Importing CSV");
 
         File newFile = new File(file);
         File mappingFile = new File(mappingFileLocation);
@@ -84,10 +82,10 @@ public class CLIImporter implements Action {
                 e.printStackTrace();
             } catch (IOException e) {
                 System.out.println("Unable to load files.");
-                logger.error(e.toString());
+                LOGGER.error(e.toString());
             } catch(RepositoryException e){
                 System.out.println("Unable to connect to to repository");
-                logger.error(e.toString());
+                LOGGER.error(e.toString());
             }
         }else{
             System.out.println("Files do not exist.");
