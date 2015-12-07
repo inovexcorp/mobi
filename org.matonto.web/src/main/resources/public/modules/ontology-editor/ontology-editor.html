@@ -66,8 +66,8 @@
                                ng-class="{'unsaved': ontology.unsaved, 'active': vm.current.oi == $index && vm.current.ci == undefined}">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                   ng-click="opened = !opened; $event.stopPropagation();"></i>
-                                {{ontology[ontology.rdfs + 'label'] || ontology['identifier'] + ontology['delimiter']}}
+                                   ng-click="opened = !opened; $event.stopPropagation();"
+                                ></i>{{ontology[ontology.rdfs + 'label'] || ontology['identifier'] + ontology['delimiter']}}
                                 <i ng-show="ontology.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                             </a>
                         </li>
@@ -79,8 +79,8 @@
                                        ng-class="{'unsaved': class.unsaved, 'active': vm.current.oi == oi && vm.current.ci == $index && vm.current.pi == undefined}">
                                         <i class="fa fa-fw"
                                            ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
-                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"></i>
-                                        {{class[ontology.rdfs + 'label'] || class['@id']}}
+                                           ng-click="subOpened = !subOpened; $event.stopPropagation();"
+                                        ></i>{{class[ontology.rdfs + 'label'] || class['@id']}}
                                         <i ng-show="class.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -90,8 +90,8 @@
                                         <li ng-repeat="property in class.properties">
                                             <a ng-click="vm.edit(oi, ci, $index)"
                                                ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                                <i class="fa fa-fw {{property.icon}}"></i>
-                                                {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                                <i class="fa fa-fw {{property.icon}}"
+                                                ></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                                 <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                             </a>
                                         </li>
@@ -125,8 +125,8 @@
                                         <li ng-repeat="property in ontology.noDomains">
                                             <a ng-click="vm.edit(oi, undefined, $index)"
                                                ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                                <i class="fa fa-fw {{property.icon}}"></i>
-                                                {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                                <i class="fa fa-fw {{property.icon}}"
+                                                ></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                                 <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                             </a>
                                         </li>
@@ -196,8 +196,8 @@
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, ci, $index)"
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>
-                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"
+                                        ></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                         <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -208,8 +208,8 @@
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, undefined, $index)"
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>
-                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"
+                                        ></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                         <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -232,7 +232,8 @@
                         <li>
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
-                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"></i>{{ontology[ontology.rdfs + 'label'] || ontology['@id']}}
+                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
+                                ></i>{{ontology[ontology.rdfs + 'label'] || ontology['@id']}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -242,8 +243,8 @@
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, ci, $index);"
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == ci && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>
-                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"
+                                        ></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                         <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -254,8 +255,8 @@
                                     <a class="text-only"
                                        ng-click="vm.edit(oi, undefined, $index)"
                                        ng-class="{'unsaved': property.unsaved, 'active': vm.current.oi == oi && vm.current.ci == undefined && vm.current.pi == $index}">
-                                        <i class="fa fa-fw {{property.icon}}"></i>
-                                        {{property[ontology.rdfs + 'label'] || property['@id']}}
+                                        <i class="fa fa-fw {{property.icon}}"
+                                        ></i>{{property[ontology.rdfs + 'label'] || property['@id']}}
                                         <i ng-show="property.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
