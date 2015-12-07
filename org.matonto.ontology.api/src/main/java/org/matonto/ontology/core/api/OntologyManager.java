@@ -12,22 +12,22 @@ import com.google.common.base.Optional;
 
 public interface OntologyManager {
 	
-	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public Ontology createOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public Optional<Ontology> retrieveOntology(OntologyId ontologyId) throws MatontoOntologyException; 
+	Optional<Ontology> retrieveOntology(OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public boolean storeOntology(Ontology ontology) throws MatontoOntologyException;
+	boolean storeOntology(Ontology ontology) throws MatontoOntologyException;
 	
-	public boolean deleteOntology(OntologyId ontologyId) throws MatontoOntologyException;
+	boolean deleteOntology(OntologyId ontologyId) throws MatontoOntologyException;
 
-	public Optional<Map<OntologyId, String>> getOntologyRegistry() throws MatontoOntologyException;
+	Optional<Map<OntologyId, String>> getOntologyRegistry() throws MatontoOntologyException;
 	
-	public OntologyId createOntologyId(Resource contextId);
+	OntologyId createOntologyId(Resource contextId);
 	
 }

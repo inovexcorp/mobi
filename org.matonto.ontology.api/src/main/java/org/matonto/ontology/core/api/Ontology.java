@@ -12,45 +12,45 @@ import org.openrdf.model.Model;
 
 public interface Ontology {
 	
-	public Model asModel() throws MatontoOntologyException;
+	Model asModel() throws MatontoOntologyException;
 	
-	public OutputStream asTurtle() throws MatontoOntologyException;
+	OutputStream asTurtle() throws MatontoOntologyException;
 	
-	public OutputStream asRdfXml() throws MatontoOntologyException;
+	OutputStream asRdfXml() throws MatontoOntologyException;
 	
-	public OutputStream asOwlXml() throws MatontoOntologyException;
+	OutputStream asOwlXml() throws MatontoOntologyException;
 	
-	public OutputStream asJsonLD() throws MatontoOntologyException;
+	OutputStream asJsonLD() throws MatontoOntologyException;
 	
-	public OntologyId getOntologyId();
+	OntologyId getOntologyId();
 	
-	public Set<Annotation> getAnnotations();
+	Set<Annotation> getAnnotations();
 	
-	public void setOntologyId(OntologyId ontologyId);
+	void setOntologyId(OntologyId ontologyId);
 	
-	public void setAnnotations(Set<Annotation> annotations); 
+	void setAnnotations(Set<Annotation> annotations);
 	
 //	public Set<Axiom> getAxioms();
 	
-	public void addAxiom(Axiom axiom);
+	void addAxiom(Axiom axiom);
 	
-	public void addAxioms(Set<Axiom> axioms);
+	void addAxioms(Set<Axiom> axioms);
 	
-	public void addAnnotation(Annotation annotation);
+	void addAnnotation(Annotation annotation);
 	
-	public void addAnnotations(Set<Annotation> annotations);
+	void addAnnotations(Set<Annotation> annotations);
 	
-	public void addDirectImport(OntologyIRI diIri);
+	void addDirectImport(OntologyIRI diIri);
 	
-	public void addDirectImports(Set<OntologyIRI> diIris);
+	void addDirectImports(Set<OntologyIRI> diIris);
 	
-	public Set<OntologyIRI> getDirectImportsDocuments();
+	Set<OntologyIRI> getDirectImportsDocuments();
 	
-	public boolean importOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
+	boolean importOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public boolean importOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
+	boolean importOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	public boolean importOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
+	boolean importOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
 	
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 
@@ -67,8 +67,7 @@ public interface Ontology {
      *
      * @return true if the resource ids are equal and their RDF models are isomorphic.
 	 */
-	public boolean equals(Object o);
+	boolean equals(Object o);
 	
-	public int hashCode();
-	
+	int hashCode();
 }

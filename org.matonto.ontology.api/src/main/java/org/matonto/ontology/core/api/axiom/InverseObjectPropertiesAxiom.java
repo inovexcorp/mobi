@@ -5,8 +5,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression
 
 public interface InverseObjectPropertiesAxiom extends ObjectPropertyAxiom {
 	
-	public ObjectPropertyExpression getFirstProperty();
+	ObjectPropertyExpression getFirstProperty();
 	
-	public ObjectPropertyExpression getSecondProperty();
-
+	ObjectPropertyExpression getSecondProperty();
 }

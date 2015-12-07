@@ -15,7 +15,6 @@ import org.apache.commons.io.IOUtils;
 
 public class MatOntoStringUtils {
 
-	
 	/*
 	 * Obtains content of URL to String
 	 */
@@ -37,23 +36,19 @@ public class MatOntoStringUtils {
         return response.toString();
 	}
 	
-	
 	/*
 	 * Converts InputStream to String
 	 */
 	public static String InputStreamToText(InputStream is) {
-
 		BufferedReader br = null;
 		StringBuilder sb = new StringBuilder();
 
 		String line;
 		try {
-
 			br = new BufferedReader(new InputStreamReader(is));
 			while ((line = br.readLine()) != null) {
 				sb.append(line+"\n");
 			}
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -69,17 +64,14 @@ public class MatOntoStringUtils {
 		}
 
 		return sb.toString();
-
 	}
-	
-	
+
 	/*
 	 * Uses Regex to address the language tag issue in OWL2 RDF mapping  where 
 	 * RDF-1.1 it is not allowed to have a datatype in the Turtle document 
 	 * if you have a language. This one defaults the language tag to "@en"(English).
 	 */
-	public static InputStream replaceLanguageTag(InputStream inputStream)
-	{
+	public static InputStream replaceLanguageTag(InputStream inputStream) {
 		InputStream result = null;
 		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
 		String replaceWith = "xml:lang=\"en\"";
@@ -89,14 +81,12 @@ public class MatOntoStringUtils {
 		return result;
 	}
 	
-	
 	/*
 	 * Uses Regex to address the language tag issue in OWL2 RDF mapping  where 
 	 * RDF-1.1 it is not allowed to have a datatype in the Turtle document 
 	 * if you have a language. 
 	 */
-	public static InputStream replaceLanguageTag(InputStream inputStream, String languageSuffix)
-	{
+	public static InputStream replaceLanguageTag(InputStream inputStream, String languageSuffix) {
 		InputStream result = null;
 		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
 		String replaceWith = "xml:lang=\"" + languageSuffix + "\"";
@@ -107,8 +97,7 @@ public class MatOntoStringUtils {
 	}
 	
 	
-	public static OutputStream replaceLanguageTag(OutputStream outputStream)
-	{
+	public static OutputStream replaceLanguageTag(OutputStream outputStream) {
 		OutputStream result = new ByteArrayOutputStream();
 		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
 		String replaceWith = "xml:lang=\"en\"";
@@ -127,8 +116,7 @@ public class MatOntoStringUtils {
 	}
 	
 	
-	public static OutputStream replaceLanguageTag(OutputStream outputStream, String languageSuffix)
-	{
+	public static OutputStream replaceLanguageTag(OutputStream outputStream, String languageSuffix) {
 		OutputStream result = new ByteArrayOutputStream();
 		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
 		String replaceWith = "xml:lang=\"" + languageSuffix + "\"";
@@ -150,8 +138,7 @@ public class MatOntoStringUtils {
 	/*
 	 * Removes OWLAPI signature at the end of ontology document 
 	 */
-	public static OutputStream removeOWLGeneratorSignature(OutputStream outputStream)
-	{
+	public static OutputStream removeOWLGeneratorSignature(OutputStream outputStream) {
 		OutputStream result = new ByteArrayOutputStream();
 		String signature = "<\\!--.*?OWL API.*?-->|#\\##.*?OWL API.*";
 		String content = outputStream.toString();
@@ -168,5 +155,4 @@ public class MatOntoStringUtils {
 		
 		return result;
 	}
-
 }

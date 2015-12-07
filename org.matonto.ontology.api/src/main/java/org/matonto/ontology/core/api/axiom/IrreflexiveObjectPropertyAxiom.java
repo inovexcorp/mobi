@@ -4,6 +4,5 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression
 
 public interface IrreflexiveObjectPropertyAxiom extends ObjectPropertyAxiom {
 
-	public ObjectPropertyExpression getObjectProperty();
-	
+	ObjectPropertyExpression getObjectProperty();
 }

@@ -6,7 +6,7 @@ import org.matonto.ontology.core.api.datarange.DataRange;
 
 public interface DataPropertyRangeAxiom extends DataPropertyAxiom {
 	
-	public DataPropertyExpression getDataProperty();
+	DataPropertyExpression getDataProperty();
 	
-	public DataRange getRange();
+	DataRange getRange();
 }

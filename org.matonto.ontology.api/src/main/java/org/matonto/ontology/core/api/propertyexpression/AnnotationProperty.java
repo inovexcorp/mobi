@@ -5,10 +5,9 @@ import org.matonto.ontology.core.api.propertyexpression.Property;
 
 public interface AnnotationProperty extends Property {
 	
-	public OntologyIRI getIRI();
+	OntologyIRI getIRI();
 
-	public boolean isComment();
+	boolean isComment();
 	  
-	public boolean isLabel();
-	  
+	boolean isLabel();
 }

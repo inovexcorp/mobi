@@ -4,8 +4,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression
 
 public interface SubObjectPropertyOfAxiom extends ObjectPropertyAxiom {
 		
-	public ObjectPropertyExpression getSubObjectProperty();
+	ObjectPropertyExpression getSubObjectProperty();
 	
-	public ObjectPropertyExpression getSuperObjectProperty();
-
+	ObjectPropertyExpression getSuperObjectProperty();
 }

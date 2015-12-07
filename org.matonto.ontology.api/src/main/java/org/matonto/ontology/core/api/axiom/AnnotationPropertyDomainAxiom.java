@@ -6,7 +6,7 @@ import org.matonto.ontology.core.api.OntologyIRI;
 
 public interface AnnotationPropertyDomainAxiom extends AnnotationAxiom {
 
-	public OntologyIRI getDomain();
+	OntologyIRI getDomain();
 	
-	public AnnotationProperty getProperty();
+	AnnotationProperty getProperty();
 }

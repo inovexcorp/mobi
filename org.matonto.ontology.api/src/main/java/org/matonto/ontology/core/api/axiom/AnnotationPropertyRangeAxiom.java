@@ -5,7 +5,7 @@ import org.matonto.ontology.core.api.OntologyIRI;
 
 public interface AnnotationPropertyRangeAxiom extends AnnotationAxiom {
 
-	public OntologyIRI getRange();
+	OntologyIRI getRange();
 	
-	public AnnotationProperty getProperty();
+	AnnotationProperty getProperty();
 }

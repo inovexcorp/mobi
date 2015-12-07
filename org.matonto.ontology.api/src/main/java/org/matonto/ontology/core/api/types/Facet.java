@@ -11,8 +11,7 @@ import com.google.common.base.Preconditions;
 
 
 public enum Facet {
-
-	LENGTH(Namespaces.XSD, "length", "length"), 
+	LENGTH(Namespaces.XSD, "length", "length"),
 	MIN_LENGTH(Namespaces.XSD, "minLength", "minLength"), 
 	MAX_LENGTH(Namespaces.XSD, "maxLength", "maxLength"), 
 	PATTERN(Namespaces.XSD, "pattern", "pattern"), 
@@ -29,46 +28,39 @@ public enum Facet {
 	private final String symbolicForm;	
 	private final String prefixedName;
 	
-	private Facet(Namespaces ns, String shortForm, String symbolicForm)
-	{
+	Facet(Namespaces ns, String shortForm, String symbolicForm) {
 //		iri = SimpleIRI.create(ns.toString(), shortForm);
 		this.shortForm = shortForm;
 		this.symbolicForm = symbolicForm;
 		prefixedName = (ns.getPrefixName() + ':' + shortForm);
 	}
 	   
-	
 	public String getShortForm()
 	{
 		return shortForm;
 	}
-	
-	
+
 //	public OntologyIRI getOntologyIRI()
 //	{
 //		return iri;
 //	}
-	
 	
 	public String getSymbolicForm()
 	{
 		return symbolicForm;
 	}
 	
-	
 	public String getPrefixedName()
 	{
 		return prefixedName;
 	}
-	
 	
 	@Override
 	public String toString()
 	{
 		return getShortForm();
 	}
-	
-	
+
 //	public static Set<OntologyIRI> getFacetIRIs()
 //	{
 //		Set<OntologyIRI> iris = new HashSet<OntologyIRI>();
@@ -77,8 +69,7 @@ public enum Facet {
 //		}
 //		return iris;
 //	}
-	
-	
+
 	public static Set<String> getFacets()
 	{
 		Set<String> result = new HashSet<String>();
@@ -87,8 +78,7 @@ public enum Facet {
 		}
 		return result;
 	}
-	
-	
+
 //	public static Facet getFacet(OntologyIRI iri)
 //	{
 //		Preconditions.checkNotNull(iri, "iri cannot be null");
@@ -100,7 +90,6 @@ public enum Facet {
 //		throw new IllegalArgumentException("Unknown facet: " + iri);
 //	}
 //
-	 
 	public static Facet getFacetByShortName(String shortName)
 	{
 		Preconditions.checkNotNull(shortName);
@@ -111,8 +100,7 @@ public enum Facet {
 		}
 		return null;
 	}
-	 
-	
+
 	public static Facet getFacetBySymbolicName(String symbolicName)
 	{
 		for (Facet vocabulary : values()) {
@@ -122,6 +110,4 @@ public enum Facet {
 		}
 		return null;
 	}
-	 
-	
 }
