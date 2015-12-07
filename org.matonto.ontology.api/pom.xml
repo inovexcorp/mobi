@@ -51,15 +51,8 @@
                         <Bundle-Name>MatOnto Ontology Service - Core</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                        	org.matonto.ontology.core.api,
-                            org.matonto.ontology.core.api.*,
-                            org.matonto.ontology.core.utils
+                        	org.matonto.ontology.core*
                         </Export-Package>
-                        <Import-Package>
-                        	com.google.common.base.*,
-                        	*
-                        </Import-Package>
-                        <_metatype>*</_metatype>
                     </instructions>
                 </configuration>
             </plugin>
