@@ -41,8 +41,6 @@ public class CLIExporter implements Action {
     @Override
     public Object execute() throws Exception {
 
-        System.out.println(repositoryId + " " + file + " " + exportService);
-
         if(fileType == null){
             exportService.exportToFile(repositoryId, file);
         }
