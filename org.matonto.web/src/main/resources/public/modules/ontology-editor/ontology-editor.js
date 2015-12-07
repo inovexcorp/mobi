@@ -778,7 +778,7 @@
             var /*prop,*/
                 duplicate = false,
                 empty = !vm.newPrefix.length || !vm.newValue.length,
-                i = vm.selected.context;
+                i = vm.selected.context.length;
             // checks to make sure that it is unique - OBJECT VERSION
             /*for(prop in vm.selected.context) {
                 if(vm.selected.context.hasOwnProperty(prop) && (prop == vm.newPrefix || vm.selected[prop] == vm.newValue)) {
