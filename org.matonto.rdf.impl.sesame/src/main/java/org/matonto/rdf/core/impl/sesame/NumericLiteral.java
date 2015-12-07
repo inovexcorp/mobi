@@ -1,7 +1,7 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.IRI;
-import org.matonto.rdf.core.api.ValueFactory;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
 import org.openrdf.model.vocabulary.XMLSchema;
 
 public class NumericLiteral extends SimpleLiteral {

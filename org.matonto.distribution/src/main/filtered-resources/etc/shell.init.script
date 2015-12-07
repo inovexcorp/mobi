@@ -1,0 +1,6 @@
+#Place any startup scripting in here. To deploy an obr bundle, use:
+#wait -t 5 obr
+#obr:start <bundle-name>
+
+wait -t 5 obr
+obr:start -d org.matonto.repository.impl.sesame

@@ -1,9 +1,9 @@
 package org.matonto.rdf.core.impl.sesame;
 
 
-import org.matonto.rdf.core.api.IRI;
-import org.matonto.rdf.core.api.Literal;
-import org.matonto.rdf.core.api.ValueFactory;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.utils.LiteralUtils;
 
 import java.time.LocalDateTime;
@@ -34,7 +34,7 @@ public class SimpleLiteral implements Literal {
     }
 
     /**
-     * Creates a new datyped literal with the supplied label and datatype.
+     * Creates a new datatyped literal with the supplied label and datatype.
      *
      * @param label - The label for the literal, must not be null.
      * @param datatype - The datatype for the literal.

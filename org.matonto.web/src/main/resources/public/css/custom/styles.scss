@@ -215,16 +215,19 @@ ul {
 aside,
 section,
 section > form,
-.tree-container,
-.scroll-without-buttons {
+.tree-container {
     height: 100%;
 }
 
 /* scroll styles */
-.scroll-without-buttons {
-    margin-top: -33px;
+.scroll-without-buttons,
+.ontology-editor .tab:not(.default) {
+    bottom: 1px;
+    left: 15px;
     overflow-y: auto;
-    padding-top: 43px;
+    position: absolute;
+    right: 16px;
+    top: 33px;
 }
 
 /* table with inputs */

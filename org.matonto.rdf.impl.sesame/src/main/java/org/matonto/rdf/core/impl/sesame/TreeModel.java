@@ -1,8 +1,8 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.Model;
-import org.matonto.rdf.core.api.Namespace;
-import org.matonto.rdf.core.api.Statement;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Namespace;
+import org.matonto.rdf.api.Statement;
 
 import java.util.Collection;
 import java.util.Set;

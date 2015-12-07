@@ -1,0 +1,4 @@
+Bundle-SymbolicName: org.matonto.repository.impl.core
+Bundle-Name: MatOnto Repository Core Impl
+Export-Package: org.matonto.repository.impl.core*
+Service-Component: *
