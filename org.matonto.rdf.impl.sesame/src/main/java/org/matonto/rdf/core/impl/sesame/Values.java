@@ -1,7 +1,6 @@
 package org.matonto.rdf.core.impl.sesame;
 
-import org.matonto.rdf.core.api.*;
-import org.openrdf.model.util.Literals;
+import org.matonto.rdf.api.*;
 
 public class Values {
 
@@ -9,6 +8,26 @@ public class Values {
     private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
 
     private Values() {}
+
+    public static org.openrdf.model.Statement sesameStatement(Statement statement) {
+        if (statement.getContext().isPresent()) {
+            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameIRI(statement.getPredicate()),
+                    sesameValue(statement.getObject()), sesameResource(statement.getContext().get()));
+        } else {
+            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameIRI(statement.getPredicate()),
+                    sesameValue(statement.getObject()));
+        }
+    }
+
+    public static Statement matontoStatement(org.openrdf.model.Statement statement) {
+        if (statement.getContext() != null) {
+            return MATONTO_VF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
+                    matontoValue(statement.getObject()), matontoResource(statement.getContext()));
+        } else {
+            return MATONTO_VF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
+                    matontoValue(statement.getObject()));
+        }
+    }
 
     public static org.openrdf.model.Resource sesameResource(Resource resource) {
         if (resource == null) {

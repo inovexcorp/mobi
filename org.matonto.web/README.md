@@ -29,8 +29,7 @@ bower -version
 Use the following commands to get this project and install all Node and bower dependencies. This will give you the develop branch instead of the master branch. If that is not desired, removed **-b develop --single-branch**.
 
 ```
-$ git clone -b develop --single-branch git@gitlab.inovexcorp.com:matonto/MatOnto-Web.git
-$ cd MatOnto-Web
+$ cd web
 $ npm install
 $ bower install
 ```
@@ -40,17 +39,17 @@ $ bower install
 The following line of code should be ran from the MatOnto-Web directory from above.
 
 ```
-$ mvn clean install -Dview.build=dev
+$ mvn clean install
 ```
 
-This will result in a target directory that will contain the bundle needed by Karaf. The **dev** could be replaced with **prod** if you want to minify the css and js.
+This will result in a target directory that will contain the bundle needed by Karaf.
 
 ## Deploy
 
 Now, you simply have to move the bundle to your Karaf local deploy directory. For example, run this code from the MatOnto-Web directory from above.
 
 ```
-$ mv target/web-1.0-SNAPSHOT.jar ~/path/to/karaf/deploy
+$ mv target/web-1.0.0-SNAPSHOT.jar ~/path/to/karaf/deploy
 ```
 
 You should be able to view it here: [http://localhost:8181/index.html](http://localhost:8181/index.html).

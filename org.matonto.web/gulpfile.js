@@ -28,7 +28,8 @@ var jsFiles = function(prefix) {
             prefix + '**/js/vendor/**/*.js',
             prefix + '**/app.module.js',
             prefix + '**/route.config.js',
-            prefix + '**/filters/*.js',
+            prefix + '**/custom/filters/*.js',
+            prefix + '**/custom/directives/*.js',
             prefix + '**/modules/**/*/directives/**/*.js',
             prefix + '**/modules/**/*.js'
         ]

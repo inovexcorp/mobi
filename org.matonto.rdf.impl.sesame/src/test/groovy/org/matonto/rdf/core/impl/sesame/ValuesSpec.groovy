@@ -1,8 +1,8 @@
 package org.matonto.rdf.core.impl.sesame
 
-import org.matonto.rdf.core.api.BNode
-import org.matonto.rdf.core.api.IRI
-import org.matonto.rdf.core.api.Literal
+import org.matonto.rdf.api.BNode
+import org.matonto.rdf.api.IRI
+import org.matonto.rdf.api.Literal
 import org.openrdf.model.ValueFactory
 import spock.lang.Specification
 
