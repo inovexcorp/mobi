@@ -26,31 +26,9 @@
             }
         }
 
-        /* Styles the header for each of the editing panels */
-        h4 {
-            background-color: $brand-primary;
-            color: #fff;
-            margin: -16px -16px 10px;
-            padding: 10px 16px 10px;
-
-            /* makes sure that small text in headers have the same color as the header */
-            small {
-                color: inherit;
-            }
-        }
-
         /* Stops the user from resizing the textarea */
         form {
             height: 100%;
-
-            /* styles for scrollable tab */
-            .tab {
-                height: 100%;
-                margin-top: -33px;
-                overflow-y: auto;
-                padding: 48px 15px 15px;
-                z-index: -1;
-            }
 
             textarea {
                 resize: none;

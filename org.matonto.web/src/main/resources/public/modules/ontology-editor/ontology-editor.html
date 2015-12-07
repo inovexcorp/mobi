@@ -293,7 +293,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': !vm.ontologies[vm.current.oi].tab || vm.ontologies[vm.current.oi].tab == 'basic'}"
-                           ng-click="vm.ontologies[vm.current.oi].tab = 'basic'"><small>Basic</small></a>
+                           ng-click="vm.ontologies[vm.current.oi].tab = 'basic'"><small>{{vm.selected[vm.selected.rdfs + 'label'] || vm.selected['@id']}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.ontologies[vm.current.oi].tab == 'annotations'}"
                            ng-click="vm.ontologies[vm.current.oi].tab = 'annotations'"><small>Annotations</small></a>
