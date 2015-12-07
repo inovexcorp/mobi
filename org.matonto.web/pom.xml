@@ -76,37 +76,37 @@
                     <!-- Required: The following runs the script that copies the
                          appropriate files from the npm build directory into the location
                              'maven-bundle-plugin' is expecting. -->
-                    <execution>
-                        <id>npm run prepare-for-bundle (prepare-package)</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <executable>npm</executable>
-                            <arguments>
-                                <argument>run</argument>
-                                <argument>prepare-for-bundle</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
+                    <!--<execution>-->
+                        <!--<id>npm run prepare-for-bundle (prepare-package)</id>-->
+                        <!--<goals>-->
+                            <!--<goal>exec</goal>-->
+                        <!--</goals>-->
+                        <!--<phase>prepare-package</phase>-->
+                        <!--<configuration>-->
+                            <!--<executable>npm</executable>-->
+                            <!--<arguments>-->
+                                <!--<argument>run</argument>-->
+                                <!--<argument>prepare-for-bundle</argument>-->
+                            <!--</arguments>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
 
                     <!-- Required: The following calls the npm script that cleans
                          up the build after the install. -->
-                    <execution>
-                        <id>npm run clean (install)</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>install</phase>
-                        <configuration>
-                            <executable>npm</executable>
-                            <arguments>
-                                <argument>run</argument>
-                                <argument>clean</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
+                    <!--<execution>-->
+                        <!--<id>npm run clean (install)</id>-->
+                        <!--<goals>-->
+                            <!--<goal>exec</goal>-->
+                        <!--</goals>-->
+                        <!--<phase>install</phase>-->
+                        <!--<configuration>-->
+                            <!--<executable>npm</executable>-->
+                            <!--<arguments>-->
+                                <!--<argument>run</argument>-->
+                                <!--<argument>clean</argument>-->
+                            <!--</arguments>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
                 </executions>
             </plugin>
 
@@ -133,7 +133,14 @@
                 <directory>src/main/resources</directory>
                 <excludes>
                     <exclude>public/**</exclude>
+                    <exclude>templates/**</exclude>
                 </excludes>
+            </resource>
+            <resource>
+                <directory>target/classes</directory>
+                <includes>
+                    <include>build/**</include>
+                </includes>
             </resource>
         </resources>
     </build>
