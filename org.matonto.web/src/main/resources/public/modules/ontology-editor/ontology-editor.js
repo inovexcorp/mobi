@@ -52,6 +52,8 @@
         vm.reset = reset;
         vm.submit = submit;
         vm.unsaved = unsaved;
+        vm.uploadClicked = uploadClicked;
+        vm.uploadOntology = uploadOntology;
 
         activate();
 
@@ -457,15 +459,6 @@
                 });
         }
 
-        // shows the success function above the form on the right side
-        function _showSuccess() {
-            _saveState();
-            vm.success = true;
-            $timeout(function() {
-                vm.success = false;
-            }, 2000);
-        }
-
         // saves the current state for when they change the tabs on the right
         function _saveState(oi, ci, pi) {
             var isDirty;
@@ -561,14 +554,18 @@
                 // cleans form validations
                 vm.classForm.$setPristine();
             }
-            // else, they have to be working with an ontology
-            else {
+            // else, if ontology index is specified, they are working with an ontology
+            else if(oi !== undefined) {
                 vm.shown = 'ontology-editor';
                 unique = vm.tab + oi;
                 _editOrCreate(vm.ontologies, oi, unique, vm.ontologyDefault);
                 // resets vm.original
                 vm.original = '';
                 vm.ontologyForm.$setPristine();
+            }
+            // else, they must be uploading an ontology
+            else {
+                vm.shown = 'upload-form';
             }
         }
 
@@ -865,7 +862,7 @@
             var arr, fresh,
                 result = false;
             // if something is currently selected
-            if(Object.keys(vm.current).length && Object.keys(vm.selected).length && vm.current.oi !== -1) {
+            if(vm.current.oi && Object.keys(vm.current).length && Object.keys(vm.selected).length && vm.current.oi !== -1) {
                 // gets array of taken names
                 arr = vm.ontologies[vm.current.oi].taken;
                 // gets the new name
@@ -875,6 +872,21 @@
             }
             // returns the result
             return result;
+        }
+
+        // show the upload ontology form on the right side
+        function uploadClicked() {
+            vm.shown = 'upload-form';
+            vm.current = {};
+            _saveState();
+        }
+
+        // upload ontology
+        function uploadOntology(isValid) {
+            if(isValid && vm.upload.file) {
+                // upload what they selected here
+                console.log(vm.upload.file);
+            }
         }
     }
 })();

@@ -222,7 +222,7 @@ section > form,
 
 /* scroll styles */
 .scroll-without-buttons,
-.ontology-editor .tab:not(.default) {
+.ontology-editor .tab:not(.default):not(.upload) {
     bottom: 1px;
     left: 15px;
     overflow-y: auto;

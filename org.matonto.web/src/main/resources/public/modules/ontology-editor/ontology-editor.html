@@ -141,8 +141,8 @@
                            ng-class="{'active': vm.current.oi == -1}">
                             <i class="fa fa-plus fa-fw"></i>Create New Ontology
                         </a>
-                        <a ng-click="vm.showUploadOverlay = true;"
-                           ng-class="{'active': vm.showUploadOverlay}">
+                        <a ng-click="vm.uploadClicked();"
+                           ng-class="{'active': vm.shown == 'upload-form'}">
                             <i class="fa fa-upload fa-fw"></i>Upload Ontology
                         </a>
                     </div>
@@ -285,9 +285,6 @@
                     <p class="lead">Welcome to the Ontology Editor!</p>
                     <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
                 </div>
-
-                <!-- success message -->
-                <p ng-show="vm.success" class="text-success"><i class="fa fa-check fa-fw"></i>Success</p>
 
                 <!-- ontology editor -->
                 <form name="vm.ontologyForm" class="clearfix" novalidate autocomplete="off"
@@ -508,36 +505,34 @@
                         <div ng-include="'annotations-template'"></div>
                     </div>
                 </form>
+
+                <!-- upload ontology -->
+                <form name="vm.uploadForm" class="clearfix tab upload" novalidate
+                      ng-submit="vm.uploadOntology(vm.uploadForm.$valid);"
+                      ng-show="vm.shown == 'upload-form'">
+                    <h4>Upload Ontology</h4>
+                    <!-- file to upload -->
+                    <div class="form-group">
+                        <label for="file">Select a file</label>
+                        <div id="file" file-input="vm.upload.file"></div>
+                    </div>
+                    <!-- namespace -->
+                    <div class="form-group">
+                        <label for="namespace">Namespace</label>
+                        <input class="form-control" type="text" name="namespace" id="namespace" required ng-model="vm.upload.namespace" />
+                    </div>
+                    <!-- local name -->
+                    <div class="form-group">
+                        <label for="localName">Local Name</label>
+                        <input class="form-control" type="text" name="localName" id="localName" required ng-model="vm.upload.localName" />
+                    </div>
+                    <!-- buttons -->
+                    <div class="btn-container clearfix">
+                        <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.uploadForm.$invalid || !vm.upload.file">Upload It</button>
+                    </div>
+                </form>
             </div>
         </section>
-    </div>
-
-    <!-- upload overlay -->
-    <div class="overlay sm" ng-show="vm.showUploadOverlay">
-        <!-- content container -->
-        <form name="vm.uploadForm" class="content clearfix" novalidate>
-            <h6>Upload Ontology</h6>
-            <!-- file to upload -->
-            <div class="form-group">
-                <label for="file">Select a file</label>
-                <input type="file" name="file" id="file" required />
-            </div>
-            <!-- namespace -->
-            <div class="form-group">
-                <label for="namespace">Namespace</label>
-                <input class="form-control" type="text" name="namespace" id="namespace" required />
-            </div>
-            <!-- local name -->
-            <div class="form-group">
-                <label for="localName">Local Name</label>
-                <input class="form-control" type="text" name="localName" id="localName" required />
-            </div>
-            <!-- buttons -->
-            <div class="btn-container clearfix">
-                <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.uploadForm.$invalid">Upload It</button>
-                <button type="button" class="btn btn-default pull-right" ng-click="vm.showUploadOverlay = false;">Cancel</button>
-            </div>
-        </form>
     </div>
 
     <!-- TODO: remove this before production since it is used for testing -->

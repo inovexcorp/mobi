@@ -17,7 +17,8 @@
                     restrict: 'EA',
                     template: '<input type="file" />',
                     replace: true,
-                    link: link
+                    link: link,
+                    priority: 9999
                 };
             return directive;
 
@@ -31,8 +32,12 @@
                             onChange(scope);
                         });
                     };
-
+                // binds the change event to the element
                 element.bind('change', updateModel);
+                // adds the required
+                /*if(attrs.hasOwnProperty('required')) {
+                    element.attr('required', true);
+                }*/
             }
         }
 })();
