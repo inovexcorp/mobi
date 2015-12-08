@@ -139,7 +139,11 @@
                     <div class="creator">
                         <a ng-click="vm.edit(-1)"
                            ng-class="{'active': vm.current.oi == -1}">
-                            <i class="fa fa-plus fa-fw"></i>New Ontology
+                            <i class="fa fa-plus fa-fw"></i>Create New Ontology
+                        </a>
+                        <a ng-click="vm.showUploadOverlay = true;"
+                           ng-class="{'active': vm.showUploadOverlay}">
+                            <i class="fa fa-upload fa-fw"></i>Upload Ontology
                         </a>
                     </div>
                     <!-- end ontologies -->
@@ -506,6 +510,34 @@
                 </form>
             </div>
         </section>
+    </div>
+
+    <!-- upload overlay -->
+    <div class="overlay" ng-show="vm.showUploadOverlay">
+        <!-- content container -->
+        <form name="vm.uploadForm" class="content clearfix" action="rest/ontology/uploadOntology" method="post" enctype="multipart/form-data" novalidate>
+            <h6>Upload Ontology</h6>
+            <!-- file to upload -->
+            <div class="form-group">
+                <label for="file">Select a file</label>
+                <input type="file" name="file" id="file" required />
+            </div>
+            <!-- namespace -->
+            <div class="form-group">
+                <label for="namespace">Namespace</label>
+                <input class="form-control" type="text" name="namespace" id="namespace" required />
+            </div>
+            <!-- local name -->
+            <div class="form-group">
+                <label for="localName">Local Name</label>
+                <input class="form-control" type="text" name="localName" id="localName" required />
+            </div>
+            <!-- buttons -->
+            <div class="btn-container clearfix">
+                <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.uploadForm.$invalid">Upload It</button>
+                <button type="button" class="btn btn-default pull-right" ng-click="vm.showUploadOverlay = false;">Cancel</button>
+            </div>
+        </form>
     </div>
 
     <!-- TODO: remove this before production since it is used for testing -->
