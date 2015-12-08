@@ -76,18 +76,6 @@ public class RDFImportServiceImpl implements RDFImportService {
             throw new RepositoryException(e);
         }
 
-
-//        repConnect = repository.getConnection();
-//        if(repConnect == null){
-//            throw new RepositoryException("Failed to connect to the repository.");
-//        }
-//        System.out.println("Repository connected!");
-//        // ASK ABOUT THE ADD METHOD
-//        repConnect.add(file, newURI.toString(), format);
-//
-//
-//
-//        repConnect.close();
     }
 
     /**
@@ -127,19 +115,6 @@ public class RDFImportServiceImpl implements RDFImportService {
         }catch(RepositoryConfigException e){
             throw new RepositoryException(e);
         }
-
-
-//        repConnect = repository.getConnection();
-//        if(repConnect == null){
-//            throw new RepositoryException("Failed to connect to the repository.");
-//        }
-//        System.out.println("Repository connected!");
-//        // ASK ABOUT THE ADD METHOD
-//        repConnect.add(file, newURI.toString(), format);
-//
-//
-//
-//        repConnect.close();
 
     }
 
