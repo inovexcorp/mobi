@@ -1,11 +1,5 @@
 package org.matonto.etl.service.csv;
 
-
-import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
-
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -14,13 +8,9 @@ public class ClassMapping {
     private Map<Integer, String> dataProperties = new LinkedHashMap<Integer, String>();
     private Map<ClassMapping, String> objectProperties = new LinkedHashMap<ClassMapping, String>();
     private boolean isInstance = false;
-    private ValueFactory vf = ValueFactoryImpl.getInstance();
     private String prefix;
     private String mapping;
     private String localName;
-
-    public ClassMapping(){ }
-
 
     public String getPrefix(){ return prefix; }
 
