@@ -44,7 +44,7 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     /**
-     * Import a CSV fild and load it into the MatOnto Framework. Mappings are already in an RDF Model
+     * Import a CSV file and load it into the MatOnto Framework. Mappings are already in an RDF Model
      *
      * @param csv          The csv file to be loaded
      * @param mappingModel The mapping of CSV to MatOnto Ontologies in an RDF Model. See the MatOnto Wiki for details
@@ -69,7 +69,7 @@ public class CSVConverterImpl implements CSVConverter {
      * @param csv         The CSV file to be loaded
      * @param mappingFile The mapping file in RDF Format. See the MatOnto Wiki for details
      * @return A Model of RDF data converted from CSV
-     * @throws IOException       Thrown if there is a problem readin the files given
+     * @throws IOException       Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
      */
     @Override
@@ -88,7 +88,7 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     /**
-     * Pulls the documnets delimiting character from the mapping. If no separator is found, a comma is used
+     * Pulls the documents delimiting character from the mapping. If no separator is found, a comma is used
      *
      * @param mappingModel The ontology mapping in an RDF Model. See MatOnto Wiki for details.
      * @return The character that is used to separate values in the document to be loaded.
@@ -114,7 +114,7 @@ public class CSVConverterImpl implements CSVConverter {
      * @param csv          The CSV file to be loaded
      * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
      * @return A Model of RDF data converted from CSV
-     * @throws IOException Thrown if there is a problem readin the files given
+     * @throws IOException Thrown if there is a problem reading the files given
      */
     @Override
     public Model convert(File csv, Model mappingModel) throws IOException {
@@ -195,7 +195,7 @@ public class CSVConverterImpl implements CSVConverter {
      * @return The local name portion of a URI used in RDF data
      */
     String generateLocalName(String localNameTemplate, String uuid, String[] currentLine) {
-        if ("".equals(localNameTemplate))
+        if ("".equals(localNameTemplate) || localNameTemplate == null)
             return uuid;
         Pattern p = Pattern.compile("(\\$\\{)(\\d+|UUID)(\\})");
         Matcher m = p.matcher(localNameTemplate);
@@ -285,7 +285,7 @@ public class CSVConverterImpl implements CSVConverter {
     /**
      * Parses a Mapping file into a Model
      *
-     * @param mapping the maping file to be parsed to a model
+     * @param mapping the mapping file to be parsed to a model
      * @return An RDF Model containing the data from the mapping file
      * @throws RDFParseException Thrown if there is a problem with RDF data in the file
      * @throws IOException       Thrown if there is a problem reading the file.

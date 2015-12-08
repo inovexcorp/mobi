@@ -84,7 +84,7 @@ public class CLIImporter implements Action {
                 System.out.println("Unable to load files.");
                 LOGGER.error(e.toString());
             } catch(RepositoryException e){
-                System.out.println("Unable to connect to to repository");
+                System.out.println("Unable to connect to repository");
                 LOGGER.error(e.toString());
             }
         }else{

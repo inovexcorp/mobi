@@ -20,7 +20,7 @@ public class CLIExporter implements Action {
     @Argument(index = 2, name = "fileType", description = "The file's type", required = false, multiValued = false)
     String fileType = null;
 
-    @Argument(index = 3, name = "subject", description = "A subject that all exported triples will be restrited to.", required = false, multiValued = false)
+    @Argument(index = 3, name = "subject", description = "A subject that all exported triples will be restricted to.", required = false, multiValued = false)
     String subj = null;
 
     @Argument(index = 4, name = "predicate", description = "A predicate that all exported triples will be restricted to.", required = false, multiValued = false)
