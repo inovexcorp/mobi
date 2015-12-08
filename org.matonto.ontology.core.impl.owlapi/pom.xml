@@ -44,8 +44,8 @@
             <artifactId>sesame-queryresultio-binary</artifactId>
             <version>${ontology.openrdf.version}</version>
         </dependency>
-
         <!-- Owlapi dependencies -->
+
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-osgidistribution</artifactId>
