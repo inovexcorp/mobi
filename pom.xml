@@ -22,9 +22,11 @@
         <module>org.matonto.etl.csv</module>
         <module>org.matonto.etl.rdf</module>
         <module>org.matonto.ontology.core.impl.owlapi</module>
+        <module>org.matonto.etl.rest</module>
         <module>org.matonto.ontology.cli</module>
         <module>org.matonto.ontology.rest</module>
         <module>org.matonto.web</module>
+        <module>org.matonto.swagger</module>
         <module>org.matonto.api</module>
         <module>org.matonto.repository.impl.sesame</module>
         <module>org.matonto.semantic.service</module>
