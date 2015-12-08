@@ -9,6 +9,7 @@ import org.openrdf.repository.RepositoryConnection
 import org.openrdf.repository.RepositoryException
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
+import org.openrdf.rio.UnsupportedRDFormatException
 import org.springframework.core.io.ClassPathResource
 
 import spock.lang.Specification
@@ -186,7 +187,7 @@ class RDFExportSpec extends Specification {
         ex.exportToFile("cli-rdf-service", textFile)
 
         then:
-        thrown IOException
+        thrown UnsupportedRDFormatException
     }
 
     def "Nonexistant repository causes exception" (){

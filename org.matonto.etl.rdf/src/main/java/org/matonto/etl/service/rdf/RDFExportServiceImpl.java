@@ -1,25 +1,20 @@
 package org.matonto.etl.service.rdf;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import org.apache.log4j.Logger;
 import org.matonto.etl.api.rdf.RDFExportService;
+import org.openrdf.model.Resource;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.n3.N3Writer;
-import org.openrdf.rio.nquads.NQuadsWriter;
-import org.openrdf.rio.rdfjson.RDFJSONWriter;
-import org.openrdf.rio.rdfxml.RDFXMLWriter;
-import org.openrdf.rio.trig.TriGWriter;
-import org.openrdf.rio.turtle.TurtleWriter;
-import org.apache.commons.io.FilenameUtils;
+import org.openrdf.rio.*;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -32,7 +27,7 @@ public class RDFExportServiceImpl implements RDFExportService {
 
     private RepositoryConnection repConnect;
 
-    private RDFHandler handler;
+    private static final Logger LOGGER = Logger.getLogger(RDFExportServiceImpl.class);
 
 
     @Reference(target="(repositorytype=memory)")
@@ -55,39 +50,12 @@ public class RDFExportServiceImpl implements RDFExportService {
         if(repConnect == null){
             throw new RepositoryException("Repository does not exist/could not be found.");
         }
-        System.out.println("Repository connected!");
+        LOGGER.info("Repository connected!");
 
-        String ext = FilenameUtils.getExtension(file.getName());
+        RDFFormat format = Rio.getWriterFormatForFileName(file.getName());
+        RDFWriter rdfWriter = Rio.createWriter(format, new FileWriter(file.getAbsoluteFile()));
 
-        if(ext.equalsIgnoreCase("ttl")){
-            handler = new TurtleWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(ext.equalsIgnoreCase("trig")){
-            handler = new TriGWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(ext.equalsIgnoreCase("xml") || ext.equalsIgnoreCase("rdf")){
-            handler = new RDFXMLWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(ext.equalsIgnoreCase("nt")){
-            handler = new N3Writer(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(ext.equalsIgnoreCase("nq")){
-            handler = new NQuadsWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(ext.equalsIgnoreCase("jsonld")){
-            handler = new RDFJSONWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())), RDFFormat.JSONLD);
-        }
-        else{
-            System.out.println(ext);
-            throw new IOException("IOException! File type not supported by Sesame.");
-        }
-
-        if(file.canWrite() == false){
-            //Create file cannot be written exception.
-            throw new Exception("File cannot be written to!");
-        }
-
-        repConnect.export(handler);
+        repConnect.export(rdfWriter);
 
         System.out.println("Exporting complete!");
 
@@ -107,75 +75,29 @@ public class RDFExportServiceImpl implements RDFExportService {
         if(repConnect == null){
             throw new RepositoryException("Repository does not exist/could not be found.");
         }
-        System.out.println("Repository connected!");
+        LOGGER.info("Repository connected!");
 
-        if(filetype.equalsIgnoreCase("turtle") || filetype.equalsIgnoreCase("ttl")){
-            handler = new TurtleWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(filetype.equalsIgnoreCase("trig")){
-            handler = new TriGWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(filetype.equalsIgnoreCase("xml")){
-            handler = new RDFXMLWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(filetype.equalsIgnoreCase("ntriples")){
-            handler = new N3Writer(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(filetype.equalsIgnoreCase("nquads")){
-            handler = new NQuadsWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())));
-        }
-        else if(filetype.equalsIgnoreCase("jsonld")){
-            handler = new RDFJSONWriter(new BufferedWriter(new FileWriter(file.getAbsoluteFile())), RDFFormat.JSONLD);
-        }
-        else{
-            //Create file type exception
-            throw new IOException("IOException! File type not supported by Sesame.");
-        }
+        RDFFormat format = Rio.getWriterFormatForFileName(file.getName());
+        RDFWriter rdfWriter = Rio.createWriter(format, new FileWriter(file.getAbsoluteFile()));
 
-        if(file.canWrite() == false){
-            //Create file cannot be written exception.
-            throw new Exception("File cannot be written to!");
-        }
-
-
-        if(subj == null){
-            if(pred == null){
-                if(obj == null){
-                    repConnect.exportStatements(null, null, null, true, handler);
-                }
-                else{
-                    repConnect.exportStatements(null, null, vf.createLiteral(obj), true, handler);
-                }
-            }
-            else{
-                if(obj == null){
-                    repConnect.exportStatements(null, vf.createURI(pred), null, true, handler);
-                }
-                else{
-                    repConnect.exportStatements(null, vf.createURI(pred), vf.createLiteral(obj), true, handler);
-                }
-            }
-        }
-        else{
-            if(pred == null){
-                if(obj == null){
-                    repConnect.exportStatements(vf.createURI(subj), null, null, true, handler);
-                }
-                else{
-                    repConnect.exportStatements(vf.createURI(subj), null, vf.createLiteral(obj), true, handler);
-                }
-            }
-            else{
-                if(obj == null){
-                    repConnect.exportStatements(vf.createURI(subj), vf.createURI(pred), null, true, handler);
-                }
-                else{
-                    repConnect.exportStatements(vf.createURI(subj), vf.createURI(pred), vf.createLiteral(obj), true, handler);
-                }
+        Resource subjResource = null;
+        URI predicateURI = null;
+        Value objValue = null;
+        if(subj != null)
+            subjResource = vf.createURI(subj);
+        if(pred != null)
+            predicateURI = vf.createURI(pred);
+        if(obj != null) {
+            try {
+                objValue = vf.createURI(obj);
+            }catch(IllegalArgumentException e){
+                objValue = vf.createLiteral(obj);
             }
         }
 
-        System.out.println("Exporting complete!");
+        repConnect.exportStatements(subjResource,predicateURI,objValue, true, rdfWriter);
+
+        LOGGER.info("Exporting complete!");
 
     }
 }
