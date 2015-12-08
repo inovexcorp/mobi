@@ -5,8 +5,7 @@ import org.matonto.ontology.core.api.classexpression.ClassExpression;
 
 public interface SubClassOfAxiom extends ClassAxiom {
 
-	public ClassExpression getSubClass();
+	ClassExpression getSubClass();
 	
-	public ClassExpression getSuperClass();
-	
+	ClassExpression getSuperClass();
 }

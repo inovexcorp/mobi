@@ -6,12 +6,11 @@ import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 public interface ClassExpression {
 
-	public ClassExpressionType getClassExpressionType();
+	ClassExpressionType getClassExpressionType();
 	
-	public Set<ClassExpression> asConjunctSet();
+	Set<ClassExpression> asConjunctSet();
 	
-	public boolean containsConjunct(ClassExpression ce);
+	boolean containsConjunct(ClassExpression ce);
 	
-	public Set<ClassExpression> asDisjunctSet();
-	
+	Set<ClassExpression> asDisjunctSet();
 }

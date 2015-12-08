@@ -6,8 +6,7 @@ import org.matonto.ontology.core.api.Individual;
 
 public interface ClassAssertionAxiom extends AssertionAxiom {
 
-	public Individual getIndividual();
+	Individual getIndividual();
 	
-	public ClassExpression getClassExpression();
-	
+	ClassExpression getClassExpression();
 }

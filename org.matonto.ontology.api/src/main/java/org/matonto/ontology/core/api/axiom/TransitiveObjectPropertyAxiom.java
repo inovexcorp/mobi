@@ -4,6 +4,5 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression
 
 public interface TransitiveObjectPropertyAxiom extends ObjectPropertyAxiom {
 
-	public ObjectPropertyExpression getObjectProperty();
-
+	ObjectPropertyExpression getObjectProperty();
 }

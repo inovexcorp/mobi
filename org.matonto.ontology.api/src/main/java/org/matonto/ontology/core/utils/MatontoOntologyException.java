@@ -1,11 +1,9 @@
 package org.matonto.ontology.core.utils;
 
-public class MatontoOntologyException extends RuntimeException {
+import org.matonto.exception.MatOntoException;
 
-	
-	/**
-	 * 
-	 */
+public class MatontoOntologyException extends MatOntoException {
+
 	private static final long serialVersionUID = -5863496450275604264L;
 
 	public MatontoOntologyException() {}
@@ -24,6 +22,4 @@ public class MatontoOntologyException extends RuntimeException {
 	{
 		super(cause);
 	}
-	
-	
 }

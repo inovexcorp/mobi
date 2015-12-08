@@ -4,8 +4,7 @@ import org.matonto.ontology.core.api.Entity;
 
 public interface DeclarationAxiom extends Axiom {
 
-	public Entity getEntity();
+	Entity getEntity();
 	
-	public DeclarationAxiom getAxiomWithoutAnnotations();
-	
+	DeclarationAxiom getAxiomWithoutAnnotations();
 }

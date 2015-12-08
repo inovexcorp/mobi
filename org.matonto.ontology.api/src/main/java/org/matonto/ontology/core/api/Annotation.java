@@ -7,12 +7,11 @@ import java.util.Set;
 
 public interface Annotation {
 
-	public AnnotationProperty getProperty();
+	AnnotationProperty getProperty();
 	
-	public AnnotationValue getValue();
+	AnnotationValue getValue();
 	
-	public Set<Annotation> getAnnotations();
+	Set<Annotation> getAnnotations();
 	
-	public boolean isAnnotated();
-	
+	boolean isAnnotated();
 }

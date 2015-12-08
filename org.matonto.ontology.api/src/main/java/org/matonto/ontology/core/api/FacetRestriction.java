@@ -4,8 +4,7 @@ import org.matonto.ontology.core.api.types.Facet;
 
 public interface FacetRestriction {
 
-		public Facet getFacet();
+	Facet getFacet();
 		
-		public Literal getFacetValue();
-		
+	Literal getFacetValue();
 }

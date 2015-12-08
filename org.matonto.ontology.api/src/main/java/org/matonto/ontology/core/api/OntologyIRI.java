@@ -4,8 +4,7 @@ import com.google.common.base.Optional;
 
 public interface OntologyIRI extends AnnotationValue, AnnotationSubject {
 
-	public String getNamespace();
+	String getNamespace();
 	
-	public Optional<String> getLocalName();
-	
+	Optional<String> getLocalName();
 }

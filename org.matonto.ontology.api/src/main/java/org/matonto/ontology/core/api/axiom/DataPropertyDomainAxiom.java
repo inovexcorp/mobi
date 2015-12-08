@@ -5,8 +5,7 @@ import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 
 public interface DataPropertyDomainAxiom extends DataPropertyAxiom {
 	
-	public DataPropertyExpression getDataProperty();
+	DataPropertyExpression getDataProperty();
 	
-	public ClassExpression getDomain();
-
+	ClassExpression getDomain();
 }

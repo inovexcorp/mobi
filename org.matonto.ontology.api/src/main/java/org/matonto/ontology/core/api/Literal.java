@@ -5,9 +5,9 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 
 public interface Literal extends AnnotationValue {
 
-	public String getLanguage();
+	String getLanguage();
 	
-	public String getLiteral();
+	String getLiteral();
 	
-	public Datatype getDatatype();
+	Datatype getDatatype();
 }

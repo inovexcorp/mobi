@@ -13,8 +13,7 @@ public enum EntityType {
 	private final String printName;
 	private final String pluralPrintName;
 	
-	private EntityType(String name, String printName, String pluralPrintName)
-	{
+	EntityType(String name, String printName, String pluralPrintName) {
 		this.name = name;
 		this.printName = printName;
 		this.pluralPrintName = pluralPrintName;
@@ -38,7 +37,6 @@ public enum EntityType {
 //	public String getPrefixedName()
 //	{
 //	}
-//
 //
 //	public OntologyIRI getIRI()
 //	{

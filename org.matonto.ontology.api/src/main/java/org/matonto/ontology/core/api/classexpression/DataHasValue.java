@@ -5,8 +5,7 @@ import org.matonto.ontology.core.api.Literal;
 
 public interface DataHasValue extends ClassExpression {
 
-	public DataPropertyExpression getProperty();
+	DataPropertyExpression getProperty();
 	
-	public Literal getValue();
-	
+	Literal getValue();
 }

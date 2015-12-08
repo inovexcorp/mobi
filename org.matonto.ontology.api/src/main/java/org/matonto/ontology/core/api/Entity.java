@@ -5,8 +5,7 @@ import org.matonto.ontology.core.api.types.EntityType;
 
 public interface Entity {
 
-	public OntologyIRI getIRI();
+	OntologyIRI getIRI();
 	
-	public EntityType getEntityType();
-	
+	EntityType getEntityType();
 }

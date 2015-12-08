@@ -6,6 +6,5 @@ import java.util.Set;
 
 public interface DisjointDataPropertiesAxiom extends DataPropertyAxiom {
 	
-	public Set<DataPropertyExpression> getDataProperties();
-
+	Set<DataPropertyExpression> getDataProperties();
 }

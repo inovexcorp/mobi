@@ -7,10 +7,9 @@ import com.google.common.base.Optional;
 
 public interface OntologyId {
 
-	public Optional<OntologyIRI> getOntologyIRI();
+	Optional<OntologyIRI> getOntologyIRI();
 	
-	public Optional<OntologyIRI> getVersinIRI();
+	Optional<OntologyIRI> getVersinIRI();
 	
-	public Resource getContextId();
-	
+	Resource getContextId();
 }

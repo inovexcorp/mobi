@@ -4,16 +4,15 @@ import org.matonto.ontology.core.api.Entity;
 
 public interface Datatype extends Entity, DataRange {
 
-	  public boolean isString();
+	boolean isString();
 	  
-	  public boolean isInteger();
+	boolean isInteger();
 	  
-	  public boolean isFloat();
+	boolean isFloat();
 	  
-	  public boolean isDouble();
+    boolean isDouble();
+
+	boolean isBoolean();
 	  
-	  public boolean isBoolean();
-	  
-	  public boolean isRDFPlainLiteral();
-	  
+	boolean isRDFPlainLiteral();
 }
