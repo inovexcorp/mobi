@@ -507,28 +507,32 @@
                 </form>
 
                 <!-- upload ontology -->
-                <form name="vm.uploadForm" class="clearfix tab upload" novalidate
+                <form name="vm.uploadForm" class="clearfix" novalidate
                       ng-submit="vm.uploadOntology(vm.uploadForm.$valid);"
                       ng-show="vm.shown == 'upload-form'">
-                    <h4>Upload Ontology</h4>
-                    <!-- file to upload -->
-                    <div class="form-group">
-                        <label for="file">Select a file</label>
-                        <div id="file" file-input="vm.upload.file"></div>
-                    </div>
-                    <!-- namespace -->
-                    <div class="form-group">
-                        <label for="namespace">Namespace</label>
-                        <input class="form-control" type="text" name="namespace" id="namespace" required ng-model="vm.upload.namespace" />
-                    </div>
-                    <!-- local name -->
-                    <div class="form-group">
-                        <label for="localName">Local Name</label>
-                        <input class="form-control" type="text" name="localName" id="localName" required ng-model="vm.upload.localName" />
-                    </div>
-                    <!-- buttons -->
-                    <div class="btn-container clearfix">
-                        <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.uploadForm.$invalid || !vm.upload.file">Upload It</button>
+                    <!-- section header -->
+                    <h4 class="section-header">Upload Ontology</h4>
+                    <!-- form -->
+                    <div class="tab">
+                        <!-- file to upload -->
+                        <div class="form-group">
+                            <label for="file">Select a file</label>
+                            <div id="file" file-input="vm.upload.file"></div>
+                        </div>
+                        <!-- namespace -->
+                        <div class="form-group">
+                            <label for="namespace">Namespace</label>
+                            <input class="form-control" type="text" name="namespace" id="namespace" required ng-model="vm.upload.namespace" />
+                        </div>
+                        <!-- local name -->
+                        <div class="form-group">
+                            <label for="localName">Local Name</label>
+                            <input class="form-control" type="text" name="localName" id="localName" required ng-model="vm.upload.localName" />
+                        </div>
+                        <!-- buttons -->
+                        <div class="btn-container clearfix">
+                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.uploadForm.$invalid || !vm.upload.file">Upload It</button>
+                        </div>
                     </div>
                 </form>
             </div>

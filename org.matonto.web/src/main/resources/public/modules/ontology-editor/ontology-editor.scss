@@ -16,27 +16,14 @@
     .editor {
         height: 100%;
 
-        /* Pads the outside of the tab elements */
-        .tab {
-            padding: 15px;
-
-            /* Makes the prefix box shorter than the value box */
-            table thead .prefix-col {
-                width: 30%;
-            }
+        /* Makes the prefix box shorter than the value box */
+        .tab table thead .prefix-col {
+            width: 30%;
         }
 
         /* Stops the user from resizing the textarea */
         form {
             height: 100%;
-
-            h4 {
-                background: $brand-primary;
-                color: #fff;
-                font-size: 16px;
-                margin: -15px -15px 15px;
-                padding: 6px 15px 10px;
-            }
 
             textarea {
                 resize: none;

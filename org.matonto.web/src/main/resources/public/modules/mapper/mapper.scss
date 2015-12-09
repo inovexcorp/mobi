@@ -2,13 +2,27 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .mapper {
-    /* styles for the left side */
-    .list {
-        padding: 10px;
 
-        /* adds spacing to the property tables in left side */
-        table {
-            margin: 5px 0 5px;
+    /* spinner background styles */
+    .spinner {
+        background: #fff;
+        height: 100%;
+        left: 0;
+        opacity: .5;
+        position: absolute;
+        top: 0;
+        width: 100%;
+
+        /* spinner icon styles */
+        .fa-spinner {
+            left: 50%;
+            position: absolute;
+            top: 50%;
+
+            -webkit-transform: translate(-50%, -50%);
+               -moz-transform: translate(-50%, -50%);
+                -ms-transform: translate(-50%, -50%);
+                    transform: translate(-50%, -50%);
         }
     }
 
@@ -17,34 +31,7 @@
         /* makes the font smaller for the table */
         table {
             font-size: 12px;
-        }
-
-        /* adds padding around the default option */
-        .default {
-            padding: 15px;
-        }
-    }
-
-    /* styles to highlight columns (applied to <table>) if you hover over them (currently, not being used) */
-    .highlight-columns {
-        overflow: hidden;
-
-        /* relatively positions td and th */
-        td,
-        th {
-            position: relative;
-
-            /* once hovered, apply highlight */
-            &:hover::after {
-                content: '';
-                position: absolute;
-                background-color: $gray-lighter;
-                left: 0;
-                top: -5000px;
-                height: 10000px;
-                width: 100%;
-                z-index: -1;
-            }
+            margin-bottom: 0;
         }
     }
 }

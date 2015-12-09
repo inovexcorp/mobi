@@ -222,13 +222,13 @@ section > form,
 
 /* scroll styles */
 .scroll-without-buttons,
-.ontology-editor .tab:not(.default):not(.upload) {
+.tab:not(.default) {
     bottom: 1px;
     left: 15px;
     overflow-y: auto;
     position: absolute;
     right: 16px;
-    top: 33px;
+    top: 34px;
 }
 
 /* table with inputs */
@@ -271,4 +271,18 @@ section > form,
             right: 0;
         }
     }
+}
+
+/* pads the outside of the tab elements */
+.tab {
+    padding: 15px;
+}
+
+/* section title */
+.section-header {
+    background: $brand-primary;
+    color: #fff;
+    font-size: 16px;
+    margin: 0;
+    padding: 6px 15px 10px;
 }
