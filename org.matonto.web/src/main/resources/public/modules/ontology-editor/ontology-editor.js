@@ -24,6 +24,7 @@
 
         // public default variables
         vm.success = false;
+        vm.uploadError = undefined;
         vm.shown = 'default';
         vm.tab = 'everything';
         vm.newPrefix = '';
@@ -909,13 +910,15 @@
                 fd.append('localName', localName);
                 // uploads the ontology file
                 $http.post('/matonto/rest/ontology/uploadOntology', fd, config)
-                    .success(function(data) {
+                    .then(function(data) {
                         console.log('success', data);
-                    })
-                    .error(function(data) {
-                        console.log('error', data);
-                    })
-                    .then(function() {
+                        // sets the error data
+                        if(data.error) {
+                            vm.uploadError = data.error;
+                        } else {
+                            vm.uploadError = undefined;
+                        }
+                        // hides the spinner
                         vm.showSpinner = false;
                     });
             }

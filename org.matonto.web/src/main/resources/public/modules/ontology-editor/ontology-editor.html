@@ -516,6 +516,9 @@
                     </div>
                     <!-- section header -->
                     <h4 class="section-header">Upload Ontology</h4>
+                    <p class="text-danger" ng-show="vm.uploadError">
+                        <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.uploadError}}
+                    </p>
                     <!-- form -->
                     <div class="tab">
                         <!-- file to upload -->
