@@ -882,10 +882,28 @@
         }
 
         // upload ontology
-        function uploadOntology(isValid) {
-            if(isValid && vm.upload.file) {
-                // upload what they selected here
-                console.log(vm.upload.file);
+        function uploadOntology(isValid, file, namespace, localName) {
+            if(isValid && file) {
+                // sets up the configurations for the post method
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                // adds the data to the FormData
+                fd.append('file', file);
+                fd.append('namespace', namespace);
+                fd.append('localName', localName);
+                // uploads the ontology file
+                $http.post('/matonto/rest/ontology/uploadOntology', fd, config)
+                    .success(function(data) {
+                        console.log('success', data);
+                    })
+                    .error(function(data) {
+                        console.log('error', data);
+                    });
             }
         }
     }

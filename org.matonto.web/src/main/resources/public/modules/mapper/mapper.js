@@ -39,13 +39,13 @@
                 vm.showSpinner = true;
                 // parameters for the http request
                 var params = {
-                    method: 'POST',
-                    url: '/etl/csv/upload',
-                    headers: {
-                        'File-Name': fileName
-                    },
-                    data: inputStream
-                };
+                        method: 'POST',
+                        url: '/etl/csv/upload',
+                        headers: {
+                            'File-Name': fileName
+                        },
+                        data: inputStream
+                    };
                 // uploads the file
                 $http(params)
                     .success(function(data) {

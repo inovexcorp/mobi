@@ -17,8 +17,7 @@
                     restrict: 'EA',
                     template: '<input type="file" />',
                     replace: true,
-                    link: link,
-                    priority: 9999
+                    link: link
                 };
             return directive;
 

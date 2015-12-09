@@ -508,7 +508,7 @@
 
                 <!-- upload ontology -->
                 <form name="vm.uploadForm" class="clearfix" novalidate
-                      ng-submit="vm.uploadOntology(vm.uploadForm.$valid);"
+                      ng-submit="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);"
                       ng-show="vm.shown == 'upload-form'">
                     <!-- section header -->
                     <h4 class="section-header">Upload Ontology</h4>
@@ -517,7 +517,7 @@
                         <!-- file to upload -->
                         <div class="form-group">
                             <label for="file">Select a file</label>
-                            <div id="file" file-input="vm.upload.file"></div>
+                            <div id="file" name="file" file-input="vm.upload.file"></div>
                         </div>
                         <!-- namespace -->
                         <div class="form-group">
