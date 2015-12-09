@@ -2,30 +2,6 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .mapper {
-
-    /* spinner background styles */
-    .spinner {
-        background: #fff;
-        height: 100%;
-        left: 0;
-        opacity: .5;
-        position: absolute;
-        top: 0;
-        width: 100%;
-
-        /* spinner icon styles */
-        .fa-spinner {
-            left: 50%;
-            position: absolute;
-            top: 50%;
-
-            -webkit-transform: translate(-50%, -50%);
-               -moz-transform: translate(-50%, -50%);
-                -ms-transform: translate(-50%, -50%);
-                    transform: translate(-50%, -50%);
-        }
-    }
-
     /* styles for the right side */
     .viewer {
         /* makes the font smaller for the table */
