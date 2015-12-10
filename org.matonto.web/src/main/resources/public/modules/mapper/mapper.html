@@ -61,7 +61,7 @@
         <div class="overlay sm" ng-show="vm.showUploadOverlay">
             <!-- content container -->
             <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off"
-                  ng-submit="vm.upload(vm.uploadForm.$valid, vm.overlayData.inputStream, vm.overlayData.fileName);">
+                  ng-submit="vm.submitUpload(vm.uploadForm.$valid, vm.overlayData.inputStream, vm.overlayData.fileName);">
                 <!-- spinner -->
                 <div class="spinner" ng-show="vm.showSpinner">
                     <i class="fa fa-spinner fa-spin fa-3x"></i>

@@ -9,7 +9,7 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('ontology-editor', ['file-input'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['$scope', '$http', '$timeout'];

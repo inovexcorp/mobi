@@ -2,20 +2,17 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('mapper', ['etl', 'file-input', 'mapping'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$http'];
+    MapperController.$inject = ['etlService'];
 
-    function MapperController($http) {
+    function MapperController(etlService) {
         var vm = this;
-
-        vm.files = [];
-        vm.overlayData = {};
 
         vm.setSelected = setSelected;
         vm.uploadClicked = uploadClicked;
-        vm.upload = upload;
+        vm.submitUpload = submitUpload;
 
         // sets the selected value based on index
         function setSelected(index) {
@@ -31,39 +28,13 @@
             vm.showUploadOverlay = true;
         }
 
-        // uploads a delimited document to the data/tmp/ directory
-        function upload(isValid, inputStream, fileName) {
-            // checks to make sure the form is valid before hitting the endpoint
-            if(isValid) {
-                // shows the spinner
-                vm.showSpinner = true;
-                // parameters for the http request
-                var params = {
-                        method: 'POST',
-                        url: '/etl/csv/upload',
-                        headers: {
-                            'File-Name': fileName
-                        },
-                        data: inputStream
-                    };
-                // uploads the file
-                $http(params)
-                    .success(function(data) {
-                        // once the file is uploaded, get the rows
-                        $http.get('/etl/csv/preview/' + fileName)
-                            .success(function(data) {
-                                // adds the file to vm.files
-                                vm.files.push({name: fileName, header: data[0], rows: data.slice(1, data.length)});
-                                setSelected(vm.files.length - 1);
-                                // hides the overlay and spinner
-                                vm.showUploadOverlay = false;
-                                vm.showSpinner = false;
-                            });
-                    })
-                    .error(function(data) {
-                        console.log('something went wrong, sorry... :(');
-                    });
-            }
+        // handles the upload file submission
+        function submitUpload(isValid, inputStream, fileName) {
+            // uploads and then previews the file (defaults to 10)
+            etlService.uploadThenPreview(isValid, inputStream, fileName)
+                .then(function(data) {
+                    console.log('data', data);
+                });
         }
     }
 })();
