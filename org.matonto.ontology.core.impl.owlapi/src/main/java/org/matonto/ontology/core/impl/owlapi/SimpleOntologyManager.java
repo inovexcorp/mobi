@@ -40,7 +40,6 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 
 
-
 @Component (immediate=true)
 public class SimpleOntologyManager implements OntologyManager {
 	
@@ -156,13 +155,6 @@ public class SimpleOntologyManager implements OntologyManager {
 		return Optional.of(new SimpleOntology(onto));
 	}
 	
-	/**
-	 * Persists Ontology object in the repository, and returns true if successfully persisted
-	 * 
-	 * @return True if successfully persisted, or false if ontology Id already exists in the repository or
-	 * if an owlapi exception or sesame exception is caught.
-	 * @throws IllegalStateException - if the repository is null
-	 */
 	@Override
 	public boolean storeOntology(Ontology ontology) throws MatontoOntologyException {
 		if(repository == null)
@@ -172,7 +164,6 @@ public class SimpleOntologyManager implements OntologyManager {
 		if(ontologyExists(ontologyId))
 			throw new MatontoOntologyException("Ontology with the ontology ID already exists.");
 		
-		boolean persisted = false;
 		RepositoryConnection conn = null;
 		
 		try {
@@ -180,50 +171,36 @@ public class SimpleOntologyManager implements OntologyManager {
 			Model model = ontology.asModel();
 			conn.add(model, ontologyId.getOntologyIdentifier());
 			ontologyRegistry.get().put(ontologyId, location);
-			persisted = true;
-			
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
             closeConnection(conn);
 		}
 		
-		return persisted;
+		return true;
 	}
 	
-	/**
-	 * Deletes named graph in the repository with given context id, and returns true if successfully removed.
-	 * 
-	 * @return True if the name graph with given context id is successfully deleted, or false if ontology Id
-	 * does not exist in the repository or if an owlapi exception or sesame exception is caught.
-	 * @throws IllegalStateException - if the repository is null
-	 */
 	@Override
 	public boolean deleteOntology(OntologyId ontologyId) throws MatontoOntologyException {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
 		
-		boolean deleted = false;
 		if(!ontologyExists(ontologyId))
-			throw new MatontoOntologyException("Ontology ID doesn't exist.");
+			throw new MatontoOntologyException("Ontology ID does not exist.");
 		
 		RepositoryConnection conn = null;
 		
-		try
-		{		
+		try {
 			conn = repository.getConnection();
-			//Execute Update query 
 			conn.clear(ontologyId.getOntologyIdentifier());
 			ontologyRegistry.get().remove(ontologyId, location);
-			deleted = true;
-			
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
             closeConnection(conn);
 		}
 		
-		return deleted;
+		return true;
 	}
 
 	/**
@@ -301,8 +278,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	public OntologyIRI createOntologyIRI(String iriString) {
 		return new SimpleIRI(iriString);
 	}
-	
-	
+
     private void closeConnection(RepositoryConnection conn) {
         try {
             if(conn != null)
