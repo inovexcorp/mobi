@@ -64,14 +64,14 @@ public abstract class SimpleAxiom implements Axiom {
 	/*
 	 * MUST Implement!!!!!!!
 	 */
-	public OWLAxiom owlapiAxiom(Axiom matontoAxiom)
+	public static OWLAxiom owlapiAxiom(Axiom matontoAxiom)
 	{
-		return null;
+		throw new UnsupportedOperationException();
 	}
 	
-	public Axiom matontoAxiom(OWLAxiom owlapiAxiom)
+	public static Axiom matontoAxiom(OWLAxiom owlapiAxiom)
 	{
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 }

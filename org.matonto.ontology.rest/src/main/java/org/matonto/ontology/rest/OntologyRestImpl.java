@@ -90,7 +90,7 @@ public class OntologyRestImpl {
 			
 			if(!ontologies.isEmpty()) {
 				for(OntologyId oid : ontologies.keySet()) {
-					String ontologyId = oid.getContextId().stringValue();
+					String ontologyId = oid.getOntologyIdentifier().stringValue();
 					json.put(ontologyId, ontologies.get(oid));
 				}
 			}

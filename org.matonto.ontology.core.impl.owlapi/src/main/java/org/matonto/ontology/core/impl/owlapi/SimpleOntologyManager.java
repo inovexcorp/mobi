@@ -1,13 +1,14 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
@@ -19,8 +20,6 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.repository.http.HTTPRepository;
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
 
 import info.aduna.iteration.Iterations;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -99,16 +98,15 @@ public class SimpleOntologyManager implements OntologyManager {
 
 
 	@Override
-	public Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException
-	{
+	public Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException, FileNotFoundException {
 		return new SimpleOntology(file, ontologyId);
 	}
 
 
 	@Override
-	public Ontology createOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException
+	public Ontology createOntology(OntologyIRI iri, OntologyId ontologyId) throws MatontoOntologyException
 	{
-		return new SimpleOntology(url, ontologyId);
+		return new SimpleOntology(iri, ontologyId);
 	}
 
 
@@ -122,7 +120,6 @@ public class SimpleOntologyManager implements OntologyManager {
 	/**
 	 * Checks if given context id exists in the repository, and returns true if it does.
 	 * 
-	 * @param Ontology id (Type: org.openrdf.model.Resource)
 	 * @return True if given context id exists in the repository, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
@@ -141,7 +138,6 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * object or an empty Optional instance if the ontology id is not found or any owlapi exception or sesame 
 	 * exception is caught.   
 	 * 
-	 * @param ontology id (Type: org.openrdf.model.Resource) 
 	 * @return an Optional with Ontology if ontology id is found, or an empty Optional instance if not found.
 	 * @throws IllegalStateException - if the repository is null
 	 */
@@ -154,17 +150,15 @@ public class SimpleOntologyManager implements OntologyManager {
 		if(!ontologyExists(ontologyId))
 			return Optional.absent();
 
-		SimpleOntology ontology = new SimpleOntology();
 		OWLOntologyManager mgr = OWLManager.createOWLOntologyManager();
 		OWLOntology onto = null;
-		IRI iri = null;
-		
+
 		RepositoryConnection conn = null;
 		
 		try
 		{		
 			conn = repository.getConnection();
-	    	Model model = Iterations.addAll(conn.getStatements(null, null, null, false, ontologyId.getContextId()), new LinkedHashModel());
+	    	Model model = Iterations.addAll(conn.getStatements(null, null, null, false, ontologyId.getOntologyIdentifier()), new LinkedHashModel());
 				
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
@@ -175,13 +169,8 @@ public class SimpleOntologyManager implements OntologyManager {
 	    		 
 	    	if (format.isPrefixOWLOntologyFormat())  
 	    		owlxmlFormat.copyPrefixesFrom(format.asPrefixOWLOntologyFormat()); 
-	    		 
-	    	File tempFile = File.createTempFile("tempfile", ".owl");
-			tempFile.deleteOnExit();
-			iri = IRI.create(tempFile.toURI());
 
-	    	mgr.saveOntology(onto, owlxmlFormat, iri);
-
+	    	mgr.saveOntology(onto, owlxmlFormat, IRI.create(ontologyId.getOntologyIdentifier().stringValue()));
 		} catch (OWLOntologyStorageException e) {
 			throw new MatontoOntologyException("Unable to save to an ontology object", e);
 		} catch (OWLOntologyCreationException e) {
@@ -198,15 +187,8 @@ public class SimpleOntologyManager implements OntologyManager {
 				e.printStackTrace();
 			}
 		}
-		
-		ontology.setOntologyId(ontologyId);
-		ontology.setOntology(onto);
-		ontology.setOwlapiOntologyManager(mgr);
-		ontology.setIRI(SimpleIRI.matontoIRI(iri));
-		ontology.getOntologyAnnotations();
-		ontology.setDirectImportsDocuments();
-		ontology.setAxioms();
-		return Optional.of(ontology);
+
+		return Optional.of(new SimpleOntology(onto));
 	}
 
 	
@@ -214,7 +196,6 @@ public class SimpleOntologyManager implements OntologyManager {
 	/**
 	 * Persists Ontology object in the repository, and returns true if successfully persisted
 	 * 
-	 * @param Ontology object
 	 * @return True if successfully persisted, or false if ontology Id already exists in the repository or
 	 * if an owlapi exception or sesame exception is caught.
 	 * @throws IllegalStateException - if the repository is null
@@ -236,7 +217,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		{		
 			conn = repository.getConnection();
 			Model model = ontology.asModel();
-			conn.add(model, ontologyId.getContextId());
+			conn.add(model, ontologyId.getOntologyIdentifier());
 			ontologyRegistry.get().put(ontologyId, location);
 			persisted = true;
 			
@@ -260,8 +241,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	/**
 	 * Deletes named graph in the repository with given context id, and returns true if successfully removed.
 	 * 
-	 * @param Ontology id (Type: org.openrdf.model.Resource)
-	 * @return True if the name graph with given context id is successfully deleted, or false if ontology Id 
+	 * @return True if the name graph with given context id is successfully deleted, or false if ontology Id
 	 * does not exist in the repository or if an owlapi exception or sesame exception is caught.
 	 * @throws IllegalStateException - if the repository is null
 	 */
@@ -281,7 +261,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		{		
 			conn = repository.getConnection();
 			//Execute Update query 
-			conn.clear(ontologyId.getContextId());
+			conn.clear(ontologyId.getOntologyIdentifier());
 			ontologyRegistry.get().remove(ontologyId, location);
 			deleted = true;
 			
@@ -355,14 +335,9 @@ public class SimpleOntologyManager implements OntologyManager {
 		}
 		
 	}
-	
-	
-	public OntologyId createOntologyId(Resource contextId)
-	{
-		return new SimpleOntologyId(contextId);
-	}
-	
-	
 
-	
+    // FIXME: 12/9/15
+    public OntologyId createOntologyId(Resource contextId) {
+		return new SimpleOntologyId();//(contextId);
+	}
 }

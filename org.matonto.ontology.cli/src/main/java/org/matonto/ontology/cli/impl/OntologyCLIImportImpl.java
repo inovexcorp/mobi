@@ -1,6 +1,7 @@
 package org.matonto.ontology.cli.impl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -93,8 +94,7 @@ public class OntologyCLIImportImpl implements Action
 	}
 
 	
-	private boolean importOntology() throws MatontoOntologyException
-	{	
+	private boolean importOntology() throws MatontoOntologyException, FileNotFoundException {
 		boolean persisted = false;
 
 		System.out.println("Importing ontology file...");

@@ -210,7 +210,7 @@ public class SimpleOntologyTest
 //    @Test
 //    public void printOntologyTest() throws IOException
 //    {
-//    	SimpleOntology ontology = new SimpleOntology(bookRes.getFile(), bookRes.getContextId());
+//    	SimpleOntology ontology = new SimpleOntology(bookRes.getFile(), bookRes.getOntologyIdentifier());
 //    	System.out.println("---------------------------------------------------------------");
 //    	System.out.println("---------------------------------------------------------------");
 //    	System.out.println("------------------------ As Turtule ---------------------------");

@@ -1,26 +1,13 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.commons.io.IOUtils;
-import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.axiom.Axiom;
-import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyIRI;
-import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.ontology.core.impl.owlapi.axiom.SimpleAxiom;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 import org.openrdf.model.impl.LinkedHashModel;
-
 import org.openrdf.model.util.Models;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
@@ -32,65 +19,53 @@ import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rio.RioRenderer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class SimpleOntology implements Ontology {
 
-	private OntologyIRI iri;
 	private OntologyId ontologyId;
-	private Set<Axiom> axioms = new HashSet<Axiom>();
-	private Set<Annotation> annotations = new HashSet<Annotation>();
-	private Set<OntologyIRI> directImportIris = new HashSet<OntologyIRI>();
 	
 	//Owlapi variables
 	private OWLOntology ontology;
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
+
+    protected SimpleOntology(OWLOntology ontology) {
+        this.ontology = ontology;
+
+        OWLOntologyID owlApiID = ontology.getOntologyID();
+        com.google.common.base.Optional<IRI> oIRI = owlApiID.getOntologyIRI();
+        com.google.common.base.Optional<IRI> vIRI = owlApiID.getVersionIRI();
+
+        if (owlApiID.isAnonymous()) {
+            ontologyId = new SimpleOntologyId();
+        } else if (vIRI.isPresent()) {
+            ontologyId = new SimpleOntologyId(SimpleIRI.matontoIRI(oIRI.get()), SimpleIRI.matontoIRI(vIRI.get()));
+        } else {
+            ontologyId = new SimpleOntologyId(SimpleIRI.matontoIRI(oIRI.get()));
+        }
+    }
 	
-	protected SimpleOntology() throws MatontoOntologyException
-	{
+	public SimpleOntology(OntologyId ontologyId) throws MatontoOntologyException {
+        this.ontologyId = ontologyId;
+
 		try {
 			ontology = manager.createOntology();
-			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
-			
-		} catch (OWLOntologyCreationException e) {		
-			throw new MatontoOntologyException("Error in ontology creation", e);
-		}
-		
-	}
-	
-	public SimpleOntology(OntologyId ontologyId) throws MatontoOntologyException
-	{
-		try {
-			ontology = manager.createOntology();
-			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
-			this.ontologyId = ontologyId;
-			
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 	
-	
-	public SimpleOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException
-	{
+	public SimpleOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException {
+        this.ontologyId = ontologyId;
+
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
-			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
-			this.ontologyId = ontologyId;
-			getOntologyAnnotations();
-			getOntologyDirectImportsIris();
-			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		} finally {
@@ -98,126 +73,91 @@ public class SimpleOntology implements Ontology {
 		}
 	}
 	
+	public SimpleOntology(File file, OntologyId ontologyId) throws MatontoOntologyException, FileNotFoundException {
+        this(new FileInputStream(file), ontologyId);
+	}
 	
-	public SimpleOntology(File file, OntologyId ontologyId) throws MatontoOntologyException
-	{
-		iri = SimpleIRI.create(file);
+	public SimpleOntology(OntologyIRI iri, OntologyId ontologyId) throws MatontoOntologyException {
+        this.ontologyId = ontologyId;
+
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
-			this.ontologyId = ontologyId;
-			getOntologyAnnotations();
-			getOntologyDirectImportsIris();
-			getOntologyAxioms();
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
-	
-	
-	public SimpleOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException
-	{
-		iri = SimpleIRI.create(url);
-		try {
-			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
-			this.ontologyId = ontologyId;
-			getOntologyAnnotations();
-			getOntologyDirectImportsIris();
-			getOntologyAxioms();
-		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException("Error in ontology creation", e);
-		}
-	}
-	
-	
-	protected OWLOntology getOwlapiOntology()
-	{
-		return this.ontology;
-	}
-	
-	
-	protected void setOntology(OWLOntology ontology)
-	{
-		this.ontology = ontology;
-	}
-	
-	
-	protected OWLOntologyManager getOwlapiOntologyManager()
-	{
-		return this.manager;
-	}
-	
-	
-	protected void setOwlapiOntologyManager(OWLOntologyManager manager)
-	{
-		this.manager = manager;
-	}
-	
-	
-	public OntologyIRI getIRI()
-	{
-		return iri;
-	}
-	
-	
-	protected void setIRI(OntologyIRI iri)
-	{
-		this.iri = iri;
-	}
-	
-	
-	@Override
-	public void setOntologyId(OntologyId ontologyId)
-	{
-		this.ontologyId = ontologyId;
-	}
-	
 
 	@Override
-	public OntologyId getOntologyId() 
-	{
+	public OntologyId getOntologyId() {
 		return ontologyId;
 	}
-	
-	
+
+//    @Override
+//    public void addOWLObject(@Nonnull org.matonto.ontology.core.api.OWLObject object) {
+//        OWLOntologyChange change;
+//
+//        if (object instanceof Annotation) {
+//            change = new AddOntologyAnnotation(ontology, SimpleAnnotation.owlapiAnnotation( (Annotation) object));
+//        } else {
+//            throw new IllegalArgumentException("OWLObject not supported.");
+//        }
+//
+//        manager.applyChange(change);
+//    }
+
 	@Override
-	public void setAnnotations(Set<Annotation> annotations) 
-	{
-		mergeAnnos(annotations);
-	}
-	
-	
-	@Override
-	public Set<Annotation> getAnnotations()
-	{
-		return new HashSet<Annotation>(annotations);
-	}
-	
-	
-	protected void setAxioms()
-	{
-		getOntologyAxioms();
+	public Set<Annotation> getAnnotations() {
+        return ontology.getAnnotations()
+                .stream()
+                .map(SimpleAnnotation::matontoAnnotation)
+                .collect(Collectors.toSet());
 	}
 
-	
-//	@Override
-	public Set<Axiom> getAxioms() 
-	{
-		return new HashSet<Axiom>(axioms);
-	}
-	
-	
-	protected void setDirectImportsDocuments()
-	{
-		getOntologyDirectImportsIris();
-	}
-	
-	
-	@Override
-	public Set<OntologyIRI> getDirectImportsDocuments() 
-	{
-		return directImportIris;
-	}
-	
+    @Override
+    public Set<Axiom> getAxioms() {
+        return ontology.getAxioms()
+                .stream()
+                .map(SimpleAxiom::matontoAxiom)
+                .collect(Collectors.toSet());
+    }
+
+//    @Override
+//    public void addAnnotation(@Nonnull Annotation annotation) {
+//        AnnotationChange change = new AddOntologyAnnotation(ontology, SimpleAnnotation.owlapiAnnotation(annotation));
+//        manager.applyChange(change);
+//    }
+//
+//    @Override
+//    public void addAnnotations(@Nonnull Set<Annotation> annotations) {
+//        List<AnnotationChange> changes = annotations
+//                .stream()
+//                .map(annotation -> new AddOntologyAnnotation(ontology, SimpleAnnotation.owlapiAnnotation(annotation)))
+//                .collect(Collectors.toList());
+//
+//        manager.applyChanges(changes);
+//    }
+//
+//    @Override
+//    public void removeAnnotation(Annotation annotation) {
+//        AnnotationChange change = new RemoveOntologyAnnotation(ontology, SimpleAnnotation.owlapiAnnotation(annotation));
+//        manager.applyChange(change);
+//    }
+//
+//    @Override
+//    public void removeAllAnnotations() {
+//        List<AnnotationChange> changes = ontology.getAnnotations()
+//                .stream()
+//                .map(annotation -> new RemoveOntologyAnnotation(ontology, annotation))
+//                .collect(Collectors.toList());
+//
+//        manager.applyChanges(changes);
+//    }
+//
+//    @Override
+//    public void setAnnotations(@Nonnull Set<Annotation> annotations) {
+//        removeAllAnnotations();
+//        addAnnotations(annotations);
+//    }
 
     /**
      * @return the unmodifiable sesame model that represents this Ontology
@@ -252,31 +192,23 @@ public class SimpleOntology implements Ontology {
 		return sesameModel.unmodifiable();
 	}
 	
-	
 	@Override
-	public OutputStream asTurtle() throws MatontoOntologyException
-	{		
+	public OutputStream asTurtle() throws MatontoOntologyException {
 		return getOntologyDocument(new TurtleDocumentFormat());		
 	}
 
-	
 	@Override
-	public OutputStream asRdfXml() throws MatontoOntologyException
-	{
+	public OutputStream asRdfXml() throws MatontoOntologyException {
 		return getOntologyDocument(new RDFXMLDocumentFormat());		
 	}
 
-	
 	@Override
-	public OutputStream asOwlXml() throws MatontoOntologyException
-	{
+	public OutputStream asOwlXml() throws MatontoOntologyException {
 		return getOntologyDocument(new OWLXMLDocumentFormat());
 	}
-	
-	
+
 	@Override
-	public OutputStream asJsonLD() throws MatontoOntologyException
-	{
+	public OutputStream asJsonLD() throws MatontoOntologyException {
 		OutputStream outputStream = new ByteArrayOutputStream();
 		try {
 			Rio.write(asModel(), outputStream, RDFFormat.JSONLD);
@@ -285,91 +217,37 @@ public class SimpleOntology implements Ontology {
 		}
 		return outputStream;
 	}
-	
-
 
 	@Override
-	public boolean importOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException
-	{
-		try {
-			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
-			iri = SimpleIRI.matontoIRI(manager.getOntologyDocumentIRI(ontology));
-			this.ontologyId = ontologyId;
-			getOntologyAnnotations();
-			getOntologyDirectImportsIris();
-			getOntologyAxioms();
-			return true;
-			
-		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException("Error in ontology creation", e);
-		} finally {
-			IOUtils.closeQuietly(inputStream);
-		}
-	}
-	
-	
-	@Override
-	public boolean importOntology(File file, OntologyId ontologyId)  throws MatontoOntologyException
-	{
-		try {
-			iri = SimpleIRI.create(file);
-			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
-			this.ontologyId = ontologyId;
-			getOntologyAnnotations();
-			getOntologyDirectImportsIris();
-			getOntologyAxioms();
-			return true;
-			
-		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException("Error in ontology creation", e);
-		}
-	}
-	
-
-	@Override
-	public boolean importOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException
-	{
-		try {
-			iri = SimpleIRI.create(url);
-			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
-			this.ontologyId = ontologyId;
-			getOntologyAnnotations();
-			getOntologyDirectImportsIris();
-			getOntologyAxioms();
-			return true;
-			
-		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException("Error in ontology creation", e);
-		}
-	}
-
-	
-
-	@Override
-	public boolean equals(Object o) 
-	{
+	public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
+
         if (o instanceof SimpleOntology) {
         	SimpleOntology simpleOntology = (SimpleOntology) o;
         	OntologyId oId = simpleOntology.getOntologyId();
         	if(oId.equals(ontologyId))
         		return Models.isomorphic(this.asModel(), simpleOntology.asModel());
         }
+
         return false;
 	}
-	
-	
+
     @Override
-    public int hashCode() 
-    {
-    	return this.ontologyId.hashCode();
+    public int hashCode() {
+    	return this.ontologyId.hashCode() + this.asModel().hashCode();
     }
-    
-    
-	private OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat) throws MatontoOntologyException
-	{
+
+    protected OWLOntology getOwlapiOntology() {
+        return this.ontology;
+    }
+
+    protected OWLOntologyManager getOwlapiOntologyManager() {
+        return this.manager;
+    }
+
+	private OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat) throws MatontoOntologyException {
 		OutputStream os = null;
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		OWLDocumentFormat format = manager.getOntologyFormat(ontology);
@@ -392,97 +270,5 @@ public class SimpleOntology implements Ontology {
 		
 		else
 			return os;
-		
 	}
-	
-	
-	protected void getOntologyAnnotations()
-	{
-		if(ontology != null) {
-			Set<OWLAnnotation> owlAnnos = ontology.getAnnotations();
-			for(OWLAnnotation owlAnno : owlAnnos) {
-				annotations.add(SimpleAnnotation.matontoAnnotation(owlAnno));
-			}
-		}			
-	}
-	
-	
-	private void mergeAnnos(Set<Annotation> annotations)
-	{
-		if(this.annotations.isEmpty())
-			this.annotations = new HashSet<Annotation>(annotations);
-		else
-			this.annotations.addAll(annotations);
-	}
-
-
-	private void getOntologyDirectImportsIris()
-	{
-		if(ontology != null) {
-			Set<IRI> owlIris = ontology.getDirectImportsDocuments();
-			for(IRI owlIri : owlIris) {
-				directImportIris.add(SimpleIRI.matontoIRI(owlIri));
-			}
-		}
-	}
-	
-	
-	private void getOntologyAxioms()
-	{
-//		if(ontology != null) 
-//			axioms = ontology.getAxioms();
-	}
-
-	
-	@Override
-	public void addAxiom(Axiom axiom) 
-	{
-		if(axiom!=null && !this.axioms.contains(axiom))
-			this.axioms.add(axiom);		
-	}
-	
-
-	@Override
-	public void addAxioms(Set<Axiom> axioms) 
-	{
-		if(axioms!=null)
-			for(Axiom axiom : axioms)
-				addAxiom(axiom);
-	}
-
-	
-	@Override
-	public void addAnnotation(Annotation annotation) 
-	{
-		if(annotation!=null && !this.annotations.contains(annotation))
-			this.annotations.add(annotation);
-	}
-
-	
-	@Override
-	public void addAnnotations(Set<Annotation> annotations) 
-	{
-		if(annotations!=null)
-			for(Annotation annotation : annotations)
-				addAnnotation(annotation);
-	}
-
-	
-	@Override
-	public void addDirectImport(OntologyIRI diIri) 
-	{
-		if(diIri!=null && !this.directImportIris.contains(diIri))
-			this.directImportIris.add(diIri);
-	}
-
-	
-	@Override
-	public void addDirectImports(Set<OntologyIRI> diIris) 
-	{
-		if(diIris!=null)
-			for(OntologyIRI diIri : diIris)
-				addDirectImport(diIri);
-	}
-	
-
 }

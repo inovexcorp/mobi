@@ -76,7 +76,7 @@ public class SimpleOntologyManagerTest
 //    	SimpleOntology ontology3 = null;
 //    	boolean stored3 = false;
 //    	try {
-//			ontology3 = new SimpleOntology(bookRes.getFile(), SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
+//			ontology3 = new SimpleOntology(bookRes.getFile(), SimpleOntologyManager.createOntologyId(bookRes.getOntologyIdentifier()));
 //			stored3 = manager.storeOntology(ontology3);
 //		} catch (IOException e) {
 //			e.printStackTrace();
@@ -97,7 +97,7 @@ public class SimpleOntologyManagerTest
 
 		Optional<Ontology> ontology5 = manager.retrieveOntology(manager.createOntologyId(ttlRes.getContextId()));
 
-//		Optional<Ontology> ontology6 = manager.retrieveOntology(SimpleOntologyManager.createOntologyId(bookRes.getContextId()));
+//		Optional<Ontology> ontology6 = manager.retrieveOntology(SimpleOntologyManager.createOntologyId(bookRes.getOntologyIdentifier()));
 
 		assertNotEquals(Optional.absent(), ontology4);
 		assertNotEquals(Optional.absent(), ontology5);

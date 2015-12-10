@@ -1,6 +1,7 @@
 package org.matonto.ontology.core.api;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
@@ -14,9 +15,9 @@ public interface OntologyManager {
 	
 	Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
 	
-	Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException, FileNotFoundException;
 	
-	Ontology createOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(OntologyIRI iri, OntologyId ontologyId) throws MatontoOntologyException;
 	
 	Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
 	
