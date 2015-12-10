@@ -28,6 +28,7 @@ public interface RDFExportService {
      *
      * @param repositoryID The ID of the repository to export RDF data from
      * @param file The file to export the data to.
+     * @param filetype The RDF Serialization to use when exporting triples to a file
      * @param subj A subject that all exported triples will be restricted to
      * @param pred A predicate that all exported triples will be restricted to
      * @param obj An object that all exported triples will be restricted to
