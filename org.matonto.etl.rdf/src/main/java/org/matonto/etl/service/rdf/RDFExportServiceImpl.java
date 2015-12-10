@@ -11,6 +11,8 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.openrdf.model.Model;
@@ -64,12 +66,17 @@ public class RDFExportServiceImpl implements RDFExportService {
             }
         }
 
-        Optional<org.matonto.repository.api.Repository> optRepo = repositoryManager.getRepository(repositoryID);
+        if(!file.canWrite())
+            throw new IOException("Unable to write to file");
 
         RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() -> new IOException("Unsupported file type"));
 
+        Optional<org.matonto.repository.api.Repository> optRepo = repositoryManager.getRepository(repositoryID);
+
         if(optRepo.isPresent()){
-            RepositoryResult<org.matonto.rdf.api.Statement> result = optRepo.get().getConnection().getStatements(subjResource, predicateIRI, objValue);
+            Repository repo = optRepo.get();
+            RepositoryConnection conn = repo.getConnection();
+            RepositoryResult<org.matonto.rdf.api.Statement> result = conn.getStatements(subjResource, predicateIRI, objValue);
 
             Model m = new org.openrdf.model.impl.LinkedHashModel();
             result.forEach((s)->{
