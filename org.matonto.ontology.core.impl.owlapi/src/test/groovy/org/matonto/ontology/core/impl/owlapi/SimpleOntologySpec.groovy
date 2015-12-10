@@ -1,14 +1,4 @@
 package org.matonto.ontology.core.impl.owlapi
-
-import java.io.File
-import java.io.InputStream
-import java.io.FileInputStream
-import java.net.URL
-import org.semanticweb.owlapi.model.IRI
-import org.semanticweb.owlapi.model.OWLOntology
-import org.semanticweb.owlapi.model.OWLOntologyManager
-import org.openrdf.model.Model
-import org.openrdf.model.impl.URIImpl
 import spock.lang.Shared
 import spock.lang.Specification
 
