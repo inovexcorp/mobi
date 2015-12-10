@@ -1,9 +1,14 @@
 package org.matonto.rdf.core.impl.sesame;
 
+import aQute.bnd.annotation.component.Component;
+import org.matonto.rdf.api.ValueFactory;
 
+@Component(provide = ValueFactory.class)
 public class SimpleValueFactory extends AbstractValueFactory {
 
-    private SimpleValueFactory() {}
+    private SimpleValueFactory() {
+        super();
+    }
 
     /**
      * SingletonHolder is loaded on the first execution of SimpleValueFactory.getInstance()

@@ -31,6 +31,10 @@
             <groupId>org.codehaus.gpars</groupId>
             <artifactId>gpars</artifactId>
         </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

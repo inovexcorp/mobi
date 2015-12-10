@@ -22,6 +22,11 @@ class SimpleValueFactorySpec extends Specification {
         VF.createBNode() != VF.createBNode()
     }
 
+    def "createBNode() returns BNodes that start with matonto prefix"() {
+        expect:
+        VF.createBNode().stringValue().startsWith("_:matonto/bnode/")
+    }
+
     def "createBNode() returns unique BNodes with two threads"() {
         setup:
         def results = []
