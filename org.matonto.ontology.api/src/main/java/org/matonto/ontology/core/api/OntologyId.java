@@ -1,8 +1,9 @@
 package org.matonto.ontology.core.api;
 
+import java.util.Optional;
+
 import org.openrdf.model.Resource;
 
-import com.google.common.base.Optional;
 
 
 public interface OntologyId {

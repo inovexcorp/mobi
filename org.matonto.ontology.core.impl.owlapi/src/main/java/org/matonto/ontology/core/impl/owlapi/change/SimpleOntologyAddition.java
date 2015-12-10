@@ -16,6 +16,6 @@ public class SimpleOntologyAddition<T extends OWLObject> implements OntologyAddi
 
     @Override
     public T getChangedObject() {
-        return null;
+        return object;
     }
 }

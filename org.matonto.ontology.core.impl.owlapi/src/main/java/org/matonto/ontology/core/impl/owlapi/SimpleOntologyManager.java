@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyIRI;
@@ -23,21 +24,15 @@ import org.openrdf.repository.http.HTTPRepository;
 
 import info.aduna.iteration.Iterations;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -50,7 +45,7 @@ import aQute.bnd.annotation.component.Reference;
 public class SimpleOntologyManager implements OntologyManager {
 	
 	private static Repository repository;
-	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.fromNullable(new HashMap<>());
+	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.ofNullable(new HashMap<>());
 	private static String location;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
 	
@@ -133,7 +128,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			throw new IllegalStateException("Repository is null");
    	 
 		if(!ontologyExists(ontologyId))
-			return Optional.absent();
+			return Optional.empty();
 
 		OWLOntologyManager mgr = OWLManager.createOWLOntologyManager();
 		OWLOntology onto = null;
@@ -147,16 +142,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
 	    	parser.parse(new RioMemoryTripleSource(model), onto, new OWLOntologyLoaderConfiguration());
-			    
-	    	OWLDocumentFormat format = mgr.getOntologyFormat(onto);
-	    	OWLXMLDocumentFormat owlxmlFormat = new OWLXMLDocumentFormat();
-	    		 
-	    	if (format.isPrefixOWLOntologyFormat())  
-	    		owlxmlFormat.copyPrefixesFrom(format.asPrefixOWLOntologyFormat()); 
 
-	    	mgr.saveOntology(onto, owlxmlFormat, IRI.create(ontologyId.getOntologyIdentifier().stringValue()));
-		} catch (OWLOntologyStorageException e) {
-			throw new MatontoOntologyException("Unable to save to an ontology object", e);
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Unable to create an ontology object", e);
 		} catch (IOException e) {
@@ -273,7 +259,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			
 			while (contextIds.hasNext()) {
 				Resource contextId = contextIds.next();
-			    ontologyMap.put(createOntologyId(contextId), location);
+			    ontologyMap.put(createOntologyId(new SimpleIRI(contextId.stringValue())), location);
 			}
 			
 			ontologyRegistry = Optional.of(ontologyMap);
@@ -291,18 +277,32 @@ public class SimpleOntologyManager implements OntologyManager {
 		
 	}
 
+	@Override
     public OntologyId createOntologyId() {
         return new SimpleOntologyId();
     }
 
+	@Override
     public OntologyId createOntologyId(OntologyIRI ontologyIRI) {
         return new SimpleOntologyId(ontologyIRI);
     }
 
+	@Override
     public OntologyId createOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI) {
         return new SimpleOntologyId(ontologyIRI, versionIRI);
     }
 
+	@Override
+	public OntologyIRI createOntologyIRI(String ns, String ln) {
+		return new SimpleIRI(ns, ln);
+	}
+	
+	@Override
+	public OntologyIRI createOntologyIRI(String iriString) {
+		return new SimpleIRI(iriString);
+	}
+	
+	
     private void closeConnection(RepositoryConnection conn) {
         try {
             if(conn != null)

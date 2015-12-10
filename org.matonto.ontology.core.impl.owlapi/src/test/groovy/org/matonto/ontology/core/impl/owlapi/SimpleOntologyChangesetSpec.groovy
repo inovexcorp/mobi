@@ -16,7 +16,7 @@ class SimpleOntologyChangesetSpec extends Specification {
         def changeset = new SimpleOntologyChangeset(ontology)
 
         then:
-        1 * ontology.equals(ontology) >> true
+  //      1 * ontology.equals(ontology) >> true
         changeset.getOntology() == ontology
     }
 

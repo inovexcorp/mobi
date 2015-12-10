@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Optional;
 
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
@@ -11,7 +12,6 @@ import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.io.XMLUtils;
 import org.semanticweb.owlapi.model.IRI;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 public class SimpleIRI implements OntologyIRI {
@@ -20,45 +20,16 @@ public class SimpleIRI implements OntologyIRI {
 	private static String localName;
 	private static IRI iri;
 
-	protected SimpleIRI(String ns, String ln) 
+	public SimpleIRI(String ns, String ln) 
 	{
 		namespace = Preconditions.checkNotNull(ns, "namespace cannot be null");
 		localName = ln;
 		iri = IRI.create(namespace, localName);
 	}
 
-	protected SimpleIRI(String str) 
+	public SimpleIRI(String str) 
 	{
 		this(XMLUtils.getNCNamePrefix(str), XMLUtils.getNCNameSuffix(str));
-	}
-
-	protected SimpleIRI(URI uri) 
-	{
-		this(uri.toString());
-	}
-
-	public static SimpleIRI create(String namespace, String localName) 
-	{
-		return new SimpleIRI(namespace, localName);
-	}
-
-	public static SimpleIRI create(File file) 
-	{
-		return new SimpleIRI(file.toURI());
-	}
-
-	public static SimpleIRI create(URI uri) 
-	{
-		return new SimpleIRI(uri);
-	}
-
-	public static SimpleIRI create(URL url) 
-	{
-		try {
-			return new SimpleIRI(url.toURI());
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	protected IRI getOwlapiIRI() {
@@ -70,7 +41,7 @@ public class SimpleIRI implements OntologyIRI {
 		if (matontoIri == null)
 			return null;
 		else
-			return IRI.create(matontoIri.getNamespace(), matontoIri.getLocalName().orNull());
+			return IRI.create(matontoIri.getNamespace(), matontoIri.getLocalName().orElse(null));
 	}
 
 	public static OntologyIRI matontoIRI(IRI owlIri) 
@@ -94,7 +65,7 @@ public class SimpleIRI implements OntologyIRI {
 	public Optional<String> getLocalName() 
 	{
 		if (localName.isEmpty())
-			return Optional.absent();
+			return Optional.empty();
 
 		return Optional.of(localName);
 	}
@@ -108,13 +79,13 @@ public class SimpleIRI implements OntologyIRI {
 	@Override
 	public Optional<Literal> asLiteral() 
 	{
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 	@Override
 	public Optional<AnonymousIndividual> asAnonymousIndividual() 
 	{
-		return Optional.absent();
+		return Optional.empty();
 	}
 	
 	@Override

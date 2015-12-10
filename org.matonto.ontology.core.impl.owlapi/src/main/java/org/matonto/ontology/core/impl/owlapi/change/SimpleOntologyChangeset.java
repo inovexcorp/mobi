@@ -43,7 +43,7 @@ public class SimpleOntologyChangeset implements OntologyChangeset {
 
     @Override
     public Set<OntologyChange> getChanges() {
-        return null;
+        return changes;
     }
 
     @Override
