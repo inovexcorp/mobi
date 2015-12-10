@@ -37,11 +37,11 @@ public class SimpleOntology implements Ontology {
 
     protected SimpleOntology(OWLOntology ontology) {
         this.ontology = ontology;
-
+        this.manager = this.ontology.getOWLOntologyManager();
         OWLOntologyID owlApiID = ontology.getOntologyID();
         com.google.common.base.Optional<IRI> oIRI = owlApiID.getOntologyIRI();
         com.google.common.base.Optional<IRI> vIRI = owlApiID.getVersionIRI();
-
+		
         if (owlApiID.isAnonymous()) {
             ontologyId = new SimpleOntologyId();
         } else if (vIRI.isPresent()) {

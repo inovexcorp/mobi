@@ -79,6 +79,24 @@ public class SimpleOntologyManagerTest
     	
 		Optional<Ontology> ontology4 = manager.retrieveOntology(id1);
 		Optional<Ontology> ontology5 = manager.retrieveOntology(id2);
+		if(!ontology4.isPresent())
+			System.out.println("ontology is empty");
+		else {
+			System.out.println(ontology4.get().asOwlXml());
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println(ontology4.get().asRdfXml());
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println(ontology4.get().asTurtle());
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println("-------------------------------------------------------------------------------------------------------");
+			System.out.println(ontology4.get().asJsonLD());
+		}
+
 
 		assertNotEquals(Optional.empty(), ontology4);
 		assertNotEquals(Optional.empty(), ontology5);
