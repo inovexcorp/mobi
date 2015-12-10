@@ -1,16 +1,19 @@
 package org.matonto.ontology.cli.impl;
 
 import java.io.File;
-import org.apache.felix.gogo.commands.Argument;
-import org.apache.felix.gogo.commands.Command;
-import org.apache.karaf.shell.console.OsgiCommandSupport;
-import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyManager;
+import java.io.FileNotFoundException;
 
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -18,11 +21,12 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 
 
-@Component (immediate=true)
 @Command(scope = "matonto", name = "importOntology", description = "Imports ontology to a repository")
-public class OntologyCLIImportImpl extends OsgiCommandSupport
+@Service
+@Component (immediate=true)
+public class OntologyCLIImportImpl implements Action
 {
-	private OntologyManager manager;
+	private static OntologyManager manager;
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyCLIImportImpl.class);
 	
     @Activate
@@ -38,58 +42,72 @@ public class OntologyCLIImportImpl extends OsgiCommandSupport
     }
 	
 	@Reference
-	protected void setOntologyManager(OntologyManager manager)
+	protected void setOntologyManager(final OntologyManager ontoManager)
 	{
-		this.manager = manager;
+		manager = ontoManager;
+	}
+	
+	protected void unsetOntologyManager(final OntologyManager ontoManager)
+	{
+		manager = null;
+	}
+	
+	protected OntologyManager getOntologyManager()
+	{
+		return manager;
 	}
 
 	
 	//Command Line Arguments and Options	
-	@Argument(index = 0, name = "RepositoryID", description = "The id of the repository the file will be imported to", required = true, multiValued = false)
-	String repositoryId = null;
-	
-	@Argument(index = 1, name = "ImportFile", description = "The file to be imported into the repository", required = true, multiValued = false)
+	@Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository", required = true, multiValued = false)
 	String fromFile = null;
 	
-	@Argument(index = 2, name = "namespace", description = "The namespace of the context id for ontology named graph to be created under", required = true, multiValued = false)
+	@Argument(index = 1, name = "namespace", description = "The namespace of the context id for ontology named graph to be created under", required = true, multiValued = false)
 	String namespace = null;
 	
-	@Argument(index = 3, name = "localName", description = "The local name of the context id for ontology named graph to be created under", required = true, multiValued = false)
+	@Argument(index = 2, name = "localName", description = "The local name of the context id for ontology named graph to be created under", required = true, multiValued = false)
 	String localName = null;
 	
 	
 	@Override
-	protected Object doExecute() throws Exception 
+	public Object execute() throws Exception 
 	{	
+		if(manager == null)
+			throw new IllegalStateException("Ontology manager is null");
+
 		boolean persisted = false;
-		persisted = importOntology();
+		String errorMsg = null;
+		
+		try {
+			persisted = importOntology();
+		} catch(MatontoOntologyException ex) {
+			errorMsg = ex.getMessage();
+		}
 		
 		if(persisted)
 			System.out.println("Succesful file import.");
 		else
-			System.out.println("Unsuccessful file import.");
+			System.out.println("Unsuccessful file import. " + errorMsg);
 
 		return null;
 	}
 
 	
-	private boolean importOntology()
-	{	
+	private boolean importOntology() throws MatontoOntologyException, FileNotFoundException {
 		boolean persisted = false;
 
 		System.out.println("Importing ontology file...");
 
 		File newFile = new File(fromFile);
 		if(newFile.exists()) {
-			URI uri = new URIImpl(namespace + "#" + localName);
-			Ontology ontology = manager.createOntology(newFile, uri);
+			OntologyIRI iri = manager.createOntologyIRI(namespace + "#" + localName);
+			Ontology ontology = manager.createOntology(newFile, manager.createOntologyId(iri));
 			persisted = manager.storeOntology(ontology);
 		}
 				
 		else
 			System.out.println("File does not exist.");
 			
-
 		return persisted;
 	}
 

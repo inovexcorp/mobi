@@ -12,14 +12,13 @@
 
     <artifactId>ontology.cli</artifactId>
 
-    <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
+    <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
             <artifactId>org.apache.karaf.shell.console</artifactId>
-            <version>2.2.11</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -27,8 +26,7 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>ontology.core</artifactId>
-   	    <scope>provided</scope>
+            <artifactId>ontology.api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
@@ -49,11 +47,19 @@
                         <Bundle-Name>MatOnto Ontology Service - CLI</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package></Export-Package>
-			<Import-Package>
-			    org.openrdf.*;version="${ontology.openrdf.version}",
-			    org.matonto.ontology.core.api;version="[1.0,2)",
-			    *
-			</Import-Package>
+                        <Import-Package>
+                            org.openrdf.*;version="${ontology.openrdf.version}",
+                            org.matonto.ontology.core.api;version="[1.0,2)",
+                            org.matonto.ontology.core.api.*;version="[1.0,2)",
+                            org.matonto.ontology.core.utils;version="[1.0,2)",
+                            com.google.common.base.*,
+                            org.apache.commons.io.*,
+                            org.apache.felix.service.command,
+			              	org.apache.karaf.shell.commands,
+			              	org.apache.karaf.shell.console,
+                            *
+                        </Import-Package>
+                        <Karaf-Commands>*</Karaf-Commands>
                         <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>
