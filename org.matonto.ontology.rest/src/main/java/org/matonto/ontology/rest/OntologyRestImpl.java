@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -18,20 +19,17 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import com.sun.jersey.multipart.FormDataParam;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
-import com.sun.jersey.multipart.FormDataParam;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -90,7 +88,7 @@ public class OntologyRestImpl {
 			
 			if(!ontologies.isEmpty()) {
 				for(OntologyId oid : ontologies.keySet()) {
-					String ontologyId = oid.getContextId().stringValue();
+					String ontologyId = oid.getOntologyIdentifier().stringValue();
 					json.put(ontologyId, ontologies.get(oid));
 				}
 			}
@@ -109,26 +107,23 @@ public class OntologyRestImpl {
 		@Produces(MediaType.APPLICATION_JSON)
 		public Response uploadFile(
 								@FormDataParam("file") InputStream fileInputStream,
-								@FormDataParam("namespace") String namespace,
-								@FormDataParam("localName") String localName)
+								@FormDataParam("ontologyIdStr") String ontologyIdStr)
 		{	
-			if (namespace == null || namespace.length() == 0)
-				return Response.status(500).entity("Namespace is empty").build();
-			
-			if (localName == null || localName.length() == 0)
-				return Response.status(500).entity("Local name is empty").build();
+			if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+				return Response.status(500).entity("OntologyID is empty").build();
 			
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 			
 			boolean persisted = false;
 			JSONObject json = new JSONObject();
-			URI uri = new URIImpl(namespace + "#" + localName);
 			Ontology ontology;
 			
 			try{
-				ontology = manager.createOntology(fileInputStream, manager.createOntologyId(uri));
+				OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+				ontology = manager.createOntology(fileInputStream, manager.createOntologyId(iri));
 				persisted = manager.storeOntology(ontology);
+				
 			} catch(MatontoOntologyException ex) {
 				json.put("error", ex.getMessage());
 			} finally {	
@@ -147,16 +142,11 @@ public class OntologyRestImpl {
 		@GET
 		@Path("/getOntology")
 		@Produces(MediaType.APPLICATION_JSON)
-		public Response getOntology(@QueryParam("namespace") String namespace,
-									@QueryParam("localName") String localName,
+		public Response getOntology(@QueryParam("ontologyIdStr") String ontologyIdStr,
 									@QueryParam("rdfFormat") String rdfFormat) 
 		{
-			
-			if (namespace == null || namespace.length() == 0)
-				return Response.status(500).entity("Namespace is empty").build();
-			
-			if (localName == null || localName.length() == 0)
-				return Response.status(500).entity("Local name is empty").build();
+			if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+				return Response.status(500).entity("OntologyID is empty").build();
 			
 			if (rdfFormat == null || rdfFormat.length() == 0)
 				return Response.status(500).entity("Output format is empty").build();
@@ -164,14 +154,15 @@ public class OntologyRestImpl {
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 			
-			URI uri = new URIImpl(namespace + "#" + localName);
-
 			JSONObject json = new JSONObject();
-			Optional<Ontology> ontology = Optional.absent();
+			Optional<Ontology> ontology = Optional.empty();
 			String message = null;
-			
+			OntologyId ontologyId = null;
 			try{
-				ontology = manager.retrieveOntology(manager.createOntologyId(uri));
+				OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+				ontologyId = manager.createOntologyId(iri);
+				ontology = manager.retrieveOntology(ontologyId);
+				
 			} catch(MatontoOntologyException ex) {
 				message = ex.getMessage();
 			} 
@@ -200,7 +191,7 @@ public class OntologyRestImpl {
 				IOUtils.closeQuietly(outputStream);	
 					
 				json.put("document format", rdfFormat);
-				json.put("ontology id", uri.stringValue());
+				json.put("ontology id", ontologyId);
 				json.put("ontology", content);
 				
 			} else if(message == null) {
@@ -219,15 +210,11 @@ public class OntologyRestImpl {
 		@GET
 		@Path("/downloadOntology")
 		@Produces(MediaType.APPLICATION_OCTET_STREAM)
-		public Response downloadOntologyFile(@QueryParam("namespace") String namespace,
-											@QueryParam("localName") String localName,
+		public Response downloadOntologyFile(@QueryParam("ontologyIdStr") String ontologyIdStr,
 											@QueryParam("rdfFormat") String rdfFormat) 
 		{
-			if (namespace == null || namespace.length() == 0)
-				return Response.status(500).entity("Namespace is empty").build();
-			
-			if (localName == null || localName.length() == 0)
-				return Response.status(500).entity("Local name is empty").build();
+			if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+				return Response.status(500).entity("OntologyID is empty").build();
 			
 			if (rdfFormat == null || rdfFormat.length() == 0)
 				return Response.status(500).entity("Output format is empty").build();
@@ -235,13 +222,14 @@ public class OntologyRestImpl {
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 
-			
-			URI uri = new URIImpl(namespace + "#" + localName);
-			Optional<Ontology> ontology = Optional.absent();
+		
+			Optional<Ontology> ontology = Optional.empty();
 			String message = null;
 			
-			try {
-				ontology = manager.retrieveOntology(manager.createOntologyId(uri));
+			try{
+				OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+				OntologyId ontologyId = manager.createOntologyId(iri);
+				ontology = manager.retrieveOntology(ontologyId);
 			} catch(MatontoOntologyException ex) {
 				message = ex.getMessage();
 			} 
@@ -308,24 +296,21 @@ public class OntologyRestImpl {
 		@GET
 		@Path("/deleteOntology")
 		@Produces(MediaType.APPLICATION_JSON)
-		public Response deleteOntology(@QueryParam("namespace") String namespace,
-											@QueryParam("localName") String localName) 
+		public Response deleteOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
 		{
-			if (namespace == null || namespace.length() == 0)
-				return Response.status(500).entity("Namespace is empty").build();
-			
-			if (localName == null || localName.length() == 0)
-				return Response.status(500).entity("Local name is empty").build();
+			if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+				return Response.status(500).entity("OntologyID is empty").build();
 			
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 
 			JSONObject json = new JSONObject();
-			URI uri = new URIImpl(namespace + "#" + localName);
 			boolean deleted = false;
 			
 			try{
-				deleted = manager.deleteOntology(manager.createOntologyId(uri));
+				OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+				OntologyId ontologyId = manager.createOntologyId(iri);
+				deleted = manager.deleteOntology(ontologyId);
 			} catch(MatontoOntologyException ex) {
 				json.put("error", ex.getMessage());
 			} 

@@ -1,13 +1,13 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import java.util.Optional;
+
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.model.OWLLiteral;
-
-import com.google.common.base.Optional;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 
@@ -60,7 +60,7 @@ public class SimpleLiteral implements Literal {
 	@Override
 	public Optional<OntologyIRI> asIRI() 
 	{
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 
@@ -74,7 +74,7 @@ public class SimpleLiteral implements Literal {
 	@Override
 	public Optional<AnonymousIndividual> asAnonymousIndividual() 
 	{
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 	

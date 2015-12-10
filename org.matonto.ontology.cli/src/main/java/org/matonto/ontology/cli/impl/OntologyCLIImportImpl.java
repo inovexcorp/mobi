@@ -1,12 +1,12 @@
 package org.matonto.ontology.cli.impl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,16 +93,15 @@ public class OntologyCLIImportImpl implements Action
 	}
 
 	
-	private boolean importOntology() throws MatontoOntologyException
-	{	
+	private boolean importOntology() throws MatontoOntologyException, FileNotFoundException {
 		boolean persisted = false;
 
 		System.out.println("Importing ontology file...");
 
 		File newFile = new File(fromFile);
 		if(newFile.exists()) {
-			URI uri = new URIImpl(namespace + "#" + localName);
-			Ontology ontology = manager.createOntology(newFile, manager.createOntologyId(uri));
+			OntologyIRI iri = manager.createOntologyIRI(namespace + "#" + localName);
+			Ontology ontology = manager.createOntology(newFile, manager.createOntologyId(iri));
 			persisted = manager.storeOntology(ontology);
 		}
 				

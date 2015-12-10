@@ -1,14 +1,11 @@
 package org.matonto.ontology.core.api;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.util.Set;
-
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
+
+import java.io.OutputStream;
+import java.util.Set;
 
 public interface Ontology {
 	
@@ -25,33 +22,9 @@ public interface Ontology {
 	OntologyId getOntologyId();
 	
 	Set<Annotation> getAnnotations();
-	
-	void setOntologyId(OntologyId ontologyId);
-	
-	void setAnnotations(Set<Annotation> annotations);
-	
-//	public Set<Axiom> getAxioms();
-	
-	void addAxiom(Axiom axiom);
-	
-	void addAxioms(Set<Axiom> axioms);
-	
-	void addAnnotation(Annotation annotation);
-	
-	void addAnnotations(Set<Annotation> annotations);
-	
-	void addDirectImport(OntologyIRI diIri);
-	
-	void addDirectImports(Set<OntologyIRI> diIris);
-	
-	Set<OntologyIRI> getDirectImportsDocuments();
-	
-	boolean importOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
-	
-	boolean importOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
-	
-	boolean importOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
-	
+
+    Set<Axiom> getAxioms();
+
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 
 	 * and returns true if the resource ids are equal and their RDF models are isomorphic. 

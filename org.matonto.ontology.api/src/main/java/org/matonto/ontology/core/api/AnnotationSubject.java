@@ -1,6 +1,6 @@
 package org.matonto.ontology.core.api;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 public interface AnnotationSubject {
 

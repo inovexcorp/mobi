@@ -1,13 +1,13 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import java.util.Optional;
+
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.openrdf.model.util.Models;
 import org.semanticweb.owlapi.model.NodeID;
 import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
-
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLAnonymousIndividualImpl;
@@ -41,14 +41,14 @@ public class SimpleAnonymousIndividual
 	@Override
 	public Optional<OntologyIRI> asIRI() 
 	{
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 	
 	@Override
 	public Optional<Literal> asLiteral() 
 	{
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 	
