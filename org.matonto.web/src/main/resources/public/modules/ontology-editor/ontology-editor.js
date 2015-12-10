@@ -52,7 +52,6 @@
         vm.removePrefix = removePrefix;
         vm.reset = reset;
         vm.submit = submit;
-        vm.unsaved = unsaved;
         vm.uploadClicked = uploadClicked;
         vm.uploadOntology = uploadOntology;
 
@@ -758,24 +757,24 @@
             }
         }
 
-        // converts the context object into an array
-        function objToArr(context) {
+        // converts the object into an array of objects with key and value properties
+        function objToArr(obj) {
             var prop,
                 temp = [];
-            for(prop in context) {
-                if(context.hasOwnProperty(prop)) {
-                    temp.push({key: prop, value: context[prop]});
+            for(prop in obj) {
+                if(obj.hasOwnProperty(prop)) {
+                    temp.push({key: prop, value: obj[prop]});
                 }
             }
             return temp;
         }
 
-        // converts the context array into an object
-        function arrToObj(context) {
+        // converts the array of objects with key and value properties into an object
+        function arrToObj(arr) {
             var temp = {},
-                i = context.length;
+                i = arr.length;
             while(i--) {
-                temp[context[i].key] = context[i].value;
+                temp[arr[i].key] = arr[i].value;
             }
             return temp;
         }
@@ -859,11 +858,6 @@
                 // focuses the newly editable input
                 input.focus();
             }
-        }
-
-        // marks the selected item as unsaved
-        function unsaved() {
-            vm.selected.unsaved = true;
         }
 
         // checks to see if the string is already taken

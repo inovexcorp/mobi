@@ -314,12 +314,12 @@
                             <!-- identifier -->
                             <div class="form-group col-xs-9">
                                 <label class="control-label" for="ontology-identifier">Identifier</label>
-                                <input type="text" class="form-control" id="ontology-identifier" name="iri" ng-model="vm.selected.identifier" ng-trim="false" ng-change="vm.unsaved();">
+                                <input type="text" class="form-control" id="ontology-identifier" name="iri" ng-model="vm.selected.identifier" ng-trim="false" ng-change="vm.selected.unsaved = true;">
                             </div>
                             <!-- delimiter -->
                             <div class="form-group col-xs-3">
                                 <label class="control-label" for="ontology-delimiter">Delimiter</label>
-                                <select class="form-control" id="ontology-delimiter" ng-model="vm.selected.delimiter" ng-change="vm.unsaved();">
+                                <select class="form-control" id="ontology-delimiter" ng-model="vm.selected.delimiter" ng-change="vm.selected.unsaved = true;">
                                     <option value="#">#</option>
                                     <option value="/">/</option>
                                     <option value=":">:</option>
@@ -329,12 +329,12 @@
                         <!-- label -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-label">{{(vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs}}label</label>
-                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[((vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs) + 'label']" ng-trim="false" ng-change="vm.unsaved();">
+                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[((vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs) + 'label']" ng-trim="false" ng-change="vm.selected.unsaved = true;">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-comments">{{(vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs}}comment</label>
-                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[((vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs) + 'comment']" ng-change="vm.unsaved();"></textarea>
+                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[((vm.current.oi !== -1) ? vm.ontologies[vm.current.oi].rdfs : vm.selected.rdfs) + 'comment']" ng-change="vm.selected.unsaved = true;"></textarea>
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].tab != 'annotations'" class="btn-container clearfix">
@@ -423,7 +423,7 @@
                             <label class="control-label" for="class-iri">Identifier</label>
                             <div class="input-group">
                                 <div class="input-group-addon">{{vm.selected.prefix}}</div>
-                                <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" ng-change="vm.unsaved();" required>
+                                <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" ng-change="vm.selected.unsaved = true;" required>
                             </div>
                             <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
                             <strong ng-if="vm.isTaken()" class="help-block">The entered value is already used elsewhere.</strong>
@@ -432,12 +432,12 @@
                         <!-- name -->
                         <div class="form-group">
                             <label class="control-label" for="class-name">{{vm.ontologies[vm.current.oi].rdfs}}label</label>
-                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false" ng-change="vm.unsaved();">
+                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-trim="false" ng-change="vm.selected.unsaved = true;">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="class-comments">{{vm.ontologies[vm.current.oi].rdfs}}comment</label>
-                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.unsaved();"></textarea>
+                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.selected.unsaved = true;"></textarea>
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].tab != 'annotations'" class="btn-container clearfix">
@@ -477,7 +477,7 @@
                             <label class="control-label" for="property-iri">Identifier</label>
                             <div class="input-group">
                                 <div class="input-group-addon">{{vm.selected.prefix}}</div>
-                                <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" required ng-change="vm.unsaved();">
+                                <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" required ng-change="vm.selected.unsaved = true;">
                             </div>
                             <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
                             <strong ng-if="vm.isTaken()" class="help-block">The entered value is already used elsewhere.</strong>
@@ -486,12 +486,12 @@
                         <!-- name -->
                         <div class="form-group">
                             <label class="control-label" for="property-name">{{vm.ontologies[vm.current.oi].rdfs}}label</label>
-                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-change="vm.unsaved();">
+                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-change="vm.selected.unsaved = true;">
                         </div>
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="property-comments">{{vm.ontologies[vm.current.oi].rdfs}}comment</label>
-                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.unsaved();"></textarea>
+                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.selected.unsaved = true;"></textarea>
                         </div>
                         <!-- buttons -->
                         <div ng-show="vm.ontologies[vm.current.oi].classes[vm.current.ci].properties[vm.current.pi].tab != 'annotations'" class="btn-container clearfix">
