@@ -7,12 +7,13 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.base.AbstractStatementSet;
 import org.openrdf.model.util.Models;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SesameModelWrapper implements Model {
+public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
     private static final long serialVersionUID = -4290503637573113943L;
     private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
@@ -161,26 +162,6 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public Object[] toArray() {
-        Iterator<Statement> it = iterator();
-        List<Object> r = new ArrayList<>(size());
-        while (it.hasNext()) {
-            r.add(it.next());
-        }
-        return r.toArray();
-    }
-
-    @Override
-    public <T> T[] toArray(T[] a) {
-        Iterator<Statement> it = iterator();
-        List<Object> r = new ArrayList<>(size());
-        while (it.hasNext()) {
-            r.add(it.next());
-        }
-        return r.toArray(a);
-    }
-
-    @Override
     public boolean add(Statement statement) {
         if (statement.getContext().isPresent()) {
             return add(statement.getSubject(), statement.getPredicate(), statement.getObject(), statement.getContext().get());
@@ -196,48 +177,6 @@ public class SesameModelWrapper implements Model {
             return remove(st.getSubject(), st.getPredicate(), st.getObject(), st.getContext().orElse(null));
         }
         return false;
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        Iterator<?> e = c.iterator();
-        while (e.hasNext())
-            if (!contains(e.next()))
-                return false;
-        return true;
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends Statement> c) {
-        Iterator<? extends Statement> e = c.iterator();
-        boolean modified = false;
-        while (e.hasNext()) {
-            if (add(e.next()))
-                modified = true;
-        }
-        return modified;
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        Iterator<Statement> e = iterator();
-        boolean modified = false;
-        while (e.hasNext()) {
-            if (!c.contains(e.next())) {
-                e.remove();
-                modified = true;
-            }
-        }
-        return modified;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        boolean modified = false;
-        Iterator<?> i = c.iterator();
-        while (i.hasNext())
-            modified |= remove(i.next());
-        return modified;
     }
 
     @Override
