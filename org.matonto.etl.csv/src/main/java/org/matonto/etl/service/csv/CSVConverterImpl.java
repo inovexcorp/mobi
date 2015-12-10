@@ -7,6 +7,7 @@ import com.opencsv.CSVReader;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.*;
+import org.openrdf.model.util.Models;
 import org.openrdf.repository.*;
 import org.openrdf.rio.*;
 import java.io.*;
@@ -103,7 +104,7 @@ public class CSVConverterImpl implements CSVConverter {
         if (separatorModel.isEmpty())
             return ',';
         else
-            separator = separatorModel.objectString().charAt(0);
+            separator = Models.objectString(separatorModel).get().charAt(0);
 
         return separator;
     }
@@ -243,21 +244,21 @@ public class CSVConverterImpl implements CSVConverter {
 
             //Parse each property
             if (!prefixModel.isEmpty())
-                classMapping.setPrefix(prefixModel.objectString());
+                classMapping.setPrefix(Models.objectString(prefixModel).get());
             Model mapsToModel = mappingModel.filter(classMappingURI, Delimited.MAPS_TO.uri(), null);
             if (!mapsToModel.isEmpty())
-                classMapping.setMapping(mapsToModel.objectString());
+                classMapping.setMapping(Models.objectString(mapsToModel).get());
             Model localNameModel = mappingModel.filter(classMappingURI, Delimited.LOCAL_NAME.uri(), null);
             if (!localNameModel.isEmpty())
-                classMapping.setLocalName(localNameModel.objectString());
+                classMapping.setLocalName(Models.objectString(localNameModel).get());
 
             //Parse the data properties
             Model dataPropertyModel = mappingModel.filter(classMappingURI, Delimited.DATA_PROPERTY.uri(), null);
             for (Statement s : dataPropertyModel) {
                 Model propertyModel = mappingModel.filter((URI) s.getObject(), Delimited.HAS_PROPERTY.uri(), null);
-                String property = propertyModel.objectString();
+                String property = Models.objectString(propertyModel).get();
                 Model indexModel = mappingModel.filter((URI) s.getObject(), Delimited.COLUMN_INDEX.uri(), null);
-                Integer columnIndexInt = Integer.parseInt(indexModel.objectLiteral().stringValue());
+                Integer columnIndexInt = Integer.parseInt(Models.objectLiteral(indexModel).get().stringValue());
                 classMapping.addDataProperty(columnIndexInt, property);
             }
 
@@ -265,9 +266,9 @@ public class CSVConverterImpl implements CSVConverter {
             Model objectPropertyModel = mappingModel.filter(classMappingURI, Delimited.OBJECT_PROPERTY.uri(), null);
             for (Statement s : objectPropertyModel) {
                 Model propertyModel = mappingModel.filter((URI) s.getObject(), Delimited.HAS_PROPERTY.uri(), null);
-                String property = propertyModel.objectString();
+                String property = Models.objectString(propertyModel).get();
                 Model classModel = mappingModel.filter((URI) s.getObject(), Delimited.CLASS_MAPPING_PROP.uri(), null);
-                URI objectMappingResultURI = classModel.objectURI();
+                IRI objectMappingResultURI = Models.objectIRI(classModel).get();
 
                 if (uriToObject.containsKey(objectMappingResultURI))
                     classMapping.addObjectProperty(uriToObject.get(objectMappingResultURI), property);
@@ -297,7 +298,7 @@ public class CSVConverterImpl implements CSVConverter {
         if(extension.equals("jsonld"))
             mapFormat = RDFFormat.JSONLD;
         else
-            mapFormat = Rio.getParserFormatForFileName(mapping.getName());
+            mapFormat = Rio.getParserFormatForFileName(mapping.getName()).get();
         FileReader r = new FileReader(mapping);
         Model m;
         m = Rio.parse(r, "", mapFormat);

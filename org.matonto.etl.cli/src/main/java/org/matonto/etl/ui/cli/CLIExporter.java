@@ -45,7 +45,7 @@ public class CLIExporter implements Action {
             exportService.exportToFile(repositoryId, file);
         }
         else{
-            exportService.exportToFile(repositoryId, file, fileType, subj, predicate, obj);
+            exportService.exportToFile(repositoryId, file, subj, predicate, obj);
         }
 
         return null;

@@ -21,6 +21,10 @@
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${etl.openrdf.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.api</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

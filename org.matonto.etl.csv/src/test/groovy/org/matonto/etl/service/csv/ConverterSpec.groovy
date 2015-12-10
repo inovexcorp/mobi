@@ -1,5 +1,6 @@
 package org.matonto.etl.service.csv
 
+import org.openrdf.model.IRI
 import org.openrdf.model.Model
 import org.openrdf.model.impl.LinkedHashModel
 import org.openrdf.repository.Repository
@@ -137,7 +138,7 @@ class ConverterSpec extends Specification {
         c.importCSV(csv, mappingFile, "test");
         repo.initialize()
         RepositoryConnection con = repo.getConnection();
-        RepositoryResult result = con.getStatements(null,null,null, false);
+        RepositoryResult result = con.getStatements(null,(IRI)null,null, false);
         Model m2 = new LinkedHashModel();
         m2.addAll(result.asList());
         FileReader r = new FileReader(out);
