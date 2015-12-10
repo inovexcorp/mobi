@@ -18,7 +18,7 @@ public class CSVConverterImpl implements CSVConverter {
 
     private Repository repository;
 
-    private static final Logger logger = Logger.getLogger(CSVConverterImpl.class);
+    private static final Logger LOGGER = Logger.getLogger(CSVConverterImpl.class);
 
     ValueFactory vf = new ValueFactoryImpl();
     Map<URI, ClassMapping> uriToObject;
@@ -38,12 +38,13 @@ public class CSVConverterImpl implements CSVConverter {
      * @throws IOException         Thrown if there is a problem reading one of the files given
      * @throws RepositoryException Thrown when the service cannot connect to the MatOnto Repository
      */
+    @Override
     public void importCSV(File csv, File mappingFile, String repoID) throws RDFParseException, IOException, RepositoryException {
         importCSV(csv, parseMapping(mappingFile), repoID);
     }
 
     /**
-     * Import a CSV fild and load it into the MatOnto Framework. Mappings are already in an RDF Model
+     * Import a CSV file and load it into the MatOnto Framework. Mappings are already in an RDF Model
      *
      * @param csv          The csv file to be loaded
      * @param mappingModel The mapping of CSV to MatOnto Ontologies in an RDF Model. See the MatOnto Wiki for details
@@ -51,6 +52,7 @@ public class CSVConverterImpl implements CSVConverter {
      * @throws IOException         Thrown if there is a problem reading a given file
      * @throws RepositoryException Thrown if there is a problem loading data into the repository
      */
+    @Override
     public void importCSV(File csv, Model mappingModel, String repoID) throws IOException, RepositoryException {
         Model converted = convert(csv, mappingModel);
 
@@ -67,9 +69,10 @@ public class CSVConverterImpl implements CSVConverter {
      * @param csv         The CSV file to be loaded
      * @param mappingFile The mapping file in RDF Format. See the MatOnto Wiki for details
      * @return A Model of RDF data converted from CSV
-     * @throws IOException       Thrown if there is a problem readin the files given
+     * @throws IOException       Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
      */
+    @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
         return convert(csv, converted);
@@ -85,7 +88,7 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     /**
-     * Pulls the documnets delimiting character from the mapping. If no separator is found, a comma is used
+     * Pulls the documents delimiting character from the mapping. If no separator is found, a comma is used
      *
      * @param mappingModel The ontology mapping in an RDF Model. See MatOnto Wiki for details.
      * @return The character that is used to separate values in the document to be loaded.
@@ -111,8 +114,9 @@ public class CSVConverterImpl implements CSVConverter {
      * @param csv          The CSV file to be loaded
      * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
      * @return A Model of RDF data converted from CSV
-     * @throws IOException Thrown if there is a problem readin the files given
+     * @throws IOException Thrown if there is a problem reading the files given
      */
+    @Override
     public Model convert(File csv, Model mappingModel) throws IOException {
         char separator = getSeparator(mappingModel);
         CSVReader reader = new CSVReader(new FileReader(csv), separator);
@@ -162,7 +166,7 @@ public class CSVConverterImpl implements CSVConverter {
                 convertedRDF.add(classInstance, property, vf.createLiteral("" + nextLine[i - 1]));
             } catch (ArrayIndexOutOfBoundsException e) {
                 //Cell does not contain any data. No need to throw exception.
-                logger.warn("Missing data for " + classInstance + ": " + property);
+                LOGGER.info("Missing data for " + classInstance + ": " + property);
             }
         }
 
@@ -175,7 +179,7 @@ public class CSVConverterImpl implements CSVConverter {
 
             //If there isn't enough data to create the local name, don't create the instance
             URI property = vf.createURI(objectProps.get(objectMapping));
-            if (!localName.equals("_"))
+            if (!"_".equals(localName))
                 convertedRDF.add(classInstance, property, vf.createURI(omURI));
         }
 
@@ -191,19 +195,20 @@ public class CSVConverterImpl implements CSVConverter {
      * @return The local name portion of a URI used in RDF data
      */
     String generateLocalName(String localNameTemplate, String uuid, String[] currentLine) {
-        if (localNameTemplate == null || localNameTemplate.equals(""))
+        if ("".equals(localNameTemplate) || localNameTemplate == null)
             return uuid;
         Pattern p = Pattern.compile("(\\$\\{)(\\d+|UUID)(\\})");
         Matcher m = p.matcher(localNameTemplate);
         StringBuffer result = new StringBuffer();
         while (m.find()) {
-            if (m.group(2).equals("UUID"))
+            if ("UUID".equals(m.group(2)))
                 m.appendReplacement(result, uuid);
             else {
                 int colIndex = Integer.parseInt(m.group(2));
                 try {
                     m.appendReplacement(result, currentLine[colIndex - 1]);
                 } catch (ArrayIndexOutOfBoundsException e) {
+                    LOGGER.info("Data not available for local name. Using '_'");
                     m.appendReplacement(result, "_");
                 }
             }
@@ -280,13 +285,19 @@ public class CSVConverterImpl implements CSVConverter {
     /**
      * Parses a Mapping file into a Model
      *
-     * @param mapping the maping file to be parsed to a model
+     * @param mapping the mapping file to be parsed to a model
      * @return An RDF Model containing the data from the mapping file
      * @throws RDFParseException Thrown if there is a problem with RDF data in the file
      * @throws IOException       Thrown if there is a problem reading the file.
      */
     private Model parseMapping(File mapping) throws RDFParseException, IOException {
-        RDFFormat mapFormat = Rio.getParserFormatForFileName(mapping.getName());
+        String extension = mapping.getName().split("\\.")[mapping.getName().split("\\.").length - 1];
+        LOGGER.info("FileName = " + mapping.getName() + "\t Extension:" + extension);
+        RDFFormat mapFormat;
+        if(extension.equals("jsonld"))
+            mapFormat = RDFFormat.JSONLD;
+        else
+            mapFormat = Rio.getParserFormatForFileName(mapping.getName());
         FileReader r = new FileReader(mapping);
         Model m;
         m = Rio.parse(r, "", mapFormat);

@@ -16,7 +16,7 @@ var gulp = require('gulp'),
 
 // Project specific path variables
 var src = './src/main/resources/public/',
-    dest = './src/main/resources/build/';
+    dest = './target/classes/build/';
 
 // JS and CSS file lists
 // NOTE: This is where we determine the order in which JS files are loaded
@@ -28,7 +28,8 @@ var jsFiles = function(prefix) {
             prefix + '**/js/vendor/**/*.js',
             prefix + '**/app.module.js',
             prefix + '**/route.config.js',
-            prefix + '**/filters/*.js',
+            prefix + '**/custom/filters/*.js',
+            prefix + '**/custom/directives/*.js',
             prefix + '**/modules/**/*/directives/**/*.js',
             prefix + '**/modules/**/*.js'
         ]
