@@ -16,6 +16,6 @@ class SimpleOntologyAdditionSpec extends Specification {
         def addition = new SimpleOntologyAddition<Annotation>(ontology, annotation)
 
         then:
-        addition instanceof Annotation
+        addition.getChangedObject() instanceof Annotation
     }
 }

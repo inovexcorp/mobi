@@ -3,13 +3,11 @@ package org.matonto.ontology.core.api;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Map;
+import java.util.Optional;
 
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.openrdf.model.Resource;
 
-import com.google.common.base.Optional;
 
 public interface OntologyManager {
 	
@@ -29,6 +27,14 @@ public interface OntologyManager {
 
 	Optional<Map<OntologyId, String>> getOntologyRegistry() throws MatontoOntologyException;
 	
-	OntologyId createOntologyId(Resource contextId);
+	OntologyId createOntologyId();
+	
+	OntologyId createOntologyId(OntologyIRI ontologyIRI);
+	
+	OntologyId createOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI);
+	
+	OntologyIRI createOntologyIRI(String ns, String ln);
+	
+	OntologyIRI createOntologyIRI(String iriString);
 	
 }

@@ -1,15 +1,15 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import java.util.Optional;
+
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.openrdf.model.Resource;
 import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.URIImpl;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
-import com.google.common.base.Optional;
 
 public class SimpleOntologyId implements OntologyId {
 
@@ -18,27 +18,23 @@ public class SimpleOntologyId implements OntologyId {
 
     private static final ValueFactory VF = ValueFactoryImpl.getInstance();
 
+    
     public SimpleOntologyId() {
-        Optional<IRI> oIRI = Optional.absent();
-        Optional<IRI> vIRI = Optional.absent();
-
-        this.identifier = VF.createBNode();
-        ontologyId = new OWLOntologyID(oIRI, vIRI);
+        this.identifier = VF.createBNode();       
+        ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(), com.google.common.base.Optional.absent());
     }
 
 	public SimpleOntologyId(OntologyIRI ontologyIRI) {
-        IRI oIRI = SimpleIRI.owlapiIRI(ontologyIRI);
-
-		this.identifier = VF.createURI(ontologyIRI.toString());
-		ontologyId = new OWLOntologyID(Optional.of(oIRI), Optional.absent());
+		this.identifier = VF.createURI(ontologyIRI.toString());		
+		IRI oIRI = SimpleIRI.owlapiIRI(ontologyIRI);
+		ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.absent());
 	}
 
 	public SimpleOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI) {
+        this.identifier = VF.createURI(versionIRI.toString());
         IRI oIRI = SimpleIRI.owlapiIRI(ontologyIRI);
         IRI vIRI = SimpleIRI.owlapiIRI(versionIRI);
-
-        this.identifier = VF.createURI(versionIRI.toString());
-        ontologyId = new OWLOntologyID(Optional.of(oIRI), Optional.of(vIRI));
+        ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
 	}
 		
 	
@@ -48,7 +44,7 @@ public class SimpleOntologyId implements OntologyId {
             IRI owlIri = ontologyId.getOntologyIRI().get();
             return Optional.of(SimpleIRI.matontoIRI(owlIri));
         } else {
-            return Optional.absent();
+            return Optional.empty();
         }
 	}
 	
@@ -59,7 +55,7 @@ public class SimpleOntologyId implements OntologyId {
             IRI versionIri = ontologyId.getVersionIRI().get();
             return Optional.of(SimpleIRI.matontoIRI(versionIri));
         } else {
-            return Optional.absent();
+            return Optional.empty();
         }
 	}
 
@@ -73,8 +69,8 @@ public class SimpleOntologyId implements OntologyId {
 	
 	@Override
 	public String toString() {
-        Optional<IRI> vIRI = ontologyId.getVersionIRI();
-		Optional<IRI> oIRI = ontologyId.getOntologyIRI();
+		com.google.common.base.Optional<IRI> vIRI = ontologyId.getVersionIRI();
+		com.google.common.base.Optional<IRI> oIRI = ontologyId.getOntologyIRI();
 
         if (vIRI.isPresent()) {
             return vIRI.get().toString();
@@ -93,7 +89,8 @@ public class SimpleOntologyId implements OntologyId {
 		
 		if (obj instanceof SimpleOntologyId) {
 			SimpleOntologyId other = (SimpleOntologyId) obj;
-            return identifier.equals(other.getOntologyIdentifier());
+            if(identifier.equals(other.getOntologyIdentifier()))
+            	return this.getVersionIRI().equals(other.getVersionIRI());
 		}
 		
 		return false;		        	
@@ -109,8 +106,8 @@ public class SimpleOntologyId implements OntologyId {
 	}
 
 	public static SimpleOntologyId matontoOntologyId(OWLOntologyID owlId) {
-		Optional<IRI> oIRI = owlId.getOntologyIRI();
-		Optional<IRI> vIRI = owlId.getVersionIRI();
+		com.google.common.base.Optional<IRI> oIRI = owlId.getOntologyIRI();
+		com.google.common.base.Optional<IRI> vIRI = owlId.getVersionIRI();
 
         if (vIRI.isPresent()) {
             return new SimpleOntologyId(SimpleIRI.matontoIRI(oIRI.get()), SimpleIRI.matontoIRI(vIRI.get()));
