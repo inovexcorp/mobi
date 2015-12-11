@@ -5,8 +5,6 @@
         .module('mapping', [])
         .service('mappingService', mappingService);
 
-        mappingService.$inject = [];
-
         function mappingService() {
             var self = this;
 
