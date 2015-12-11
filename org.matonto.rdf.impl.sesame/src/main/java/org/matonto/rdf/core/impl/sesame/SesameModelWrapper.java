@@ -82,6 +82,9 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
     @Override
     public Optional<Namespace> removeNamespace(String prefix) {
+    	if(prefix==null)
+    		return Optional.empty();
+    	
         Optional<org.openrdf.model.Namespace> sesameNS = sesameModel.removeNamespace(prefix);
 
         if (sesameNS.isPresent()) {
@@ -93,9 +96,10 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
     @Override
     public void setNamespace(Namespace namespace) {
-        sesameModel.setNamespace(
+    	if(namespace != null)
+    		sesameModel.setNamespace(
                 new org.openrdf.model.impl.SimpleNamespace(namespace.getPrefix(), namespace.getName())
-        );
+    		);
     }
 
     @Override
