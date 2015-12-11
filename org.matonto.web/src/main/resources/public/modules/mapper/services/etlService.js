@@ -22,12 +22,12 @@
                     var config = {
                             headers: {
                                 'File-Name': fileName
-                            },
-                            data: inputStream
+                            }
                         };
 
-                    return $http.post('/etl/csv/upload', config)
+                    return $http.post('/etl/csv/upload', inputStream, config)
                         .then(function(response) {
+                            console.log('response', response);
                             // TODO: handle error situation (using $q)
                             return response.data;
                         });
@@ -42,10 +42,10 @@
              */
             self.preview = function(fileName, rowEnd) {
                 var config = {
-                    headers: {
-                        'Row-Count': rowEnd
-                    }
-                }
+                        headers: {
+                            'Row-Count': rowEnd ? rowEnd : 0
+                        }
+                    };
 
                 return $http.get('/etl/csv/preview/' + fileName, config)
                     .then(function(response) {
@@ -55,8 +55,7 @@
                                 header: response.data[0],
                                 rows: response.data.slice(1, response.data.length)
                             };
-                        }
-                    );
+                        });
             }
 
             /**

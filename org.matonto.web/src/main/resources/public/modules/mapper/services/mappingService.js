@@ -8,6 +8,12 @@
         mappingService.$inject = [];
 
         function mappingService() {
+            var self = this;
 
+            self.files = [];
+
+            self.addFile = function(data) {
+                self.files.push(data);
+            }
         }
 })();
