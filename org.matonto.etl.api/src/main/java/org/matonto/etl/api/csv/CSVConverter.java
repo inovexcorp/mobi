@@ -32,6 +32,27 @@ public interface CSVConverter {
      */
     void importCSV(File csv, Model mappingModel, String repoID) throws IOException, RepositoryException;
 
+    //TODO File out javadoc
+    /**
+     *
+     * @param csv
+     * @param mappingFile
+     * @param exportFile
+     * @throws IOException
+     */
+    void exportCSV(File csv, File mappingFile, File exportFile) throws IOException;
+
+
+    //TODO Fill out javadoc
+    /**
+     *
+     * @param csv
+     * @param mappingModel
+     * @param exportFile
+     * @throws IOException
+     */
+    void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException;
+
     /**
      * Converts a CSV to RDF using a mapping file. Returns the RDF data as a Model
      *

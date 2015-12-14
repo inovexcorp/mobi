@@ -2,7 +2,10 @@ package org.matonto.etl.api.rdf;
 
 import java.io.File;
 import java.io.IOException;
+
+import org.openrdf.model.Model;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
 
 public interface RDFExportService {
@@ -32,4 +35,23 @@ public interface RDFExportService {
      */
     void exportToFile(String repositoryID, File file, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException;
 
+    /**
+     * THis will export a model to a given file.
+     *
+     * @param model The model with triples to export
+     * @param file The file to export the data to.
+     * @throws RepositoryException if there is an error writing to the file
+     * @throws IllegalArgumentException if there is an error processing the RDF file format from the file name
+     */
+    void exportToFile(Model model, File file) throws IOException;
+
+    /**
+     * This will export a model to a given file.
+     *
+     * @param model The model with triples to export
+     * @param file The file to export the data to.
+     * @param format The format of the rdf file to be exported
+     * @throws RepositoryException if there is an error writing to the file
+     */
+    void exportToFile(Model model, File file, RDFFormat format) throws IOException;
 }

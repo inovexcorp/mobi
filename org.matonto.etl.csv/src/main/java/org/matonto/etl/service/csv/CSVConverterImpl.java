@@ -42,6 +42,16 @@ public class CSVConverterImpl implements CSVConverter {
         importService.importModel(repoID, mappingModel);
     }
 
+    @Override
+    public void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException{
+        //TODO exportCSV method
+    }
+
+    @Override
+    public void exportCSV(File csv, File mappingFile, File exportFile) throws IOException{
+        //TODO exportCSV method
+    }
+
 
     @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
