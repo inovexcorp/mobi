@@ -422,7 +422,7 @@
                         <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid || vm.isTaken() }" class="form-group">
                             <label class="control-label" for="class-iri">Local Name</label>
                             <div class="input-group">
-                                <div class="input-group-addon">{{vm.ontologies[vm.current.oi].prefix || vm.ontologies[vm.current.oi]['@id'] + vm.ontologies[vm.current.oi].delimiter}}</div>
+                                <div class="input-group-addon">{{vm.selected[vm.ontologies[vm.current.oi].rdfs + 'isDefinedBy']['@id']}}</div>
                                 <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" ng-change="vm.selected.unsaved = true;" required>
                             </div>
                             <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
@@ -433,7 +433,7 @@
                         <div class="form-group">
                             <label class="control-label" for="sub-class">Sub Class Of <small class="text-muted"><{{vm.ontologies[vm.current.oi].rdfs}}subClassOf></small></label>
                             <ul>
-                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.current.oi].rdfs + 'subClassOf']" class="bg-primary sub-class">{{item['@id'] ? item['@id'] : item}}<i class="fa fa-times fa-fw"></i></li>
+                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.current.oi].rdfs + 'subClassOf']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}} <i class="fa fa-times"></i></li>
                             </ul>
                             <input type="text" class="form-control" id="sub-class" name="sub-class" ng-model="vm.selected.newSubClass" disabled />
                         </div>
@@ -484,7 +484,7 @@
                         <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid || vm.isTaken() }" class="form-group">
                             <label class="control-label" for="property-iri">Local Name</label>
                             <div class="input-group">
-                                <div class="input-group-addon">{{vm.ontologies[vm.current.oi].prefix || vm.ontologies[vm.current.oi]['@id'] + vm.ontologies[vm.current.oi].delimiter}}</div>
+                                <div class="input-group-addon">{{vm.selected[vm.ontologies[vm.current.oi].rdfs + 'isDefinedBy']['@id']}}</div>
                                 <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" required ng-change="vm.selected.unsaved = true;">
                             </div>
                             <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
@@ -495,18 +495,34 @@
                         <div class="form-group">
                             <label class="control-label" for="sub-property">Sub Property Of <small class="text-muted"><{{vm.ontologies[vm.current.oi].rdfs}}subPropertyOf></small></label>
                             <ul>
-                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.current.oi].rdfs + 'subPropertyOf']" class="bg-primary sub-class">{{item['@id'] ? item['@id'] : item}}<i class="fa fa-times fa-fw"></i></li>
+                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.current.oi].rdfs + 'subPropertyOf']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}} <i class="fa fa-times"></i></li>
                             </ul>
                             <input type="text" class="form-control" id="sub-property" name="sub-class" ng-model="vm.selected.newSubProperty" disabled />
                         </div>
-                        <!-- name -->
+                        <!-- rdfs:domain -->
                         <div class="form-group">
-                            <label class="control-label" for="property-name">{{vm.ontologies[vm.current.oi].rdfs}}label</label>
+                            <label class="control-label" for="domain">Domain <small class="text-muted"><{{vm.ontologies[vm.current.oi].rdfs}}domain></small></label>
+                            <ul>
+                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.current.oi].rdfs + 'domain']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}}</li>
+                            </ul>
+                            <input type="text" class="form-control" id="domain" name="domain" ng-model="vm.selected.newDomain" disabled />
+                        </div>
+                        <!-- rdfs:range -->
+                        <div class="form-group">
+                            <label class="control-label" for="range">Range <small class="text-muted"><{{vm.ontologies[vm.current.oi].rdfs}}range></small></label>
+                            <ul>
+                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.current.oi].rdfs + 'range']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}} <i class="fa fa-times"></i></li>
+                            </ul>
+                            <input type="text" class="form-control" id="range" name="range" ng-model="vm.selected.newRange" disabled />
+                        </div>
+                        <!-- rdfs:label -->
+                        <div class="form-group">
+                            <label class="control-label" for="property-name">Label <small class="text-muted"><{{vm.ontologies[vm.current.oi].rdfs}}label></small></label>
                             <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'label']" ng-change="vm.selected.unsaved = true;">
                         </div>
-                        <!-- comments -->
+                        <!-- rdfs:comment -->
                         <div class="form-group">
-                            <label class="control-label" for="property-comments">{{vm.ontologies[vm.current.oi].rdfs}}comment</label>
+                            <label class="control-label" for="property-comments">Comment <small class="text-muted"><{{vm.ontologies[vm.current.oi].rdfs}}comment></small></label>
                             <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.current.oi].rdfs + 'comment']" ng-change="vm.selected.unsaved = true;"></textarea>
                         </div>
                         <!-- buttons -->

@@ -304,7 +304,7 @@
         function submit(isValid) {
             // if all angular validation passes
             if(isValid) {
-                var latest, temp,
+                /*var latest, temp,
                     oi = vm.current.oi,
                     ci = vm.current.ci,
                     pi = vm.current.pi,
@@ -389,7 +389,8 @@
                     }
                 }
                 // it is now saved so, set unsaved to false
-                vm.selected.unsaved = false;
+                vm.selected.unsaved = false;*/
+                ontologyManagerService.save(vm.current.oi, vm.current.ci, vm.current.pi);
             }
         }
 

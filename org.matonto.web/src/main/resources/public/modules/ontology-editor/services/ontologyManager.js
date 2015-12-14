@@ -251,5 +251,32 @@
                         }
                     });
             }
+
+            self.save = function(oi, ci, pi) {
+                var result;
+                if(pi !== undefined && ci !== undefined) {
+                    result = angular.copy(self.ontologies[oi].classes[ci].properties[pi]);
+                } else if(pi !== undefined && ci === undefined) {
+                    result = angular.copy(self.ontologies[oi].noDomains[pi]);
+                } else if(ci !== undefined) {
+                    result = angular.copy(self.ontologies[oi].classes[ci]);
+                    delete result.properties;
+                } else {
+                    result = angular.copy(self.ontologies[oi]);
+                    delete result.classes;
+                }
+                console.log(result);
+            }
+
+            self.create = function(oi, ci, pi, obj) {
+                var result;
+                if(pi !== undefined) {
+
+                } else if(ci !== undefined) {
+
+                } else {
+
+                }
+            }
         }
 })();
