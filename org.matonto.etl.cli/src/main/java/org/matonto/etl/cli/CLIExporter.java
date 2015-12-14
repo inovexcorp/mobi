@@ -24,9 +24,11 @@ public class CLIExporter implements Action {
     @Option(name = "-pred", aliases = "--predicate", description = "A predicate that all exported triples will be restricted to.")
     String predicate = null;
 
-    @Option(name = "-obj", aliases = "--object", description = "An object that all exported triples will be restricted to.")
-    String obj = null;
+    @Option(name = "-objIRI", aliases = "--objectIRI", description = "An object that all exported triples will be restricted to. Takes precedence over ObjectLiteral")
+    String objIRI = null;
 
+    @Option(name = "-objLit", aliases = "--objectLiteral", description = "An object literal that all exported triples will be restricted to. ObjectIRI takes precedence")
+    String objLit = null;
 
     public RDFExportService getExportService() {
         return exportService;
@@ -39,7 +41,7 @@ public class CLIExporter implements Action {
     @Override
     public Object execute() throws Exception {
 
-        exportService.exportToFile(repositoryId, file, subj, predicate, obj);
+        exportService.exportToFile(repositoryId, file, subj, predicate, objIRI, objLit);
 
         return null;
     }
