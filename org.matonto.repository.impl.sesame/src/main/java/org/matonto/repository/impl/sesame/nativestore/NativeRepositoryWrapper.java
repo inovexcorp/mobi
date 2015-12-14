@@ -2,6 +2,7 @@ package org.matonto.repository.impl.sesame.nativestore;
 
 import aQute.bnd.annotation.component.*;
 import aQute.bnd.annotation.metatype.Configurable;
+import org.apache.commons.lang3.StringUtils;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.base.RepositoryWrapper;
@@ -42,11 +43,8 @@ public class NativeRepositoryWrapper extends RepositoryWrapper {
 
         if (props.containsKey("tripleIndexes")) {
             Set<String> indexes = config.tripleIndexes();
-
-            StringBuilder indexString = new StringBuilder();
-            indexes.forEach(indexString::append);
-
-            sesameNativeStore.setTripleIndexes(indexString.toString());
+            String indexString = StringUtils.join(indexes, ",");
+            sesameNativeStore.setTripleIndexes(indexString);
         }
 
         return new SesameRepositoryWrapper(new SailRepository(sesameNativeStore));
@@ -57,12 +55,19 @@ public class NativeRepositoryWrapper extends RepositoryWrapper {
         super.validateConfig(props);
         NativeRepositoryConfig config = Configurable.createConfigurable(NativeRepositoryConfig.class, props);
 
-        // TODO: Validate indexes
         if (props.containsKey("dataDir")) {
             if (config.dataDir().equals(""))
                 throw new RepositoryConfigException(
                         new IllegalArgumentException("Repository property 'dataDir' cannot be empty.")
                 );
+        }
+
+        if (props.containsKey("tripleIndexes")) {
+            config.tripleIndexes().forEach(index -> {
+                // Make sure String matches index regex
+                if (!index.matches("^(?!.*s.*s)(?!.*p.*p)(?!.*o.*o)(?!.*c.*c)[spoc]{4}$"))
+                    throw new RepositoryConfigException(new IllegalArgumentException("Invalid Triple Index"));
+            });
         }
     }
 
