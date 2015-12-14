@@ -1,10 +1,7 @@
 package org.matonto.rdf.core.impl.sesame;
 
 import org.junit.Test;
-import org.matonto.rdf.api.BNode;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Literal;
-import org.matonto.rdf.api.Namespace;
+import org.matonto.rdf.api.*;
 import org.openrdf.model.impl.LinkedHashModel;
 
 import static org.junit.Assert.*;
@@ -49,25 +46,11 @@ public class SesameModelWrapperTest {
         model7.add(b, p, o2);
         model8.add(s, p, b2);
         model8.add(b2, p, o2);
-        model8.add(null);
 
         assertEquals(model1, model2);
         assertEquals(model3, model4);
         assertNotEquals(model1, model3);
         assertEquals(model5, model6);
         assertEquals(model7, model8);
-    }
-    
-    @Test
-    public void testNullNamespace() {
-    	SesameModelWrapper model9 = new SesameModelWrapper(new LinkedHashModel());
-    	model9.setNamespace(null);
-    	
-    	SesameModelWrapper model10 = new SesameModelWrapper(new LinkedHashModel());
-    	model10.setNamespace(null);
-    	Namespace ns = model10.setNamespace(null, null);
-    	assertNull(ns.getName());
-    	
-    	model10.removeNamespace(null);
     }
 }

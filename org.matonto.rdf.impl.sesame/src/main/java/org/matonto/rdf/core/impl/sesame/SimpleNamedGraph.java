@@ -4,6 +4,7 @@ import org.matonto.rdf.api.*;
 import org.matonto.rdf.base.AbstractStatementSet;
 import org.openrdf.model.util.Models;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph {
@@ -22,19 +23,19 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
         this.graphID = graphID;
     }
 
-    public SimpleNamedGraph(Resource graphID, Model model) {
+    public SimpleNamedGraph(Resource graphID, @Nonnull Model model) {
         this(graphID, model.getNamespaces());
     }
 
-    public SimpleNamedGraph(Resource graphID, Collection<? extends Statement> c) {
+    public SimpleNamedGraph(Resource graphID, @Nonnull Collection<@Nonnull ? extends Statement> c) {
         this(graphID, Collections.emptySet(), c);
     }
 
-    public SimpleNamedGraph(Resource graphID, Set<Namespace> namespaces) {
+    public SimpleNamedGraph(Resource graphID, @Nonnull Set<@Nonnull Namespace> namespaces) {
         this(graphID, namespaces, Collections.emptyList());
     }
 
-    public SimpleNamedGraph(Resource graphID, Set<Namespace> namespaces, Collection<? extends Statement> c) {
+    public SimpleNamedGraph(Resource graphID, @Nonnull Set<@Nonnull Namespace> namespaces, @Nonnull Collection<@Nonnull ? extends Statement> c) {
         this(graphID);
 
         c.forEach(stmt -> {
@@ -54,7 +55,12 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
 
     private boolean validStatement(Statement statement) {
         Optional<Resource> context = statement.getContext();
-        return context.isPresent() && context.get().equals(getGraphID());
+
+        if (context.isPresent()) {
+            return context.get().equals(getGraphID());
+        } else {
+            return getGraphID() == null;
+        }
     }
 
     @Override
@@ -63,7 +69,7 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     }
 
     @Override
-    public boolean add(Resource subject, IRI predicate, Value object) {
+    public boolean add(@Nonnull Resource subject, @Nonnull IRI predicate, @Nonnull Value object) {
         return model.add(subject, predicate, object, getGraphID());
     }
 
@@ -78,17 +84,17 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@Nonnull Object o) {
         return model.contains(o);
     }
 
     @Override
-    public Iterator<Statement> iterator() {
+    public @Nonnull Iterator<Statement> iterator() {
         return model.iterator();
     }
 
     @Override
-    public boolean add(Statement statement) {
+    public boolean add(@Nonnull Statement statement) {
         if (validStatement(statement)) {
             return model.add(statement);
         } else {
@@ -114,17 +120,17 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     }
 
     @Override
-    public Optional<Namespace> removeNamespace(String prefix) {
+    public Optional<Namespace> removeNamespace(@Nonnull String prefix) {
         return model.removeNamespace(prefix);
     }
 
     @Override
-    public void setNamespace(Namespace namespace) {
+    public void setNamespace(@Nonnull Namespace namespace) {
         model.setNamespace(namespace);
     }
 
     @Override
-    public Namespace setNamespace(String prefix, String name) {
+    public Namespace setNamespace(@Nonnull String prefix, @Nonnull String name) {
         return model.setNamespace(prefix, name);
     }
 
@@ -146,22 +152,18 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     }
 
     @Override
-    public Model asModel(ModelFactory factory) {
+    public Model asModel(@Nonnull ModelFactory factory) {
         Model m = factory.createEmptyModel();
         m.addAll(model);
         return m;
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(@Nonnull Object o) {
         if (o instanceof Statement) {
             Statement st = (Statement) o;
 
-            if (validStatement(st)) {
-                return model.remove(st);
-            } else {
-                return false;
-            }
+            return validStatement(st) && model.remove(st);
         }
         return false;
     }

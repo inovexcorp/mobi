@@ -10,6 +10,7 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.base.AbstractStatementSet;
 import org.openrdf.model.util.Models;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     }
 
     @Override
-    public boolean add(Resource subject, IRI predicate, Value object, Resource... context) {
+    public boolean add(@Nonnull Resource subject, @Nonnull IRI predicate, @Nonnull Value object, Resource... context) {
         return sesameModel.add(Values.sesameResource(subject), Values.sesameIRI(predicate), Values.sesameValue(object),
                 Values.sesameResources(context));
     }
@@ -81,10 +82,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     }
 
     @Override
-    public Optional<Namespace> removeNamespace(String prefix) {
-    	if(prefix==null)
-    		return Optional.empty();
-    	
+    public Optional<Namespace> removeNamespace(@Nonnull String prefix) {
         Optional<org.openrdf.model.Namespace> sesameNS = sesameModel.removeNamespace(prefix);
 
         if (sesameNS.isPresent()) {
@@ -95,15 +93,14 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     }
 
     @Override
-    public void setNamespace(Namespace namespace) {
-    	if(namespace != null)
-    		sesameModel.setNamespace(
-                new org.openrdf.model.impl.SimpleNamespace(namespace.getPrefix(), namespace.getName())
-    		);
+    public void setNamespace(@Nonnull Namespace namespace) {
+        sesameModel.setNamespace(
+            new org.openrdf.model.impl.SimpleNamespace(namespace.getPrefix(), namespace.getName())
+        );
     }
 
     @Override
-    public Namespace setNamespace(String prefix, String name) {
+    public Namespace setNamespace(@Nonnull String prefix, @Nonnull String name) {
         Optional<? extends Namespace> result = getNamespace(prefix);
         if (!result.isPresent() || !result.get().getName().equals(name)) {
             result = Optional.of(new SimpleNamespace(prefix, name));
@@ -128,7 +125,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@Nonnull Object o) {
         if (o instanceof Statement) {
             Statement st = (Statement) o;
             if (st.getContext().isPresent()) {
@@ -141,7 +138,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     }
 
     @Override
-    public Iterator<Statement> iterator() {
+    public @Nonnull Iterator<Statement> iterator() {
         Iterator<org.openrdf.model.Statement> sesameItr = sesameModel.iterator();
 
         return new Iterator<Statement>() {
@@ -166,7 +163,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     }
 
     @Override
-    public boolean add(Statement statement) {
+    public boolean add(@Nonnull Statement statement) {
         if (statement.getContext().isPresent()) {
             return add(statement.getSubject(), statement.getPredicate(), statement.getObject(), statement.getContext().get());
         } else {
@@ -175,7 +172,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(@Nonnull Object o) {
         if (o instanceof Statement) {
             Statement st = (Statement) o;
             return remove(st.getSubject(), st.getPredicate(), st.getObject(), st.getContext().orElse(null));
