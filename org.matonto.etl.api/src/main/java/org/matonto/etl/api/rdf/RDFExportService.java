@@ -5,9 +5,6 @@ import java.io.IOException;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFHandlerException;
 
-/**
- * Created by bryan on 9/10/15.
- */
 public interface RDFExportService {
 
     /**
@@ -20,7 +17,7 @@ public interface RDFExportService {
      * @throws RDFHandlerException
      * @throws RepositoryException
      */
-    public void exportToFile (String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException, Exception;
+    void exportToFile (String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException;
 
 
     /**
@@ -32,6 +29,6 @@ public interface RDFExportService {
      * @param pred A predicate that all exported triples will be restricted to
      * @param obj An object that all exported triples will be restricted to
      */
-    public void exportToFile(String repositoryID, File file, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException, Exception;
+    void exportToFile(String repositoryID, File file, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException;
 
 }

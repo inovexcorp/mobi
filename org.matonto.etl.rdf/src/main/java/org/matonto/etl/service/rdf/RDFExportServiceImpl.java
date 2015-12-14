@@ -16,6 +16,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.openrdf.model.Model;
+import org.openrdf.model.util.URIUtil;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.*;
 
@@ -41,7 +42,7 @@ public class RDFExportServiceImpl implements RDFExportService {
      * Exports all info from the repository with the given repositoryID into the file specified.
      * @throws IOException
      */
-    public void exportToFile(String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException, Exception {
+    public void exportToFile(String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException {
         exportToFile(repositoryID, file, null, null, null);
     }
 
@@ -49,7 +50,7 @@ public class RDFExportServiceImpl implements RDFExportService {
      * Exports the rdf statements with the given subject, predicate, and object into the given file with a given filetype.
      * Enter null in the subj, pred, and obj fields if you don't want to filter by a particular value
      */
-    public void exportToFile(String repositoryID, File file, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException, Exception {
+    public void exportToFile(String repositoryID, File file, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException {
 
         Resource subjResource = null;
         IRI predicateIRI = null;
@@ -59,9 +60,9 @@ public class RDFExportServiceImpl implements RDFExportService {
         if(pred != null)
             predicateIRI = valueFactory.createIRI(pred);
         if(obj != null) {
-            try {
+            if(URIUtil.isValidURIReference(obj)) {
                 objValue = valueFactory.createIRI(obj);
-            }catch(IllegalArgumentException e){
+            }else {
                 objValue = valueFactory.createLiteral(obj);
             }
         }

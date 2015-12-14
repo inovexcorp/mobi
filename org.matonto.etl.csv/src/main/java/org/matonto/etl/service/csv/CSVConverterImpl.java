@@ -5,6 +5,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.rdf.RDFImportService;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.*;
 import org.openrdf.model.util.Models;
@@ -17,17 +18,15 @@ import java.util.regex.*;
 @Component(provide= CSVConverter.class)
 public class CSVConverterImpl implements CSVConverter {
 
-    private Repository repository;
-
     private static final Logger LOGGER = Logger.getLogger(CSVConverterImpl.class);
 
     ValueFactory vf = new ValueFactoryImpl();
     Map<URI, ClassMapping> uriToObject;
 
-    @Reference(target = "(repositorytype=memory)")
-    public void setRepository(Repository repository) {
-        this.repository = repository;
-    }
+    RDFImportService importService;
+
+    @Reference
+    public void setImportService(RDFImportService importService){this.importService = importService;}
 
     /**
      * Import a CSV file and load it into the MatOnto Framework
@@ -58,10 +57,7 @@ public class CSVConverterImpl implements CSVConverter {
         Model converted = convert(csv, mappingModel);
 
         //Import Converted using rdf.importer
-        if (!repository.isInitialized())
-            repository.initialize();
-        RepositoryConnection con = repository.getConnection();
-        con.add(converted);
+        importService.importModel(repoID, mappingModel);
     }
 
     /**
