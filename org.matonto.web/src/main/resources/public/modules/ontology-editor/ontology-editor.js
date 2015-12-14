@@ -9,12 +9,12 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input'])
+        .module('ontology-editor', ['file-input', 'ontologyManager'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['$scope', '$http', '$timeout'];
+    OntologyEditorController.$inject = ['$scope', '$http', '$timeout', 'ontologyManagerService'];
 
-    function OntologyEditorController($scope, $http, $timeout) {
+    function OntologyEditorController($scope, $http, $timeout, ontologyManagerService) {
         var owl, rdfs,
             defaultRdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
             defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
@@ -29,12 +29,11 @@
         vm.tab = 'everything';
         vm.newPrefix = '';
         vm.newValue = '';
-        vm.original = '';
         vm.propertyDefault = { '@id': '', annotations: [] };
         vm.classDefault = { '@id': '', '@type': 'owl:Class', properties: [], annotations: [] };
         vm.ontologyDefault = _setOntologyDefault();
         vm.annotations = [];
-        vm.ontologies = [];
+        vm.ontologies = ontologyManagerService.getList();
         vm.versions = [];
         vm.current = {};
         vm.newItems = {};
@@ -42,13 +41,11 @@
         vm.state = {};
 
         // public functions
-        vm.addAnnotation = addAnnotation;
         vm.addPrefix = addPrefix;
         vm.changeTab = changeTab;
         vm.edit = edit;
         vm.editPrefix = editPrefix;
         vm.isTaken = isTaken;
-        vm.removeAnnotation = removeAnnotation;
         vm.removePrefix = removePrefix;
         vm.reset = reset;
         vm.submit = submit;
@@ -58,7 +55,14 @@
         activate();
 
         function activate() {
-            _getOntologies();
+            // watch for changes made to the ontology list
+            $scope.$watch(function() {
+                $timeout(function() {
+                    return ontologyManagerService.getList();
+                }, 0);
+            }, function(fresh, old) {
+                vm.ontologies = ontologyManagerService.getList();
+            }, true);
         }
 
         // creates the default ontology object used when creating a new ontology
@@ -71,49 +75,10 @@
                 context: [],
                 annotations: [],
                 taken: [],
-                annotationList: _setAnnotations('rdfs:', 'owl:', []),
                 rdfs: 'rdfs:',
                 owl: 'owl:',
                 context: objToArr({ rdf: defaultRdf, rdfs: defaultRdfs, xsd: defaultXsd, owl: defaultOwl })
             };
-        }
-
-        // removes the annotation
-        function removeAnnotation(item) {
-            var i = vm.selected.annotations.length;
-            // remove it from the annotations list
-            while(i--) {
-                if(item == vm.selected.annotations[i]) {
-                    vm.selected.annotations.splice(i, 1);
-                }
-            }
-            // removes it from the object itself
-            delete vm.selected[item];
-        }
-
-        // adds the annotation that the user is editing
-        function addAnnotation() {
-            var add;
-
-            // adds the item to the actual object
-            if(vm.selected.currentAnnotation !== 'other') {
-                vm.selected[vm.selected.currentAnnotation] = vm.selected.currentAnnotationValue;
-                add = vm.selected.currentAnnotation;
-            } else {
-                vm.selected[vm.selected.currentAnnotationKey] = vm.selected.currentAnnotationValue;
-                add = vm.selected.currentAnnotationKey;
-            }
-
-            // adds the annotation to the list of items used to determine which is shown in the drop down
-            vm.selected.annotations.push(add);
-
-            // resets the value
-            vm.selected.currentAnnotation = 'default';
-            vm.selected.currentAnnotationValue = '';
-            vm.selected.currentAnnotationKey = '';
-
-            // resets unsaved
-            vm.selected.unsaved = false;
         }
 
         // if the uri of the ontology changes, this function will update the rest of the ids to match
@@ -181,293 +146,6 @@
             }
         }
 
-        // determines which image should be shown depending on the type of property
-        function _chooseIcon(property, rdfs, xsd) {
-            var icon = '',
-                range = property[rdfs + 'range'];
-            // assigns the icon based on the range
-            if(range) {
-                switch(range['@id']) {
-                    // TODO: pick better icon for Literal? since it can be for Integers as well
-                    case xsd + 'string':
-                    case rdfs + 'Literal':
-                        icon = 'fa-font';
-                        break;
-                    default:
-                        icon = 'fa-link';
-                        break;
-                }
-            }
-            // TODO: figure out what to do if there isn't a range
-            else {
-                icon = 'fa-question';
-            }
-            // return the class for an icon from Font Awesome
-            return icon;
-        }
-
-        // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
-        function _setAnnotations(rdfs, owl, arr) {
-            // default owl2 annotations
-            var item,
-                i = arr.length,
-                temp = [
-                    rdfs + 'seeAlso',
-                    rdfs + 'isDefinedBy',
-                    owl + 'deprecated',
-                    owl + 'versionInfo',
-                    owl + 'priorVersion',
-                    owl + 'backwardCompatibleWith',
-                    owl + 'incompatibleWith'
-                ];
-
-            // adds the ontology specific annotations
-            while(i--) {
-                temp.push(arr[i]['@id']);
-            }
-
-            // returns the combined array
-            return temp;
-        }
-
-        // add annotations to the list necessary
-        function _addAnnotationsTo(obj, rdfs, owl, annotationList) {
-            var prop,
-                exclude = [
-                    owl + 'disjointWith',
-                    rdfs + 'comment',
-                    rdfs + 'domain',
-                    rdfs + 'equivalentClass',
-                    rdfs + 'inverseOf',
-                    rdfs + 'isDefinedBy',
-                    rdfs + 'label',
-                    rdfs + 'range',
-                    rdfs + 'subClassOf',
-                    rdfs + 'subPropertyOf',
-                    '@id',
-                    '@type',
-                    'annotations',
-                    'classes',
-                    'icon',
-                    'properties'
-                ];
-
-            // adds the annotations property to the object
-            obj.annotations = [];
-
-            // looks for all annotations not used elsewhere
-            for(prop in obj) {
-                // adds all the other non-rdfs:label
-                if(obj.hasOwnProperty(prop) && exclude.indexOf(prop) === -1) {
-                    obj.annotations.push(prop);
-                }
-            }
-        }
-
-        // takes the flattened JSON-LD data and creates our custom tree structure
-        function _parseOntologies(flattened, context, owl, rdfs, xsd) {
-            var obj, type, domain, j, k, classObj, property, ontology, len, addToClass, delimiter,
-                taken = [],
-                classes = [],
-                properties = [],
-                annotationList = [],
-                noDomains = [],
-                findOwner = [],
-                list = flattened['@graph'] ? angular.copy(flattened['@graph']) : angular.copy(flattened),
-                i = list.length;
-
-            // seperating the types out
-            while(i--) {
-                obj = list[i];
-                type = obj['@type'];
-
-                switch(type) {
-                    case owl + 'Ontology':
-                        ontology = obj;
-                        break;
-                    case owl + 'Class':
-                        obj.properties = [];
-                        classes.push(obj);
-                        // adds the class name to the taken list
-                        taken.push(_getPrefixAndSuffix(obj['@id']).suffix);
-                        break;
-                    case owl + 'DatatypeProperty':
-                    case owl + 'ObjectProperty':
-                        obj.icon = _chooseIcon(obj, rdfs, xsd);
-                        properties.push(obj);
-                        // adds the property name to the taken list
-                        taken.push(_getPrefixAndSuffix(obj['@id']).suffix);
-                        break;
-                    case owl + 'AnnotationProperty':
-                        annotationList.push(obj);
-                        // adds the annotation name to the taken list
-                        taken.push(_getPrefixAndSuffix(obj['@id']).suffix);
-                        break;
-                }
-                // add all other properties to the annotation list
-                _addAnnotationsTo(obj, rdfs, owl, annotationList);
-            }
-
-            // adds the property to the class
-            var addToClass = function(id, property) {
-                j = classes.length;
-                while(j--) {
-                    classObj = classes[j];
-                    if(classObj['@id'] === id) {
-                        property.prefix = _getPrefixAndSuffix(property['@id']).prefix;
-                        property['@id'] = property['@id'].replace(property.prefix, '');
-                        classObj.properties.push(property);
-                        break;
-                    }
-                }
-            }
-
-            // iterates over all properties to find domain
-            i = properties.length;
-            while(i--) {
-                property = properties[i];
-                domain = property[rdfs + 'domain'];
-                // since it has a domain, put it with the proper class
-                if(domain) {
-                    if(Object.prototype.toString.call(domain) === '[object Array]') {
-                        k = domain.length;
-                        while(k--) {
-                            addToClass(domain[k]['@id'], property);
-                        }
-                    } else {
-                        addToClass(domain['@id'], property);
-                    }
-                }
-                // adds it to the noDomains array for now
-                else {
-                    property.prefix = _getPrefixAndSuffix(property['@id']).prefix;
-                    property['@id'] = property['@id'].replace(property.prefix, '');
-                    noDomains.push(property);
-                }
-            }
-
-            // updates the classes prefix property
-            i = classes.length;
-            while(i--) {
-                classes[i].prefix = _getPrefixAndSuffix(classes[i]['@id']).prefix;
-                classes[i]['@id'] = classes[i]['@id'].replace(classes[i].prefix, '');
-            }
-
-            // adds the classes, context and properties without domains to the ontology
-            ontology.classes = classes;
-            ontology.noDomains = noDomains;
-            ontology.context = objToArr(context);
-            ontology.owl = owl;
-            ontology.rdfs = rdfs;
-            ontology.annotationList = _setAnnotations(rdfs, owl, annotationList);
-            ontology.taken = taken;
-
-            // checks to see if the initial context contains the ontology id already
-            i = ontology.context.length;
-            while(i--) {
-                if(ontology.context[i].value === ontology['@id']) {
-                    ontology.prefix = ontology.context[i].key + ':';
-                    break;
-                }
-            }
-
-            // checks to see if the ontology has a delimiter specified already
-            len = ontology['@id'].length;
-            delimiter = ontology['@id'].charAt(len - 1);
-
-            // if it does, remove it from the identifier part
-            if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
-                ontology.delimiter = delimiter;
-                ontology.identifier = ontology['@id'].substring(0, len - 1);
-            } else {
-                ontology.delimiter = '#';
-                ontology.identifier = ontology['@id'];
-            }
-
-            // makes it an array because it will be later
-            vm.ontologies.push(ontology);
-            vm.versions.push([{time: new Date(), ontology: angular.copy(ontology)}]);
-
-            // updates the view with the changes made here
-            $scope.$apply();
-        }
-
-        // checks the context for owl or rdfs prefixes
-        function _checkContext(context) {
-            // property variable needed
-            var prop,
-                result = {
-                    owl: defaultOwl,
-                    rdfs: defaultRdfs,
-                    xsd: defaultXsd
-                };
-            // checks through all of the prefixes and replaces the owl/rdfs prefix used in the code here
-            for(prop in context) {
-                // makes sure it has the property
-                if(context.hasOwnProperty(prop)) {
-                    switch(context[prop]) {
-                        // sets the owl variable
-                        case defaultOwl:
-                            result.owl = prop + ':';
-                            break;
-                        // sets the rdfs variable
-                        case defaultRdfs:
-                            result.rdfs = prop + ':';
-                            break;
-                        // sets the xsd variable
-                        case defaultXsd:
-                            result.xsd = prop + ':';
-                            break;
-                    }
-                }
-            }
-            return result;
-        }
-
-        // gets the ontologies and flattens them
-        function _getOntologies() {
-            // variable for the json-ld function
-            var ontology,
-                context = {};
-
-            // NOTE: if you click away from this page and then come back, this ontology will not be there because of the JSONP callback issue which will not be an issue once API is bundled up
-            /*$http.jsonp('/matonto/rest/ontology/getOntology?namespace=http%3A%2F%2Fwww.foaf.com&localName=localname&rdfFormat=default&callback=JSON_CALLBACK')
-                .success(function(data) {
-                    if(data.ontology) {
-                        var temp = {};
-                        // parse the ontology
-                        ontology = JSON.parse(data.ontology);
-                        // sets the context if the ontology has it
-                        if(ontology['@context']) {
-                            context = ontology['@context'];
-                        }
-                        temp = _checkContext(context);
-                        jsonld.flatten(ontology, context, function(err, flattened) {
-                            _parseOntologies(flattened, context, temp.owl, temp.rdfs, temp.xsd);
-                        });
-                    }
-                });*/
-
-            /*$http.get('/matonto/rest/ontology/getAllOntologyIds')
-                .success(function(data) {
-                    var key, localName, namespace,
-                        i = data.length;
-                    while(i--) {
-                        data[i]
-                    }
-                });*/
-
-            $http.get('/example.json')
-                .then(function(obj) {
-                    var temp = {};
-                    // flatten the ontologies
-                    jsonld.flatten(obj.data, obj.data['@context'], function(err, flattened) {
-                        temp = _checkContext(obj.data['@context']);
-                        _parseOntologies(flattened, obj.data['@context'], temp.owl, temp.rdfs, temp.xsd);
-                    });
-                });
-        }
-
         // saves the current state for when they change the tabs on the right
         function _saveState(oi, ci, pi) {
             var isDirty;
@@ -476,23 +154,6 @@
                 ci: ci,
                 pi: pi
             }
-        }
-
-        // removes the beginning of the @id which is referenced here by the 'id'
-        function _getPrefixAndSuffix(id) {
-            var result = {},
-                hash = id.indexOf('#') + 1,
-                slash = id.lastIndexOf('/') + 1,
-                colon = id.lastIndexOf(':') + 1;
-            // gets the result based on the delimiter present
-            if(hash !== 0) {
-                result = { prefix: id.substring(0, hash), suffix: id.substring(hash) };
-            } else if(slash !== 0) {
-                result = { prefix: id.substring(0, slash), suffix: id.substring(slash) };
-            } else if(colon !== 0) {
-                result = { prefix: id.substring(0, colon), suffix: id.substring(colon) };
-            }
-            return result;
         }
 
         // finds out whether they are editing or creating an object
@@ -542,15 +203,11 @@
                 // if has a domain associated with it (it is in the class.properties array)
                 if(ci !== undefined) {
                     _editOrCreate(vm.ontologies[oi].classes[ci].properties, pi, unique, vm.propertyDefault);
-                    // finds what the current original value
-                    vm.original = (pi !== -1) ? arr[arr.length - 1].ontology.classes[ci].properties[pi]['@id'] : '';
                 }
                 // else, it is in the noDomains array
                 else {
                     _editOrCreate(vm.ontologies[oi].noDomains, pi, unique, vm.propertyDefault);
                 }
-                // cleans form validations
-                vm.propertyForm.$setPristine();
             }
             // else, if class index is specified, they are working with a class
             else if(ci !== undefined) {
@@ -558,19 +215,12 @@
                 unique = vm.tab + oi + ci;
                 // checks if editing or creating
                 _editOrCreate(vm.ontologies[oi].classes, ci, unique, vm.classDefault);
-                // finds what the current original value
-                vm.original = (ci !== -1) ? arr[arr.length - 1].ontology.classes[ci]['@id'] : '';
-                // cleans form validations
-                vm.classForm.$setPristine();
             }
             // else, if ontology index is specified, they are working with an ontology
             else if(oi !== undefined) {
                 vm.shown = 'ontology-editor';
                 unique = vm.tab + oi;
                 _editOrCreate(vm.ontologies, oi, unique, vm.ontologyDefault);
-                // resets vm.original
-                vm.original = '';
-                vm.ontologyForm.$setPristine();
             }
             // else, they must be uploading an ontology
             else {
@@ -711,20 +361,6 @@
                         latest = angular.merge(latest, changed);
                         // updates the selected @id
                         vm.selected['@id'] = vm.selected.identifier + vm.selected.delimiter;
-                    }
-                }
-                // updates the taken array with the class/property changes
-                if(pi !== undefined || ci !== undefined) {
-                    // gets the array and index of current name
-                    var arr = vm.ontologies[oi].taken,
-                        index = arr.indexOf(vm.original),
-                        fresh = changed['@id'];
-                    // makes sure that the item is in the array already
-                    if(index !== -1) {
-                        // sets the taken array
-                        arr[index] = fresh;
-                        // sets the original to the new value
-                        vm.original = fresh;
                     }
                 }
                 // if an ontology is not being created, add this version to the versions list
@@ -872,7 +508,7 @@
                 // gets the new name
                 fresh = vm.selected['@id'];
                 // sets the result to see if the value is already being used and isn't the one currently selected
-                result = arr.indexOf(fresh) !== -1 && vm.original !== fresh;
+                result = arr.indexOf(fresh) !== -1;
             }
             // returns the result
             return result;
@@ -887,35 +523,7 @@
 
         // upload ontology
         function uploadOntology(isValid, file, namespace, localName) {
-            if(isValid && file) {
-                // show the spinner
-                vm.showSpinner = true;
-                // sets up the configurations for the post method
-                var fd = new FormData(),
-                    config = {
-                        transformRequest: angular.identity,
-                        headers: {
-                            'Content-Type': undefined
-                        }
-                    };
-                // adds the data to the FormData
-                fd.append('file', file);
-                fd.append('namespace', namespace);
-                fd.append('localName', localName);
-                // uploads the ontology file
-                $http.post('/matonto/rest/ontology/uploadOntology', fd, config)
-                    .then(function(data) {
-                        console.log('success', data);
-                        // sets the error data
-                        if(data.error) {
-                            vm.uploadError = data.error;
-                        } else {
-                            vm.uploadError = undefined;
-                        }
-                        // hides the spinner
-                        vm.showSpinner = false;
-                    });
-            }
+            ontologyManagerService.uploadThenGet(isValid, file, namespace, localName);
         }
     }
 })();

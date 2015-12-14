@@ -28,6 +28,14 @@
             textarea {
                 resize: none;
             }
+
+            /* Styles for the sub classes configured */
+            .sub-class {
+                border-radius: 3px;
+                display: inline-block;
+                margin: 0 5px 5px 0;
+                padding: 2px 1px 2px 5px;
+            }
         }
 
         /* Annotation styles */

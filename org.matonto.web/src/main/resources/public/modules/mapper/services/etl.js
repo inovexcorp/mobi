@@ -8,7 +8,8 @@
         etlService.$inject = ['$http', '$q'];
 
         function etlService($http, $q) {
-            var self = this;
+            var self = this,
+                prefix = '/etl/csv';
 
             /**
              * HTTP POST to CSV.upload which uploads file to data/tmp/ directory.
@@ -25,7 +26,7 @@
                             }
                         };
 
-                    return $http.post('/etl/csv/upload', inputStream, config)
+                    return $http.post(prefix + '/upload', inputStream, config)
                         .then(function(response) {
                             console.log('response', response);
                             // TODO: handle error situation (using $q)
@@ -47,7 +48,7 @@
                         }
                     };
 
-                return $http.get('/etl/csv/preview/' + fileName, config)
+                return $http.get(prefix + '/preview/' + fileName, config)
                     .then(function(response) {
                             // TODO: handle error situation (using $q)
                             return {
