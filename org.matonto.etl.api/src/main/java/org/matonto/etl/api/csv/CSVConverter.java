@@ -41,7 +41,7 @@ public interface CSVConverter {
      * @throws IOException       Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
      */
-    public Model convert(File csv, File mappingFile) throws IOException, RDFParseException;
+    Model convert(File csv, File mappingFile) throws IOException, RDFParseException;
 
     /**
      * Converts a CSV to RDF using a mapping file. Returns the RDF data as a Model
@@ -51,6 +51,6 @@ public interface CSVConverter {
      * @return A Model of RDF data converted from CSV
      * @throws IOException Thrown if there is a problem reading the files given
      */
-    public Model convert(File csv, Model mappingModel) throws IOException;
+    Model convert(File csv, Model mappingModel) throws IOException;
 
 }
