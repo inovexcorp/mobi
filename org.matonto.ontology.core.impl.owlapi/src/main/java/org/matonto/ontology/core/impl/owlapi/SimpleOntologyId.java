@@ -10,6 +10,8 @@ import org.openrdf.model.impl.ValueFactoryImpl;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
+import com.google.common.base.Preconditions;
+
 
 public class SimpleOntologyId implements OntologyId {
 
@@ -24,17 +26,17 @@ public class SimpleOntologyId implements OntologyId {
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(), com.google.common.base.Optional.absent());
     }
 
-	public SimpleOntologyId(OntologyIRI ontologyIRI) {
-		this.identifier = VF.createURI(ontologyIRI.toString());		
-		IRI oIRI = SimpleIRI.owlapiIRI(ontologyIRI);
+	public SimpleOntologyId(OntologyIRI ontologyIRI) {	
+		IRI oIRI = Values.owlapiIRI(Preconditions.checkNotNull(ontologyIRI, "ontologyIRI cannot be null"));
 		ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.absent());
+		this.identifier = VF.createURI(ontologyIRI.toString());	
 	}
 
 	public SimpleOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI) {
-        this.identifier = VF.createURI(versionIRI.toString());
-        IRI oIRI = SimpleIRI.owlapiIRI(ontologyIRI);
-        IRI vIRI = SimpleIRI.owlapiIRI(versionIRI);
+        IRI oIRI =Values.owlapiIRI(Preconditions.checkNotNull(ontologyIRI, "ontologyIRI cannot be null"));
+        IRI vIRI = Values.owlapiIRI(Preconditions.checkNotNull(versionIRI, "versionIRI cannot be null"));
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
+        this.identifier = VF.createURI(versionIRI.toString());
 	}
 		
 	
@@ -42,7 +44,7 @@ public class SimpleOntologyId implements OntologyId {
 	public Optional<OntologyIRI> getOntologyIRI() {
         if (ontologyId.getOntologyIRI().isPresent()) {
             IRI owlIri = ontologyId.getOntologyIRI().get();
-            return Optional.of(SimpleIRI.matontoIRI(owlIri));
+            return Optional.of(Values.matontoIRI(owlIri));
         } else {
             return Optional.empty();
         }
@@ -53,7 +55,7 @@ public class SimpleOntologyId implements OntologyId {
 	public Optional<OntologyIRI> getVersionIRI() {
         if (ontologyId.getVersionIRI().isPresent()) {
             IRI versionIri = ontologyId.getVersionIRI().get();
-            return Optional.of(SimpleIRI.matontoIRI(versionIri));
+            return Optional.of(Values.matontoIRI(versionIri));
         } else {
             return Optional.empty();
         }
@@ -101,22 +103,6 @@ public class SimpleOntologyId implements OntologyId {
 		return identifier.hashCode();
 	}
 
-	public static OWLOntologyID owlapiOntologyId(SimpleOntologyId simpleId) {
-		return simpleId.getOwlapiOntologyId();
-	}
-
-	public static SimpleOntologyId matontoOntologyId(OWLOntologyID owlId) {
-		com.google.common.base.Optional<IRI> oIRI = owlId.getOntologyIRI();
-		com.google.common.base.Optional<IRI> vIRI = owlId.getVersionIRI();
-
-        if (vIRI.isPresent()) {
-            return new SimpleOntologyId(SimpleIRI.matontoIRI(oIRI.get()), SimpleIRI.matontoIRI(vIRI.get()));
-        } else if (oIRI.isPresent()) {
-            return new SimpleOntologyId(SimpleIRI.matontoIRI(oIRI.get()));
-        } else {
-            return new SimpleOntologyId();
-        }
-	}
 }
 
 

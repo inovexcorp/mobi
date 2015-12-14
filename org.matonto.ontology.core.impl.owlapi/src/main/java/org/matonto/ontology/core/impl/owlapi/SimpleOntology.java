@@ -45,9 +45,9 @@ public class SimpleOntology implements Ontology {
         if (owlApiID.isAnonymous()) {
             ontologyId = new SimpleOntologyId();
         } else if (vIRI.isPresent()) {
-            ontologyId = new SimpleOntologyId(SimpleIRI.matontoIRI(oIRI.get()), SimpleIRI.matontoIRI(vIRI.get()));
+            ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()), Values.matontoIRI(vIRI.get()));
         } else {
-            ontologyId = new SimpleOntologyId(SimpleIRI.matontoIRI(oIRI.get()));
+            ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()));
         }
     }
 	
@@ -81,7 +81,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyId = ontologyId;
 
 		try {
-			ontology = manager.loadOntologyFromOntologyDocument(SimpleIRI.owlapiIRI(iri));
+			ontology = manager.loadOntologyFromOntologyDocument(Values.owlapiIRI(iri));
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
@@ -109,7 +109,7 @@ public class SimpleOntology implements Ontology {
 	public Set<Annotation> getAnnotations() {
         return ontology.getAnnotations()
                 .stream()
-                .map(SimpleAnnotation::matontoAnnotation)
+                .map(Values::matontoAnnotation)
                 .collect(Collectors.toSet());
 	}
 

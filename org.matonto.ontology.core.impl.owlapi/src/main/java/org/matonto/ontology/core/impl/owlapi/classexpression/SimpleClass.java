@@ -9,6 +9,7 @@ import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
+import org.matonto.ontology.core.impl.owlapi.Values;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 
@@ -27,7 +28,7 @@ public class SimpleClass implements OClass {
 	public SimpleClass(OntologyIRI iri)
 	{
 		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
-		owlClass = new OWLClassImpl(SimpleIRI.owlapiIRI(iri));
+		owlClass = new OWLClassImpl(Values.owlapiIRI(iri));
 		isThing = owlClass.isOWLThing();
 		isNothing = owlClass.isOWLNothing();
 	}
@@ -105,20 +106,5 @@ public class SimpleClass implements OClass {
 		return result;
 	}
 	
-	
-	public static OClass matontoClass(OWLClass owlapiClass)
-	{
-		IRI owlapiIri = owlapiClass.getIRI();
-		OntologyIRI matontoIri = SimpleIRI.matontoIRI(owlapiIri);
-		return new SimpleClass(matontoIri);
-	}
-	
-	
-	public static OWLClass owlapiClass(OClass matontoClass)
-	{
-		OntologyIRI matontoIri = matontoClass.getIRI();
-		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
-		return new OWLClassImpl(owlapiIri);
-	}
 
 }

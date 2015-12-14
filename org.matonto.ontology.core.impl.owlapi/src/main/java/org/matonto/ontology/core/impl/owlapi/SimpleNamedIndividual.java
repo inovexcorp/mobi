@@ -51,22 +51,6 @@ public class SimpleNamedIndividual
 	}
 	
 	
-	public static NamedIndividual matontoNamedIndividual(OWLNamedIndividual owlapiIndividual)
-	{
-		IRI owlapiIri = ((OWLNamedIndividualImpl) owlapiIndividual).getIRI();
-		OntologyIRI matontoIri = SimpleIRI.matontoIRI(owlapiIri);
-		return new SimpleNamedIndividual(matontoIri);
-	}
-	
-	
-	public static OWLNamedIndividual owlapiNamedIndividual(NamedIndividual matontoIndividual)
-	{
-		OntologyIRI matontoIri = ((SimpleNamedIndividual) matontoIndividual).getIRI();
-		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
-		return new OWLNamedIndividualImpl(owlapiIri);
-	}
-
-
 	@Override
 	public boolean isNamed() 
 	{

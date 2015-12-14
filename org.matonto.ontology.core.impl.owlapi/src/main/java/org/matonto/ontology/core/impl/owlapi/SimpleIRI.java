@@ -36,32 +36,13 @@ public class SimpleIRI implements OntologyIRI {
 		return iri;
 	}
 
-	public static IRI owlapiIRI(OntologyIRI matontoIri) 
-	{
-		if (matontoIri == null)
-			return null;
-		else
-			return IRI.create(matontoIri.getNamespace(), matontoIri.getLocalName().orElse(null));
-	}
-
-	public static OntologyIRI matontoIRI(IRI owlIri) 
-	{
-		if (owlIri == null)
-			return null;
-		else {
-			namespace = owlIri.getNamespace();
-			if (owlIri.getRemainder().isPresent())
-				localName = owlIri.getRemainder().get();
-			return new SimpleIRI(namespace, localName);
-		}
-
-	}
-
+	@Override
 	public String getNamespace() 
 	{
 		return namespace;
 	}
-
+	
+	@Override
 	public Optional<String> getLocalName() 
 	{
 		if (localName.isEmpty())
@@ -101,7 +82,6 @@ public class SimpleIRI implements OntologyIRI {
 		
 		return false;
 	}
-	
 	
 	@Override
 	public String toString()

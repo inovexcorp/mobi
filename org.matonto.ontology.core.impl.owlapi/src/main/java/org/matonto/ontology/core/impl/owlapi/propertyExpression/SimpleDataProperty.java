@@ -51,21 +51,6 @@ public class SimpleDataProperty implements DataProperty {
 	}
 	
 	
-	public static DataProperty matontoDataProperty(OWLDataProperty owlapiDataProperty)
-	{
-		IRI owlapiIri = owlapiDataProperty.getIRI();
-		OntologyIRI matontoIri = SimpleIRI.matontoIRI(owlapiIri);
-		return new SimpleDataProperty(matontoIri);
-	}
-	
-	
-	public static OWLDataProperty owlapiDataProperty(DataProperty matontoDataProperty)
-	{
-		OntologyIRI matontoIri = matontoDataProperty.getIRI();
-		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
-		return new OWLDataPropertyImpl(owlapiIri);
-	}
-
 	@Override
 	public DataProperty asDataProperty() 
 	{

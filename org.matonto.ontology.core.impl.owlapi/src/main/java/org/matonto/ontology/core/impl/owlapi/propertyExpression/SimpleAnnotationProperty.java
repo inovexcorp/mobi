@@ -4,6 +4,7 @@ import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
+import org.matonto.ontology.core.impl.owlapi.Values;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
@@ -38,14 +39,14 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 	@Override
 	public boolean isComment() 
 	{
-		return SimpleIRI.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
+		return Values.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
 	}
 
 	
 	@Override
 	public boolean isLabel() 
 	{
-		return SimpleIRI.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
+		return Values.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
 	}
 	
 	
@@ -55,18 +56,6 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 		return EntityType.ANNOTATION_PROPERTY;
 	}
 
-	
-	public static OWLAnnotationProperty owlapiAnnotationProperty(AnnotationProperty sap)
-	{
-		return new OWLAnnotationPropertyImpl(SimpleIRI.owlapiIRI(sap.getIRI()));
-	}
-	
-	
-	public static SimpleAnnotationProperty matontoAnnotationProperty(OWLAnnotationProperty oap)
-	{
-		return new SimpleAnnotationProperty(SimpleIRI.matontoIRI(oap.getIRI()));
-	}
-	
 	
 	@Override
 	public boolean equals(Object obj)

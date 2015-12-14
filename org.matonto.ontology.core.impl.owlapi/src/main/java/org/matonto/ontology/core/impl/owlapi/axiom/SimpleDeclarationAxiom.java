@@ -12,6 +12,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.matonto.ontology.core.impl.owlapi.SimpleAnnotation;
 import org.matonto.ontology.core.impl.owlapi.SimpleNamedIndividual;
+import org.matonto.ontology.core.impl.owlapi.Values;
 import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
@@ -98,70 +99,5 @@ public class SimpleDeclarationAxiom
 		return false;
 	}
 	
-	
-	public static DeclarationAxiom matonotoDeclarationAxiom(OWLDeclarationAxiom owlapiAxiom)
-	{
-		OWLEntity owlapiEntity = owlapiAxiom.getEntity();
-		Entity matontoEntity = null;
-		switch(owlapiEntity.getEntityType().getName()) {
-			case "Class":
-				matontoEntity = SimpleClass.matontoClass((OWLClass) owlapiEntity);
-			
-			case "ObjectProperty":
-				matontoEntity = SimpleObjectProperty.matontoObjectProperty((OWLObjectProperty) owlapiEntity);
-				
-			case "DataProperty":
-				matontoEntity = SimpleDataProperty.matontoDataProperty((OWLDataProperty) owlapiEntity);
-				
-			case "AnnotationProperty":
-				matontoEntity = SimpleAnnotationProperty.matontoAnnotationProperty((OWLAnnotationProperty) owlapiEntity);
-				
-			case "NamedIndividual":
-				matontoEntity = SimpleNamedIndividual.matontoNamedIndividual((OWLNamedIndividual) owlapiEntity);
-				
-			case "Datatype":
-				matontoEntity = SimpleDatatype.matontoDatatype((OWLDatatype) owlapiEntity);	
-		}
-		
-		Set<OWLAnnotation> owlapiAnnotations = owlapiAxiom.getAnnotations();
-		Set<Annotation> matontoAnnotations = new HashSet<Annotation>();
-		for(OWLAnnotation owlapiAnnotation : owlapiAnnotations)
-			matontoAnnotations.add(SimpleAnnotation.matontoAnnotation(owlapiAnnotation));
-			
-		return new SimpleDeclarationAxiom(matontoEntity, matontoAnnotations);
-	}
-	
-	
-	public static OWLDeclarationAxiom owlapiDeclarationAxiom(DeclarationAxiom matontoAxiom)
-	{
-		Entity matontoEntity = matontoAxiom.getEntity();
-		OWLEntity owlapiEntity = null;
-		switch(matontoEntity.getEntityType().getName()) {
-			case "Class":
-				owlapiEntity = SimpleClass.owlapiClass((OClass) matontoEntity);
-			
-			case "ObjectProperty":
-				owlapiEntity = SimpleObjectProperty.owlapiObjectProperty((ObjectProperty) matontoEntity);
-				
-			case "DataProperty":
-				owlapiEntity = SimpleDataProperty.owlapiDataProperty((DataProperty) matontoEntity);
-				
-			case "AnnotationProperty":
-				owlapiEntity = SimpleAnnotationProperty.owlapiAnnotationProperty((AnnotationProperty) matontoEntity);
-				
-			case "NamedIndividual":
-				owlapiEntity = SimpleNamedIndividual.owlapiNamedIndividual((NamedIndividual) matontoEntity);
-				
-			case "Datatype":
-				owlapiEntity = SimpleDatatype.owlapiDatatype((Datatype) matontoEntity);	
-		}
-		
-		Set<Annotation> matontoAnnotations = matontoAxiom.getAnnotations();
-		Set<OWLAnnotation> owlapiAnnotations = new HashSet<OWLAnnotation>();
-		for(Annotation matontoAnnotation : matontoAnnotations)
-			owlapiAnnotations.add(SimpleAnnotation.owlapiAnnotation(matontoAnnotation));
-			
-		return new OWLDeclarationAxiomImpl(owlapiEntity, owlapiAnnotations);
-	}
 
 }

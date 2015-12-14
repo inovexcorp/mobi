@@ -11,6 +11,6 @@ public class SimplePropertyExpression implements PropertyExpression {
 		if (this == obj) 
 			return true;
 
-		return obj instanceof PropertyExpression;	
+		return (obj instanceof PropertyExpression);	
 	}
 }

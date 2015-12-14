@@ -59,18 +59,6 @@ public class SimpleAnonymousIndividual
 	}
 	
 	
-	public static OWLAnonymousIndividual owlapiAnonymousIndividual(AnonymousIndividual individual)
-	{
-		return new OWLAnonymousIndividualImpl(NodeID.getNodeID(individual.getId()));
-	}
-	
-	
-	public static AnonymousIndividual matontoAnonymousIndividual(OWLAnonymousIndividual owlIndividual)
-	{
-		return new SimpleAnonymousIndividual(owlIndividual.getID());
-	}
-	
-	
 	@Override
 	public boolean equals(Object obj) 
 	{

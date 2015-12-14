@@ -44,18 +44,6 @@ public class SimpleLiteral implements Literal {
 		return datatype;
 	}
 	
-	
-	public static OWLLiteral owlapiLiteral(Literal literal)
-	{
-		return new OWLLiteralImpl(literal.getLiteral(), literal.getLanguage(), SimpleDatatype.owlapiDatatype(literal.getDatatype()));
-	}
-	
-	
-	public static Literal matontoLiteral(OWLLiteral owlLiteral)
-	{
-		return new SimpleLiteral(owlLiteral.getLiteral(), owlLiteral.getLang(), SimpleDatatype.matontoDatatype(owlLiteral.getDatatype()));
-	}
-
 
 	@Override
 	public Optional<OntologyIRI> asIRI() 

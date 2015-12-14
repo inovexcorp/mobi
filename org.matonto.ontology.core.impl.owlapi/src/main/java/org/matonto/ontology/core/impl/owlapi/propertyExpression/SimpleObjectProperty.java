@@ -58,21 +58,5 @@ public class SimpleObjectProperty
 		return this;
 	}
 	
-	
-	public static ObjectProperty matontoObjectProperty(OWLObjectProperty owlapiObjectProperty)
-	{
-		IRI owlapiIri = owlapiObjectProperty.getIRI();
-		OntologyIRI matontoIri = SimpleIRI.matontoIRI(owlapiIri);
-		return new SimpleObjectProperty(matontoIri);
-	}
-	
-	
-	public static OWLObjectProperty owlapiObjectProperty(ObjectProperty matontoObjectProperty)
-	{
-		OntologyIRI matontoIri = matontoObjectProperty.getIRI();
-		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
-		return new OWLObjectPropertyImpl(owlapiIri);
-	}
-
 
 }
