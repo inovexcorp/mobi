@@ -47,7 +47,10 @@ public class NativeRepositoryWrapper extends RepositoryWrapper {
             sesameNativeStore.setTripleIndexes(indexString);
         }
 
-        return new SesameRepositoryWrapper(new SailRepository(sesameNativeStore));
+        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(new SailRepository(sesameNativeStore));
+        repo.setConfig(config);
+
+        return repo;
     }
 
     @Override
