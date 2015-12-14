@@ -5,9 +5,6 @@ import java.io.IOException;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFHandlerException;
 
-/**
- * Created by bryan on 9/10/15.
- */
 public interface RDFExportService {
 
     /**
@@ -15,12 +12,10 @@ public interface RDFExportService {
      *
      * @param repositoryID The ID of the repository to export RDF data from
      * @param file The file to export the data to.
-     * @throws Exception
-     * @throws IOException
-     * @throws RDFHandlerException
-     * @throws RepositoryException
+     * @throws RepositoryException Thrown if there is a problem connecting to the given repository
+     * @throws IOException Thrown if there is an error writing to the file
      */
-    public void exportToFile (String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException, Exception;
+    void exportToFile (String repositoryID, File file) throws RepositoryException, IOException;
 
 
     /**
@@ -28,11 +23,13 @@ public interface RDFExportService {
      *
      * @param repositoryID The ID of the repository to export RDF data from
      * @param file The file to export the data to.
-     * @param filetype The RDF Serialization to use when exporting triples to a file
      * @param subj A subject that all exported triples will be restricted to
      * @param pred A predicate that all exported triples will be restricted to
-     * @param obj An object that all exported triples will be restricted to
+     * @param objLit An object literal that all exported triples will be restricted to. Will only be used if objIRI is not passed
+     * @param objIRI An object IRI that all exported triples will be restricted to. Takes precedence over objLit
+     * @throws RepositoryException Thrown if there is a problem connecting to the given repository
+     * @throws IOException Thrown if there is an error writing to the file
      */
-    public void exportToFile(String repositoryID, File file, String filetype, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException, Exception;
+    void exportToFile(String repositoryID, File file, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException;
 
 }
