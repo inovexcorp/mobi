@@ -19,6 +19,7 @@ public interface RDFImportService {
      * @throws RDFParseException thrown if there is a problem parsing the RDF file
      * @throws RepositoryException thrown if there is a problem connecting to the given repository
      * @throws IOException thrown if there is a problem reading the file
+     * @throws IllegalArgumentException thrown if the repository does not exist
      */
     void importFile(String repositoryID,  File file, Boolean cont) throws IOException, RepositoryException, RDFParseException;
 
@@ -31,6 +32,7 @@ public interface RDFImportService {
      * @throws RDFParseException thrown if there is a problem parsing the RDF file
      * @throws RepositoryException thrown if there is a problem connecting to the given repository
      * @throws IOException thrown if there is a problem reading the file
+     * @throws IllegalArgumentException thrown if the repository does not exist
      */
     void importFile(String repositoryID,  File file, Boolean cont, RDFFormat format) throws IOException, RepositoryException, RDFParseException;
 
