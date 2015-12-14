@@ -29,8 +29,6 @@ public class RDFImportServiceImpl implements RDFImportService {
 
     private RepositoryManager repositoryManager;
 
-    private static final Logger LOGGER = Logger.getLogger(RDFImportServiceImpl.class);
-
     @Reference
     public void setRepositoryManager(RepositoryManager repositoryManager){this.repositoryManager = repositoryManager;}
 

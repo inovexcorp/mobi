@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Optional;
-import org.apache.log4j.Logger;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
@@ -29,8 +28,6 @@ public class RDFExportServiceImpl implements RDFExportService {
 
     private RepositoryManager repositoryManager;
 
-    private static final Logger LOGGER = Logger.getLogger(RDFImportServiceImpl.class);
-
     private ValueFactory valueFactory;
 
     @Reference
@@ -42,15 +39,15 @@ public class RDFExportServiceImpl implements RDFExportService {
      * Exports all info from the repository with the given repositoryID into the file specified.
      * @throws IOException
      */
-    public void exportToFile(String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException {
-        exportToFile(repositoryID, file, null, null, null);
+    public void exportToFile(String repositoryID, File file) throws RepositoryException, IOException {
+        exportToFile(repositoryID, file, null, null, null, null);
     }
 
     /**
      * Exports the rdf statements with the given subject, predicate, and object into the given file with a given filetype.
      * Enter null in the subj, pred, and obj fields if you don't want to filter by a particular value
      */
-    public void exportToFile(String repositoryID, File file, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException {
+    public void exportToFile(String repositoryID, File file, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException {
 
         Resource subjResource = null;
         IRI predicateIRI = null;
@@ -59,12 +56,10 @@ public class RDFExportServiceImpl implements RDFExportService {
             subjResource = valueFactory.createIRI(subj);
         if(pred != null)
             predicateIRI = valueFactory.createIRI(pred);
-        if(obj != null) {
-            if(URIUtil.isValidURIReference(obj)) {
-                objValue = valueFactory.createIRI(obj);
-            }else {
-                objValue = valueFactory.createLiteral(obj);
-            }
+        if(objIRI != null){
+            objValue = valueFactory.createIRI(objIRI);
+        }else if(objLit != null) {
+            objValue = valueFactory.createLiteral(objLit);
         }
 
         if(!file.canWrite())

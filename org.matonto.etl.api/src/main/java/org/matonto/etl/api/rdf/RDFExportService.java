@@ -12,12 +12,10 @@ public interface RDFExportService {
      *
      * @param repositoryID The ID of the repository to export RDF data from
      * @param file The file to export the data to.
-     * @throws Exception
-     * @throws IOException
-     * @throws RDFHandlerException
-     * @throws RepositoryException
+     * @throws RepositoryException Thrown if there is a problem connecting to the given repository
+     * @throws IOException Thrown if there is an error writing to the file
      */
-    void exportToFile (String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException;
+    void exportToFile (String repositoryID, File file) throws RepositoryException, IOException;
 
 
     /**
@@ -27,8 +25,11 @@ public interface RDFExportService {
      * @param file The file to export the data to.
      * @param subj A subject that all exported triples will be restricted to
      * @param pred A predicate that all exported triples will be restricted to
-     * @param obj An object that all exported triples will be restricted to
+     * @param objLit An object literal that all exported triples will be restricted to. Will only be used if objIRI is not passed
+     * @param objIRI An object IRI that all exported triples will be restricted to. Takes precedence over objLit
+     * @throws RepositoryException Thrown if there is a problem connecting to the given repository
+     * @throws IOException Thrown if there is an error writing to the file
      */
-    void exportToFile(String repositoryID, File file, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException;
+    void exportToFile(String repositoryID, File file, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException;
 
 }
