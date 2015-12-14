@@ -6,6 +6,11 @@ package org.matonto.rdf.api;
  */
 public interface NamedGraph extends StatementSet {
 
+    /**
+     * Returns the Resource that represents the named graph ID.
+     *
+     * @return the Resource that represents the named graph ID.
+     */
     Resource getGraphID();
 
     /**
@@ -73,5 +78,11 @@ public interface NamedGraph extends StatementSet {
      */
     NamedGraph unmodifiable();
 
+    /**
+     * Returns a Model containing the NamedGraph statements.
+     *
+     * @param factory the ModelFactory used to create the returned Model.
+     * @return The Model created by the supplied ModelFactory containing the statements from the NamedGraph.
+     */
     Model asModel(ModelFactory factory);
 }
