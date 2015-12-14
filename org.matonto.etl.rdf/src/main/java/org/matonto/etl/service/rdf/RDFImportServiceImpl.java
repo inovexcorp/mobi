@@ -20,6 +20,7 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModel;
 import org.openrdf.rio.*;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.openrdf.rio.helpers.BasicParserSettings;
 import org.openrdf.rio.helpers.StatementCollector;
 import javax.annotation.Nonnull;
 
@@ -27,8 +28,6 @@ import javax.annotation.Nonnull;
 public class RDFImportServiceImpl implements RDFImportService {
 
     private RepositoryManager repositoryManager;
-
-    private static final Logger LOGGER = Logger.getLogger(RDFImportServiceImpl.class);
 
     @Reference
     public void setRepositoryManager(RepositoryManager repositoryManager){this.repositoryManager = repositoryManager;}
@@ -58,6 +57,13 @@ public class RDFImportServiceImpl implements RDFImportService {
             throw new IOException("File not found");
 
         RDFParser parser = Rio.createParser(format);
+        ParserConfig parserConfig = new ParserConfig();
+        if(cont){
+            parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES);
+            parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES);
+            parserConfig.addNonFatalError(BasicParserSettings.NORMALIZE_DATATYPE_VALUES);
+        }
+        parser.setParserConfig(parserConfig);
         Model m = new org.openrdf.model.impl.LinkedHashModel();
         parser.setRDFHandler(new StatementCollector(m));
         try {
@@ -66,11 +72,11 @@ public class RDFImportServiceImpl implements RDFImportService {
             throw new RDFParseException(e);
         }
 
-        storeModel(repositoryID, m);
+        importModel(repositoryID, m);
 
     }
 
-    private void storeModel(String repositoryID, Model m){
+    public void importModel(String repositoryID, Model m){
         Optional<Repository> optRepo = repositoryManager.getRepository(repositoryID);
         if(optRepo.isPresent()){
             org.matonto.rdf.api.Model matontoModel = m.stream()
