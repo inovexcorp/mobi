@@ -40,6 +40,8 @@ public interface RDFImportService {
      * Import a model into a given repository
      * @param repositoryID the ID of the repository to import the triples from a model
      * @param m The rdf model to be imported
+     * @throws IllegalArgumentException thrown if the repository does not exist
+     * @throws RepositoryException thrown if there is a problem connecting to the given repository
      */
     void importModel(String repositoryID, Model m);
 }
