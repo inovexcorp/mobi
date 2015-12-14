@@ -1,4 +1,4 @@
-package org.matonto.etl.ui.cli;
+package org.matonto.etl.cli;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,24 +15,21 @@ import org.openrdf.rio.RDFParseException;
 
 @Command(scope = "matonto", name = "import", description = "Imports objects to a repository")
 public class CLIImporter implements Action {
-    
+
     //Command Line Arguments and Options
     @Argument(index = 0, name = "DataType", description = "The data type being imported. Supported data types are: RDF and CSV", required = true)
     String dataType = null;
 
-    @Argument(index = 1, name = "RepositoryID", description = "The id of the repository the file will be imported to", required = true, multiValued = false)
+    @Argument(index = 1, name = "RepositoryID", description = "The id of the repository the file will be imported to", required = true)
     String repositoryId = null;
 
-    @Argument(index = 2, name = "ImportFile", description = "The file to be imported into the repository", required = true, multiValued = false)
+    @Argument(index = 2, name = "ImportFile", description = "The file to be imported into the repository", required = true)
     String file = null;
 
-    @Argument(index = 3, name="CSV/XML Mapping File", description = "The mapping file for the import of CSV or XML Files", required = false, multiValued = false)
+    @Argument(index = 3, name="CSV/XML Mapping File", description = "The mapping file for the import of CSV or XML Files")
     String mappingFileLocation = null;
 
-    @Option (name = "-t", aliases = "--fileType", description = "Specify the file type if the one given is unsupported by Sesame.", required = false, multiValued = false)
-    String fileType = null;
-
-    @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an error on a line.", required = false, multiValued = false)
+    @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an error on a line.")
     boolean continueOnError = false;
     private static final Logger LOGGER = Logger.getLogger(CLIImporter.class);
 
@@ -45,7 +42,7 @@ public class CLIImporter implements Action {
 
     public void setImportService(RDFImportService importService) {this.importService = importService;}
     public void setCsvConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
-    
+
     @Override
     public Object execute() throws Exception {
 
@@ -65,8 +62,9 @@ public class CLIImporter implements Action {
         try{
             File newFile = new File(file);
             importService.importFile(repositoryId, newFile, continueOnError);
-        }catch(Exception e){
-            throw new RuntimeException(e);
+        }catch(IOException e){
+            System.out.println(e.getMessage());
+            LOGGER.error(e.toString());
         }
     }
 
@@ -78,13 +76,8 @@ public class CLIImporter implements Action {
         if(newFile.exists() && mappingFile.exists()) {
             try {
                 csvConverter.importCSV(newFile, mappingFile, repositoryId);
-            } catch (RDFParseException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                System.out.println("Unable to load files.");
-                LOGGER.error(e.toString());
-            } catch(RepositoryException e){
-                System.out.println("Unable to connect to repository");
+            } catch (Exception e){
+                System.out.println(e.getMessage());
                 LOGGER.error(e.toString());
             }
         }else{
