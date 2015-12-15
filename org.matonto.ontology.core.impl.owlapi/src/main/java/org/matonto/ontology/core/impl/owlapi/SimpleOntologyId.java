@@ -2,6 +2,8 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.openrdf.model.Resource;
@@ -10,14 +12,11 @@ import org.openrdf.model.impl.ValueFactoryImpl;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
-import com.google.common.base.Preconditions;
-
 
 public class SimpleOntologyId implements OntologyId {
 
 	private Resource identifier;
 	private OWLOntologyID ontologyId;
-
     private static final ValueFactory VF = ValueFactoryImpl.getInstance();
 
     
@@ -26,15 +25,15 @@ public class SimpleOntologyId implements OntologyId {
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(), com.google.common.base.Optional.absent());
     }
 
-	public SimpleOntologyId(OntologyIRI ontologyIRI) {	
-		IRI oIRI = Values.owlapiIRI(Preconditions.checkNotNull(ontologyIRI, "ontologyIRI cannot be null"));
+	public SimpleOntologyId(@Nonnull OntologyIRI ontologyIRI) {	
+		IRI oIRI = Values.owlapiIRI(ontologyIRI);
 		ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.absent());
 		this.identifier = VF.createURI(ontologyIRI.toString());	
 	}
 
-	public SimpleOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI) {
-        IRI oIRI =Values.owlapiIRI(Preconditions.checkNotNull(ontologyIRI, "ontologyIRI cannot be null"));
-        IRI vIRI = Values.owlapiIRI(Preconditions.checkNotNull(versionIRI, "versionIRI cannot be null"));
+	public SimpleOntologyId(@Nonnull OntologyIRI ontologyIRI, @Nonnull OntologyIRI versionIRI) {
+        IRI oIRI =Values.owlapiIRI(ontologyIRI);
+        IRI vIRI = Values.owlapiIRI(versionIRI);
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
         this.identifier = VF.createURI(versionIRI.toString());
 	}

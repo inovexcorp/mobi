@@ -1,26 +1,25 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 import org.matonto.ontology.core.api.axiom.SymmetricObjectPropertyAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
 public class SimpleSymmetricObjectPropertyAxiom 
 	extends SimpleAxiom 
 	implements SymmetricObjectPropertyAxiom {
-
+    
+    
 	private ObjectPropertyExpression objectProperty;
 	
 	
-	public SimpleSymmetricObjectPropertyAxiom(ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
+	public SimpleSymmetricObjectPropertyAxiom(@Nonnull ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.objectProperty = Preconditions.checkNotNull(objectProperty, "objectProperty cannot be null");
+		this.objectProperty = objectProperty;
 	}
 	
 
@@ -35,7 +34,7 @@ public class SimpleSymmetricObjectPropertyAxiom
 
 	
 	@Override
-	public SymmetricObjectPropertyAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public SymmetricObjectPropertyAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleSymmetricObjectPropertyAxiom(objectProperty, mergeAnnos(annotations));
 	}

@@ -3,12 +3,10 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.axiom.DisjointDataPropertiesAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -20,10 +18,10 @@ public class SimpleDisjointDataPropertiesAxiom
 	private Set<DataPropertyExpression> properties;
 	
 	
-	public SimpleDisjointDataPropertiesAxiom(Set<DataPropertyExpression> properties, Set<Annotation> annotations) 
+	public SimpleDisjointDataPropertiesAxiom(@Nonnull Set<DataPropertyExpression> properties, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.properties = new TreeSet<DataPropertyExpression>(Preconditions.checkNotNull(properties, "properties cannot be null"));
+		this.properties = new TreeSet<DataPropertyExpression>(properties);
 	}
 
 	
@@ -38,7 +36,7 @@ public class SimpleDisjointDataPropertiesAxiom
 	
 
 	@Override
-	public DisjointDataPropertiesAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public DisjointDataPropertiesAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleDisjointDataPropertiesAxiom(properties, mergeAnnos(annotations));
 	}

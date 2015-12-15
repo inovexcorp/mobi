@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
@@ -105,7 +107,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @return True if given context id exists in the repository, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
-	public boolean ontologyExists(OntologyId ontologyId) {
+	public boolean ontologyExists(@Nonnull OntologyId ontologyId) {
 	   	if(repository == null)
 	   		throw new IllegalStateException("Repository is null");
 	   	
@@ -122,7 +124,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public Optional<Ontology> retrieveOntology(OntologyId ontologyId) throws MatontoOntologyException {
+	public Optional<Ontology> retrieveOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
@@ -156,7 +158,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	}
 	
 	@Override
-	public boolean storeOntology(Ontology ontology) throws MatontoOntologyException {
+	public boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
@@ -181,7 +183,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	}
 	
 	@Override
-	public boolean deleteOntology(OntologyId ontologyId) throws MatontoOntologyException {
+	public boolean deleteOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
 		

@@ -3,13 +3,12 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.axiom.DifferentIndividualsAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleDifferentIndividualsAxiom 
 	extends SimpleAxiom 
@@ -19,10 +18,10 @@ public class SimpleDifferentIndividualsAxiom
 	private Set<Individual> individuals;
 	
 	
-	public SimpleDifferentIndividualsAxiom(Set<Individual> individuals, Set<Annotation> annotations) 
+	public SimpleDifferentIndividualsAxiom(@Nonnull Set<Individual> individuals, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.individuals = new TreeSet<Individual>(Preconditions.checkNotNull(individuals, "individuals cannot be null"));
+		this.individuals = new TreeSet<Individual>(individuals);
 	}
 
 
@@ -37,7 +36,7 @@ public class SimpleDifferentIndividualsAxiom
 
 	
 	@Override
-	public DifferentIndividualsAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public DifferentIndividualsAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleDifferentIndividualsAxiom(individuals, mergeAnnos(annotations));
 	}

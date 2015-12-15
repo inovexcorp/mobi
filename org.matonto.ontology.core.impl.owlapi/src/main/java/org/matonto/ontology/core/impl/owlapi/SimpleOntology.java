@@ -25,6 +25,8 @@ import java.io.*;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 
 public class SimpleOntology implements Ontology {
 
@@ -34,7 +36,7 @@ public class SimpleOntology implements Ontology {
 	private OWLOntology ontology;
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 
-    protected SimpleOntology(OWLOntology ontology) {
+    protected SimpleOntology(@Nonnull OWLOntology ontology) {
         this.ontology = ontology;
         this.manager = this.ontology.getOWLOntologyManager();
         OWLOntologyID owlApiID = ontology.getOntologyID();
@@ -116,7 +118,7 @@ public class SimpleOntology implements Ontology {
     public Set<Axiom> getAxioms() {
         return ontology.getAxioms()
                 .stream()
-                .map(SimpleAxiom::matontoAxiom)
+                .map(Values::matontoAxiom)
                 .collect(Collectors.toSet());
     }
 

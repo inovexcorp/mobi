@@ -1,24 +1,18 @@
 package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLDataProperty;
 
-import com.google.common.base.Preconditions;
-
-import uk.ac.manchester.cs.owl.owlapi.OWLDataPropertyImpl;
 
 public class SimpleDataProperty implements DataProperty {
 
 	private OntologyIRI iri;
 	
-	
-	public SimpleDataProperty(OntologyIRI iri)
+	public SimpleDataProperty(@Nonnull OntologyIRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 	}
 	
 	@Override

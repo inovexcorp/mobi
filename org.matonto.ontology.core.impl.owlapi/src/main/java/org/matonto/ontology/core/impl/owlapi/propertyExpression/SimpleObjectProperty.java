@@ -1,15 +1,9 @@
 package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.OntologyIRI;
-
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
-
-import com.google.common.base.Preconditions;
 
 
 public class SimpleObjectProperty 
@@ -19,10 +13,9 @@ public class SimpleObjectProperty
 	
 	private OntologyIRI iri;
 	
-	
-	public SimpleObjectProperty(OntologyIRI iri)
+	public SimpleObjectProperty(@Nonnull OntologyIRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 	}
 	
 	@Override

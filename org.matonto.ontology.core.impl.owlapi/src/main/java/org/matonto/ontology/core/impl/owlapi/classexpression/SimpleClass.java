@@ -2,20 +2,16 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
 import org.matonto.ontology.core.impl.owlapi.Values;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
-
-import com.google.common.base.Preconditions;
-
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
+
 
 public class SimpleClass implements OClass {
 
@@ -25,9 +21,9 @@ public class SimpleClass implements OClass {
 	private OWLClass owlClass;
 	
 	
-	public SimpleClass(OntologyIRI iri)
+	public SimpleClass(@Nonnull OntologyIRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 		owlClass = new OWLClassImpl(Values.owlapiIRI(iri));
 		isThing = owlClass.isOWLThing();
 		isNothing = owlClass.isOWLNothing();
@@ -92,7 +88,7 @@ public class SimpleClass implements OClass {
 	
 	
 	@Override
-	public boolean containsConjunct(ClassExpression ce)
+	public boolean containsConjunct(@Nonnull ClassExpression ce)
 	{
 		return ce.equals(this);
 	}

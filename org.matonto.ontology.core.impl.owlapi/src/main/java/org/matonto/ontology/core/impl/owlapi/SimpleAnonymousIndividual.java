@@ -1,16 +1,13 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.Optional;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;
-import org.openrdf.model.util.Models;
 import org.semanticweb.owlapi.model.NodeID;
-import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
 import com.google.common.base.Preconditions;
 
-import uk.ac.manchester.cs.owl.owlapi.OWLAnonymousIndividualImpl;
 
 public class SimpleAnonymousIndividual 
 	implements AnonymousIndividual {
@@ -19,9 +16,9 @@ public class SimpleAnonymousIndividual
 	private NodeID nodeId;
 	
 	
-	public SimpleAnonymousIndividual(NodeID nodeId) 
+	public SimpleAnonymousIndividual(@Nonnull NodeID nodeId) 
 	{
-		this.nodeId = (NodeID)Preconditions.checkNotNull(nodeId,"nodeID cannot be null");
+		this.nodeId = nodeId;
 	}
 	
 	

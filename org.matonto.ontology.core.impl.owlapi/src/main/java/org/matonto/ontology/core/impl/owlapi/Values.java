@@ -11,6 +11,7 @@ import org.matonto.ontology.core.api.FacetRestriction;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.datarange.DataOneOf;
@@ -37,6 +38,7 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataOneOf;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -515,6 +517,22 @@ public class Values {
 		
 		return new OWLAnnotationPropertyImpl(owlapiIRI(property.getIRI()));
 	}
+	   
+    /*
+     * MUST Implement!!!!!!!
+     */
+    public static Axiom matontoAxiom(OWLAxiom owlapiAxiom)
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    /*
+     * MUST Implement!!!!!!!
+     */
+    public static OWLAxiom owlapiAxiom(Axiom matontoAxiom)
+    {
+        throw new UnsupportedOperationException();
+    }
 
 	public static DeclarationAxiom matonotoDeclarationAxiom(OWLDeclarationAxiom owlapiAxiom)
 	{

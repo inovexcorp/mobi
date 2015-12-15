@@ -1,18 +1,13 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Optional;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.io.XMLUtils;
 import org.semanticweb.owlapi.model.IRI;
 
-import com.google.common.base.Preconditions;
 
 public class SimpleIRI implements OntologyIRI {
 
@@ -20,14 +15,14 @@ public class SimpleIRI implements OntologyIRI {
 	private static String localName;
 	private static IRI iri;
 
-	public SimpleIRI(String ns, String ln) 
+	public SimpleIRI(@Nonnull String ns, String ln) 
 	{
-		namespace = Preconditions.checkNotNull(ns, "namespace cannot be null");
+		namespace = ns;
 		localName = ln;
 		iri = IRI.create(namespace, localName);
 	}
 
-	public SimpleIRI(String str) 
+	public SimpleIRI(@Nonnull String str) 
 	{
 		this(XMLUtils.getNCNamePrefix(str), XMLUtils.getNCNameSuffix(str));
 	}

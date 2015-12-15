@@ -2,21 +2,17 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.DataRangeType;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
 import org.matonto.ontology.core.impl.owlapi.Values;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
-
-import com.google.common.base.Preconditions;
-
-import uk.ac.manchester.cs.owl.owlapi.OWL2DatatypeImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLDatatypeImpl;
+
 
 public class SimpleDatatype implements Datatype {
 	
@@ -25,9 +21,9 @@ public class SimpleDatatype implements Datatype {
 	private OWL2Datatype owl2Datatype;
 
 	
-	public SimpleDatatype(OntologyIRI iri)
+	public SimpleDatatype(@Nonnull OntologyIRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 		IRI owlIri = Values.owlapiIRI(iri);
 		owlDatatype = new OWLDatatypeImpl(owlIri);
 		owl2Datatype = OWL2Datatype.getDatatype(owlIri);

@@ -1,15 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.Optional;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.datarange.Datatype;
-import org.matonto.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.OntologyIRI;
-import org.semanticweb.owlapi.model.OWLLiteral;
 
-import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 
 public class SimpleLiteral implements Literal {
 
@@ -17,7 +14,7 @@ public class SimpleLiteral implements Literal {
 	private String language;
 	private Datatype datatype;
 
-	public SimpleLiteral(String literal, String lang, Datatype datatype) 
+	public SimpleLiteral(@Nonnull String literal, String lang, @Nonnull Datatype datatype) 
 	{
 		this.literal = literal;
 		this.language = lang;

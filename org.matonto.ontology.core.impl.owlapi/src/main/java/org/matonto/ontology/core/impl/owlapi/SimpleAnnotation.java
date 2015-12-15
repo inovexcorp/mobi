@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.annotation.Nonnull;
+
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
@@ -32,12 +34,12 @@ public class SimpleAnnotation implements Annotation {
 	private Set<Annotation> annotations;
 	
 
-	public SimpleAnnotation(AnnotationProperty property, AnnotationValue value, Set<? extends Annotation> annotations)
+	public SimpleAnnotation(@Nonnull AnnotationProperty property, AnnotationValue value, Set<? extends Annotation> annotations)
 	{
-		this.property = (AnnotationProperty)Preconditions.checkNotNull(property, "property cannot be null");
-		this.value = (AnnotationValue)Preconditions.checkNotNull(value, "value cannot be null");
-		this.annotations = CollectionFactory.getCopyOnRequestSetFromMutableCollection(new TreeSet<Annotation>
-				(Preconditions.checkNotNull(annotations, "annotations cannot be null")));
+		this.property = property;
+		this.value = value;
+		if(annotations!=null)
+		    this.annotations = new TreeSet<Annotation>(annotations);
 	}
 		
 	@Override
@@ -58,14 +60,15 @@ public class SimpleAnnotation implements Annotation {
 		return annotations;
 	}
 
-	public Annotation getAnnotatedAnnotation(Set<Annotation> annotations)
+	public Annotation getAnnotatedAnnotation(@Nonnull Set<Annotation> annotations)
 	{
 		if (annotations.isEmpty()) {
 			return this;
 		}
-			Set<Annotation> merged = new HashSet<Annotation>(this.annotations);
-			merged.addAll(annotations);
-			return new SimpleAnnotation(property, value, merged);
+		
+		Set<Annotation> merged = new HashSet<Annotation>(this.annotations);
+		merged.addAll(annotations);
+		return new SimpleAnnotation(property, value, merged);
 	}
 	
 	@Override

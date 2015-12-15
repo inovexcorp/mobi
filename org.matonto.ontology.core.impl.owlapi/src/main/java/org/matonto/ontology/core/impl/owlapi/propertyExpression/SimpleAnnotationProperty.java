@@ -1,25 +1,21 @@
 package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
 import org.matonto.ontology.core.impl.owlapi.Values;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
-import com.google.common.base.Preconditions;
-
-import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationPropertyImpl;
 
 public class SimpleAnnotationProperty implements AnnotationProperty {
 
-	private static OntologyIRI iri = null;
+	private OntologyIRI iri = null;
 	
 	
-	public SimpleAnnotationProperty(OntologyIRI iri)	
+	public SimpleAnnotationProperty(@Nonnull OntologyIRI iri)	
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 	}
 		
 	@Override

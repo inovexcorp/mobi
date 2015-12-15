@@ -1,10 +1,10 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.FacetRestriction;
 import org.matonto.ontology.core.api.Literal;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.Facet;
+
 
 public class SimpleFacetRestriction implements FacetRestriction {
 
@@ -13,16 +13,15 @@ public class SimpleFacetRestriction implements FacetRestriction {
 	private Literal facetValue;
 	
 	
-	public SimpleFacetRestriction(Facet facet, Literal facetValue)
+	public SimpleFacetRestriction(@Nonnull Facet facet, @Nonnull Literal facetValue)
 	{
-		this.facet = Preconditions.checkNotNull(facet, "facet cannot be null");
-		this.facetValue = Preconditions.checkNotNull(facetValue, "facetValues cannot be null");
+		this.facet = facet;
+		this.facetValue = facetValue;
 	}
 	
 	
 	@Override
-	public Facet
-	getFacet()
+	public Facet getFacet()
 	{
 		return facet;
 	}

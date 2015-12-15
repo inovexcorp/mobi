@@ -2,22 +2,19 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.DataOneOf;
 import org.matonto.ontology.core.api.Literal;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.DataRangeType;
 
-public class SimpleDataOneOf implements DataOneOf {
-	
+
+public class SimpleDataOneOf implements DataOneOf {	
 	
 	private Set<Literal> values;
-
 	
-	public SimpleDataOneOf(Set<Literal> values)	
+	public SimpleDataOneOf(@Nonnull Set<Literal> values)	
 	{
-		this.values = new HashSet<Literal>(Preconditions.checkNotNull(values, "values cannot be null"));
+		this.values = new HashSet<Literal>(values);
 	}
 	
 	

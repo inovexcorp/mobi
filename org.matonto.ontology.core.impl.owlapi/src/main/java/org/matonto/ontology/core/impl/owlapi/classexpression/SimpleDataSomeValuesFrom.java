@@ -2,14 +2,13 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.classexpression.DataSomeValuesFrom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 
 public class SimpleDataSomeValuesFrom implements DataSomeValuesFrom {
 
@@ -17,10 +16,10 @@ public class SimpleDataSomeValuesFrom implements DataSomeValuesFrom {
 	private DataRange dataRange;
 	
 	
-	public SimpleDataSomeValuesFrom(DataPropertyExpression property, DataRange dataRange)
+	public SimpleDataSomeValuesFrom(@Nonnull DataPropertyExpression property, @Nonnull DataRange dataRange)
 	{
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
-		this.dataRange = Preconditions.checkNotNull(dataRange, "dataRange cannot be null");
+		this.property = property;
+		this.dataRange = dataRange;
 	}
 	
 	@Override
@@ -39,7 +38,7 @@ public class SimpleDataSomeValuesFrom implements DataSomeValuesFrom {
 	
 	
 	@Override
-	public boolean containsConjunct(ClassExpression ce)
+	public boolean containsConjunct(@Nonnull ClassExpression ce)
 	{
 		return ce.equals(this);
 	}
