@@ -23,7 +23,7 @@ public interface NativeRepositoryConfig extends RepositoryConfig {
     /**
      * The triple indexes for the native store. Default value is: "spoc,posc"
      *
-     * @return The long representing the syncDelay
+     * @return The Set of String representing triple indexes.
      */
     @Meta.AD(required = false)
     Set<String> tripleIndexes();
