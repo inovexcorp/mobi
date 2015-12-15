@@ -5,8 +5,10 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.rdf.RDFImportService;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.*;
+import org.openrdf.model.util.Models;
 import org.openrdf.repository.*;
 import org.openrdf.rio.*;
 import java.io.*;
@@ -16,62 +18,31 @@ import java.util.regex.*;
 @Component(provide= CSVConverter.class)
 public class CSVConverterImpl implements CSVConverter {
 
-    private Repository repository;
-
     private static final Logger LOGGER = Logger.getLogger(CSVConverterImpl.class);
 
     ValueFactory vf = new ValueFactoryImpl();
     Map<URI, ClassMapping> uriToObject;
 
-    @Reference(target = "(repositorytype=memory)")
-    public void setRepository(Repository repository) {
-        this.repository = repository;
-    }
+    RDFImportService importService;
 
-    /**
-     * Import a CSV file and load it into the MatOnto Framework
-     *
-     * @param csv         The csv file to be loaded
-     * @param mappingFile A mapping file to map the CSV data to MatOnto Ontologies. See the MatOnto Wiki for details
-     * @param repoID      The repository ID for where to load the RDF
-     * @throws RDFParseException   Thrown if there is a problem parsing the mapping file
-     * @throws IOException         Thrown if there is a problem reading one of the files given
-     * @throws RepositoryException Thrown when the service cannot connect to the MatOnto Repository
-     */
+    @Reference
+    public void setImportService(RDFImportService importService){this.importService = importService;}
+
     @Override
     public void importCSV(File csv, File mappingFile, String repoID) throws RDFParseException, IOException, RepositoryException {
         importCSV(csv, parseMapping(mappingFile), repoID);
     }
 
-    /**
-     * Import a CSV file and load it into the MatOnto Framework. Mappings are already in an RDF Model
-     *
-     * @param csv          The csv file to be loaded
-     * @param mappingModel The mapping of CSV to MatOnto Ontologies in an RDF Model. See the MatOnto Wiki for details
-     * @param repoID       The repository ID for where to load the RDF
-     * @throws IOException         Thrown if there is a problem reading a given file
-     * @throws RepositoryException Thrown if there is a problem loading data into the repository
-     */
+
     @Override
     public void importCSV(File csv, Model mappingModel, String repoID) throws IOException, RepositoryException {
         Model converted = convert(csv, mappingModel);
 
         //Import Converted using rdf.importer
-        if (!repository.isInitialized())
-            repository.initialize();
-        RepositoryConnection con = repository.getConnection();
-        con.add(converted);
+        importService.importModel(repoID, mappingModel);
     }
 
-    /**
-     * Converts a CSV to RDF using a mapping file. Returns the RDF data as a Model
-     *
-     * @param csv         The CSV file to be loaded
-     * @param mappingFile The mapping file in RDF Format. See the MatOnto Wiki for details
-     * @return A Model of RDF data converted from CSV
-     * @throws IOException       Thrown if there is a problem reading the files given
-     * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
-     */
+
     @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
@@ -103,19 +74,12 @@ public class CSVConverterImpl implements CSVConverter {
         if (separatorModel.isEmpty())
             return ',';
         else
-            separator = separatorModel.objectString().charAt(0);
+            separator = Models.objectString(separatorModel).get().charAt(0);
 
         return separator;
     }
 
-    /**
-     * Converts a CSV to RDF using a mapping file. Returns the RDF data as a Model
-     *
-     * @param csv          The CSV file to be loaded
-     * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
-     * @return A Model of RDF data converted from CSV
-     * @throws IOException Thrown if there is a problem reading the files given
-     */
+
     @Override
     public Model convert(File csv, Model mappingModel) throws IOException {
         char separator = getSeparator(mappingModel);
@@ -243,21 +207,21 @@ public class CSVConverterImpl implements CSVConverter {
 
             //Parse each property
             if (!prefixModel.isEmpty())
-                classMapping.setPrefix(prefixModel.objectString());
+                classMapping.setPrefix(Models.objectString(prefixModel).get());
             Model mapsToModel = mappingModel.filter(classMappingURI, Delimited.MAPS_TO.uri(), null);
             if (!mapsToModel.isEmpty())
-                classMapping.setMapping(mapsToModel.objectString());
+                classMapping.setMapping(Models.objectString(mapsToModel).get());
             Model localNameModel = mappingModel.filter(classMappingURI, Delimited.LOCAL_NAME.uri(), null);
             if (!localNameModel.isEmpty())
-                classMapping.setLocalName(localNameModel.objectString());
+                classMapping.setLocalName(Models.objectString(localNameModel).get());
 
             //Parse the data properties
             Model dataPropertyModel = mappingModel.filter(classMappingURI, Delimited.DATA_PROPERTY.uri(), null);
             for (Statement s : dataPropertyModel) {
                 Model propertyModel = mappingModel.filter((URI) s.getObject(), Delimited.HAS_PROPERTY.uri(), null);
-                String property = propertyModel.objectString();
+                String property = Models.objectString(propertyModel).get();
                 Model indexModel = mappingModel.filter((URI) s.getObject(), Delimited.COLUMN_INDEX.uri(), null);
-                Integer columnIndexInt = Integer.parseInt(indexModel.objectLiteral().stringValue());
+                Integer columnIndexInt = Integer.parseInt(Models.objectLiteral(indexModel).get().stringValue());
                 classMapping.addDataProperty(columnIndexInt, property);
             }
 
@@ -265,9 +229,9 @@ public class CSVConverterImpl implements CSVConverter {
             Model objectPropertyModel = mappingModel.filter(classMappingURI, Delimited.OBJECT_PROPERTY.uri(), null);
             for (Statement s : objectPropertyModel) {
                 Model propertyModel = mappingModel.filter((URI) s.getObject(), Delimited.HAS_PROPERTY.uri(), null);
-                String property = propertyModel.objectString();
+                String property = Models.objectString(propertyModel).get();
                 Model classModel = mappingModel.filter((URI) s.getObject(), Delimited.CLASS_MAPPING_PROP.uri(), null);
-                URI objectMappingResultURI = classModel.objectURI();
+                IRI objectMappingResultURI = Models.objectIRI(classModel).get();
 
                 if (uriToObject.containsKey(objectMappingResultURI))
                     classMapping.addObjectProperty(uriToObject.get(objectMappingResultURI), property);
@@ -297,7 +261,7 @@ public class CSVConverterImpl implements CSVConverter {
         if(extension.equals("jsonld"))
             mapFormat = RDFFormat.JSONLD;
         else
-            mapFormat = Rio.getParserFormatForFileName(mapping.getName());
+            mapFormat = Rio.getParserFormatForFileName(mapping.getName()).get();
         FileReader r = new FileReader(mapping);
         Model m;
         m = Rio.parse(r, "", mapFormat);

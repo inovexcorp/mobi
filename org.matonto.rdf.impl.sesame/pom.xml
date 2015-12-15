@@ -31,6 +31,10 @@
             <groupId>org.codehaus.gpars</groupId>
             <artifactId>gpars</artifactId>
         </dependency>
+        <dependency>
+            <groupId>edu.washington.cs.types.checker</groupId>
+            <artifactId>checker-framework</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

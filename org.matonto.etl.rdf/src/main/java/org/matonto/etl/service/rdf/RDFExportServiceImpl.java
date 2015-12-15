@@ -3,16 +3,19 @@ package org.matonto.etl.service.rdf;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import org.apache.log4j.Logger;
+import java.util.Optional;
 import org.matonto.etl.api.rdf.RDFExportService;
-import org.openrdf.model.Resource;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.repository.Repository;
-import org.openrdf.repository.RepositoryConnection;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
+import org.matonto.repository.base.RepositoryResult;
+import org.openrdf.model.Model;
+import org.openrdf.model.util.URIUtil;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.*;
 
@@ -23,81 +26,64 @@ import aQute.bnd.annotation.component.Reference;
 @Component(provide = RDFExportService.class, immediate=true)
 public class RDFExportServiceImpl implements RDFExportService {
 
-    private Repository repository;
+    private RepositoryManager repositoryManager;
 
-    private RepositoryConnection repConnect;
+    private ValueFactory valueFactory;
 
-    private static final Logger LOGGER = Logger.getLogger(RDFExportServiceImpl.class);
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager){this.repositoryManager = repositoryManager;}
 
-
-    @Reference(target="(repositorytype=memory)")
-    public void setRepository(Repository repository) {
-        this.repository = repository;
-    }
-
-
+    @Reference
+    public void setValueFactory(ValueFactory valueFactory){this.valueFactory = valueFactory;}
     /**
      * Exports all info from the repository with the given repositoryID into the file specified.
      * @throws IOException
      */
-    public void exportToFile(String repositoryID, File file) throws RepositoryException, RDFHandlerException, IOException, Exception {
-
-        if(repository == null){
-            throw new RepositoryException("Repository does not exist/could not be found.");
-        }
-
-        repConnect = repository.getConnection();
-        if(repConnect == null){
-            throw new RepositoryException("Repository does not exist/could not be found.");
-        }
-        LOGGER.info("Repository connected!");
-
-        RDFFormat format = Rio.getWriterFormatForFileName(file.getName());
-        RDFWriter rdfWriter = Rio.createWriter(format, new FileWriter(file.getAbsoluteFile()));
-
-        repConnect.export(rdfWriter);
-
-        System.out.println("Exporting complete!");
-
+    public void exportToFile(String repositoryID, File file) throws RepositoryException, IOException {
+        exportToFile(repositoryID, file, null, null, null, null);
     }
 
     /**
      * Exports the rdf statements with the given subject, predicate, and object into the given file with a given filetype.
      * Enter null in the subj, pred, and obj fields if you don't want to filter by a particular value
      */
-    public void exportToFile(String repositoryID, File file, String filetype, String subj, String pred, String obj) throws RepositoryException, RDFHandlerException, IOException, Exception {
-
-        ValueFactory vf = ValueFactoryImpl.getInstance();
-
-
-        repConnect = repository.getConnection();
-
-        if(repConnect == null){
-            throw new RepositoryException("Repository does not exist/could not be found.");
-        }
-        LOGGER.info("Repository connected!");
-
-        RDFFormat format = Rio.getWriterFormatForFileName(file.getName());
-        RDFWriter rdfWriter = Rio.createWriter(format, new FileWriter(file.getAbsoluteFile()));
+    public void exportToFile(String repositoryID, File file, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException {
 
         Resource subjResource = null;
-        URI predicateURI = null;
+        IRI predicateIRI = null;
         Value objValue = null;
         if(subj != null)
-            subjResource = vf.createURI(subj);
+            subjResource = valueFactory.createIRI(subj);
         if(pred != null)
-            predicateURI = vf.createURI(pred);
-        if(obj != null) {
-            try {
-                objValue = vf.createURI(obj);
-            }catch(IllegalArgumentException e){
-                objValue = vf.createLiteral(obj);
-            }
+            predicateIRI = valueFactory.createIRI(pred);
+        if(objIRI != null){
+            objValue = valueFactory.createIRI(objIRI);
+        }else if(objLit != null) {
+            objValue = valueFactory.createLiteral(objLit);
         }
 
-        repConnect.exportStatements(subjResource,predicateURI,objValue, true, rdfWriter);
+        if(!file.canWrite())
+            throw new IOException("Unable to write to file");
 
-        LOGGER.info("Exporting complete!");
+        RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() -> new IOException("Unsupported file type"));
+
+        Optional<org.matonto.repository.api.Repository> optRepo = repositoryManager.getRepository(repositoryID);
+
+        if(optRepo.isPresent()){
+            Repository repo = optRepo.get();
+            RepositoryConnection conn = repo.getConnection();
+            RepositoryResult<org.matonto.rdf.api.Statement> result = conn.getStatements(subjResource, predicateIRI, objValue);
+
+            Model m = new org.openrdf.model.impl.LinkedHashModel();
+            result.forEach((s)->{
+                m.add(Values.sesameStatement(s));
+            });
+
+            Rio.write(m, new FileWriter(file), format);
+
+        }else{
+            throw new IllegalArgumentException("Repository does not exist");
+        }
 
     }
 }
