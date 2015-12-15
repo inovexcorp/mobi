@@ -6,9 +6,7 @@ import org.matonto.rdf.api.ValueFactory;
 @Component(provide = ValueFactory.class)
 public class SimpleValueFactory extends AbstractValueFactory {
 
-    private SimpleValueFactory() {
-        super();
-    }
+    private SimpleValueFactory() {}
 
     /**
      * SingletonHolder is loaded on the first execution of SimpleValueFactory.getInstance()
