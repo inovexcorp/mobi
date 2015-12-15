@@ -38,6 +38,19 @@ class SimpleNamedGraphSpec extends Specification {
         graph.size() == 2
     }
 
+    def "add(stmt) with null returns boolean"() {
+        setup:
+        def s = new SimpleIRI("http://test.com/s")
+        def p = new SimpleIRI("http://test.com/p")
+        def o = new SimpleIRI("http://test.com/o")
+        def graph2 = new SimpleNamedGraph(null)
+        def stmt = new SimpleStatement(s, p, o, null)
+
+        expect:
+        graph2.add(stmt)
+        graph2.size() == 1
+    }
+
     def "addAll(model) returns boolean"() {
         setup:
         def s = new SimpleIRI("http://test.com/s")
