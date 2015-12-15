@@ -30,12 +30,17 @@
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${ontology.openrdf.version}</version>
-        </dependency>        
+        </dependency>   
+             
         <!-- Owlapi dependencies -->
-
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-osgidistribution</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>edu.washington.cs.types.checker</groupId>
+            <artifactId>checker-framework</artifactId>
         </dependency>
     </dependencies>
 

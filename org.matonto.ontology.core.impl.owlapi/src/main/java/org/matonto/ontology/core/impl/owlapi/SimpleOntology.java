@@ -7,7 +7,6 @@ import org.matonto.ontology.core.impl.owlapi.axiom.SimpleAxiom;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
-import org.openrdf.model.Statement;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.util.Models;
 import org.openrdf.rio.*;
@@ -210,18 +209,10 @@ public class SimpleOntology implements Ontology {
 	@Override
 	public OutputStream asJsonLD() throws MatontoOntologyException {
 		OutputStream outputStream = new ByteArrayOutputStream();
-
-		RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, outputStream);
-		WriterConfig config = writer.getWriterConfig();
-		config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
-		writer.setWriterConfig(config);
-
+        WriterConfig config = new WriterConfig();
+        config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
 		try {
-			writer.startRDF();
-			for (Statement st: asModel()) {
-				writer.handleStatement(st);
-			}
-			writer.endRDF();
+		    Rio.write(asModel(), outputStream, RDFFormat.JSONLD, config);
 		} catch (RDFHandlerException e) {
 			throw new MatontoOntologyException("Error while parsing Ontology.");
 		}
