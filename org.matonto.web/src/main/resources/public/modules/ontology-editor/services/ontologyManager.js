@@ -9,7 +9,17 @@
 
         function ontologyManagerService($http) {
             var self = this,
-                prefix = '/matonto/rest/ontology';
+                prefix = '/matonto/rest/ontology',
+                newOntology = {
+                    '@id': '',
+                    '@type': 'owl:Ontology',
+                    matonto: {
+                        rdfs: 'rdfs:',
+                        owl: 'owl:',
+                        delimiter: '#',
+                        classes: []
+                    }
+                };
 
             self.ontologies = [];
 
@@ -45,11 +55,13 @@
             }
 
             function restructure(flattened, context, prefixes) {
-                var obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon,
+                var obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon, objToArr,
                     ontology = {
-                        noDomains: [],
-                        owl: prefixes.owl,
-                        rdfs: prefixes.rdfs
+                        matonto: {
+                            noDomains: [],
+                            owl: prefixes.owl,
+                            rdfs: prefixes.rdfs
+                        }
                     },
                     classes = [],
                     properties = [],
@@ -61,10 +73,14 @@
                         delimiter = obj['@id'].charAt(len - 1);
 
                     if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
-                        obj.delimiter = delimiter;
+                        obj.matonto = {
+                            delimiter: delimiter
+                        }
                         obj['@id'] = obj['@id'].substring(0, len - 1);
                     } else {
-                        obj.delimiter = '#';
+                        obj.matonto = {
+                            delimiter: '#'
+                        }
                     }
 
                     angular.merge(ontology, obj);
@@ -116,14 +132,18 @@
                             initOntology(ontology, obj);
                             break;
                         case prefixes.owl + 'Class':
-                            obj.properties = [];
+                            obj.matonto = {
+                                properties: []
+                            };
                             obj['@id'] = removeNamespace(obj['@id']);
                             classes.push(obj);
                             break;
                         case prefixes.owl + 'DatatypeProperty':
                         case prefixes.owl + 'ObjectProperty':
                             obj['@id'] = removeNamespace(obj['@id']);
-                            obj.icon = chooseIcon(obj, prefixes.rdfs, prefixes.xsd);
+                            obj.matonto = {
+                                icon: chooseIcon(obj, prefixes.rdfs, prefixes.xsd)
+                            };
                             properties.push(obj);
                             break;
                     }
@@ -133,7 +153,7 @@
                     var i = classes.length;
                     while(i--) {
                         if(classes[i]['@id'] === id) {
-                            classes[i].properties.push(property);
+                            classes[i].matonto.properties.push(property);
                             break;
                         }
                     }
@@ -153,17 +173,30 @@
                             addToClass(removeNamespace(domain['@id']), properties[i]);
                         }
                     } else {
-                        ontology.noDomains.push(properties[i]);
+                        ontology.matonto.noDomains.push(properties[i]);
                     }
                 }
 
-                ontology.classes = classes;
+                objToArr = function(obj) {
+                    var prop,
+                        temp = [];
+                    for(prop in obj) {
+                        if(obj.hasOwnProperty(prop)) {
+                            temp.push({key: prop, value: obj[prop]});
+                        }
+                    }
+                    return temp;
+                }
+
+                ontology.matonto.classes = classes;
+                ontology.matonto.context = objToArr(context);
                 return ontology;
             }
 
             function addOntology(ontology) {
                 var getPrefixes,
-                    context = ontology['@context'] ? ontology['@context'] : {};
+                    context = ontology['@context'] || {};
+                ontology = ontology['@graph'] || ontology;
 
                 getPrefixes = function(context) {
                     var prop,
@@ -191,6 +224,7 @@
                     return result;
 
                 }
+                // TODO: integrate with latest develop ontology changes which flatten the JSON in the service layer
                 jsonld.flatten(ontology, context, function(err, flattened) {
                     self.ontologies.push(restructure(flattened, context, getPrefixes(context)));
                 });
@@ -198,6 +232,20 @@
 
             self.getList = function() {
                 return self.ontologies;
+            }
+
+            self.getObject = function(oi, ci, pi) {
+                var result = {};
+                if(pi !== undefined && ci !== undefined) {
+                    result = self.ontologies[oi].matonto.classes[ci].matonto.properties[pi];
+                } else if(pi !== undefined && ci === undefined) {
+                    result = self.ontologies[oi].matonto.noDomains[pi];
+                } else if(ci !== undefined) {
+                    result = self.ontologies[oi].matonto.classes[ci];
+                } else if(oi !== undefined) {
+                    result = self.ontologies[oi];
+                }
+                return result;
             }
 
             self.upload = function(isValid, file, namespace, localName) {
@@ -252,31 +300,50 @@
                     });
             }
 
-            self.save = function(oi, ci, pi) {
-                var result;
-                if(pi !== undefined && ci !== undefined) {
-                    result = angular.copy(self.ontologies[oi].classes[ci].properties[pi]);
-                } else if(pi !== undefined && ci === undefined) {
-                    result = angular.copy(self.ontologies[oi].noDomains[pi]);
-                } else if(ci !== undefined) {
-                    result = angular.copy(self.ontologies[oi].classes[ci]);
-                    delete result.properties;
-                } else {
-                    result = angular.copy(self.ontologies[oi]);
-                    delete result.classes;
+            self.edit = function(isValid, oi, ci, pi) {
+                var item,
+                    current = self.ontologies[oi],
+                    id = current.matonto.prefix || (current['@id'] + current.matonto.delimiter),
+                    result = 'not valid';
+                if(isValid) {
+                    if(pi !== undefined && ci !== undefined) {
+                        item = current.matonto.classes[ci].matonto.properties[pi];
+                        result = angular.copy(item);
+                        result['@id'] = id + result['@id'];
+                    } else if(pi !== undefined && ci === undefined) {
+                        item = current.matonto.noDomains[pi];
+                        result = angular.copy(item);
+                        result['@id'] = id + result['@id'];
+                    } else if(ci !== undefined) {
+                        item = current.matonto.classes[ci];
+                        result = angular.copy(item);
+                        result['@id'] = id + result['@id'];
+                    } else {
+                        result = angular.copy(current);
+                        result['@id'] = result['@id'] + result.matonto.delimiter;
+                    }
+                    item.matonto.unsaved = false;
+                    delete result.matonto;
                 }
                 console.log(result);
             }
 
-            self.create = function(oi, ci, pi, obj) {
-                var result;
-                if(pi !== undefined) {
-
-                } else if(ci !== undefined) {
-
-                } else {
-
+            self.create = function(isValid, oi, ci, pi, obj) {
+                var item = angular.copy(obj),
+                    result = 'not valid';
+                delete item.matonto;
+                if(isValid) {
+                    if(pi !== undefined) {
+                        result = angular.copy(self.ontologies[oi].classes[ci]['@id']);
+                    } else if(ci !== undefined) {
+                        result = angular.copy(self.ontologies[oi]['@id']);
+                        delete item.properties;
+                    } else {
+                        result = '';
+                        delete item.classes;
+                    }
                 }
+                console.log(result, obj);
             }
         }
 })();
