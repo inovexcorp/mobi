@@ -299,12 +299,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         result4.size() == 4
         result5.size() == 1
     }
-
-    def "getValueFactory() returns a ValueFactory"() {
-        expect:
-        conn.getValueFactory() instanceof ValueFactory
-    }
-
+    
     def "getContextIDs() returns correctly for empty repo"() {
         expect:
         !conn.getContextIDs().hasNext()
