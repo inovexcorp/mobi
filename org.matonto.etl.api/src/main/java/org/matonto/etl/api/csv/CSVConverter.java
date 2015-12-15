@@ -34,22 +34,22 @@ public interface CSVConverter {
 
     //TODO File out javadoc
     /**
-     *
-     * @param csv
-     * @param mappingFile
-     * @param exportFile
-     * @throws IOException
+     * Converts a CSV to RDF using a mapping file. Exports the resulting RDF to a file
+     * @param csv          The CSV file to be loaded
+     * @param mappingFile  An RDF file of the mapping to CSV. See MatOnto Wiki for details.
+     * @param exportFile   The file where the converted RDF should be written to
+     * @throws IOException Thrown if there is a problem reading any of the files or writting the output file
      */
     void exportCSV(File csv, File mappingFile, File exportFile) throws IOException;
 
 
     //TODO Fill out javadoc
     /**
-     *
-     * @param csv
-     * @param mappingModel
-     * @param exportFile
-     * @throws IOException
+     * Converts a CSV to RDF using a mapping file in a model. Exports the resulting RDF to a file
+     * @param csv          The CSV file to be loaded
+     * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
+     * @param exportFile   The file where the converted RDF should be written to
+     * @throws IOException Thrown if there is a problem reading any of the files or writting the output file
      */
     void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException;
 
