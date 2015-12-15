@@ -9,6 +9,9 @@ import java.io.Writer;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.json.Json;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonObjectBuilder;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -22,7 +25,6 @@ import javax.ws.rs.core.StreamingOutput;
 import com.sun.jersey.multipart.FormDataParam;
 
 import org.apache.commons.io.IOUtils;
-import org.json.JSONObject;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
@@ -41,10 +43,11 @@ import aQute.bnd.annotation.component.Reference;
 @Path("/ontology")
 public class OntologyRestImpl {
 	
-		private static OntologyManager manager;
-		private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
-		
-	    @Activate
+	private static OntologyManager manager;
+	private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
+	private static final JsonBuilderFactory JSON_FACTORY = Json.createBuilderFactory(null);
+
+	@Activate
 	    public void activate() 
 	    {
 	        LOG.info("Activating the OntologyRestImpl");
@@ -84,16 +87,16 @@ public class OntologyRestImpl {
 			
 			Optional<Map<OntologyId, String>> ontologyRegistry = manager.getOntologyRegistry();	
 			Map<OntologyId, String> ontologies = ontologyRegistry.get();
-			JSONObject json = new JSONObject();
-			
+            JsonObjectBuilder builder = JSON_FACTORY.createObjectBuilder();
+
 			if(!ontologies.isEmpty()) {
 				for(OntologyId oid : ontologies.keySet()) {
 					String ontologyId = oid.getOntologyIdentifier().stringValue();
-					json.put(ontologyId, ontologies.get(oid));
+					builder.add(ontologyId, ontologies.get(oid));
 				}
 			}
 
-			return Response.status(200).entity(json.toString()).build();
+			return Response.status(200).entity(builder.build().toString()).build();
 		}
 
 		
@@ -116,7 +119,7 @@ public class OntologyRestImpl {
 				throw new IllegalStateException("Ontology manager is null");
 			
 			boolean persisted = false;
-			JSONObject json = new JSONObject();
+            JsonObjectBuilder builder = JSON_FACTORY.createObjectBuilder();
 			Ontology ontology;
 			
 			try{
@@ -125,13 +128,13 @@ public class OntologyRestImpl {
 				persisted = manager.storeOntology(ontology);
 				
 			} catch(MatontoOntologyException ex) {
-				json.put("error", ex.getMessage());
+				builder.add("error", ex.getMessage());
 			} finally {	
 				IOUtils.closeQuietly(fileInputStream);
 			}
 			
-			json.put("result", persisted);		
-			return Response.status(200).entity(json.toString()).build();
+			builder.add("result", persisted);
+			return Response.status(200).entity(builder.build().toString()).build();
 		}
 		
 		
@@ -154,13 +157,12 @@ public class OntologyRestImpl {
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 			
-			JSONObject json = new JSONObject();
-			Optional<Ontology> ontology = Optional.empty();
+            JsonObjectBuilder builder = JSON_FACTORY.createObjectBuilder();
+            Optional<Ontology> ontology = Optional.empty();
 			String message = null;
-			OntologyId ontologyId = null;
+            OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+            OntologyId ontologyId = manager.createOntologyId(iri);
 			try{
-				OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
-				ontologyId = manager.createOntologyId(iri);
 				ontology = manager.retrieveOntology(ontologyId);
 				
 			} catch(MatontoOntologyException ex) {
@@ -190,17 +192,17 @@ public class OntologyRestImpl {
 					
 				IOUtils.closeQuietly(outputStream);	
 					
-				json.put("document format", rdfFormat);
-				json.put("ontology id", ontologyId);
-				json.put("ontology", content);
+				builder.add("document format", rdfFormat);
+                builder.add("ontology id", ontologyId.getOntologyIdentifier().stringValue());
+                builder.add("ontology", content);
 				
 			} else if(message == null) {
-				json.put("error", "OntologyId doesn't exist.");
+                builder.add("error", "OntologyId doesn't exist.");
 			} else {
-				json.put("error", message);
+                builder.add("error", message);
 			}
 			
-		  return Response.status(200).entity(json.toString()).build();
+		  return Response.status(200).entity(builder.build().toString()).build();
 		}
 		
 		
@@ -304,7 +306,7 @@ public class OntologyRestImpl {
 			if(manager == null)
 				throw new IllegalStateException("Ontology manager is null");
 
-			JSONObject json = new JSONObject();
+			JsonObjectBuilder builder = JSON_FACTORY.createObjectBuilder();
 			boolean deleted = false;
 			
 			try{
@@ -312,12 +314,12 @@ public class OntologyRestImpl {
 				OntologyId ontologyId = manager.createOntologyId(iri);
 				deleted = manager.deleteOntology(ontologyId);
 			} catch(MatontoOntologyException ex) {
-				json.put("error", ex.getMessage());
+				builder.add("error", ex.getMessage());
 			} 
 
-			json.put("result", deleted);
+			builder.add("result", deleted);
 			  
-			return Response.ok(json.toString()).build();
+			return Response.ok(builder.build().toString()).build();
 		}
 		
 }
