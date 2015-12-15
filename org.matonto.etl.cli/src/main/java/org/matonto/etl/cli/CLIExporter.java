@@ -34,7 +34,6 @@ public class CLIExporter implements Action {
     public RDFExportService getExportService() {
         return exportService;
     }
-
     public void setExportService(RDFExportService exportService) {
         this.exportService = exportService;
     }
