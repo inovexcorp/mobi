@@ -1,9 +1,10 @@
 package org.matonto.etl.cli;
 
-import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Argument;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.Option;
+import org.apache.felix.gogo.commands.Action;
+import org.apache.felix.gogo.commands.Argument;
+import org.apache.felix.gogo.commands.Command;
+import org.apache.felix.gogo.commands.Option;
+import org.apache.felix.service.command.CommandSession;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
@@ -32,7 +33,7 @@ public class CLITransform implements Action{
     public void setCsvConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
 
     @Override
-    public Object execute() throws Exception {
+    public Object execute(CommandSession session) throws Exception {
         LOGGER.info("Importing CSV");
 
         File newFile = new File(file);

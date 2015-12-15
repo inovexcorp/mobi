@@ -3,17 +3,17 @@
     <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
 
         <command name="matonto/export">
-            <action class="org.matonto.cli.exporter.CLIExporter">
+            <action class="org.matonto.etl.cli.CLIExporter">
                 <property name="exportService" ref="exportServiceBean" />
             </action>
         </command>
         <command name="matonto/import">
-            <action class="org.matonto.cli.exporter.CLIImporter">
+            <action class="org.matonto.etl.cli.CLIImporter">
                 <property name="importService" ref="importServiceBean" />
             </action>
         </command>
         <command name="matonto/transform">
-            <action class="org.matonto.cli.exporter.CLITransform">
+            <action class="org.matonto.etl.cli.CLITransform">
                 <property name="csvConverter" ref="csvConverterBean" />
             </action>
         </command>

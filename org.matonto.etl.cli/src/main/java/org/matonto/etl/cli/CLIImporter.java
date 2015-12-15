@@ -3,10 +3,11 @@ package org.matonto.etl.cli;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.karaf.shell.api.action.Argument;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.Option;
-import org.apache.karaf.shell.api.action.Action;
+import org.apache.felix.gogo.commands.Action;
+import org.apache.felix.gogo.commands.Argument;
+import org.apache.felix.gogo.commands.Command;
+import org.apache.felix.gogo.commands.Option;
+import org.apache.felix.service.command.CommandSession;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.log4j.Logger;
 import org.openrdf.repository.RepositoryException;
@@ -36,7 +37,7 @@ public class CLIImporter implements Action {
     public void setImportService(RDFImportService importService) {this.importService = importService;}
 
     @Override
-    public Object execute() throws Exception {
+    public Object execute(CommandSession commandSession) throws Exception {
 
         LOGGER.info("Importing RDF");
         try{

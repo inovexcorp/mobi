@@ -1,10 +1,11 @@
 package org.matonto.etl.cli;
 
 import java.io.File;
-import org.apache.karaf.shell.api.action.Argument;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Option;
+import org.apache.felix.gogo.commands.Action;
+import org.apache.felix.gogo.commands.Argument;
+import org.apache.felix.gogo.commands.Command;
+import org.apache.felix.gogo.commands.Option;
+import org.apache.felix.service.command.CommandSession;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.etl.api.rdf.RDFExportService;
 
@@ -39,11 +40,10 @@ public class CLIExporter implements Action {
     }
 
     @Override
-    public Object execute() throws Exception {
+    public Object execute(CommandSession commandSession) throws Exception {
 
         exportService.exportToFile(repositoryId, file, subj, predicate, objIRI, objLit);
 
         return null;
     }
-
 }
