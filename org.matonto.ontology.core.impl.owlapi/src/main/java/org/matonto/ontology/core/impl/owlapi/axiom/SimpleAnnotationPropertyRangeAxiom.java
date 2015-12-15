@@ -5,8 +5,8 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.axiom.AnnotationPropertyRangeAxiom;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.AxiomType;
+import org.matonto.rdf.api.IRI;
 
 
 public class SimpleAnnotationPropertyRangeAxiom 
@@ -14,11 +14,11 @@ public class SimpleAnnotationPropertyRangeAxiom
 	implements AnnotationPropertyRangeAxiom {
 
 
-	private OntologyIRI range;
+	private IRI range;
 	private AnnotationProperty property;
 	
 	
-	public SimpleAnnotationPropertyRangeAxiom(@Nonnull OntologyIRI range, @Nonnull AnnotationProperty property, Set<Annotation> annotations) 
+	public SimpleAnnotationPropertyRangeAxiom(@Nonnull IRI range, @Nonnull AnnotationProperty property, Set<Annotation> annotations) 
 	{
 		super(annotations);
 		this.range = range;
@@ -51,7 +51,7 @@ public class SimpleAnnotationPropertyRangeAxiom
 
 	
 	@Override
-	public OntologyIRI getRange() 
+	public IRI getRange() 
 	{
 		return range;
 	}

@@ -2,21 +2,21 @@ package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
+import org.matonto.rdf.api.IRI;
 
 
 public class SimpleDataProperty implements DataProperty {
 
-	private OntologyIRI iri;
+	private IRI iri;
 	
-	public SimpleDataProperty(@Nonnull OntologyIRI iri)
+	public SimpleDataProperty(@Nonnull IRI iri)
 	{
 		this.iri = iri;
 	}
 	
 	@Override
-	public OntologyIRI getIRI() 
+	public IRI getIRI() 
 	{
 		return iri;
 	}
@@ -37,7 +37,7 @@ public class SimpleDataProperty implements DataProperty {
 		}
 		
 		if(obj instanceof DataProperty) {
-			OntologyIRI otherIri = ((DataProperty) obj).getIRI();
+			IRI otherIri = ((DataProperty) obj).getIRI();
 			return otherIri.equals(iri);
 		}
 		

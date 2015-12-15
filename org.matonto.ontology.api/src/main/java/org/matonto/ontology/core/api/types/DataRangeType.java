@@ -1,7 +1,11 @@
 package org.matonto.ontology.core.api.types;
 
 import javax.annotation.Nonnull;
-import org.semanticweb.owlapi.vocab.Namespaces;
+
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
+
+import aQute.bnd.annotation.component.Reference;
 
 
 public enum DataRangeType {
@@ -15,13 +19,25 @@ public enum DataRangeType {
 
 	private final String name;
 	private final String prefixedName;
-//	private final SimpleIRI iri;
-	
+	private final IRI iri;
+    private static ValueFactory factory;
+    
+    @Reference
+    protected void setValueFactory(final ValueFactory vf)
+    {
+        factory = vf;
+    }
+    	
 	DataRangeType(@Nonnull String name) {
 		this.name = name;
-		prefixedName = (Namespaces.OWL.getPrefixName() + ':' + name);
-//		iri = SimpleIRI.create(Namespaces.OWL.getPrefixIRI(), name);
+		prefixedName = ("owl" + ':' + name);
+		iri = createIRI("http://www.w3.org/2002/07/owl#", name);
 	}
+	
+    private IRI createIRI(String namespace, String localName)
+    {
+        return factory.createIRI(namespace.toString(), localName);
+    }	
    
 	public String getName()
 	{
@@ -38,10 +54,10 @@ public enum DataRangeType {
 		return name;
 	}
 
-//	public SimpleIRI getIRI()
-//	{
-//		return iri;
-//	}
+	public IRI getIRI()
+	{
+		return iri;
+	}
 
 	public String getPrefixedName()
 	{

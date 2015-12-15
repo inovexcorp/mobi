@@ -5,23 +5,23 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.OClass;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.matonto.ontology.core.impl.owlapi.Values;
+import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 
 public class SimpleClass implements OClass {
 
-	private OntologyIRI iri;
+	private IRI iri;
 	private final boolean isThing;
 	private final boolean isNothing;
 	private OWLClass owlClass;
 	
 	
-	public SimpleClass(@Nonnull OntologyIRI iri)
+	public SimpleClass(@Nonnull IRI iri)
 	{
 		this.iri = iri;
 		owlClass = new OWLClassImpl(Values.owlapiIRI(iri));
@@ -30,7 +30,7 @@ public class SimpleClass implements OClass {
 	}
 	
 	@Override
-	public OntologyIRI getIRI() 
+	public IRI getIRI() 
 	{
 		return iri;
 	}
@@ -63,7 +63,7 @@ public class SimpleClass implements OClass {
 		}
 		
 		if(obj instanceof OClass) {
-			OntologyIRI otherIri = ((OClass) obj).getIRI();
+			IRI otherIri = ((OClass) obj).getIRI();
 			return otherIri.equals(iri);
 		}
 		

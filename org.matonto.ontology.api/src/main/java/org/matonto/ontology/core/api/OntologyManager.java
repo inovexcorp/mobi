@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.IRI;
 
 
 public interface OntologyManager {
@@ -15,7 +16,7 @@ public interface OntologyManager {
 	
 	Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException, FileNotFoundException;
 	
-	Ontology createOntology(OntologyIRI iri, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(IRI iri, OntologyId ontologyId) throws MatontoOntologyException;
 	
 	Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
 	
@@ -50,12 +51,12 @@ public interface OntologyManager {
 	
 	OntologyId createOntologyId();
 	
-	OntologyId createOntologyId(OntologyIRI ontologyIRI);
+	OntologyId createOntologyId(IRI ontologyIRI);
 	
-	OntologyId createOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI);
+	OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 	
-	OntologyIRI createOntologyIRI(String ns, String ln);
+	IRI createOntologyIRI(String ns, String ln);
 	
-	OntologyIRI createOntologyIRI(String iriString);
+	IRI createOntologyIRI(String iriString);
 	
 }

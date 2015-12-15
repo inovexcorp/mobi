@@ -8,9 +8,9 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.axiom.AnnotationAssertionAxiom;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.AnnotationSubject;
-import org.matonto.ontology.core.api.AnnotationValue;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.matonto.ontology.core.impl.owlapi.SimpleAnnotation;
+import org.matonto.rdf.api.Value;
 
 
 public class SimpleAnnotationAssertionAxiom 
@@ -20,10 +20,10 @@ public class SimpleAnnotationAssertionAxiom
 	
 	private AnnotationSubject subject;
 	private AnnotationProperty property;
-	private AnnotationValue value;
+	private Value value;
 	
 	
-	public SimpleAnnotationAssertionAxiom(@Nonnull AnnotationSubject subject, @Nonnull AnnotationProperty property, AnnotationValue value, Set<Annotation> annotations) 
+	public SimpleAnnotationAssertionAxiom(@Nonnull AnnotationSubject subject, @Nonnull AnnotationProperty property, Value value, Set<Annotation> annotations) 
 	{
 		super(annotations);
 		this.subject = subject;
@@ -71,7 +71,7 @@ public class SimpleAnnotationAssertionAxiom
 	
 
 	@Override
-	public AnnotationValue getValue() 
+	public Value getValue() 
 	{		
 		return value;
 	}

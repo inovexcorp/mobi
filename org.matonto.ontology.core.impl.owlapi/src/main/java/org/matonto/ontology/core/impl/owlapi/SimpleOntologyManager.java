@@ -7,14 +7,13 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.annotation.Nonnull;
-
 import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
 import org.openrdf.model.impl.LinkedHashModel;
@@ -23,7 +22,6 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.repository.http.HTTPRepository;
-
 import info.aduna.iteration.Iterations;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
@@ -35,7 +33,6 @@ import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
@@ -46,6 +43,7 @@ import aQute.bnd.annotation.component.Reference;
 public class SimpleOntologyManager implements OntologyManager {
 	
 	private static Repository repository;
+    private static ValueFactory factory;
 	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.ofNullable(new HashMap<>());
 	private static String location;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
@@ -72,6 +70,17 @@ public class SimpleOntologyManager implements OntologyManager {
 	    repository = null;
 	}
 	
+    @Reference
+    protected void setValueFactory(final ValueFactory vf)
+    {
+        factory = vf;
+    }
+    
+    protected void unsetValueFactory(final ValueFactory vf)
+    {
+        factory = null;
+    }
+	
 	@Override
 	public Optional<Map<OntologyId, String>> getOntologyRegistry() {
 		return ontologyRegistry;
@@ -91,7 +100,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
 
 	@Override
-	public Ontology createOntology(OntologyIRI iri, OntologyId ontologyId) throws MatontoOntologyException {
+	public Ontology createOntology(IRI iri, OntologyId ontologyId) throws MatontoOntologyException {
 		return new SimpleOntology(iri, ontologyId);
 	}
 
@@ -238,7 +247,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			
 			while (contextIds.hasNext()) {
 				Resource contextId = contextIds.next();
-			    ontologyMap.put(createOntologyId(new SimpleIRI(contextId.stringValue())), location);
+			    ontologyMap.put(createOntologyId(factory.createIRI(contextId.stringValue())), location);
 			}
 			
 			ontologyRegistry = Optional.of(ontologyMap);
@@ -262,23 +271,23 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
 	@Override
-    public OntologyId createOntologyId(OntologyIRI ontologyIRI) {
+    public OntologyId createOntologyId(IRI ontologyIRI) {
         return new SimpleOntologyId(ontologyIRI);
     }
 
 	@Override
-    public OntologyId createOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI) {
+    public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
         return new SimpleOntologyId(ontologyIRI, versionIRI);
     }
 
 	@Override
-	public OntologyIRI createOntologyIRI(String ns, String ln) {
-		return new SimpleIRI(ns, ln);
+	public IRI createOntologyIRI(String ns, String ln) {
+		return factory.createIRI(ns, ln);
 	}
 	
 	@Override
-	public OntologyIRI createOntologyIRI(String iriString) {
-		return new SimpleIRI(iriString);
+	public IRI createOntologyIRI(String iriString) {
+		return factory.createIRI(iriString);
 	}
 
     private void closeConnection(RepositoryConnection conn) {

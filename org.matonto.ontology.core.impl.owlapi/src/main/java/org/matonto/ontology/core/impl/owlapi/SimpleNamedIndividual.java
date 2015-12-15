@@ -2,24 +2,24 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.NamedIndividual;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
+import org.matonto.rdf.api.IRI;
 
 
 public class SimpleNamedIndividual 
 	implements NamedIndividual {
 
-	private OntologyIRI iri;
+	private IRI iri;
 	
 	
-	public SimpleNamedIndividual(@Nonnull OntologyIRI iri)
+	public SimpleNamedIndividual(@Nonnull IRI iri)
 	{
 		this.iri = iri;
 	}
 	
 	
 	@Override
-	public OntologyIRI getIRI() 
+	public IRI getIRI() 
 	{
 		return iri;
 	}

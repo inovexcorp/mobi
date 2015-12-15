@@ -37,12 +37,4 @@ public enum EntityType {
 		return pluralPrintName;
 	}
 	
-//	public String getPrefixedName()
-//	{
-//	}
-//
-//	public OntologyIRI getIRI()
-//	{
-//		return SimpleIRI.matontoIRI(owlapiEntityType(this).getIRI());
-//	}
 }

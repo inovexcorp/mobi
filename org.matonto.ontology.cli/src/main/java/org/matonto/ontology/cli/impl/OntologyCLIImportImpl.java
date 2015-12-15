@@ -4,17 +4,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
@@ -100,7 +98,7 @@ public class OntologyCLIImportImpl implements Action
 
 		File newFile = new File(fromFile);
 		if(newFile.exists()) {
-			OntologyIRI iri = manager.createOntologyIRI(namespace + "#" + localName);
+			IRI iri = manager.createOntologyIRI(namespace + "#" + localName);
 			Ontology ontology = manager.createOntology(newFile, manager.createOntologyId(iri));
 			persisted = manager.storeOntology(ontology);
 		}

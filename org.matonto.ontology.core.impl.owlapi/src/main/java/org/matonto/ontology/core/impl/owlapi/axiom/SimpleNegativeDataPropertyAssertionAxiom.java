@@ -5,9 +5,9 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.Individual;
-import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.axiom.NegativeDataPropertyAssertionAxiom;
 import org.matonto.ontology.core.api.types.AxiomType;
+import org.matonto.rdf.api.Literal;
 
 
 public class SimpleNegativeDataPropertyAssertionAxiom 

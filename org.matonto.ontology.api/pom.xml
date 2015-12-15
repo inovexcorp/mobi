@@ -24,6 +24,10 @@
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.api</artifactId>
+        </dependency>    
 
         <!-- Openrdf Sesame dependencies -->
         <dependency>
@@ -31,16 +35,15 @@
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${ontology.openrdf.version}</version>
         </dependency>   
-             
-        <!-- Owlapi dependencies -->
-        <dependency>
-            <groupId>net.sourceforge.owlapi</groupId>
-            <artifactId>owlapi-osgidistribution</artifactId>
-        </dependency>
         
         <dependency>
             <groupId>edu.washington.cs.types.checker</groupId>
             <artifactId>checker-framework</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
     </dependencies>
 

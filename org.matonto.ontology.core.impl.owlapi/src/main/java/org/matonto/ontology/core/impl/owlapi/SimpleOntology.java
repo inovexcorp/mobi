@@ -3,9 +3,9 @@ package org.matonto.ontology.core.impl.owlapi;
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.axiom.Axiom;
-import org.matonto.ontology.core.impl.owlapi.axiom.SimpleAxiom;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.IRI;
 import org.openrdf.model.Model;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.util.Models;
@@ -18,14 +18,17 @@ import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rio.RioRenderer;
-
 import java.io.*;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nonnull;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 
 public class SimpleOntology implements Ontology {
@@ -40,8 +43,8 @@ public class SimpleOntology implements Ontology {
         this.ontology = ontology;
         this.manager = this.ontology.getOWLOntologyManager();
         OWLOntologyID owlApiID = ontology.getOntologyID();
-        com.google.common.base.Optional<IRI> oIRI = owlApiID.getOntologyIRI();
-        com.google.common.base.Optional<IRI> vIRI = owlApiID.getVersionIRI();
+        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = owlApiID.getOntologyIRI();
+        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlApiID.getVersionIRI();
 		
         if (owlApiID.isAnonymous()) {
             ontologyId = new SimpleOntologyId();
@@ -78,7 +81,7 @@ public class SimpleOntology implements Ontology {
         this(new FileInputStream(file), ontologyId);
 	}
 	
-	public SimpleOntology(OntologyIRI iri, OntologyId ontologyId) throws MatontoOntologyException {
+	public SimpleOntology(IRI iri, OntologyId ontologyId) throws MatontoOntologyException {
         this.ontologyId = ontologyId;
 
 		try {

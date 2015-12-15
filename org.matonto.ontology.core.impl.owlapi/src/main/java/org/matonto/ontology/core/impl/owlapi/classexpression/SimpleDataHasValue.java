@@ -6,8 +6,8 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.DataHasValue;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
-import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+import org.matonto.rdf.api.Literal;
 
 
 public class SimpleDataHasValue implements DataHasValue {

@@ -2,24 +2,24 @@ package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.matonto.ontology.core.impl.owlapi.Values;
+import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
 
 public class SimpleAnnotationProperty implements AnnotationProperty {
 
-	private OntologyIRI iri = null;
+	private IRI iri = null;
 	
 	
-	public SimpleAnnotationProperty(@Nonnull OntologyIRI iri)	
+	public SimpleAnnotationProperty(@Nonnull IRI iri)	
 	{
 		this.iri = iri;
 	}
 		
 	@Override
-	public OntologyIRI getIRI()
+	public IRI getIRI()
 	{
 		return iri;
 	}

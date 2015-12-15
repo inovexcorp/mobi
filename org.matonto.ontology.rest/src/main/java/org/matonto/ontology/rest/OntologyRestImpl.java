@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -20,16 +19,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import com.sun.jersey.multipart.FormDataParam;
-
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
@@ -120,7 +117,7 @@ public class OntologyRestImpl {
 		Ontology ontology;
 		
 		try{
-			OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+			IRI iri = manager.createOntologyIRI(ontologyIdStr);
 			ontology = manager.createOntology(fileInputStream, manager.createOntologyId(iri));
 			persisted = manager.storeOntology(ontology);
 			
@@ -157,7 +154,7 @@ public class OntologyRestImpl {
 		JSONObject json = new JSONObject();
         Optional<Ontology> ontology = Optional.empty();
 		String message = null;
-        OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+        IRI iri = manager.createOntologyIRI(ontologyIdStr);
         OntologyId ontologyId = manager.createOntologyId(iri);
 		try{
 			ontology = manager.retrieveOntology(ontologyId);
@@ -226,7 +223,7 @@ public class OntologyRestImpl {
 		String message = null;
 		
 		try{
-			OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+			IRI iri = manager.createOntologyIRI(ontologyIdStr);
 			OntologyId ontologyId = manager.createOntologyId(iri);
 			ontology = manager.retrieveOntology(ontologyId);
 		} catch(MatontoOntologyException ex) {
@@ -307,7 +304,7 @@ public class OntologyRestImpl {
 		boolean deleted = false;
 		
 		try{
-			OntologyIRI iri = manager.createOntologyIRI(ontologyIdStr);
+			IRI iri = manager.createOntologyIRI(ontologyIdStr);
 			OntologyId ontologyId = manager.createOntologyId(iri);
 			deleted = manager.deleteOntology(ontologyId);
 		} catch(MatontoOntologyException ex) {

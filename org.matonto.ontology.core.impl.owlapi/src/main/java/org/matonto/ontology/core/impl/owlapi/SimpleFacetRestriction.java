@@ -2,8 +2,8 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.FacetRestriction;
-import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.types.Facet;
+import org.matonto.rdf.api.Literal;
 
 
 public class SimpleFacetRestriction implements FacetRestriction {

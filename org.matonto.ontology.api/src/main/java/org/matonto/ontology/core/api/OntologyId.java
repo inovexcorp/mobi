@@ -2,15 +2,16 @@ package org.matonto.ontology.core.api;
 
 import java.util.Optional;
 
+import org.matonto.rdf.api.IRI;
 import org.openrdf.model.Resource;
 
 
 
 public interface OntologyId {
 
-	Optional<OntologyIRI> getOntologyIRI();
+	Optional<IRI> getOntologyIRI();
 	
-	Optional<OntologyIRI> getVersionIRI();
+	Optional<IRI> getVersionIRI();
 
 	/**
 	 * The Resource that uniquely identifies this ontology. OWL2 Specifications state that an ontology

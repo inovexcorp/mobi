@@ -6,21 +6,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
-
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.IRI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
@@ -115,7 +112,7 @@ public class OntologyCLIExportImpl implements Action
 			if (!newFile.exists())
 				newFile.createNewFile();
 			
-			OntologyIRI iri = manager.createOntologyIRI(namespace + "#" + localName);
+			IRI iri = manager.createOntologyIRI(namespace + "#" + localName);
 			OntologyId id = manager.createOntologyId(iri);
 			Optional<Ontology> ontology = manager.retrieveOntology(id);
 			

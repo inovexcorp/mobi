@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.DataOneOf;
-import org.matonto.ontology.core.api.Literal;
 import org.matonto.ontology.core.api.types.DataRangeType;
+import org.matonto.rdf.api.Literal;
 
 
 public class SimpleDataOneOf implements DataOneOf {	
