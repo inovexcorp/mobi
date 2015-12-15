@@ -9,10 +9,9 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.util.Models;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.Rio;
+import org.openrdf.rio.*;
+import org.openrdf.rio.helpers.JSONLDMode;
+import org.openrdf.rio.helpers.JSONLDSettings;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -210,12 +209,15 @@ public class SimpleOntology implements Ontology {
 	@Override
 	public OutputStream asJsonLD() throws MatontoOntologyException {
 		OutputStream outputStream = new ByteArrayOutputStream();
+        WriterConfig config = new WriterConfig();
+        config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
 		try {
-			Rio.write(asModel(), outputStream, RDFFormat.JSONLD);
+		    Rio.write(asModel(), outputStream, RDFFormat.JSONLD, config);
 		} catch (RDFHandlerException e) {
-			e.printStackTrace();
+			throw new MatontoOntologyException("Error while parsing Ontology.");
 		}
-		return outputStream;
+
+        return outputStream;
 	}
 
 	@Override
