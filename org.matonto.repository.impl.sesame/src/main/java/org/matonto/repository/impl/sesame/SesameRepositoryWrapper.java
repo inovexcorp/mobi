@@ -2,6 +2,7 @@ package org.matonto.repository.impl.sesame;
 
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.config.RepositoryConfig;
 import org.matonto.repository.exception.RepositoryException;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.util.Optional;
 public class SesameRepositoryWrapper implements Repository {
 
     org.openrdf.repository.Repository sesameRepository;
+    RepositoryConfig config;
 
     public SesameRepositoryWrapper() {
     }
@@ -28,6 +30,15 @@ public class SesameRepositoryWrapper implements Repository {
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
+    }
+
+    @Override
+    public RepositoryConfig getConfig() {
+        return config;
+    }
+
+    public void setConfig(RepositoryConfig config) {
+        this.config = config;
     }
 
     public Optional<File> getDataDir() {

@@ -34,6 +34,7 @@
         <module>org.matonto.itests</module>
         <module>org.matonto.distribution</module>
         <module>org.matonto.repository.impl.core</module>
+        <module>org.matonto.persistence.cli</module>
     </modules>
 
     <properties>

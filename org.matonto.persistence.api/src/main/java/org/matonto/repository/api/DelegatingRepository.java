@@ -16,7 +16,6 @@ public interface DelegatingRepository extends Repository {
      */
     void setDelegate(Repository delegate);
 
-
     /**
      * Returns the ID of this Repository Object.
      *
