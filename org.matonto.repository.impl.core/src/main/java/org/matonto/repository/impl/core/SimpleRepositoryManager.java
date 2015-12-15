@@ -13,9 +13,9 @@ import java.util.Optional;
 @Component
 public class SimpleRepositoryManager implements RepositoryManager {
 
-    protected Map<String, Repository> initializedRepositories;
+    protected Map<String, Repository> initializedRepositories = new HashMap<>();
 
-    @Reference(type = '*')
+    @Reference(type = '*', dynamic = true)
     public void addRepository(DelegatingRepository repository) {
         initializedRepositories.put(repository.getRepositoryID(), repository);
     }
