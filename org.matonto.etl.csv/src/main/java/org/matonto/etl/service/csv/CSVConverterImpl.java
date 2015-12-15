@@ -45,7 +45,7 @@ public class CSVConverterImpl implements CSVConverter {
         Model converted = convert(csv, mappingModel);
 
         //Import Converted using rdf.importer
-        importService.importModel(repoID, mappingModel);
+        importService.importModel(repoID, converted);
     }
 
     @Override

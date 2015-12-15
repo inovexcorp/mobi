@@ -56,7 +56,7 @@ public class RDFExportServiceImpl implements RDFExportService {
             objValue = valueFactory.createLiteral(objLit);
         }
 
-        if(!file.canWrite())
+        if(file.exists() && !file.canWrite())
             throw new IOException("Unable to write to file");
 
         RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() -> new IOException("Unsupported file type"));
