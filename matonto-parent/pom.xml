@@ -128,6 +128,11 @@
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
             </dependency>
+            <dependency>
+                <groupId>edu.washington.cs.types.checker</groupId>
+                <artifactId>checker-framework</artifactId>
+                <version>1.7.5</version>
+            </dependency>
 
             <!-- Test Dependencies -->
             <dependency>

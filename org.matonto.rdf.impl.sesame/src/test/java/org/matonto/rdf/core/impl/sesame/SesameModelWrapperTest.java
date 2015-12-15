@@ -1,9 +1,7 @@
 package org.matonto.rdf.core.impl.sesame;
 
 import org.junit.Test;
-import org.matonto.rdf.api.BNode;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.*;
 import org.openrdf.model.impl.LinkedHashModel;
 
 import static org.junit.Assert.*;
