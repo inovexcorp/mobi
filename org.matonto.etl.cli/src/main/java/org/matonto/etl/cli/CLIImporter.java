@@ -21,11 +21,11 @@ public class CLIImporter implements Action {
     //Command Line Arguments and Options
 
 
-    @Argument(index = 0, name = "RepositoryID", description = "The id of the repository the file will be imported to", required = true)
-    String repositoryId = null;
-
-    @Argument(index = 1, name = "ImportFile", description = "The file to be imported into the repository", required = true)
+    @Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository", required = true)
     String file = null;
+
+    @Argument(index = 1, name = "RepositoryID", description = "The id of the repository the file will be imported to", required = true)
+    String repositoryId = null;
 
     @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an error on a line.")
     boolean continueOnError = false;
