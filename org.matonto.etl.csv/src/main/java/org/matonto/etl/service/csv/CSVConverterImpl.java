@@ -5,6 +5,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.*;
@@ -23,10 +24,15 @@ public class CSVConverterImpl implements CSVConverter {
     ValueFactory vf = new ValueFactoryImpl();
     Map<URI, ClassMapping> uriToObject;
 
+    //Inject Import and Export Services
     RDFImportService importService;
+    RDFExportService exportService;
 
     @Reference
     public void setImportService(RDFImportService importService){this.importService = importService;}
+
+    @Reference
+    public void setExportService(RDFExportService exportService){this.exportService = exportService;}
 
     @Override
     public void importCSV(File csv, File mappingFile, String repoID) throws RDFParseException, IOException, RepositoryException {
@@ -43,15 +49,16 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     @Override
-    public void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException{
-        //TODO exportCSV method
+    public void exportCSV(File csv, File mappingFile, File exportFile) throws IOException{
+        exportCSV(csv,parseMapping(mappingFile), exportFile);
     }
 
     @Override
-    public void exportCSV(File csv, File mappingFile, File exportFile) throws IOException{
-        //TODO exportCSV method
-    }
+    public void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException{
+        Model converted = convert(csv, mappingModel);
 
+        exportService.exportToFile(converted, exportFile);
+    }
 
     @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
