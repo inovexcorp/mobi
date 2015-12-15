@@ -7,12 +7,14 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.base.AbstractStatementSet;
 import org.openrdf.model.util.Models;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SesameModelWrapper implements Model {
+public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
     private static final long serialVersionUID = -4290503637573113943L;
     private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
@@ -30,7 +32,7 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public boolean add(Resource subject, IRI predicate, Value object, Resource... context) {
+    public boolean add(@Nonnull Resource subject, @Nonnull IRI predicate, @Nonnull Value object, Resource... context) {
         return sesameModel.add(Values.sesameResource(subject), Values.sesameIRI(predicate), Values.sesameValue(object),
                 Values.sesameResources(context));
     }
@@ -80,7 +82,7 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public Optional<Namespace> removeNamespace(String prefix) {
+    public Optional<Namespace> removeNamespace(@Nonnull String prefix) {
         Optional<org.openrdf.model.Namespace> sesameNS = sesameModel.removeNamespace(prefix);
 
         if (sesameNS.isPresent()) {
@@ -91,14 +93,14 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public void setNamespace(Namespace namespace) {
+    public void setNamespace(@Nonnull Namespace namespace) {
         sesameModel.setNamespace(
-                new org.openrdf.model.impl.SimpleNamespace(namespace.getPrefix(), namespace.getName())
+            new org.openrdf.model.impl.SimpleNamespace(namespace.getPrefix(), namespace.getName())
         );
     }
 
     @Override
-    public Namespace setNamespace(String prefix, String name) {
+    public Namespace setNamespace(@Nonnull String prefix, @Nonnull String name) {
         Optional<? extends Namespace> result = getNamespace(prefix);
         if (!result.isPresent() || !result.get().getName().equals(name)) {
             result = Optional.of(new SimpleNamespace(prefix, name));
@@ -123,7 +125,7 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(@Nonnull Object o) {
         if (o instanceof Statement) {
             Statement st = (Statement) o;
             if (st.getContext().isPresent()) {
@@ -136,7 +138,7 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public Iterator<Statement> iterator() {
+    public @Nonnull Iterator<Statement> iterator() {
         Iterator<org.openrdf.model.Statement> sesameItr = sesameModel.iterator();
 
         return new Iterator<Statement>() {
@@ -161,27 +163,7 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public Object[] toArray() {
-        Iterator<Statement> it = iterator();
-        List<Object> r = new ArrayList<>(size());
-        while (it.hasNext()) {
-            r.add(it.next());
-        }
-        return r.toArray();
-    }
-
-    @Override
-    public <T> T[] toArray(T[] a) {
-        Iterator<Statement> it = iterator();
-        List<Object> r = new ArrayList<>(size());
-        while (it.hasNext()) {
-            r.add(it.next());
-        }
-        return r.toArray(a);
-    }
-
-    @Override
-    public boolean add(Statement statement) {
+    public boolean add(@Nonnull Statement statement) {
         if (statement.getContext().isPresent()) {
             return add(statement.getSubject(), statement.getPredicate(), statement.getObject(), statement.getContext().get());
         } else {
@@ -190,54 +172,12 @@ public class SesameModelWrapper implements Model {
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(@Nonnull Object o) {
         if (o instanceof Statement) {
             Statement st = (Statement) o;
             return remove(st.getSubject(), st.getPredicate(), st.getObject(), st.getContext().orElse(null));
         }
         return false;
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        Iterator<?> e = c.iterator();
-        while (e.hasNext())
-            if (!contains(e.next()))
-                return false;
-        return true;
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends Statement> c) {
-        Iterator<? extends Statement> e = c.iterator();
-        boolean modified = false;
-        while (e.hasNext()) {
-            if (add(e.next()))
-                modified = true;
-        }
-        return modified;
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        Iterator<Statement> e = iterator();
-        boolean modified = false;
-        while (e.hasNext()) {
-            if (!c.contains(e.next())) {
-                e.remove();
-                modified = true;
-            }
-        }
-        return modified;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        boolean modified = false;
-        Iterator<?> i = c.iterator();
-        while (i.hasNext())
-            modified |= remove(i.next());
-        return modified;
     }
 
     @Override

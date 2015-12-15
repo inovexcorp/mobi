@@ -4,13 +4,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.openrdf.repository.RepositoryException;
+import org.matonto.repository.exception.RepositoryException;
+import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParseException;
 
-/**
- * Created by bryan on 9/10/15.
- */
 public interface RDFImportService {
 
     /**
@@ -18,12 +16,12 @@ public interface RDFImportService {
      * @param repositoryID The id of the repository to import triples to
      * @param file The file to import triples from
      * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
-     * @throws FileNotFoundException
-     * @throws RDFParseException
-     * @throws RepositoryException
-     * @throws IOException
+     * @throws RDFParseException thrown if there is a problem parsing the RDF file
+     * @throws RepositoryException thrown if there is a problem connecting to the given repository
+     * @throws IOException thrown if there is a problem reading the file
+     * @throws IllegalArgumentException thrown if the repository does not exist
      */
-    public void importFile(String repositoryID,  File file, Boolean cont) throws FileNotFoundException, IOException, RepositoryException, RDFParseException;
+    void importFile(String repositoryID,  File file, Boolean cont) throws IOException, RepositoryException, RDFParseException;
 
     /**
      * Imports a triple file to a specified repository.
@@ -31,9 +29,19 @@ public interface RDFImportService {
      * @param file The file to import triples from
      * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
      * @param format The file format for the imported file
+     * @throws RDFParseException thrown if there is a problem parsing the RDF file
+     * @throws RepositoryException thrown if there is a problem connecting to the given repository
+     * @throws IOException thrown if there is a problem reading the file
+     * @throws IllegalArgumentException thrown if the repository does not exist
      */
+    void importFile(String repositoryID,  File file, Boolean cont, RDFFormat format) throws IOException, RepositoryException, RDFParseException;
 
-    public void importFile(String repositoryID,  File file, Boolean cont, RDFFormat format) throws FileNotFoundException, IOException, RepositoryException, RDFParseException;
-
-
+    /**
+     * Import a model into a given repository
+     * @param repositoryID the ID of the repository to import the triples from a model
+     * @param m The rdf model to be imported
+     * @throws IllegalArgumentException thrown if the repository does not exist
+     * @throws RepositoryException thrown if there is a problem connecting to the given repository
+     */
+    void importModel(String repositoryID, Model m);
 }
