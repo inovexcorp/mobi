@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 
 
@@ -19,7 +19,7 @@ public interface OntologyManager {
 	
 	Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
 	
-	Optional<Ontology> retrieveOntology(OntologyId ontologyId) throws MatontoOntologyException;
+	Optional<Ontology> retrieveOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException;
 
 	/**
 	 * Persists Ontology object in the repository, and returns true if successfully persisted
@@ -28,7 +28,7 @@ public interface OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
      * @throws MatontoOntologyException - if an exception occurs while persisting
 	 */
-	boolean storeOntology(Ontology ontology) throws MatontoOntologyException;
+	boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Deletes the ontology with the given OntologyId, and returns true if successfully removed. The identifier
@@ -44,7 +44,7 @@ public interface OntologyManager {
      * does not exist in the repository or if an owlapi exception or sesame exception is caught.
      * @throws IllegalStateException - if the repository is null
      */
-	boolean deleteOntology(OntologyId ontologyId) throws MatontoOntologyException;
+	boolean deleteOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException;
 
 	Optional<Map<OntologyId, String>> getOntologyRegistry() throws MatontoOntologyException;
 	

@@ -1,12 +1,12 @@
 package org.matonto.ontology.core.api.types;
 
-
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.ontology.core.api.OntologyManager;
 import org.semanticweb.owlapi.vocab.Namespaces;
-
 import com.google.common.base.Preconditions;
 
 
@@ -23,13 +23,14 @@ public enum Facet {
 	FRACTION_DIGITS(Namespaces.XSD, "fractionDigits", "fractionDigits"), 
 	LANG_RANGE(Namespaces.RDF, "langRange", "langRange");
 	
-//	private final OntologyIRI iri;
+	private final OntologyIRI iri;
 	private final String shortForm;	
 	private final String symbolicForm;	
 	private final String prefixedName;
 	
-	Facet(Namespaces ns, String shortForm, String symbolicForm) {
-//		iri = SimpleIRI.create(ns.toString(), shortForm);
+	Facet(@Nonnull Namespaces ns, @Nonnull String shortForm, @Nonnull String symbolicForm) {
+	    OntologyManager manager = null;
+		iri = manager.createOntologyIRI(ns.toString(), shortForm);
 		this.shortForm = shortForm;
 		this.symbolicForm = symbolicForm;
 		prefixedName = (ns.getPrefixName() + ':' + shortForm);

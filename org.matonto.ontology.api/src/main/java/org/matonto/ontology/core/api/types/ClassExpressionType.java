@@ -1,8 +1,6 @@
 package org.matonto.ontology.core.api.types;
 
 import javax.annotation.Nonnull;
-
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.vocab.Namespaces;
 
 

@@ -10,15 +10,16 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
-
+import javax.annotation.Nonnull;
 import org.apache.commons.io.IOUtils;
+
 
 public class MatOntoStringUtils {
 
 	/*
 	 * Obtains content of URL to String
 	 */
-	public static String urlToText(String url) throws Exception {
+	public static String urlToText(@Nonnull String url) throws Exception {
         URL website = new URL(url);
         URLConnection connection = website.openConnection();
         BufferedReader in = new BufferedReader(
@@ -36,10 +37,11 @@ public class MatOntoStringUtils {
         return response.toString();
 	}
 	
+	
 	/*
 	 * Converts InputStream to String
 	 */
-	public static String InputStreamToText(InputStream is) {
+	public static String InputStreamToText(@Nonnull InputStream is) {
 		BufferedReader br = null;
 		StringBuilder sb = new StringBuilder();
 
@@ -66,27 +68,25 @@ public class MatOntoStringUtils {
 		return sb.toString();
 	}
 
+	
 	/*
 	 * Uses Regex to address the language tag issue in OWL2 RDF mapping  where 
 	 * RDF-1.1 it is not allowed to have a datatype in the Turtle document 
 	 * if you have a language. This one defaults the language tag to "@en"(English).
 	 */
-	public static InputStream replaceLanguageTag(InputStream inputStream) {
-		InputStream result = null;
-		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
-		String replaceWith = "xml:lang=\"en\"";
-		String content = InputStreamToText(inputStream);
-		content = content.replaceAll(toReplace, replaceWith);
-		result = new ByteArrayInputStream(content.getBytes( ));
-		return result;
+	public static InputStream replaceLanguageTag(@Nonnull InputStream inputStream)
+	{
+	    return replaceLanguageTag(inputStream, "en");
 	}
+	
 	
 	/*
 	 * Uses Regex to address the language tag issue in OWL2 RDF mapping  where 
 	 * RDF-1.1 it is not allowed to have a datatype in the Turtle document 
 	 * if you have a language. 
 	 */
-	public static InputStream replaceLanguageTag(InputStream inputStream, String languageSuffix) {
+	public static InputStream replaceLanguageTag(@Nonnull InputStream inputStream, @Nonnull String languageSuffix)
+	{
 		InputStream result = null;
 		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
 		String replaceWith = "xml:lang=\"" + languageSuffix + "\"";
@@ -97,26 +97,14 @@ public class MatOntoStringUtils {
 	}
 	
 	
-	public static OutputStream replaceLanguageTag(OutputStream outputStream) {
-		OutputStream result = new ByteArrayOutputStream();
-		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
-		String replaceWith = "xml:lang=\"en\"";
-		String content = outputStream.toString();
-		content = content.replaceAll(toReplace, replaceWith);
-		try {
-			result.write(content.getBytes(Charset.forName("UTF-8")));
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			IOUtils.closeQuietly(outputStream);
-		}
-		
-		return result;
+	public static OutputStream replaceLanguageTag(@Nonnull OutputStream outputStream) 
+	{
+		return replaceLanguageTag(outputStream, "en");
 	}
 	
 	
-	public static OutputStream replaceLanguageTag(OutputStream outputStream, String languageSuffix) {
+	public static OutputStream replaceLanguageTag(@Nonnull OutputStream outputStream, @Nonnull String languageSuffix) 
+	{
 		OutputStream result = new ByteArrayOutputStream();
 		String toReplace = "rdf:datatype=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString\"";
 		String replaceWith = "xml:lang=\"" + languageSuffix + "\"";
@@ -138,7 +126,8 @@ public class MatOntoStringUtils {
 	/*
 	 * Removes OWLAPI signature at the end of ontology document 
 	 */
-	public static OutputStream removeOWLGeneratorSignature(OutputStream outputStream) {
+	public static OutputStream removeOWLGeneratorSignature(@Nonnull OutputStream outputStream) 
+	{
 		OutputStream result = new ByteArrayOutputStream();
 		String signature = "<\\!--.*?OWL API.*?-->|#\\##.*?OWL API.*";
 		String content = outputStream.toString();
