@@ -38,7 +38,7 @@ public class SimpleOntology implements Ontology {
 	//Owlapi variables
 	private OWLOntology ontology;
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-
+	
     protected SimpleOntology(@Nonnull OWLOntology ontology) {
         this.ontology = ontology;
         this.manager = this.ontology.getOWLOntologyManager();
@@ -50,8 +50,10 @@ public class SimpleOntology implements Ontology {
             ontologyId = new SimpleOntologyId();
         } else if (vIRI.isPresent()) {
             ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()), Values.matontoIRI(vIRI.get()));
-        } else {
+        } else if (oIRI.isPresent()){
             ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()));
+        } else {
+            ontologyId = new SimpleOntologyId();
         }
     }
 	
@@ -90,6 +92,7 @@ public class SimpleOntology implements Ontology {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
+	
 
 	@Override
 	public OntologyId getOntologyId() {

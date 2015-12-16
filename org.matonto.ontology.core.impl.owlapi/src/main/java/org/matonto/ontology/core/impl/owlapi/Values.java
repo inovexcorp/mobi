@@ -32,6 +32,7 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 //import org.matonto.rdf.core.impl.sesame.SimpleIRI;
 //import org.matonto.rdf.core.impl.sesame.SimpleLiteral;
 import org.semanticweb.owlapi.model.NodeID;
@@ -53,6 +54,8 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.vocab.OWLFacet;
+
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import uk.ac.manchester.cs.owl.owlapi.OWL2DatatypeImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationImpl;
@@ -68,7 +71,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
 
-
+@Component (immediate=true)
 public class Values {
     
     private static ValueFactory factory;
@@ -84,7 +87,7 @@ public class Values {
         factory = null;
     }
     
-	private Values() {}
+	protected Values() {}
 
 	public static IRI matontoIRI(org.semanticweb.owlapi.model.IRI owlIri) 
 	{

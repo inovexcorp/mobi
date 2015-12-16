@@ -27,7 +27,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-        </dependency>    
+        </dependency>            
 
         <!-- Openrdf Sesame dependencies -->
         <dependency>

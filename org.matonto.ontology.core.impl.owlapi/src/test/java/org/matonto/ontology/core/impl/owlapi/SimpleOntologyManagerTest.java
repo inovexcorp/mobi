@@ -5,14 +5,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
-
 import java.net.URL;
 import java.util.Optional;
-
 import static org.junit.Assert.*;
 
 
@@ -20,6 +20,8 @@ public class SimpleOntologyManagerTest
 {
 	static Repository repo;
 	static SimpleOntologyManager manager = new SimpleOntologyManager();
+	static Values values = new Values();
+	static ValueFactory factory = SimpleValueFactory.getInstance();
 
 	@Rule
     public ResourceFile bookRes = new ResourceFile("/Book.owl");
@@ -40,6 +42,8 @@ public class SimpleOntologyManagerTest
 			e.printStackTrace();
 		}
 		manager.setRepo(repo);
+		manager.setValueFactory(factory);
+		values.setValueFactory(factory);
 	}
     
     @Test 

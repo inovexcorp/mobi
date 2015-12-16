@@ -39,7 +39,7 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 
 
-@Component (immediate=true)
+@Component (immediate=true, provide = OntologyManager.class)
 public class SimpleOntologyManager implements OntologyManager {
 	
 	private static Repository repository;
@@ -298,4 +298,6 @@ public class SimpleOntologyManager implements OntologyManager {
             LOG.warn("Could not close Repository." + e.toString());
         }
     }
+    
+
 }
