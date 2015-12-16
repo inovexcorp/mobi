@@ -48,22 +48,22 @@
                     <!-- everything tree tab -->
                     <a class="btn btn-primary"
                        ng-class="{'active': vm.state.tab == 'everything'}"
-                       ng-click="vm.changeTreeTab('everything');"><small>Tree</small></a>
+                       ng-click="vm.setTreeTab('everything');"><small>Tree</small></a>
 
                     <!-- class tree tab -->
                     <a class="btn btn-primary"
                        ng-class="{'active': vm.state.tab == 'class'}"
-                       ng-click="vm.changeTreeTab('class');"><small>Class</small></a>
+                       ng-click="vm.setTreeTab('class');"><small>Class</small></a>
 
                     <!-- object property tree tab -->
                     <a class="btn btn-primary"
                        ng-class="{'active': vm.state.tab == 'object'}"
-                       ng-click="vm.changeTreeTab('object');"><small>Object</small></a>
+                       ng-click="vm.setTreeTab('object');"><small>Object</small></a>
 
                     <!-- datatype property tree tab -->
                     <a class="btn btn-primary"
                        ng-class="{'active': vm.state.tab == 'datatype'}"
-                       ng-click="vm.changeTreeTab('datatype');"><small>Data</small></a>
+                       ng-click="vm.setTreeTab('datatype');"><small>Data</small></a>
                 </div>
 
                 <!-- tree showing ontologies, classes, and properties -->
@@ -306,17 +306,17 @@
                         <!-- basic button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.changeEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected['@id'] + vm.selected.matonto.delimiter) : 'New Ontology'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected['@id'] + vm.selected.matonto.delimiter) : 'New Ontology'}}</small></a>
 
                         <!-- annotations button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
-                           ng-click="vm.changeEditorTab('annotations');"><small>Annotations</small></a>
+                           ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
 
                         <!-- prefix button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'prefix'}"
-                           ng-click="vm.changeEditorTab('prefix');"><small>Prefix</small></a>
+                           ng-click="vm.setEditorTab('prefix');"><small>Prefix</small></a>
                     </div>
 
                     <!-- basic tab -->
@@ -425,10 +425,10 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.changeEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Class'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Class'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
-                           ng-click="vm.changeEditorTab('annotations');"><small>Annotations</small></a>
+                           ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
                     </div>
 
                     <!-- basic tab -->
@@ -490,10 +490,10 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.changeEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Property'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Property'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
-                           ng-click="vm.changeEditorTab('annotations');"><small>Annotations</small></a>
+                           ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
                     </div>
 
                     <!-- basic tab -->

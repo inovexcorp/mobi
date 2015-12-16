@@ -35,7 +35,8 @@
                     }
                 },
                 newProperty = {
-                    '@id': ''
+                    '@id': '',
+                    matonto: {}
                 };
 
             self.newItems = {};
@@ -291,7 +292,6 @@
                         }
                         self.newItems[unique] = result;
                     }
-                    console.log(result);
                 }
 
                 if(pi === -1 || ci === -1 || oi === -1) {
@@ -372,7 +372,7 @@
                     obj.matonto.unsaved = false;
                 }
                 // TODO: update obj.matonto.originalId in .then() after API call to update the @id if it changed
-                console.log('for joy', result, 'original', obj.matonto.originalId, 'for me', obj);
+                console.log('edit', result, obj.matonto.originalId, obj);
             }
 
             self.create = function(isValid, obj, state) {
@@ -413,7 +413,7 @@
                     delete self.newItems[unique];
                     delete result.matonto;
                 }
-                console.log('for joy', result, 'for me', obj);
+                console.log('create', result, obj);
             }
         }
 })();
