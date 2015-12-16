@@ -51,7 +51,7 @@
         }
 
         vm.submitEdit = function(isValid) {
-            ontologyManagerService.edit(isValid, vm.state.oi, vm.state.ci, vm.state.pi);
+            ontologyManagerService.edit(isValid, vm.state.oi, vm.state.ci, vm.state.pi, vm.selected);
         }
 
         vm.create = function(editor, oi, ci, pi) {

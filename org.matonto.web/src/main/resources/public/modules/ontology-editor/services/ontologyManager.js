@@ -71,18 +71,18 @@
                 initOntology = function(ontology, obj) {
                     var len = obj['@id'].length,
                         delimiter = obj['@id'].charAt(len - 1);
-
                     if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
                         obj.matonto = {
-                            delimiter: delimiter
+                            delimiter: delimiter,
+                            originalId: obj['@id']
                         }
                         obj['@id'] = obj['@id'].substring(0, len - 1);
                     } else {
                         obj.matonto = {
-                            delimiter: '#'
+                            delimiter: '#',
+                            originalId: ['@id']
                         }
                     }
-
                     angular.merge(ontology, obj);
                 }
 
@@ -133,17 +133,19 @@
                             break;
                         case prefixes.owl + 'Class':
                             obj.matonto = {
-                                properties: []
+                                properties: [],
+                                originalId: obj['@id']
                             };
                             obj['@id'] = removeNamespace(obj['@id']);
                             classes.push(obj);
                             break;
                         case prefixes.owl + 'DatatypeProperty':
                         case prefixes.owl + 'ObjectProperty':
-                            obj['@id'] = removeNamespace(obj['@id']);
                             obj.matonto = {
-                                icon: chooseIcon(obj, prefixes.rdfs, prefixes.xsd)
+                                icon: chooseIcon(obj, prefixes.rdfs, prefixes.xsd),
+                                originalId: obj['@id']
                             };
+                            obj['@id'] = removeNamespace(obj['@id']);
                             properties.push(obj);
                             break;
                     }
@@ -300,32 +302,21 @@
                     });
             }
 
-            self.edit = function(isValid, oi, ci, pi) {
-                var item,
-                    current = self.ontologies[oi],
-                    id = current.matonto.prefix || (current['@id'] + current.matonto.delimiter),
-                    result = 'not valid';
+            self.edit = function(isValid, oi, ci, pi, obj) {
+                var current = self.ontologies[oi],
+                    namespace = current.matonto.prefix || (current['@id'] + current.matonto.delimiter),
+                    result = angular.copy(obj);
                 if(isValid) {
-                    if(pi !== undefined && ci !== undefined) {
-                        item = current.matonto.classes[ci].matonto.properties[pi];
-                        result = angular.copy(item);
-                        result['@id'] = id + result['@id'];
-                    } else if(pi !== undefined && ci === undefined) {
-                        item = current.matonto.noDomains[pi];
-                        result = angular.copy(item);
-                        result['@id'] = id + result['@id'];
-                    } else if(ci !== undefined) {
-                        item = current.matonto.classes[ci];
-                        result = angular.copy(item);
-                        result['@id'] = id + result['@id'];
+                    if(pi !== undefined || ci !== undefined) {
+                        result['@id'] = namespace + result['@id'];
                     } else {
-                        result = angular.copy(current);
                         result['@id'] = result['@id'] + result.matonto.delimiter;
                     }
-                    item.matonto.unsaved = false;
                     delete result.matonto;
+                    obj.matonto.unsaved = false;
                 }
-                console.log(result);
+                // TODO: update obj.matonto.originalId in .then() after API call
+                console.log(result, obj.matonto.originalId);
             }
 
             self.create = function(isValid, oi, ci, pi, obj) {
