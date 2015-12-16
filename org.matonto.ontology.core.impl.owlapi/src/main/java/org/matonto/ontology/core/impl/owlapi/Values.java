@@ -87,7 +87,7 @@ public class Values {
         factory = null;
     }
     
-	protected Values() {}
+	public Values() {}
 
 	public static IRI matontoIRI(org.semanticweb.owlapi.model.IRI owlIri) 
 	{
