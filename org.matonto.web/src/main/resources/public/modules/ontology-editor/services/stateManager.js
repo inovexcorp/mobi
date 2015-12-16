@@ -13,33 +13,37 @@
             self.states = {
                 current: 'everything',
                 everything: {
-                    id: 'everything',
+                    tab: 'everything',
                     editor: 'default',
                     editorTab: 'basic'
                 },
                 class: {
-                    id: 'class',
+                    tab: 'class',
                     editor: 'default',
                     editorTab: 'basic'
                 },
                 object: {
-                    id: 'object',
+                    tab: 'object',
                     editor: 'default',
                     editorTab: 'basic'
                 },
                 datatype: {
-                    id: 'datatype',
+                    tab: 'datatype',
                     editor: 'default',
                     editorTab: 'basic'
                 }
             }
 
-            self.changeTreeTab = function(tab) {
+            self.setTreeTab = function(tab) {
                 self.states.current = tab;
             }
 
-            self.changeEditorTab = function(tab) {
+            self.setEditorTab = function(tab) {
                 self.states[self.states.current].editorTab = tab;
+            }
+
+            self.getEditorTab = function() {
+                return self.states[self.states.current].editorTab;
             }
 
             self.setState = function(editor, oi, ci, pi) {
@@ -52,6 +56,24 @@
 
             self.getState = function() {
                 return self.states[self.states.current];
+            }
+
+            self.setStateToNew = function(state, ontologies) {
+                var editor,
+                    oi = state.oi,
+                    ci = state.ci,
+                    pi = state.pi;
+                if(oi === -1) {
+                    oi = ontologies.length - 1;
+                    editor = 'ontology-editor';
+                } else if(ci === -1) {
+                    ci = ontologies[oi].matonto.classes.length - 1;
+                    editor = 'class-editor';
+                } else {
+                    pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
+                    editor = 'property-editor';
+                }
+                self.setState(editor, oi, ci, pi);
             }
         }
 })();

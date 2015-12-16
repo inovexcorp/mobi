@@ -47,33 +47,33 @@
                 <div class="btn-group btn-group-justified" role="group">
                     <!-- everything tree tab -->
                     <a class="btn btn-primary"
-                       ng-class="{'active': vm.state.id == 'everything'}"
+                       ng-class="{'active': vm.state.tab == 'everything'}"
                        ng-click="vm.changeTreeTab('everything');"><small>Tree</small></a>
 
                     <!-- class tree tab -->
                     <a class="btn btn-primary"
-                       ng-class="{'active': vm.state.id == 'class'}"
+                       ng-class="{'active': vm.state.tab == 'class'}"
                        ng-click="vm.changeTreeTab('class');"><small>Class</small></a>
 
                     <!-- object property tree tab -->
                     <a class="btn btn-primary"
-                       ng-class="{'active': vm.state.id == 'object'}"
+                       ng-class="{'active': vm.state.tab == 'object'}"
                        ng-click="vm.changeTreeTab('object');"><small>Object</small></a>
 
                     <!-- datatype property tree tab -->
                     <a class="btn btn-primary"
-                       ng-class="{'active': vm.state.id == 'datatype'}"
+                       ng-class="{'active': vm.state.tab == 'datatype'}"
                        ng-click="vm.changeTreeTab('datatype');"><small>Data</small></a>
                 </div>
 
                 <!-- tree showing ontologies, classes, and properties -->
-                <div ng-if="vm.state.id == 'everything'" class="tree everything-tree scroll-without-buttons">
+                <div ng-if="vm.state.tab == 'everything'" class="tree everything-tree scroll-without-buttons">
                     <!-- tree view -->
                     <strong>Everything</strong>
                     <!-- start ontologies -->
                     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
                         <li>
-                            <a ng-click="vm.edit('ontology-editor', $index)"
+                            <a ng-click="vm.selectItem('ontology-editor', $index)"
                                ng-class="{'unsaved': ontology.matonto.unsaved, 'active': vm.state.oi == $index && vm.state.ci == undefined}">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
@@ -86,7 +86,7 @@
                             <!-- start classes -->
                             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
                                 <li>
-                                    <a ng-click="vm.edit('class-editor', oi, $index)"
+                                    <a ng-click="vm.selectItem('class-editor', oi, $index)"
                                        ng-class="{'unsaved': class.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == $index && vm.state.pi == undefined}">
                                         <i class="fa fa-fw"
                                            ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
@@ -99,7 +99,7 @@
                                     <!-- start properties -->
                                     <ul>
                                         <li ng-repeat="property in class.matonto.properties">
-                                            <a ng-click="vm.edit('property-editor', oi, ci, $index)"
+                                            <a ng-click="vm.selectItem('property-editor', oi, ci, $index)"
                                                ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == ci && vm.state.pi == $index}">
                                                 <i class="fa fa-fw {{property.matonto.icon}}"
                                                 ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
@@ -108,7 +108,7 @@
                                         </li>
                                     </ul>
                                     <div class="creator">
-                                        <a ng-click="vm.edit('property-editor', oi, ci, -1)"
+                                        <a ng-click="vm.selectItem('property-editor', oi, ci, -1)"
                                            ng-class="{'active': vm.state.oi == oi && vm.state.ci == ci && vm.state.pi == -1}">
                                             <i class="fa fa-plus fa-fw"></i>New Property
                                         </a>
@@ -117,7 +117,7 @@
                                 </li>
                             </ul>
                             <div class="creator">
-                                <a ng-click="vm.edit('class-editor', oi, -1)"
+                                <a ng-click="vm.selectItem('class-editor', oi, -1)"
                                    ng-class="{'active': vm.state.oi == oi && vm.state.ci == -1}">
                                     <i class="fa fa-plus fa-fw"></i>New Class
                                 </a>
@@ -134,7 +134,7 @@
                                 <li class="container" ng-show="noDomains">
                                     <ul>
                                         <li ng-repeat="property in ontology.matonto.noDomains">
-                                            <a ng-click="vm.edit('property-editor', oi, undefined, $index)"
+                                            <a ng-click="vm.selectItem('property-editor', oi, undefined, $index)"
                                                ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == undefined && vm.state.pi == $index}">
                                                 <i class="fa fa-fw {{property.icon}}"
                                                 ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
@@ -148,11 +148,11 @@
                         </li>
                     </ul>
                     <div class="creator">
-                        <a ng-click="vm.create('ontology-editor', -1)"
+                        <a ng-click="vm.selectItem('ontology-editor', -1)"
                            ng-class="{'active': vm.state.oi == -1}">
                             <i class="fa fa-plus fa-fw"></i> Create New Ontology
                         </a>
-                        <a ng-click="vm.edit('upload-form')"
+                        <a ng-click="vm.selectItem('upload-form')"
                            ng-class="{'active': vm.state.editor === 'upload-form'}">
                             <i class="fa fa-upload fa-fw"></i>Upload Ontology
                         </a>
@@ -161,7 +161,7 @@
                 </div>
 
                 <!-- tree showing classes -->
-                <div ng-if="vm.state.id == 'class'" class="tree class-tree scroll-without-buttons">
+                <div ng-if="vm.state.tab == 'class'" class="tree class-tree scroll-without-buttons">
                     <!-- class view -->
                     <strong>Classes</strong>
                     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
@@ -176,7 +176,7 @@
                             <ul>
                                 <li ng-repeat="class in ontology.matonto.classes">
                                     <a class="text-only"
-                                       ng-click="vm.edit('class-editor', oi, $index)"
+                                       ng-click="vm.selectItem('class-editor', oi, $index)"
                                        ng-class="{'unsaved': class.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == $index && vm.state.pi == undefined}">
                                         {{class[ontology.matonto.rdfs + 'label'] || class['@id']}}
                                         <i ng-show="class.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
@@ -184,7 +184,7 @@
                                 </li>
                             </ul>
                             <div class="creator">
-                                <a ng-click="vm.create('class-editor', oi, -1)"
+                                <a ng-click="vm.selectItem('class-editor', oi, -1)"
                                    ng-class="{'active': vm.state.oi == oi && vm.state.ci == -1}">
                                     <i class="fa fa-plus fa-fw"></i>New Class
                                 </a>
@@ -194,7 +194,7 @@
                 </div>
 
                 <!-- tree showing object properties -->
-                <div ng-if="vm.state.id == 'object'" class="tree object-tree scroll-without-buttons">
+                <div ng-if="vm.state.tab == 'object'" class="tree object-tree scroll-without-buttons">
                     <!-- property view -->
                     <strong>Object Properties</strong>
                     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
@@ -209,7 +209,7 @@
                             <ul ng-repeat="(ci, class) in ontology.matonto.classes">
                                 <li ng-repeat="property in class.matonto.properties" ng-if="property['@type'] == ontology.matonto.owl + 'ObjectProperty'">
                                     <a class="text-only"
-                                       ng-click="vm.edit('property-editor', oi, ci, $index)"
+                                       ng-click="vm.selectItem('property-editor', oi, ci, $index)"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == ci && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
                                         ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
@@ -221,7 +221,7 @@
                             <ul>
                                 <li ng-repeat="property in ontology.noDomains" ng-if="property['@type'] == ontology.matonto.owl + 'ObjectProperty'">
                                     <a class="text-only"
-                                       ng-click="vm.edit('property-editor', oi, undefined, $index)"
+                                       ng-click="vm.selectItem('property-editor', oi, undefined, $index)"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == undefined && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
                                         ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
@@ -230,7 +230,7 @@
                                 </li>
                             </ul>
                             <div class="creator">
-                                <a ng-click="vm.create('property-editor', oi, -1, -1)"
+                                <a ng-click="vm.selectItem('property-editor', oi, -1, -1)"
                                    ng-class="{'active': vm.state.oi == oi && vm.state.ci == -1 && vm.state.pi == -1}">
                                     <i class="fa fa-plus fa-fw"></i>New Object Property
                                 </a>
@@ -240,7 +240,7 @@
                 </div>
 
                 <!-- tree showing dataType properties -->
-                <div ng-if="vm.state.id == 'datatype'" class="tree datatype-tree scroll-without-buttons">
+                <div ng-if="vm.state.tab == 'datatype'" class="tree datatype-tree scroll-without-buttons">
                     <!-- property view -->
                     <strong>DataType Properties</strong>
                     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
@@ -256,7 +256,7 @@
                             <ul ng-repeat="(ci, class) in ontology.matonto.classes">
                                 <li ng-repeat="property in class.matonto.properties" ng-if="property['@type'] == ontology.matonto.owl + 'DataTypeProperty' || property['@type'] == ontology.matonto.owl + 'DatatypeProperty'">
                                     <a class="text-only"
-                                       ng-click="vm.edit('property-editor', oi, ci, $index);"
+                                       ng-click="vm.selectItem('property-editor', oi, ci, $index);"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == ci && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
                                         ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
@@ -268,7 +268,7 @@
                             <ul>
                                 <li ng-repeat="property in ontology.matonto.noDomains" ng-if="property['@type'] == ontology.matonto.owl + 'DataTypeProperty' || property['@type'] == ontology.matonto.owl + 'DatatypeProperty'">
                                     <a class="text-only"
-                                       ng-click="vm.edit('property-editor', oi, undefined, $index)"
+                                       ng-click="vm.selectItem('property-editor', oi, undefined, $index)"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == undefined && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
                                         ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
@@ -277,7 +277,7 @@
                                 </li>
                             </ul>
                             <div class="creator">
-                                <a ng-click="vm.create('property-editor', oi, -1, -1)"
+                                <a ng-click="vm.selectItem('property-editor', oi, -1, -1)"
                                    ng-class="{'active': vm.state['datatype'].selected == 'create-property' && vm.state['datatype'].class == class}">
                                     <i class="fa fa-plus fa-fw"></i>New DataType Property
                                 </a>
@@ -306,7 +306,7 @@
                         <!-- basic button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.changeEditorTab('basic');"><small>{{vm.selected['@id'] + vm.selected.matonto.delimiter}}</small></a>
+                           ng-click="vm.changeEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected['@id'] + vm.selected.matonto.delimiter) : 'New Ontology'}}</small></a>
 
                         <!-- annotations button -->
                         <a class="btn btn-primary"
@@ -425,7 +425,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.changeEditorTab('basic');"><small>{{(vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']}}</small></a>
+                           ng-click="vm.changeEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Class'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.changeEditorTab('annotations');"><small>Annotations</small></a>
@@ -490,7 +490,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.changeEditorTab('basic');"><small>{{(vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']}}</small></a>
+                           ng-click="vm.changeEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Property'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.changeEditorTab('annotations');"><small>Annotations</small></a>

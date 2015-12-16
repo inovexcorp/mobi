@@ -12,7 +12,7 @@
 
         vm.ontologies = ontologyManagerService.getList();
         vm.state = stateManagerService.getState();
-        vm.selected = ontologyManagerService.getObject(vm.state.oi, vm.state.ci, vm.state.pi);
+        vm.selected = ontologyManagerService.getObject(vm.state);
 
         initialize();
 
@@ -27,14 +27,14 @@
         }
 
         /* State Management */
-        vm.changeTreeTab = function(tab) {
-            stateManagerService.changeTreeTab(tab);
+        vm.setTreeTab = function(tab) {
+            stateManagerService.setTreeTab(tab);
             vm.state = stateManagerService.getState();
-            vm.selected = ontologyManagerService.getObject(vm.state.oi, vm.state.ci, vm.state.pi);
+            vm.selected = ontologyManagerService.getObject(vm.state);
         }
 
-        vm.changeEditorTab = function(tab) {
-            stateManagerService.changeEditorTab(tab);
+        vm.setEditorTab = function(tab) {
+            stateManagerService.setEditorTab(tab);
             vm.state = stateManagerService.getState();
         }
 
@@ -43,38 +43,35 @@
             ontologyManagerService.uploadThenGet(isValid, file, namespace, localName);
         }
 
-        vm.edit = function(editor, oi, ci, pi) {
+        vm.selectItem = function(editor, oi, ci, pi) {
             stateManagerService.setState(editor, oi, ci, pi);
-            stateManagerService.changeEditorTab('basic');
+            stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
-            vm.selected = ontologyManagerService.getObject(vm.state.oi, vm.state.ci, vm.state.pi);
+            vm.selected = ontologyManagerService.getObject(vm.state);
         }
 
         vm.submitEdit = function(isValid) {
-            ontologyManagerService.edit(isValid, vm.state.oi, vm.state.ci, vm.state.pi, vm.selected);
-        }
-
-        vm.create = function(editor, oi, ci, pi) {
-            stateManagerService.setState(editor, oi, ci, pi);
-            vm.state = stateManagerService.getState();
-            // TODO: figure out what to set vm.selected to
+            ontologyManagerService.edit(isValid, vm.selected, vm.state);
         }
 
         vm.submitCreate = function(isValid) {
-            ontologyManagerService.create(isValid, vm.state.oi, vm.state.ci, vm.state.pi, vm.selected);
+            ontologyManagerService.create(isValid, vm.selected, vm.state);
+            stateManagerService.setStateToNew(vm.state, vm.ontologies);
+            stateManagerService.setEditorTab('basic');
+            vm.state = stateManagerService.getState();
         }
 
         /* Prefix (Context) Management */
         vm.editPrefix = function(edit, old, index, value) {
-            prefixManagerService.editPrefix(edit, old, index, value, vm.ontologies[vm.state.oi]);
+            prefixManagerService.editPrefix(edit, old, index, value, vm.selected);
         }
 
         vm.addPrefix = function(key, value) {
-            prefixManagerService.addPrefix(key, value, vm.ontologies[vm.state.oi]);
+            prefixManagerService.addPrefix(key, value, vm.selected);
         }
 
         vm.removePrefix = function(key) {
-            prefixManagerService.removePrefix(key, vm.ontologies[vm.state.oi]);
+            prefixManagerService.removePrefix(key, vm.selected);
         }
     }
 })();

@@ -10,6 +10,9 @@
         function ontologyManagerService($http) {
             var self = this,
                 prefix = '/matonto/rest/ontology',
+                defaultOwl = 'http://www.w3.org/2002/07/owl#',
+                defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
+                defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
                 newOntology = {
                     '@id': '',
                     '@type': 'owl:Ontology',
@@ -17,10 +20,25 @@
                         rdfs: 'rdfs:',
                         owl: 'owl:',
                         delimiter: '#',
-                        classes: []
+                        classes: [],
+                        context: [
+                            { key: 'owl', value: defaultOwl },
+                            { key: 'rdfs', value: defaultRdfs },
+                            { key: 'xsd', value: defaultXsd }
+                        ]
                     }
+                },
+                newClass = {
+                    '@id': '',
+                    matonto: {
+                        properties: []
+                    }
+                },
+                newProperty = {
+                    '@id': ''
                 };
 
+            self.newItems = {};
             self.ontologies = [];
 
             initialize();
@@ -203,9 +221,9 @@
                 getPrefixes = function(context) {
                     var prop,
                         result = {
-                            owl: 'http://www.w3.org/2002/07/owl#',
-                            rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
-                            xsd: 'http://www.w3.org/2001/XMLSchema#'
+                            owl: defaultOwl,
+                            rdfs: defaultRdfs,
+                            xsd: defaultXsd
                         };
 
                     for(prop in context) {
@@ -236,16 +254,50 @@
                 return self.ontologies;
             }
 
-            self.getObject = function(oi, ci, pi) {
-                var result = {};
-                if(pi !== undefined && ci !== undefined) {
-                    result = self.ontologies[oi].matonto.classes[ci].matonto.properties[pi];
-                } else if(pi !== undefined && ci === undefined) {
-                    result = self.ontologies[oi].matonto.noDomains[pi];
-                } else if(ci !== undefined) {
-                    result = self.ontologies[oi].matonto.classes[ci];
-                } else if(oi !== undefined) {
-                    result = self.ontologies[oi];
+            self.getObject = function(state) {
+                var current, editing, creating,
+                    oi = state.oi,
+                    ci = state.ci,
+                    pi = state.pi,
+                    tab = state.tab,
+                    result = {};
+
+                editing = function() {
+                    if(pi !== undefined && ci !== undefined) {
+                        result = self.ontologies[oi].matonto.classes[ci].matonto.properties[pi];
+                    } else if(pi !== undefined && ci === undefined) {
+                        result = self.ontologies[oi].matonto.noDomains[pi];
+                    } else if(ci !== undefined) {
+                        result = self.ontologies[oi].matonto.classes[ci];
+                    } else if(oi !== undefined) {
+                        result = self.ontologies[oi];
+                    }
+                }
+
+                creating = function() {
+                    var unique = tab + oi + ci + pi;
+                    if(self.newItems[unique]) {
+                        result = self.newItems[unique];
+                    } else {
+                        if(pi === -1) {
+                            result = angular.copy(newProperty);
+                            // TODO: need to figure out what type of property
+                            result['@type'] = self.ontologies[oi].matonto.owl + 'DataTypeProperty';
+                        } else if(ci === -1) {
+                            result = angular.copy(newClass);
+                            result['@type'] = self.ontologies[oi].matonto.owl + 'Class';
+                        } else {
+                            result = angular.copy(newOntology);
+                        }
+                        self.newItems[unique] = result;
+                    }
+                    console.log(result);
+                }
+
+                if(pi === -1 || ci === -1 || oi === -1) {
+                    creating();
+                } else {
+                    editing();
                 }
                 return result;
             }
@@ -302,8 +354,12 @@
                     });
             }
 
-            self.edit = function(isValid, oi, ci, pi, obj) {
-                var current = self.ontologies[oi],
+            self.edit = function(isValid, obj, state) {
+                var oi = state.oi,
+                    ci = state.ci,
+                    pi = state.pi,
+                    tab = state.tab,
+                    current = self.ontologies[oi],
                     namespace = current.matonto.prefix || (current['@id'] + current.matonto.delimiter),
                     result = angular.copy(obj);
                 if(isValid) {
@@ -315,26 +371,49 @@
                     delete result.matonto;
                     obj.matonto.unsaved = false;
                 }
-                // TODO: update obj.matonto.originalId in .then() after API call
-                console.log(result, obj.matonto.originalId);
+                // TODO: update obj.matonto.originalId in .then() after API call to update the @id if it changed
+                console.log('for joy', result, 'original', obj.matonto.originalId, 'for me', obj);
             }
 
-            self.create = function(isValid, oi, ci, pi, obj) {
-                var item = angular.copy(obj),
-                    result = 'not valid';
-                delete item.matonto;
-                if(isValid) {
-                    if(pi !== undefined) {
-                        result = angular.copy(self.ontologies[oi].classes[ci]['@id']);
-                    } else if(ci !== undefined) {
-                        result = angular.copy(self.ontologies[oi]['@id']);
-                        delete item.properties;
-                    } else {
-                        result = '';
-                        delete item.classes;
+            self.create = function(isValid, obj, state) {
+                var arrToObj,
+                    oi = state.oi,
+                    ci = state.ci,
+                    pi = state.pi,
+                    tab = state.tab,
+                    item = angular.copy(obj),
+                    result = angular.copy(obj),
+                    unique = tab + oi + ci + pi;
+                obj.matonto.unsaved = false;
+
+                // TODO: get this involved with passing the context back to joy
+                arrToObj = function(context) {
+                    var temp = {},
+                        i = context.length;
+                    while(i--) {
+                        temp[context[i].key] = context[i].value;
                     }
+                    return temp;
                 }
-                console.log(result, obj);
+
+                if(isValid) {
+                    if(oi === -1) {
+                        obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
+                        self.ontologies.push(obj);
+                    } else {
+                        var current = self.ontologies[oi],
+                            namespace = current.matonto.prefix || current['@id'] + current.matonto.delimiter;
+                        obj.matonto.originalId = namespace + obj['@id'];
+                        if(ci === -1) {
+                            current.matonto.classes.push(obj);
+                        } else {
+                            current.matonto.classes[ci].matonto.properties.push(obj);
+                        }
+                    }
+                    delete self.newItems[unique];
+                    delete result.matonto;
+                }
+                console.log('for joy', result, 'for me', obj);
             }
         }
 })();
