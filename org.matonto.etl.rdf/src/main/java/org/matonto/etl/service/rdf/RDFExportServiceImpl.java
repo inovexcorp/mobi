@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Optional;
+
+import org.apache.log4j.Logger;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
@@ -24,6 +26,8 @@ import aQute.bnd.annotation.component.Reference;
 
 @Component(provide = RDFExportService.class, immediate=true)
 public class RDFExportServiceImpl implements RDFExportService {
+
+    private static final Logger LOGGER = Logger.getLogger(RDFExportServiceImpl.class);
 
     private RepositoryManager repositoryManager;
 
@@ -55,6 +59,9 @@ public class RDFExportServiceImpl implements RDFExportService {
         }else if(objLit != null) {
             objValue = valueFactory.createLiteral(objLit);
         }
+
+        LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\n"
+                    +"Obj: " + objValue);
 
         if(file.exists() && !file.canWrite())
             throw new IOException("Unable to write to file");
