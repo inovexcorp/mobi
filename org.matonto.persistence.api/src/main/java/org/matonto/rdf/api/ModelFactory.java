@@ -1,5 +1,6 @@
 package org.matonto.rdf.api;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Set;
 
@@ -18,7 +19,7 @@ public interface ModelFactory {
      *
      * @return The created Model.
      */
-    Model createModel(Model model);
+    Model createModel(@Nonnull Model model);
 
     /**
      * Creates a Model populated with the supplied Collection as its contents.
@@ -32,7 +33,7 @@ public interface ModelFactory {
      *
      * @return The created Model.
      */
-    Model createModel(Set<Namespace> namespaces);
+    Model createModel(@Nonnull Set<Namespace> namespaces);
 
     /**
      * Creates a Model populated with the supplied Collection as its contents and the supplied
@@ -40,5 +41,5 @@ public interface ModelFactory {
      *
      * @return The created Model.
      */
-    Model createModel(Set<Namespace> namespaces, Collection<? extends Statement> c);
+    Model createModel(@Nonnull Set<Namespace> namespaces, @Nonnull Collection<? extends Statement> c);
 }
