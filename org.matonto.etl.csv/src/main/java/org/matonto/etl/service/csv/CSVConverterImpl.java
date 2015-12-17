@@ -22,7 +22,7 @@ public class CSVConverterImpl implements CSVConverter {
     private static final Logger LOGGER = Logger.getLogger(CSVConverterImpl.class);
 
     ValueFactory vf = new ValueFactoryImpl();
-    Map<URI, ClassMapping> uriToObject;
+    Map<IRI, ClassMapping> uriToObject;
 
     //Inject Import and Export Services
     RDFImportService importService;
@@ -83,11 +83,11 @@ public class CSVConverterImpl implements CSVConverter {
      */
     public char getSeparator(Model mappingModel) {
         char separator;
-        Model documentModel = mappingModel.filter(null, Delimited.TYPE.uri(), Delimited.DOCUMENT.uri());
+        Model documentModel = mappingModel.filter(null, Delimited.TYPE.iri(), Delimited.DOCUMENT.iri());
         if (documentModel.isEmpty())
             return ',';
-        URI documentURI = (URI) documentModel.subjects().toArray()[0];
-        Model separatorModel = mappingModel.filter(documentURI, Delimited.SEPARATOR.uri(), null);
+        IRI documentIRI = (IRI) documentModel.subjects().toArray()[0];
+        Model separatorModel = mappingModel.filter(documentIRI, Delimited.SEPARATOR.iri(), null);
         if (separatorModel.isEmpty())
             return ',';
         else
@@ -107,6 +107,7 @@ public class CSVConverterImpl implements CSVConverter {
 
         ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
 
+        LOGGER.warn(classMappings);
         //Skip headers
         reader.readNext();
         //Traverse each row and convert column into RDF
@@ -135,14 +136,14 @@ public class CSVConverterImpl implements CSVConverter {
         if (classLocalName.equals("_"))
             return convertedRDF;
 
-        String cmURI = cm.getPrefix() + classLocalName;
+        String cmIRI = cm.getPrefix() + classLocalName;
 
-        URI classInstance = vf.createURI(cmURI);
-        convertedRDF.add(classInstance, Delimited.TYPE.uri(), vf.createURI(cm.getMapping()));
+        IRI classInstance = vf.createIRI(cmIRI);
+        convertedRDF.add(classInstance, Delimited.TYPE.iri(), vf.createIRI(cm.getMapping()));
         //Create the data properties
         Map<Integer, String> dataProps = cm.getDataProperties();
         for (Integer i : dataProps.keySet()) {
-            URI property = vf.createURI(dataProps.get(i));
+            IRI property = vf.createIRI(dataProps.get(i));
             try {
                 convertedRDF.add(classInstance, property, vf.createLiteral("" + nextLine[i - 1]));
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -156,12 +157,12 @@ public class CSVConverterImpl implements CSVConverter {
         for (ClassMapping objectMapping : objectProps.keySet()) {
             String localName = generateLocalName(objectMapping.getLocalName(), uuid, nextLine);
 
-            String omURI = objectMapping.getPrefix() + localName;
+            String omIRI = objectMapping.getPrefix() + localName;
 
             //If there isn't enough data to create the local name, don't create the instance
-            URI property = vf.createURI(objectProps.get(objectMapping));
+            IRI property = vf.createIRI(objectProps.get(objectMapping));
             if (!"_".equals(localName))
-                convertedRDF.add(classInstance, property, vf.createURI(omURI));
+                convertedRDF.add(classInstance, property, vf.createIRI(omIRI));
         }
 
         return convertedRDF;
@@ -173,7 +174,7 @@ public class CSVConverterImpl implements CSVConverter {
      * @param localNameTemplate The local name template given in the mapping file. See MatOnto Wiki for details
      * @param uuid              A Universally Unique IDentifier to use when building the local name
      * @param currentLine       The current line in the CSV file in case data is used in the Local Name
-     * @return The local name portion of a URI used in RDF data
+     * @return The local name portion of a IRI used in RDF data
      */
     String generateLocalName(String localNameTemplate, String uuid, String[] currentLine) {
         if ("".equals(localNameTemplate) || localNameTemplate == null)
@@ -207,55 +208,58 @@ public class CSVConverterImpl implements CSVConverter {
     private ArrayList<ClassMapping> parseClassMappings(Model mappingModel) {
         ArrayList<ClassMapping> classMappings = new ArrayList<ClassMapping>();
 
-        Model classMappingModel = mappingModel.filter(null, Delimited.TYPE.uri(), vf.createURI("http://matonto.org/ontologies/delimited/ClassMapping"));
-        uriToObject = new LinkedHashMap<URI, ClassMapping>();
-        for (Resource classMappingURI : classMappingModel.subjects()) {
-
+        Model classMappingModel = mappingModel.filter(null, Delimited.TYPE.iri(), vf.createIRI("http://matonto.org/ontologies/delimited/ClassMapping"));
+        LOGGER.warn("ClassMappingModel empty?" + classMappingModel.isEmpty());
+        LOGGER.warn("MappingModel empty?" + mappingModel.isEmpty());
+        LOGGER.warn("MappingModel things:\n" + mappingModel.subjects());
+        uriToObject = new LinkedHashMap<IRI, ClassMapping>();
+        for (Resource classMappingIRI : classMappingModel.subjects()) {
+            LOGGER.warn("Parsing mappings");
             ClassMapping classMapping;
 
-            if (uriToObject.containsKey(classMappingURI)) {
-                classMapping = uriToObject.get(classMappingURI);
+            if (uriToObject.containsKey(classMappingIRI)) {
+                classMapping = uriToObject.get(classMappingIRI);
             } else {
                 classMapping = new ClassMapping();
-                uriToObject.put((URI) classMappingURI, classMapping);
+                uriToObject.put((IRI) classMappingIRI, classMapping);
             }
 
-            Model prefixModel = mappingModel.filter(classMappingURI, Delimited.HAS_PREFIX.uri(), null);
+            Model prefixModel = mappingModel.filter(classMappingIRI, Delimited.HAS_PREFIX.iri(), null);
 
             //Parse each property
             if (!prefixModel.isEmpty())
                 classMapping.setPrefix(Models.objectString(prefixModel).get());
-            Model mapsToModel = mappingModel.filter(classMappingURI, Delimited.MAPS_TO.uri(), null);
+            Model mapsToModel = mappingModel.filter(classMappingIRI, Delimited.MAPS_TO.iri(), null);
             if (!mapsToModel.isEmpty())
                 classMapping.setMapping(Models.objectString(mapsToModel).get());
-            Model localNameModel = mappingModel.filter(classMappingURI, Delimited.LOCAL_NAME.uri(), null);
+            Model localNameModel = mappingModel.filter(classMappingIRI, Delimited.LOCAL_NAME.iri(), null);
             if (!localNameModel.isEmpty())
                 classMapping.setLocalName(Models.objectString(localNameModel).get());
 
             //Parse the data properties
-            Model dataPropertyModel = mappingModel.filter(classMappingURI, Delimited.DATA_PROPERTY.uri(), null);
+            Model dataPropertyModel = mappingModel.filter(classMappingIRI, Delimited.DATA_PROPERTY.iri(), null);
             for (Statement s : dataPropertyModel) {
-                Model propertyModel = mappingModel.filter((URI) s.getObject(), Delimited.HAS_PROPERTY.uri(), null);
+                Model propertyModel = mappingModel.filter((IRI) s.getObject(), Delimited.HAS_PROPERTY.iri(), null);
                 String property = Models.objectString(propertyModel).get();
-                Model indexModel = mappingModel.filter((URI) s.getObject(), Delimited.COLUMN_INDEX.uri(), null);
+                Model indexModel = mappingModel.filter((IRI) s.getObject(), Delimited.COLUMN_INDEX.iri(), null);
                 Integer columnIndexInt = Integer.parseInt(Models.objectLiteral(indexModel).get().stringValue());
                 classMapping.addDataProperty(columnIndexInt, property);
             }
 
             //Parse the object properties
-            Model objectPropertyModel = mappingModel.filter(classMappingURI, Delimited.OBJECT_PROPERTY.uri(), null);
+            Model objectPropertyModel = mappingModel.filter(classMappingIRI, Delimited.OBJECT_PROPERTY.iri(), null);
             for (Statement s : objectPropertyModel) {
-                Model propertyModel = mappingModel.filter((URI) s.getObject(), Delimited.HAS_PROPERTY.uri(), null);
+                Model propertyModel = mappingModel.filter((IRI) s.getObject(), Delimited.HAS_PROPERTY.iri(), null);
                 String property = Models.objectString(propertyModel).get();
-                Model classModel = mappingModel.filter((URI) s.getObject(), Delimited.CLASS_MAPPING_PROP.uri(), null);
-                IRI objectMappingResultURI = Models.objectIRI(classModel).get();
+                Model classModel = mappingModel.filter((IRI) s.getObject(), Delimited.CLASS_MAPPING_PROP.iri(), null);
+                IRI objectMappingResultIRI = Models.objectIRI(classModel).get();
 
-                if (uriToObject.containsKey(objectMappingResultURI))
-                    classMapping.addObjectProperty(uriToObject.get(objectMappingResultURI), property);
+                if (uriToObject.containsKey(objectMappingResultIRI))
+                    classMapping.addObjectProperty(uriToObject.get(objectMappingResultIRI), property);
                 else {
                     ClassMapping objectMappingResult = new ClassMapping();
                     classMapping.addObjectProperty(objectMappingResult, property);
-                    uriToObject.put(objectMappingResultURI, objectMappingResult);
+                    uriToObject.put(objectMappingResultIRI, objectMappingResult);
                 }
             }
             classMappings.add(classMapping);

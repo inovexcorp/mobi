@@ -1,5 +1,6 @@
 package org.matonto.etl.service.csv;
 
+import org.openrdf.model.IRI;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -20,14 +21,14 @@ public enum Delimited {
 
     ValueFactory vf = ValueFactoryImpl.getInstance();
 
-    String uri;
+    String iri;
 
-    Delimited(String uri){
-        this.uri = uri;
+    Delimited(String iri){
+        this.iri = iri;
     }
 
-    public URI uri(){
-        return vf.createURI(uri);
+    public IRI iri(){
+        return vf.createIRI(iri);
     }
 
 }
