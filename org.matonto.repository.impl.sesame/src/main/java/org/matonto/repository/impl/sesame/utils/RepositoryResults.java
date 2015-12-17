@@ -18,7 +18,7 @@ public class RepositoryResults {
      * @return the Model containing all the Statements from a RepositoryResult.
      */
     public static Model asModel(RepositoryResult<Statement> results, ModelFactory factory) {
-        Model model = factory.createEmptyModel();
+        Model model = factory.createModel();
         results.forEach(model::add);
         return model;
     }
