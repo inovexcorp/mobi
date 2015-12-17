@@ -26,7 +26,7 @@ public interface ModelFactory {
      *
      * @return The created Model.
      */
-    Model createModel(Collection<? extends Statement> c);
+    Model createModel(@Nonnull Collection<@Nonnull ? extends Statement> c);
 
     /**
      * Creates an empty Model with the supplied Model's Namespaces as its namespaces.
@@ -41,5 +41,5 @@ public interface ModelFactory {
      *
      * @return The created Model.
      */
-    Model createModel(@Nonnull Set<Namespace> namespaces, @Nonnull Collection<? extends Statement> c);
+    Model createModel(@Nonnull Set<Namespace> namespaces, @Nonnull Collection<@Nonnull ? extends Statement> c);
 }
