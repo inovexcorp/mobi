@@ -11,7 +11,8 @@ import java.util.Set;
 
 @Component(provide = ModelFactory.class,
         properties = {
-                "service.ranking:Integer=20"
+                "service.ranking:Integer=20",
+                "implType=hash"
         })
 public class LinkedHashModelFactoryService extends AbstractModelFactory {
 

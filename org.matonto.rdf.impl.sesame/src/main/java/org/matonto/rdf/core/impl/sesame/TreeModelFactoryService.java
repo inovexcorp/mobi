@@ -6,7 +6,8 @@ import org.matonto.rdf.api.ModelFactory;
 
 @Component(provide = ModelFactory.class,
         properties = {
-                "service.ranking:Integer=10"
+                "service.ranking:Integer=10",
+                "implType=tree"
         })
 public class TreeModelFactoryService extends AbstractModelFactory {
 
