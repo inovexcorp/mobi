@@ -4,6 +4,7 @@ import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.LiteralUtils;
 import org.openrdf.model.vocabulary.XMLSchema;
 
+import javax.annotation.Nonnull;
 import java.time.OffsetDateTime;
 
 public abstract class AbstractValueFactory implements ValueFactory {
@@ -22,7 +23,7 @@ public abstract class AbstractValueFactory implements ValueFactory {
     }
 
     @Override
-    public BNode createBNode(String id) {
+    public BNode createBNode(@Nonnull String id) {
         return new SimpleBNode(id);
     }
 
@@ -41,37 +42,37 @@ public abstract class AbstractValueFactory implements ValueFactory {
     }
 
     @Override
-    public IRI createIRI(String iri) {
+    public IRI createIRI(@Nonnull String iri) {
         return new SimpleIRI(iri);
     }
 
     @Override
-    public IRI createIRI(String namespace, String localName) {
+    public IRI createIRI(@Nonnull String namespace, @Nonnull String localName) {
         return new SimpleIRI(namespace + localName);
     }
 
     @Override
-    public Statement createStatement(Resource subject, IRI predicate, Value object) {
+    public Statement createStatement(@Nonnull Resource subject, @Nonnull IRI predicate, @Nonnull Value object) {
         return new SimpleStatement(subject, predicate, object);
     }
 
     @Override
-    public Statement createStatement(Resource subject, IRI predicate, Value object, Resource context) {
+    public Statement createStatement(@Nonnull Resource subject, @Nonnull IRI predicate, @Nonnull Value object, Resource context) {
         return new SimpleStatement(subject, predicate, object, context);
     }
 
     @Override
-    public Literal createLiteral(String literal) {
+    public Literal createLiteral(@Nonnull String literal) {
         return new SimpleLiteral(literal, createIRI(XMLSchema.STRING.stringValue()));
     }
 
     @Override
-    public Literal createLiteral(String literal, IRI datatype) {
+    public Literal createLiteral(@Nonnull String literal, @Nonnull IRI datatype) {
         return new SimpleLiteral(literal, datatype);
     }
 
     @Override
-    public Literal createLiteral(String literal, String language) {
+    public Literal createLiteral(@Nonnull String literal, @Nonnull String language) {
         return new SimpleLiteral(literal, language);
     }
 
@@ -86,7 +87,7 @@ public abstract class AbstractValueFactory implements ValueFactory {
     }
 
     @Override
-    public Literal createLiteral(OffsetDateTime literal) {
+    public Literal createLiteral(@Nonnull OffsetDateTime literal) {
         return createLiteral(literal.format(LiteralUtils.OFFSET_TIME_FORMATTER),
                 new SimpleIRI(XMLSchema.DATETIME.stringValue()));
     }
@@ -122,6 +123,11 @@ public abstract class AbstractValueFactory implements ValueFactory {
 
     protected Literal createFPLiteral(Number value, IRI datatype) {
         return new NumericLiteral(value, datatype);
+    }
+
+    @Override
+    public Namespace createNamespace(@Nonnull String prefix, @Nonnull String name) {
+        return new SimpleNamespace(prefix, name);
     }
 
     /**
