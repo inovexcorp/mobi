@@ -81,6 +81,13 @@ public interface NamedGraph extends StatementSet {
     /**
      * Returns a Model containing the NamedGraph statements.
      *
+     * @return The Model containing the statements from the NamedGraph.
+     */
+    Model asModel();
+
+    /**
+     * Returns a Model containing the NamedGraph statements.
+     *
      * @param factory the ModelFactory used to create the returned Model.
      * @return The Model created by the supplied ModelFactory containing the statements from the NamedGraph.
      */
