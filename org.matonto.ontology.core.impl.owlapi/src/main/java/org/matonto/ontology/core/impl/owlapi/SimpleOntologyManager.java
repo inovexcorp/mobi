@@ -163,7 +163,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			closeConnection(conn);
 		}
 
-		return Optional.of(new SimpleOntology(onto));
+		return Optional.of(Values.matontoOntology(onto));
 	}
 	
 	@Override

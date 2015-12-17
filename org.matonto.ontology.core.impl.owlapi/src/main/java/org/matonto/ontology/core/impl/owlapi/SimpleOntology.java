@@ -22,13 +22,13 @@ import org.semanticweb.owlapi.rio.RioRenderer;
 import java.io.*;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLMutableOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 
 
 public class SimpleOntology implements Ontology {
@@ -39,23 +39,6 @@ public class SimpleOntology implements Ontology {
 	private OWLOntology ontology;
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 	
-    protected SimpleOntology(@Nonnull OWLOntology ontology) {
-        this.ontology = ontology;
-        this.manager = this.ontology.getOWLOntologyManager();
-        OWLOntologyID owlApiID = ontology.getOntologyID();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = owlApiID.getOntologyIRI();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlApiID.getVersionIRI();
-		
-        if (owlApiID.isAnonymous()) {
-            ontologyId = new SimpleOntologyId();
-        } else if (vIRI.isPresent()) {
-            ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()), Values.matontoIRI(vIRI.get()));
-        } else if (oIRI.isPresent()){
-            ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()));
-        } else {
-            ontologyId = new SimpleOntologyId();
-        }
-    }
 	
 	public SimpleOntology(OntologyId ontologyId) throws MatontoOntologyException {
         this.ontologyId = ontologyId;
@@ -93,7 +76,23 @@ public class SimpleOntology implements Ontology {
 		}
 	}
 	
-
+	protected void setOWLOntologyObject(OWLOntology ontology) {
+	    if(ontology instanceof OWLMutableOntology) {
+	        OWLOntologyManager mgr = ontology.getOWLOntologyManager();
+	        try {
+                mgr.copyOntology(this.ontology, OntologyCopy.MOVE);
+                this.manager = ontology.getOWLOntologyManager();
+            } catch (OWLOntologyCreationException e) {
+                throw new MatontoOntologyException("Error in ontology creation", e);
+            }
+	    }
+	    
+	    else {
+	        this.ontology = ontology;
+	        this.manager = ontology.getOWLOntologyManager();
+	    }
+	}
+	
 	@Override
 	public OntologyId getOntologyId() {
 		return ontologyId;

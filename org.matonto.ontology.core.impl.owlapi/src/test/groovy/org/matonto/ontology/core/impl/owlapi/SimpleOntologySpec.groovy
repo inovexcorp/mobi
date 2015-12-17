@@ -1,8 +1,9 @@
 package org.matonto.ontology.core.impl.owlapi
-import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import spock.lang.Shared
 import spock.lang.Specification
+
 
 class SimpleOntologySpec extends Specification {
 
@@ -12,6 +13,8 @@ class SimpleOntologySpec extends Specification {
     
 //    @Share
 //    def factory = SimpleValueFactory.getInstance();
+//    
+//    def manager.setValueFactory(factory);
 //
 //	@Shared
 //	def file = new File("src/test/resources/travel.owl")
@@ -31,7 +34,11 @@ class SimpleOntologySpec extends Specification {
 //    @Shared
 //    def urlOntologyId = manager.createOntologyId(urlIri)
 //
-//
+//    def setup() {}          // run before every feature method
+//    def cleanup() {}        // run after every feature method
+//    def setupSpec() {}     // run before the first feature method
+//    def cleanupSpec() {}   // run after the last feature method
+//    
 //    /* OntologyId creation test */
 //    def"File OntologyId creation"() {
 //        setup:
@@ -160,5 +167,5 @@ class SimpleOntologySpec extends Specification {
 //        expect:
 //        ontology.asModel() instanceof org.openrdf.model.Model
 //    }
-//
+
 }

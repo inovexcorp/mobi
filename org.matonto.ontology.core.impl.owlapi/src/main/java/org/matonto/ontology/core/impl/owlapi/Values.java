@@ -7,6 +7,8 @@ import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.FacetRestriction;
 import org.matonto.ontology.core.api.NamedIndividual;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
@@ -32,9 +34,6 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
-//import org.matonto.rdf.core.impl.sesame.SimpleIRI;
-//import org.matonto.rdf.core.impl.sesame.SimpleLiteral;
 import org.semanticweb.owlapi.model.NodeID;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
@@ -51,12 +50,10 @@ import org.semanticweb.owlapi.model.OWLFacetRestriction;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.vocab.OWLFacet;
-
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import uk.ac.manchester.cs.owl.owlapi.OWL2DatatypeImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationPropertyImpl;
@@ -70,6 +67,8 @@ import uk.ac.manchester.cs.owl.owlapi.OWLFacetRestrictionImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
 
 @Component (immediate=true)
 public class Values {
@@ -88,6 +87,38 @@ public class Values {
     }
     
 	public Values() {}
+	
+    public static SimpleOntology matontoOntology(OWLOntology ontology) 
+    {
+        if(ontology == null)
+            return null;
+        
+        OWLOntologyID owlApiID = ontology.getOntologyID();
+        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = owlApiID.getOntologyIRI();
+        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlApiID.getVersionIRI();
+        OntologyId ontologyId = null;
+        if (owlApiID.isAnonymous()) {
+            ontologyId = new SimpleOntologyId();
+        } else if (vIRI.isPresent()) {
+            ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()), Values.matontoIRI(vIRI.get()));
+        } else if (oIRI.isPresent()){
+            ontologyId = new SimpleOntologyId(Values.matontoIRI(oIRI.get()));
+        } else {
+            ontologyId = new SimpleOntologyId();
+        }
+        
+        SimpleOntology matontoOntology = new SimpleOntology(ontologyId);
+        matontoOntology.setOWLOntologyObject(ontology);
+        return matontoOntology;
+    }
+    
+    public static OWLOntology owlapiOntology(Ontology ontology)
+    {
+        if(ontology == null)
+            return null;
+        
+        return ((SimpleOntology)ontology).getOwlapiOntology();
+    }
 
 	public static IRI matontoIRI(org.semanticweb.owlapi.model.IRI owlIri) 
 	{
