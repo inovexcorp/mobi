@@ -8,7 +8,8 @@ import org.matonto.rdf.api.Resource;
 @Component(
         provide = NamedGraphFactory.class,
         properties = {
-                "service.ranking:Integer=20"
+                "service.ranking:Integer=20",
+                "implType=hash"
         })
 public class LinkedHashNamedGraphFactoryService extends AbstractNamedGraphFactory {
 
