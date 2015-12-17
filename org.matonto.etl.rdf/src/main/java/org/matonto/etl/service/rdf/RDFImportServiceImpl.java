@@ -35,7 +35,7 @@ public class RDFImportServiceImpl implements RDFImportService {
     public void setRepositoryManager(RepositoryManager repositoryManager){this.repositoryManager = repositoryManager;}
 
     @Reference
-    public void setValueFactory(ModelFactory modelFactory) {
+    public void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
 

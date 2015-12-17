@@ -1,5 +1,7 @@
 package org.matonto.etl.service.rdf
 
+import org.matonto.rdf.api.Model
+import org.matonto.rdf.api.ModelFactory
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.api.RepositoryManager
 import org.matonto.repository.api.Repository
@@ -32,16 +34,19 @@ class RDFImportSpec extends Specification {
         Repository repo = Mock()
         RepositoryManager manager = Mock()
         RepositoryConnection repoConn = Mock()
+        ModelFactory factory = Mock()
         RDFImportServiceImpl importService = new RDFImportServiceImpl()
         File testFile = new ClassPathResource("importer/testFile.trig").getFile();
 
         when:
         importService.setRepositoryManager(manager)
+        importService.setModelFactory(factory)
         importService.importFile("test", testFile, true)
 
         then:
         1 * manager.getRepository("test") >> Optional.of(repo)
         1 * repo.getConnection() >> repoConn
+        1 * factory.createModel(_) >> Mock(Model.class)
     }
 
     def "Invalid file type causes error"(){
