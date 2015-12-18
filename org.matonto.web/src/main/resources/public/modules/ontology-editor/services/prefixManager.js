@@ -5,9 +5,9 @@
         .module('prefixManager', [])
         .service('prefixManagerService', prefixManagerService);
 
-        prefixManagerService.$inject = ['$http'];
+        prefixManagerService.$inject = [];
 
-        function prefixManagerService($http) {
+        function prefixManagerService() {
             var self = this;
 
             function updateRefs(obj, old, fresh, owl) {
@@ -70,7 +70,7 @@
                 }
             }
 
-            self.addPrefix = function(key, value, ontology) {
+            self.add = function(key, value, ontology) {
                 var context = ontology.matonto.context,
                     duplicate = false,
                     empty = !key.length || !value.length,
@@ -93,7 +93,7 @@
                 }
             }
 
-            self.removePrefix = function(key, ontology) {
+            self.remove = function(key, ontology) {
                 var i = ontology.matonto.context.length;
                 while(i--) {
                     if(ontology.matonto.context[i].key === key) {
@@ -104,7 +104,7 @@
                 }
             }
 
-            self.editPrefix = function(edit, old, index, value, ontology) {
+            self.edit = function(edit, old, index, value, ontology) {
                 var input = document.getElementById('prefix-' + index);
                 if(edit) {
                     updateRefs(ontology, old + ':', input.value + ':', ontology.matonto.owl);

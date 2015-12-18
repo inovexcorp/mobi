@@ -3,108 +3,43 @@
 
     angular
         .module('annotationManager', [])
-        .service('annotationManagerService', annotationManagerService);
+        .service('annotationManagerService', annotationManagerService)
+        .filter('annotationManagerFilter', annotationManagerFilter);
 
-        annotationManagerService.$inject = ['$http'];
+        annotationManagerService.$inject = [];
 
-        function annotationManagerService($http) {
-            var self = this,
-                prefix = '/matonto/rest/ontology';
-
-            // sets the built-in annotations provided by OWL 2 - http://www.w3.org/TR/owl2-syntax/#Annotation_Properties
-            function _setAnnotations(rdfs, owl, arr) {
-                // default owl2 annotations
-                var item,
-                    i = arr.length,
-                    temp = [
-                        rdfs + 'seeAlso',
-                        rdfs + 'isDefinedBy',
-                        owl + 'deprecated',
-                        owl + 'versionInfo',
-                        owl + 'priorVersion',
-                        owl + 'backwardCompatibleWith',
-                        owl + 'incompatibleWith'
-                    ];
-
-                // adds the ontology specific annotations
-                while(i--) {
-                    temp.push(arr[i]['@id']);
-                }
-
-                // returns the combined array
-                return temp;
-            }
-
-            // add annotations to the list necessary
-            function _addAnnotationsTo(obj, rdfs, owl, annotationList) {
-                var prop,
-                    exclude = [
-                        owl + 'disjointWith',
-                        rdfs + 'comment',
-                        rdfs + 'domain',
-                        rdfs + 'equivalentClass',
-                        rdfs + 'inverseOf',
-                        rdfs + 'isDefinedBy',
-                        rdfs + 'label',
-                        rdfs + 'range',
-                        rdfs + 'subClassOf',
-                        rdfs + 'subPropertyOf',
-                        '@id',
-                        '@type',
-                        'annotations',
-                        'classes',
-                        'icon',
-                        'properties'
-                    ];
-
-                // adds the annotations property to the object
-                obj.annotations = [];
-
-                // looks for all annotations not used elsewhere
-                for(prop in obj) {
-                    // adds all the other non-rdfs:label
-                    if(obj.hasOwnProperty(prop) && exclude.indexOf(prop) === -1) {
-                        obj.annotations.push(prop);
-                    }
-                }
-            }
+        function annotationManagerService() {
+            var self = this;
 
             // removes the annotation
-            function removeAnnotation(item) {
-                var i = vm.selected.annotations.length;
-                // remove it from the annotations list
-                while(i--) {
-                    if(item == vm.selected.annotations[i]) {
-                        vm.selected.annotations.splice(i, 1);
-                    }
-                }
-                // removes it from the object itself
-                delete vm.selected[item];
+            self.remove = function(obj, key) {
+                delete obj[key];
             }
 
             // adds the annotation that the user is editing
-            function addAnnotation() {
-                var add;
-
-                // adds the item to the actual object
-                if(vm.selected.currentAnnotation !== 'other') {
-                    vm.selected[vm.selected.currentAnnotation] = vm.selected.currentAnnotationValue;
-                    add = vm.selected.currentAnnotation;
+            self.add = function(obj, key, value, select) {
+                if(select === 'other') {
+                    obj[key] = value;
                 } else {
-                    vm.selected[vm.selected.currentAnnotationKey] = vm.selected.currentAnnotationValue;
-                    add = vm.selected.currentAnnotationKey;
+                    obj[select] = value;
                 }
+            }
 
-                // adds the annotation to the list of items used to determine which is shown in the drop down
-                vm.selected.annotations.push(add);
+            self.inWhiteList = function(key, ontology) {
+                return ontology.matonto.annotations.indexOf(key) !== -1;
+            }
+        }
 
-                // resets the value
-                vm.selected.currentAnnotation = 'default';
-                vm.selected.currentAnnotationValue = '';
-                vm.selected.currentAnnotationKey = '';
-
-                // resets unsaved
-                vm.selected.unsaved = false;
+        function annotationManagerFilter() {
+            return function(obj, annotations) {
+                var prop,
+                    results = [];
+                for(prop in obj) {
+                    if(annotations.indexOf(prop) !== -1) {
+                        results.push(prop);
+                    }
+                }
+                return results;
             }
         }
 })();

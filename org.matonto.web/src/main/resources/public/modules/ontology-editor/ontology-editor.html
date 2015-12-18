@@ -1,39 +1,41 @@
 <!-- annotation template -->
 <script type="text/ng-template" id="annotations-template">
     <!-- list of annotations -->
-    <div class="well well-sm annotation" ng-repeat="item in vm.selected.annotations">
-        <span><strong>{{item}}</strong><br>{{vm.selected[item]}}</span>
-        <button type="button" class="btn btn-link" ng-click="vm.removeAnnotation(item)"><i class="fa fa-fw fa-times"></i></button>
+    <!-- TODO: make a filter to utilize a white list (that doesn't exist yet, but will) -->
+    <div class="well well-sm annotation" ng-repeat="key in (vm.selected | annotationManagerFilter:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
+        <span><strong>{{key}}</strong><br>{{vm.selected[key]['@id'] || vm.selected[key]}}</span>
+        <button type="button" class="btn btn-link" ng-click="vm.removeAnnotation(key)"><i class="fa fa-fw fa-times"></i></button>
     </div>
 
     <!-- annotation list -->
     <div class="form-group">
         <label class="control-label" for="ontology-annotation-list">Annotation</label>
-        <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.currentAnnotation">
+        <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.matonto.currentAnnotationSelect">
             <option value="default">Please select an annotation to add</option>
-            <option ng-repeat="annotation in ((vm.state.oi === -1) ? vm.selected.annotationList : vm.ontologies[vm.state.oi].annotationList)" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
+            <option ng-repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
             <option value="other">Add a new annotation</option>
         </select>
     </div>
 
     <!-- key, if new -->
-    <div ng-show="vm.selected.currentAnnotation === 'other'" class="form-group">
+    <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other'" class="form-group">
         <label class="control-label" for="ontology-annotation-key">Name</label>
-        <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.currentAnnotationKey" />
+        <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" />
     </div>
 
     <!-- value -->
     <div class="form-group">
         <label class="control-label" for="ontology-annotation-value">Value</label>
-        <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.currentAnnotationValue"></textarea>
+        <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.matonto.currentAnnotationValue"></textarea>
     </div>
 
     <!-- TODO: add a section here for comments -->
     <!-- annotation buttons -->
     <div class="btn-container clearfix">
+        <!-- adding a custom one -->
         <button type="button" class="btn btn-primary pull-right"
-                ng-click="vm.addAnnotation()"
-                ng-disabled="!(((vm.selected.currentAnnotation === 'other' && vm.selected.currentAnnotationKey) || vm.selected.currentAnnotation) && vm.selected.currentAnnotationValue)"><i class="fa fa-plus fa-fw"></i>Add annotation</button>
+                ng-click="vm.addAnnotation(vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationSelect); vm.selected.matonto.currentAnnotationKey = ''; vm.selected.matonto.currentAnnotationValue = ''; vm.selected.matonto.currentAnnotationSelect = 'default';"
+                ng-disabled="!(((vm.selected.matonto.currentAnnotationSelect === 'other' && vm.selected.matonto.currentAnnotationKey) || (vm.selected.matonto.currentAnnotationSelect !== 'other' && vm.selected.matonto.currentAnnotationSelect !== 'default')) && vm.selected.matonto.currentAnnotationValue)"><i class="fa fa-plus fa-fw"></i>Add annotation</button>
     </div>
 </script>
 

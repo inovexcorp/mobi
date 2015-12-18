@@ -27,7 +27,7 @@
 
             /* Don't let them change the height of the textareas */
             textarea {
-                resize: none;
+                resize: vertical;
             }
 
             /* Styles for the sub classes configured */

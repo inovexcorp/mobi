@@ -5,81 +5,27 @@
         .module('ontologyManager', [])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$http'];
+        ontologyManagerService.$inject = ['$http', '$q', '$timeout'];
 
-        function ontologyManagerService($http) {
+        function ontologyManagerService($http, $q, $timeout) {
             var self = this,
                 prefix = '/matonto/rest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
                 defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
-                defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
-                newOntology = {
-                    '@id': '',
-                    '@type': 'owl:Ontology',
-                    matonto: {
-                        rdfs: 'rdfs:',
-                        owl: 'owl:',
-                        delimiter: '#',
-                        classes: [],
-                        context: [
-                            { key: 'owl', value: defaultOwl },
-                            { key: 'rdfs', value: defaultRdfs },
-                            { key: 'xsd', value: defaultXsd }
-                        ]
-                    }
-                },
-                newClass = {
-                    '@id': '',
-                    matonto: {
-                        properties: []
-                    }
-                },
-                newProperty = {
-                    '@id': '',
-                    matonto: {}
-                };
+                defaultXsd = 'http://www.w3.org/2001/XMLSchema#';
 
             self.newItems = {};
             self.ontologies = [];
 
-            initialize();
-
-            function initialize() {
-                $http.get(prefix + '/getAllOntologyIds')
-                    .then(function(response) {
-                        if(!response.data.error) {
-                            var prop, arr, getDelimiter;
-
-                            getDelimiter = function(id) {
-                                var result = ':',
-                                    hash = id.indexOf('#') + 1,
-                                    slash = id.lastIndexOf('/') + 1;
-                                if(hash !== 0) {
-                                    result = '#';
-                                } else if(slash !== 0) {
-                                    result = '/';
-                                }
-                                return result;
-                            }
-
-                            for(prop in response.data) {
-                                arr = prop.split(getDelimiter(prop));
-                                self.get(arr[0], arr[1]);
-                            }
-                        } else {
-                            // TODO: handle error better
-                            console.log(response.data.error);
-                        }
-                    });
-            }
-
             function restructure(flattened, context, prefixes) {
-                var obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon, objToArr,
+                var j, obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon, objToArr, annotations,
                     ontology = {
                         matonto: {
                             noDomains: [],
                             owl: prefixes.owl,
-                            rdfs: prefixes.rdfs
+                            rdfs: prefixes.rdfs,
+                            annotations: [],
+                            currentAnnotationSelect: 'default'
                         }
                     },
                     classes = [],
@@ -90,6 +36,7 @@
                 initOntology = function(ontology, obj) {
                     var len = obj['@id'].length,
                         delimiter = obj['@id'].charAt(len - 1);
+
                     if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
                         obj.matonto = {
                             delimiter: delimiter,
@@ -102,6 +49,18 @@
                             originalId: ['@id']
                         }
                     }
+                    // TODO: replace with actual annotation list from web service
+                    obj.matonto.annotations = [
+                        prefixes.rdfs + 'seeAlso',
+                        prefixes.rdfs + 'isDefinedBy',
+                        prefixes.owl + 'deprecated',
+                        prefixes.owl + 'versionInfo',
+                        prefixes.owl + 'priorVersion',
+                        prefixes.owl + 'backwardCompatibleWith',
+                        prefixes.owl + 'incompatibleWith',
+                        'http://purl.org/dc/elements/1.1/description',
+                        'http://purl.org/dc/elements/1.1/title'
+                    ];
                     angular.merge(ontology, obj);
                 }
 
@@ -144,7 +103,7 @@
 
                 while(i--) {
                     obj = list[i];
-                    type = obj['@type'];
+                    type = obj['@type'] ? obj['@type'][0] : undefined;
 
                     switch(type) {
                         case prefixes.owl + 'Ontology':
@@ -153,7 +112,8 @@
                         case prefixes.owl + 'Class':
                             obj.matonto = {
                                 properties: [],
-                                originalId: obj['@id']
+                                originalId: obj['@id'],
+                                currentAnnotationSelect: 'default'
                             };
                             obj['@id'] = removeNamespace(obj['@id']);
                             classes.push(obj);
@@ -162,7 +122,8 @@
                         case prefixes.owl + 'ObjectProperty':
                             obj.matonto = {
                                 icon: chooseIcon(obj, prefixes.rdfs, prefixes.xsd),
-                                originalId: obj['@id']
+                                originalId: obj['@id'],
+                                currentAnnotationSelect: 'default'
                             };
                             obj['@id'] = removeNamespace(obj['@id']);
                             properties.push(obj);
@@ -211,6 +172,7 @@
 
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
+                console.log('restructure');
                 return ontology;
             }
 
@@ -245,10 +207,25 @@
                     return result;
 
                 }
+
                 // TODO: integrate with latest develop ontology changes which flatten the JSON in the service layer
-                jsonld.flatten(ontology, context, function(err, flattened) {
-                    self.ontologies.push(restructure(flattened, context, getPrefixes(context)));
-                });
+                self.ontologies.push(restructure(ontology, context, getPrefixes(context)));
+            }
+
+            self.initialize = function() {
+                var deferred = $q.defer();
+                $http.get(prefix + '/getAllOntologies')
+                    .then(function(response) {
+                        var i = response.data.length;
+                        while(i--) {
+                            addOntology(JSON.parse(response.data[i]));
+                        }
+                        $timeout(function() {
+                            console.log('service', self.ontologies);
+                            deferred.resolve(self.ontologies);
+                        }, 0);
+                    });
+                return deferred.promise;
             }
 
             self.getList = function() {
@@ -261,7 +238,48 @@
                     ci = state.ci,
                     pi = state.pi,
                     tab = state.tab,
-                    result = {};
+                    result = {},
+                    newOntology = {
+                        '@id': '',
+                        '@type': 'owl:Ontology',
+                        matonto: {
+                            rdfs: 'rdfs:',
+                            owl: 'owl:',
+                            delimiter: '#',
+                            classes: [],
+                            // TODO: get actual annotations from webservice
+                            annotations: [
+                                'rdfs:seeAlso',
+                                'rdfs:isDefinedBy',
+                                'owl:deprecated',
+                                'owl:versionInfo',
+                                'owl:priorVersion',
+                                'owl:backwardCompatibleWith',
+                                'owl:incompatibleWith',
+                                'http://purl.org/dc/elements/1.1/description',
+                                'http://purl.org/dc/elements/1.1/title'
+                            ],
+                            currentAnnotationSelect: 'default',
+                            context: [
+                                { key: 'owl', value: defaultOwl },
+                                { key: 'rdfs', value: defaultRdfs },
+                                { key: 'xsd', value: defaultXsd }
+                            ]
+                        }
+                    },
+                    newClass = {
+                        '@id': '',
+                        matonto: {
+                            properties: [],
+                            currentAnnotationSelect: 'default'
+                        }
+                    },
+                    newProperty = {
+                        '@id': '',
+                        matonto: {
+                            currentAnnotationSelect: 'default'
+                        }
+                    };
 
                 editing = function() {
                     if(pi !== undefined && ci !== undefined) {
