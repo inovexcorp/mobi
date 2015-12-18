@@ -51,8 +51,8 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
         this.repositoryID = repositoryID;
     }
 
-    public String getRepositoryType() {
-        return REPOSITORY_TYPE;
+    public RepositoryConfig getConfig() {
+        return delegate.getConfig();
     }
 
     protected void start(Map<String, Object> props) {

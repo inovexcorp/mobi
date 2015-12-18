@@ -1,6 +1,5 @@
 package org.matonto.repository.impl.sesame
 
-import org.matonto.rdf.api.ValueFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.repository.api.RepositoryConnection
@@ -116,7 +115,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         def c = vf.createIRI("http://test.com/c")
 
         def factory = new LinkedHashModelFactory()
-        def model = factory.createEmptyModel()
+        def model = factory.createModel()
         model.add(s, p, o)
         model.add(s, p, o, c)
 
@@ -136,7 +135,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         def c2 = vf.createIRI("http://test.com/c2")
 
         def factory = new LinkedHashModelFactory()
-        def model = factory.createEmptyModel()
+        def model = factory.createModel()
         model.add(s, p, o)
         model.add(s, p, o, c)
         model.add(s, p, o2)
@@ -299,12 +298,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         result4.size() == 4
         result5.size() == 1
     }
-
-    def "getValueFactory() returns a ValueFactory"() {
-        expect:
-        conn.getValueFactory() instanceof ValueFactory
-    }
-
+    
     def "getContextIDs() returns correctly for empty repo"() {
         expect:
         !conn.getContextIDs().hasNext()

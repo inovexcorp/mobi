@@ -19,7 +19,7 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${etl.openrdf.version}</version>
+            <version>${openrdf.version}</version>
         </dependency>
         <dependency>
             <groupId>com.opencsv</groupId>

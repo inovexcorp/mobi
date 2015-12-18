@@ -45,7 +45,10 @@ public class MemoryRepositoryWrapper extends RepositoryWrapper {
             sesameMemoryStore.setSyncDelay(config.syncDelay());
         }
 
-        return new SesameRepositoryWrapper(new SailRepository(sesameMemoryStore));
+        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(new SailRepository(sesameMemoryStore));
+        repo.setConfig(config);
+
+        return repo;
     }
 
     @Override

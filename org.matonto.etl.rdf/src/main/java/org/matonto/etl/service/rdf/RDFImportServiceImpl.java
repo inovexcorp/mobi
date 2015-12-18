@@ -2,106 +2,101 @@ package org.matonto.etl.service.rdf;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.matonto.etl.api.rdf.RDFImportService;
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
-import org.openrdf.repository.Repository;
-import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.Rio;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.exception.RepositoryException;
+import org.openrdf.model.Model;
+import org.openrdf.rio.*;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.openrdf.rio.helpers.BasicParserSettings;
+import org.openrdf.rio.helpers.StatementCollector;
+import javax.annotation.Nonnull;
 
 @Component(provide = RDFImportService.class, immediate = true)
 public class RDFImportServiceImpl implements RDFImportService {
 
-    private Repository repository;
+    private RepositoryManager repositoryManager;
 
-    private RepositoryConnection repConnect;
+    private ModelFactory modelFactory;
 
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager){this.repositoryManager = repositoryManager;}
 
-    @Reference(target = "(repositorytype=memory)")
-    public void setRepository(Repository repository) {
-        this.repository = repository;
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
     }
 
     /**
      * Imports a file into the openrdf repository (with the given repositoryID) deployed on karaf
      * @throws FileNotFoundException
      */
-    public void importFile(String repositoryID,  File file, Boolean cont) throws FileNotFoundException, IOException, RepositoryException, RDFParseException {
+    public void importFile(String repositoryID, @Nonnull File file, Boolean cont) throws IOException, RepositoryException, RDFParseException {
 
-
-        if (file == null) {
-            throw new FileNotFoundException("File does not exist or could not be found");
-        }
-        if(repository == null){
-            throw new RepositoryException("Repository does not exist/could not be found.");
-        }
+        if(!file.exists())
+            throw new IOException("File not found");
 
         //Get the rdf format based on the file name. If the format returns null, it is an unsupported file type.
-        RDFFormat format = Rio.getParserFormatForFileName(file.getName());
+        RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() -> new IOException("Unsupported file type"));
 
-        if (format == null) {
-            throw new IOException("Invalid format type! Please use the help command to check valid formats.");
-        }
-
-        URI newURI = new URIImpl("<http://matonto.org/>");
-
-        repConnect = repository.getConnection();
-        if(repConnect == null){
-            throw new RepositoryException("Failed to connect to the repository.");
-        }
-        System.out.println("Repository connected!");
-        // ASK ABOUT THE ADD METHOD
-        repConnect.add(file, newURI.toString(), format);
-
-
-
-        repConnect.close();
-
-
-
-
+        importFile(repositoryID,file, cont, format);
 
     }
 
     /**
      * Imports a file with a specified format into the openrdf repository (with the given repositoryID) deployed on karaf
      */
-    public void importFile(String repositoryID, File file, Boolean cont, RDFFormat format) throws FileNotFoundException, IOException, RepositoryException, RDFParseException {
+    public void importFile(String repositoryID, @Nonnull File file, Boolean cont,@Nonnull RDFFormat format) throws IOException, RepositoryException, RDFParseException {
 
+        if(!file.exists())
+            throw new IOException("File not found");
 
-        if (file == null) {
-            throw new FileNotFoundException();
+        RDFParser parser = Rio.createParser(format);
+        ParserConfig parserConfig = new ParserConfig();
+        if(cont){
+            parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES);
+            parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES);
+            parserConfig.addNonFatalError(BasicParserSettings.NORMALIZE_DATATYPE_VALUES);
         }
-        if(repository == null){
-            throw new RepositoryException("Repository does not exist/could not be found.");
-        }
-
-        //If the format passd in is null, try and get the format from the filename. Otherwise, throw an exception
-        if (format == null) {
-            format = Rio.getParserFormatForFileName(file.getName());
-
-            if (format == null) {
-                throw new IOException();
-            }
-        }
-
-        repConnect = repository.getConnection();
-        if(repConnect == null){
-            throw new RepositoryException("Failed to connect to the repository.");
+        parser.setParserConfig(parserConfig);
+        Model m = new org.openrdf.model.impl.LinkedHashModel();
+        parser.setRDFHandler(new StatementCollector(m));
+        try {
+            parser.parse(new FileReader(file), "");
+        }catch(RDFHandlerException e){
+            throw new RDFParseException(e);
         }
 
-        URI newURI = new URIImpl("<http://matonto.org/>");
+        importModel(repositoryID, m);
 
-        repConnect.add(file, newURI.toString(), format);
+    }
 
-        repConnect.close();
+    public void importModel(String repositoryID, Model m) {
+        Optional<Repository> optRepo = repositoryManager.getRepository(repositoryID);
+        if (optRepo.isPresent()) {
+            Set<Statement> stmts = m.stream()
+                    .map(Values::matontoStatement)
+                    .collect(Collectors.toSet());
 
+            org.matonto.rdf.api.Model matontoModel = modelFactory.createModel(stmts);
+
+            RepositoryConnection conn = optRepo.get().getConnection();
+            conn.add(matontoModel);
+        } else {
+            throw new IllegalArgumentException("Repository does not exist");
+        }
     }
 
 }
