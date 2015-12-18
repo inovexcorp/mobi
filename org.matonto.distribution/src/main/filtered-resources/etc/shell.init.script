@@ -3,6 +3,7 @@
 #obr:start <bundle-name>
 
 wait -t 5000 obr
+obr:url-refresh
 obr:start -d \
     org.matonto.persistence.api \
     org.matonto.persistence.cli \
@@ -13,8 +14,8 @@ obr:start -d \
     org.matonto.etl.cli \
     org.matonto.etl.csv \
     org.matonto.etl.rdf \
+    org.matonto.etl.rest \
     org.matonto.ontology.api \
     org.matonto.ontology.cli \
     org.matonto.ontology.core.impl.owlapi \
-    org.matonto.ontology.rest \
     org.matonto.web
