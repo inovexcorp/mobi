@@ -159,7 +159,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			throw new MatontoOntologyException("Unable to create an ontology object", e);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
-		} finally {
+        } finally {
 			closeConnection(conn);
 		}
 
@@ -298,6 +298,5 @@ public class SimpleOntologyManager implements OntologyManager {
             LOG.warn("Could not close Repository." + e.toString());
         }
     }
-    
 
 }

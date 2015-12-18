@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <scope>test</scope>
+            <!-- <scope>test</scope> -->
             <exclusions>
                 <exclusion>
                     <groupId>org.openrdf.sesame</groupId>

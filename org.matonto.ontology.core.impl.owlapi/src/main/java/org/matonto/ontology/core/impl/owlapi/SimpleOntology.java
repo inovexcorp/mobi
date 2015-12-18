@@ -80,8 +80,8 @@ public class SimpleOntology implements Ontology {
 	    if(ontology instanceof OWLMutableOntology) {
 	        OWLOntologyManager mgr = ontology.getOWLOntologyManager();
 	        try {
-                mgr.copyOntology(this.ontology, OntologyCopy.MOVE);
-                this.manager = ontology.getOWLOntologyManager();
+                this.ontology = this.manager.copyOntology(ontology, OntologyCopy.MOVE);
+                
             } catch (OWLOntologyCreationException e) {
                 throw new MatontoOntologyException("Error in ontology creation", e);
             }
@@ -267,7 +267,7 @@ public class SimpleOntology implements Ontology {
 		try {
 			manager.saveOntology(ontology, prefixFormat, outputStream);
 			os = MatOntoStringUtils.replaceLanguageTag(outputStream);
-			
+
 		} catch (OWLOntologyStorageException e) {
 			throw new MatontoOntologyException("Unable to save to an ontology object", e);
 		} finally {
