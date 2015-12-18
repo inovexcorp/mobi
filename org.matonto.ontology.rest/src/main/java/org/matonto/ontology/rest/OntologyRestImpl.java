@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -73,9 +74,37 @@ public class OntologyRestImpl {
 		{
 			return manager;
 		}
-		
-		
-		
+
+		@GET
+		@Path("/getAllOntologies")
+		@Produces(MediaType.APPLICATION_JSON)
+		public Response getAllOntologies()
+		{
+			if(manager == null)
+				throw new IllegalStateException("Ontology manager is null");
+
+			Optional<Map<OntologyId, String>> ontologyRegistry = manager.getOntologyRegistry();
+			Map<OntologyId, String> ontologies = ontologyRegistry.get();
+			JSONArray jsonArray = new JSONArray();
+
+			URI uri;
+			Optional<Ontology> ontology;
+			OutputStream outputStream;
+
+			if(!ontologies.isEmpty()) {
+				for(OntologyId oid : ontologies.keySet()) {
+					uri = new URIImpl(oid.getContextId().toString());
+					ontology = manager.retrieveOntology(manager.createOntologyId(uri));
+					outputStream = ontology.get().asJsonLD();
+					if(outputStream != null) {
+						jsonArray.put(outputStream.toString());
+					}
+				}
+			}
+
+			return Response.status(200).entity(jsonArray.toString()).build();
+		}
+
 		@GET
 		@Path("getAllOntologyIds")
 		@Produces(MediaType.APPLICATION_JSON)
