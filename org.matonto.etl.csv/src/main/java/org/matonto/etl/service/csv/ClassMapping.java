@@ -1,5 +1,7 @@
 package org.matonto.etl.service.csv;
 
+import org.openrdf.model.IRI;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ public class ClassMapping {
     private String prefix;
     private String mapping;
     private String localName;
+    private IRI iri;
 
     public String getPrefix(){ return prefix; }
 
@@ -24,6 +27,8 @@ public class ClassMapping {
 
     public String getLocalName(){return localName;}
 
+    public IRI getIri(){return iri;}
+
     public void setInstance(boolean isInstance){ this.isInstance = isInstance; }
 
     public void addDataProperty(Integer index, String property){ dataProperties.put(index, property); }
@@ -35,5 +40,8 @@ public class ClassMapping {
     public void setMapping(String mapping){this.mapping = mapping;}
 
     public void setLocalName(String localName){this.localName = localName;}
+
+    public void setIRI(IRI iri){this.iri = iri;}
+
 
 }

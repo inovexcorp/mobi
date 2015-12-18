@@ -109,9 +109,9 @@ class ConverterSpec extends Specification {
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
         CSVConverterImpl c = Spy(CSVConverterImpl)
         def uuid = "12345"
-
+        c.generateUUID() >> "12345"
         expect:
-        result.equals(c.generateLocalName(localName, uuid, nextLine))
+        result.equals(c.generateLocalName(localName, nextLine))
 
         where:
         result              | localName

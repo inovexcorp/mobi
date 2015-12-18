@@ -50,7 +50,7 @@ public class CSVConverterImpl implements CSVConverter {
 
     @Override
     public void exportCSV(File csv, File mappingFile, File exportFile) throws IOException{
-        exportCSV(csv,parseMapping(mappingFile), exportFile);
+        exportCSV(csv, parseMapping(mappingFile), exportFile);
     }
 
     @Override
@@ -112,9 +112,12 @@ public class CSVConverterImpl implements CSVConverter {
         reader.readNext();
         //Traverse each row and convert column into RDF
         while ((nextLine = reader.readNext()) != null) {
-            String uuid = generateUUID();
             for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm, uuid, nextLine));
+                convertedRDF.addAll(writeClassToModel(cm,nextLine));
+            }
+            //Reset classMappings
+            for (ClassMapping cm : classMappings) {
+                cm.setInstance(false);
             }
         }
         return convertedRDF;
@@ -128,17 +131,21 @@ public class CSVConverterImpl implements CSVConverter {
      * @param nextLine The line of CSV to be mapped
      * @return A Model of RDF based on the line of CSV data
      */
-    Model writeClassToModel(ClassMapping cm, String uuid, String[] nextLine) {
+    Model writeClassToModel(ClassMapping cm, String[] nextLine) {
         Model convertedRDF = new LinkedHashModel();
-        String classLocalName = generateLocalName(cm.getLocalName(), uuid, nextLine);
-
+        //Generate new IRI if an instance of the class mapping has not been created in this row.
+        if(!cm.isInstance()) {
+            String classLocalName = generateLocalName(cm.getLocalName(), nextLine);
+            cm.setIRI(vf.createIRI(cm.getPrefix() + classLocalName));
+            if(!"_".equals(classLocalName))
+                cm.setInstance(true);
+        }
         //If there isn't enough data to create the local name, don't create the instance
-        if (classLocalName.equals("_"))
+        if (!cm.isInstance())
             return convertedRDF;
 
-        String cmIRI = cm.getPrefix() + classLocalName;
 
-        IRI classInstance = vf.createIRI(cmIRI);
+        IRI classInstance = cm.getIri();
         convertedRDF.add(classInstance, Delimited.TYPE.iri(), vf.createIRI(cm.getMapping()));
         //Create the data properties
         Map<Integer, String> dataProps = cm.getDataProperties();
@@ -155,14 +162,17 @@ public class CSVConverterImpl implements CSVConverter {
         //Create the object properties
         Map<ClassMapping, String> objectProps = cm.getObjectProperties();
         for (ClassMapping objectMapping : objectProps.keySet()) {
-            String localName = generateLocalName(objectMapping.getLocalName(), uuid, nextLine);
-
-            String omIRI = objectMapping.getPrefix() + localName;
+            if(!objectMapping.isInstance()) {
+                String localName = generateLocalName(objectMapping.getLocalName(), nextLine);
+                objectMapping.setIRI(vf.createIRI(objectMapping.getPrefix() + localName));
+                if(!"_".equals(localName))
+                    objectMapping.setInstance(true);
+            }
 
             //If there isn't enough data to create the local name, don't create the instance
             IRI property = vf.createIRI(objectProps.get(objectMapping));
-            if (!"_".equals(localName))
-                convertedRDF.add(classInstance, property, vf.createIRI(omIRI));
+            if (objectMapping.isInstance())
+                convertedRDF.add(classInstance, property, objectMapping.getIri());
         }
 
         return convertedRDF;
@@ -176,15 +186,20 @@ public class CSVConverterImpl implements CSVConverter {
      * @param currentLine       The current line in the CSV file in case data is used in the Local Name
      * @return The local name portion of a IRI used in RDF data
      */
-    String generateLocalName(String localNameTemplate, String uuid, String[] currentLine) {
-        if ("".equals(localNameTemplate) || localNameTemplate == null)
+    String generateLocalName(String localNameTemplate, String[] currentLine) {
+        String uuid = "";
+        if ("".equals(localNameTemplate) || localNameTemplate == null) {
+            //Only generate UUIDs when necessary. If you really have to waste a UUID go here: http://wasteaguid.info/
+            uuid = generateUUID();
             return uuid;
+        }
         Pattern p = Pattern.compile("(\\$\\{)(\\d+|UUID)(\\})");
         Matcher m = p.matcher(localNameTemplate);
         StringBuffer result = new StringBuffer();
         while (m.find()) {
             if ("UUID".equals(m.group(2)))
-                m.appendReplacement(result, uuid);
+                //Once again, only generate UUIDs when necessary
+                m.appendReplacement(result, generateUUID());
             else {
                 int colIndex = Integer.parseInt(m.group(2));
                 try {
