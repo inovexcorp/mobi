@@ -233,4 +233,13 @@ class SimpleValueFactorySpec extends Specification {
         literal.getDatatype().stringValue() == XMLSchema.SHORT.stringValue()
         literal.shortValue() == (short) 42
     }
+
+    def "createNamespace(prefix, name) creates the correct namespace"() {
+        given:
+        def ns = VF.createNamespace("http://test.com#", "class")
+
+        expect:
+        ns.getPrefix() == "http://test.com#"
+        ns.getName() == "class"
+    }
 }

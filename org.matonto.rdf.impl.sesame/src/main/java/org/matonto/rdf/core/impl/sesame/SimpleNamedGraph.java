@@ -12,7 +12,14 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     private static final long serialVersionUID = -2898304389277771420L;
     private Resource graphID;
     private Model model;
+    private ModelFactory factory = LinkedHashModelFactory.getInstance();
     private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
+
+    protected SimpleNamedGraph(Resource graphID, ModelFactory factory) {
+        this.factory = factory;
+        setDelegate(factory.createModel());
+        this.graphID = graphID;
+    }
 
     public SimpleNamedGraph() {
         this(MATONTO_VF.createBNode());
@@ -152,8 +159,13 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     }
 
     @Override
+    public Model asModel() {
+        return asModel(factory);
+    }
+
+    @Override
     public Model asModel(@Nonnull ModelFactory factory) {
-        Model m = factory.createEmptyModel();
+        Model m = factory.createModel();
         m.addAll(model);
         return m;
     }

@@ -1,16 +1,16 @@
 package org.matonto.rdf.core.impl.sesame;
 
 
-public class TreeModelFactory extends TreeModelFactoryService {
+public class TreeNamedGraphFactory extends TreeNamedGraphFactoryService {
 
-    private TreeModelFactory() {}
+    private TreeNamedGraphFactory() {}
 
     /**
-     * SingletonHolder is loaded on the first execution of TreeModelFactory.getInstance()
+     * SingletonHolder is loaded on the first execution of TreeNamedGraphFactory.getInstance()
      * or the first access to SingletonHolder.INSTANCE, not before.
      */
     private static class SingletonHolder {
-        private static final TreeModelFactory INSTANCE = new TreeModelFactory();
+        private static final TreeNamedGraphFactory INSTANCE = new TreeNamedGraphFactory();
     }
 
     /**
@@ -18,7 +18,7 @@ public class TreeModelFactory extends TreeModelFactoryService {
      *
      * @return a singleton instance of SimpleValueFactory.
      */
-    public static TreeModelFactory getInstance() {
+    public static TreeNamedGraphFactory getInstance() {
         return SingletonHolder.INSTANCE;
     }
 }
