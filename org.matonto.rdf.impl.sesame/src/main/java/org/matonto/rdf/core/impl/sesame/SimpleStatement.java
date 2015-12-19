@@ -4,6 +4,7 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
+import org.matonto.rdf.core.utils.Values;
 
 import java.util.Objects;
 import java.util.Optional;
