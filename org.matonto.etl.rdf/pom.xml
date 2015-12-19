@@ -65,7 +65,7 @@
                         <Export-Package></Export-Package>
                         <Export-Service>
                             org.matonto.etl.api.rdf.RDFExportService,
-                            org.matonto.api.rdf.RDFImportService
+                            org.matonto.etl.api.rdf.RDFImportService
                         </Export-Service>
                         <Service-Component>*</Service-Component>
                     </instructions>
