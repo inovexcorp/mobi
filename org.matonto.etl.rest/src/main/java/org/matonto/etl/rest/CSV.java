@@ -3,15 +3,11 @@ package org.matonto.etl.rest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.opencsv.CSVReader;
-import org.apache.camel.Exchange;
-import org.apache.camel.processor.loadbalancer.ExceptionFailureStatistics;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.openrdf.model.Model;
-import org.openrdf.model.Statement;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFWriter;
 import org.openrdf.rio.Rio;
 
 import java.io.*;

@@ -9,13 +9,12 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.openrdf.model.Model;
-import org.openrdf.model.util.URIUtil;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.*;
 

@@ -1,5 +1,5 @@
 Bundle-SymbolicName: org.matonto.rdf.impl.sesame
 Bundle-Name: MatOnto RDF Sesame Implementation
-Export-Package: org.matonto.rdf.core.impl.sesame
+Export-Package: org.matonto.rdf.core.impl.sesame.factory,org.matonto.rdf.core.utils
 Import-Package: org.openrdf*;version="[4.0.0,4.1.0)",*
 Service-Component: *
