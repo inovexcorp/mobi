@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.api.Repository;
