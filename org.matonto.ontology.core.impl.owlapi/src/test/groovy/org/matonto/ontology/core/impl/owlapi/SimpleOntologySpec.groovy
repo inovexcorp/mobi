@@ -1,15 +1,64 @@
 package org.matonto.ontology.core.impl.owlapi
 
-import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
-import spock.lang.Shared
+import org.matonto.ontology.core.api.Annotation
+import org.matonto.ontology.core.api.OntologyId
+import org.matonto.rdf.api.IRI
+import org.matonto.rdf.api.ValueFactory
+import org.semanticweb.owlapi.model.OWLAnnotation
 import spock.lang.Specification
 
 
 class SimpleOntologySpec extends Specification {
 
+    def ontologyIdMock = Mock(OntologyId)
+    def testOntStream = this.getClass().getClassLoader().getResourceAsStream("test.owl")
+    def factoryMock = Mock(ValueFactory)
 
-    @Shared
-    def manager = new SimpleOntologyManager();
+    def setup() {
+        def values = new Values()
+        values.setValueFactory(factoryMock)
+    }
+
+    def "getOntologyId returns ontologyId"() {
+        setup:
+        def ontology = new SimpleOntology(ontologyIdMock)
+
+        when:
+        def ontologyId = ontology.getOntologyId()
+
+        then:
+        ontologyId == ontologyIdMock
+    }
+
+    def "Stream constructor works"() {
+        when:
+        def ontology = new SimpleOntology(testOntStream, ontologyIdMock)
+
+        then:
+        ontology instanceof SimpleOntology
+    }
+//
+//    def "getAnnotations"() {
+//        setup:
+//        def iriMock = Mock(IRI)
+//        def owlAnnot = Mock(OWLAnnotation)
+//        def ontology = new SimpleOntology(testOntStream, ontologyIdMock)
+//
+//        when:
+//        def annotations = ontology.getAnnotations()
+//
+//        then:
+//        factoryMock.createIRI(*_) >> iriMock
+//        iriMock.get
+//        annotations.size() == 1
+//    }
+//
+//    def "getAxioms"() {
+//
+//    }
+
+//    @Shared
+//    def manager = new SimpleOntologyManager();
     
 //    @Share
 //    def factory = SimpleValueFactory.getInstance();
