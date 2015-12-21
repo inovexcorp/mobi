@@ -52,10 +52,9 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Import-Package>*</Import-Package>
-                        <Export-Package>org.matonto.etl.api.csv</Export-Package>
+                        <Export-Package></Export-Package>
                         <Export-Service>org.matonto.etl.api.csv.CSVConverter</Export-Service>
                         <Service-Component>*</Service-Component>
                     </instructions>
