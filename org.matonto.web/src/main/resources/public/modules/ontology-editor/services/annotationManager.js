@@ -24,10 +24,6 @@
                     obj[select] = value;
                 }
             }
-
-            self.inWhiteList = function(key, ontology) {
-                return ontology.matonto.annotations.indexOf(key) !== -1;
-            }
         }
 
         function annotationManagerFilter() {
