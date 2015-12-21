@@ -1,14 +1,18 @@
-package org.matonto.rdf.core.impl.sesame
+package org.matonto.rdf.core.utils
 
 import org.matonto.rdf.api.BNode
 import org.matonto.rdf.api.IRI
 import org.matonto.rdf.api.Literal
+import org.matonto.rdf.core.impl.sesame.SimpleBNode
+import org.matonto.rdf.core.impl.sesame.SimpleIRI
+import org.matonto.rdf.core.impl.sesame.SimpleLiteral
 import org.openrdf.model.ValueFactory
+import org.openrdf.model.impl.SimpleValueFactory
 import spock.lang.Specification
 
 class ValuesSpec extends Specification {
 
-    private static final ValueFactory SESAME_VF = org.openrdf.model.impl.SimpleValueFactory.getInstance();
+    private static final ValueFactory SESAME_VF = SimpleValueFactory.getInstance();
 
     def "sesameResource(IRI) returns a Sesame IRI"() {
         setup:
