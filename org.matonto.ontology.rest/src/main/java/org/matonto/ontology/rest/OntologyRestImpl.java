@@ -73,7 +73,7 @@ public class OntologyRestImpl {
 		return manager;
 	}
 
-	/*@GET
+	@GET
 	@Path("/getAllOntologies")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllOntologies()
@@ -99,7 +99,7 @@ public class OntologyRestImpl {
 		}
 
 		return Response.status(200).entity(jsonArray.toString()).build();
-	}*/
+	}
 
 	@GET
 	@Path("getAllOntologyIds")

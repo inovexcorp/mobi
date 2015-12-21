@@ -42,7 +42,7 @@
 <div class="ontology-editor clearfix" ng-controller="OntologyEditorController as vm">
     <div class="row">
         <!-- navigation structure -->
-        <aside class="col-md-3 col-sm-4 col-xs-6">
+        <aside class="col-xs-4">
             <div class="tree-container boxed">
                 <!-- tab view -->
                 <div class="btn-group btn-group-justified" role="group">
@@ -79,7 +79,7 @@
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
                                    ng-click="opened = !opened; $event.stopPropagation();"
-                                ></i>{{ontology[ontology.matonto.rdfs + 'label'] || ontology['@id'] + ontology['delimiter']}}
+                                ></i>{{ontology[ontology.matonto.rdfs + 'label'[0]['@value']] || ontology['@id'] + ontology['delimiter']}}
                                 <i ng-show="ontology.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                             </a>
                         </li>
@@ -92,7 +92,7 @@
                                         <i class="fa fa-fw"
                                            ng-class="{'fa-minus-square-o': subOpened, 'fa-plus-square-o': !subOpened}"
                                            ng-click="subOpened = !subOpened; $event.stopPropagation();"
-                                        ></i>{{class[ontology.matonto.rdfs + 'label'] || class['@id']}}
+                                        ></i>{{class[ontology.matonto.rdfs + 'label'[0]['@value']] || class['@id']}}
                                         <i ng-show="class.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -103,7 +103,7 @@
                                             <a ng-click="vm.selectItem('property-editor', oi, ci, $index)"
                                                ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == ci && vm.state.pi == $index}">
                                                 <i class="fa fa-fw {{property.matonto.icon}}"
-                                                ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
+                                                ></i>{{property[ontology.matonto.rdfs + 'label'[0]['@value']] || property['@id']}}
                                                 <i ng-show="property.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                             </a>
                                         </li>
@@ -138,7 +138,7 @@
                                             <a ng-click="vm.selectItem('property-editor', oi, undefined, $index)"
                                                ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == undefined && vm.state.pi == $index}">
                                                 <i class="fa fa-fw {{property.icon}}"
-                                                ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
+                                                ></i>{{property[ontology.matonto.rdfs + 'label'[0]['@value']] || property['@id']}}
                                                 <i ng-show="property.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                             </a>
                                         </li>
@@ -170,7 +170,7 @@
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                        ></i>{{ontology[ontology.matonto.rdfs + 'label'] || ontology['@id'] + ontology.delimiter}}
+                                        ></i>{{ontology[ontology.matonto.rdfs + 'label'[0]['@value']] || ontology['@id'] + ontology.delimiter}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -179,7 +179,7 @@
                                     <a class="text-only"
                                        ng-click="vm.selectItem('class-editor', oi, $index)"
                                        ng-class="{'unsaved': class.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == $index && vm.state.pi == undefined}">
-                                        {{class[ontology.matonto.rdfs + 'label'] || class['@id']}}
+                                        {{class[ontology.matonto.rdfs + 'label'[0]['@value']] || class['@id']}}
                                         <i ng-show="class.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -202,7 +202,7 @@
                         <li>
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
-                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"></i>{{ontology[ontology.matonto.rdfs + 'label'] || ontology['@id'] + ontology.delimiter}}
+                                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"></i>{{ontology[ontology.matonto.rdfs + 'label'[0]['@value']] || ontology['@id'] + ontology.delimiter}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -213,7 +213,7 @@
                                        ng-click="vm.selectItem('property-editor', oi, ci, $index)"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == ci && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
-                                        ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
+                                        ></i>{{property[ontology.matonto.rdfs + 'label'[0]['@value']] || property['@id']}}
                                         <i ng-show="property.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -225,7 +225,7 @@
                                        ng-click="vm.selectItem('property-editor', oi, undefined, $index)"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == undefined && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
-                                        ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
+                                        ></i>{{property[ontology.matonto.rdfs + 'label'[0]['@value']] || property['@id']}}
                                         <i ng-show="property.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -249,7 +249,7 @@
                             <a ng-click="opened = !opened; $event.stopPropagation();">
                                 <i class="fa fa-fw"
                                    ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                                ></i>{{ontology[ontology.matonto.rdfs + 'label'] || ontology['@id'] + ontology.delimiter}}
+                                ></i>{{ontology[ontology.matonto.rdfs + 'label'[0]['@value']] || ontology['@id'] + ontology.delimiter}}
                             </a>
                         </li>
                         <li class="container" ng-show="opened">
@@ -260,7 +260,7 @@
                                        ng-click="vm.selectItem('property-editor', oi, ci, $index);"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == ci && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
-                                        ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
+                                        ></i>{{property[ontology.matonto.rdfs + 'label'[0]['@value']] || property['@id']}}
                                         <i ng-show="property.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -272,7 +272,7 @@
                                        ng-click="vm.selectItem('property-editor', oi, undefined, $index)"
                                        ng-class="{'unsaved': property.matonto.unsaved, 'active': vm.state.oi == oi && vm.state.ci == undefined && vm.state.pi == $index}">
                                         <i class="fa fa-fw {{property.matonto.icon}}"
-                                        ></i>{{property[ontology.matonto.rdfs + 'label'] || property['@id']}}
+                                        ></i>{{property[ontology.matonto.rdfs + 'label'[0]['@value']] || property['@id']}}
                                         <i ng-show="property.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
                                     </a>
                                 </li>
@@ -290,7 +290,7 @@
         </aside>
 
         <!-- edit/create form section -->
-        <section class="col-md-9 col-sm-8 col-xs-6">
+        <section class="col-xs-8">
             <div class="editor boxed">
                 <!-- default -->
                 <div ng-if="vm.state.editor === 'default'" class="tab default">
@@ -347,13 +347,13 @@
                         <!-- label -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-label">Label <small class="text-muted"><{{vm.selected.matonto.rdfs}}label></small></label>
-                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[((vm.state.oi !== -1) ? vm.ontologies[vm.state.oi].matonto.rdfs : vm.selected.matonto.rdfs) + 'label']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
+                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[((vm.state.oi !== -1) ? vm.ontologies[vm.state.oi].matonto.rdfs : vm.selected.matonto.rdfs) + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- comments -->
                         <div class="form-group">
                             <label class="control-label" for="ontology-comments">Comment <small class="text-muted"><{{vm.selected.matonto.rdfs}}comment></small></label>
-                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[((vm.state.oi !== -1) ? vm.ontologies[vm.state.oi].matonto.rdfs : vm.selected.matonto.rdfs) + 'comment']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[((vm.state.oi !== -1) ? vm.ontologies[vm.state.oi].matonto.rdfs : vm.selected.matonto.rdfs) + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- buttons -->
@@ -461,13 +461,13 @@
                         <!-- rdfs:label -->
                         <div class="form-group">
                             <label class="control-label" for="class-name">Label <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}label></small></label>
-                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
+                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- rdfs:comment -->
                         <div class="form-group">
                             <label class="control-label" for="class-comments">Comment <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}comment></small></label>
-                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- buttons -->
@@ -544,13 +544,13 @@
                         <!-- rdfs:label -->
                         <div class="form-group">
                             <label class="control-label" for="property-name">Label <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}label></small></label>
-                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label']" ng-change="vm.selected.matonto.unsaved = true;">
+                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- rdfs:comment -->
                         <div class="form-group">
                             <label class="control-label" for="property-comments">Comment <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}comment></small></label>
-                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- buttons -->

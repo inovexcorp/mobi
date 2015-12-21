@@ -17,6 +17,23 @@
             self.newItems = {};
             self.ontologies = [];
 
+            initialize();
+
+            function initialize() {
+                var deferred = $q.defer();
+                $http.get(prefix + '/getAllOntologies')
+                    .then(function(response) {
+                        var i = response.data.length;
+                        while(i--) {
+                            addOntology(response.data[i]);
+                        }
+                        $timeout(function() {
+                            deferred.resolve(self.ontologies);
+                        }, 0);
+                    });
+                return deferred.promise;
+            }
+
             function restructure(flattened, context, prefixes) {
                 var j, obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon, objToArr, annotations,
                     ontology = {
@@ -172,7 +189,6 @@
 
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
-                console.log('restructure');
                 return ontology;
             }
 
@@ -210,22 +226,6 @@
 
                 // TODO: integrate with latest develop ontology changes which flatten the JSON in the service layer
                 self.ontologies.push(restructure(ontology, context, getPrefixes(context)));
-            }
-
-            self.initialize = function() {
-                var deferred = $q.defer();
-                $http.get(prefix + '/getAllOntologies')
-                    .then(function(response) {
-                        var i = response.data.length;
-                        while(i--) {
-                            addOntology(JSON.parse(response.data[i]));
-                        }
-                        $timeout(function() {
-                            console.log('service', self.ontologies);
-                            deferred.resolve(self.ontologies);
-                        }, 0);
-                    });
-                return deferred.promise;
             }
 
             self.getList = function() {
@@ -332,8 +332,7 @@
                         };
                     // adds the data to the FormData
                     fd.append('file', file);
-                    fd.append('namespace', namespace);
-                    fd.append('localName', localName);
+                    fd.append('ontologyIdStr', namespace + '#' + localName);
                     // uploads the ontology file
                     return $http.post(prefix + '/uploadOntology', fd, config);
                 }
@@ -342,8 +341,7 @@
             self.get = function(namespace, localName) {
                 var config = {
                         params: {
-                            namespace: namespace,
-                            localName: localName,
+                            ontologyIdStr: namespace + '#' + localName,
                             rdfFormat: 'json-ld'
                         }
                     };
@@ -352,7 +350,7 @@
                 return $http.get(prefix + '/getOntology', config)
                     .then(function(response) {
                         if(!response.data.error) {
-                            addOntology(JSON.parse(response.data.ontology));
+                            addOntology(response.data.ontology);
                         } else {
                             // TODO: handle error better
                             console.warn(response.data.error);
