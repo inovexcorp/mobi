@@ -43,7 +43,9 @@ public class SimpleOntologyManagerTest
 		}
 		manager.setRepo(repo);
 		manager.setValueFactory(factory);
+		values.setManager(manager);
 		values.setValueFactory(factory);
+		
 	}
     
     @Test 
