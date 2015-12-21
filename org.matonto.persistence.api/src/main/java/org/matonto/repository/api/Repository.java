@@ -1,5 +1,6 @@
 package org.matonto.repository.api;
 
+import org.matonto.repository.config.RepositoryConfig;
 import org.matonto.repository.exception.RepositoryException;
 
 import java.io.File;
@@ -20,6 +21,8 @@ public interface Repository {
      * @throws RepositoryException - If something went wrong during the creation of the Connection.
      */
     RepositoryConnection getConnection() throws RepositoryException;
+
+    RepositoryConfig getConfig();
 
     /**
      * Get the directory, if set, where data and logging for this repository is stored.

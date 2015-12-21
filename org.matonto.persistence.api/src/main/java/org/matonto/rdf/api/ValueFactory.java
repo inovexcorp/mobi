@@ -1,5 +1,6 @@
 package org.matonto.rdf.api;
 
+import javax.annotation.Nonnull;
 import java.time.OffsetDateTime;
 
 public interface ValueFactory {
@@ -17,7 +18,7 @@ public interface ValueFactory {
      * @param id - The blank node identifier.
      * @return An object representing the blank node.
      */
-    BNode createBNode(String id);
+    BNode createBNode(@Nonnull String id);
 
     /**
      * Creates a new IRI from the supplied string-representation.
@@ -26,7 +27,7 @@ public interface ValueFactory {
      * @return An object representing the IRI.
      * @throws IllegalArgumentException - If the supplied string does not resolve to a legal (absolute) IRI.
      */
-    IRI createIRI(String iri);
+    IRI createIRI(@Nonnull String iri);
 
     /**
      * Creates a new IRI from the supplied namespace and local name. Calling this method is functionally equivalent to
@@ -37,7 +38,7 @@ public interface ValueFactory {
      * @param localName - The IRI's local name.
      * @return An object representing the IRI.
      */
-    IRI createIRI(String namespace, String localName);
+    IRI createIRI(@Nonnull String namespace, @Nonnull String localName);
 
     /**
      * Creates a new xsd:boolean-typed literal representing the specified value.
@@ -61,7 +62,7 @@ public interface ValueFactory {
      * @param literal - The value for the literal.
      * @return An xsd:dateTime-typed literal for the specified value.
      */
-    Literal createLiteral(OffsetDateTime literal);
+    Literal createLiteral(@Nonnull OffsetDateTime literal);
 
     /**
      * Creates a new xsd:double-typed literal representing the specified value.
@@ -109,7 +110,7 @@ public interface ValueFactory {
      * @param literal - The literal's label.
      * @return An object representing the literal.
      */
-    Literal createLiteral(String literal);
+    Literal createLiteral(@Nonnull String literal);
 
     /**
      * Creates a new literal with the supplied label and datatype.
@@ -118,7 +119,7 @@ public interface ValueFactory {
      * @param datatype - The literal's datatype, or null if the literal doesn't have a datatype.
      * @return An object representing the literal.
      */
-    Literal createLiteral(String literal, IRI datatype);
+    Literal createLiteral(@Nonnull String literal, @Nonnull IRI datatype);
 
     /**
      * Creates a new literal with the supplied label and language attribute.
@@ -127,7 +128,7 @@ public interface ValueFactory {
      * @param language - The literal's language attribute, or null if the literal doesn't have a language.
      * @return An object representing the literal.
      */
-    Literal createLiteral(String literal, String language);
+    Literal createLiteral(@Nonnull String literal, @Nonnull String language);
 
     /**
      * Creates a new statement with the supplied subject, predicate and object.
@@ -137,7 +138,7 @@ public interface ValueFactory {
      * @param object - The statement's object.
      * @return The created statement.
      */
-    Statement createStatement(Resource subject, IRI predicate, Value object);
+    Statement createStatement(@Nonnull Resource subject, @Nonnull IRI predicate, @Nonnull Value object);
 
     /**
      * Creates a new statement with the supplied subject, predicate and object and associated context.
@@ -148,5 +149,14 @@ public interface ValueFactory {
      * @param context - The statement's context.
      * @return The created statement.
      */
-    Statement createStatement(Resource subject, IRI predicate, Value object, Resource context);
+    Statement createStatement(@Nonnull Resource subject, @Nonnull IRI predicate, @Nonnull Value object, Resource context);
+
+    /**
+     * Creates a new Namespace with the supplied prefix and name.
+     *
+     * @param prefix The prefix of the namespace
+     * @param name The localname of the namespace
+     * @return The created Namespace.
+     */
+    Namespace createNamespace(@Nonnull String prefix, @Nonnull String name);
 }

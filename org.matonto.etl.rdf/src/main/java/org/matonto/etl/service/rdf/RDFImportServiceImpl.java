@@ -5,18 +5,18 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
 import org.matonto.etl.api.rdf.RDFImportService;
-import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.api.Repository;
-import org.matonto.repository.exception.RepositoryConfigException;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.Model;
-import org.openrdf.model.Statement;
-import org.matonto.rdf.core.impl.sesame.LinkedHashModel;
 import org.openrdf.rio.*;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -29,8 +29,15 @@ public class RDFImportServiceImpl implements RDFImportService {
 
     private RepositoryManager repositoryManager;
 
+    private ModelFactory modelFactory;
+
     @Reference
     public void setRepositoryManager(RepositoryManager repositoryManager){this.repositoryManager = repositoryManager;}
+
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
+    }
 
     /**
      * Imports a file into the openrdf repository (with the given repositoryID) deployed on karaf
@@ -76,16 +83,18 @@ public class RDFImportServiceImpl implements RDFImportService {
 
     }
 
-    public void importModel(String repositoryID, Model m){
+    public void importModel(String repositoryID, Model m) {
         Optional<Repository> optRepo = repositoryManager.getRepository(repositoryID);
-        if(optRepo.isPresent()){
-            org.matonto.rdf.api.Model matontoModel = m.stream()
+        if (optRepo.isPresent()) {
+            Set<Statement> stmts = m.stream()
                     .map(Values::matontoStatement)
-                    .collect(LinkedHashModel::new,LinkedHashModel::add,LinkedHashModel::addAll);
+                    .collect(Collectors.toSet());
+
+            org.matonto.rdf.api.Model matontoModel = modelFactory.createModel(stmts);
+
             RepositoryConnection conn = optRepo.get().getConnection();
             conn.add(matontoModel);
-
-        }else{
+        } else {
             throw new IllegalArgumentException("Repository does not exist");
         }
     }

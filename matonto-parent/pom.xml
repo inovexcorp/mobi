@@ -44,12 +44,22 @@
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
+                <artifactId>persistence.cli</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.matonto</groupId>
                 <artifactId>rdf.impl.sesame</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>repository.impl.sesame</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.matonto</groupId>
+                <artifactId>repository.impl.core</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -91,6 +101,11 @@
             </dependency>
             <dependency>
                 <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-sail-nativerdf</artifactId>
+                <version>${openrdf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
                 <artifactId>sesame-runtime-osgi</artifactId>
                 <version>${openrdf.version}</version>
             </dependency>
@@ -127,6 +142,11 @@
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.4</version>
             </dependency>
             <dependency>
                 <groupId>edu.washington.cs.types.checker</groupId>
@@ -174,6 +194,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>2.8.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.karaf.tooling</groupId>
+                    <artifactId>karaf-maven-plugin</artifactId>
+                    <version>${karaf.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
