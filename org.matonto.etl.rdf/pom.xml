@@ -62,9 +62,11 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Import-Package>*</Import-Package>
-                        <Export-Package>org.matonto.etl.api.rdf</Export-Package>
-                        <!--<Export-Service>org.matonto.etl.api.rdf.RDFExportService;org.matonto.etl.api.rdf.RDFImportService</Export-Service>-->
+                        <Export-Package></Export-Package>
+                        <Export-Service>
+                            org.matonto.etl.api.rdf.RDFExportService,
+                            org.matonto.etl.api.rdf.RDFImportService
+                        </Export-Service>
                         <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>

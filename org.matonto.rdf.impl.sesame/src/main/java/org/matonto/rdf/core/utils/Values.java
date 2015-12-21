@@ -1,6 +1,7 @@
-package org.matonto.rdf.core.impl.sesame;
+package org.matonto.rdf.core.utils;
 
 import org.matonto.rdf.api.*;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 
 public class Values {
 
