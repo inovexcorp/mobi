@@ -38,7 +38,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-	    <scope>provided</scope>
+	       <scope>provided</scope>
         </dependency>
 
         <!-- Jersey dependencies -->
@@ -102,7 +102,8 @@
                             com.sun.jersey.multipart.*,
                             com.sun.jersey.core.header.*,
                             com.sun.jersey.api.core,
-                            com.sun.jersey.spi.container.servlet
+                            com.sun.jersey.spi.container.servlet, 
+                            *
                         </Import-Package>
                         <Web-ContextPath>matonto</Web-ContextPath>
                         <Webapp-Context>matonto</Webapp-Context>

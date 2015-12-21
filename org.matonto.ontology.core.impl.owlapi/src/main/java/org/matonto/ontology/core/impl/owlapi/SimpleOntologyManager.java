@@ -10,29 +10,19 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
-import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyIRI;
-import org.matonto.ontology.core.api.OntologyId;
-import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
 import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.repository.Repository;
-import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.repository.RepositoryResult;
+import org.openrdf.repository.*;
 import org.openrdf.repository.http.HTTPRepository;
 
 import info.aduna.iteration.Iterations;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
-import org.semanticweb.owlapi.rio.RioParserImpl;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.rio.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +36,7 @@ import aQute.bnd.annotation.component.Reference;
 public class SimpleOntologyManager implements OntologyManager {
 	
 	private static Repository repository;
-	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.ofNullable(new HashMap<>());
+	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.of(new HashMap<>());
 	private static String location;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
 	
