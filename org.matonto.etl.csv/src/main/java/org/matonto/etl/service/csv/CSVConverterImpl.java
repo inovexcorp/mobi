@@ -127,7 +127,6 @@ public class CSVConverterImpl implements CSVConverter {
      * Writes RDF statements based on a class mapping and a line of data from CSV
      *
      * @param cm       The ClassMapping object to guide the RDF creation
-     * @param uuid     A UUID to use when creating new instances
      * @param nextLine The line of CSV to be mapped
      * @return A Model of RDF based on the line of CSV data
      */
@@ -182,7 +181,6 @@ public class CSVConverterImpl implements CSVConverter {
      * Generates a local name for RDF Instances
      *
      * @param localNameTemplate The local name template given in the mapping file. See MatOnto Wiki for details
-     * @param uuid              A Universally Unique IDentifier to use when building the local name
      * @param currentLine       The current line in the CSV file in case data is used in the Local Name
      * @return The local name portion of a IRI used in RDF data
      */
