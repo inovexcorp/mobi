@@ -1,17 +1,19 @@
 package org.matonto.etl.cli;
 
 import java.io.File;
-import org.apache.felix.gogo.commands.Action;
-import org.apache.felix.gogo.commands.Argument;
-import org.apache.felix.gogo.commands.Command;
-import org.apache.felix.gogo.commands.Option;
-import org.apache.felix.service.command.CommandSession;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Option;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.etl.api.rdf.RDFExportService;
 
 @Command(scope = "matonto", name = "export", description="Exports objects from a repository")
+@Service
 public class CLIExporter implements Action {
 
+    @Reference
     private RDFExportService exportService;
 
     @Argument(index = 0, name = "repId", description = "The id of the repository the file will be imported to", required = true)
@@ -32,15 +34,12 @@ public class CLIExporter implements Action {
     @Option(name = "-objLit", aliases = "--objectLiteral", description = "An object literal that all exported triples will be restricted to. ObjectIRI takes precedence")
     String objLit = null;
 
-    public RDFExportService getExportService() {
-        return exportService;
-    }
     public void setExportService(RDFExportService exportService) {
         this.exportService = exportService;
     }
 
     @Override
-    public Object execute(CommandSession commandSession) throws Exception {
+    public Object execute() throws Exception {
 
         exportService.exportToFile(repositoryId, file, subj, predicate, objIRI, objLit);
 

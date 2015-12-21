@@ -1,17 +1,18 @@
 package org.matonto.etl.cli;
 
-import org.apache.felix.gogo.commands.Action;
-import org.apache.felix.gogo.commands.Argument;
-import org.apache.felix.gogo.commands.Command;
-import org.apache.felix.gogo.commands.Option;
-import org.apache.felix.service.command.CommandSession;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
 
 import java.io.File;
 
 @Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
+@Service
 public class CLITransform implements Action{
 
     @Argument(index = 0, name = "Delimited File", description = "The path of the File to be transformed", required = true)
@@ -26,14 +27,15 @@ public class CLITransform implements Action{
     @Option(name="-r", aliases = "--repositoryID", description = "The repository to store the resulting triples. (Required if no output file given)")
     String repositoryID = null;
 
-    private static final Logger LOGGER = Logger.getLogger(CLIImporter.class);
+    private static final Logger LOGGER = Logger.getLogger(CLITransform.class);
 
+    @Reference
     private CSVConverter csvConverter;
-    public CSVConverter getCsvConverter(){return csvConverter;}
-    public void setCsvConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
+
+    public void setCSVConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
 
     @Override
-    public Object execute(CommandSession session) throws Exception {
+    public Object execute() throws Exception {
         LOGGER.info("Importing CSV");
 
         File newFile = new File(file);
@@ -46,7 +48,7 @@ public class CLITransform implements Action{
                     csvConverter.importCSV(newFile, mappingFile, repositoryID);
             } catch (Exception e){
                 System.out.println(e.getMessage());
-                LOGGER.error(e.toString());
+                LOGGER.error(e);
             }
         }else{
             System.out.println("Files do not exist.");
