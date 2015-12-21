@@ -7,10 +7,10 @@ class TreeModelFactorySpec extends Specification {
 
     def "Factory method returns a model"() {
         given:
-        def factory = new TreeModelFactory()
+        def factory = TreeModelFactory.getInstance()
 
         expect:
-        factory.createEmptyModel() instanceof Model
-        factory.createEmptyModel() instanceof TreeModel
+        factory.createModel() instanceof Model
+        factory.createModel() instanceof TreeModel
     }
 }

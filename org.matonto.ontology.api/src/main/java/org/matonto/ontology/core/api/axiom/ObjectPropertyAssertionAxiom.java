@@ -5,11 +5,11 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression
 
 public interface ObjectPropertyAssertionAxiom extends AssertionAxiom {
 
-	public Individual getSubject();
+	Individual getSubject();
 	
-	public ObjectPropertyExpression getProperty();
+	ObjectPropertyExpression getProperty();
 	
-	public Individual getObject();
+	Individual getObject();
 	
-	public boolean containsAnonymousIndividuals();
+	boolean containsAnonymousIndividuals();
 }

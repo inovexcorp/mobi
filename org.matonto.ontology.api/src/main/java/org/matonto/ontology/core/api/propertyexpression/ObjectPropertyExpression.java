@@ -2,9 +2,7 @@ package org.matonto.ontology.core.api.propertyexpression;
 
 public interface ObjectPropertyExpression extends PropertyExpression {
 
+	ObjectPropertyExpression getInverseProperty();
 	
-	public ObjectPropertyExpression getInverseProperty();
-	
-	public ObjectPropertyExpression getSimplified();
-	
+	ObjectPropertyExpression getSimplified();
 }

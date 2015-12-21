@@ -6,9 +6,8 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 
 public interface DatatypeDefinitionAxiom extends Axiom {
 
-	public Datatype getDatatype();
+	Datatype getDatatype();
 	
-	public DataRange getDataRange();
-	
+	DataRange getDataRange();
 }
 

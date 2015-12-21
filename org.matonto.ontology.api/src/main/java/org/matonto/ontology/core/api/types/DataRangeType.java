@@ -12,14 +12,12 @@ public enum DataRangeType {
 	DATA_COMPLEMENT_OF("DataComplementOf"), 
 	DATA_UNION_OF("DataUnionOf"), 
 	DATA_INTERSECTION_OF("DataIntersectionOf");
-	
 
 	private final String name;
 	private final String prefixedName;
 //	private final SimpleIRI iri;
 	
-	private DataRangeType(@Nonnull String name)
-	{
+	DataRangeType(@Nonnull String name) {
 		this.name = name;
 		prefixedName = (Namespaces.OWL.getPrefixName() + ':' + name);
 //		iri = SimpleIRI.create(Namespaces.OWL.getPrefixIRI(), name);
@@ -29,26 +27,22 @@ public enum DataRangeType {
 	{
 		return name;
 	}
-	
-	
+
 	public String toString()
 	{
 		return name;
 	}
-	
-	
+
 	public String getShortForm()
 	{
 		return name;
 	}
-	
-	
+
 //	public SimpleIRI getIRI()
 //	{
 //		return iri;
 //	}
-	
-	
+
 	public String getPrefixedName()
 	{
 		return prefixedName;

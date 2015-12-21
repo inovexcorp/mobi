@@ -1,5 +1,8 @@
 package org.matonto.etl.service.csv
 
+import org.matonto.etl.api.csv.CSVConverter
+import org.matonto.etl.api.rdf.RDFImportService
+import org.openrdf.model.IRI
 import org.openrdf.model.Model
 import org.openrdf.model.impl.LinkedHashModel
 import org.openrdf.repository.Repository
@@ -128,26 +131,15 @@ class ConverterSpec extends Specification {
         setup:
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
-        File out = new ClassPathResource("testOutput.ttl").getFile();
-        CSVConverterImpl c = Spy(CSVConverterImpl)
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = new LinkedHashModel();
-        Repository repo = new SailRepository(new MemoryStore())
-        c.setRepository(repo);
-        c.importCSV(csv, mappingFile, "test");
-        repo.initialize()
-        RepositoryConnection con = repo.getConnection();
-        RepositoryResult result = con.getStatements(null,null,null, false);
-        Model m2 = new LinkedHashModel();
-        m2.addAll(result.asList());
-        FileReader r = new FileReader(out);
-        m = Rio.parse(r, "", RDFFormat.TURTLE);
+        RDFImportService importService = Mock()
+        CSVConverterImpl csvConverter = new CSVConverterImpl()
+        csvConverter.setImportService(importService)
 
+        when:
+        csvConverter.importCSV(csv, mappingFile, "test")
 
-        expect:
-        m.equals(m2);
-
-
+        then:
+        noExceptionThrown()
     }
 
     def "Invalid RDF Causes RDFParseException"(){

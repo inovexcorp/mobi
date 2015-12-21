@@ -8,12 +8,11 @@ import org.matonto.ontology.core.api.AnnotationValue;
 
 public interface AnnotationAssertionAxiom extends AnnotationAxiom {
 
-	public AnnotationSubject getSubject();
+	AnnotationSubject getSubject();
 	
-	public AnnotationProperty getProperty();
+	AnnotationProperty getProperty();
 	
-	public AnnotationValue getValue();
+	AnnotationValue getValue();
 	
-	public Annotation getAnnotation();
-	
+	Annotation getAnnotation();
 }

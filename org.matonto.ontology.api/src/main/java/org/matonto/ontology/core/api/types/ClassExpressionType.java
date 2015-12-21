@@ -6,8 +6,7 @@ import org.matonto.ontology.core.api.OntologyIRI;
 import org.semanticweb.owlapi.vocab.Namespaces;
 
 
-public enum ClassExpressionType
-{
+public enum ClassExpressionType {
 	OWL_CLASS("Class"), 
 	OBJECT_SOME_VALUES_FROM("ObjectSomeValuesFrom"), 
 	OBJECT_ALL_VALUES_FROM("ObjectAllValuesFrom"), 
@@ -27,13 +26,11 @@ public enum ClassExpressionType
 	OBJECT_COMPLEMENT_OF("ObjectComplementOf"), 
 	OBJECT_ONE_OF("ObjectOneOf");
 
-
 	private final String name;
 	private final String prefixedName;
 //	private final OntologyIRI iri;
 
-	private ClassExpressionType(@Nonnull String name)
-	{
+	ClassExpressionType(@Nonnull String name) {
 		this.name = name;
 		prefixedName = (Namespaces.OWL.getPrefixName() + ':' + name);
 //		iri = SimpleIRI.create(Namespaces.OWL.getPrefixIRI(), name);

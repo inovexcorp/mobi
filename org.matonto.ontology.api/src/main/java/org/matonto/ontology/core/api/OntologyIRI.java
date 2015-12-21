@@ -1,11 +1,11 @@
 package org.matonto.ontology.core.api;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 public interface OntologyIRI extends AnnotationValue, AnnotationSubject {
 
-	public String getNamespace();
+	String getNamespace();
 	
-	public Optional<String> getLocalName();
+	Optional<String> getLocalName();
 	
 }

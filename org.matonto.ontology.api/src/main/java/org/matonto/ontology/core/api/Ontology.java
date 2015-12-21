@@ -1,57 +1,30 @@
 package org.matonto.ontology.core.api;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.util.Set;
-
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.openrdf.model.Model;
 
+import java.io.OutputStream;
+import java.util.Set;
+
 public interface Ontology {
 	
-	public Model asModel() throws MatontoOntologyException;
+	Model asModel() throws MatontoOntologyException;
 	
-	public OutputStream asTurtle() throws MatontoOntologyException;
+	OutputStream asTurtle() throws MatontoOntologyException;
 	
-	public OutputStream asRdfXml() throws MatontoOntologyException;
+	OutputStream asRdfXml() throws MatontoOntologyException;
 	
-	public OutputStream asOwlXml() throws MatontoOntologyException;
+	OutputStream asOwlXml() throws MatontoOntologyException;
 	
-	public OutputStream asJsonLD() throws MatontoOntologyException;
+	OutputStream asJsonLD() throws MatontoOntologyException;
 	
-	public OntologyId getOntologyId();
+	OntologyId getOntologyId();
 	
-	public Set<Annotation> getAnnotations();
-	
-	public void setOntologyId(OntologyId ontologyId);
-	
-	public void setAnnotations(Set<Annotation> annotations); 
-	
-//	public Set<Axiom> getAxioms();
-	
-	public void addAxiom(Axiom axiom);
-	
-	public void addAxioms(Set<Axiom> axioms);
-	
-	public void addAnnotation(Annotation annotation);
-	
-	public void addAnnotations(Set<Annotation> annotations);
-	
-	public void addDirectImport(OntologyIRI diIri);
-	
-	public void addDirectImports(Set<OntologyIRI> diIris);
-	
-	public Set<OntologyIRI> getDirectImportsDocuments();
-	
-	public boolean importOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
-	
-	public boolean importOntology(File file, OntologyId ontologyId) throws MatontoOntologyException;
-	
-	public boolean importOntology(URL url, OntologyId ontologyId) throws MatontoOntologyException;
-	
+	Set<Annotation> getAnnotations();
+
+    Set<Axiom> getAxioms();
+
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 
 	 * and returns true if the resource ids are equal and their RDF models are isomorphic. 
@@ -67,8 +40,7 @@ public interface Ontology {
      *
      * @return true if the resource ids are equal and their RDF models are isomorphic.
 	 */
-	public boolean equals(Object o);
+	boolean equals(Object o);
 	
-	public int hashCode();
-	
+	int hashCode();
 }

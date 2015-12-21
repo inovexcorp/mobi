@@ -6,10 +6,9 @@ import org.matonto.ontology.core.api.Literal;
 
 public interface NegativeDataPropertyAssertionAxiom extends AssertionAxiom {
 
-	public Individual getSubject();
+	Individual getSubject();
 	
-	public DataPropertyExpression getDataProperty();
+	DataPropertyExpression getDataProperty();
 	
-	public Literal getValue();
-	
+	Literal getValue();
 }

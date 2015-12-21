@@ -22,6 +22,11 @@ class SimpleValueFactorySpec extends Specification {
         VF.createBNode() != VF.createBNode()
     }
 
+    def "createBNode() returns BNodes that start with matonto prefix"() {
+        expect:
+        VF.createBNode().stringValue().startsWith("_:matonto/bnode/")
+    }
+
     def "createBNode() returns unique BNodes with two threads"() {
         setup:
         def results = []
@@ -227,5 +232,14 @@ class SimpleValueFactorySpec extends Specification {
         literal.getLabel() == "42"
         literal.getDatatype().stringValue() == XMLSchema.SHORT.stringValue()
         literal.shortValue() == (short) 42
+    }
+
+    def "createNamespace(prefix, name) creates the correct namespace"() {
+        given:
+        def ns = VF.createNamespace("http://test.com#", "class")
+
+        expect:
+        ns.getPrefix() == "http://test.com#"
+        ns.getName() == "class"
     }
 }

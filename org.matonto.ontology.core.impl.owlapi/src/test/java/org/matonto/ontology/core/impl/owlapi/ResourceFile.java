@@ -10,8 +10,6 @@ import java.nio.charset.Charset;
 
 import org.apache.commons.io.FilenameUtils;
 import org.junit.rules.ExternalResource;
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
@@ -23,14 +21,14 @@ public class ResourceFile extends ExternalResource
     File file = null;
     InputStream stream;
     URL url = null;
-    URI contextId;
+    String contextId;
 
     public ResourceFile(String res)
     {
         this.res = res;
         try {
 			createFile();
-			contextId = new URIImpl("http://www.matonto.org/samples2#" + FilenameUtils.getBaseName(file.getName()));
+			contextId = "http://www.matonto.org/samples2#" + FilenameUtils.getBaseName(file.getName());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -43,7 +41,7 @@ public class ResourceFile extends ExternalResource
         return file;
     }
     
-    public URI getContextId()
+    public String getContextId()
     {
     	return contextId;
     }

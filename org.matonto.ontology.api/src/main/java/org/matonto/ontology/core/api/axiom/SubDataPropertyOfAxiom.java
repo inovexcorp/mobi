@@ -4,8 +4,7 @@ import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 
 public interface SubDataPropertyOfAxiom extends DataPropertyAxiom {
 	
-	public DataPropertyExpression getSubDataProperty();
+	DataPropertyExpression getSubDataProperty();
 	
-	public DataPropertyExpression getSuperDataProperty();
-
+	DataPropertyExpression getSuperDataProperty();
 }

@@ -5,7 +5,7 @@ import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 
 public interface SubAnnotationPropertyOfAxiom extends AnnotationAxiom {
 	
-	public AnnotationProperty getSubProperty();
+	AnnotationProperty getSubProperty();
 	
-	public AnnotationProperty getSuperProperty();
+	AnnotationProperty getSuperProperty();
 }

@@ -20,17 +20,27 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+
         <!-- Openrdf Sesame dependencies -->
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${ontology.openrdf.version}</version>
-        </dependency>
-        
+        </dependency>   
+             
         <!-- Owlapi dependencies -->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-osgidistribution</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>edu.washington.cs.types.checker</groupId>
+            <artifactId>checker-framework</artifactId>
         </dependency>
     </dependencies>
 
@@ -46,15 +56,8 @@
                         <Bundle-Name>MatOnto Ontology Service - Core</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                        	org.matonto.ontology.core.api,
-                            org.matonto.ontology.core.api.*,
-                            org.matonto.ontology.core.utils
+                        	org.matonto.ontology.core*
                         </Export-Package>
-                        <Import-Package>
-                        	com.google.common.base.*,
-                        	*
-                        </Import-Package>
-                        <_metatype>*</_metatype>
                     </instructions>
                 </configuration>
             </plugin>

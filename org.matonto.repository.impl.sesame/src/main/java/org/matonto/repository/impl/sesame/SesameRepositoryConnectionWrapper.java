@@ -120,9 +120,4 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         }
     }
-
-    @Override
-    public ValueFactory getValueFactory() {
-        return SimpleValueFactory.getInstance();
-    }
 }

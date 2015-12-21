@@ -5,17 +5,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
 
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -116,8 +115,9 @@ public class OntologyCLIExportImpl implements Action
 			if (!newFile.exists())
 				newFile.createNewFile();
 			
-			URI uri = new URIImpl(namespace + "#" + localName);
-			Optional<Ontology> ontology = manager.retrieveOntology(manager.createOntologyId(uri));
+			OntologyIRI iri = manager.createOntologyIRI(namespace + "#" + localName);
+			OntologyId id = manager.createOntologyId(iri);
+			Optional<Ontology> ontology = manager.retrieveOntology(id);
 			
 			if(ontology.isPresent()) 
 			{

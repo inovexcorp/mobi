@@ -1,13 +1,13 @@
 package org.matonto.ontology.core.api;
 
-import com.google.common.base.Optional;
-
+import java.util.Optional;
 
 public interface AnnotationValue {
 
-		public Optional<OntologyIRI> asIRI();
-		
-		public Optional<Literal> asLiteral();
-		
-		public Optional<AnonymousIndividual> asAnonymousIndividual();
+	// TODO: This smells bad
+	Optional<OntologyIRI> asIRI();
+
+	Optional<Literal> asLiteral();
+
+	Optional<AnonymousIndividual> asAnonymousIndividual();
 }

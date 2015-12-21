@@ -1,18 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi
-
-import java.io.File
-import java.io.InputStream
-import java.io.FileInputStream
-import java.net.URL
-import org.semanticweb.owlapi.model.IRI
-import org.semanticweb.owlapi.model.OWLOntology
-import org.semanticweb.owlapi.model.OWLOntologyManager
-import org.openrdf.model.Model
-import org.openrdf.model.impl.URIImpl
 import spock.lang.Shared
 import spock.lang.Specification
 
 class SimpleOntologySpec extends Specification {
+
+
+    @Shared
+    def manager = new SimpleOntologyManager();
 
 	@Shared
 	def file = new File("src/test/resources/travel.owl")
@@ -21,19 +15,16 @@ class SimpleOntologySpec extends Specification {
 	def url = new URL("http://protege.cim3.net/file/pub/ontologies/travel/travel.owl")
 
     @Shared
-    def fileId = new URIImpl("http://www.matonto.org/samples#travel.owl");
+    def fileIri = manager.createOntologyIRI("http://www.matonto.org/samples#travel.owl");
 
     @Shared
-    def urlId = new URIImpl("http://protege.cim3.net/file/pub/ontologies/travel/travel.owl");
+    def fileOntologyId = manager.createOntologyId(fileIri);
 
     @Shared
-    def manager = new SimpleOntologyManager();
+    def urlIri = manager.createOntologyIRI("http://protege.cim3.net/file/pub/ontologies/travel/travel.owl");
 
     @Shared
-    def fileOntologyId = manager.createOntologyId(fileId);
-
-    @Shared
-    def urlOntologyId = manager.createOntologyId(urlId);
+    def urlOntologyId = manager.createOntologyId(urlIri);
 
 
     /* OntologyId creation test */
@@ -55,11 +46,6 @@ class SimpleOntologySpec extends Specification {
 
 
 	/* Constructors Tests */
-	def "default constructor"() {
-        expect:
-        new SimpleOntology() instanceof SimpleOntology
-    }
-
     def "constructor with File param"() {
     	setup:
     	def simpleOntology = new SimpleOntology(file, fileOntologyId)
@@ -67,15 +53,6 @@ class SimpleOntologySpec extends Specification {
     	expect:
     	simpleOntology instanceof SimpleOntology
     }
-
-    def "constructor with URL param"() {
-    	setup:
-    	def simpleOntology = new SimpleOntology(url, urlOntologyId)
-
-    	expect:
-    	simpleOntology instanceof SimpleOntology
-    }
-
 
     def "constructor with InputStream param"() {
     	setup:
@@ -87,7 +64,7 @@ class SimpleOntologySpec extends Specification {
     }
 
 
-    def "ontologyId equals url string"() {
+    def "ontologyId equals file iri string"() {
         setup:
         def ontology = new SimpleOntology(file, fileOntologyId)
         def id = "http://www.matonto.org/samples#travel.owl"
@@ -99,8 +76,9 @@ class SimpleOntologySpec extends Specification {
 
 	def "ontologyId equals url string"() {
 		setup:
-		def ontology = new SimpleOntology(url, urlOntologyId)
+		def ontology = new SimpleOntology(url.openStream(), urlOntologyId)
 		def id = "http://protege.cim3.net/file/pub/ontologies/travel/travel.owl"
+
         expect:
         ontology.getOntologyId().toString() == id
     }
@@ -111,14 +89,16 @@ class SimpleOntologySpec extends Specification {
 		setup:
 		def ontology1 = new SimpleOntology(file, fileOntologyId)
 		def ontology2 = new SimpleOntology(file, fileOntologyId)
+
         expect:
         ontology1 == ontology2
     }
 
     def "ontology3 equals ontology4"() {
 		setup:
-		def ontology3 = new SimpleOntology(url, urlOntologyId)
-		def ontology4 = new SimpleOntology(url, urlOntologyId)
+		def ontology3 = new SimpleOntology(url.openStream(), urlOntologyId)
+		def ontology4 = new SimpleOntology(url.openStream(), urlOntologyId)
+
         expect:
         ontology3 == ontology4
     }
@@ -126,7 +106,8 @@ class SimpleOntologySpec extends Specification {
     def "ontology1 not equal ontology3"() {
 		setup:
 		def ontology1 = new SimpleOntology(file, fileOntologyId)
-		def ontology3= new SimpleOntology(url, urlOntologyId)
+		def ontology3= new SimpleOntology(url.openStream(), urlOntologyId)
+
         expect:
         ontology1 != ontology3
     }
@@ -135,6 +116,7 @@ class SimpleOntologySpec extends Specification {
 		setup:
 		def ontology1 = new SimpleOntology(file, fileOntologyId)
 		def ontology2 = new SimpleOntology(file, fileOntologyId)
+
         expect:
         ontology1.hashCode() == ontology2.hashCode()
     }
@@ -142,30 +124,26 @@ class SimpleOntologySpec extends Specification {
     def "ontology1 hashCode not equal ontology3 hashCode"() {
 		setup:
 		def ontology1 = new SimpleOntology(file, fileOntologyId)
-		def ontology3 = new SimpleOntology(url, urlOntologyId)
+		def ontology3 = new SimpleOntology(url.openStream(), urlOntologyId)
+
         expect:
         ontology1.hashCode() != ontology3.hashCode()
     }
 
 
 	/* asModel Tests */
-	def "Empty SimpleOntology as openrdf.sesame.Model object"() {
-		setup:
-		def ontology = new SimpleOntology()
-        expect:
-        ontology.asModel() instanceof org.openrdf.model.Model
-    }
-
     def "SimpleOntology with File input as openrdf.sesame.Model object"() {
 		setup:
 		def ontology = new SimpleOntology(file, fileOntologyId)
+
         expect:
         ontology.asModel() instanceof org.openrdf.model.Model
     }
 
 	def "SimpleOntology with url input as openrdf.sesame.Model object"() {
 		setup:
-		def ontology = new SimpleOntology(url, urlOntologyId)
+		def ontology = new SimpleOntology(url.openStream(), urlOntologyId)
+
         expect:
         ontology.asModel() instanceof org.openrdf.model.Model
     }

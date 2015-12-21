@@ -6,6 +6,5 @@ import java.util.Set;
 
 public interface EquivalentObjectPropertiesAxiom extends ObjectPropertyAxiom {
 	
-	public Set<ObjectPropertyExpression> getObjectPropertys();
-
+	Set<ObjectPropertyExpression> getObjectPropertys();
 }

@@ -6,8 +6,7 @@ import java.util.Set;
 
 public interface DatatypeRestriction extends DataRange {
 
-	public Datatype getDatatype();
+	Datatype getDatatype();
 	
-	public Set<FacetRestriction> getFacetRestictions();
-	
+	Set<FacetRestriction> getFacetRestictions();
 }

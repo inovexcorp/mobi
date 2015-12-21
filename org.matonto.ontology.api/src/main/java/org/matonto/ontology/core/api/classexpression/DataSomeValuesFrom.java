@@ -5,8 +5,7 @@ import org.matonto.ontology.core.api.datarange.DataRange;
 
 public interface DataSomeValuesFrom extends ClassExpression {
 
-	public DataPropertyExpression getProperty();
+	DataPropertyExpression getProperty();
 	
-	public DataRange getDataRange();
-	
+	DataRange getDataRange();
 }

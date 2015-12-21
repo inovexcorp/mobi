@@ -1,6 +1,5 @@
 package org.matonto.rdf.core.impl.sesame;
 
-
 public class SimpleValueFactory extends AbstractValueFactory {
 
     private SimpleValueFactory() {}

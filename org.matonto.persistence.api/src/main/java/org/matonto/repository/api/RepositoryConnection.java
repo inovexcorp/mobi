@@ -103,11 +103,4 @@ public interface RepositoryConnection extends AutoCloseable {
      * @throws RepositoryException
      */
     RepositoryResult<Resource> getContextIDs() throws RepositoryException;
-
-    /**
-     * Gets a ValueFactory for this RepositoryConnection.
-     *
-     * @return A repository-specific ValueFactory.
-     */
-    ValueFactory getValueFactory();
 }

@@ -42,15 +42,13 @@ public enum AxiomType {
 	SUB_ANNOTATION_PROPERTY_OF ("SubAnnotationPropertyOf", true, true, false), 
 	ANNOTATION_PROPERTY_RANGE ("AnnotationPropertyRangeOf", true, true, false), 
 	ANNOTATION_PROPERTY_DOMAIN ("AnnotationPropertyDomain", true, true, false);
-	
-	
+
 	private final String name;
 	private final boolean owl2Axiom;
 	private final boolean nonSyntacticOWL2Axiom;
 	private final boolean isLogical;
    
-	private AxiomType(String name, boolean owl2Axiom, boolean nonSyntacticOWL2Axiom, boolean isLogical)
-	{
+	AxiomType(String name, boolean owl2Axiom, boolean nonSyntacticOWL2Axiom, boolean isLogical) {
 		this.name = name;
 		this.owl2Axiom = owl2Axiom;
 		this.nonSyntacticOWL2Axiom = nonSyntacticOWL2Axiom;
