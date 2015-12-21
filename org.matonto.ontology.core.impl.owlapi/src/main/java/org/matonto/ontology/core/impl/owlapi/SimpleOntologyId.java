@@ -4,9 +4,8 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.rdf.api.IRI;
-import org.openrdf.model.Resource;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
 
@@ -14,25 +13,23 @@ public class SimpleOntologyId implements OntologyId {
 
 	private Resource identifier;
 	private OWLOntologyID ontologyId;
-    private static final ValueFactory VF = ValueFactoryImpl.getInstance();
 
-    
-    public SimpleOntologyId() {
-        this.identifier = VF.createBNode();       
+    public SimpleOntologyId(ValueFactory factory) {
+        this.identifier = factory.createBNode();
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(), com.google.common.base.Optional.absent());
     }
 
-	public SimpleOntologyId(@Nonnull IRI ontologyIRI) {	
+	public SimpleOntologyId(ValueFactory factory, @Nonnull IRI ontologyIRI) {
 	    org.semanticweb.owlapi.model.IRI oIRI = Values.owlapiIRI(ontologyIRI);
 		ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.absent());
-		this.identifier = VF.createURI(ontologyIRI.toString());	
+		this.identifier = factory.createIRI(ontologyIRI.toString());
 	}
 
-	public SimpleOntologyId(@Nonnull IRI ontologyIRI, @Nonnull IRI versionIRI) {
+	public SimpleOntologyId(ValueFactory factory, @Nonnull IRI ontologyIRI, @Nonnull IRI versionIRI) {
 	    org.semanticweb.owlapi.model.IRI oIRI =Values.owlapiIRI(ontologyIRI);
 	    org.semanticweb.owlapi.model.IRI vIRI = Values.owlapiIRI(versionIRI);
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
-        this.identifier = VF.createURI(versionIRI.toString());
+        this.identifier = factory.createIRI(versionIRI.toString());
 	}
 		
 	

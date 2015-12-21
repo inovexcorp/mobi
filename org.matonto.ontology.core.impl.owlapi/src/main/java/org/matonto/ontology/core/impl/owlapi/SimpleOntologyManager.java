@@ -44,7 +44,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	
 	private static Repository repository;
     private static ValueFactory factory;
-	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.ofNullable(new HashMap<>());
+	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.of(new HashMap<>());
 	private static String location;
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
 	
@@ -147,15 +147,14 @@ public class SimpleOntologyManager implements OntologyManager {
 		
 		try {
 			conn = repository.getConnection();
-	    	Model model = Iterations.addAll(conn.getStatements(null, null, null, false, ontologyId.getOntologyIdentifier()), new LinkedHashModel());
+            Resource sesameResource = SesameValues.sesameResource(ontologyId.getOntologyIdentifier());
+	    	Model model = Iterations.addAll(conn.getStatements(null, null, null, false, sesameResource), new LinkedHashModel());
 				
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
 	    	parser.parse(new RioMemoryTripleSource(model), onto, new OWLOntologyLoaderConfiguration());
 
-		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException("Unable to create an ontology object", e);
-		} catch (IOException e) {
+		} catch (OWLOntologyCreationException | IOException e) {
 			throw new MatontoOntologyException("Unable to create an ontology object", e);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
@@ -178,9 +177,12 @@ public class SimpleOntologyManager implements OntologyManager {
 		RepositoryConnection conn = null;
 		
 		try {
-			conn = repository.getConnection();
 			Model model = ontology.asModel();
-			conn.add(model, ontologyId.getOntologyIdentifier());
+            Resource sesameResource = SesameValues.sesameResource(ontologyId.getOntologyIdentifier());
+
+            conn = repository.getConnection();
+            conn.add(model, sesameResource);
+
 			ontologyRegistry.get().put(ontologyId, location);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
@@ -203,7 +205,8 @@ public class SimpleOntologyManager implements OntologyManager {
 		
 		try {
 			conn = repository.getConnection();
-			conn.clear(ontologyId.getOntologyIdentifier());
+            Resource sesameResource = SesameValues.sesameResource(ontologyId.getOntologyIdentifier());
+            conn.clear(sesameResource);
 			ontologyRegistry.get().remove(ontologyId, location);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
@@ -267,17 +270,17 @@ public class SimpleOntologyManager implements OntologyManager {
 
 	@Override
     public OntologyId createOntologyId() {
-        return new SimpleOntologyId();
+        return new SimpleOntologyId(factory);
     }
 
 	@Override
     public OntologyId createOntologyId(IRI ontologyIRI) {
-        return new SimpleOntologyId(ontologyIRI);
+        return new SimpleOntologyId(factory, ontologyIRI);
     }
 
 	@Override
     public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
-        return new SimpleOntologyId(ontologyIRI, versionIRI);
+        return new SimpleOntologyId(factory, ontologyIRI, versionIRI);
     }
 
 	@Override
