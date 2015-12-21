@@ -245,6 +245,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public int hashCode() {
+        // TODO: This looks like an expensive operation
     	return this.ontologyId.hashCode() + this.asModel().hashCode();
     }
 
