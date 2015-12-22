@@ -27,7 +27,7 @@ import static org.powermock.api.easymock.PowerMock.mockStatic;
 import static org.powermock.api.easymock.PowerMock.replay;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Values.class)
+@PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyTest {
 
     OntologyId ontologyIdMock;
@@ -140,9 +140,9 @@ public class SimpleOntologyTest {
     @Test
     public void annotationsAreCorrectForNonemptyOntology() throws Exception {
         // Behaviors
-        mockStatic(Values.class);
-        expect(Values.matontoAnnotation(isA(OWLAnnotation.class))).andReturn(mock(Annotation.class)).anyTimes();
-        replay(ontologyIdMock, Values.class);
+        mockStatic(SimpleOntologyValues.class);
+        expect(SimpleOntologyValues.matontoAnnotation(isA(OWLAnnotation.class))).andReturn(mock(Annotation.class)).anyTimes();
+        replay(ontologyIdMock, SimpleOntologyValues.class);
 
         // Setup
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
@@ -165,9 +165,9 @@ public class SimpleOntologyTest {
     @Test
     public void axiomsAreCorrectForNonemptyOntology() throws Exception {
         // Behaviors
-        mockStatic(Values.class);
-        expect(Values.matontoAxiom(isA(OWLAxiom.class))).andReturn(mock(Axiom.class)).anyTimes();
-        replay(ontologyIdMock, Values.class);
+        mockStatic(SimpleOntologyValues.class);
+        expect(SimpleOntologyValues.matontoAxiom(isA(OWLAxiom.class))).andReturn(mock(Axiom.class)).anyTimes();
+        replay(ontologyIdMock, SimpleOntologyValues.class);
 
         // Setup
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");

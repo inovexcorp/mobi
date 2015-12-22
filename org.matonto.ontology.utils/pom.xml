@@ -39,9 +39,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>MatOnto Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Import-Package>
-                            org.openrdf*;version="[2.7,2.8)",
+                            org.openrdf.*;version="${ontology.openrdf.version}",
                             *
                         </Import-Package>
                         <Service-Component>*</Service-Component>

@@ -1,24 +1,41 @@
 package org.matonto.ontology.utils.impl;
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
+
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.*;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Component
+
+@Component (immediate=true, provide = SesameTransformer.class)
 public class SimpleSesameTransformer implements SesameTransformer {
 
     private static final org.openrdf.model.ValueFactory SESAME_VF = ValueFactoryImpl.getInstance();
     private ValueFactory matontoVF;
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleSesameTransformer.class);
+    
+    @Activate
+    public void activate() {
+        LOG.info("Activating the SimpleSesameTransformer");
+    }
+ 
+    @Deactivate
+    public void deactivate() {
+        LOG.info("Deactivating the SimpleSesameTransformer");
+    }
 
     @Reference
     protected void setMatontoVF(ValueFactory valueFactory) {
         matontoVF = valueFactory;
     }
 
-    protected SimpleSesameTransformer() {}
+    public SimpleSesameTransformer() {}
 
     @Override
     public org.openrdf.model.Statement sesameStatement(Statement statement) {

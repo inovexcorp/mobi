@@ -7,7 +7,7 @@ import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.Values;
+import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
 import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
@@ -24,7 +24,7 @@ public class SimpleClass implements OClass {
 	public SimpleClass(@Nonnull IRI iri)
 	{
 		this.iri = iri;
-		owlClass = new OWLClassImpl(Values.owlapiIRI(iri));
+		owlClass = new OWLClassImpl(SimpleOntologyValues.owlapiIRI(iri));
 		isThing = owlClass.isOWLThing();
 		isNothing = owlClass.isOWLNothing();
 	}

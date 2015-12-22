@@ -3,7 +3,7 @@ package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.Values;
+import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
 import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
@@ -35,14 +35,14 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 	@Override
 	public boolean isComment() 
 	{
-		return Values.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
+		return SimpleOntologyValues.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
 	}
 
 	
 	@Override
 	public boolean isLabel() 
 	{
-		return Values.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
+		return SimpleOntologyValues.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
 	}
 	
 	

@@ -7,9 +7,8 @@ import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
-import org.openrdf.model.Model;
-import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.util.Models;
 import org.openrdf.rio.*;
 import org.openrdf.rio.helpers.JSONLDMode;
@@ -28,9 +27,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLMutableOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 
 
 public class SimpleOntology implements Ontology {
@@ -76,7 +73,7 @@ public class SimpleOntology implements Ontology {
         this.transformer = transformer;
 
 		try {
-			ontology = manager.loadOntologyFromOntologyDocument(Values.owlapiIRI(iri));
+			ontology = manager.loadOntologyFromOntologyDocument(SimpleOntologyValues.owlapiIRI(iri));
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
@@ -112,7 +109,7 @@ public class SimpleOntology implements Ontology {
 	public Set<Annotation> getAnnotations() {
         return ontology.getAnnotations()
                 .stream()
-                .map(Values::matontoAnnotation)
+                .map(SimpleOntologyValues::matontoAnnotation)
                 .collect(Collectors.toSet());
 	}
 
@@ -120,7 +117,7 @@ public class SimpleOntology implements Ontology {
     public Set<Axiom> getAxioms() {
         return ontology.getAxioms()
                 .stream()
-                .map(Values::matontoAxiom)
+                .map(SimpleOntologyValues::matontoAxiom)
                 .collect(Collectors.toSet());
     }
 
@@ -165,8 +162,8 @@ public class SimpleOntology implements Ontology {
     /**
      * @return the unmodifiable sesame model that represents this Ontology
      */
-	protected Model asSesameModel() throws MatontoOntologyException {
-		Model sesameModel = new LinkedHashModel();
+	protected org.openrdf.model.Model asSesameModel() throws MatontoOntologyException {
+	    org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
 		ByteArrayOutputStream bos = null;
 		ByteArrayInputStream is = null;
 		
@@ -194,8 +191,8 @@ public class SimpleOntology implements Ontology {
 	}
 
     @Override
-    public org.matonto.rdf.api.Model asModel(ModelFactory factory) throws MatontoOntologyException {
-        org.matonto.rdf.api.Model matontoModel = factory.createModel();
+    public Model asModel(ModelFactory factory) throws MatontoOntologyException {
+        Model matontoModel = factory.createModel();
 
         asSesameModel().forEach(stmt -> {
             matontoModel.add(transformer.matontoStatement(stmt));

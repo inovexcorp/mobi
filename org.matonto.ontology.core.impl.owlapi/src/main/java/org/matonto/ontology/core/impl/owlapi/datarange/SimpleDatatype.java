@@ -6,7 +6,7 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.types.DataRangeType;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.Values;
+import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
 import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -23,7 +23,7 @@ public class SimpleDatatype implements Datatype {
 	public SimpleDatatype(@Nonnull IRI iri)
 	{
 		this.iri = iri;
-		org.semanticweb.owlapi.model.IRI owlIri = Values.owlapiIRI(iri);
+		org.semanticweb.owlapi.model.IRI owlIri = SimpleOntologyValues.owlapiIRI(iri);
 		owlDatatype = new OWLDatatypeImpl(owlIri);
 		owl2Datatype = OWL2Datatype.getDatatype(owlIri);
 	}
@@ -90,7 +90,7 @@ public class SimpleDatatype implements Datatype {
 		Set<IRI> matontoIris = new HashSet<IRI>();
 		Set<org.semanticweb.owlapi.model.IRI> owlapiIris = OWL2Datatype.getDatatypeIRIs();
 		for(org.semanticweb.owlapi.model.IRI i : owlapiIris) {
-			matontoIris.add(Values.matontoIRI(i));
+			matontoIris.add(SimpleOntologyValues.matontoIRI(i));
 		}
 		
 		return matontoIris;

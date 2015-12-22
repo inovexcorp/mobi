@@ -54,7 +54,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto Ontology Service - Core</Bundle-Name>
+                        <Bundle-Name>MatOnto Ontology Service - Core API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                         	org.matonto.ontology.core*

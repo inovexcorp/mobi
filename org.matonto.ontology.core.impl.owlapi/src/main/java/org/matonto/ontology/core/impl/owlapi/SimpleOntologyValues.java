@@ -34,6 +34,9 @@ import org.matonto.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.vocab.OWLFacet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import uk.ac.manchester.cs.owl.owlapi.OWL2DatatypeImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationPropertyImpl;
@@ -47,32 +50,40 @@ import uk.ac.manchester.cs.owl.owlapi.OWLFacetRestrictionImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 
+
 @Component (immediate=true)
-public class Values {
+public class SimpleOntologyValues {
     
     private static ValueFactory factory;
-	private static OntologyManager manager;
     private static SesameTransformer transformer;
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyValues.class);
+    
+    @Activate
+    public void activate() {
+        LOG.info("Activating the SimpleOntologyValues");
+    }
+ 
+    @Deactivate
+    public void deactivate() {
+        LOG.info("Deactivating the SimpleOntologyValues");
+    }
     
     @Reference
     protected void setValueFactory(final ValueFactory vf) {
         factory = vf;
     }
 
-	@Reference
-	protected void setManager(final OntologyManager ontologyManager) {
-		manager = ontologyManager;
-	}
-
     @Reference
     protected void setTransformer(final SesameTransformer sTransformer) {
         transformer = sTransformer;
     }
     
-	public Values() {}
+	public SimpleOntologyValues() {}
 	
     public static Ontology matontoOntology(OWLOntology ontology) {
         if(ontology == null)
@@ -83,13 +94,13 @@ public class Values {
         com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlApiID.getVersionIRI();
         OntologyId ontologyId;
         if (owlApiID.isAnonymous()) {
-            ontologyId = manager.createOntologyId();
+            ontologyId = new SimpleOntologyId(factory);
         } else if (vIRI.isPresent()) {
-            ontologyId = manager.createOntologyId(matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
+            ontologyId = new SimpleOntologyId(factory, matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
         } else if (oIRI.isPresent()){
-            ontologyId = manager.createOntologyId(matontoIRI(oIRI.get()));
+            ontologyId = new SimpleOntologyId(factory, matontoIRI(oIRI.get()));
         } else {
-            ontologyId = manager.createOntologyId();
+            ontologyId = new SimpleOntologyId(factory);
         }
 
         OWLOntology tOntology = ontology;
@@ -323,11 +334,11 @@ public class Values {
 		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlId.getVersionIRI();
 
         if (vIRI.isPresent()) {
-            return manager.createOntologyId(matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
+            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
         } else if (oIRI.isPresent()) {
-            return manager.createOntologyId(matontoIRI(oIRI.get()));
+            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()));
         } else {
-            return manager.createOntologyId();
+            return new SimpleOntologyId(factory);
         }
 	}	
 	
@@ -426,6 +437,9 @@ public class Values {
 			case "Datatype": 
 				owlapiType = org.semanticweb.owlapi.model.EntityType.DATATYPE;
 				break;
+				
+    		default:
+    		    return null;
 		}
 		
 		return owlapiType;
@@ -616,7 +630,7 @@ public class Values {
 		
 		Set<OWLAnnotation> owlapiAnnotations = owlapiAxiom.getAnnotations();
 		Set<Annotation> matontoAnnotations = owlapiAnnotations.stream()
-                .map(Values::matontoAnnotation)
+                .map(SimpleOntologyValues::matontoAnnotation)
                 .collect(Collectors.toSet());
 
         return new SimpleDeclarationAxiom(matontoEntity, matontoAnnotations);
@@ -656,7 +670,7 @@ public class Values {
 		
 		Set<Annotation> matontoAnnotations = matontoAxiom.getAnnotations();
 		Set<OWLAnnotation> owlapiAnnotations = matontoAnnotations.stream()
-                .map(Values::owlapiAnnotation)
+                .map(SimpleOntologyValues::owlapiAnnotation)
                 .collect(Collectors.toSet());
 
         return new OWLDeclarationAxiomImpl(owlapiEntity, owlapiAnnotations);

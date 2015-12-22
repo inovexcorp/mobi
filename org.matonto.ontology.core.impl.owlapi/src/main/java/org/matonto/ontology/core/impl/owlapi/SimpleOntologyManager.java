@@ -16,9 +16,9 @@ import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.*;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
-import org.openrdf.model.impl.LinkedHashModel;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -38,6 +38,7 @@ import aQute.bnd.annotation.component.Reference;
 @Component (immediate=true, provide = OntologyManager.class)
 public class SimpleOntologyManager implements OntologyManager {
 	
+    private RepositoryManager repositoryManager;
 	private static Repository repository;
     private static ValueFactory factory;
 	private static Map<OntologyId, String> ontologyRegistry = new HashMap<>();
@@ -50,7 +51,8 @@ public class SimpleOntologyManager implements OntologyManager {
     @Activate
     public void activate() {
         LOG.info("Activating the SimpleOntologyManager");
-        this.initOntologyRegistry();
+        getRepository("ontology-repo");
+        initOntologyRegistry();
     }
  
     @Deactivate
@@ -58,13 +60,24 @@ public class SimpleOntologyManager implements OntologyManager {
         LOG.info("Deactivating the SimpleOntologyManger");
     }
 
-	@Reference
-	protected void setRepo(Repository repo) {
-	    repository = repo;
-	}
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
 
-    protected void unsetRepo(Repository repo) {
-        repository = null;
+    protected void getRepository(String repositoryId) {
+        if(repositoryManager == null)
+            throw new IllegalStateException("Repository Manager is null");
+        
+        Optional<Repository> optRepo = repositoryManager.getRepository(repositoryId);
+        if(optRepo.isPresent())
+            setRepo(optRepo.get());
+        else
+            throw new IllegalStateException("Repository does not exist");
+    }
+    
+    protected void setRepo(Repository repo) {
+        this.repository = repo;
     }
 
     @Reference
@@ -73,12 +86,12 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Reference
-    protected void setTransformer(SesameTransformer transformer) {
+    protected void setTransformer(final SesameTransformer transformer) {
         this.transformer = transformer;
     }
 
     @Reference
-    protected void setModelFactory(ModelFactory modelFactory) {
+    protected void setModelFactory(final ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
 	
@@ -146,7 +159,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			conn = repository.getConnection();
             RepositoryResult<Statement> stmts = conn.getStatements(null, null, null, ontologyId.getOntologyIdentifier());
 
-            org.openrdf.model.Model sesameModel = new LinkedHashModel();
+            org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
             stmts.forEach(stmt -> sesameModel.add(transformer.sesameStatement(stmt)));
 
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
@@ -160,7 +173,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			closeConnection(conn);
 		}
 
-		return Optional.of(Values.matontoOntology(onto));
+		return Optional.of(SimpleOntologyValues.matontoOntology(onto));
 	}
 	
 	@Override

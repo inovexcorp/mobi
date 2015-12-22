@@ -7,12 +7,14 @@ import org.matonto.ontology.utils.api.SesameTransformer
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.api.ValueFactory
 import org.matonto.repository.api.Repository
+import org.matonto.repository.api.RepositoryManager
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.config.RepositoryConfig
 import spock.lang.Specification
 
 class SimpleOntologyManagerSpec extends Specification {
 
+    def repositoryManager = Mock(RepositoryManager)
     def repository = Mock(Repository)
     def connection = Mock(RepositoryConnection)
     def model = Mock(Model)
@@ -26,8 +28,9 @@ class SimpleOntologyManagerSpec extends Specification {
         def manager = [
                 ontologyExists: { o -> return true }
         ] as SimpleOntologyManager
-        manager.setRepo(repository)
+        manager.setRepositoryManager(repositoryManager)
         manager.setValueFactory(factory)
+        manager.setRepo(repository)
 
         when:
         manager.storeOntology(ontology)
@@ -43,9 +46,10 @@ class SimpleOntologyManagerSpec extends Specification {
         def manager = [
                 ontologyExists: { o -> return false }
         ] as SimpleOntologyManager
-        manager.setRepo(repository)
+        manager.setRepositoryManager(repositoryManager)
         manager.setValueFactory(factory)
         manager.setTransformer(sesameTransformer)
+        manager.setRepo(repository)
 
         when:
         def result = manager.storeOntology(ontology)

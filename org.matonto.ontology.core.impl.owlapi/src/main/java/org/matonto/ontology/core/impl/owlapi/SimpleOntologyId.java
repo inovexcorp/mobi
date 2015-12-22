@@ -20,14 +20,14 @@ public class SimpleOntologyId implements OntologyId {
     }
 
 	public SimpleOntologyId(ValueFactory factory, @Nonnull IRI ontologyIRI) {
-	    org.semanticweb.owlapi.model.IRI oIRI = Values.owlapiIRI(ontologyIRI);
+	    org.semanticweb.owlapi.model.IRI oIRI = SimpleOntologyValues.owlapiIRI(ontologyIRI);
 		ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.absent());
 		this.identifier = factory.createIRI(ontologyIRI.toString());
 	}
 
 	public SimpleOntologyId(ValueFactory factory, @Nonnull IRI ontologyIRI, @Nonnull IRI versionIRI) {
-	    org.semanticweb.owlapi.model.IRI oIRI =Values.owlapiIRI(ontologyIRI);
-	    org.semanticweb.owlapi.model.IRI vIRI = Values.owlapiIRI(versionIRI);
+	    org.semanticweb.owlapi.model.IRI oIRI =SimpleOntologyValues.owlapiIRI(ontologyIRI);
+	    org.semanticweb.owlapi.model.IRI vIRI = SimpleOntologyValues.owlapiIRI(versionIRI);
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
         this.identifier = factory.createIRI(versionIRI.toString());
 	}
@@ -37,7 +37,7 @@ public class SimpleOntologyId implements OntologyId {
 	public Optional<IRI> getOntologyIRI() {
         if (ontologyId.getOntologyIRI().isPresent()) {
             org.semanticweb.owlapi.model.IRI owlIri = ontologyId.getOntologyIRI().get();
-            return Optional.of(Values.matontoIRI(owlIri));
+            return Optional.of(SimpleOntologyValues.matontoIRI(owlIri));
         } else {
             return Optional.empty();
         }
@@ -48,7 +48,7 @@ public class SimpleOntologyId implements OntologyId {
 	public Optional<IRI> getVersionIRI() {
         if (ontologyId.getVersionIRI().isPresent()) {
             org.semanticweb.owlapi.model.IRI versionIri = ontologyId.getVersionIRI().get();
-            return Optional.of(Values.matontoIRI(versionIri));
+            return Optional.of(SimpleOntologyValues.matontoIRI(versionIri));
         } else {
             return Optional.empty();
         }
