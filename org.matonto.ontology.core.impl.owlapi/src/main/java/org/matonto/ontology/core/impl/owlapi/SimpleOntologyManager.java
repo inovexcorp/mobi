@@ -59,9 +59,13 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
 	@Reference
-	protected void setRepo(final Repository repo) {
+	protected void setRepo(Repository repo) {
 	    repository = repo;
 	}
+
+    protected void unsetRepo(Repository repo) {
+        repository = null;
+    }
 
     @Reference
     protected void setValueFactory(final ValueFactory vf) {
