@@ -2,7 +2,7 @@
 <script type="text/ng-template" id="annotations-template">
     <!-- list of annotations -->
     <div class="well well-sm annotation" ng-repeat="key in (vm.selected | annotationManagerFilter:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
-        <span><strong>{{key}}</strong><br>{{vm.selected[key]['@id'] || vm.selected[key]}}</span>
+        <span><strong>{{key}}</strong><br>{{vm.selected[key][0]['@value'] || vm.selected[key][0]['@id']}}</span>
         <button type="button" class="btn btn-link" ng-click="vm.removeAnnotation(key)"><i class="fa fa-fw fa-times"></i></button>
     </div>
 

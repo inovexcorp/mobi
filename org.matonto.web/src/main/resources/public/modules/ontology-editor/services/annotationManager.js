@@ -11,18 +11,21 @@
         function annotationManagerService() {
             var self = this;
 
-            // removes the annotation
             self.remove = function(obj, key) {
                 delete obj[key];
             }
 
-            // adds the annotation that the user is editing
             self.add = function(obj, key, value, select) {
+                var item = [{'@value': value}];
                 if(select === 'other') {
-                    obj[key] = value;
+                    obj[key] = item;
                 } else {
-                    obj[select] = value;
+                    obj[select] = item;
                 }
+            }
+
+            self.edit = function(obj, key, value) {
+                obj[key] = value;
             }
         }
 

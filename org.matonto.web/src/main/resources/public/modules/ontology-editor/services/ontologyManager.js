@@ -20,18 +20,13 @@
             initialize();
 
             function initialize() {
-                var deferred = $q.defer();
                 $http.get(prefix + '/getAllOntologies')
                     .then(function(response) {
                         var i = response.data.length;
                         while(i--) {
                             addOntology(response.data[i]);
                         }
-                        $timeout(function() {
-                            deferred.resolve(self.ontologies);
-                        }, 0);
                     });
-                return deferred.promise;
             }
 
             function restructure(flattened, context, prefixes) {
