@@ -78,9 +78,8 @@ public class OntologyRestImpl {
 	{
 		if(manager == null)
 			throw new IllegalStateException("Ontology manager is null");
-		
-		Optional<Map<OntologyId, String>> ontologyRegistry = manager.getOntologyRegistry();	
-		Map<OntologyId, String> ontologies = ontologyRegistry.get();
+
+		Map<OntologyId, String> ontologies = manager.getOntologyRegistry();
 		JSONObject json = new JSONObject();
 
 		if(!ontologies.isEmpty()) {

@@ -47,7 +47,7 @@ public interface OntologyManager {
      */
 	boolean deleteOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException;
 
-	Optional<Map<OntologyId, String>> getOntologyRegistry() throws MatontoOntologyException;
+	Map<OntologyId, String> getOntologyRegistry() throws MatontoOntologyException;
 	
 	OntologyId createOntologyId();
 	

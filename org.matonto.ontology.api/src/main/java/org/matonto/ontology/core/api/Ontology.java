@@ -2,14 +2,15 @@ package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.openrdf.model.Model;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 
 import java.io.OutputStream;
 import java.util.Set;
 
 public interface Ontology {
 	
-	Model asModel() throws MatontoOntologyException;
+	Model asModel(ModelFactory factory) throws MatontoOntologyException;
 	
 	OutputStream asTurtle() throws MatontoOntologyException;
 	

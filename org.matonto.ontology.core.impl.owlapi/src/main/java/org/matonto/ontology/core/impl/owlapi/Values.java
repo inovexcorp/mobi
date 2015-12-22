@@ -26,29 +26,13 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotation
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.semanticweb.owlapi.model.NodeID;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAnnotationValue;
-import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataOneOf;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLEntity;
-import org.semanticweb.owlapi.model.OWLFacetRestriction;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyID;
-import org.semanticweb.owlapi.model.OWLRuntimeException;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.vocab.OWLFacet;
 import uk.ac.manchester.cs.owl.owlapi.OWL2DatatypeImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationImpl;
@@ -71,6 +55,7 @@ public class Values {
     
     private static ValueFactory factory;
 	private static OntologyManager manager;
+    private static SesameTransformer transformer;
     
     @Reference
     protected void setValueFactory(final ValueFactory vf) {
@@ -81,10 +66,15 @@ public class Values {
 	protected void setManager(final OntologyManager ontologyManager) {
 		manager = ontologyManager;
 	}
+
+    @Reference
+    protected void setTransformer(final SesameTransformer sTransformer) {
+        transformer = sTransformer;
+    }
     
 	public Values() {}
 	
-    public static SimpleOntology matontoOntology(OWLOntology ontology) {
+    public static Ontology matontoOntology(OWLOntology ontology) {
         if(ontology == null)
             return null;
 
@@ -101,10 +91,18 @@ public class Values {
         } else {
             ontologyId = manager.createOntologyId();
         }
-        
-        SimpleOntology matontoOntology = new SimpleOntology(ontologyId);
-        matontoOntology.setOWLOntologyObject(ontology);
-        return matontoOntology;
+
+        OWLOntology tOntology = ontology;
+
+        if(ontology instanceof OWLMutableOntology) {
+            try {
+                tOntology = ontology.getOWLOntologyManager().copyOntology(ontology, OntologyCopy.MOVE);
+            } catch (OWLOntologyCreationException e) {
+                throw new MatontoOntologyException("Error in ontology creation", e);
+            }
+        }
+
+        return new SimpleOntology(tOntology, ontologyId, transformer);
     }
     
     public static OWLOntology owlapiOntology(Ontology ontology)

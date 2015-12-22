@@ -27,15 +27,13 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-        </dependency>            
+        </dependency>
 
-        <!-- Openrdf Sesame dependencies -->
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>   
-        
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>edu.washington.cs.types.checker</groupId>
             <artifactId>checker-framework</artifactId>

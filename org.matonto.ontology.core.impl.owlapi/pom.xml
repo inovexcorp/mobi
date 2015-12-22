@@ -27,7 +27,11 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-        </dependency>    
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
+        </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
@@ -116,6 +120,10 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Ontology Core OWLAPI Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
+                        <Import-Package>
+                            org.openrdf*;version="[2.7,2.8)",
+                            *
+                        </Import-Package>
                         <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>

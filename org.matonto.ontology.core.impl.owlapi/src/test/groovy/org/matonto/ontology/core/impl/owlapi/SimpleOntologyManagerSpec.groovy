@@ -3,11 +3,12 @@ package org.matonto.ontology.core.impl.owlapi
 import org.matonto.ontology.core.api.Ontology
 import org.matonto.ontology.core.api.OntologyId
 import org.matonto.ontology.core.utils.MatontoOntologyException
+import org.matonto.ontology.utils.api.SesameTransformer
+import org.matonto.rdf.api.Model
 import org.matonto.rdf.api.ValueFactory
-import org.openrdf.model.Model
-import org.openrdf.model.Resource
-import org.openrdf.repository.Repository
-import org.openrdf.repository.RepositoryConnection
+import org.matonto.repository.api.Repository
+import org.matonto.repository.api.RepositoryConnection
+import org.matonto.repository.config.RepositoryConfig
 import spock.lang.Specification
 
 class SimpleOntologyManagerSpec extends Specification {
@@ -15,8 +16,7 @@ class SimpleOntologyManagerSpec extends Specification {
     def repository = Mock(Repository)
     def connection = Mock(RepositoryConnection)
     def model = Mock(Model)
-    def sesameValues = Mock(SesameValues)
-    def resource = Mock(Resource)
+    def sesameTransformer = Mock(SesameTransformer)
     def factory = Mock(ValueFactory)
     def ontology = Mock(Ontology)
     def ontologyId = Mock(OntologyId)
@@ -45,15 +45,17 @@ class SimpleOntologyManagerSpec extends Specification {
         ] as SimpleOntologyManager
         manager.setRepo(repository)
         manager.setValueFactory(factory)
+        manager.setTransformer(sesameTransformer)
 
         when:
         def result = manager.storeOntology(ontology)
 
         then:
         ontology.getOntologyId() >> ontologyId
-        ontology.asModel() >> model
-        sesameValues.sesameResource(_) >> resource
+        ontology.asModel(_) >> model
+//        sesameTransformer.sesameResource(_) >> resource
         repository.getConnection() >> connection
+        repository.getConfig() >> Mock(RepositoryConfig.class)
         result
     }
 
