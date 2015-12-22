@@ -27,16 +27,7 @@
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
             <artifactId>org.apache.karaf.shell.console</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>            
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>
+        </dependency>           
     </dependencies>
 
     <build>
@@ -50,19 +41,8 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Ontology Service - CLI</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
+                        <Import-Package>*</Import-Package>
                         <Export-Package></Export-Package>
-                        <Import-Package>
-<!--                             org.openrdf.*;version="${ontology.openrdf.version}",
-                            org.matonto.ontology.core.api.*;version="[1.0,2)",
-                            org.matonto.ontology.core.utils;version="[1.0,2)",
-                            org.matonto.rdf.api.*;version="[1.0,2)",
-                            com.google.common.base.*,
-                            org.apache.commons.io.*, -->
-                            org.apache.felix.service.command,
-			              	org.apache.karaf.shell.commands,
-			              	org.apache.karaf.shell.console,
-                            *
-                        </Import-Package>
                         <Karaf-Commands>*</Karaf-Commands>
                         <Service-Component>*</Service-Component>
                     </instructions>

@@ -13,33 +13,17 @@ import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
 
 
 @Command(scope = "matonto", name = "importOntology", description = "Imports ontology to a repository")
 @Service
-@Component (immediate=true)
 public class OntologyCLIImportImpl implements Action
 {
+    @Reference
 	private static OntologyManager manager;
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyCLIImportImpl.class);
-	
-    @Activate
-    public void activate() 
-    {
-        LOG.info("Activating the OntologyCLIImportImpl");
-    }
- 
-    @Deactivate
-    public void deactivate() 
-    {
-        LOG.info("Deactivating the OntologyCLIImportImpl");
-    }
-	
-	@Reference
+
 	protected void setOntologyManager(final OntologyManager ontoManager)
 	{
 		manager = ontoManager;
@@ -60,11 +44,8 @@ public class OntologyCLIImportImpl implements Action
 	@Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository", required = true, multiValued = false)
 	String fromFile = null;
 	
-	@Argument(index = 1, name = "namespace", description = "The namespace of the context id for ontology named graph to be created under", required = true, multiValued = false)
-	String namespace = null;
-	
-	@Argument(index = 2, name = "localName", description = "The local name of the context id for ontology named graph to be created under", required = true, multiValued = false)
-	String localName = null;
+	@Argument(index = 1, name = "ontologyId", description = "the ontology id/context id for ontology named graph to be created under", required = true, multiValued = false)
+	String ontologyId = null;
 	
 	
 	@Override
@@ -98,7 +79,7 @@ public class OntologyCLIImportImpl implements Action
 
 		File newFile = new File(fromFile);
 		if(newFile.exists()) {
-			IRI iri = manager.createOntologyIRI(namespace + "#" + localName);
+			IRI iri = manager.createOntologyIRI(ontologyId);
 			Ontology ontology = manager.createOntology(newFile, manager.createOntologyId(iri));
 			persisted = manager.storeOntology(ontology);
 		}

@@ -18,34 +18,23 @@ import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+
+//import aQute.bnd.annotation.component.Activate;
+//import aQute.bnd.annotation.component.Component;
+//import aQute.bnd.annotation.component.Deactivate;
+//import aQute.bnd.annotation.component.Reference;
 
 
 @Command(scope = "matonto", name = "exportOntology", description="Exports ontology from a repository")
 @Service
-@Component (immediate=true)
 public class OntologyCLIExportImpl implements Action
 {
+    @Reference
 	private static OntologyManager manager;
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyCLIExportImpl.class);
-	
-	
-    @Activate
-    public void activate() 
-    {
-        LOG.info("Activating the OntologyCLIExportImpl");
-    }
- 
-    @Deactivate
-    public void deactivate() 
-    {
-        LOG.info("Deactivating the OntologyCLIExportImpl");
-    }
     
-	@Reference
+
 	protected void setOntologyManager(final OntologyManager ontoManager)
 	{
 		manager = ontoManager;
@@ -62,12 +51,9 @@ public class OntologyCLIExportImpl implements Action
 	}
 	
 	//Command Line Arguments and Options	
-	@Argument(index = 0, name = "namespace", description = "The namespace of the context id for the ontology named graph to be exported", required = true, multiValued = false)
-	String namespace = null;
-	
-	@Argument(index = 1, name = "localName", description = "The local name of the context id for the ontology named graph to be exported", required = true, multiValued = false)
-	String localName = null;
-	
+	@Argument(index = 0, name = "ontologyId", description = "The ontology id/context id for the ontology named graph to be exported", required = true, multiValued = false)
+	String ontologyId = null;
+
 	@Argument(index = 2, name = "DataFormat", description = "The data format of the ontology being exported. Supported data formats are: RDF(rdf/xml), OWL(owl/xml) and TURTLE (default type)", required = true)
 	String dataFormat = null;
 	
@@ -112,7 +98,7 @@ public class OntologyCLIExportImpl implements Action
 			if (!newFile.exists())
 				newFile.createNewFile();
 			
-			IRI iri = manager.createOntologyIRI(namespace + "#" + localName);
+			IRI iri = manager.createOntologyIRI(ontologyId);
 			OntologyId id = manager.createOntologyId(iri);
 			Optional<Ontology> ontology = manager.retrieveOntology(id);
 			
