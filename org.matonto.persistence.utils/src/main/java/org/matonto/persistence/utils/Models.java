@@ -1,41 +1,50 @@
 package org.matonto.persistence.utils;
 
-import org.jetbrains.annotations.NotNull;
 import org.matonto.rdf.api.*;
 
 import java.util.*;
 
 public class Models {
 
+    protected Models(){}
 
     public static Optional<Value> object(Model m) {
-        Value o = null;
-        for (Statement s : m) {
-            o = s.getObject();
-        }
-        return Optional.ofNullable(o);
+        return m.stream().map(Statement::getObject).findAny();
+    }
+
+    public static Optional<Literal> objectLiteral(Model m) {
+        return m.stream().map(Statement::getObject).filter(o -> o instanceof Literal).map(l -> (Literal) l).findAny();
     }
 
     public static Optional<IRI> objectIRI(Model m) {
-        return m.stream().map(st -> st.getObject()).filter(o -> o instanceof IRI).map(r -> (IRI) r).findAny();
+        return m.stream().map(Statement::getObject).filter(o -> o instanceof IRI).map(r -> (IRI) r).findAny();
+    }
+
+    public static Optional<Resource> objectResource(Model m) {
+        return m.stream().map(Statement::getObject).filter(o -> o instanceof Resource).map(r -> (Resource) r).findAny();
     }
 
     public static Optional<String> objectString(Model m) {
-        //TODO Implement
-        return Optional.empty();
+        return m.stream().map(st -> st.getObject().stringValue()).findAny();
+
     }
 
+    public static Optional<Resource> subject(Model m) {
+        return m.stream().map(Statement::getSubject).findAny();
+    }
+
+
     public static Optional<IRI> subjectIRI(Model m) {
-        //TODO Implement
-        return Optional.empty();
+        return m.stream().map(Statement::getSubject).filter(s -> s instanceof IRI).map(s -> (IRI) s).findAny();
+
     }
 
     public static Optional<BNode> subjectBNode(Model m) {
-        return Optional.empty();
+        return m.stream().map(Statement::getSubject).filter(s -> s instanceof BNode).map(s -> (BNode) s).findAny();
     }
 
     public static Optional<IRI> predicate(Model m) {
-        return Optional.empty();
+        return m.stream().map(Statement::getPredicate).findAny();
     }
 
     public static boolean isomorphic(Iterable<? extends Statement> model1,
