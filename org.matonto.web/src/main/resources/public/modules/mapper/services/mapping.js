@@ -13,5 +13,9 @@
             self.addFile = function(data) {
                 self.files.push(data);
             }
+
+            self.removeFile = function(index) {
+                self.files.splice(index, 1);
+            }
         }
 })();

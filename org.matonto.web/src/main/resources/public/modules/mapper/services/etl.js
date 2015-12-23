@@ -28,7 +28,6 @@
 
                     return $http.post(prefix + '/upload', inputStream, config)
                         .then(function(response) {
-                            console.log('response', response);
                             // TODO: handle error situation (using $q)
                             return response.data;
                         });
