@@ -5,25 +5,56 @@
 body {
     bottom: 0;
     left: 0;
+    max-height: 100%;
     position: absolute;
     right: 0;
     top: 0;
 
+    /* spinner background styles */
+    .spinner {
+        background: #fff;
+        height: 100%;
+        left: 0;
+        opacity: .5;
+        position: absolute;
+        top: 0;
+        width: 100%;
+        z-index: 1;
+
+        /* spinner icon styles */
+        .fa-spinner {
+            left: 50%;
+            position: absolute;
+            top: 50%;
+
+            -webkit-transform: translate(-50%, -50%);
+               -moz-transform: translate(-50%, -50%);
+                -ms-transform: translate(-50%, -50%);
+                    transform: translate(-50%, -50%);
+        }
+    }
+
+    /* styles for the left nav */
     &.left-nav {
+        /* adds more padding if the words are shown */
         &.show-words > .view-container {
             padding-left: 140px;
         }
+
+        /* adds extra padding to the left if the nav bar is positioned over there */
         > .view-container {
             padding-left: 75px;
         }
     }
 
+    /* adds extra padding top if the nav bar is positioned up there */
     &:not(.left-nav) > .view-container {
         padding-top: 64px;
     }
 
+    /* view container spacing with extra on the bottom for the icon buttons */
     > .view-container {
-        padding: 15px 15px 48px;
+        padding: 15px 15px 34px;
     }
 }
 
@@ -34,20 +65,22 @@ ul {
     padding: 0;
 }
 
-/* Icons to change the nav menu layout */
+/* icons to change the nav menu layout */
 .nav-layout-options {
     bottom: 0;
     float: right;
     position: fixed;
-    right: 0;
+    right: 15px;
 
+    /* icon styles */
     .fa {
         display: inline-block;
         cursor: pointer;
         opacity: .25;
-        padding: 10px;
+        padding: 10px 6px;
         text-decoration: none;
 
+        /* change opacity on hover */
         &:hover {
             opacity: 1;
         }
@@ -57,7 +90,8 @@ ul {
 /* standard box style and height */
 .boxed {
     border: 1px solid $gray-dark;
-    min-height: 400px;
+    height: 100%;
+    overflow-y: auto;
 }
 
 /* Overlay styles */
@@ -68,6 +102,7 @@ ul {
     position: fixed;
     right: 0;
     top: 0;
+    z-index: 3;
 
     /* small sized overlay */
     &.sm .content {
@@ -112,6 +147,7 @@ ul {
         margin-top: 7px;
     }
 
+    /* adds margin depending on which way the button is pulled */
     .btn {
         &.pull-left {
             margin-right: 10px;
@@ -120,6 +156,11 @@ ul {
             margin-left: 10px;
         }
     }
+}
+
+/* adds spacing for icons in buttons */
+.btn .fa {
+    margin-right: 2px;
 }
 
 /* tree styles */
@@ -138,16 +179,27 @@ ul {
 
         /* Increases the padding for links without icons */
         &.text-only {
-            padding: 3px 10px;
+            padding: 3px 4px 3px 10px;
         }
 
+        /* The tree node changes are unsaved */
+        &.unsaved .unsaved-icon {
+            color: $brand-danger;
+            line-height: 19px;
+            padding-left: 0;
+            padding-right: 5px;
+        }
+
+        /* Hover changes color and background color */
         &:hover,
-        &.active {
-            /* Hover changes color and background color */
+        &.active,
+        &.active .unsaved-icon,
+        &.unsaved:hover .unsaved-icon {
             background-color: $brand-primary;
             color: #fff;
         }
 
+        /* adds some spacing to the right of the icons */
         > .fa.fa-fw {
             margin-right: 2px;
         }
@@ -186,25 +238,80 @@ ul {
     }
 }
 
+/* makes the height of the containers 100% so scrolling works as expected */
+.view-container,
+.view-container > div,
+.view-container > div > .row,
+aside,
+section,
+section > form,
+.tree-container {
+    height: 100%;
+}
+
+/* scroll styles */
+.scroll-without-buttons,
+.tab:not(.default) {
+    bottom: 1px;
+    left: 16px;
+    overflow-y: auto;
+    position: absolute;
+    right: 16px;
+    top: 34px;
+}
+
 /* table with inputs */
-.input-table > tbody > tr > td {
-    padding: 0;
-    position: relative;
+.input-table {
+    margin: 0;
 
-    /* Removes all input styles to make the table look better */
-    input {
-        background-color: transparent;
-        border: 0;
-        padding: 8px;
-        width: 100%;
+    /* table header cell styles */
+    > thead > tr > th.action-button {
+        width: 37px;
     }
 
-    /* The plus button in the prefix table to add new rows */
-    .add,
-    .remove {
-        bottom: 0px;
-        padding: 7px 12px;
-        position: absolute;
-        right: 0px;
+    /* table body cell styles */
+    > tbody > tr > td {
+        padding: 0;
+        position: relative;
+
+        &.action-button {
+            text-align: center;
+        }
+
+        /* Removes all input styles to make the table look better */
+        input {
+            background-color: transparent;
+            border: 0;
+            padding: 8px 35px 8px 8px;
+            width: 100%;
+        }
+
+        /* The plus button in the prefix table to add new rows */
+        .add,
+        .remove {
+            padding: 7px 12px;
+        }
+
+        /* absolutely positions the edit button */
+        .edit {
+            bottom: 0;
+            padding: 7px 8px;
+            position: absolute;
+            right: 0;
+        }
     }
+}
+
+/* pads the outside of the tab elements */
+.tab {
+    padding: 15px;
+}
+
+/* section title */
+.section-header {
+    background: $brand-primary;
+    color: #fff;
+    font-size: 16px;
+    margin: 0;
+    padding: 6px 15px 10px;
 }

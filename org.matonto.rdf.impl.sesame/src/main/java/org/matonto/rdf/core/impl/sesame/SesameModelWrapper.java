@@ -8,6 +8,7 @@ import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.base.AbstractStatementSet;
+import org.matonto.rdf.core.utils.Values;
 import org.openrdf.model.util.Models;
 
 import javax.annotation.Nonnull;

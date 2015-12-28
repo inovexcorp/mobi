@@ -2,7 +2,7 @@ package org.matonto.rdf.core.impl.sesame.factory;
 
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.core.impl.sesame.SimpleStatement;
-import org.matonto.rdf.core.impl.sesame.Values;
+import org.matonto.rdf.core.utils.Values;
 
 public class StatementValueFactory implements SesameMatOntoValueFactory<Statement, org.openrdf.model.Statement> {
 

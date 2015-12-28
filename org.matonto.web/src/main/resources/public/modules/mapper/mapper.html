@@ -1,39 +1,28 @@
-<!-- put-new-file-name-here.html -->
+<!-- mapper.html -->
 <div class="mapper clearfix" ng-controller="MapperController as vm">
-
     <div class="row">
         <!-- navigation structure -->
         <aside class="col-md-3 col-sm-4 col-xs-6">
-            <div class="boxed list">
-                <!-- dataset list -->
-                <div class="form-group">
-                    <label class="control-label" for="datasets">DataSet</label>
-                    <select class="form-control"  id="datasets" name="datasets" ng-model="vm.selected" ng-change="vm.updateDataSetSelection();">
-                        <option value="default">Please select a DataSet</option>
-                        <option ng-repeat="item in vm.dataSets" value="{{$index}}">{{item.name}}</option>
-                        <option value="new">Add a new DataSet</option>
-                    </select>
+            <div class="boxed tree">
+                <!-- title for the links on this page -->
+                <strong>ETL Endpoint Links</strong>
+                <!-- delimited data files -->
+                <ul>
+                    <li ng-repeat="file in vm.files track by $index">
+                        <a ng-click="vm.index = $index;"
+                           ng-class="{'active': vm.index === $index && !vm.showUploadOverlay}">
+                            <i class="fa fa-fw fa-file-o"></i>{{file.name}}
+                        </a>
+                    </li>
+                </ul>
+                <!-- links -->
+                <div class="creator">
+                    <!-- upload link -->
+                    <a ng-click="vm.showUploadOverlay = true;"
+                       ng-class="{'active': vm.showUploadOverlay}">
+                        <i class="fa fa-upload fa-fw"></i>Upload Delimited File
+                    </a>
                 </div>
-                <!-- mapping list -->
-                <div class="form-group">
-                    <label class="control-label" for="mappings" ng-class="{'text-muted': vm.selected == 'default'}">Class Mapping</label>
-                    <select class="form-control"  id="mappings" name="mappings" ng-model="vm.mapping" ng-disabled="vm.selected == 'default'" ng-change="vm.updateMappingSelection();">
-                        <option value="default">Please select a Class Mapping</option>
-                        <option ng-repeat="item in vm.dataSets[vm.selected].mappings" value="{{$index}}">{{item.name}}</option>
-                        <option value="new">Add a new class mapping</option>
-                    </select>
-                </div>
-                <!-- mapping form -->
-                <form ng-show="vm.mapping != 'default' && vm.mapping != 'new'">
-                    <strong>Class Mapping Details</strong>
-                    <!-- add new detail -->
-                    <a type="button" class="btn btn-link" ng-click="vm.showPropertyOverlay = true; vm.another = true;"><i class="fa fa-plus fa-fw"></i>New Class Mapping Property</a>
-
-                    <!-- buttons -->
-                    <div class="btn-container clearfix">
-                        <button type="submit" class="btn btn-primary pull-right">Save</button>
-                    </div>
-                </form>
             </div>
         </aside>
 
@@ -41,154 +30,60 @@
         <section class="col-md-9 col-sm-8 col-xs-6">
             <div class="boxed viewer">
                 <!-- default -->
-                <div ng-show="vm.selected == 'default' || vm.selected == 'new'" class="default">
+                <div ng-show="vm.index == undefined" class="tab default">
                     <p class="lead">Welcome to the DataSet Mapper!</p>
                     <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
                 </div>
                 <!-- dataset viewer -->
-                <table ng-show="vm.selected != undefined" class="table highlight-columns">
-                    <thead>
-                        <tr>
-                            <th ng-repeat="(key, value) in vm.dataSets[vm.selected].dataSet[0]">{{key}}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="row in vm.dataSets[vm.selected].dataSet">
-                            <td ng-repeat="(key, value) in row">{{value}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div ng-show="vm.index != undefined">
+                    <!-- selected file name -->
+                    <h4 class="section-header">{{vm.files[vm.index].name}}</h4>
+                    <!-- preview of the file data -->
+                    <div class="tab">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th ng-repeat="item in vm.files[vm.index].header">{{item}}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="row in vm.files[vm.index].rows track by $index">
+                                    <td ng-repeat="item in row track by $index">{{item}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
-    </div>
 
-    <!-- add dataset overlay -->
-    <div class="overlay sm" ng-show="vm.showDataSetOverlay">
-        <!-- content container -->
-        <form class="content clearfix">
-            <h6>New Dataset</h6>
-            <!-- name -->
-            <div class="form-group">
-                <label for="dataset-name">Name</label>
-                <input type="text" class="form-control" id="dataset-name" ng-model="vm.dataSetName">
-            </div>
-            <!-- file -->
-            <div class="form-group">
-                <label for="source">Source file</label>
-                <div id="source" file-input="vm.file" on-change="vm.readFile()"></div>
-            </div>
-            <!-- buttons -->
-            <div class="btn-container clearfix">
-                <button type="submit" class="btn btn-primary pull-right" ng-click="vm.addDataSet();" ng-disabled="!vm.file || !vm.dataSetName">Add</button>
-                <button type="button" class="btn btn-default pull-right" ng-click="vm.cancelDataSet();">Cancel</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- add mapping overlay -->
-    <div class="overlay sm" ng-show="vm.showMappingOverlay">
-        <!-- content container -->
-        <form class="content clearfix">
-            <h6>New Class Mapping</h6>
-            <!-- name -->
-            <div class="form-group">
-                <label for="mapping-name">Name</label>
-                <input type="text" class="form-control" id="mapping-name" ng-model="vm.mappingName">
-            </div>
-            <!-- buttons -->
-            <div class="btn-container clearfix">
-                <button type="submit" class="btn btn-primary pull-right" ng-click="vm.addMapping();" ng-disabled="!vm.mappingName">Add</button>
-                <button type="button" class="btn btn-default pull-right" ng-click="vm.cancelMapping();">Cancel</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- add property overlay -->
-    <div class="overlay sm" ng-show="vm.showPropertyOverlay">
-        <!-- content container -->
-        <form class="content clearfix" name="vm.form" novalidate>
-            <h6>New Class Mapping Property</h6>
-            <!-- type -->
-            <div class="form-group">
-                <label class="control-label" for="type">Type</label>
-                <select class="form-control"  id="type" name="type" ng-model="vm.new.type" ng-change="vm.clearNew();">
-                    <option value="default">Please select a Type</option>
-                    <option value="delim:hasPrefix" ng-show="!vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:hasPrefix']">Prefix</option>
-                    <option value="delim:localName" ng-show="!vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:localName']">Local Name</option>
-                    <option value="delim:mapsTo" ng-show="!vm.dataSets[vm.selected].mappings[vm.mapping].mapping['delim:mapsTo']">Maps To</option>
-                    <option value="delim:dataProperty">Data Property</option>
-                    <option value="delim:objectProperty">Object Property</option>
-                </select>
-            </div>
-
-            <!-- hasPrefix or localName -->
-            <div ng-show="vm.new.type == 'delim:hasPrefix' || vm.new.type == 'delim:localName' || vm.new.type == 'delim:mapsTo'">
+        <!-- add data overlay -->
+        <div class="overlay sm" ng-show="vm.showUploadOverlay">
+            <!-- content container -->
+            <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off"
+                  ng-submit="vm.submitUpload(vm.uploadForm.$valid, vm.inputStream, vm.fileName);">
+                <!-- spinner -->
+                <div class="spinner" ng-show="vm.showSpinner">
+                    <i class="fa fa-spinner fa-spin fa-3x"></i>
+                </div>
+                <!-- section header -->
+                <h6>New Delimited Data</h6>
+                <!-- file -->
+                <div class="form-group">
+                    <label for="inputStream">Source file</label>
+                    <div id="inputStream" file-input="vm.inputStream"></div>
+                </div>
                 <!-- name -->
                 <div class="form-group">
-                    <label for="value">Value</label>
-                    <input type="text" class="form-control" id="value" ng-model="vm.new.value" ng-required="vm.new.type == 'delim:hasPrefix' || vm.new.type == 'delim:localName' || vm.new.type == 'delim:mapsTo'">
+                    <label for="fileName">MatOnto File Label</label>
+                    <input type="text" class="form-control" id="fileName" ng-model="vm.fileName" required />
                 </div>
-            </div>
-
-            <!-- data property -->
-            <div ng-show="vm.new.type == 'delim:dataProperty'">
-                <!-- name -->
-                <div class="form-group">
-                    <label for="property-name">URI (for this property)</label>
-                    <input type="text" class="form-control" id="property-name" ng-model="vm.new.name" ng-required="vm.new.type == 'delim:dataProperty'">
+                <!-- buttons -->
+                <div class="btn-container clearfix">
+                    <button type="submit" class="btn btn-primary pull-right" ng-disabled="!vm.inputStream || vm.uploadForm.$invalid">Add</button>
+                    <button type="button" class="btn btn-default pull-right" ng-click="vm.showUploadOverlay = false;">Cancel</button>
                 </div>
-                <!-- column -->
-                <div class="form-group">
-                    <label for="column-index">Column (starts at 1 from the left)</label>
-                    <select class="form-control" id="column-index" name="column" ng-model="vm.new['delim:columnIndex']" ng-required="vm.new.type == 'delim:dataProperty'" ng-pattern="/^(?!^default$).*$/">
-                        <option value="default">Please select a column</option>
-                        <option ng-repeat="(key, value) in vm.dataSets[vm.selected].dataSet[0]" value="{{$index + 1}}">{{$index + 1}} - {{key}}</option>
-                    </select>
-                </div>
-                <!-- has property -->
-                <div class="form-group">
-                    <label for="has-property">URI (property from ontology)</label>
-                    <input type="text" class="form-control" id="has-property" ng-model="vm.new['delim:hasProperty']['@id']" ng-required="vm.new.type == 'delim:dataProperty'">
-                </div>
-            </div>
-
-            <!-- object property -->
-            <div ng-show="vm.new.type == 'delim:objectProperty'">
-                <!-- name -->
-                <div class="form-group">
-                    <label for="object-name">URI (for this property)</label>
-                    <input type="text" class="form-control" id="object-name" ng-model="vm.new.name" ng-required="vm.new.type == 'delim:objectProperty'">
-                </div>
-                <!-- class mapping -->
-                <div class="form-group">
-                    <label for="class-mapping">Class (another class mapping)</label>
-                    <select class="form-control"  id="class-mapping" name="class-mapping" ng-model="vm.new['delim:classMapping']" ng-required="vm.new.type == 'delim:objectProperty'" ng-pattern="/^(?!^default$).*$/">
-                        <option value="default">Please select a Class Mapping</option>
-                        <option ng-repeat="item in vm.dataSets[vm.selected].mappings" value="{{$index}}" ng-show="item.mapping['@id'] != vm.dataSets[vm.selected].mappings[vm.mapping].mapping['@id']">{{item.name}}</option>
-                    </select>
-                </div>
-                <!-- has property -->
-                <div class="form-group">
-                    <label for="has-property">URI (ontology)</label>
-                    <input type="text" class="form-control" id="has-property" ng-model="vm.new['delim:hasProperty']['@id']" ng-required="vm.new.type == 'delim:objectProperty'">
-                </div>
-            </div>
-
-            <!-- default buttons -->
-            <div class="btn-container clearfix">
-                <button type="submit" class="btn btn-primary pull-right" ng-show="vm.new.type != 'default'" ng-click="vm.addProperty();" ng-disabled="vm.form.$invalid">Add</button>
-                <button type="button" class="btn btn-default pull-right" ng-click="vm.cancelProperty();">Cancel</button>
-                <div class="checkbox pull-right">
-                    <label>
-                        <input type="checkbox" ng-model="vm.another" />Add another?
-                    </label>
-                </div>
-            </div>
-
-        </form>
+            </form>
+        </div>
     </div>
-
-    <pre>{{vm.new | json}}</pre>
-    <pre>{{vm.dataSets[vm.selected].mappings[vm.mapping].mapping | json}}</pre>
-    <pre>{{vm.dataSets[vm.selected].mappings | json}}</pre>
 </div>

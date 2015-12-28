@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('catalog', [])
         .controller('CatalogController', CatalogController);
 
     function CatalogController() {
