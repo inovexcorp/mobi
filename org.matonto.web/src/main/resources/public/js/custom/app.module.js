@@ -3,7 +3,13 @@
 
     angular
         .module('app', [
-            'ui.bootstrap',
+            'catalog',
+            'home',
+            'login',
+            'mapper',
+            'nav',
+            'ontology-editor',
+            'webtop',
             'ui.router'
         ]);
 })();
