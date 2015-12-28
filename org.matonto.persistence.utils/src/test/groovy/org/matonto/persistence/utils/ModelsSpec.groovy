@@ -4,6 +4,7 @@ import org.matonto.rdf.api.BNode
 import org.matonto.rdf.api.IRI
 import org.matonto.rdf.api.Literal
 import org.matonto.rdf.api.Model
+import org.matonto.rdf.api.ModelFactory
 import org.matonto.rdf.api.Resource
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel
 import org.matonto.rdf.core.impl.sesame.SimpleBNode
@@ -13,7 +14,6 @@ import spock.lang.Specification
 
 
 class ModelsSpec extends Specification{
-
 
     def "objectString returns object string from only statement in model"(){
         setup:
