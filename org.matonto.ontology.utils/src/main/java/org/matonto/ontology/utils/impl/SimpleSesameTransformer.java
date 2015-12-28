@@ -108,7 +108,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     public org.openrdf.model.Value sesameValue(Value value) {
         if (value == null) {
             return null;
-        } else if (value instanceof URI) {
+        } else if (value instanceof IRI) {
             return sesameURI((IRI) value);
         } else if (value instanceof BNode) {
             return sesameResource((BNode) value);
@@ -118,8 +118,12 @@ public class SimpleSesameTransformer implements SesameTransformer {
             if (literal.getLanguage().isPresent()) {
                 return SESAME_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {
-                URI datatype = SESAME_VF.createURI(literal.getDatatype().stringValue());
-                return SESAME_VF.createLiteral(literal.stringValue(), datatype);
+                if(literal.getDatatype()!=null) {
+                    URI datatype = SESAME_VF.createURI(literal.getDatatype().stringValue());
+                    return SESAME_VF.createLiteral(literal.stringValue(), datatype);
+                } else {
+                    return SESAME_VF.createLiteral(literal.stringValue());
+                }
             }
         }
     }
@@ -138,8 +142,12 @@ public class SimpleSesameTransformer implements SesameTransformer {
             if (literal.getLanguage() != null) {
                 return matontoVF.createLiteral(literal.stringValue(), literal.getLanguage());
             } else {
-                IRI datatype = matontoVF.createIRI(literal.getDatatype().stringValue());
-                return matontoVF.createLiteral(literal.stringValue(), datatype);
+                if(literal.getDatatype()!=null) {
+                    IRI datatype = matontoVF.createIRI(literal.getDatatype().stringValue());
+                    return matontoVF.createLiteral(literal.stringValue(), datatype);
+                } else {
+                    return matontoVF.createLiteral(literal.stringValue());
+                }
             }
         }
     }

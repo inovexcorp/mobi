@@ -42,7 +42,7 @@
                         <Bundle-Name>MatOnto Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Import-Package>
-                            org.openrdf.*;version="${ontology.openrdf.version}",
+                            org.openrdf.*;version="[2.7,2.9)",
                             *
                         </Import-Package>
                         <Service-Component>*</Service-Component>

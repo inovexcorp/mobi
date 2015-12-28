@@ -31,6 +31,7 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.vocab.OWLFacet;
@@ -50,6 +51,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLFacetRestrictionImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLOntologyManagerImpl;
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
@@ -107,7 +109,9 @@ public class SimpleOntologyValues {
 
         if(ontology instanceof OWLMutableOntology) {
             try {
-                tOntology = ontology.getOWLOntologyManager().copyOntology(ontology, OntologyCopy.MOVE);
+                OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
+                tOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
+                
             } catch (OWLOntologyCreationException e) {
                 throw new MatontoOntologyException("Error in ontology creation", e);
             }

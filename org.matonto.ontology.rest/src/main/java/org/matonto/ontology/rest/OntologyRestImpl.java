@@ -114,6 +114,7 @@ public class OntologyRestImpl {
 		boolean persisted = false;
 		JSONObject json = new JSONObject();
 		Ontology ontology;
+		String message;
 		
 		try{
 			IRI iri = manager.createOntologyIRI(ontologyIdStr);
@@ -121,7 +122,9 @@ public class OntologyRestImpl {
 			persisted = manager.storeOntology(ontology);
 			
 		} catch(MatontoOntologyException ex) {
-			json.put("error", ex.getMessage());
+		    message = ex.getMessage();
+            LOG.error("Exception occurred while uploading ontology: " + message, ex);
+			json.put("error", "Exception occurred while uploading ontology: " + message);
 		} finally {	
 			IOUtils.closeQuietly(fileInputStream);
 		}
@@ -157,9 +160,9 @@ public class OntologyRestImpl {
         OntologyId ontologyId = manager.createOntologyId(iri);
 		try{
 			ontology = manager.retrieveOntology(ontologyId);
-			
 		} catch(MatontoOntologyException ex) {
-			message = ex.getMessage();
+		    message = ex.getMessage();
+		    LOG.error("Exception occurred while retrieving ontology: " + message, ex);
 		} 
 		
 		
@@ -192,7 +195,7 @@ public class OntologyRestImpl {
 		} else if(message == null) {
             json.put("error", "OntologyId doesn't exist.");
 		} else {
-            json.put("error", message);
+            json.put("error", "Exception occurred while retrieving ontology: " + message);
 		}
 		
 	  return Response.status(200).entity(json.toString()).build();
@@ -219,14 +222,14 @@ public class OntologyRestImpl {
 
 	
 		Optional<Ontology> ontology = Optional.empty();
-		String message = null;
 		
 		try{
 			IRI iri = manager.createOntologyIRI(ontologyIdStr);
 			OntologyId ontologyId = manager.createOntologyId(iri);
 			ontology = manager.retrieveOntology(ontologyId);
 		} catch(MatontoOntologyException ex) {
-			message = ex.getMessage();
+		    LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+            return Response.status(500).entity(ex.getMessage()).build();
 		} 
 		
 		OutputStream outputStream = null;
@@ -301,13 +304,15 @@ public class OntologyRestImpl {
 
 		JSONObject json = new JSONObject();
 		boolean deleted = false;
-		
+		String message;
 		try{
 			IRI iri = manager.createOntologyIRI(ontologyIdStr);
 			OntologyId ontologyId = manager.createOntologyId(iri);
 			deleted = manager.deleteOntology(ontologyId);
 		} catch(MatontoOntologyException ex) {
-			json.put("error", ex.getMessage());
+		    message = ex.getMessage();
+		    LOG.error("Exception occurred while deleting ontology: " + message, ex);
+            json.put("error", "Exception occurred while deleting ontology: " + message);
 		} 
 
 		json.put("result", deleted);

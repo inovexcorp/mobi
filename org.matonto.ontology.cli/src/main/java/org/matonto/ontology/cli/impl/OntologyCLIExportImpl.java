@@ -20,11 +20,6 @@ import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 
-//import aQute.bnd.annotation.component.Activate;
-//import aQute.bnd.annotation.component.Component;
-//import aQute.bnd.annotation.component.Deactivate;
-//import aQute.bnd.annotation.component.Reference;
-
 
 @Command(scope = "matonto", name = "exportOntology", description="Exports ontology from a repository")
 @Service

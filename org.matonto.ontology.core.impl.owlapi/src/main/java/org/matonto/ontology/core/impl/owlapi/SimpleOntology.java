@@ -84,7 +84,7 @@ public class SimpleOntology implements Ontology {
         this.transformer = transformer;
 
         this.ontology = ontology;
-        this.manager = ontology.getOWLOntologyManager();
+        this.manager = this.ontology.getOWLOntologyManager();
     }
 	
 	@Override
