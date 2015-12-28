@@ -8,7 +8,6 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
-
 import java.io.File;
 
 @Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
