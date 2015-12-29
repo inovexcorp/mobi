@@ -8,6 +8,10 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.rdf.RDFExportService;
+import org.matonto.etl.api.rdf.RDFImportService;
+import org.openrdf.model.Model;
+
 import java.io.File;
 
 @Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
@@ -30,8 +34,15 @@ public class CLITransform implements Action{
 
     @Reference
     private CSVConverter csvConverter;
+    public void setCSVConverter(CSVConverter csvConverter) { this.csvConverter = csvConverter; }
 
-    public void setCSVConverter(CSVConverter csvConverter){this.csvConverter = csvConverter;}
+    @Reference
+    private RDFImportService rdfImportService;
+    protected void setRdfImportService(RDFImportService rdfImportService) { this.rdfImportService = rdfImportService; }
+
+    @Reference
+    private RDFExportService rdfExportService;
+    protected void setRdfExportService(RDFExportService rdfExportService) { this.rdfExportService = rdfExportService; }
 
     @Override
     public Object execute() throws Exception {
@@ -39,22 +50,28 @@ public class CLITransform implements Action{
 
         File newFile = new File(file);
         File mappingFile = new File(mappingFileLocation);
-        if(newFile.exists() && mappingFile.exists()) {
-            try {
-                if(outputFile != null && repositoryID != null)
-                    csvConverter.importAndExportCSV(newFile, mappingFile, new File(outputFile), repositoryID);
-                else if(outputFile != null)
-                    csvConverter.exportCSV(newFile, mappingFile, new File(outputFile));
-                else if(repositoryID != null)
-                    csvConverter.importCSV(newFile, mappingFile, repositoryID);
-                else
-                    System.out.println("No output file or output repository given. Please supply one or more option.");
-            } catch (Exception e){
-                System.out.println(e.getMessage());
-                LOGGER.error(e);
-            }
-        }else{
+
+        if (!newFile.exists() && !mappingFile.exists()) {
             System.out.println("Files do not exist.");
+            return null;
+        }
+
+        if (outputFile == null && repositoryID == null) {
+            System.out.println("No output file or output repository given. Please supply one or more option.");
+            return null;
+        }
+
+        try {
+            Model model = csvConverter.convert(newFile, mappingFile);
+
+            if(repositoryID != null)
+                rdfImportService.importModel(repositoryID, model);
+
+            if(outputFile != null)
+                rdfExportService.exportToFile(model, outputFile);
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+            LOGGER.error(e);
         }
 
         return null;
