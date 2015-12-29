@@ -30,6 +30,28 @@ public class CSVConverterImpl implements CSVConverter {
         return convert(csv, converted);
     }
 
+    @Override
+    public Model convert(File csv, Model mappingModel) throws IOException {
+        char separator = getSeparator(mappingModel);
+        CSVReader reader = new CSVReader(new FileReader(csv), separator);
+        String[] nextLine;
+
+        Model convertedRDF = new LinkedHashModel();
+
+        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+
+        //Skip headers
+        reader.readNext();
+        //Traverse each row and convert column into RDF
+        while ((nextLine = reader.readNext()) != null) {
+            String uuid = generateUUID();
+            for (ClassMapping cm : classMappings) {
+                convertedRDF.addAll(writeClassToModel(cm, uuid, nextLine));
+            }
+        }
+        return convertedRDF;
+    }
+
     /**
      * Generates a UUID for use in new RDF instances. Separate method allows for testing
      *
@@ -58,29 +80,6 @@ public class CSVConverterImpl implements CSVConverter {
             separator = Models.objectString(separatorModel).get().charAt(0);
 
         return separator;
-    }
-
-
-    @Override
-    public Model convert(File csv, Model mappingModel) throws IOException {
-        char separator = getSeparator(mappingModel);
-        CSVReader reader = new CSVReader(new FileReader(csv), separator);
-        String[] nextLine;
-
-        Model convertedRDF = new LinkedHashModel();
-
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
-
-        //Skip headers
-        reader.readNext();
-        //Traverse each row and convert column into RDF
-        while ((nextLine = reader.readNext()) != null) {
-            String uuid = generateUUID();
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm, uuid, nextLine));
-            }
-        }
-        return convertedRDF;
     }
 
     /**

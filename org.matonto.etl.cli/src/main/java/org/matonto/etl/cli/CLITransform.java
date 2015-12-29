@@ -16,7 +16,7 @@ import java.io.File;
 
 @Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
-public class CLITransform implements Action{
+public class CLITransform implements Action {
 
     @Argument(index = 0, name = "Delimited File", description = "The path of the File to be transformed", required = true)
     String file = null;
