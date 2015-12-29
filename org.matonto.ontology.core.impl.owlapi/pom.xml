@@ -32,18 +32,6 @@
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>repository.impl.sesame</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>repository.impl.core</artifactId>
-        </dependency>
         
         <dependency>
             <groupId>biz.aQute.bnd</groupId>

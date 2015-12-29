@@ -118,12 +118,8 @@ public class SimpleSesameTransformer implements SesameTransformer {
             if (literal.getLanguage().isPresent()) {
                 return SESAME_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {
-                if(literal.getDatatype()!=null) {
-                    URI datatype = SESAME_VF.createURI(literal.getDatatype().stringValue());
-                    return SESAME_VF.createLiteral(literal.stringValue(), datatype);
-                } else {
-                    return SESAME_VF.createLiteral(literal.stringValue());
-                }
+                URI datatype = SESAME_VF.createURI(literal.getDatatype().stringValue());
+                return SESAME_VF.createLiteral(literal.stringValue(), datatype);
             }
         }
     }
