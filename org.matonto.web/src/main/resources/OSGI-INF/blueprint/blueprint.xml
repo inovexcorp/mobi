@@ -1,6 +1,24 @@
 <blueprint default-activation="eager"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+    <!-- Servlet -->
+    <bean id="authContext" class="org.matonto.web.authentication.AuthHttpContext"/>
 
+    <service id="authContextService" ref="authContext" interface="org.osgi.service.http.HttpContext">
+        <service-properties>
+            <entry key="httpContext.id" value="auth"/>
+        </service-properties>
+    </service>
+
+    <bean id="authServlet" class="org.matonto.web.authentication.StatusServlet"/>
+
+    <service id="authServletService" ref="authServlet" interface="javax.servlet.Servlet">
+        <service-properties>
+            <entry key="alias" value="/auth"/>
+            <entry key="httpContext.id" value="auth"/>
+        </service-properties>
+    </service>
+
+    <!-- Resources -->
     <bean id="resourceMapping"
           class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
         <property name="alias" value="/" />
