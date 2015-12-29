@@ -41,10 +41,14 @@ public class CLITransform implements Action{
         File mappingFile = new File(mappingFileLocation);
         if(newFile.exists() && mappingFile.exists()) {
             try {
-                if(outputFile != null)
+                if(outputFile != null && repositoryID != null)
+                    csvConverter.importAndExportCSV(newFile, mappingFile, new File(outputFile), repositoryID);
+                else if(outputFile != null)
                     csvConverter.exportCSV(newFile, mappingFile, new File(outputFile));
-                if(repositoryID != null)
+                else if(repositoryID != null)
                     csvConverter.importCSV(newFile, mappingFile, repositoryID);
+                else
+                    System.out.println("No output file or output repository given. Please supply one or more option.");
             } catch (Exception e){
                 System.out.println(e.getMessage());
                 LOGGER.error(e);

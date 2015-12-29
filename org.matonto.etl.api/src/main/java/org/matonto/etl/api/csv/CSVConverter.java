@@ -51,6 +51,17 @@ public interface CSVConverter {
     void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException;
 
     /**
+     * Converts a CSV to RDF using a mapping file in a file. Exports the result to a file and stores the result in a repository
+     * @param csv                   The CSV file to be loaded
+     * @param mappingFile           An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
+     * @param exportFile            The file where the converted RDF should be written to
+     * @param repoID                The repository ID for where to load the RDF
+     * @throws IOException          Thrown if there is a problem reading any of the files or writting the output file
+     * @throws RepositoryException  Thrown if there is a problem loading data into the repository
+     */
+    void importAndExportCSV(File csv, File mappingFile, File exportFile, String repoID) throws IOException, RepositoryException;
+
+    /**
      * Converts a CSV to RDF using a mapping file. Returns the RDF data as a Model
      *
      * @param csv         The CSV file to be loaded

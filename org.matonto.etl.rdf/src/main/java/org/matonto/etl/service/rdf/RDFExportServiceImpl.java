@@ -40,12 +40,14 @@ public class RDFExportServiceImpl implements RDFExportService {
     public void setValueFactory(ValueFactory valueFactory){this.valueFactory = valueFactory;}
 
     @Override
-    public void exportToFile(String repositoryID, File file) throws RepositoryException, IOException {
-        exportToFile(repositoryID, file, null, null, null, null);
+    public File exportToFile(String repositoryID, String filepath) throws RepositoryException, IOException {
+        return exportToFile(repositoryID, filepath, null, null, null, null);
     }
 
     @Override
-    public void exportToFile(String repositoryID, File file, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException {
+    public File exportToFile(String repositoryID, String filepath, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException {
+
+        File file = new File(filepath);
 
         Resource subjResource = null;
         IRI predicateIRI = null;
@@ -80,7 +82,7 @@ public class RDFExportServiceImpl implements RDFExportService {
                 m.add(Values.sesameStatement(s));
             });
 
-            exportToFile(m, file, format);
+            return exportToFile(m, filepath, format);
 
         }else{
             throw new IllegalArgumentException("Repository does not exist");
@@ -89,18 +91,21 @@ public class RDFExportServiceImpl implements RDFExportService {
     }
 
     @Override
-    public void exportToFile(Model model, File file) throws IOException{
-        Optional<RDFFormat> optFormat = Rio.getWriterFormatForFileName(file.getName());
+    public File exportToFile(Model model, String filepath) throws IOException{
+
+        Optional<RDFFormat> optFormat = Rio.getWriterFormatForFileName(filepath);
         if(optFormat.isPresent()){
-            exportToFile(model, file, optFormat.get());
+            return exportToFile(model, filepath, optFormat.get());
         }else{
             throw new IllegalArgumentException("File format not supported");
         }
     }
 
     @Override
-    public void exportToFile(Model model, File file, RDFFormat format) throws IOException{
+    public File exportToFile(Model model, String filepath, RDFFormat format) throws IOException{
+        File file = new File(filepath);
         Rio.write(model, new FileWriter(file), format);
+        return file;
     }
 
 

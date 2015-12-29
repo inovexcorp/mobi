@@ -48,22 +48,32 @@ public class CSVConverterImpl implements CSVConverter {
         importService.importModel(repoID, converted);
     }
 
+
     @Override
     public void exportCSV(File csv, File mappingFile, File exportFile) throws IOException{
-        exportCSV(csv,parseMapping(mappingFile), exportFile);
+        exportCSV(csv, parseMapping(mappingFile), exportFile);
     }
 
     @Override
     public void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException{
         Model converted = convert(csv, mappingModel);
 
-        exportService.exportToFile(converted, exportFile);
+        exportService.exportToFile(converted, exportFile.getAbsolutePath());
     }
 
     @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
         return convert(csv, converted);
+    }
+
+
+    @Override
+    public void importAndExportCSV(File csv, File mappingFile, File exportFile, String repoID) throws IOException, RepositoryException{
+        Model converted = convert(csv, mappingFile);
+
+        exportService.exportToFile(converted, exportFile.getAbsolutePath());
+        importService.importModel(repoID, converted);
     }
 
     /**
