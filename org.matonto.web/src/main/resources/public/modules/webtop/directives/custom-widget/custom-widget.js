@@ -7,7 +7,7 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('widget', [])
         .directive('customWidget', customWidget);
 
         customWidget.$inject = ['$document'];

@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('webtop', ['widget'])
         .controller('WebtopController', WebtopController);
 
     WebtopController.$inject = ['$http'];
