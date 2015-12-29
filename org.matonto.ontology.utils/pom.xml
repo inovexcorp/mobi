@@ -10,38 +10,23 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>ontology.api</artifactId>
-
+    <artifactId>ontology.utils</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
-
-    <properties>
-        <jackson.version>2.6.3</jackson.version>
-    </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>edu.washington.cs.types.checker</groupId>
-            <artifactId>checker-framework</artifactId>
-        </dependency>
-        
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-model</artifactId>
+            <version>${ontology.openrdf.version}</version>
         </dependency>
     </dependencies>
 
@@ -54,11 +39,13 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto Ontology Service - Core API</Bundle-Name>
+                        <Bundle-Name>MatOnto Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>
-                        	org.matonto.ontology.core*
-                        </Export-Package>
+                        <Import-Package>
+                            org.openrdf.*;version="[2.7,2.9)",
+                            *
+                        </Import-Package>
+                        <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>
             </plugin>

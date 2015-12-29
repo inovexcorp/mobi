@@ -7,45 +7,52 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.annotation.Nonnull;
-
-import org.matonto.ontology.core.api.*;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.repository.*;
-import org.openrdf.repository.http.HTTPRepository;
-
-import info.aduna.iteration.Iterations;
+import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.*;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
+import org.matonto.repository.base.RepositoryResult;
+import org.matonto.repository.exception.RepositoryException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.model.*;
-import org.semanticweb.owlapi.rio.*;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
+import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 
 
-@Component (immediate=true)
+@Component (immediate=true, provide = OntologyManager.class)
 public class SimpleOntologyManager implements OntologyManager {
 	
+    private RepositoryManager repositoryManager;
 	private static Repository repository;
-	private static Optional<Map<OntologyId, String>> ontologyRegistry = Optional.of(new HashMap<>());
-	private static String location;
+    private static ValueFactory factory;
+	private static Map<OntologyId, String> ontologyRegistry = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
+    private SesameTransformer transformer;
+    private ModelFactory modelFactory;
 	
 	public SimpleOntologyManager() {}
 	
     @Activate
     public void activate() {
         LOG.info("Activating the SimpleOntologyManager");
-        this.initOntologyRegistry();
+        getRepository("ontology-repo");
+        initOntologyRegistry();
     }
  
     @Deactivate
@@ -53,42 +60,68 @@ public class SimpleOntologyManager implements OntologyManager {
         LOG.info("Deactivating the SimpleOntologyManger");
     }
 
-	@Reference
-	protected void setRepo(final Repository repo) {
-	    repository = repo;
-	}
-	
-	protected void unsetRepo(final Repository repo) {
-	    repository = null;
-	}
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
+
+    protected void getRepository(String repositoryId) {
+        if(repositoryManager == null)
+            throw new IllegalStateException("Repository Manager is null");
+        
+        Optional<Repository> optRepo = repositoryManager.getRepository(repositoryId);
+        if(optRepo.isPresent())
+            setRepo(optRepo.get());
+        else
+            throw new IllegalStateException("Repository does not exist");
+    }
+    
+    protected void setRepo(Repository repo) {
+        repository = repo;
+    }
+
+    @Reference
+    protected void setValueFactory(final ValueFactory vf) {
+        factory = vf;
+    }
+
+    @Reference
+    protected void setTransformer(final SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
+    @Reference
+    protected void setModelFactory(final ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
+    }
 	
 	@Override
-	public Optional<Map<OntologyId, String>> getOntologyRegistry() {
+	public Map<OntologyId, String> getOntologyRegistry() {
 		return ontologyRegistry;
 	}
 
 	@Override
 	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException
 	{
-		return new SimpleOntology(ontologyId);
+		return new SimpleOntology(ontologyId, transformer);
 	}
 
 
 	@Override
 	public Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException, FileNotFoundException {
-		return new SimpleOntology(file, ontologyId);
+		return new SimpleOntology(file, ontologyId, transformer);
 	}
 
 
 	@Override
-	public Ontology createOntology(OntologyIRI iri, OntologyId ontologyId) throws MatontoOntologyException {
-		return new SimpleOntology(iri, ontologyId);
+	public Ontology createOntology(IRI iri, OntologyId ontologyId) throws MatontoOntologyException {
+		return new SimpleOntology(iri, ontologyId, transformer);
 	}
 
 
 	@Override
 	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException {
-		return new SimpleOntology(inputStream, ontologyId);
+		return new SimpleOntology(inputStream, ontologyId, transformer);
 	}
 	
 	/**
@@ -98,11 +131,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	public boolean ontologyExists(@Nonnull OntologyId ontologyId) {
-	   	if(repository == null)
-	   		throw new IllegalStateException("Repository is null");
-	   	
-	   	else
-	   		return ontologyRegistry.get().containsKey(ontologyId);
+        return ontologyRegistry.containsKey(ontologyId);
 	}
 	
 	/**
@@ -128,23 +157,23 @@ public class SimpleOntologyManager implements OntologyManager {
 		
 		try {
 			conn = repository.getConnection();
-	    	Model model = Iterations.addAll(conn.getStatements(null, null, null, false, ontologyId.getOntologyIdentifier()), new LinkedHashModel());
-				
+            RepositoryResult<Statement> stmts = conn.getStatements(null, null, null, ontologyId.getOntologyIdentifier());
+
+            org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
+            stmts.forEach(stmt -> sesameModel.add(transformer.sesameStatement(stmt)));
+
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
-	    	parser.parse(new RioMemoryTripleSource(model), onto, new OWLOntologyLoaderConfiguration());
-
-		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException("Unable to create an ontology object", e);
-		} catch (IOException e) {
+	    	parser.parse(new RioMemoryTripleSource(sesameModel), onto, new OWLOntologyLoaderConfiguration());
+		} catch (OWLOntologyCreationException | IOException e) {
 			throw new MatontoOntologyException("Unable to create an ontology object", e);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
-		} finally {
+        } finally {
 			closeConnection(conn);
 		}
 
-		return Optional.of(new SimpleOntology(onto));
+		return Optional.of(SimpleOntologyValues.matontoOntology(onto));
 	}
 	
 	@Override
@@ -159,10 +188,12 @@ public class SimpleOntologyManager implements OntologyManager {
 		RepositoryConnection conn = null;
 		
 		try {
-			conn = repository.getConnection();
-			Model model = ontology.asModel();
-			conn.add(model, ontologyId.getOntologyIdentifier());
-			ontologyRegistry.get().put(ontologyId, location);
+			Model model = ontology.asModel(modelFactory);
+
+            conn = repository.getConnection();
+            conn.add(model, ontologyId.getOntologyIdentifier());
+
+			ontologyRegistry.put(ontologyId, repository.getConfig().id());
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -184,8 +215,8 @@ public class SimpleOntologyManager implements OntologyManager {
 		
 		try {
 			conn = repository.getConnection();
-			conn.clear(ontologyId.getOntologyIdentifier());
-			ontologyRegistry.get().remove(ontologyId, location);
+            conn.clear(ontologyId.getOntologyIdentifier());
+			ontologyRegistry.remove(ontologyId, repository.getConfig().id());
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -208,15 +239,6 @@ public class SimpleOntologyManager implements OntologyManager {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
 		
-		if(repository instanceof HTTPRepository)
-			location = ((HTTPRepository) repository).getRepositoryURL();
-		else {
-			if(repository.getDataDir() != null)
-				location = repository.getDataDir().getAbsolutePath();
-			else
-				location = "default in-memory store";
-		}
-		
 		RepositoryConnection conn = null;
 		RepositoryResult<Resource> contextIds = null;
 		
@@ -228,10 +250,10 @@ public class SimpleOntologyManager implements OntologyManager {
 			
 			while (contextIds.hasNext()) {
 				Resource contextId = contextIds.next();
-			    ontologyMap.put(createOntologyId(new SimpleIRI(contextId.stringValue())), location);
+			    ontologyMap.put(createOntologyId(factory.createIRI(contextId.stringValue())), repository.getConfig().id());
 			}
 			
-			ontologyRegistry = Optional.of(ontologyMap);
+			ontologyRegistry = ontologyMap;
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -248,27 +270,27 @@ public class SimpleOntologyManager implements OntologyManager {
 
 	@Override
     public OntologyId createOntologyId() {
-        return new SimpleOntologyId();
+        return new SimpleOntologyId(factory);
     }
 
 	@Override
-    public OntologyId createOntologyId(OntologyIRI ontologyIRI) {
-        return new SimpleOntologyId(ontologyIRI);
+    public OntologyId createOntologyId(IRI ontologyIRI) {
+        return new SimpleOntologyId(factory, ontologyIRI);
     }
 
 	@Override
-    public OntologyId createOntologyId(OntologyIRI ontologyIRI, OntologyIRI versionIRI) {
-        return new SimpleOntologyId(ontologyIRI, versionIRI);
+    public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
+        return new SimpleOntologyId(factory, ontologyIRI, versionIRI);
     }
 
 	@Override
-	public OntologyIRI createOntologyIRI(String ns, String ln) {
-		return new SimpleIRI(ns, ln);
+	public IRI createOntologyIRI(String ns, String ln) {
+		return factory.createIRI(ns, ln);
 	}
 	
 	@Override
-	public OntologyIRI createOntologyIRI(String iriString) {
-		return new SimpleIRI(iriString);
+	public IRI createOntologyIRI(String iriString) {
+		return factory.createIRI(iriString);
 	}
 
     private void closeConnection(RepositoryConnection conn) {
@@ -279,4 +301,5 @@ public class SimpleOntologyManager implements OntologyManager {
             LOG.warn("Could not close Repository." + e.toString());
         }
     }
+
 }

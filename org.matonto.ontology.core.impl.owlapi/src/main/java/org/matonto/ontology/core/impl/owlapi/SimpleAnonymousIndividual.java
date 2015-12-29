@@ -3,18 +3,20 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.AnonymousIndividual;
-import org.matonto.ontology.core.api.Literal;
-import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Literal;
 import org.semanticweb.owlapi.model.NodeID;
-import com.google.common.base.Preconditions;
 
 
 public class SimpleAnonymousIndividual 
 	implements AnonymousIndividual {
 
 	
-	private NodeID nodeId;
-	
+	/**
+     * 
+     */
+    private static final long serialVersionUID = -1687216753927244254L;
+    private NodeID nodeId;
 	
 	public SimpleAnonymousIndividual(@Nonnull NodeID nodeId) 
 	{
@@ -36,13 +38,12 @@ public class SimpleAnonymousIndividual
 
 	
 	@Override
-	public Optional<OntologyIRI> asIRI() 
+	public Optional<IRI> asIRI() 
 	{
 		return Optional.empty();
 	}
 
 	
-	@Override
 	public Optional<Literal> asLiteral() 
 	{
 		return Optional.empty();
@@ -89,5 +90,12 @@ public class SimpleAnonymousIndividual
 	{
 		return true;
 	}
+
+
+    @Override
+    public String stringValue() 
+    {
+        return getId();
+    }
 
 }

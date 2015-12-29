@@ -5,8 +5,8 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.axiom.AnnotationPropertyDomainAxiom;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.AxiomType;
+import org.matonto.rdf.api.IRI;
 
 
 public class SimpleAnnotationPropertyDomainAxiom 
@@ -14,11 +14,11 @@ public class SimpleAnnotationPropertyDomainAxiom
 	implements AnnotationPropertyDomainAxiom {
 
 	
-	private OntologyIRI domain;
+	private IRI domain;
 	private AnnotationProperty property;
 	
 	
-	public SimpleAnnotationPropertyDomainAxiom(OntologyIRI domain, @Nonnull AnnotationProperty property, Set<Annotation> annotations) 
+	public SimpleAnnotationPropertyDomainAxiom(IRI domain, @Nonnull AnnotationProperty property, Set<Annotation> annotations) 
 	{
 		super(annotations);
 		this.domain = domain;
@@ -51,7 +51,7 @@ public class SimpleAnnotationPropertyDomainAxiom
 
 	
 	@Override
-	public OntologyIRI getDomain() 
+	public IRI getDomain() 
 	{
 		return domain;
 	}

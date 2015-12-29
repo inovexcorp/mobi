@@ -28,7 +28,11 @@
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.api</artifactId>
+        </dependency>    
+        
 		<dependency>
 			<groupId>org.apache.servicemix.bundles</groupId>
 			<artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
@@ -90,16 +94,6 @@
                         <Bundle-Name>MatOnto Ontology Service - Rest</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Import-Package>
-                            org.openrdf.*;version="${ontology.openrdf.version}",
-                            org.matonto.ontology.core.api;version="[1.0,2)",
-                            org.matonto.ontology.core.api.*;version="[1.0,2)",
-                            org.matonto.ontology.core.utils;version="[1.0,2)",
-                            com.google.common.base.*,
-                            org.apache.commons.io.*,
-                            net.sf.*,
-                            org.slf4j.*,
-                            javax.ws.rs.*,
-                            com.sun.jersey.multipart.*,
                             com.sun.jersey.core.header.*,
                             com.sun.jersey.api.core,
                             com.sun.jersey.spi.container.servlet, 

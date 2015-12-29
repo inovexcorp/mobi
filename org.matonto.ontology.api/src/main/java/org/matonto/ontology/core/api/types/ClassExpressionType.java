@@ -1,7 +1,10 @@
 package org.matonto.ontology.core.api.types;
 
 import javax.annotation.Nonnull;
-import org.semanticweb.owlapi.vocab.Namespaces;
+
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
+import aQute.bnd.annotation.component.Reference;
 
 
 public enum ClassExpressionType {
@@ -26,13 +29,25 @@ public enum ClassExpressionType {
 
 	private final String name;
 	private final String prefixedName;
-//	private final OntologyIRI iri;
-
+	private final IRI iri;
+    private static ValueFactory factory;
+    
+    @Reference
+    protected void setValueFactory(final ValueFactory vf)
+    {
+        factory = vf;
+    }
+    
 	ClassExpressionType(@Nonnull String name) {
 		this.name = name;
-		prefixedName = (Namespaces.OWL.getPrefixName() + ':' + name);
-//		iri = SimpleIRI.create(Namespaces.OWL.getPrefixIRI(), name);
+		prefixedName = ("owl" + ':' + name);
+		iri = createIRI("http://www.w3.org/2002/07/owl#", name);
 	}
+	
+	private IRI createIRI(String namespace, String localName)
+    {
+        return factory.createIRI(namespace.toString(), localName);
+    }
    
 	public String getName()
 	{
@@ -52,10 +67,10 @@ public enum ClassExpressionType {
 	}
 	
 	
-//	public OntologyIRI getIRI()
-//	{
-//		return iri;
-//	}
+	public IRI getIRI()
+	{
+		return iri;
+	}
 	
 	
 	public String getPrefixedName()
