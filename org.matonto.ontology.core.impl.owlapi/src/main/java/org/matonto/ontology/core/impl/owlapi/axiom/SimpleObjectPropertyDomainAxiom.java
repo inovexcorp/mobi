@@ -1,14 +1,13 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.axiom.ObjectPropertyDomainAxiom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleObjectPropertyDomainAxiom 
 	extends SimpleAxiom 
@@ -19,11 +18,11 @@ public class SimpleObjectPropertyDomainAxiom
 	private ClassExpression domain;
 	
 	
-	public SimpleObjectPropertyDomainAxiom(ObjectPropertyExpression objectProperty, ClassExpression domain, Set<Annotation> annotations) 
+	public SimpleObjectPropertyDomainAxiom(@Nonnull ObjectPropertyExpression objectProperty, @Nonnull ClassExpression domain, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.objectProperty = Preconditions.checkNotNull(objectProperty, "objectProperty cannot be null");
-		this.domain = Preconditions.checkNotNull(domain, "domain cannot be null");
+		this.objectProperty = objectProperty;
+		this.domain = domain;
 	}
 
 	
@@ -38,7 +37,7 @@ public class SimpleObjectPropertyDomainAxiom
 
 	
 	@Override
-	public ObjectPropertyDomainAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public ObjectPropertyDomainAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleObjectPropertyDomainAxiom(objectProperty, domain, mergeAnnos(annotations));
 	}

@@ -2,14 +2,13 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.DataCardinalityRestriction;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.datarange.DataRange;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 
 public class SimpleDataCardinalityRestriction implements DataCardinalityRestriction {
 
@@ -18,11 +17,11 @@ public class SimpleDataCardinalityRestriction implements DataCardinalityRestrict
 	private DataRange dataRange;
 	
 	
-	public SimpleDataCardinalityRestriction(DataPropertyExpression property, int cardinality, DataRange dataRange)
+	public SimpleDataCardinalityRestriction(@Nonnull DataPropertyExpression property, int cardinality, @Nonnull DataRange dataRange)
 	{
 		this.cardinality = cardinality;
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
-		this.dataRange = Preconditions.checkNotNull(dataRange, "dataRange cannot be null");
+		this.property = property;
+		this.dataRange = dataRange;
 	}
 	
 	
@@ -43,7 +42,7 @@ public class SimpleDataCardinalityRestriction implements DataCardinalityRestrict
 	
 
 	@Override
-	public boolean containsConjunct(ClassExpression ce) 
+	public boolean containsConjunct(@Nonnull ClassExpression ce) 
 	{
 		return ce.equals(this);
 	}

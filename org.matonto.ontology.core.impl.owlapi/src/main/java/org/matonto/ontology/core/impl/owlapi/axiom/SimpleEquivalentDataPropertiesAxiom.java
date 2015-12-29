@@ -3,12 +3,10 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.axiom.EquivalentDataPropertiesAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -20,10 +18,10 @@ public class SimpleEquivalentDataPropertiesAxiom
 	private Set<DataPropertyExpression> properties;
 	
 	
-	public SimpleEquivalentDataPropertiesAxiom(Set<DataPropertyExpression> properties, Set<Annotation> annotations) 
+	public SimpleEquivalentDataPropertiesAxiom(@Nonnull Set<DataPropertyExpression> properties, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.properties = new TreeSet<DataPropertyExpression>(Preconditions.checkNotNull(properties, "properties cannot be null"));
+		this.properties = new TreeSet<DataPropertyExpression>(properties);
 	}
 
 	
@@ -38,7 +36,7 @@ public class SimpleEquivalentDataPropertiesAxiom
 	
 
 	@Override
-	public EquivalentDataPropertiesAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public EquivalentDataPropertiesAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleEquivalentDataPropertiesAxiom(properties, mergeAnnos(annotations));
 	}

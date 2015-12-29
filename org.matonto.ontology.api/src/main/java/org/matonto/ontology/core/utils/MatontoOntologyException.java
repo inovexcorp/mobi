@@ -2,6 +2,7 @@ package org.matonto.ontology.core.utils;
 
 import org.matonto.exception.MatOntoException;
 
+
 public class MatontoOntologyException extends MatOntoException {
 
 	private static final long serialVersionUID = -5863496450275604264L;

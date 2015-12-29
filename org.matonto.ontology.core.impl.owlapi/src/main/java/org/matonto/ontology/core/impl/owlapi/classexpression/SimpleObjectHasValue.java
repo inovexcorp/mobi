@@ -2,22 +2,20 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectHasValue;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
-public class SimpleObjectHasValue implements ObjectHasValue {
 
+public class SimpleObjectHasValue implements ObjectHasValue {
 	
 	private ObjectPropertyExpression property;
 	
-	public SimpleObjectHasValue(ObjectPropertyExpression property)
+	public SimpleObjectHasValue(@Nonnull ObjectPropertyExpression property)
 	{
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
+		this.property = property;
 	}
 		
 	
@@ -45,7 +43,7 @@ public class SimpleObjectHasValue implements ObjectHasValue {
 	
 
 	@Override
-	public boolean containsConjunct(ClassExpression ce) 
+	public boolean containsConjunct(@Nonnull ClassExpression ce) 
 	{
 		return ce.equals(this);
 	}

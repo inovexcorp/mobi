@@ -1,5 +1,6 @@
 package org.matonto.ontology.core.impl.owlapi.classexpression;
 
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectMinCardinality;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
@@ -8,11 +9,9 @@ import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 public class SimpleObjectMinCardinality 
 	extends SimpleObjectCardinalityRestriction 
-	implements ObjectMinCardinality {
-
+	implements ObjectMinCardinality {	
 	
-	
-	public SimpleObjectMinCardinality(ObjectPropertyExpression property, int cardinality, ClassExpression expression) 
+	public SimpleObjectMinCardinality(@Nonnull ObjectPropertyExpression property, int cardinality, @Nonnull ClassExpression expression) 
 	{
 		super(property, cardinality, expression);
 	}

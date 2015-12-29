@@ -1,15 +1,9 @@
 package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
-import org.matonto.ontology.core.api.OntologyIRI;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
-
-import com.google.common.base.Preconditions;
+import org.matonto.rdf.api.IRI;
 
 
 public class SimpleObjectProperty 
@@ -17,16 +11,15 @@ public class SimpleObjectProperty
 	implements ObjectProperty {
 
 	
-	private OntologyIRI iri;
+	private IRI iri;
 	
-	
-	public SimpleObjectProperty(OntologyIRI iri)
+	public SimpleObjectProperty(@Nonnull IRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 	}
 	
 	@Override
-	public OntologyIRI getIRI() 
+	public IRI getIRI() 
 	{
 		return iri;
 	}
@@ -45,7 +38,7 @@ public class SimpleObjectProperty
 		}
 		
 		if(obj instanceof ObjectProperty) {
-			OntologyIRI otherIri = ((ObjectProperty) obj).getIRI();
+			IRI otherIri = ((ObjectProperty) obj).getIRI();
 			return otherIri.equals(iri);
 		}
 		
@@ -58,21 +51,5 @@ public class SimpleObjectProperty
 		return this;
 	}
 	
-	
-	public static ObjectProperty matontoObjectProperty(OWLObjectProperty owlapiObjectProperty)
-	{
-		IRI owlapiIri = owlapiObjectProperty.getIRI();
-		OntologyIRI matontoIri = SimpleIRI.matontoIRI(owlapiIri);
-		return new SimpleObjectProperty(matontoIri);
-	}
-	
-	
-	public static OWLObjectProperty owlapiObjectProperty(ObjectProperty matontoObjectProperty)
-	{
-		OntologyIRI matontoIri = matontoObjectProperty.getIRI();
-		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
-		return new OWLObjectPropertyImpl(owlapiIri);
-	}
-
 
 }

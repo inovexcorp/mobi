@@ -1,13 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.axiom.SubClassOfAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleSubClassOfAxiom extends SimpleClassAxiom implements SubClassOfAxiom {
 
@@ -15,11 +14,11 @@ public class SimpleSubClassOfAxiom extends SimpleClassAxiom implements SubClassO
 	private ClassExpression superClass;
 	
 	
-	public SimpleSubClassOfAxiom(ClassExpression subClass, ClassExpression superClass, Set<Annotation> annotations) 
+	public SimpleSubClassOfAxiom(@Nonnull ClassExpression subClass, @Nonnull ClassExpression superClass, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.subClass = Preconditions.checkNotNull(subClass, "subClass cannot be null");
-		this.superClass = Preconditions.checkNotNull(subClass, "subClass cannot be null");
+		this.subClass = subClass;
+		this.superClass = subClass;
 	}
 
 	
@@ -48,7 +47,7 @@ public class SimpleSubClassOfAxiom extends SimpleClassAxiom implements SubClassO
 	
 	
 	@Override
-	public SubClassOfAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public SubClassOfAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleSubClassOfAxiom(subClass, superClass, mergeAnnos(annotations));
 	}

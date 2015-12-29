@@ -2,23 +2,21 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.classexpression.ObjectOneOf;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
-public class SimpleObjectOneOf 
-	implements ObjectOneOf {
+
+public class SimpleObjectOneOf implements ObjectOneOf {
 
 	
 	private Set<Individual> individuals;
 	
-	public SimpleObjectOneOf(Set<Individual> individuals) 
+	public SimpleObjectOneOf(@Nonnull Set<Individual> individuals) 
 	{
-		this.individuals = new HashSet<Individual>(Preconditions.checkNotNull(individuals, "individuals cannot be null"));
+		this.individuals = new HashSet<Individual>(individuals);
 	}
 	
 	
@@ -79,7 +77,7 @@ public class SimpleObjectOneOf
 	
 	
 	@Override
-	public boolean containsConjunct(ClassExpression ce)
+	public boolean containsConjunct(@Nonnull ClassExpression ce)
 	{
 		return ce.equals(this);
 	}

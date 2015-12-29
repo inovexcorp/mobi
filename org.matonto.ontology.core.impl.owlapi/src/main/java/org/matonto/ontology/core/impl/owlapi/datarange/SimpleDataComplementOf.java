@@ -1,20 +1,18 @@
 package org.matonto.ontology.core.impl.owlapi.datarange;
 
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.DataComplementOf;
 import org.matonto.ontology.core.api.datarange.DataRange;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.DataRangeType;
 
-public class SimpleDataComplementOf implements DataComplementOf {
 
+public class SimpleDataComplementOf implements DataComplementOf {
 	
 	private DataRange dataRange;
-	
-	
-	public SimpleDataComplementOf(DataRange dataRange)
+		
+	public SimpleDataComplementOf(@Nonnull DataRange dataRange)
 	{
-		this.dataRange = Preconditions.checkNotNull(dataRange, "dataRange cannot be null");
+		this.dataRange = dataRange;
 	}
 	
 	

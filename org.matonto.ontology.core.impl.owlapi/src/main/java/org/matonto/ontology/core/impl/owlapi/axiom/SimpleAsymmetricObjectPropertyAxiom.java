@@ -1,12 +1,10 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.axiom.AsymmetricObjectPropertyAxiom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -18,10 +16,10 @@ public class SimpleAsymmetricObjectPropertyAxiom
 	private ObjectPropertyExpression objectProperty;
 	
 	
-	public SimpleAsymmetricObjectPropertyAxiom(ObjectPropertyExpression objectProperty, Set<Annotation> annotations)
+	public SimpleAsymmetricObjectPropertyAxiom(@Nonnull ObjectPropertyExpression objectProperty, Set<Annotation> annotations)
 	{
 		super(annotations);
-		this.objectProperty = Preconditions.checkNotNull(objectProperty, "objectProperty cannot be null");
+		this.objectProperty = objectProperty;
 	}
 	
 
@@ -36,7 +34,7 @@ public class SimpleAsymmetricObjectPropertyAxiom
 
 	
 	@Override
-	public AsymmetricObjectPropertyAxiom getAnnotatedAxiom(Set<Annotation> annotations)
+	public AsymmetricObjectPropertyAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations)
 	{
 		return new SimpleAsymmetricObjectPropertyAxiom(objectProperty, mergeAnnos(annotations));
 	}

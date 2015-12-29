@@ -3,16 +3,15 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.axiom.HasKeyAxiom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleHasKeyAxiom 
 	extends SimpleAxiom 
@@ -23,11 +22,11 @@ public class SimpleHasKeyAxiom
 	private Set<PropertyExpression> propertyExpressions;
 
 	
-	public SimpleHasKeyAxiom(ClassExpression expression, Set<PropertyExpression> propertyExpressions, Set<Annotation> annotations) 
+	public SimpleHasKeyAxiom(@Nonnull ClassExpression expression, @Nonnull Set<PropertyExpression> propertyExpressions, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.expression = Preconditions.checkNotNull(expression, "expression cannot be null");
-		this.propertyExpressions = new TreeSet<PropertyExpression>(Preconditions.checkNotNull(propertyExpressions, "propertyExpressions cannot be null"));
+		this.expression = expression;
+		this.propertyExpressions = new TreeSet<PropertyExpression>(propertyExpressions);
 	}
 
 	
@@ -42,7 +41,7 @@ public class SimpleHasKeyAxiom
 
 	
 	@Override
-	public HasKeyAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public HasKeyAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleHasKeyAxiom(expression, propertyExpressions, mergeAnnos(annotations));
 	}

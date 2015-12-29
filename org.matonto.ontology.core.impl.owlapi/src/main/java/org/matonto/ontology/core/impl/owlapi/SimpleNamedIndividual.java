@@ -1,29 +1,25 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.NamedIndividual;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.matonto.rdf.api.IRI;
 
-import com.google.common.base.Preconditions;
-
-import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 
 public class SimpleNamedIndividual 
 	implements NamedIndividual {
 
-	private OntologyIRI iri;
+	private IRI iri;
 	
 	
-	public SimpleNamedIndividual(OntologyIRI iri)
+	public SimpleNamedIndividual(@Nonnull IRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 	}
 	
 	
 	@Override
-	public OntologyIRI getIRI() 
+	public IRI getIRI() 
 	{
 		return iri;
 	}
@@ -51,22 +47,6 @@ public class SimpleNamedIndividual
 	}
 	
 	
-	public static NamedIndividual matontoNamedIndividual(OWLNamedIndividual owlapiIndividual)
-	{
-		IRI owlapiIri = ((OWLNamedIndividualImpl) owlapiIndividual).getIRI();
-		OntologyIRI matontoIri = SimpleIRI.matontoIRI(owlapiIri);
-		return new SimpleNamedIndividual(matontoIri);
-	}
-	
-	
-	public static OWLNamedIndividual owlapiNamedIndividual(NamedIndividual matontoIndividual)
-	{
-		OntologyIRI matontoIri = ((SimpleNamedIndividual) matontoIndividual).getIRI();
-		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
-		return new OWLNamedIndividualImpl(owlapiIri);
-	}
-
-
 	@Override
 	public boolean isNamed() 
 	{

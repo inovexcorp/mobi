@@ -7,8 +7,7 @@ public class SimpleObjectPropertyExpression
 	extends SimplePropertyExpression
 	implements ObjectPropertyExpression {
 
-	
-	public ObjectPropertyExpression simplestForm;
+
 	public ObjectPropertyExpression inverse;
 	
 	
@@ -21,9 +20,9 @@ public class SimpleObjectPropertyExpression
 	}
 
 	@Override
-	public ObjectPropertyExpression getSimplified() 
+	public ObjectPropertyExpression getNamedProperty() 
 	{
-		return simplestForm;
+		return inverse;
 	}
 	
 	
