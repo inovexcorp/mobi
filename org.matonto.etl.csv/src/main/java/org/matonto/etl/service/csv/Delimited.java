@@ -1,10 +1,5 @@
 package org.matonto.etl.service.csv;
 
-import org.openrdf.model.IRI;
-import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
-
 public enum Delimited {
     TYPE ("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
     MAPS_TO ("http://matonto.org/ontologies/delimited/mapsTo"),
@@ -18,17 +13,14 @@ public enum Delimited {
     DOCUMENT ("http://matonto.org/ontologies/delimited/Document"),
     SEPARATOR ("http://matonto.org/ontologies/delimited/separator");
 
+    String s;
 
-    ValueFactory vf = ValueFactoryImpl.getInstance();
-
-    String iri;
-
-    Delimited(String iri){
-        this.iri = iri;
+    Delimited(String s){
+        this.s = s;
     }
 
-    public IRI iri(){
-        return vf.createIRI(iri);
+    public String stringValue(){
+        return s;
     }
 
 }

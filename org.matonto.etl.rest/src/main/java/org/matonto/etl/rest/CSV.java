@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.opencsv.CSVReader;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.rdf.core.utils.Values;
 import org.openrdf.model.Model;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.rio.RDFFormat;
@@ -12,6 +13,7 @@ import org.openrdf.rio.Rio;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CSV{
 
@@ -71,7 +73,7 @@ public class CSV{
         }
         Model m = new LinkedHashModel();
         try{
-            m = csvConverter.convert(new File("data/tmp/" + fileName),new File("data/tmp/mappingFile.jsonld"));
+            m = sesameModel(csvConverter.convert(new File("data/tmp/" + fileName),new File("data/tmp/mappingFile.jsonld")));
         }catch(Exception e){
             throw new RuntimeException(e);
         }
@@ -109,6 +111,17 @@ public class CSV{
             throw new RuntimeException("Error Loading Document");
         }
         return json;
+    }
+
+    Model sesameModel(org.matonto.rdf.api.Model m){
+        Set<org.openrdf.model.Statement> stmts = m.stream()
+                .map(Values::sesameStatement)
+                .collect(Collectors.toSet());
+
+        Model sesameModel = new LinkedHashModel();
+        sesameModel.addAll(stmts);
+
+        return sesameModel;
     }
 
 }

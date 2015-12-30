@@ -1,21 +1,17 @@
 package org.matonto.etl.service.csv
 
-import org.matonto.etl.api.csv.CSVConverter
 import org.matonto.etl.api.rdf.RDFImportService
-import org.openrdf.model.IRI
-import org.openrdf.model.Model
-import org.openrdf.model.impl.LinkedHashModel
-import org.openrdf.repository.Repository
-import org.openrdf.repository.RepositoryConnection
-import org.openrdf.repository.RepositoryResult
-import org.openrdf.repository.sail.SailRepository
+import org.matonto.rdf.api.Model
+import org.matonto.rdf.api.ModelFactory
+import org.matonto.rdf.core.impl.sesame.LinkedHashModel
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
+import org.matonto.rdf.api.ValueFactory
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.RDFParseException
 import org.openrdf.rio.Rio
-import org.openrdf.sail.memory.MemoryStore
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
-
 
 class ConverterSpec extends Specification {
 
@@ -27,9 +23,13 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         FileReader r = new FileReader(out);
-        m = Rio.parse(r, "", RDFFormat.TURTLE);
+        m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile);
 
         expect:
@@ -44,10 +44,14 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         FileReader r = new FileReader(out);
-        m = Rio.parse(r, "", RDFFormat.TURTLE);
-        Model convertedModel = c.convert(csv, mappingFile);
+        m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model convertedModel = c.convert(csv, mappingFile)
 
         expect:
         m.equals(convertedModel);
@@ -61,9 +65,13 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         FileReader r = new FileReader(out);
-        m = Rio.parse(r, "", RDFFormat.TURTLE);
+        m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile);
 
         expect:
@@ -78,10 +86,14 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         FileReader r = new FileReader(out);
-        m = Rio.parse(r, "", RDFFormat.TURTLE);
-        Model convertedModel = c.convert(csv, mappingFile);
+        m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model convertedModel = c.convert(csv, mappingFile)
 
         expect:
         m.equals(convertedModel);
@@ -95,10 +107,14 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         FileReader r = new FileReader(out);
-        m = Rio.parse(r, "", RDFFormat.TURTLE);
-        Model convertedModel = c.convert(csv, mappingFile);
+        m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model convertedModel = c.convert(csv, mappingFile)
 
         expect:
         m.equals(convertedModel);
@@ -108,6 +124,10 @@ class ConverterSpec extends Specification {
         setup:
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
         CSVConverterImpl c = Spy(CSVConverterImpl)
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
         def uuid = "12345"
         c.generateUUID() >> "12345"
         expect:
@@ -134,6 +154,10 @@ class ConverterSpec extends Specification {
         RDFImportService importService = Mock()
         CSVConverterImpl csvConverter = new CSVConverterImpl()
         csvConverter.setImportService(importService)
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        csvConverter.setValueFactory(vf)
+        csvConverter.setModelFactory(mf);
 
         when:
         csvConverter.importCSV(csv, mappingFile, "test")
@@ -147,6 +171,10 @@ class ConverterSpec extends Specification {
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("testInvalidMapping.ttl").getFile();
         CSVConverterImpl c = new CSVConverterImpl();
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
 
         when:
         Model convertedModel = c.convert(csv, mappingFile);
@@ -162,12 +190,17 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testPropertiesMissingOut.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl);
+        ModelFactory mf = new LinkedHashModelFactory();
+        ValueFactory vf = new SimpleValueFactory();
+        c.setValueFactory(vf)
+        c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         FileReader r = new FileReader(out);
-        m = Rio.parse(r, "", RDFFormat.TURTLE)
+        m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile);
         expect:
         m.equals(convertedModel);
     }
 
+    
 }

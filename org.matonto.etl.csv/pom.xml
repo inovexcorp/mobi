@@ -17,6 +17,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${openrdf.version}</version>
@@ -41,6 +45,10 @@
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
         </dependency>
     </dependencies>
 

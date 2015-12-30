@@ -1,6 +1,6 @@
 package org.matonto.etl.api.csv;
 
-import org.openrdf.model.Model;
+import org.matonto.rdf.api.Model;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFParseException;
 

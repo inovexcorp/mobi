@@ -1,7 +1,6 @@
 package org.matonto.etl.service.csv;
 
-import org.openrdf.model.IRI;
-
+import org.matonto.rdf.api.IRI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
