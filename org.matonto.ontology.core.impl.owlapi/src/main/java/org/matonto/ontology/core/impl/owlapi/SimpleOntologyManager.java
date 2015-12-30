@@ -29,15 +29,16 @@ import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Reference;
+import aQute.bnd.annotation.component.*;
 
 
-@Component (immediate=true, provide = OntologyManager.class)
+@Component (immediate=true, 
+            provide = OntologyManager.class,
+            name = SimpleOntologyManager.COMPONENT_NAME,
+            configurationPolicy = ConfigurationPolicy.require)
 public class SimpleOntologyManager implements OntologyManager {
 	
+    protected static final String COMPONENT_NAME = "OntologyManager";
     private RepositoryManager repositoryManager;
 	private static Repository repository;
     private static ValueFactory factory;
@@ -49,15 +50,21 @@ public class SimpleOntologyManager implements OntologyManager {
 	public SimpleOntologyManager() {}
 	
     @Activate
-    public void activate() {
-        LOG.info("Activating the SimpleOntologyManager");
-        getRepository("ontology-repo");
-        initOntologyRegistry();
+    public void activate(final Map<String, Object> properties) {
+        LOG.info("Activating " + COMPONENT_NAME);
+        String repositoryId = null;
+        if (properties.containsKey("repositoryId")) {
+            getRepository((String)properties.get("repositoryId"));
+            LOG.info("repositoryId - " + properties.get("repositoryId"));
+            initOntologyRegistry();
+        } else {
+            LOG.error("Unable to set repositoryId");
+        }
     }
  
     @Deactivate
     public void deactivate() {
-        LOG.info("Deactivating the SimpleOntologyManger");
+        LOG.info("Deactivating " + COMPONENT_NAME);
     }
 
     @Reference
