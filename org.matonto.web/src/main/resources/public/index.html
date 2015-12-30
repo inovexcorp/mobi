@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="app">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="type/png" href="/icon.png">
 
-    <title>Test Page</title>
+    <title ng-bind="$state.current.data.title + ' | MatOnto'"></title>
     <!-- inject:css -->
     <!-- endinject -->
 </head>
-<body ng-app="app" ng-class="{'left-nav clearfix': $root.leftLayout, 'show-words': $root.showWords}">
+<body ng-class="{'left-nav clearfix': $root.leftLayout, 'show-words': $root.showWords}">
     <!-- Basic header, container, and footer for all states -->
     <nav ui-view="header"></nav>
     <div ui-view="container" class="view-container"></div>
