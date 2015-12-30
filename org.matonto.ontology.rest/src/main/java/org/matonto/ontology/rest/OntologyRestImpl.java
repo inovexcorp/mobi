@@ -68,8 +68,8 @@ public class OntologyRestImpl {
 	{
 		return manager;
 	}
-	
-	
+
+
 	
 	@GET
 	@Path("getAllOntologyIds")
