@@ -5,7 +5,7 @@
         <property name="bundle" ref="blueprintBundle"/>
         <property name="unsecuredPages">
             <list>
-                <value>/matonto/login.html</value>
+                <value>/matonto/index.html</value>
             </list>
         </property>
     </bean>
@@ -21,6 +21,13 @@
         <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
             <property name="alias" value="/matonto/css" />
             <property name="path" value="build/css" />
+        </bean>
+    </service>
+
+    <service id="imageResources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+            <property name="alias" value="/matonto/images" />
+            <property name="path" value="build/images" />
         </bean>
     </service>
 
