@@ -52,7 +52,6 @@ public class SimpleOntologyManager implements OntologyManager {
     @Activate
     public void activate(final Map<String, Object> properties) {
         LOG.info("Activating " + COMPONENT_NAME);
-        String repositoryId = null;
         if (properties.containsKey("repositoryId")) {
             getRepository((String)properties.get("repositoryId"));
             LOG.info("repositoryId - " + properties.get("repositoryId"));
