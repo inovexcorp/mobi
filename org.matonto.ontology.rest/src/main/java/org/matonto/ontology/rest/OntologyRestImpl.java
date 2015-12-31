@@ -31,6 +31,7 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 
@@ -91,6 +92,43 @@ public class OntologyRestImpl {
 
 		return Response.status(200).entity(json.toString()).build();
 	}
+	
+	
+	
+	@GET
+    @Path("/getAllOntologies")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllOntologies()
+    {
+        if(manager == null)
+            throw new IllegalStateException("Ontology manager is null");
+
+        Map<OntologyId, String> ontologyRegistry = manager.getOntologyRegistry();
+        JSONArray jsonArray = new JSONArray();
+
+        Optional<Ontology> ontology;
+        OutputStream outputStream = null;
+
+        if(!ontologyRegistry.isEmpty()) {
+            for(OntologyId oid : ontologyRegistry.keySet()) {
+                ontology = manager.retrieveOntology(oid);
+                if(ontology.isPresent()) {
+                    try {
+                        outputStream = ontology.get().asJsonLD();
+                        if(outputStream != null) 
+                            jsonArray.add(outputStream.toString());
+                    } catch(MatontoOntologyException ex) {
+                        JSONObject json = new JSONObject();
+                        json.put("Error in retrieving ontology with ontologyId " + oid, ex.getMessage());
+                        jsonArray.add(json);              
+                    }
+             
+                }
+            }
+        }
+
+        return Response.status(200).entity(jsonArray.toString()).build();
+    }
 
 	
 	
