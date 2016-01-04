@@ -101,7 +101,7 @@ public class AuthHttpContext implements HttpContext {
         String password = usernameAndPassword.substring(userNameIndex + 1);
 
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
-        boolean success = ((username.equals("admin") && password.equals("admin")));
+        boolean success = ((username.equals("admin") && password.equals("M@tontoRox!")));
 
         if (success)
             request.setAttribute(REMOTE_USER, "admin");
