@@ -10,11 +10,11 @@
 
     function config($stateProvider, $urlRouterProvider) {
         // Defaults to home
-        $urlRouterProvider.otherwise('/login');
+        $urlRouterProvider.otherwise('/home');
 
         // Sets the states
         $stateProvider
-            .state('login', {
+            /*.state('login', {
                 url: '/login',
                 views: {
                     container: {
@@ -24,7 +24,7 @@
                 data: {
                     title: 'Login'
                 }
-            })
+            })*/
             .state('root', {
                 abstract: true,
                 resolve: {
