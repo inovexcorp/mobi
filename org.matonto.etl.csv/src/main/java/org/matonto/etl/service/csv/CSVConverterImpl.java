@@ -125,7 +125,7 @@ public class CSVConverterImpl implements CSVConverter {
         for (Integer i : dataProps.keySet()) {
             IRI property = valueFactory.createIRI(dataProps.get(i));
             try {
-                convertedRDF.add(classInstance, property, valueFactory.createLiteral("" + nextLine[i - 1]));
+                convertedRDF.add(classInstance, property, valueFactory.createLiteral(nextLine[i - 1]));
             } catch (ArrayIndexOutOfBoundsException e) {
                 //Cell does not contain any data. No need to throw exception.
                 LOGGER.info("Missing data for " + classInstance + ": " + property);
