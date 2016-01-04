@@ -17,28 +17,26 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class AuthHttpContext implements HttpContext {
+public abstract class AuthHttpContext implements HttpContext {
 
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
     private final ConcurrentMap<String, URL> resourceCache = new ConcurrentHashMap<>();
 
-    private static final String REDIRECT_PATH = "/matonto/login.html";
-
     /**
      * The bundle that registered the service.
      */
-    private Bundle bundle;
+    protected Bundle bundle;
 
     /**
      * The root path of the web app inside the bundle.
      */
-    private String rootPath = "/";
+    protected String rootPath = "/";
 
     /**
      * List of pages that will not be authenticated.
      */
-    private List<String> unsecuredPages;
+    protected List<String> unsecuredPages;
 
     public void setBundle(Bundle bundle) {
         this.bundle = bundle;
@@ -73,22 +71,20 @@ public class AuthHttpContext implements HttpContext {
         }
 
         if (req.getHeader("Authorization") == null) {
-            log.debug("No authorization header. Redirecting to " + REDIRECT_PATH);
-            res.sendRedirect(REDIRECT_PATH);
-//            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
+            return handleNoAuthHeader(req, res);
         }
 
         if (authenticated(req)) {
             log.debug("Authorization Granted.");
             return true;
         } else {
-            log.debug("Authorization Denied. Redirecting to " + REDIRECT_PATH);
-            res.sendRedirect(REDIRECT_PATH);
-//            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
+            return handleAuthDenied(req, res);
         }
     }
+
+    protected abstract boolean handleNoAuthHeader(HttpServletRequest req, HttpServletResponse res) throws IOException;
+
+    protected abstract boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
     protected boolean authenticated(HttpServletRequest request) {
         request.setAttribute(AUTHENTICATION_TYPE, HttpServletRequest.BASIC_AUTH);
@@ -101,7 +97,7 @@ public class AuthHttpContext implements HttpContext {
         String password = usernameAndPassword.substring(userNameIndex + 1);
 
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
-        boolean success = ((username.equals("admin") && password.equals("admin")));
+        boolean success = ((username.equals("admin") && password.equals("M@tontoRox!")));
 
         if (success)
             request.setAttribute(REMOTE_USER, "admin");
