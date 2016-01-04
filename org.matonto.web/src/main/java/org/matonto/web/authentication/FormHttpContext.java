@@ -6,7 +6,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class RedirectHttpContext extends AuthHttpContext {
+/**
+ * Performs Form Authentication.
+ */
+public class FormHttpContext extends AuthHttpContext {
 
     private static final String REDIRECT_PATH = "/matonto/login.html";
 
@@ -24,5 +27,13 @@ public class RedirectHttpContext extends AuthHttpContext {
         log.debug("Authorization Denied. Redirecting to " + REDIRECT_PATH);
         res.sendRedirect(REDIRECT_PATH);
         return false;
+    }
+
+    @Override
+    protected boolean handleAuth(HttpServletRequest req) throws IOException {
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+
+        return authenticated(req, username, password);
     }
 }

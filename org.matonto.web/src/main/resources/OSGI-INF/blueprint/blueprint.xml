@@ -1,7 +1,7 @@
 <blueprint default-activation="eager"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
     <!-- Authorization Context -->
-    <bean id="authContext" class="org.matonto.web.authentication.RedirectHttpContext">
+    <bean id="authContext" class="org.matonto.web.authentication.FormHttpContext">
         <property name="bundle" ref="blueprintBundle"/>
         <property name="unsecuredPages">
             <list>

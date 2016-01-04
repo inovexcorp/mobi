@@ -74,7 +74,7 @@ public abstract class AuthHttpContext implements HttpContext {
             return handleNoAuthHeader(req, res);
         }
 
-        if (authenticated(req)) {
+        if (handleAuth(req)) {
             log.debug("Authorization Granted.");
             return true;
         } else {
@@ -86,21 +86,14 @@ public abstract class AuthHttpContext implements HttpContext {
 
     protected abstract boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
-    protected boolean authenticated(HttpServletRequest request) {
-        request.setAttribute(AUTHENTICATION_TYPE, HttpServletRequest.BASIC_AUTH);
+    protected abstract boolean handleAuth(HttpServletRequest req) throws IOException;
 
-        String authzHeader = request.getHeader("Authorization");
-        String usernameAndPassword = new String(Base64.decodeBase64(authzHeader.substring(6).getBytes()));
-
-        int userNameIndex = usernameAndPassword.indexOf(":");
-        String username = usernameAndPassword.substring(0, userNameIndex);
-        String password = usernameAndPassword.substring(userNameIndex + 1);
-
+    protected boolean authenticated(HttpServletRequest req, String username, String password) {
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
         boolean success = ((username.equals("admin") && password.equals("M@tontoRox!")));
 
         if (success)
-            request.setAttribute(REMOTE_USER, "admin");
+            req.setAttribute(REMOTE_USER, "admin");
 
         return success;
     }
