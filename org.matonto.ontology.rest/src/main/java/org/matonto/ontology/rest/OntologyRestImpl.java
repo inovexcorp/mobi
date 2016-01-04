@@ -31,6 +31,7 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 
@@ -77,7 +78,7 @@ public class OntologyRestImpl {
 	public Response getAllOntologyIds()
 	{
 		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
+		    return Response.status(500).entity("Ontology manager is null").build();
 
 		Map<OntologyId, String> ontologies = manager.getOntologyRegistry();
 		JSONObject json = new JSONObject();
@@ -91,6 +92,43 @@ public class OntologyRestImpl {
 
 		return Response.status(200).entity(json.toString()).build();
 	}
+	
+	
+	
+	@GET
+    @Path("/getAllOntologies")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllOntologies()
+    {
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+
+        Map<OntologyId, String> ontologyRegistry = manager.getOntologyRegistry();
+        JSONArray jsonArray = new JSONArray();
+
+        Optional<Ontology> ontology;
+        OutputStream outputStream = null;
+
+        if(!ontologyRegistry.isEmpty()) {
+            for(OntologyId oid : ontologyRegistry.keySet()) {
+                ontology = manager.retrieveOntology(oid);
+                if(ontology.isPresent()) {
+                    try {
+                        outputStream = ontology.get().asJsonLD();
+                        if(outputStream != null) 
+                            jsonArray.add(outputStream.toString());
+                    } catch(MatontoOntologyException ex) {
+                        JSONObject json = new JSONObject();
+                        json.put("Error in retrieving ontology with ontologyId " + oid, ex.getMessage());
+                        jsonArray.add(json);              
+                    }
+             
+                }
+            }
+        }
+
+        return Response.status(200).entity(jsonArray.toString()).build();
+    }
 
 	
 	
@@ -104,12 +142,12 @@ public class OntologyRestImpl {
 	public Response uploadFile(
 							@FormDataParam("file") InputStream fileInputStream,
 							@FormDataParam("ontologyIdStr") String ontologyIdStr)
-	{	
+	{	     
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-			return Response.status(500).entity("OntologyID is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
+			return Response.status(400).entity("OntologyID is empty").build();
 		
 		boolean persisted = false;
 		JSONObject json = new JSONObject();
@@ -143,15 +181,15 @@ public class OntologyRestImpl {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOntology(@QueryParam("ontologyIdStr") String ontologyIdStr,
 								@QueryParam("rdfFormat") String rdfFormat) 
-	{
+	{	       
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-			return Response.status(500).entity("OntologyID is empty").build();
+			return Response.status(400).entity("OntologyID is empty").build();
 		
 		if (rdfFormat == null || rdfFormat.length() == 0)
-			return Response.status(500).entity("Output format is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
+			return Response.status(400).entity("Output format is empty").build();
 		
 		JSONObject json = new JSONObject();
         Optional<Ontology> ontology = Optional.empty();
@@ -178,9 +216,11 @@ public class OntologyRestImpl {
 			else if(rdfFormat.equalsIgnoreCase("turtle"))
 				outputStream = ontology.get().asTurtle();
 			
-			else {
-				outputStream = ontology.get().asJsonLD();
-			}
+			else if(rdfFormat.equalsIgnoreCase("jsonld"))
+                outputStream = ontology.get().asJsonLD();
+            
+            else 
+                return Response.status(400).entity("Output format is invalid").build();
 		
 			String content = "";
 			if(outputStream != null)
@@ -210,16 +250,15 @@ public class OntologyRestImpl {
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response downloadOntologyFile(@QueryParam("ontologyIdStr") String ontologyIdStr,
 										@QueryParam("rdfFormat") String rdfFormat) 
-	{
+	{  
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-			return Response.status(500).entity("OntologyID is empty").build();
+			return Response.status(400).entity("OntologyID is empty").build();
 		
 		if (rdfFormat == null || rdfFormat.length() == 0)
-			return Response.status(500).entity("Output format is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
-
+			return Response.status(400).entity("Output format is empty").build();
 	
 		Optional<Ontology> ontology = Optional.empty();
 		
@@ -246,9 +285,11 @@ public class OntologyRestImpl {
 			else if(rdfFormat.equalsIgnoreCase("turtle"))
 				outputStream = ontology.get().asTurtle();
 			
-			else {
-				outputStream = ontology.get().asJsonLD();
-			}
+			else if(rdfFormat.equalsIgnoreCase("jsonld"))
+                outputStream = ontology.get().asJsonLD();
+            
+            else 
+                return Response.status(400).entity("Output format is invalid").build();
 		}
 		
 		
@@ -295,12 +336,12 @@ public class OntologyRestImpl {
 	@Path("/deleteOntology")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
-	{
+	{	       
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
 
 		JSONObject json = new JSONObject();
 		boolean deleted = false;
