@@ -1,5 +1,8 @@
 package org.matonto.ontology.core.api.types;
 
+import javax.annotation.Nonnull;
+
+
 public enum EntityType {
 	
 	CLASS("Class", "Class", "Classes"),
@@ -13,7 +16,7 @@ public enum EntityType {
 	private final String printName;
 	private final String pluralPrintName;
 	
-	EntityType(String name, String printName, String pluralPrintName) {
+	EntityType(@Nonnull String name, @Nonnull String printName, @Nonnull String pluralPrintName) {
 		this.name = name;
 		this.printName = printName;
 		this.pluralPrintName = pluralPrintName;
@@ -34,12 +37,4 @@ public enum EntityType {
 		return pluralPrintName;
 	}
 	
-//	public String getPrefixedName()
-//	{
-//	}
-//
-//	public OntologyIRI getIRI()
-//	{
-//		return SimpleIRI.matontoIRI(owlapiEntityType(this).getIRI());
-//	}
 }

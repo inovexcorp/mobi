@@ -1,13 +1,11 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.axiom.DataPropertyRangeAxiom;
 import org.matonto.ontology.core.api.datarange.DataRange;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -20,11 +18,11 @@ public class SimpleDataPropertyRangeAxiom
 	public DataRange range;
 	
 	
-	public SimpleDataPropertyRangeAxiom(DataPropertyExpression property, DataRange range, Set<Annotation> annotations) 
+	public SimpleDataPropertyRangeAxiom(@Nonnull DataPropertyExpression property, @Nonnull DataRange range, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
-		this.range = Preconditions.checkNotNull(range, "range cannot be null");
+		this.property = property;
+		this.range = range;
 	}
 
 	
@@ -39,7 +37,7 @@ public class SimpleDataPropertyRangeAxiom
 	
 
 	@Override
-	public DataPropertyRangeAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public DataPropertyRangeAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleDataPropertyRangeAxiom(property, range, mergeAnnos(annotations));
 	}

@@ -2,13 +2,12 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectAllValuesFrom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 
 public class SimpleObjectAllValuesFrom implements ObjectAllValuesFrom {
 
@@ -16,10 +15,10 @@ public class SimpleObjectAllValuesFrom implements ObjectAllValuesFrom {
 	private ObjectPropertyExpression property;
 	private ClassExpression classExpression;
 	
-	public SimpleObjectAllValuesFrom(ObjectPropertyExpression property, ClassExpression classExpression)
+	public SimpleObjectAllValuesFrom(@Nonnull ObjectPropertyExpression property, @Nonnull ClassExpression classExpression)
 	{
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
-		this.classExpression = Preconditions.checkNotNull(classExpression, "classExpression cannot be null");
+		this.property = property;
+		this.classExpression = classExpression;
 	}
 	
 	
@@ -54,7 +53,7 @@ public class SimpleObjectAllValuesFrom implements ObjectAllValuesFrom {
 
 	
 	@Override
-	public boolean containsConjunct(ClassExpression ce) 
+	public boolean containsConjunct(@Nonnull ClassExpression ce) 
 	{
 		return (this.equals(ce) || classExpression.equals(ce));
 	}

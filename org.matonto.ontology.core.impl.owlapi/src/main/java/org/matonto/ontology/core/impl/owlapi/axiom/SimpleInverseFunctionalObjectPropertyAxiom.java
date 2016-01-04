@@ -1,12 +1,10 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.axiom.InverseFunctionalObjectPropertyAxiom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -18,10 +16,10 @@ public class SimpleInverseFunctionalObjectPropertyAxiom
 	private ObjectPropertyExpression objectProperty;
 	
 	
-	public SimpleInverseFunctionalObjectPropertyAxiom(ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
+	public SimpleInverseFunctionalObjectPropertyAxiom(@Nonnull ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.objectProperty = Preconditions.checkNotNull(objectProperty, "objectProperty cannot be null");
+		this.objectProperty = objectProperty;
 	}
 
 	
@@ -36,7 +34,7 @@ public class SimpleInverseFunctionalObjectPropertyAxiom
 
 	
 	@Override
-	public InverseFunctionalObjectPropertyAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public InverseFunctionalObjectPropertyAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleInverseFunctionalObjectPropertyAxiom(objectProperty, mergeAnnos(annotations));
 	}

@@ -1,9 +1,9 @@
 package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.propertyexpression.ObjectInverseOf;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 
-import com.google.common.base.Preconditions;
 
 public class SimpleObjectInverseOf 
 	extends SimpleObjectPropertyExpression
@@ -12,9 +12,9 @@ public class SimpleObjectInverseOf
 	
 	private ObjectPropertyExpression inverseProperty;
 	
-	public SimpleObjectInverseOf(ObjectPropertyExpression inverseProperty)
+	public SimpleObjectInverseOf(@Nonnull ObjectPropertyExpression inverseProperty)
 	{
-		this.inverseProperty = Preconditions.checkNotNull(inverseProperty, "InverseProperty cannot be null");
+		this.inverseProperty = inverseProperty;
 	}
 	
 

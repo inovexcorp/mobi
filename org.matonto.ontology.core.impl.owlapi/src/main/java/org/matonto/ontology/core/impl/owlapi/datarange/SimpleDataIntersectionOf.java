@@ -3,11 +3,9 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.DataIntersectionOf;
 import org.matonto.ontology.core.api.datarange.DataRange;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.DataRangeType;
 
 
@@ -16,9 +14,9 @@ public class SimpleDataIntersectionOf implements DataIntersectionOf {
 	
 	private Set<DataRange> operands;
 	
-	public SimpleDataIntersectionOf(Set<DataRange> operands)
+	public SimpleDataIntersectionOf(@Nonnull Set<DataRange> operands)
 	{
-		this.operands = new TreeSet<DataRange>(Preconditions.checkNotNull(operands, "operands cannot be null"));
+		this.operands = new TreeSet<DataRange>(operands);
 	}
 	
 	

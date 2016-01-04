@@ -1,11 +1,11 @@
 package org.matonto.ontology.core.api.axiom;
 
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
-import org.matonto.ontology.core.api.OntologyIRI;
+import org.matonto.rdf.api.IRI;
 
 public interface AnnotationPropertyRangeAxiom extends AnnotationAxiom {
 
-	OntologyIRI getRange();
+	IRI getRange();
 	
 	AnnotationProperty getProperty();
 }

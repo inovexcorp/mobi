@@ -1,14 +1,13 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.axiom.NegativeObjectPropertyAssertionAxiom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleNegativeObjectPropertyAssertionAxiom 
 	extends SimpleAxiom
@@ -20,12 +19,12 @@ public class SimpleNegativeObjectPropertyAssertionAxiom
 	private Individual object;
 	
 	
-	public SimpleNegativeObjectPropertyAssertionAxiom(Individual subject, ObjectPropertyExpression property, Individual object, Set<Annotation> annotations) 
+	public SimpleNegativeObjectPropertyAssertionAxiom(@Nonnull Individual subject, @Nonnull ObjectPropertyExpression property, @Nonnull Individual object, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.subject = Preconditions.checkNotNull(subject, "subject cannot be null");
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
-		this.object = Preconditions.checkNotNull(object, "object cannot be null");
+		this.subject = subject;
+		this.property = property;
+		this.object = object;
 	}
 
 	
@@ -40,7 +39,7 @@ public class SimpleNegativeObjectPropertyAssertionAxiom
 
 	
 	@Override
-	public NegativeObjectPropertyAssertionAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public NegativeObjectPropertyAssertionAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleNegativeObjectPropertyAssertionAxiom(subject, property, object, mergeAnnos(annotations));
 	}

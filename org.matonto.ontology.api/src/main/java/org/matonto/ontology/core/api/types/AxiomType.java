@@ -1,5 +1,7 @@
 package org.matonto.ontology.core.api.types;
 
+import javax.annotation.Nonnull;
+
 
 public enum AxiomType {
 
@@ -48,7 +50,7 @@ public enum AxiomType {
 	private final boolean nonSyntacticOWL2Axiom;
 	private final boolean isLogical;
    
-	AxiomType(String name, boolean owl2Axiom, boolean nonSyntacticOWL2Axiom, boolean isLogical) {
+	AxiomType(@Nonnull String name, boolean owl2Axiom, boolean nonSyntacticOWL2Axiom, boolean isLogical) {
 		this.name = name;
 		this.owl2Axiom = owl2Axiom;
 		this.nonSyntacticOWL2Axiom = nonSyntacticOWL2Axiom;

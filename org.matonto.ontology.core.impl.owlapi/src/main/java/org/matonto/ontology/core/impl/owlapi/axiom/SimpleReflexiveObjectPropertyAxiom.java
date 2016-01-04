@@ -1,13 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 import org.matonto.ontology.core.api.axiom.ReflexiveObjectPropertyAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleReflexiveObjectPropertyAxiom 
 	extends SimpleAxiom 
@@ -17,10 +16,10 @@ public class SimpleReflexiveObjectPropertyAxiom
 	private ObjectPropertyExpression objectProperty;
 	
 	
-	public SimpleReflexiveObjectPropertyAxiom(ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
+	public SimpleReflexiveObjectPropertyAxiom(@Nonnull ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.objectProperty = Preconditions.checkNotNull(objectProperty, "objectProperty cannot be null");
+		this.objectProperty = objectProperty;
 	}
 	
 
@@ -35,7 +34,7 @@ public class SimpleReflexiveObjectPropertyAxiom
 
 	
 	@Override
-	public ReflexiveObjectPropertyAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public ReflexiveObjectPropertyAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleReflexiveObjectPropertyAxiom(objectProperty, mergeAnnos(annotations));
 	}

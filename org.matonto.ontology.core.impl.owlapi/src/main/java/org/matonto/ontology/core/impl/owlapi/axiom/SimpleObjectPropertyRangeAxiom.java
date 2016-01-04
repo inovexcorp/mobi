@@ -1,13 +1,11 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 import org.matonto.ontology.core.api.axiom.ObjectPropertyRangeAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -20,11 +18,11 @@ public class SimpleObjectPropertyRangeAxiom
 	private ClassExpression range;
 	
 	
-	public SimpleObjectPropertyRangeAxiom(ObjectPropertyExpression objectProperty, ClassExpression range, Set<Annotation> annotations) 
+	public SimpleObjectPropertyRangeAxiom(@Nonnull ObjectPropertyExpression objectProperty, @Nonnull ClassExpression range, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.objectProperty = Preconditions.checkNotNull(objectProperty, "objectProperty cannot be null");
-		this.range = Preconditions.checkNotNull(range, "range cannot be null");
+		this.objectProperty = objectProperty;
+		this.range = range;
 	}
 
 	
@@ -39,7 +37,7 @@ public class SimpleObjectPropertyRangeAxiom
 
 	
 	@Override
-	public ObjectPropertyRangeAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public ObjectPropertyRangeAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleObjectPropertyRangeAxiom(objectProperty, range, mergeAnnos(annotations));
 	}
