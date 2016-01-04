@@ -52,15 +52,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Activate
     public void activate(final Map<String, Object> properties) {
         LOG.info("Activating " + COMPONENT_NAME);
-        
-        if (properties.containsKey("repositoryId")) {
-            getRepository((String)properties.get("repositoryId"));
-            LOG.info("repositoryId - " + properties.get("repositoryId"));
-            initOntologyRegistry();
-        } else {
-            LOG.error("Unable to activate Ontology Manager: Unable to set repositoryId");
-            throw new IllegalStateException("Unable to set repositoryId");
-        }
+        setPropertyValues(properties);
     }
  
     @Deactivate
@@ -71,11 +63,17 @@ public class SimpleOntologyManager implements OntologyManager {
     @Modified
     public void modified(final Map<String, Object> properties) {
         LOG.info("Modifying the " + COMPONENT_NAME);
-        
+        setPropertyValues(properties);
+    }
+    
+    private void setPropertyValues(Map<String, Object> properties) {
         if (properties.containsKey("repositoryId") && !properties.get("repositoryId").equals("")) {
             getRepository((String)properties.get("repositoryId"));
             LOG.info("repositoryId - " + properties.get("repositoryId"));
             initOntologyRegistry();
+        } else {
+            LOG.error("Unable to activate Ontology Manager: Unable to set repositoryId");
+            throw new IllegalStateException("Unable to set repositoryId");
         }
     }
 

@@ -13,7 +13,7 @@
 
 ### Set repository ID on Karaf commandline commands as following:
 ```
-config:edit OntologyManager
+config:edit org.matonto.ontology.core.OntologyManager
 config:property-set repositoryId "{repositoryId in the repository config file}"
 config:update
 
