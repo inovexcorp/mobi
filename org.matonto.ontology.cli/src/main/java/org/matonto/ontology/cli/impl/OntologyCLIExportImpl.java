@@ -49,10 +49,10 @@ public class OntologyCLIExportImpl implements Action
 	@Argument(index = 0, name = "ontologyId", description = "The ontology id/context id for the ontology named graph to be exported", required = true, multiValued = false)
 	String ontologyId = null;
 
-	@Argument(index = 2, name = "DataFormat", description = "The data format of the ontology being exported. Supported data formats are: RDF(rdf/xml), OWL(owl/xml) and TURTLE (default type)", required = true)
+	@Argument(index = 1, name = "DataFormat", description = "The data format of the ontology being exported. Supported data formats are: RDF(rdf/xml), OWL(owl/xml) and TURTLE (default type)", required = true)
 	String dataFormat = null;
 	
-	@Argument(index = 3, name = "exportToFile", description = "The file where exported ontology to be stored", required = true, multiValued = false)
+	@Argument(index = 2, name = "exportToFile", description = "The file where exported ontology to be stored", required = true, multiValued = false)
 	String toFile = null;
 	
 	
