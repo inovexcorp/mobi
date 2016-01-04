@@ -21,9 +21,8 @@
         <bnd-maven.version>3.0.0</bnd-maven.version>
         <bndlib.version>3.0.0</bndlib.version>
         <commons-lang3.version>3.4</commons-lang3.version>
-        <openrdf.version>4.0.0</openrdf.version>
-        <etl.openrdf.version>4.0.0</etl.openrdf.version>
-        <ontology.openrdf.version>2.8.6</ontology.openrdf.version>
+        <ontology.openrdf.version>2.7.16</ontology.openrdf.version>
+        <openrdf.version>4.0.1</openrdf.version>
         <owlapi.version>4.1.3</owlapi.version>
         <karaf.version>4.0.2</karaf.version>
 
@@ -75,6 +74,11 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>ontology.api</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.matonto</groupId>
+                <artifactId>ontology.utils</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -266,9 +270,9 @@
                 </executions>
             </plugin>
             <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-release-plugin</artifactId>-->
-                <!--<version>2.8.2</version>-->
+            <!--<groupId>org.apache.maven.plugins</groupId>-->
+            <!--<artifactId>maven-release-plugin</artifactId>-->
+            <!--<version>2.8.2</version>-->
             <!--</plugin>-->
         </plugins>
     </build>

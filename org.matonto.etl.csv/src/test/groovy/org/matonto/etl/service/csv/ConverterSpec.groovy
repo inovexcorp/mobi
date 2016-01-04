@@ -1,6 +1,5 @@
 package org.matonto.etl.service.csv
 
-import org.matonto.etl.api.rdf.RDFImportService
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.api.ModelFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel
@@ -144,26 +143,6 @@ class ConverterSpec extends Specification {
         "12345"             | ""
 
 
-    }
-
-
-    def "File Imported"(){
-        setup:
-        File csv = new ClassPathResource("testFile.csv").getFile();
-        File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
-        RDFImportService importService = Mock()
-        CSVConverterImpl csvConverter = new CSVConverterImpl()
-        csvConverter.setImportService(importService)
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
-        csvConverter.setValueFactory(vf)
-        csvConverter.setModelFactory(mf);
-
-        when:
-        csvConverter.importCSV(csv, mappingFile, "test")
-
-        then:
-        noExceptionThrown()
     }
 
     def "Invalid RDF Causes RDFParseException"(){

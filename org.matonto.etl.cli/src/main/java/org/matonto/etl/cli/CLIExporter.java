@@ -1,6 +1,5 @@
 package org.matonto.etl.cli;
 
-import java.io.File;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -20,7 +19,7 @@ public class CLIExporter implements Action {
     String repositoryId = null;
 
     @Argument(index = 1, name = "file", description = "The file to be imported into the repository", required = true)
-    File file = null;
+    String filepath = null;
 
     @Option( name = "-subj", aliases="--subject", description = "A subject that all exported triples will be restricted to.")
     String subj = null;
@@ -41,7 +40,7 @@ public class CLIExporter implements Action {
     @Override
     public Object execute() throws Exception {
 
-        exportService.exportToFile(repositoryId, file, subj, predicate, objIRI, objLit);
+        exportService.exportToFile(repositoryId, filepath, subj, predicate, objIRI, objLit);
 
         return null;
     }

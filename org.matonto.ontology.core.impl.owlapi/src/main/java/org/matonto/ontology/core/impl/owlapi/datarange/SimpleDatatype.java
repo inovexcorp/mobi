@@ -2,32 +2,28 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.Datatype;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.DataRangeType;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
-import org.semanticweb.owlapi.model.IRI;
+import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
+import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
-
-import com.google.common.base.Preconditions;
-
-import uk.ac.manchester.cs.owl.owlapi.OWL2DatatypeImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLDatatypeImpl;
+
 
 public class SimpleDatatype implements Datatype {
 	
-	private OntologyIRI iri;
+	private IRI iri;
 	private OWLDatatype owlDatatype;
 	private OWL2Datatype owl2Datatype;
 
 	
-	public SimpleDatatype(OntologyIRI iri)
+	public SimpleDatatype(@Nonnull IRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
-		IRI owlIri = SimpleIRI.owlapiIRI(iri);
+		this.iri = iri;
+		org.semanticweb.owlapi.model.IRI owlIri = SimpleOntologyValues.owlapiIRI(iri);
 		owlDatatype = new OWLDatatypeImpl(owlIri);
 		owl2Datatype = OWL2Datatype.getDatatype(owlIri);
 	}
@@ -76,7 +72,7 @@ public class SimpleDatatype implements Datatype {
 	
 	
 	@Override
-	public OntologyIRI getIRI()
+	public IRI getIRI()
 	{
 		return iri;
 	}
@@ -89,12 +85,12 @@ public class SimpleDatatype implements Datatype {
 	}
 	
 	
-	public static Set<OntologyIRI> getDatatypeIRIs()
+	public static Set<IRI> getDatatypeIRIs()
 	{
-		Set<OntologyIRI> matontoIris = new HashSet<OntologyIRI>();
-		Set<IRI> owlapiIris = OWL2Datatype.getDatatypeIRIs();
-		for(IRI i : owlapiIris) {
-			matontoIris.add(SimpleIRI.matontoIRI(i));
+		Set<IRI> matontoIris = new HashSet<IRI>();
+		Set<org.semanticweb.owlapi.model.IRI> owlapiIris = OWL2Datatype.getDatatypeIRIs();
+		for(org.semanticweb.owlapi.model.IRI i : owlapiIris) {
+			matontoIris.add(SimpleOntologyValues.matontoIRI(i));
 		}
 		
 		return matontoIris;
@@ -116,25 +112,6 @@ public class SimpleDatatype implements Datatype {
 	public String getPrefixedName()
 	{
 		return owl2Datatype.getPrefixedName();
-	}
-	
-	
-	public static OWLDatatype owlapiDatatype(Datatype datatype)
-	{
-		return new OWLDatatypeImpl(SimpleIRI.owlapiIRI(datatype.getIRI()));
-	}
-	
-	
-	public static SimpleDatatype matontoDatatype(OWLDatatype owlDatatype)
-	{
-		if(owlDatatype instanceof OWLDatatypeImpl)
-			return new SimpleDatatype(SimpleIRI.matontoIRI(((OWLDatatypeImpl)owlDatatype).getIRI()));
-		
-		else if(owlDatatype instanceof OWL2DatatypeImpl)
-			return new SimpleDatatype(SimpleIRI.matontoIRI(((OWL2DatatypeImpl)owlDatatype).getIRI()));
-		
-		else
-			return null;
 	}
 	
 	

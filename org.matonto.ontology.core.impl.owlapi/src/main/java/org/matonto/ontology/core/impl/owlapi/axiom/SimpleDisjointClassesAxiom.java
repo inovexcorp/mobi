@@ -3,13 +3,12 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.axiom.DisjointClassesAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleDisjointClassesAxiom 
 	extends SimpleClassAxiom 
@@ -18,10 +17,10 @@ public class SimpleDisjointClassesAxiom
 	private Set<ClassExpression> expressions;
 	
 	
-	public SimpleDisjointClassesAxiom(Set<ClassExpression> expressions, Set<Annotation> annotations) 
+	public SimpleDisjointClassesAxiom(@Nonnull Set<ClassExpression> expressions, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.expressions = new TreeSet<ClassExpression>(Preconditions.checkNotNull(expressions, "expressions cannot be null"));
+		this.expressions = new TreeSet<ClassExpression>(expressions);
 	}
 
 	
@@ -43,7 +42,7 @@ public class SimpleDisjointClassesAxiom
 	
 	
 	@Override
-	public DisjointClassesAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public DisjointClassesAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleDisjointClassesAxiom(expressions, mergeAnnos(annotations));
 	}

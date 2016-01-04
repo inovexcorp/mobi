@@ -1,13 +1,8 @@
-/**
- * @desc custom widget directive which will pull data from a web app URL
- * @example <div custom-widget></div>
- */
-
 (function() {
     'use strict';
 
     angular
-        .module('app')
+        .module('file-input', [])
         .directive('fileInput', fileInput);
 
     fileInput.$inject = ['$parse'];
@@ -31,7 +26,7 @@
                             onChange(scope);
                         });
                     };
-
+                // binds the change event to the element
                 element.bind('change', updateModel);
             }
         }

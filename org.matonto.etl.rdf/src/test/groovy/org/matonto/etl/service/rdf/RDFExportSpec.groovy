@@ -1,5 +1,7 @@
 package org.matonto.etl.service.rdf
 
+import org.matonto.rdf.api.ModelFactory
+import org.matonto.rdf.core.impl.sesame.LinkedHashModel
 import org.matonto.repository.api.RepositoryManager
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
@@ -19,7 +21,7 @@ class RDFExportSpec extends Specification {
         File textFile = new ClassPathResource("exporter/testFile.nq").getFile()
 
         when:
-        ex.exportToFile("cli-rdf-service", textFile)
+        ex.exportToFile("cli-rdf-service", "exporter/testFile.nq")
 
         then:
         1 * rm.getRepository("cli-rdf-service") >> Optional.empty();
@@ -33,7 +35,7 @@ class RDFExportSpec extends Specification {
         textFile.setReadOnly()
 
         when:
-        exportService.exportToFile("test", textFile)
+        exportService.exportToFile("test", "exporter/testFile.txt")
 
         then:
         thrown IOException
@@ -46,7 +48,7 @@ class RDFExportSpec extends Specification {
         textFile.setWritable(true)
 
         when:
-        exportService.exportToFile("test", textFile)
+        exportService.exportToFile("test", "exporter/testFile.txt")
 
         then:
         thrown IOException
@@ -60,15 +62,18 @@ class RDFExportSpec extends Specification {
         Repository repo = Mock()
         RepositoryConnection connection = Mock()
         RepositoryResult result = Mock()
+        ModelFactory mf = Mock()
+        exportService.setModelFactory(mf)
 
         when:
         exportService.setRepositoryManager(manager)
-        exportService.exportToFile("test", testFile)
+        exportService.exportToFile("test", testFile.absolutePath)
 
         then:
         1 * manager.getRepository("test") >> Optional.of(repo)
         1 * repo.getConnection() >> connection
         1 * connection.getStatements(null, null, null) >> result
+        1 * mf.createModel() >> new LinkedHashModel()
     }
 
 }

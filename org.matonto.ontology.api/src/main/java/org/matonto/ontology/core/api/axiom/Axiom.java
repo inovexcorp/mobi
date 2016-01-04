@@ -1,10 +1,11 @@
 package org.matonto.ontology.core.api.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.OWLObject;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public interface Axiom extends OWLObject {
 
@@ -14,7 +15,7 @@ public interface Axiom extends OWLObject {
 	
 	Axiom getAxiomWithoutAnnotations();
 	
-	Axiom getAnnotatedAxiom(Set<Annotation> annotations);
+	Axiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations);
 	
 	AxiomType getAxiomType();
 }

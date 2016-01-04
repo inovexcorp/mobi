@@ -1,38 +1,48 @@
 package org.matonto.ontology.core.api.types;
 
-
 import java.util.HashSet;
 import java.util.Set;
-
-import org.matonto.ontology.core.api.OntologyIRI;
-import org.semanticweb.owlapi.vocab.Namespaces;
-
-import com.google.common.base.Preconditions;
-
+import javax.annotation.Nonnull;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
+import aQute.bnd.annotation.component.Reference;
 
 public enum Facet {
-	LENGTH(Namespaces.XSD, "length", "length"),
-	MIN_LENGTH(Namespaces.XSD, "minLength", "minLength"), 
-	MAX_LENGTH(Namespaces.XSD, "maxLength", "maxLength"), 
-	PATTERN(Namespaces.XSD, "pattern", "pattern"), 
-	MIN_INCLUSIVE(Namespaces.XSD, "minInclusive", ">="), 
-	MIN_EXCLUSIVE(Namespaces.XSD, "minExclusive", ">"), 
-	MAX_INCLUSIVE(Namespaces.XSD, "maxInclusive", "<="), 
-	MAX_EXCLUSIVE(Namespaces.XSD, "maxExclusive", "<"), 
-	TOTAL_DIGITS(Namespaces.XSD, "totalDigits", "totalDigits"), 
-	FRACTION_DIGITS(Namespaces.XSD, "fractionDigits", "fractionDigits"), 
-	LANG_RANGE(Namespaces.RDF, "langRange", "langRange");
+	LENGTH("http://www.w3.org/2001/XMLSchema#", "xsd", "length", "length"),
+	MIN_LENGTH("http://www.w3.org/2001/XMLSchema#", "xsd", "minLength", "minLength"), 
+	MAX_LENGTH("http://www.w3.org/2001/XMLSchema#", "xsd", "maxLength", "maxLength"), 
+	PATTERN("http://www.w3.org/2001/XMLSchema#", "xsd", "pattern", "pattern"), 
+	MIN_INCLUSIVE("http://www.w3.org/2001/XMLSchema#", "xsd", "minInclusive", ">="), 
+	MIN_EXCLUSIVE("http://www.w3.org/2001/XMLSchema#", "xsd", "minExclusive", ">"), 
+	MAX_INCLUSIVE("http://www.w3.org/2001/XMLSchema#", "xsd", "maxInclusive", "<="), 
+	MAX_EXCLUSIVE("http://www.w3.org/2001/XMLSchema#", "xsd", "maxExclusive", "<"), 
+	TOTAL_DIGITS("http://www.w3.org/2001/XMLSchema#", "xsd", "totalDigits", "totalDigits"), 
+	FRACTION_DIGITS("http://www.w3.org/2001/XMLSchema#", "xsd", "fractionDigits", "fractionDigits"), 
+	LANG_RANGE("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf", "langRange", "langRange");
 	
-//	private final OntologyIRI iri;
+	private final IRI iri;
 	private final String shortForm;	
 	private final String symbolicForm;	
 	private final String prefixedName;
+	private static ValueFactory factory;
 	
-	Facet(Namespaces ns, String shortForm, String symbolicForm) {
-//		iri = SimpleIRI.create(ns.toString(), shortForm);
+	@Reference
+	protected void setValueFactory(final ValueFactory vf)
+	{
+	    factory = vf;
+	}
+	
+	Facet(@Nonnull String ns, @Nonnull String nsPrefix,@Nonnull String shortForm, @Nonnull String symbolicForm) 
+	{
+		iri = createIRI(ns.toString(), shortForm);
 		this.shortForm = shortForm;
 		this.symbolicForm = symbolicForm;
-		prefixedName = (ns.getPrefixName() + ':' + shortForm);
+		prefixedName = (nsPrefix + ':' + shortForm);
+	}
+	
+	private IRI createIRI(String namespace, String localName)
+	{
+	    return factory.createIRI(namespace.toString(), localName);
 	}
 	   
 	public String getShortForm()
@@ -40,10 +50,10 @@ public enum Facet {
 		return shortForm;
 	}
 
-//	public OntologyIRI getOntologyIRI()
-//	{
-//		return iri;
-//	}
+	public IRI getOntologyIRI()
+	{
+		return iri;
+	}
 	
 	public String getSymbolicForm()
 	{
@@ -61,14 +71,14 @@ public enum Facet {
 		return getShortForm();
 	}
 
-//	public static Set<OntologyIRI> getFacetIRIs()
-//	{
-//		Set<OntologyIRI> iris = new HashSet<OntologyIRI>();
-//		for (Facet v : values()) {
-//			iris.add(v.getOntologyIRI());
-//		}
-//		return iris;
-//	}
+	public static Set<IRI> getFacetIRIs()
+	{
+		Set<IRI> iris = new HashSet<IRI>();
+		for (Facet v : values()) {
+			iris.add(v.getOntologyIRI());
+		}
+		return iris;
+	}
 
 	public static Set<String> getFacets()
 	{
@@ -79,20 +89,18 @@ public enum Facet {
 		return result;
 	}
 
-//	public static Facet getFacet(OntologyIRI iri)
-//	{
-//		Preconditions.checkNotNull(iri, "iri cannot be null");
-//		for (Facet vocabulary : values()) {
-//			if (vocabulary.getOntologyIRI().equals(iri)) {
-//				return vocabulary;
-//			}
-//		}
-//		throw new IllegalArgumentException("Unknown facet: " + iri);
-//	}
-//
-	public static Facet getFacetByShortName(String shortName)
+	public static Facet getFacet(@Nonnull IRI iri)
 	{
-		Preconditions.checkNotNull(shortName);
+		for (Facet vocabulary : values()) {
+			if (vocabulary.getOntologyIRI().equals(iri)) {
+				return vocabulary;
+			}
+		}
+		throw new IllegalArgumentException("Unknown facet: " + iri);
+	}
+
+	public static Facet getFacetByShortName(@Nonnull String shortName)
+	{
 		for (Facet vocabulary : values()) {
 			if (vocabulary.getShortForm().equals(shortName)) {
 				return vocabulary;
@@ -101,7 +109,7 @@ public enum Facet {
 		return null;
 	}
 
-	public static Facet getFacetBySymbolicName(String symbolicName)
+	public static Facet getFacetBySymbolicName(@Nonnull String symbolicName)
 	{
 		for (Facet vocabulary : values()) {
 			if (vocabulary.getSymbolicForm().equals(symbolicName)) {

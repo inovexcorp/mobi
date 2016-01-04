@@ -1,12 +1,10 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.axiom.InverseObjectPropertiesAxiom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -18,11 +16,11 @@ public class SimpleInverseObjectPropertiesAxiom
 	private ObjectPropertyExpression firstProperty;
 	private ObjectPropertyExpression secondProperty;
 	
-	public SimpleInverseObjectPropertiesAxiom(ObjectPropertyExpression firstProperty, ObjectPropertyExpression secondProperty, Set<Annotation> annotations) 
+	public SimpleInverseObjectPropertiesAxiom(@Nonnull ObjectPropertyExpression firstProperty, @Nonnull ObjectPropertyExpression secondProperty, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.firstProperty = Preconditions.checkNotNull(firstProperty, "firstProperty cannot be null");
-		this.secondProperty = Preconditions.checkNotNull(secondProperty, "secondProperty cannot be null");
+		this.firstProperty = firstProperty;
+		this.secondProperty = secondProperty;
 	}
 
 	
@@ -37,7 +35,7 @@ public class SimpleInverseObjectPropertiesAxiom
 
 	
 	@Override
-	public InverseObjectPropertiesAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public InverseObjectPropertiesAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleInverseObjectPropertiesAxiom(firstProperty, secondProperty, mergeAnnos(annotations));
 	}

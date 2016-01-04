@@ -2,20 +2,14 @@ package org.matonto.etl.cli;
 
 import java.io.File;
 import java.io.IOException;
-
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.apache.felix.service.command.CommandSession;
-import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.log4j.Logger;
-import org.openrdf.repository.RepositoryException;
 import org.matonto.etl.api.rdf.RDFImportService;
-import org.matonto.etl.api.csv.CSVConverter;
-import org.openrdf.rio.RDFParseException;
 
 @Command(scope = "matonto", name = "import", description = "Imports objects to a repository")
 @Service

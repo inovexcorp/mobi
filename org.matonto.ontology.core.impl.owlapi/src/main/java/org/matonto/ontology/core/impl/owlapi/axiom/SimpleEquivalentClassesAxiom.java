@@ -3,13 +3,12 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.axiom.EquivalentClassesAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleEquivalentClassesAxiom 
 	extends SimpleClassAxiom 
@@ -19,10 +18,10 @@ public class SimpleEquivalentClassesAxiom
 	private Set<ClassExpression> expressions;
 	
 	
-	public SimpleEquivalentClassesAxiom(Set<ClassExpression> expressions, Set<Annotation> annotations) 
+	public SimpleEquivalentClassesAxiom(@Nonnull Set<ClassExpression> expressions, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.expressions = new TreeSet<ClassExpression>(Preconditions.checkNotNull(expressions, "expressions cannot be null"));
+		this.expressions = new TreeSet<ClassExpression>(expressions);
 	}
 
 	
@@ -44,7 +43,7 @@ public class SimpleEquivalentClassesAxiom
 	
 	
 	@Override
-	public EquivalentClassesAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public EquivalentClassesAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleEquivalentClassesAxiom(expressions, mergeAnnos(annotations));
 	}

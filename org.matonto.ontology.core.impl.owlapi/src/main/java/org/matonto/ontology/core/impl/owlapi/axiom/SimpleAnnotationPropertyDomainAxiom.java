@@ -1,14 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.axiom.AnnotationPropertyDomainAxiom;
-import org.matonto.ontology.core.api.OntologyIRI;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+import org.matonto.rdf.api.IRI;
 
 
 public class SimpleAnnotationPropertyDomainAxiom 
@@ -16,15 +14,15 @@ public class SimpleAnnotationPropertyDomainAxiom
 	implements AnnotationPropertyDomainAxiom {
 
 	
-	private OntologyIRI domain;
+	private IRI domain;
 	private AnnotationProperty property;
 	
 	
-	public SimpleAnnotationPropertyDomainAxiom(OntologyIRI domain, AnnotationProperty property, Set<Annotation> annotations) 
+	public SimpleAnnotationPropertyDomainAxiom(IRI domain, @Nonnull AnnotationProperty property, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.domain = Preconditions.checkNotNull(domain, "domain cannot be null");
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
+		this.domain = domain;
+		this.property = property;
 	}
 
 	
@@ -39,7 +37,7 @@ public class SimpleAnnotationPropertyDomainAxiom
 	
 
 	@Override
-	public AnnotationPropertyDomainAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public AnnotationPropertyDomainAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleAnnotationPropertyDomainAxiom(domain, property, mergeAnnos(annotations));
 	}
@@ -53,7 +51,7 @@ public class SimpleAnnotationPropertyDomainAxiom
 
 	
 	@Override
-	public OntologyIRI getDomain() 
+	public IRI getDomain() 
 	{
 		return domain;
 	}

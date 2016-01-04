@@ -1,12 +1,10 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.axiom.FunctionalDataPropertyAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -18,10 +16,10 @@ public class SimpleFunctionalDataPropertyAxiom
 	public DataPropertyExpression property;
 	
 	
-	public SimpleFunctionalDataPropertyAxiom(DataPropertyExpression property, Set<Annotation> annotations) 
+	public SimpleFunctionalDataPropertyAxiom(@Nonnull DataPropertyExpression property, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
+		this.property = property;
 	}
 
 	
@@ -36,7 +34,7 @@ public class SimpleFunctionalDataPropertyAxiom
 	
 
 	@Override
-	public FunctionalDataPropertyAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public FunctionalDataPropertyAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleFunctionalDataPropertyAxiom(property, mergeAnnos(annotations));
 	}

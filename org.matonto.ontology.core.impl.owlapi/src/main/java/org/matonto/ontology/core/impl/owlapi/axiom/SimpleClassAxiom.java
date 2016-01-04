@@ -1,7 +1,7 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.axiom.ClassAxiom;
 import org.matonto.ontology.core.api.types.AxiomType;
@@ -48,7 +48,7 @@ public class SimpleClassAxiom extends SimpleAxiom implements ClassAxiom {
 
 
 	@Override
-	public ClassAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public ClassAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleClassAxiom(mergeAnnos(annotations));
 	}

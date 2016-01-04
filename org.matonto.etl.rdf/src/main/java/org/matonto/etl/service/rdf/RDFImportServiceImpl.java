@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.matonto.etl.api.rdf.RDFImportService;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.core.utils.Values;
@@ -16,7 +16,6 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.exception.RepositoryException;
-import org.openrdf.model.Model;
 import org.openrdf.rio.*;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -71,7 +70,7 @@ public class RDFImportServiceImpl implements RDFImportService {
             parserConfig.addNonFatalError(BasicParserSettings.NORMALIZE_DATATYPE_VALUES);
         }
         parser.setParserConfig(parserConfig);
-        Model m = new org.openrdf.model.impl.LinkedHashModel();
+        org.openrdf.model.Model m = new org.openrdf.model.impl.LinkedHashModel();
         parser.setRDFHandler(new StatementCollector(m));
         try {
             parser.parse(new FileReader(file), "");
@@ -79,24 +78,27 @@ public class RDFImportServiceImpl implements RDFImportService {
             throw new RDFParseException(e);
         }
 
-        importModel(repositoryID, m);
+        importModel(repositoryID, matontoModel(m));
 
     }
 
     public void importModel(String repositoryID, Model m) {
         Optional<Repository> optRepo = repositoryManager.getRepository(repositoryID);
+
         if (optRepo.isPresent()) {
-            Set<Statement> stmts = m.stream()
-                    .map(Values::matontoStatement)
-                    .collect(Collectors.toSet());
-
-            org.matonto.rdf.api.Model matontoModel = modelFactory.createModel(stmts);
-
             RepositoryConnection conn = optRepo.get().getConnection();
-            conn.add(matontoModel);
+            conn.add(m);
         } else {
             throw new IllegalArgumentException("Repository does not exist");
         }
+    }
+
+    Model matontoModel(org.openrdf.model.Model m){
+        Set<Statement> stmts = m.stream()
+                .map(Values::matontoStatement)
+                .collect(Collectors.toSet());
+
+        return modelFactory.createModel(stmts);
     }
 
 }

@@ -2,52 +2,41 @@
 @import "./src/main/resources/public/css/vendor/bootstrap/variables";
 
 .ontology-editor {
+    /* aligns the buttons with the box corners */
     .btn-group-justified {
-        margin: -1px;
-        width: auto;
+        z-index: 3;
     }
 
+    /* removes the rounded corners so it fits in the box provided */
     .btn-group > .btn {
         border-radius: 0;
     }
 
     /* Styles for the right side of the page */
     .editor {
-        /* Pads the outside of the tab elements */
-        .tab {
-            padding: 15px 15px 0;
+        height: 100%;
 
-            // if the buttons being shown are inside the tab, remove the left and right padding
-            .btn-container {
-                padding: 0 0 15px;
+        /* Makes the prefix box shorter than the value box */
+        .tab table thead .prefix-col {
+            width: 30%;
+        }
+
+        /* Stops the user from resizing the textarea */
+        form {
+            height: 100%;
+
+            /* Don't let them change the height of the textareas */
+            textarea {
+                resize: vertical;
             }
-        }
 
-        /* Styles the header for each of the editing panels */
-        h4 {
-            background-color: $brand-primary;
-            color: #fff;
-            margin: -16px -16px 10px;
-            padding: 10px 16px 10px;
-
-            small {
-                color: inherit;
+            /* Styles for the sub classes configured */
+            .static-list-item {
+                border-radius: 3px;
+                display: inline-block;
+                margin: 0 5px 5px 0;
+                padding: 2px 5px;
             }
-        }
-
-        /* Only lets the user resize textareas vertically */
-        form textarea {
-            resize: vertical;
-        }
-
-        /* Adds the alignment for the table error message */
-        .table-warning {
-            margin-top: -20px;
-        }
-
-        /* Matches the padding with the rest of the page */
-        .btn-container {
-            padding: 0 15px 15px;
         }
 
         /* Annotation styles */

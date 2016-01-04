@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('nav', [])
         .controller('NavController', NavController);
 
     NavController.$inject = ['$state'];

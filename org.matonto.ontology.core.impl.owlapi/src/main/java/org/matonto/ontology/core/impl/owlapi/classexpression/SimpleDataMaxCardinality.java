@@ -1,16 +1,17 @@
 package org.matonto.ontology.core.impl.owlapi.classexpression;
 
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.DataMaxCardinality;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
+
 public class SimpleDataMaxCardinality 
 	extends SimpleDataCardinalityRestriction 
 	implements DataMaxCardinality {
-
 	
-	public SimpleDataMaxCardinality(DataPropertyExpression property, int cardinality, DataRange dataRange) 
+	public SimpleDataMaxCardinality(@Nonnull DataPropertyExpression property, int cardinality, @Nonnull DataRange dataRange) 
 	{
 		super(property, cardinality, dataRange);
 	}

@@ -2,22 +2,20 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectComplementOf;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 
 public class SimpleObjectComplementOf 
 	implements ObjectComplementOf {
 
-	
 	private ClassExpression operand;
 	
-	public SimpleObjectComplementOf(ClassExpression operand) 
+	public SimpleObjectComplementOf(@Nonnull ClassExpression operand) 
 	{
-		this.operand = Preconditions.checkNotNull(operand, "operand cannot be null");
+		this.operand = operand;
 	}
 
 	
@@ -44,7 +42,7 @@ public class SimpleObjectComplementOf
 	
 	
 	@Override
-	public boolean containsConjunct(ClassExpression ce)
+	public boolean containsConjunct(@Nonnull ClassExpression ce)
 	{
 		return ce.equals(this);
 	}

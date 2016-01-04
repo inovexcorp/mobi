@@ -2,25 +2,22 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.datarange.DatatypeRestriction;
 import org.matonto.ontology.core.api.FacetRestriction;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.DataRangeType;
 
-public class SimpleDatatypeRestriction implements DatatypeRestriction {
 
+public class SimpleDatatypeRestriction implements DatatypeRestriction {
 	
 	private Datatype datatype;
 	private Set<FacetRestriction> facetRestrictions;
 	
-	
-	public SimpleDatatypeRestriction(Datatype datatype, Set<FacetRestriction> facetRestrictions)
+	public SimpleDatatypeRestriction(@Nonnull Datatype datatype, @Nonnull Set<FacetRestriction> facetRestrictions)
 	{
-		this.datatype = Preconditions.checkNotNull(datatype, "datatype cannot be null");
-		this.facetRestrictions = new HashSet<FacetRestriction>(Preconditions.checkNotNull(facetRestrictions, "facetRestrictions cannot be null"));
+		this.datatype = datatype;
+		this.facetRestrictions = new HashSet<FacetRestriction>(facetRestrictions);
 	}
 	
 	

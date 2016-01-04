@@ -5,10 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 
@@ -17,9 +15,9 @@ public class SimpleClassExpression implements ClassExpression {
 	private Set<ClassExpression> operands;
 	
 	
-	public SimpleClassExpression(Set<ClassExpression> operands)
+	public SimpleClassExpression(@Nonnull Set<ClassExpression> operands)
 	{
-		this.operands = new TreeSet<ClassExpression>(Preconditions.checkNotNull(operands, "operands cannot be null"));
+		this.operands = new TreeSet<ClassExpression>(operands);
 	}
 
 	
@@ -69,7 +67,7 @@ public class SimpleClassExpression implements ClassExpression {
 
 
 	@Override
-	public boolean containsConjunct(ClassExpression ce) 
+	public boolean containsConjunct(@Nonnull ClassExpression ce) 
 	{
 		if (ce.equals(this)) {
 			return true;

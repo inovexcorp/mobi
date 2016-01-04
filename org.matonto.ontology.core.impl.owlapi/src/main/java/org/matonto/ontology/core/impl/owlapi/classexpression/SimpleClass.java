@@ -2,38 +2,35 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.OClass;
-import org.matonto.ontology.core.api.OntologyIRI;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
-import org.semanticweb.owlapi.model.IRI;
+import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
+import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
-
-import com.google.common.base.Preconditions;
-
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
+
 
 public class SimpleClass implements OClass {
 
-	private OntologyIRI iri;
+	private IRI iri;
 	private final boolean isThing;
 	private final boolean isNothing;
 	private OWLClass owlClass;
 	
 	
-	public SimpleClass(OntologyIRI iri)
+	public SimpleClass(@Nonnull IRI iri)
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
-		owlClass = new OWLClassImpl(SimpleIRI.owlapiIRI(iri));
+		this.iri = iri;
+		owlClass = new OWLClassImpl(SimpleOntologyValues.owlapiIRI(iri));
 		isThing = owlClass.isOWLThing();
 		isNothing = owlClass.isOWLNothing();
 	}
 	
 	@Override
-	public OntologyIRI getIRI() 
+	public IRI getIRI() 
 	{
 		return iri;
 	}
@@ -66,7 +63,7 @@ public class SimpleClass implements OClass {
 		}
 		
 		if(obj instanceof OClass) {
-			OntologyIRI otherIri = ((OClass) obj).getIRI();
+			IRI otherIri = ((OClass) obj).getIRI();
 			return otherIri.equals(iri);
 		}
 		
@@ -91,7 +88,7 @@ public class SimpleClass implements OClass {
 	
 	
 	@Override
-	public boolean containsConjunct(ClassExpression ce)
+	public boolean containsConjunct(@Nonnull ClassExpression ce)
 	{
 		return ce.equals(this);
 	}
@@ -105,20 +102,5 @@ public class SimpleClass implements OClass {
 		return result;
 	}
 	
-	
-	public static OClass matontoClass(OWLClass owlapiClass)
-	{
-		IRI owlapiIri = owlapiClass.getIRI();
-		OntologyIRI matontoIri = SimpleIRI.matontoIRI(owlapiIri);
-		return new SimpleClass(matontoIri);
-	}
-	
-	
-	public static OWLClass owlapiClass(OClass matontoClass)
-	{
-		OntologyIRI matontoIri = matontoClass.getIRI();
-		IRI owlapiIri = SimpleIRI.owlapiIRI(matontoIri);
-		return new OWLClassImpl(owlapiIri);
-	}
 
 }

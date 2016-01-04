@@ -28,56 +28,47 @@ public class CSVConverterImpl implements CSVConverter {
 
     Map<IRI, ClassMapping> uriToObject;
 
-    //Inject Import and Export Services
-    RDFImportService importService;
-    RDFExportService exportService;
-
+    @Reference
+    public void setValueFactory (ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
+    }
 
     @Reference
-    public void setImportService(RDFImportService importService){this.importService = importService;}
-
-    @Reference
-    public void setExportService(RDFExportService exportService){this.exportService = exportService;}
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory){this.valueFactory = valueFactory;}
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
+    public void setModelFactory (ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
 
 
     @Override
-    public void importCSV(File csv, File mappingFile, String repoID) throws RDFParseException, IOException, RepositoryException {
-        importCSV(csv, parseMapping(mappingFile), repoID);
-    }
-
-
-    @Override
-    public void importCSV(File csv, Model mappingModel, String repoID) throws IOException, RepositoryException {
-        Model converted = convert(csv, mappingModel);
-
-        //Import Converted using rdf.importer
-        importService.importModel(repoID, sesameModel(converted));
-    }
-
-    @Override
-    public void exportCSV(File csv, File mappingFile, File exportFile) throws IOException{
-        exportCSV(csv, parseMapping(mappingFile), exportFile);
-    }
-
-    @Override
-    public void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException{
-        Model converted = convert(csv, mappingModel);
-
-        exportService.exportToFile(sesameModel(converted), exportFile);
-    }
-
-    @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
         return convert(csv, converted);
+    }
+
+    @Override
+    public Model convert(File csv, Model mappingModel) throws IOException {
+        char separator = getSeparator(mappingModel);
+        CSVReader reader = new CSVReader(new FileReader(csv), separator);
+        String[] nextLine;
+
+        Model convertedRDF = modelFactory.createModel();
+
+        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+
+        LOGGER.warn(classMappings);
+        //Skip headers
+        reader.readNext();
+        //Traverse each row and convert column into RDF
+        while ((nextLine = reader.readNext()) != null) {
+            for (ClassMapping cm : classMappings) {
+                convertedRDF.addAll(writeClassToModel(cm,nextLine));
+            }
+            //Reset classMappings
+            for (ClassMapping cm : classMappings) {
+                cm.setInstance(false);
+            }
+        }
+        return convertedRDF;
     }
 
     /**
@@ -110,32 +101,6 @@ public class CSVConverterImpl implements CSVConverter {
         return separator;
     }
 
-
-    @Override
-    public Model convert(File csv, Model mappingModel) throws IOException {
-        char separator = getSeparator(mappingModel);
-        CSVReader reader = new CSVReader(new FileReader(csv), separator);
-        String[] nextLine;
-
-        Model convertedRDF = modelFactory.createModel();
-
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
-
-        LOGGER.warn(classMappings);
-        //Skip headers
-        reader.readNext();
-        //Traverse each row and convert column into RDF
-        while ((nextLine = reader.readNext()) != null) {
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm,nextLine));
-            }
-            //Reset classMappings
-            for (ClassMapping cm : classMappings) {
-                cm.setInstance(false);
-            }
-        }
-        return convertedRDF;
-    }
 
     /**
      * Writes RDF statements based on a class mapping and a line of data from CSV

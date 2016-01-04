@@ -1,16 +1,17 @@
 package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectUnionOf;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 
 public class SimpleObjectUnionOf 
 	extends SimpleClassExpression 
 		implements ObjectUnionOf {
 
-	public SimpleObjectUnionOf(Set<ClassExpression> operands) 
+	public SimpleObjectUnionOf(@Nonnull Set<ClassExpression> operands) 
 	{
 		super(operands);
 	}

@@ -9,7 +9,7 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('nospace', [])
         .filter('nospace', nospace);
 
     function nospace() {

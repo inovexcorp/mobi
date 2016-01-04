@@ -1,7 +1,7 @@
 package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectIntersectionOf;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
@@ -10,9 +10,8 @@ import org.matonto.ontology.core.api.types.ClassExpressionType;
 public class SimpleObjectIntersectionOf 
 	extends SimpleClassExpression
 	implements ObjectIntersectionOf {
-
 	
-	public SimpleObjectIntersectionOf(Set<ClassExpression> operands) 
+	public SimpleObjectIntersectionOf(@Nonnull Set<ClassExpression> operands) 
 	{
 		super(operands);
 	}
