@@ -78,7 +78,7 @@ public class OntologyRestImpl {
 	public Response getAllOntologyIds()
 	{
 		if(manager == null)
-		    return Response.status(412).entity("Ontology manager is null").build();
+		    return Response.status(500).entity("Ontology manager is null").build();
 
 		Map<OntologyId, String> ontologies = manager.getOntologyRegistry();
 		JSONObject json = new JSONObject();
@@ -101,7 +101,7 @@ public class OntologyRestImpl {
     public Response getAllOntologies()
     {
         if(manager == null)
-            return Response.status(412).entity("Ontology manager is null").build();
+            return Response.status(500).entity("Ontology manager is null").build();
 
         Map<OntologyId, String> ontologyRegistry = manager.getOntologyRegistry();
         JSONArray jsonArray = new JSONArray();
@@ -144,7 +144,7 @@ public class OntologyRestImpl {
 							@FormDataParam("ontologyIdStr") String ontologyIdStr)
 	{	     
         if(manager == null)
-            return Response.status(412).entity("Ontology manager is null").build();
+            return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
@@ -183,7 +183,7 @@ public class OntologyRestImpl {
 								@QueryParam("rdfFormat") String rdfFormat) 
 	{	       
         if(manager == null)
-            return Response.status(412).entity("Ontology manager is null").build();
+            return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
@@ -250,7 +250,7 @@ public class OntologyRestImpl {
 										@QueryParam("rdfFormat") String rdfFormat) 
 	{  
         if(manager == null)
-            return Response.status(412).entity("Ontology manager is null").build();
+            return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
@@ -334,7 +334,7 @@ public class OntologyRestImpl {
 	public Response deleteOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
 	{	       
         if(manager == null)
-            return Response.status(412).entity("Ontology manager is null").build();
+            return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
