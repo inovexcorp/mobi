@@ -24,56 +24,32 @@ public class CSVConverterImpl implements CSVConverter {
     ValueFactory vf = new ValueFactoryImpl();
     Map<URI, ClassMapping> uriToObject;
 
-    //Inject Import and Export Services
-    RDFImportService importService;
-    RDFExportService exportService;
-
-    @Reference
-    public void setImportService(RDFImportService importService){this.importService = importService;}
-
-    @Reference
-    public void setExportService(RDFExportService exportService){this.exportService = exportService;}
-
-    @Override
-    public void importCSV(File csv, File mappingFile, String repoID) throws RDFParseException, IOException, RepositoryException {
-        importCSV(csv, parseMapping(mappingFile), repoID);
-    }
-
-
-    @Override
-    public void importCSV(File csv, Model mappingModel, String repoID) throws IOException, RepositoryException {
-        Model converted = convert(csv, mappingModel);
-
-        //Import Converted using rdf.importer
-        importService.importModel(repoID, converted);
-    }
-
-
-    @Override
-    public void exportCSV(File csv, File mappingFile, File exportFile) throws IOException{
-        exportCSV(csv, parseMapping(mappingFile), exportFile);
-    }
-
-    @Override
-    public void exportCSV(File csv, Model mappingModel, File exportFile) throws IOException{
-        Model converted = convert(csv, mappingModel);
-
-        exportService.exportToFile(converted, exportFile.getAbsolutePath());
-    }
-
     @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
         return convert(csv, converted);
     }
 
-
     @Override
-    public void importAndExportCSV(File csv, File mappingFile, File exportFile, String repoID) throws IOException, RepositoryException{
-        Model converted = convert(csv, mappingFile);
+    public Model convert(File csv, Model mappingModel) throws IOException {
+        char separator = getSeparator(mappingModel);
+        CSVReader reader = new CSVReader(new FileReader(csv), separator);
+        String[] nextLine;
 
-        exportService.exportToFile(converted, exportFile.getAbsolutePath());
-        importService.importModel(repoID, converted);
+        Model convertedRDF = new LinkedHashModel();
+
+        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+
+        //Skip headers
+        reader.readNext();
+        //Traverse each row and convert column into RDF
+        while ((nextLine = reader.readNext()) != null) {
+            String uuid = generateUUID();
+            for (ClassMapping cm : classMappings) {
+                convertedRDF.addAll(writeClassToModel(cm, uuid, nextLine));
+            }
+        }
+        return convertedRDF;
     }
 
     /**
@@ -104,29 +80,6 @@ public class CSVConverterImpl implements CSVConverter {
             separator = Models.objectString(separatorModel).get().charAt(0);
 
         return separator;
-    }
-
-
-    @Override
-    public Model convert(File csv, Model mappingModel) throws IOException {
-        char separator = getSeparator(mappingModel);
-        CSVReader reader = new CSVReader(new FileReader(csv), separator);
-        String[] nextLine;
-
-        Model convertedRDF = new LinkedHashModel();
-
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
-
-        //Skip headers
-        reader.readNext();
-        //Traverse each row and convert column into RDF
-        while ((nextLine = reader.readNext()) != null) {
-            String uuid = generateUUID();
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm, uuid, nextLine));
-            }
-        }
-        return convertedRDF;
     }
 
     /**

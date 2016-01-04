@@ -126,22 +126,6 @@ class ConverterSpec extends Specification {
 
     }
 
-
-    def "File Imported"(){
-        setup:
-        File csv = new ClassPathResource("testFile.csv").getFile();
-        File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
-        RDFImportService importService = Mock()
-        CSVConverterImpl csvConverter = new CSVConverterImpl()
-        csvConverter.setImportService(importService)
-
-        when:
-        csvConverter.importCSV(csv, mappingFile, "test")
-
-        then:
-        noExceptionThrown()
-    }
-
     def "Invalid RDF Causes RDFParseException"(){
         setup:
         File csv = new ClassPathResource("testFile.csv").getFile();
