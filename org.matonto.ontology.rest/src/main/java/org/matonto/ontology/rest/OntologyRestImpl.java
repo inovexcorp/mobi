@@ -147,7 +147,7 @@ public class OntologyRestImpl {
             return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-			return Response.status(500).entity("OntologyID is empty").build();
+			return Response.status(400).entity("OntologyID is empty").build();
 		
 		boolean persisted = false;
 		JSONObject json = new JSONObject();
@@ -186,10 +186,10 @@ public class OntologyRestImpl {
             return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-			return Response.status(500).entity("OntologyID is empty").build();
+			return Response.status(400).entity("OntologyID is empty").build();
 		
 		if (rdfFormat == null || rdfFormat.length() == 0)
-			return Response.status(500).entity("Output format is empty").build();
+			return Response.status(400).entity("Output format is empty").build();
 		
 		JSONObject json = new JSONObject();
         Optional<Ontology> ontology = Optional.empty();
@@ -216,9 +216,11 @@ public class OntologyRestImpl {
 			else if(rdfFormat.equalsIgnoreCase("turtle"))
 				outputStream = ontology.get().asTurtle();
 			
-			else {
-				outputStream = ontology.get().asJsonLD();
-			}
+			else if(rdfFormat.equalsIgnoreCase("jsonld"))
+                outputStream = ontology.get().asJsonLD();
+            
+            else 
+                return Response.status(400).entity("Output format is invalid").build();
 		
 			String content = "";
 			if(outputStream != null)
@@ -253,10 +255,10 @@ public class OntologyRestImpl {
             return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-			return Response.status(500).entity("OntologyID is empty").build();
+			return Response.status(400).entity("OntologyID is empty").build();
 		
 		if (rdfFormat == null || rdfFormat.length() == 0)
-			return Response.status(500).entity("Output format is empty").build();
+			return Response.status(400).entity("Output format is empty").build();
 	
 		Optional<Ontology> ontology = Optional.empty();
 		
@@ -283,9 +285,11 @@ public class OntologyRestImpl {
 			else if(rdfFormat.equalsIgnoreCase("turtle"))
 				outputStream = ontology.get().asTurtle();
 			
-			else {
-				outputStream = ontology.get().asJsonLD();
-			}
+			else if(rdfFormat.equalsIgnoreCase("jsonld"))
+                outputStream = ontology.get().asJsonLD();
+            
+            else 
+                return Response.status(400).entity("Output format is invalid").build();
 		}
 		
 		
