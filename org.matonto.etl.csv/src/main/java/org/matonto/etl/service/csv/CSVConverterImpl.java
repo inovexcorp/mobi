@@ -50,7 +50,6 @@ public class CSVConverterImpl implements CSVConverter {
 
         ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
 
-        LOGGER.warn(classMappings);
         //Skip headers
         reader.readNext();
         //Traverse each row and convert column into RDF
