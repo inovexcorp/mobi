@@ -15,22 +15,32 @@ public class BasicHttpContext extends AuthHttpContext {
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
     @Override
-    protected boolean handleNoAuthHeader(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        log.debug("No authorization header. Requesting Authentication");
-        res.setHeader("WWW-Authenticate", "MatOnto_Web");
-        res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-        return false;
+    public boolean handleSecurity(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        log.debug("Requesting Authorization...");
+
+        // Allow the login page
+        if (unsecuredPages.contains(req.getRequestURI())) {
+            log.debug("Allowing access to " + req.getRequestURI());
+            return true;
+        }
+
+        if (req.getHeader("Authorization") == null) {
+            log.debug("No authorization header. Requesting Authentication");
+            res.setHeader("WWW-Authenticate", "MatOnto_Web");
+            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
+
+        if (handleAuth(req, res)) {
+            log.debug("Authorization Granted.");
+            return true;
+        } else {
+            return handleAuthDenied(req, res);
+        }
     }
 
     @Override
-    protected boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        log.debug("Authorization Denied.");
-        res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-        return false;
-    }
-
-    @Override
-    protected boolean handleAuth(HttpServletRequest req) throws IOException {
+    protected boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException {
         req.setAttribute(AUTHENTICATION_TYPE, HttpServletRequest.BASIC_AUTH);
 
         String authzHeader = req.getHeader("Authorization");
@@ -41,5 +51,12 @@ public class BasicHttpContext extends AuthHttpContext {
         String password = usernameAndPassword.substring(userNameIndex + 1);
 
         return authenticated(req, username, password);
+    }
+
+    @Override
+    protected boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        log.debug("Authorization Denied.");
+        res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+        return false;
     }
 }

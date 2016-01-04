@@ -1,6 +1,5 @@
 package org.matonto.web.authentication;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -60,33 +59,9 @@ public abstract class AuthHttpContext implements HttpContext {
         }
     }
 
-    @Override
-    public boolean handleSecurity(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        log.debug("Requesting Authorization...");
-
-        // Allow the login page
-        if (unsecuredPages.contains(req.getRequestURI())) {
-            log.debug("Allowing access to " + req.getRequestURI());
-            return true;
-        }
-
-        if (req.getHeader("Authorization") == null) {
-            return handleNoAuthHeader(req, res);
-        }
-
-        if (handleAuth(req)) {
-            log.debug("Authorization Granted.");
-            return true;
-        } else {
-            return handleAuthDenied(req, res);
-        }
-    }
-
-    protected abstract boolean handleNoAuthHeader(HttpServletRequest req, HttpServletResponse res) throws IOException;
+    protected abstract boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
     protected abstract boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
-
-    protected abstract boolean handleAuth(HttpServletRequest req) throws IOException;
 
     protected boolean authenticated(HttpServletRequest req, String username, String password) {
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
