@@ -23,6 +23,8 @@ public class AuthHttpContext implements HttpContext {
 
     private final ConcurrentMap<String, URL> resourceCache = new ConcurrentHashMap<>();
 
+    private static final String REDIRECT_PATH = "/matonto/login.html";
+
     /**
      * The bundle that registered the service.
      */
@@ -66,12 +68,14 @@ public class AuthHttpContext implements HttpContext {
 
         // Allow the login page
         if (unsecuredPages.contains(req.getRequestURI())) {
+            log.debug("Allowing access to " + req.getRequestURI());
             return true;
         }
 
         if (req.getHeader("Authorization") == null) {
-            log.debug("Authorization Denied. No Header.");
-            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            log.debug("No authorization header. Redirecting to " + REDIRECT_PATH);
+            res.sendRedirect(REDIRECT_PATH);
+//            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
 
@@ -79,8 +83,9 @@ public class AuthHttpContext implements HttpContext {
             log.debug("Authorization Granted.");
             return true;
         } else {
-            log.debug("Authorization Denied. Unauthorized.");
-            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            log.debug("Authorization Denied. Redirecting to " + REDIRECT_PATH);
+            res.sendRedirect(REDIRECT_PATH);
+//            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
     }
