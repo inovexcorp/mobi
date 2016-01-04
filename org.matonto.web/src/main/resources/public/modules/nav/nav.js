@@ -28,5 +28,10 @@
                 { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Map' }
             ];
         }
+
+        vm.logout = function() {
+            // TODO: do logout action
+            console.warn('This will log you out at some future date.');
+        }
     }
 })();
