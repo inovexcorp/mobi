@@ -9,6 +9,7 @@ public enum Delimited {
     DATA_PROPERTY ("http://matonto.org/ontologies/delimited/dataProperty"),
     OBJECT_PROPERTY ("http://matonto.org/ontologies/delimited/objectProperty"),
     CLASS_MAPPING_PROP ("http://matonto.org/ontologies/delimited/classMapping"),
+    CLASS_MAPPING_OBJ ("http://matonto.org/ontologies/delimited/ClassMapping"),
     LOCAL_NAME ("http://matonto.org/ontologies/delimited/localName"),
     DOCUMENT ("http://matonto.org/ontologies/delimited/Document"),
     SEPARATOR ("http://matonto.org/ontologies/delimited/separator");

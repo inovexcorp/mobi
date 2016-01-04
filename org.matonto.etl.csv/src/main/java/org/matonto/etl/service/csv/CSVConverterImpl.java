@@ -5,13 +5,10 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import org.matonto.etl.api.csv.CSVConverter;
-import org.matonto.etl.api.rdf.RDFExportService;
-import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.Values;
 import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.repository.*;
 import org.openrdf.rio.*;
 import java.io.*;
 import java.util.*;
@@ -25,8 +22,6 @@ public class CSVConverterImpl implements CSVConverter {
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
-
-    Map<IRI, ClassMapping> uriToObject;
 
     @Reference
     public void setValueFactory (ValueFactory valueFactory) {
@@ -200,11 +195,12 @@ public class CSVConverterImpl implements CSVConverter {
     private ArrayList<ClassMapping> parseClassMappings(Model mappingModel) {
         ArrayList<ClassMapping> classMappings = new ArrayList<ClassMapping>();
 
-        Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()), valueFactory.createIRI("http://matonto.org/ontologies/delimited/ClassMapping"));
-        LOGGER.warn("ClassMappingModel empty?" + classMappingModel.isEmpty());
-        LOGGER.warn("MappingModel empty?" + mappingModel.isEmpty());
-        LOGGER.warn("MappingModel things:\n" + mappingModel.subjects());
-        uriToObject = new LinkedHashMap<IRI, ClassMapping>();
+        Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()), valueFactory.createIRI(Delimited.CLASS_MAPPING_OBJ.stringValue()));
+
+        //Holds Reference to ClassMapping Object from IRI of ClassMapping in Model.
+        //Used to join Object Properties
+        Map<IRI,ClassMapping> uriToObject = new LinkedHashMap<>();
+
         for (Resource classMappingIRI : classMappingModel.subjects()) {
             LOGGER.warn("Parsing mappings");
             ClassMapping classMapping;
@@ -216,14 +212,19 @@ public class CSVConverterImpl implements CSVConverter {
                 uriToObject.put((IRI) classMappingIRI, classMapping);
             }
 
-            Model prefixModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.HAS_PREFIX.stringValue()), null);
+            //Parse the properties from the Class Mappings
 
-            //Parse each property
+            //Prefix
+            Model prefixModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.HAS_PREFIX.stringValue()), null);
             if (!prefixModel.isEmpty())
                 classMapping.setPrefix(Models.objectString(prefixModel).get());
+
+            //Class that the Class Mapping Maps to
             Model mapsToModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.MAPS_TO.stringValue()), null);
             if (!mapsToModel.isEmpty())
                 classMapping.setMapping(Models.objectString(mapsToModel).get());
+
+            //Local Name
             Model localNameModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.LOCAL_NAME.stringValue()), null);
             if (!localNameModel.isEmpty())
                 classMapping.setLocalName(Models.objectString(localNameModel).get());
@@ -231,8 +232,10 @@ public class CSVConverterImpl implements CSVConverter {
             //Parse the data properties
             Model dataPropertyModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.DATA_PROPERTY.stringValue()), null);
             for (Statement s : dataPropertyModel) {
+
                 Model propertyModel = mappingModel.filter((IRI) s.getObject(), valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
                 String property = Models.objectString(propertyModel).get();
+
                 Model indexModel = mappingModel.filter((IRI) s.getObject(), valueFactory.createIRI(Delimited.COLUMN_INDEX.stringValue()), null);
                 Integer columnIndexInt = Integer.parseInt(Models.objectLiteral(indexModel).get().stringValue());
                 classMapping.addDataProperty(columnIndexInt, property);
@@ -241,8 +244,10 @@ public class CSVConverterImpl implements CSVConverter {
             //Parse the object properties
             Model objectPropertyModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.OBJECT_PROPERTY.stringValue()), null);
             for (Statement s : objectPropertyModel) {
+
                 Model propertyModel = mappingModel.filter((IRI) s.getObject(), valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
                 String property = Models.objectString(propertyModel).get();
+
                 Model classModel = mappingModel.filter((IRI) s.getObject(), valueFactory.createIRI(Delimited.CLASS_MAPPING_PROP.stringValue()), null);
                 IRI objectMappingResultIRI = Models.objectIRI(classModel).get();
 
@@ -282,7 +287,12 @@ public class CSVConverterImpl implements CSVConverter {
         return m;
     }
 
-    org.openrdf.model.Model sesameModel(Model m){
+    /**
+     * Convert a MatOnto Model into a Sesame Model
+     * @param m A MatOnto Model
+     * @return A Sesame Model
+     */
+    org.openrdf.model.Model sesameModel(Model m) {
         Set<org.openrdf.model.Statement> stmts = m.stream()
                                 .map(Values::sesameStatement)
                                 .collect(Collectors.toSet());
@@ -293,7 +303,12 @@ public class CSVConverterImpl implements CSVConverter {
         return sesameModel;
     }
 
-    Model matontoModel(org.openrdf.model.Model m){
+    /**
+     * Convert Sesame model to MatOnto model
+     * @param m A Sesame Model
+     * @return A Matonto Model
+     */
+    Model matontoModel(org.openrdf.model.Model m) {
         Set<Statement> stmts = m.stream()
                 .map(Values::matontoStatement)
                 .collect(Collectors.toSet());
