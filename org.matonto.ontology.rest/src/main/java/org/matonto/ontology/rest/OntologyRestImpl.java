@@ -78,7 +78,7 @@ public class OntologyRestImpl {
 	public Response getAllOntologyIds()
 	{
 		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
+		    return Response.status(412).entity("Ontology manager is null").build();
 
 		Map<OntologyId, String> ontologies = manager.getOntologyRegistry();
 		JSONObject json = new JSONObject();
@@ -101,7 +101,7 @@ public class OntologyRestImpl {
     public Response getAllOntologies()
     {
         if(manager == null)
-            throw new IllegalStateException("Ontology manager is null");
+            return Response.status(412).entity("Ontology manager is null").build();
 
         Map<OntologyId, String> ontologyRegistry = manager.getOntologyRegistry();
         JSONArray jsonArray = new JSONArray();
@@ -142,12 +142,12 @@ public class OntologyRestImpl {
 	public Response uploadFile(
 							@FormDataParam("file") InputStream fileInputStream,
 							@FormDataParam("ontologyIdStr") String ontologyIdStr)
-	{	
+	{	     
+        if(manager == null)
+            return Response.status(412).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
 		
 		boolean persisted = false;
 		JSONObject json = new JSONObject();
@@ -181,15 +181,15 @@ public class OntologyRestImpl {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOntology(@QueryParam("ontologyIdStr") String ontologyIdStr,
 								@QueryParam("rdfFormat") String rdfFormat) 
-	{
+	{	       
+        if(manager == null)
+            return Response.status(412).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
 		
 		if (rdfFormat == null || rdfFormat.length() == 0)
 			return Response.status(500).entity("Output format is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
 		
 		JSONObject json = new JSONObject();
         Optional<Ontology> ontology = Optional.empty();
@@ -248,16 +248,15 @@ public class OntologyRestImpl {
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response downloadOntologyFile(@QueryParam("ontologyIdStr") String ontologyIdStr,
 										@QueryParam("rdfFormat") String rdfFormat) 
-	{
+	{  
+        if(manager == null)
+            return Response.status(412).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
 		
 		if (rdfFormat == null || rdfFormat.length() == 0)
 			return Response.status(500).entity("Output format is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
-
 	
 		Optional<Ontology> ontology = Optional.empty();
 		
@@ -333,12 +332,12 @@ public class OntologyRestImpl {
 	@Path("/deleteOntology")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
-	{
+	{	       
+        if(manager == null)
+            return Response.status(412).entity("Ontology manager is null").build();
+        
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
-		
-		if(manager == null)
-			throw new IllegalStateException("Ontology manager is null");
 
 		JSONObject json = new JSONObject();
 		boolean deleted = false;
