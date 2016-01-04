@@ -1,14 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.axiom.AnnotationPropertyRangeAxiom;
-import org.matonto.ontology.core.api.OntologyIRI;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+import org.matonto.rdf.api.IRI;
 
 
 public class SimpleAnnotationPropertyRangeAxiom 
@@ -16,15 +14,15 @@ public class SimpleAnnotationPropertyRangeAxiom
 	implements AnnotationPropertyRangeAxiom {
 
 
-	private OntologyIRI range;
+	private IRI range;
 	private AnnotationProperty property;
 	
 	
-	public SimpleAnnotationPropertyRangeAxiom(OntologyIRI range, AnnotationProperty property, Set<Annotation> annotations) 
+	public SimpleAnnotationPropertyRangeAxiom(@Nonnull IRI range, @Nonnull AnnotationProperty property, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.range = Preconditions.checkNotNull(range, "range cannot be null");
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
+		this.range = range;
+		this.property = property;
 	}
 
 	
@@ -39,7 +37,7 @@ public class SimpleAnnotationPropertyRangeAxiom
 	
 
 	@Override
-	public AnnotationPropertyRangeAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public AnnotationPropertyRangeAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleAnnotationPropertyRangeAxiom(range, property, mergeAnnos(annotations));
 	}
@@ -53,7 +51,7 @@ public class SimpleAnnotationPropertyRangeAxiom
 
 	
 	@Override
-	public OntologyIRI getRange() 
+	public IRI getRange() 
 	{
 		return range;
 	}

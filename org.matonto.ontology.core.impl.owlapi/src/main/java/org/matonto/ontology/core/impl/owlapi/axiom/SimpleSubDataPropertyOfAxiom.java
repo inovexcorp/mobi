@@ -1,13 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.axiom.SubDataPropertyOfAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
+
 
 public class SimpleSubDataPropertyOfAxiom 
 	extends SimpleAxiom 
@@ -17,11 +16,11 @@ public class SimpleSubDataPropertyOfAxiom
 	private DataPropertyExpression superProperty;
 	
 
-	public SimpleSubDataPropertyOfAxiom(DataPropertyExpression subProperty, DataPropertyExpression superProperty, Set<Annotation> annotations) 
+	public SimpleSubDataPropertyOfAxiom(@Nonnull DataPropertyExpression subProperty, @Nonnull DataPropertyExpression superProperty, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.subProperty = Preconditions.checkNotNull(subProperty, "subProperty cannot be null");
-		this.superProperty = Preconditions.checkNotNull(superProperty, "superProperty cannot be null");
+		this.subProperty = subProperty;
+		this.superProperty = superProperty;
 	}
 
 	
@@ -36,7 +35,7 @@ public class SimpleSubDataPropertyOfAxiom
 
 	
 	@Override
-	public SubDataPropertyOfAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public SubDataPropertyOfAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleSubDataPropertyOfAxiom(subProperty, superProperty, mergeAnnos(annotations));
 	}

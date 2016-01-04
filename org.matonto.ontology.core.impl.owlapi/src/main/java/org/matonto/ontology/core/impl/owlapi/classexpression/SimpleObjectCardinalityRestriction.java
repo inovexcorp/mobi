@@ -2,13 +2,12 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectCardinalityRestriction;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 
 public class SimpleObjectCardinalityRestriction implements ObjectCardinalityRestriction {
 
@@ -18,11 +17,11 @@ public class SimpleObjectCardinalityRestriction implements ObjectCardinalityRest
 	private ClassExpression expression;
 	
 	
-	public SimpleObjectCardinalityRestriction(ObjectPropertyExpression property, int cardinality, ClassExpression expression)
+	public SimpleObjectCardinalityRestriction(@Nonnull ObjectPropertyExpression property, int cardinality, @Nonnull ClassExpression expression)
 	{
 		this.cardinality = cardinality;
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
-		this.expression = Preconditions.checkNotNull(expression, "expression cannot be null");
+		this.property = property;
+		this.expression = expression;
 	}
 	
 	
@@ -64,7 +63,7 @@ public class SimpleObjectCardinalityRestriction implements ObjectCardinalityRest
 	
 
 	@Override
-	public boolean containsConjunct(ClassExpression ce) 
+	public boolean containsConjunct(@Nonnull ClassExpression ce) 
 	{
 		return ce.equals(this);
 	}

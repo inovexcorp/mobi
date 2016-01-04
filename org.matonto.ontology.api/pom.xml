@@ -24,23 +24,24 @@
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
         </dependency>
-
-        <!-- Openrdf Sesame dependencies -->
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>   
-             
-        <!-- Owlapi dependencies -->
-        <dependency>
-            <groupId>net.sourceforge.owlapi</groupId>
-            <artifactId>owlapi-osgidistribution</artifactId>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.api</artifactId>
         </dependency>
-        
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>edu.washington.cs.types.checker</groupId>
             <artifactId>checker-framework</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
     </dependencies>
 
@@ -53,7 +54,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto Ontology Service - Core</Bundle-Name>
+                        <Bundle-Name>MatOnto Ontology Service - Core API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                         	org.matonto.ontology.core*

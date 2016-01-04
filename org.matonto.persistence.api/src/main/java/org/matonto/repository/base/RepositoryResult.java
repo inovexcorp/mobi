@@ -17,4 +17,6 @@ public abstract class RepositoryResult<T> implements Iterable<T>, Iterator<T> {
     public Iterator<T> iterator() {
         return this;
     }
+
+    public abstract void close();
 }

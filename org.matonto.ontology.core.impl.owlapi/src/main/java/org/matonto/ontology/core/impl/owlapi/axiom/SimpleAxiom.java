@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.matonto.ontology.core.api.Annotation;
 
 import org.matonto.ontology.core.api.axiom.Axiom;
@@ -11,16 +13,18 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 
 public abstract class SimpleAxiom implements Axiom {
 
-	private Set<Annotation> annotations;
+	private Set<Annotation> annotations = new HashSet<Annotation>();
 	protected Set<Annotation> NO_ANNOTATIONS;
 	
 	public SimpleAxiom(Set<Annotation> annotations)
 	{
-		if(annotations.isEmpty())
-			this.annotations = Collections.emptySet();
-		
-		else
-			this.annotations = new HashSet<Annotation>(annotations);
+	    if(annotations != null) {
+    		if(annotations.isEmpty())
+    			this.annotations = Collections.emptySet();
+    		
+    		else
+    			this.annotations = new HashSet<Annotation>(annotations);
+	    }
 	}
 	
 	@Override
@@ -39,7 +43,7 @@ public abstract class SimpleAxiom implements Axiom {
 	}
 
 	
-	protected Set<Annotation> mergeAnnos(Set<Annotation> annos)
+	protected Set<Annotation> mergeAnnos(@Nonnull Set<Annotation> annos)
 	{
 		Set<Annotation> merged = new HashSet<Annotation>(annos);
 		merged.addAll(annotations);
@@ -59,19 +63,6 @@ public abstract class SimpleAxiom implements Axiom {
 		}
 		
 		return false;
-	}
-	
-	/*
-	 * MUST Implement!!!!!!!
-	 */
-	public static OWLAxiom owlapiAxiom(Axiom matontoAxiom)
-	{
-		throw new UnsupportedOperationException();
-	}
-	
-	public static Axiom matontoAxiom(OWLAxiom owlapiAxiom)
-	{
-		throw new UnsupportedOperationException();
 	}
 
 }

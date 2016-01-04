@@ -2,15 +2,16 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.axiom.AnnotationAssertionAxiom;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.AnnotationSubject;
-import org.matonto.ontology.core.api.AnnotationValue;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.matonto.ontology.core.impl.owlapi.SimpleAnnotation;
+import org.matonto.rdf.api.Value;
+
 
 public class SimpleAnnotationAssertionAxiom 
 	extends SimpleAxiom 
@@ -19,15 +20,15 @@ public class SimpleAnnotationAssertionAxiom
 	
 	private AnnotationSubject subject;
 	private AnnotationProperty property;
-	private AnnotationValue value;
+	private Value value;
 	
 	
-	public SimpleAnnotationAssertionAxiom(AnnotationSubject subject, AnnotationProperty property, AnnotationValue value, Set<Annotation> annotations) 
+	public SimpleAnnotationAssertionAxiom(@Nonnull AnnotationSubject subject, @Nonnull AnnotationProperty property, Value value, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.subject = Preconditions.checkNotNull(subject, "subject cannot be null");
-		this.property = Preconditions.checkNotNull(property, "property cannot be null");
-		this.value = Preconditions.checkNotNull(value, "value cannot be null");
+		this.subject = subject;
+		this.property = property;
+		this.value = value;
 	}
 
 	
@@ -42,7 +43,7 @@ public class SimpleAnnotationAssertionAxiom
 
 	
 	@Override
-	public AnnotationAssertionAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public AnnotationAssertionAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleAnnotationAssertionAxiom(subject, property, value, mergeAnnos(annotations));
 	}
@@ -70,7 +71,7 @@ public class SimpleAnnotationAssertionAxiom
 	
 
 	@Override
-	public AnnotationValue getValue() 
+	public Value getValue() 
 	{		
 		return value;
 	}

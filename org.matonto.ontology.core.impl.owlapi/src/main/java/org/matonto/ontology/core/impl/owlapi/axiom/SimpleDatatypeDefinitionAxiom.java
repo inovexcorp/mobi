@@ -1,13 +1,11 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.axiom.DatatypeDefinitionAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 
@@ -20,11 +18,11 @@ public class SimpleDatatypeDefinitionAxiom
 	private DataRange dataRange;
 	
 	
-	public SimpleDatatypeDefinitionAxiom(Datatype datatype, DataRange dataRange, Set<Annotation> annotations) 
+	public SimpleDatatypeDefinitionAxiom(@Nonnull Datatype datatype, @Nonnull DataRange dataRange, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.datatype = Preconditions.checkNotNull(datatype, "datatype cannot be null");
-		this.dataRange = Preconditions.checkNotNull(dataRange, "dataRange cannot be null");
+		this.datatype = datatype;
+		this.dataRange = dataRange;
 	}
 
 	
@@ -39,7 +37,7 @@ public class SimpleDatatypeDefinitionAxiom
 
 	
 	@Override
-	public DatatypeDefinitionAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public DatatypeDefinitionAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleDatatypeDefinitionAxiom(datatype, dataRange, mergeAnnos(annotations));
 	}

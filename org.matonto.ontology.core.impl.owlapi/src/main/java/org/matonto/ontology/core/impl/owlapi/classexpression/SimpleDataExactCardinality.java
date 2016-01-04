@@ -2,7 +2,7 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.DataExactCardinality;
 import org.matonto.ontology.core.api.classexpression.DataMaxCardinality;
@@ -17,7 +17,7 @@ public class SimpleDataExactCardinality
 	implements DataExactCardinality {
 
 	
-	public SimpleDataExactCardinality(DataPropertyExpression property, int cardinality, DataRange dataRange) 
+	public SimpleDataExactCardinality(@Nonnull DataPropertyExpression property, int cardinality, @Nonnull DataRange dataRange) 
 	{
 		super(property, cardinality, dataRange);
 	}

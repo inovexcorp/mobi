@@ -1,28 +1,25 @@
 package org.matonto.ontology.core.impl.owlapi.propertyExpression;
 
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
-import org.matonto.ontology.core.api.OntologyIRI;
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.types.EntityType;
-import org.matonto.ontology.core.impl.owlapi.SimpleIRI;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
+import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
+import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
-import com.google.common.base.Preconditions;
-
-import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationPropertyImpl;
 
 public class SimpleAnnotationProperty implements AnnotationProperty {
 
-	private static OntologyIRI iri = null;
+	private IRI iri = null;
 	
 	
-	public SimpleAnnotationProperty(OntologyIRI iri)	
+	public SimpleAnnotationProperty(@Nonnull IRI iri)	
 	{
-		this.iri = Preconditions.checkNotNull(iri, "iri cannot be null");
+		this.iri = iri;
 	}
 		
 	@Override
-	public OntologyIRI getIRI()
+	public IRI getIRI()
 	{
 		return iri;
 	}
@@ -38,14 +35,14 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 	@Override
 	public boolean isComment() 
 	{
-		return SimpleIRI.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
+		return SimpleOntologyValues.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
 	}
 
 	
 	@Override
 	public boolean isLabel() 
 	{
-		return SimpleIRI.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
+		return SimpleOntologyValues.owlapiIRI(iri).equals(OWLRDFVocabulary.RDFS_LABEL.getIRI());
 	}
 	
 	
@@ -55,18 +52,6 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
 		return EntityType.ANNOTATION_PROPERTY;
 	}
 
-	
-	public static OWLAnnotationProperty owlapiAnnotationProperty(AnnotationProperty sap)
-	{
-		return new OWLAnnotationPropertyImpl(SimpleIRI.owlapiIRI(sap.getIRI()));
-	}
-	
-	
-	public static SimpleAnnotationProperty matontoAnnotationProperty(OWLAnnotationProperty oap)
-	{
-		return new SimpleAnnotationProperty(SimpleIRI.matontoIRI(oap.getIRI()));
-	}
-	
 	
 	@Override
 	public boolean equals(Object obj)

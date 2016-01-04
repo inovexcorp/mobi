@@ -1,12 +1,10 @@
 package org.matonto.ontology.core.impl.owlapi.axiom;
 
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 import org.matonto.ontology.core.api.axiom.TransitiveObjectPropertyAxiom;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.AxiomType;
 
 public class SimpleTransitiveObjectPropertyAxiom 
@@ -14,14 +12,13 @@ public class SimpleTransitiveObjectPropertyAxiom
 	implements TransitiveObjectPropertyAxiom {
 
 
-	
 	private ObjectPropertyExpression objectProperty;
 	
 	
-	public SimpleTransitiveObjectPropertyAxiom(ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
+	public SimpleTransitiveObjectPropertyAxiom(@Nonnull ObjectPropertyExpression objectProperty, Set<Annotation> annotations) 
 	{
 		super(annotations);
-		this.objectProperty = Preconditions.checkNotNull(objectProperty, "objectProperty cannot be null");
+		this.objectProperty = objectProperty;
 	}
 	
 
@@ -36,7 +33,7 @@ public class SimpleTransitiveObjectPropertyAxiom
 
 	
 	@Override
-	public TransitiveObjectPropertyAxiom getAnnotatedAxiom(Set<Annotation> annotations) 
+	public TransitiveObjectPropertyAxiom getAnnotatedAxiom(@Nonnull Set<Annotation> annotations) 
 	{
 		return new SimpleTransitiveObjectPropertyAxiom(objectProperty, mergeAnnos(annotations));
 	}

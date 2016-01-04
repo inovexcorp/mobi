@@ -3,21 +3,19 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
+import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.datarange.DataUnionOf;
-
-import com.google.common.base.Preconditions;
 import org.matonto.ontology.core.api.types.DataRangeType;
 
-public class SimpleDataUnionOf implements DataUnionOf {
 
+public class SimpleDataUnionOf implements DataUnionOf {
 	
 	private Set<DataRange> operands;
 	
-	public SimpleDataUnionOf(Set<DataRange> operands)
+	public SimpleDataUnionOf(@Nonnull Set<DataRange> operands)
 	{
-		this.operands = new TreeSet<DataRange>(Preconditions.checkNotNull(operands, "operands cannot be null"));
+		this.operands = new TreeSet<DataRange>(operands);
 	}
 	
 	

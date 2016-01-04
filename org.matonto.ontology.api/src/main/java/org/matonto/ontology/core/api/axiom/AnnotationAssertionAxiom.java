@@ -1,10 +1,10 @@
 package org.matonto.ontology.core.api.axiom;
 
-
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
+import org.matonto.rdf.api.Value;
 import org.matonto.ontology.core.api.AnnotationSubject;
-import org.matonto.ontology.core.api.AnnotationValue;
+
 
 public interface AnnotationAssertionAxiom extends AnnotationAxiom {
 
@@ -12,7 +12,7 @@ public interface AnnotationAssertionAxiom extends AnnotationAxiom {
 	
 	AnnotationProperty getProperty();
 	
-	AnnotationValue getValue();
+	Value getValue();
 	
 	Annotation getAnnotation();
 }

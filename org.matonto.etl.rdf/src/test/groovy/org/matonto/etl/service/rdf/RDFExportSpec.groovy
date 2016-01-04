@@ -19,7 +19,7 @@ class RDFExportSpec extends Specification {
         File textFile = new ClassPathResource("exporter/testFile.nq").getFile()
 
         when:
-        ex.exportToFile("cli-rdf-service", textFile)
+        ex.exportToFile("cli-rdf-service", "exporter/testFile.nq")
 
         then:
         1 * rm.getRepository("cli-rdf-service") >> Optional.empty();
@@ -33,7 +33,7 @@ class RDFExportSpec extends Specification {
         textFile.setReadOnly()
 
         when:
-        exportService.exportToFile("test", textFile)
+        exportService.exportToFile("test", "exporter/testFile.txt")
 
         then:
         thrown IOException
@@ -46,7 +46,7 @@ class RDFExportSpec extends Specification {
         textFile.setWritable(true)
 
         when:
-        exportService.exportToFile("test", textFile)
+        exportService.exportToFile("test", "exporter/testFile.txt")
 
         then:
         thrown IOException
@@ -63,7 +63,7 @@ class RDFExportSpec extends Specification {
 
         when:
         exportService.setRepositoryManager(manager)
-        exportService.exportToFile("test", testFile)
+        exportService.exportToFile("test", testFile.absolutePath)
 
         then:
         1 * manager.getRepository("test") >> Optional.of(repo)

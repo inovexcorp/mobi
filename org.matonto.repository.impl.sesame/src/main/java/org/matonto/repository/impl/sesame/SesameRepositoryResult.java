@@ -17,7 +17,11 @@ public class SesameRepositoryResult<T, U> extends RepositoryResult<T> {
     @Override
     public boolean hasNext() {
         try {
-            return sesameResults.hasNext();
+            boolean hasNext = sesameResults.hasNext();
+            if (!hasNext) {
+                close();
+            }
+            return hasNext;
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
@@ -30,5 +34,10 @@ public class SesameRepositoryResult<T, U> extends RepositoryResult<T> {
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
+    }
+
+    @Override
+    public void close() {
+        sesameResults.close();
     }
 }

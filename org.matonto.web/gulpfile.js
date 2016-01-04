@@ -26,12 +26,13 @@ var jsFiles = function(prefix) {
             prefix + '**/angular-ui-router.min.js',
             prefix + '**/ui-bootstrap.min.js',
             prefix + '**/js/vendor/**/*.js',
-            prefix + '**/app.module.js',
-            prefix + '**/route.config.js',
             prefix + '**/custom/filters/*.js',
             prefix + '**/custom/directives/*.js',
             prefix + '**/modules/**/*/directives/**/*.js',
-            prefix + '**/modules/**/*.js'
+            prefix + '**/modules/**/*/services/**/*.js',
+            prefix + '**/modules/**/*.js',
+            prefix + '**/app.module.js',
+            prefix + '**/route.config.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
