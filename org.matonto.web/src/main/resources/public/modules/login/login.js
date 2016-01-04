@@ -2,25 +2,16 @@
     'use strict';
 
     angular
-        .module('login', [])
+        .module('login', ['loginManager'])
         .controller('LoginController', LoginController);
 
-    LoginController.$inject = ['$state'];
+    LoginController.$inject = ['loginManagerService'];
 
-    function LoginController($state) {
+    function LoginController(loginManagerService) {
         var vm = this;
-        vm.submit = submit;
 
-        activate();
-
-        function activate() {
-
-        }
-
-        function submit(isValid) {
-            if(isValid) {
-                $state.go('root.home');
-            }
+        vm.login = function(isValid) {
+            loginManagerService.login(isValid, vm.form.email, vm.form.password);
         }
     }
 })();
