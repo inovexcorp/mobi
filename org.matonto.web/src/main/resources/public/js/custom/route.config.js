@@ -3,31 +3,24 @@
 
     angular
         .module('app')
-        .config(config);
+        .config(config)
+        .run(run);
 
     config.$inject = ['$stateProvider', '$urlRouterProvider'];
 
     function config($stateProvider, $urlRouterProvider) {
         // Defaults to home
-        $urlRouterProvider.otherwise('/login');
+        $urlRouterProvider.otherwise('/home');
 
         // Sets the states
         $stateProvider
-            .state('login', {
-                url: '/login',
-                views: {
-                    'container': {
-                        templateUrl: 'modules/login/login.html'
-                    }
-                }
-            })
             .state('root', {
                 abstract: true,
                 views: {
-                    'header': {
+                    header: {
                         templateUrl: 'modules/nav/nav.html'
                     },
-                    'footer': {
+                    footer: {
                         templateUrl: 'modules/footer/footer.html'
                     }
                 }
@@ -38,6 +31,9 @@
                     'container@': {
                         templateUrl: 'modules/home/home.html'
                     }
+                },
+                data: {
+                    title: 'Home'
                 }
             })
             .state('root.webtop', {
@@ -46,6 +42,9 @@
                     'container@': {
                         templateUrl: 'modules/webtop/webtop.html'
                     }
+                },
+                data: {
+                    title: 'Webtop'
                 }
             })
             .state('root.catalog', {
@@ -54,6 +53,9 @@
                     'container@': {
                         templateUrl: 'modules/catalog/catalog.html'
                     }
+                },
+                data: {
+                    title: 'Catalog'
                 }
             })
             .state('root.ontology-editor', {
@@ -62,6 +64,9 @@
                     'container@': {
                         templateUrl: 'modules/ontology-editor/ontology-editor.html'
                     }
+                },
+                data: {
+                    title: 'Ontology Editor'
                 }
             })
             .state('root.mapper', {
@@ -70,7 +75,16 @@
                     'container@': {
                         templateUrl: 'modules/mapper/mapper.html'
                     }
+                },
+                data: {
+                    title: 'Mapper'
                 }
             });
+    }
+
+    run.$inject = ['$rootScope', '$state'];
+
+    function run($rootScope, $state) {
+        $rootScope.$state = $state;
     }
 })();

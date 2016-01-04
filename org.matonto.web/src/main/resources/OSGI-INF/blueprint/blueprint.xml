@@ -1,25 +1,67 @@
 <blueprint default-activation="eager"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
-
-    <bean id="resourceMapping"
-          class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
-        <property name="alias" value="/" />
-        <property name="path" value="build" />
-    </bean>
-
-    <bean id="welcomeFile"
-          class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultWelcomeFileMapping">
-        <property name="redirect" value="true" />
-        <property name="welcomeFiles">
-            <array>
-                <value>index.html</value>
-            </array>
+    <!-- Authorization Context -->
+    <bean id="authContext" class="org.matonto.web.authentication.FormHttpContext">
+        <property name="bundle" ref="blueprintBundle"/>
+        <property name="unsecuredPages">
+            <list>
+                <value>/matonto/login.html</value>
+            </list>
         </property>
     </bean>
 
-    <service id="resources" ref="resourceMapping"
-             interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping" />
+    <service id="authContextService" ref="authContext" interface="org.osgi.service.http.HttpContext">
+        <service-properties>
+            <entry key="httpContext.id" value="authCtxId"/>
+        </service-properties>
+    </service>
 
-    <service id="welcomeFileService" ref="welcomeFile"
-             interface="org.ops4j.pax.web.extender.whiteboard.WelcomeFileMapping" />
+    <!-- Resources -->
+    <service id="cssResources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+            <property name="alias" value="/matonto/css" />
+            <property name="path" value="build/css" />
+        </bean>
+    </service>
+
+    <service id="imageResources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+            <property name="alias" value="/matonto/images" />
+            <property name="path" value="build/images" />
+        </bean>
+    </service>
+
+    <service id="jsResources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+            <property name="alias" value="/matonto/js" />
+            <property name="path" value="build/js" />
+        </bean>
+    </service>
+
+    <service id="moduleResources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+            <property name="alias" value="/matonto/modules" />
+            <property name="path" value="build/modules" />
+        </bean>
+    </service>
+
+    <service id="rootResources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+            <property name="alias" value="/matonto" />
+            <property name="path" value="build" />
+            <property name="httpContextId" value="authCtxId"/>
+        </bean>
+    </service>
+
+    <service id="welcomeFileService" interface="org.ops4j.pax.web.extender.whiteboard.WelcomeFileMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultWelcomeFileMapping">
+            <property name="redirect" value="true" />
+            <property name="welcomeFiles">
+                <array>
+                    <value>index.html</value>
+                </array>
+            </property>
+            <property name="httpContextId" value="authCtxId"/>
+        </bean>
+    </service>
 </blueprint>
