@@ -5,6 +5,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.*;
@@ -23,30 +24,32 @@ public class CSVConverterImpl implements CSVConverter {
     ValueFactory vf = new ValueFactoryImpl();
     Map<URI, ClassMapping> uriToObject;
 
-    RDFImportService importService;
-
-    @Reference
-    public void setImportService(RDFImportService importService){this.importService = importService;}
-
-    @Override
-    public void importCSV(File csv, File mappingFile, String repoID) throws RDFParseException, IOException, RepositoryException {
-        importCSV(csv, parseMapping(mappingFile), repoID);
-    }
-
-
-    @Override
-    public void importCSV(File csv, Model mappingModel, String repoID) throws IOException, RepositoryException {
-        Model converted = convert(csv, mappingModel);
-
-        //Import Converted using rdf.importer
-        importService.importModel(repoID, mappingModel);
-    }
-
-
     @Override
     public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
         return convert(csv, converted);
+    }
+
+    @Override
+    public Model convert(File csv, Model mappingModel) throws IOException {
+        char separator = getSeparator(mappingModel);
+        CSVReader reader = new CSVReader(new FileReader(csv), separator);
+        String[] nextLine;
+
+        Model convertedRDF = new LinkedHashModel();
+
+        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+
+        //Skip headers
+        reader.readNext();
+        //Traverse each row and convert column into RDF
+        while ((nextLine = reader.readNext()) != null) {
+            String uuid = generateUUID();
+            for (ClassMapping cm : classMappings) {
+                convertedRDF.addAll(writeClassToModel(cm, uuid, nextLine));
+            }
+        }
+        return convertedRDF;
     }
 
     /**
@@ -77,29 +80,6 @@ public class CSVConverterImpl implements CSVConverter {
             separator = Models.objectString(separatorModel).get().charAt(0);
 
         return separator;
-    }
-
-
-    @Override
-    public Model convert(File csv, Model mappingModel) throws IOException {
-        char separator = getSeparator(mappingModel);
-        CSVReader reader = new CSVReader(new FileReader(csv), separator);
-        String[] nextLine;
-
-        Model convertedRDF = new LinkedHashModel();
-
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
-
-        //Skip headers
-        reader.readNext();
-        //Traverse each row and convert column into RDF
-        while ((nextLine = reader.readNext()) != null) {
-            String uuid = generateUUID();
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm, uuid, nextLine));
-            }
-        }
-        return convertedRDF;
     }
 
     /**

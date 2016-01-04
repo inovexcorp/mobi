@@ -42,6 +42,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
+                        <Karaf-Commands>*</Karaf-Commands>
                     </instructions>
                 </configuration>
             </plugin>

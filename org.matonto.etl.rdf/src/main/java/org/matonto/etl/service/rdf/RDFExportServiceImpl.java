@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Optional;
+
+import org.apache.log4j.Logger;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
@@ -25,6 +27,8 @@ import aQute.bnd.annotation.component.Reference;
 @Component(provide = RDFExportService.class, immediate=true)
 public class RDFExportServiceImpl implements RDFExportService {
 
+    private static final Logger LOGGER = Logger.getLogger(RDFExportServiceImpl.class);
+
     private RepositoryManager repositoryManager;
 
     private ValueFactory valueFactory;
@@ -34,19 +38,16 @@ public class RDFExportServiceImpl implements RDFExportService {
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory){this.valueFactory = valueFactory;}
-    /**
-     * Exports all info from the repository with the given repositoryID into the file specified.
-     * @throws IOException
-     */
-    public void exportToFile(String repositoryID, File file) throws RepositoryException, IOException {
-        exportToFile(repositoryID, file, null, null, null, null);
+
+    @Override
+    public File exportToFile(String repositoryID, String filepath) throws RepositoryException, IOException {
+        return exportToFile(repositoryID, filepath, null, null, null, null);
     }
 
-    /**
-     * Exports the rdf statements with the given subject, predicate, and object into the given file with a given filetype.
-     * Enter null in the subj, pred, and obj fields if you don't want to filter by a particular value
-     */
-    public void exportToFile(String repositoryID, File file, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException {
+    @Override
+    public File exportToFile(String repositoryID, String filepath, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException {
+
+        File file = new File(filepath);
 
         Resource subjResource = null;
         IRI predicateIRI = null;
@@ -61,7 +62,10 @@ public class RDFExportServiceImpl implements RDFExportService {
             objValue = valueFactory.createLiteral(objLit);
         }
 
-        if(!file.canWrite())
+        LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\n"
+                    +"Obj: " + objValue);
+
+        if(file.exists() && !file.canWrite())
             throw new IOException("Unable to write to file");
 
         RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() -> new IOException("Unsupported file type"));
@@ -78,11 +82,31 @@ public class RDFExportServiceImpl implements RDFExportService {
                 m.add(Values.sesameStatement(s));
             });
 
-            Rio.write(m, new FileWriter(file), format);
+            return exportToFile(m, filepath, format);
 
         }else{
             throw new IllegalArgumentException("Repository does not exist");
         }
 
     }
+
+    @Override
+    public File exportToFile(Model model, String filepath) throws IOException{
+
+        Optional<RDFFormat> optFormat = Rio.getWriterFormatForFileName(filepath);
+        if(optFormat.isPresent()){
+            return exportToFile(model, filepath, optFormat.get());
+        }else{
+            throw new IllegalArgumentException("File format not supported");
+        }
+    }
+
+    @Override
+    public File exportToFile(Model model, String filepath, RDFFormat format) throws IOException{
+        File file = new File(filepath);
+        Rio.write(model, new FileWriter(file), format);
+        return file;
+    }
+
+
 }
