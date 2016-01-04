@@ -31,7 +31,7 @@
     <div class="login">
         <div class="bg-info form-container">
             <h1 class="text-center">Sign In Here</h1>
-            <form name="form" class="clearfix" onSubmit="return validate();" action="matonto/index.html" method="post">
+            <form name="form" class="clearfix" onSubmit="return validate();" action="index.html" method="post">
                 <!-- email/username -->
                 <div class="form-group">
                     <label for="username" class="sr-only">Email Address or Username</label>
@@ -56,10 +56,8 @@
                 password = form.password.value;
 
             if(username && password) {
-                alert('true');
                 return true;
             } else {
-                alert('false');
                 return false;
             }
         }

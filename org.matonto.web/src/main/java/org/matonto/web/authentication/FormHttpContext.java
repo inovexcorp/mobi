@@ -17,9 +17,11 @@ public class FormHttpContext extends AuthHttpContext {
 
     @Override
     protected boolean handleNoAuthHeader(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        log.debug("No authorization header. Redirecting to " + REDIRECT_PATH);
-        res.sendRedirect(REDIRECT_PATH);
-        return false;
+//        log.debug("No authorization header. Redirecting to " + REDIRECT_PATH);
+//        res.sendRedirect(REDIRECT_PATH);
+//        return false;
+        // Always allow
+        return true;
     }
 
     @Override

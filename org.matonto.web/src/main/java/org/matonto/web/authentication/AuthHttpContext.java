@@ -149,6 +149,10 @@ public abstract class AuthHttpContext implements HttpContext {
             return "image/jpeg";
         } else if (s.endsWith(".png")) {
             return "image/png";
+        }  else if (s.endsWith(".css")) {
+            return "text/css";
+        } else if (s.endsWith(".js")) {
+            return "application/javascript";
         } else {
             return "text/html";
         }
