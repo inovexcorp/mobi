@@ -22,24 +22,6 @@ public class FormHttpContext extends AuthHttpContext {
     private static final int MAX_AGE_MINS = 15;
 
     @Override
-    public boolean handleSecurity(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        log.debug("Requesting Authorization...");
-
-        // Allow the login page
-        if (unsecuredPages.contains(req.getRequestURI())) {
-            log.debug("Allowing access to " + req.getRequestURI());
-            return true;
-        }
-
-        if (handleAuth(req, res)) {
-            log.debug("Authorization Granted.");
-            return true;
-        } else {
-            return handleAuthDenied(req, res);
-        }
-    }
-
-    @Override
     protected boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String username = null;
         String password = null;
@@ -90,9 +72,8 @@ public class FormHttpContext extends AuthHttpContext {
     }
 
     @Override
-    protected boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    protected void handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException {
         log.debug("Authorization Denied. Redirecting to " + LOGIN_PAGE);
         res.sendRedirect(LOGIN_PAGE);
-        return false;
     }
 }

@@ -59,9 +59,28 @@ public abstract class AuthHttpContext implements HttpContext {
         }
     }
 
+    @Override
+    public boolean handleSecurity(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        log.debug("Requesting Authorization...");
+
+        // Allow the login page
+        if (unsecuredPages.contains(req.getRequestURI())) {
+            log.debug("Allowing access to " + req.getRequestURI());
+            return true;
+        }
+
+        if (handleAuth(req, res)) {
+            log.debug("Authorization Granted.");
+            return true;
+        } else {
+            handleAuthDenied(req, res);
+            return false;
+        }
+    }
+
     protected abstract boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
-    protected abstract boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
+    protected abstract void handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
     protected boolean authenticated(HttpServletRequest req, String username, String password) {
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!

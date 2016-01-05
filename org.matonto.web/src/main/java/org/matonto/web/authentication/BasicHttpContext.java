@@ -15,15 +15,7 @@ public class BasicHttpContext extends AuthHttpContext {
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
     @Override
-    public boolean handleSecurity(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        log.debug("Requesting Authorization...");
-
-        // Allow the login page
-        if (unsecuredPages.contains(req.getRequestURI())) {
-            log.debug("Allowing access to " + req.getRequestURI());
-            return true;
-        }
-
+    protected boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (req.getHeader("Authorization") == null) {
             log.debug("No authorization header. Requesting Authentication");
             res.setHeader("WWW-Authenticate", "MatOnto_Web");
@@ -31,16 +23,6 @@ public class BasicHttpContext extends AuthHttpContext {
             return false;
         }
 
-        if (handleAuth(req, res)) {
-            log.debug("Authorization Granted.");
-            return true;
-        } else {
-            return handleAuthDenied(req, res);
-        }
-    }
-
-    @Override
-    protected boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException {
         req.setAttribute(AUTHENTICATION_TYPE, HttpServletRequest.BASIC_AUTH);
 
         String authzHeader = req.getHeader("Authorization");
@@ -54,9 +36,8 @@ public class BasicHttpContext extends AuthHttpContext {
     }
 
     @Override
-    protected boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    protected void handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException {
         log.debug("Authorization Denied.");
         res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-        return false;
     }
 }
