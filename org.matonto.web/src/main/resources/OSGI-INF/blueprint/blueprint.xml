@@ -1,13 +1,8 @@
 <blueprint default-activation="eager"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
     <!-- Authorization Context -->
-    <bean id="authContext" class="org.matonto.web.authentication.FormHttpContext">
+    <bean id="authContext" class="org.matonto.web.authentication.UITokenHttpContext">
         <property name="bundle" ref="blueprintBundle"/>
-        <property name="unsecuredPages">
-            <list>
-                <value>/matonto/login.html</value>
-            </list>
-        </property>
     </bean>
 
     <service id="authContextService" ref="authContext" interface="org.osgi.service.http.HttpContext">
