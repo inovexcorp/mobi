@@ -8,58 +8,38 @@
         loginManagerService.$inject = ['$http', '$state'];
 
         function loginManagerService($http, $state) {
-            var username, password,
-                firstLogIn = true,
-                authenticated = false,
+            var authenticated = false,
                 self = this;
 
-            function _login() {
+            activate();
 
-                console.log(username, password);
-                authenticated = true;
-                $state.go('root.home');
-
-                /*//Instantiate HTTP Request
-                var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
-                request.open("GET", loginURL, true, username, password);
-                request.send(null);
-
-                //Process Response
-                request.onreadystatechange = function() {
-                    if (request.readyState == 4) {
-                        if (request.status == 200) {
-                            console.log("Success!");
-                            $state.go('root.home');
-                        } else {
-                            if(navigator.userAgent.toLowerCase().indexOf("firefox") != -1) {
-                                self.logoff();
-                            }
-                            alert("Invalid Credentials!");
-                        }
-                    }
-                }*/
+            function activate() {
+                console.log('activate loginManager thingy');
+                /*$http.get('/matontorest/user/current')
+                    .then(function(response) {
+                        console.log(response);
+                        // TODO: set authenticated based on 
+                    });*/
             }
 
-            self.login = function(isValid, _username, _password) {
+            self.login = function(isValid, username, password) {
                 if(isValid) {
-                    username = _username;
-                    password = _password;
-
-                    var userAgent = navigator.userAgent.toLowerCase();
-
-                    if(userAgent.indexOf("firefox") != -1) { //TODO: check version number
-                        if(firstLogIn) _login();
-                        else self.logoff(_login);
+                    // TODO: make $http call to validate the form and get the data back
+                    authenticated = (username == 'lewis.1378@gmail.com');
+                    if(authenticated) {
+                        $state.go('root.home');
+                        return false;
                     } else {
-                        _login();
+                        // TODO: page already shows error message
+                        return true;
                     }
-
-                    if(firstLogIn) firstLogIn = false;
                 }
             }
 
-            self.logoff = function(callback) {
-
+            self.logout = function(callback) {
+                // TODO: destroy token
+                authenticated = false;
+                $state.go('login');
             }
 
             self.isAuthenticated = function() {

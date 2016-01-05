@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('nav', [])
+        .module('nav', ['loginManager'])
         .controller('NavController', NavController);
 
-    NavController.$inject = ['$state'];
+    NavController.$inject = ['$state', 'loginManagerService'];
 
-    function NavController($state) {
+    function NavController($state, loginManagerService) {
         var vm = this;
         vm.perspectives;
 
@@ -30,8 +30,7 @@
         }
 
         vm.logout = function() {
-            // TODO: do logout action
-            console.warn('This will log you out at some future date.');
+            loginManagerService.logout();
         }
     }
 })();

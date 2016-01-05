@@ -10,12 +10,26 @@
 
     function config($stateProvider, $urlRouterProvider) {
         // Defaults to home
-        $urlRouterProvider.otherwise('/home');
+        $urlRouterProvider.otherwise('/login');
 
         // Sets the states
         $stateProvider
+            .state('login', {
+                url: '/login',
+                views: {
+                    container: {
+                        templateUrl: 'modules/login/login.html'
+                    }
+                },
+                data: {
+                    title: 'Login'
+                }
+            })
             .state('root', {
                 abstract: true,
+                resolve: {
+                    authenticate: authenticate
+                },
                 views: {
                     header: {
                         templateUrl: 'modules/nav/nav.html'
@@ -80,6 +94,17 @@
                     title: 'Mapper'
                 }
             });
+
+        function authenticate($q, $state, $timeout, loginManagerService) {
+            if(loginManagerService.isAuthenticated()) {
+                return $q.when();
+            } else {
+                $timeout(function() {
+                    $state.go('login');
+                });
+                return $q.reject();
+            }
+        }
     }
 
     run.$inject = ['$rootScope', '$state'];
