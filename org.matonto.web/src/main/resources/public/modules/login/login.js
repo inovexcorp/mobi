@@ -11,7 +11,7 @@
         var vm = this;
 
         vm.login = function(isValid) {
-            vm.showError = !loginManagerService.login(isValid, vm.form.email, vm.form.password);
+            vm.showError = !loginManagerService.login(isValid, vm.form.username, vm.form.password);
         }
     }
 })();

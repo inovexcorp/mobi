@@ -95,21 +95,16 @@
                 }
             });
 
-        function authenticate($q, $state, $timeout, loginManagerService) {
-            if(loginManagerService.isAuthenticated()) {
-                return $q.when();
-            } else {
-                $timeout(function() {
-                    $state.go('login');
-                });
-                return $q.reject();
-            }
+        authenticate.$inject = ['loginManagerService'];
+
+        function authenticate(loginManagerService) {
+            return loginManagerService.isAuthenticated();
         }
     }
 
-    run.$inject = ['$rootScope', '$state'];
+    run.$inject = ['$rootScope', '$state', '$http'];
 
-    function run($rootScope, $state) {
+    function run($rootScope, $state, $http) {
         $rootScope.$state = $state;
     }
 })();
