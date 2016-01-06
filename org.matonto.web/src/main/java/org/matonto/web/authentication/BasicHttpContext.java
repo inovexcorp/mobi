@@ -18,7 +18,7 @@ public class BasicHttpContext extends AuthHttpContext {
     protected boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (req.getHeader("Authorization") == null) {
             log.debug("No authorization header. Requesting Authentication");
-            res.setHeader("WWW-Authenticate", "MatOnto_Web");
+            res.setHeader("WWW-Authenticate", "Basic");
             res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }

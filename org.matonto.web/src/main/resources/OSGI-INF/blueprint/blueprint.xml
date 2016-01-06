@@ -15,7 +15,7 @@
     <service id="userServletService" ref="userServlet" interface="javax.servlet.Servlet">
         <service-properties>
             <entry key="alias" value="/matontorest/user/current"/>
-            <entry key="contextId" value="userCtxId"/>
+            <entry key="httpContext.id" value="userCtxId"/>
         </service-properties>
     </service>
 

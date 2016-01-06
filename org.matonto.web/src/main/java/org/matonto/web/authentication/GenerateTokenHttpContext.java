@@ -48,7 +48,7 @@ public class GenerateTokenHttpContext extends AbstractTokenHttpContext {
             res.addCookie(createSecureTokenCookie(authTokenOptional.get()));
             return true;
         } else {
-            res.setHeader("WWW-Authenticate", "MatOnto_Web");
+            res.setHeader("WWW-Authenticate", "Basic");
             return false;
         }
     }
