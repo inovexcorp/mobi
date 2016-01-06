@@ -1,13 +1,31 @@
 <blueprint default-activation="eager"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
-    <!-- Authorization Context -->
-    <bean id="authContext" class="org.matonto.web.authentication.UITokenHttpContext">
+    <!-- User Authorization Context -->
+    <bean id="userContext" class="org.matonto.web.authentication.GenerateTokenHttpContext">
         <property name="bundle" ref="blueprintBundle"/>
     </bean>
-
-    <service id="authContextService" ref="authContext" interface="org.osgi.service.http.HttpContext">
+    <service id="userContextService" ref="userContext" interface="org.osgi.service.http.HttpContext">
         <service-properties>
-            <entry key="httpContext.id" value="authCtxId"/>
+            <entry key="httpContext.id" value="userCtxId"/>
+        </service-properties>
+    </service>
+
+    <!-- User Servlet -->
+    <bean id="userServlet" class="org.matonto.web.authentication.UserServlet"/>
+    <service id="userServletService" ref="userServlet" interface="javax.servlet.Servlet">
+        <service-properties>
+            <entry key="alias" value="/matontorest/user/current"/>
+            <entry key="contextId" value="userCtxId"/>
+        </service-properties>
+    </service>
+
+    <!-- UI Authorization Context -->
+    <bean id="uiContext" class="org.matonto.web.authentication.UITokenHttpContext">
+        <property name="bundle" ref="blueprintBundle"/>
+    </bean>
+    <service id="uiContextService" ref="uiContext" interface="org.osgi.service.http.HttpContext">
+        <service-properties>
+            <entry key="httpContext.id" value="uiCtxId"/>
         </service-properties>
     </service>
 
@@ -44,7 +62,7 @@
         <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
             <property name="alias" value="/matonto" />
             <property name="path" value="build" />
-            <property name="httpContextId" value="authCtxId"/>
+            <property name="httpContextId" value="uiCtxId"/>
         </bean>
     </service>
 </blueprint>

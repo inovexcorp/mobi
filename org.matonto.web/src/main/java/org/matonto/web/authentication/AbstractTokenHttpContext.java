@@ -8,12 +8,11 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
-import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.Key;
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
@@ -22,13 +21,18 @@ public abstract class AbstractTokenHttpContext extends AuthHttpContext {
 
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
-    private static final String KEY_STRING = "testKey";
-    private static final Key KEY = new SecretKeySpec(KEY_STRING.getBytes(), 0, KEY_STRING.getBytes().length, "AES");
+    // Generate random 256-bit (32-byte) shared secret
+    private static final SecureRandom random = new SecureRandom();
+    private static final byte[] KEY = new byte[32];
+
+    static {
+        random.nextBytes(KEY);
+    }
+
     private static final long ONE_DAY_SEC = 24*60*60;
     private static final long ONE_DAY_MS = ONE_DAY_SEC*1000;
     private static final long TOKEN_DURATION = ONE_DAY_MS;
     private static final String ISSUER = "http://matonto.org/";
-
     protected static final String ANON_SCOPE = "self anon";
     protected static final String TOKEN_NAME = "matonto_web_token";
 
@@ -48,16 +52,22 @@ public abstract class AbstractTokenHttpContext extends AuthHttpContext {
                 if (jwtOptional.isPresent()) {
                     return handleTokenFound(req, res, jwtOptional.get());
                 } else {
-                    log.debug("Token Failed Verification.");
-                    return false;
+                    log.debug("Token Failed Verification. Refreshing Unauth Token.");
+                    SignedJWT unauthToken = generateUnauthToken(req);
+                    res.addCookie(createSecureTokenCookie(unauthToken));
+                    return true;
                 }
             } else {
                 return handleTokenMissing(req, res);
             }
         } catch (ParseException e) {
-            log.error("Problem Parsing JWT Token.", e);
+            String msg = "Problem Parsing JWT Token";
+            log.error(msg, e);
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
         } catch (JOSEException e) {
-            log.error("Problem Creating or Verifying JWT Token", e);
+            String msg = "Problem Creating or Verifying JWT Token";
+            log.error(msg, e);
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
         }
 
         return false;
@@ -86,7 +96,7 @@ public abstract class AbstractTokenHttpContext extends AuthHttpContext {
 
     protected Optional<SignedJWT> verifyToken(String tokenString) throws ParseException, JOSEException {
         SignedJWT signedJWT = SignedJWT.parse(tokenString);
-        JWSVerifier verifier = new MACVerifier(KEY.getEncoded());
+        JWSVerifier verifier = new MACVerifier(KEY);
 
         // Verify Token
         if (signedJWT.verify(verifier)) {
@@ -164,7 +174,7 @@ public abstract class AbstractTokenHttpContext extends AuthHttpContext {
         Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
 
         // Create HMAC signer
-        JWSSigner signer = new MACSigner(KEY.getEncoded());
+        JWSSigner signer = new MACSigner(KEY);
 
         // Prepare JWT with claims set
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
