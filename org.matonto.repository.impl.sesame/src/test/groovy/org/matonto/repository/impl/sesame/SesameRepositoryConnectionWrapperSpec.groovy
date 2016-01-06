@@ -323,4 +323,75 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         expect:
         RepositoryResults.asList(conn.getContextIDs()).size() == 2
     }
+
+    def "begin() starts a transaction"() {
+        setup:
+        conn.begin()
+
+        expect:
+        conn.isActive()
+    }
+
+    def "isActive() is false before starting a transaction"() {
+        expect:
+        !conn.isActive()
+    }
+
+    def "commit() ends current transaction"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.begin()
+        conn.add(s,p,o)
+        conn.commit()
+
+        expect:
+        conn.size() == 1
+        !conn.isActive()
+    }
+
+    def "rollback() reverts uncommitted removal of statement" (){
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.add(s,p,o)
+        conn.begin()
+        conn.clear()
+        conn.rollback()
+
+        expect:
+        conn.size() == 1
+    }
+
+    def "rollback() after uncommitted add causes no increase in size"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.begin()
+        conn.add(s,p,o)
+        conn.rollback()
+
+        expect:
+        conn.size() == 0
+    }
+
+    def "rollback() only affects current transaction"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.begin()
+        conn.add(o,p,s)
+        conn.commit()
+        conn.begin()
+        conn.add(s,p,o)
+        conn.rollback()
+
+        expect:
+        conn.size() == 1
+    }
+
 }
