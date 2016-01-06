@@ -32,21 +32,12 @@ public abstract class AuthHttpContext implements HttpContext {
      */
     protected String rootPath = "/";
 
-    /**
-     * List of pages that will not be authenticated.
-     */
-    protected List<String> unsecuredPages;
-
     public void setBundle(Bundle bundle) {
         this.bundle = bundle;
     }
 
     public void setRootPath(String rootPath) {
         this.rootPath = rootPath;
-    }
-
-    public void setUnsecuredPages(List<String> unsecuredPages) {
-        this.unsecuredPages = unsecuredPages;
     }
 
     static final URL NO_URL;
@@ -62,12 +53,6 @@ public abstract class AuthHttpContext implements HttpContext {
     @Override
     public boolean handleSecurity(HttpServletRequest req, HttpServletResponse res) throws IOException {
         log.debug("Requesting Authorization...");
-
-        // Allow the login page
-        if (unsecuredPages.contains(req.getRequestURI())) {
-            log.debug("Allowing access to " + req.getRequestURI());
-            return true;
-        }
 
         if (handleAuth(req, res)) {
             log.debug("Authorization Granted.");
