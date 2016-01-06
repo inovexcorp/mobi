@@ -28,10 +28,10 @@
                     authenticated = (username == 'lewis.1378@gmail.com');
                     if(authenticated) {
                         $state.go('root.home');
-                        return false;
+                        return true;
                     } else {
                         // TODO: page already shows error message
-                        return true;
+                        return false;
                     }
                 }
             }
