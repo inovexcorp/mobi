@@ -102,9 +102,9 @@
         }
     }
 
-    run.$inject = ['$rootScope', '$state', '$http'];
+    run.$inject = ['$rootScope', '$state'];
 
-    function run($rootScope, $state, $http) {
+    function run($rootScope, $state) {
         $rootScope.$state = $state;
     }
 })();
