@@ -8,29 +8,36 @@
         loginManagerService.$inject = ['$q', '$http', '$state', '$timeout'];
 
         function loginManagerService($q, $http, $state, $timeout) {
-            var self = this;
-
-            var dummy = false;
+            var self = this,
+                anon = 'self anon';
 
             self.login = function(isValid, username, password) {
                 if(isValid) {
-                    /*$http.get('/matontorest/user/login')
+                    var config = {
+                        params: {
+                            username: username,
+                            password: password
+                        }
+                    }
+                    $http.get('/matontorest/user/login', config)
                         .then(function(response) {
-                            var authenticated = (username == 'admin' && password == 'M@tontoRox!');
-                            if(authenticated) {
+                            if(response.status === 200 && response.data.scope !== anon) {
                                 $state.go('root.home');
+                                return true;
+                            } else {
+                                return false;
                             }
-                            return authenticated;
-                        });*/
+                        }, function(response) {
+                            return false;
+                        });
                 }
             }
 
             self.logout = function(callback) {
-                // TODO: destroy token with http call?
-                /*$http.get('/matontorest/user/logout')
+                $http.get('/matontorest/user/logout')
                     .then(function(response) {
                         $state.go('login');
-                    });*/
+                    });
                 $state.go('login');
             }
 
@@ -43,14 +50,12 @@
                 }
                 return $http.get('/matontorest/user/current')
                     .then(function(response) {
-                        console.log('success', response);
-                        if(dummy) {
+                        if(response.status === 200 && response.data.scope !== anon) {
                             return $q.when();
                         } else {
                             return handleError(response.data);
                         }
                     }, function(response) {
-                        console.log('error', response);
                         return handleError(response.data);
                     });
             }
