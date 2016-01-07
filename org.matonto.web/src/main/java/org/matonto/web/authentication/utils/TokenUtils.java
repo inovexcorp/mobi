@@ -34,7 +34,8 @@ public class TokenUtils {
     private static final long ONE_DAY_MS = ONE_DAY_SEC*1000;
     private static final long TOKEN_DURATION = ONE_DAY_MS;
     private static final String ISSUER = "http://matonto.org/";
-    private static final String ANON_SCOPE = "self anon";
+    public static final String ANON_SCOPE = "self anon";
+    public static final String AUTH_SCOPE = "self /*";
 
     // Attribute set if token verification occurs
     public static final String TOKEN_VERIFICATION_FAILED = "org.matonto.attribute.verificationFailed";
@@ -105,7 +106,7 @@ public class TokenUtils {
     public static SignedJWT generateauthToken(HttpServletResponse res, String username) throws IOException {
         SignedJWT authToken = null;
         try {
-            authToken = createJWT(username, "/*");
+            authToken = createJWT(username, AUTH_SCOPE);
         } catch (JOSEException e) {
             String msg = "Problem Creating JWT Token";
             LOG.error(msg, e);

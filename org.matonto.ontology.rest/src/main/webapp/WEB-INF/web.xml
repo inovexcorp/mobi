@@ -30,6 +30,6 @@
 	
 	<servlet-mapping>
 		<servlet-name>matonto-ontology-serlvet</servlet-name>
-		<url-pattern>/rest/*</url-pattern>
+		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
 </web-app>

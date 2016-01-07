@@ -28,7 +28,6 @@ public class UserLoginTokenContext extends AuthHttpContext {
             userCredsOptional = processBasicAuth(request);
             if (!userCredsOptional.isPresent()) {
                 log.debug("Could not find creds from BASIC Auth.");
-                response.setHeader("WWW-Authenticate", "Basic");
                 return false;
             }
         }

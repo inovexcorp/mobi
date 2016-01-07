@@ -99,8 +99,7 @@
                             com.sun.jersey.spi.container.servlet, 
                             *
                         </Import-Package>
-                        <Web-ContextPath>matonto</Web-ContextPath>
-                        <Webapp-Context>matonto</Webapp-Context>
+                        <Web-ContextPath>matontorest/ontology</Web-ContextPath>
                         <_wab>src/main/webapp</_wab>
                         <Service-Component>*</Service-Component>
                     </instructions>
