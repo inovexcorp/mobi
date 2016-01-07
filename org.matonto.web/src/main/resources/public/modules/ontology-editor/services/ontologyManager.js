@@ -103,6 +103,10 @@
                                 case prefixes.rdfs + 'Literal':
                                     icon = 'fa-font';
                                     break;
+                                case prefixes.xsd + 'double':
+                                case prefixes.xsd + 'nonNegativeInteger':
+                                    icon = 'fa-calculator';
+                                    break;
                                 default:
                                     icon = 'fa-link';
                                     break;
