@@ -32,21 +32,12 @@ public abstract class AuthHttpContext implements HttpContext {
      */
     protected String rootPath = "/";
 
-    /**
-     * List of pages that will not be authenticated.
-     */
-    protected List<String> unsecuredPages;
-
     public void setBundle(Bundle bundle) {
         this.bundle = bundle;
     }
 
     public void setRootPath(String rootPath) {
         this.rootPath = rootPath;
-    }
-
-    public void setUnsecuredPages(List<String> unsecuredPages) {
-        this.unsecuredPages = unsecuredPages;
     }
 
     static final URL NO_URL;
@@ -59,9 +50,23 @@ public abstract class AuthHttpContext implements HttpContext {
         }
     }
 
+    @Override
+    public boolean handleSecurity(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        log.debug("Requesting Authorization...");
+
+        if (handleAuth(req, res)) {
+            log.debug("Authorization Granted.");
+            return true;
+        } else {
+            log.debug("Authorization Denied.");
+            handleAuthDenied(req, res);
+            return false;
+        }
+    }
+
     protected abstract boolean handleAuth(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
-    protected abstract boolean handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
+    protected abstract void handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
     protected boolean authenticated(HttpServletRequest req, String username, String password) {
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
