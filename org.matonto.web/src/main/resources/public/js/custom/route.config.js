@@ -9,7 +9,7 @@
     config.$inject = ['$stateProvider', '$urlRouterProvider'];
 
     function config($stateProvider, $urlRouterProvider) {
-        // Defaults to home
+        // Defaults to login
         $urlRouterProvider.otherwise('/login');
 
         // Sets the states
