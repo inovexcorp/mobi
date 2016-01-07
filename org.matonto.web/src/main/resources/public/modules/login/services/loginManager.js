@@ -5,65 +5,59 @@
         .module('loginManager', [])
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$http', '$state'];
+        loginManagerService.$inject = ['$q', '$http', '$state', '$timeout'];
 
-        function loginManagerService($http, $state) {
-            var username, password,
-                firstLogIn = true,
-                authenticated = false,
-                self = this;
+        function loginManagerService($q, $http, $state, $timeout) {
+            var self = this,
+                anon = 'self anon';
 
-            function _login() {
-
-                console.log(username, password);
-                authenticated = true;
-                $state.go('root.home');
-
-                /*//Instantiate HTTP Request
-                var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
-                request.open("GET", loginURL, true, username, password);
-                request.send(null);
-
-                //Process Response
-                request.onreadystatechange = function() {
-                    if (request.readyState == 4) {
-                        if (request.status == 200) {
-                            console.log("Success!");
-                            $state.go('root.home');
-                        } else {
-                            if(navigator.userAgent.toLowerCase().indexOf("firefox") != -1) {
-                                self.logoff();
-                            }
-                            alert("Invalid Credentials!");
+            self.login = function(isValid, username, password) {
+                if(isValid) {
+                    var config = {
+                        params: {
+                            username: username,
+                            password: password
                         }
                     }
-                }*/
-            }
-
-            self.login = function(isValid, _username, _password) {
-                if(isValid) {
-                    username = _username;
-                    password = _password;
-
-                    var userAgent = navigator.userAgent.toLowerCase();
-
-                    if(userAgent.indexOf("firefox") != -1) { //TODO: check version number
-                        if(firstLogIn) _login();
-                        else self.logoff(_login);
-                    } else {
-                        _login();
-                    }
-
-                    if(firstLogIn) firstLogIn = false;
+                    $http.get('/matontorest/user/login', config)
+                        .then(function(response) {
+                            if(response.status === 200 && response.data.scope !== anon) {
+                                $state.go('root.home');
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }, function(response) {
+                            return false;
+                        });
                 }
             }
 
-            self.logoff = function(callback) {
-
+            self.logout = function(callback) {
+                $http.get('/matontorest/user/logout')
+                    .then(function(response) {
+                        $state.go('login');
+                    });
+                $state.go('login');
             }
 
             self.isAuthenticated = function() {
-                return authenticated;
+                var handleError = function(data) {
+                    $timeout(function() {
+                        $state.go('login');
+                    });
+                    return $q.reject(data);
+                }
+                return $http.get('/matontorest/user/current')
+                    .then(function(response) {
+                        if(response.status === 200 && response.data.scope !== anon) {
+                            return $q.when();
+                        } else {
+                            return handleError(response.data);
+                        }
+                    }, function(response) {
+                        return handleError(response.data);
+                    });
             }
         }
 })();
