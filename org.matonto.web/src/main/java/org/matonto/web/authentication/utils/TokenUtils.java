@@ -5,7 +5,6 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
 import javax.servlet.http.Cookie;
@@ -63,6 +62,10 @@ public class TokenUtils {
     }
 
     public static Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException {
+        if (tokenString == null) {
+            return Optional.empty();
+        }
+
         try {
             SignedJWT signedJWT = SignedJWT.parse(tokenString);
             JWSVerifier verifier = new MACVerifier(KEY);
