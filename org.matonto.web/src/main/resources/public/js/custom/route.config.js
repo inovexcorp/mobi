@@ -9,13 +9,27 @@
     config.$inject = ['$stateProvider', '$urlRouterProvider'];
 
     function config($stateProvider, $urlRouterProvider) {
-        // Defaults to home
-        $urlRouterProvider.otherwise('/home');
+        // Defaults to login
+        $urlRouterProvider.otherwise('/login');
 
         // Sets the states
         $stateProvider
+            .state('login', {
+                url: '/login',
+                views: {
+                    container: {
+                        templateUrl: 'modules/login/login.html'
+                    }
+                },
+                data: {
+                    title: 'Login'
+                }
+            })
             .state('root', {
                 abstract: true,
+                resolve: {
+                    authenticate: authenticate
+                },
                 views: {
                     header: {
                         templateUrl: 'modules/nav/nav.html'
@@ -80,6 +94,12 @@
                     title: 'Mapper'
                 }
             });
+
+        authenticate.$inject = ['loginManagerService'];
+
+        function authenticate(loginManagerService) {
+            return loginManagerService.isAuthenticated();
+        }
     }
 
     run.$inject = ['$rootScope', '$state'];
