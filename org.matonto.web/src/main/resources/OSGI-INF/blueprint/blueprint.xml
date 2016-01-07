@@ -1,26 +1,93 @@
 <blueprint default-activation="eager"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
-    <!-- User Authorization Context -->
-    <bean id="userContext" class="org.matonto.web.authentication.GenerateTokenHttpContext">
+    <!-- User Authorization Contexts -->
+    <bean id="userCurrentContext" class="org.matonto.web.authentication.context.UserCurrentTokenContext">
         <property name="bundle" ref="blueprintBundle"/>
     </bean>
-    <service id="userContextService" ref="userContext" interface="org.osgi.service.http.HttpContext">
+    <service id="userCurrentContextService" ref="userCurrentContext" interface="org.osgi.service.http.HttpContext">
         <service-properties>
-            <entry key="httpContext.id" value="userCtxId"/>
+            <entry key="httpContext.id" value="userCurrentCtxId"/>
         </service-properties>
     </service>
 
-    <!-- User Servlet -->
-    <bean id="userServlet" class="org.matonto.web.authentication.UserServlet"/>
-    <service id="userServletService" ref="userServlet" interface="javax.servlet.Servlet">
+    <bean id="userLoginContext" class="org.matonto.web.authentication.context.UserLoginTokenContext">
+        <property name="bundle" ref="blueprintBundle"/>
+    </bean>
+    <service id="userLoginContextService" ref="userLoginContext" interface="org.osgi.service.http.HttpContext">
+        <service-properties>
+            <entry key="httpContext.id" value="userLoginCtxId"/>
+        </service-properties>
+    </service>
+
+    <bean id="userLogoutContext" class="org.matonto.web.authentication.context.UserLogoutTokenContext">
+        <property name="bundle" ref="blueprintBundle"/>
+    </bean>
+    <service id="userLogoutContextService" ref="userLogoutContext" interface="org.osgi.service.http.HttpContext">
+        <service-properties>
+            <entry key="httpContext.id" value="userLogoutCtxId"/>
+        </service-properties>
+    </service>
+
+    <!-- User Servlets -->
+    <bean id="userCurrentServlet" class="org.matonto.web.authentication.UserServlet"/>
+    <service id="userCurrentServletService" ref="userCurrentServlet" interface="javax.servlet.Servlet">
         <service-properties>
             <entry key="alias" value="/matontorest/user/current"/>
-            <entry key="contextId" value="userCtxId"/>
+            <entry key="httpContext.id" value="userCurrentCtxId"/>
+        </service-properties>
+    </service>
+
+    <bean id="userLoginServlet" class="org.matonto.web.authentication.UserServlet"/>
+    <service id="userLoginServletService" ref="userLoginServlet" interface="javax.servlet.Servlet">
+        <service-properties>
+            <entry key="alias" value="/matontorest/user/login"/>
+            <entry key="httpContext.id" value="userLoginCtxId"/>
+        </service-properties>
+    </service>
+
+    <bean id="userLogoutServlet" class="org.matonto.web.authentication.UserServlet"/>
+    <service id="userLogoutServletService" ref="userLogoutServlet" interface="javax.servlet.Servlet">
+        <service-properties>
+            <entry key="alias" value="/matontorest/user/logout"/>
+            <entry key="httpContext.id" value="userLogoutCtxId"/>
+        </service-properties>
+    </service>
+
+    <!--&lt;!&ndash; User Filter &ndash;&gt;`-->
+    <!--<service id="verifyTokenFilter" interface="javax.servlet.Filter" ranking="3">-->
+        <!--<service-properties>-->
+            <!--<entry key="urlPatterns" value="/matontorest/user/current"/>-->
+        <!--</service-properties>-->
+        <!--<bean class="org.matonto.web.authentication.filter.VerifyToken"/>-->
+    <!--</service>-->
+
+    <!--<service id="genUnauthTokenFilter" interface="javax.servlet.Filter" ranking="2">-->
+        <!--<service-properties>-->
+            <!--<entry key="urlPatterns" value="/matontorest/user/current"/>-->
+            <!--<entry key="init.skipIfTokenExists" value="true"/>-->
+        <!--</service-properties>-->
+        <!--<bean class="org.matonto.web.authentication.filter.GenerateUnauthToken"/>-->
+    <!--</service>-->
+
+    <!--<service id="writePayloadFilter" interface="javax.servlet.Filter" ranking="1">-->
+        <!--<service-properties>-->
+            <!--<entry key="urlPatterns" value="/matontorest/user/current"/>-->
+        <!--</service-properties>-->
+        <!--<bean class="org.matonto.web.authentication.filter.WritePayload"/>-->
+    <!--</service>-->
+
+    <!-- REST Authorization Context -->
+    <bean id="restContext" class="org.matonto.web.authentication.context.RestTokenContext">
+        <property name="bundle" ref="blueprintBundle"/>
+    </bean>
+    <service id="restContextService" ref="restContext" interface="org.osgi.service.http.HttpContext">
+        <service-properties>
+            <entry key="httpContext.id" value="restCtxId"/>
         </service-properties>
     </service>
 
     <!-- UI Authorization Context -->
-    <bean id="uiContext" class="org.matonto.web.authentication.UITokenHttpContext">
+    <bean id="uiContext" class="org.matonto.web.authentication.context.UITokenContext">
         <property name="bundle" ref="blueprintBundle"/>
     </bean>
     <service id="uiContextService" ref="uiContext" interface="org.osgi.service.http.HttpContext">
