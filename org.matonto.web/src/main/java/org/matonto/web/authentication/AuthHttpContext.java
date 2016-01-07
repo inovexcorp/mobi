@@ -58,6 +58,7 @@ public abstract class AuthHttpContext implements HttpContext {
             log.debug("Authorization Granted.");
             return true;
         } else {
+            log.debug("Authorization Denied.");
             handleAuthDenied(req, res);
             return false;
         }
