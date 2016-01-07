@@ -36,7 +36,7 @@ import net.sf.json.JSONObject;
 
 
 @Component (immediate=true)
-@Path("/ontology")
+@Path("/")
 public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
