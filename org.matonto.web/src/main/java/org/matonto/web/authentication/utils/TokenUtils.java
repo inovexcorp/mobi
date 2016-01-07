@@ -34,8 +34,8 @@ public class TokenUtils {
     private static final long ONE_DAY_MS = ONE_DAY_SEC*1000;
     private static final long TOKEN_DURATION = ONE_DAY_MS;
     private static final String ISSUER = "http://matonto.org/";
-    private static final String ANON_SCOPE = "self anon";
-    private static final String AUTH_SCOPE = "self /*";
+    public static final String ANON_SCOPE = "self anon";
+    public static final String AUTH_SCOPE = "self /*";
 
     // Attribute set if token verification occurs
     public static final String TOKEN_VERIFICATION_FAILED = "org.matonto.attribute.verificationFailed";
