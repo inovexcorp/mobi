@@ -18,4 +18,5 @@ obr:start -d \
     org.matonto.ontology.api \
     org.matonto.ontology.cli \
     org.matonto.ontology.core.impl.owlapi \
+    org.matonto.ontology.rest \
     org.matonto.web
