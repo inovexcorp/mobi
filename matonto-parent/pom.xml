@@ -6,7 +6,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.CR-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -34,52 +34,52 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.cli</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>rdf.impl.sesame</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>repository.impl.sesame</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>repository.impl.core</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>etl.api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>ontology.api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>ontology.utils</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>semantic.service</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.CR-SNAPSHOT</version>
             </dependency>
 
             <!-- Sesame Dependencies -->
