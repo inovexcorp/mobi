@@ -58,6 +58,18 @@
             <version>${jersey.stack.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+            <version>${jersey.stack.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-servlet</artifactId>
+            <version>${jersey.stack.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- Openrdf Sesame dependencies -->
         <dependency>
@@ -96,7 +108,8 @@
                         <Import-Package>
                             com.sun.jersey.core.header.*,
                             com.sun.jersey.api.core,
-                            com.sun.jersey.spi.container.servlet, 
+                            com.sun.jersey.spi.container.servlet,
+                            com.sun.jersey.server.impl.container,
                             *
                         </Import-Package>
                         <Web-ContextPath>matontorest/ontology</Web-ContextPath>
