@@ -6,8 +6,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -20,9 +25,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.io.IOUtils;
+import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.slf4j.Logger;
@@ -360,5 +367,51 @@ public class OntologyRestImpl {
 		  
 		return Response.ok(json.toString()).build();
 	}
+	
+	   /*
+     * Returns JSON-formated ontology with requested context
+     */
+    @GET
+    @Path("/getAnnotations")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAnnotationsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    {          
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+        
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            return Response.status(400).entity("OntologyID is empty").build();
+        
+        JSONObject json = new JSONObject();
+        Optional<Ontology> ontology = Optional.empty();
+        Set<Annotation> annotations = new HashSet<>();
+        String message = null;
+        IRI iri = manager.createOntologyIRI(ontologyIdStr);
+        OntologyId ontologyId = manager.createOntologyId(iri);
+        try{
+            ontology = manager.retrieveOntology(ontologyId);
+        } catch(MatontoOntologyException ex) {
+            message = ex.getMessage();
+            LOG.error("Exception occurred while retrieving ontology: " + message, ex);
+        } 
+        
+        if(ontology.isPresent()) {
+            try{
+                annotations = ontology.get().getAllAnnotations();
+            } catch(MatontoOntologyException ex) {
+                message = ex.getMessage();
+                LOG.error("Exception occurred while parsing annotations: " + message, ex);
+            } 
+        }
+        
+        if(!annotations.isEmpty()) {
+            for(Annotation annotation : annotations) {
+                IRI propertyIRI = annotation.getProperty().getIRI();
+                json.put(propertyIRI.stringValue(), propertyIRI.getLocalName());             
+            }
+        }
+            
+        return Response.status(200).entity(json.toString()).build();
+    }
 	
 }

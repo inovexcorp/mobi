@@ -133,7 +133,7 @@ public class SimpleOntologyTest {
         replay(ontologyIdMock);
 
         Ontology ontology = new SimpleOntology(ontologyIdMock, transformer);
-        Set<Annotation> annotations = ontology.getAnnotations();
+        Set<Annotation> annotations = ontology.getOntologyAnnotations();
         assertTrue(annotations.size() == 0);
     }
 
@@ -149,7 +149,7 @@ public class SimpleOntologyTest {
         Ontology ontology = new SimpleOntology(stream, ontologyIdMock, transformer);
 
         // Test
-        Set<Annotation> annotations = ontology.getAnnotations();
+        Set<Annotation> annotations = ontology.getOntologyAnnotations();
 
         // Assertions
         assertTrue(annotations.size() == 1);

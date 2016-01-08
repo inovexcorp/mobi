@@ -20,23 +20,31 @@ import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.rio.RioRenderer;
+import org.semanticweb.owlapi.util.OWLOntologyWalker;
+import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 import java.io.*;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 
 public class SimpleOntology implements Ontology {
 
 	private OntologyId ontologyId;
+	private Set<Annotation> ontoAnnotations;
+	private Set<Annotation> annotations;
 	
 	//Owlapi variables
 	private OWLOntology ontology;
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+
 
     private SesameTransformer transformer;
 
@@ -106,13 +114,21 @@ public class SimpleOntology implements Ontology {
 //    }
 
 	@Override
-	public Set<Annotation> getAnnotations() {
-        return ontology.getAnnotations()
-                .stream()
-                .map(SimpleOntologyValues::matontoAnnotation)
-                .collect(Collectors.toSet());
+	public Set<Annotation> getOntologyAnnotations() throws MatontoOntologyException {
+	    if(ontoAnnotations == null)
+	        getAnnotations();
+	    
+        return ontoAnnotations;
 	}
 
+	@Override
+	public Set<Annotation> getAllAnnotations() throws MatontoOntologyException {
+	       if(annotations == null)
+	            getAnnotations();
+	        
+	    return annotations;
+	}
+	
     @Override
     public Set<Axiom> getAxioms() {
         return ontology.getAxioms()
@@ -284,4 +300,28 @@ public class SimpleOntology implements Ontology {
 		else
 			return os;
 	}
+	
+	private void getAnnotations() throws MatontoOntologyException {
+	    if(ontology==null)
+	        throw new MatontoOntologyException("ontology is null");
+	    
+	    ontoAnnotations = new HashSet<>();
+	    annotations = new HashSet<>();
+	    
+	    ontoAnnotations = ontology.getAnnotations().stream()
+                .map(SimpleOntologyValues::matontoAnnotation)
+                .collect(Collectors.toSet());
+	    annotations.addAll(ontoAnnotations);
+	    
+	    OWLOntologyWalker walker = new OWLOntologyWalker(Collections.singleton(ontology));
+	    OWLOntologyWalkerVisitor visitor = new OWLOntologyWalkerVisitor(walker) {
+            @Override
+            public void visit(OWLObjectSomeValuesFrom desc) {
+                annotations.add(SimpleOntologyValues.matontoAnnotation(getCurrentAnnotation()));
+            }
+        };
+
+        walker.walkStructure(visitor);
+	}
+
 }

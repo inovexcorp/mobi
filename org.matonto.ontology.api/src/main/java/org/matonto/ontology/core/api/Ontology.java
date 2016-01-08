@@ -22,7 +22,20 @@ public interface Ontology {
 	
 	OntologyId getOntologyId();
 	
-	Set<Annotation> getAnnotations();
+	/**
+	 * Gets the ontology annotations, excluding annotations for other objects such as classes and entities
+	 * 
+	 * @return ontology annotations
+	 */
+	Set<Annotation> getOntologyAnnotations();
+		
+	/**
+     * Gets all the annotations in the ontology, excluding ontology annotations, annotations for other objects such as classes 
+     * and entities
+     * 
+     * @return ontology annotations
+     */
+	Set<Annotation> getAllAnnotations();
 
     Set<Axiom> getAxioms();
 
