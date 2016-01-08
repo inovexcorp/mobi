@@ -36,6 +36,7 @@
         <module>org.matonto.repository.impl.core</module>
         <module>org.matonto.persistence.cli</module>
         <module>org.matonto.ontology.utils</module>
+        <module>org.matonto.swagger.ui</module>
     </modules>
 
     <properties>
