@@ -25,7 +25,7 @@
     <bean id="camelBean" class="org.apache.camel.component.servlet.osgi.OsgiServletRegisterer"
           init-method="register"
           destroy-method="unregister">
-        <property name="alias" value="/etl"/>
+        <property name="alias" value="/matontorest/etl"/>
         <property name="matchOnUriPrefix" value="true"/>
         <property name="httpService" ref="httpService"/>
         <property name="servlet" ref="camelServlet"/>
@@ -54,7 +54,7 @@
              knows the url to the REST services.
              Notice: This is optional, but needed if the RestRegistry should enlist accurate information.
              You can access the RestRegistry from JMX at runtime -->
-        <restConfiguration component="servlet" bindingMode="off" contextPath="etl/"
+        <restConfiguration component="servlet" bindingMode="off" contextPath="/matontorest/etl"
                            port="8181" host="localhost">
             <dataFormatProperty key="prettyPrint" value="true"/>
             <dataFormatProperty key="json.in.mustBeJAXBElement" value="false"/>
