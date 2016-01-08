@@ -15,7 +15,7 @@ body {
         &:not(.left-nav) > .view-container {
             padding-top: 93px;
         }
-        & > .view-container {
+        > .view-container {
             padding-top: 44px;
         }
         &.left-nav nav .nav,
@@ -80,6 +80,11 @@ body {
     /* view container spacing with extra on the bottom for the icon buttons */
     > .view-container {
         padding: 15px 15px 34px;
+
+        /* removes top margin from page headers */
+        h1 {
+            margin-top: 0;
+        }
     }
 }
 
