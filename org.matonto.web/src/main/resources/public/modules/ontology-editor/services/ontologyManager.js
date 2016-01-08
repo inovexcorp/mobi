@@ -27,7 +27,7 @@
                             addOntology(response.data[i]);
                         }
                     }, function(response) {
-                        console.error(response);
+                        console.log(response);
                     });
             }
 
@@ -360,7 +360,7 @@
                             addOntology(response.data.ontology);
                         } else {
                             // TODO: handle error better
-                            console.warn(response.data.error);
+                            console.log(response.data.error);
                         }
                     });
             }
@@ -372,7 +372,7 @@
                             return self.get(namespace, localName);
                         } else {
                             // TODO: handle error better
-                            console.warn(response.data.error);
+                            console.log(response.data.error);
                         }
                     });
             }
