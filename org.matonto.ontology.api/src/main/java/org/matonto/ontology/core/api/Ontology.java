@@ -19,7 +19,16 @@ public interface Ontology {
 	OutputStream asOwlXml() throws MatontoOntologyException;
 	
 	OutputStream asJsonLD() throws MatontoOntologyException;
-	
+
+	/**
+	 * Returns the OntologyID that describes the Ontology IRI, Version IRI,
+     * and Ontology identifier. Note: If the serialized ontology contains an
+     * Ontology IRI or Version IRI, it must match the Ontology and Version IRIs in
+     * this OntologyId object.
+     *
+	 * @return the OntologyID that describes the Ontology IRI, Version IRI,
+     * and Ontology identifier
+     */
 	OntologyId getOntologyId();
 	
 	Set<Annotation> getAnnotations();
