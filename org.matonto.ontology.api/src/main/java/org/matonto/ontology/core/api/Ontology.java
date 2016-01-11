@@ -1,6 +1,7 @@
 package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.api.axiom.Axiom;
+import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -36,6 +37,8 @@ public interface Ontology {
      * @return ontology annotations
      */
 	Set<Annotation> getAllAnnotations();
+	
+	Set<OClass> getAllClasses();
 
     Set<Axiom> getAxioms();
 

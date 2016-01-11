@@ -30,6 +30,7 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.slf4j.Logger;
@@ -139,7 +140,7 @@ public class OntologyRestImpl {
 	
 	
 	/*
-	 * Ingests/uploads an ontology file to a data store configured in the config file (settings.xml)
+	 * Ingests/uploads an ontology file to a data store 
 	 */
 	@POST
 	@Path("/uploadOntology")
@@ -180,7 +181,7 @@ public class OntologyRestImpl {
 	
 	
 	/*
-	 * Returns JSON-formated ontology with requested context
+	 * Returns JSON-formated ontology with requested ontology ID
 	 */
 	@GET
 	@Path("/getOntology")
@@ -247,7 +248,7 @@ public class OntologyRestImpl {
 	
 	
 	/*
-	 * Downloads ontology with requested context to a file with given a file name 
+	 * Downloads ontology with requested ontology ID to a file with given a file name 
 	*/
 	@GET
 	@Path("/downloadOntology")
@@ -331,7 +332,7 @@ public class OntologyRestImpl {
 	
 	
 	/*
-	 * Delete ontology with requested context from the server
+	 * Delete ontology with requested ontology ID from the server
 	 */
 	@GET
 	@Path("/deleteOntology")
@@ -366,8 +367,9 @@ public class OntologyRestImpl {
 		return Response.ok(json.toString()).build();
 	}
 	
-	   /*
-     * Returns JSON-formated ontology with requested context
+	
+	 /*
+     * Returns JSON-formated annotation properties in the ontology with requested ontology ID
      */
     @GET
     @Path("/getAnnotations")
@@ -386,19 +388,40 @@ public class OntologyRestImpl {
         return Response.status(200).entity(json.toString()).build();
     }
     
-    private JSONObject getAnnotationIRIs (@Nonnull String ontologyIdStr) 
-    {
-        JSONObject json = new JSONObject();
-        Optional<Ontology> optOntology = Optional.empty();
-        
-        try {
-            optOntology = getOntology(ontologyIdStr);
-        } catch(MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-        } 
-        
-        Set<Annotation> annotations = new HashSet<>();
-        
+    
+    /*
+    * Returns JSON-formated annotation properties in the ontology with requested ontology ID
+    */
+   @GET
+   @Path("/getClasses")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Response getClassesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+   {          
+       if(manager == null)
+           return Response.status(500).entity("Ontology manager is null").build();
+       
+       if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+           return Response.status(400).entity("OntologyID is empty").build();
+       
+       JSONObject json = new JSONObject();
+       json = getClassIRIs(ontologyIdStr);
+           
+       return Response.status(200).entity(json.toString()).build();
+   }
+    
+   private JSONObject getAnnotationIRIs (@Nonnull String ontologyIdStr) 
+   {
+       JSONObject json = new JSONObject();
+       Optional<Ontology> optOntology = Optional.empty();
+    
+       try {
+           optOntology = getOntology(ontologyIdStr);
+       } catch(MatontoOntologyException ex) {
+           LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+       } 
+    
+       Set<Annotation> annotations = new HashSet<>();
+
         if(optOntology.isPresent()) {
             try{
                 annotations = optOntology.get().getAllAnnotations();
@@ -406,7 +429,7 @@ public class OntologyRestImpl {
                 LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
             } 
         }
-        
+    
         if(!annotations.isEmpty()) {
             Map<String, ArrayList<String>> propertyMap = new HashMap<String, ArrayList<String>>();
             for(Annotation annotation : annotations) {
@@ -426,10 +449,63 @@ public class OntologyRestImpl {
                     }
                 }             
             }
-            
+        
             json = mapToJson(propertyMap);
         }
+   
+        else {
+            json.put("error", "OntologyId doesn't exist.");
+        }
+        
+        return json;
+    }
+    
+    private JSONObject getClassIRIs (@Nonnull String ontologyIdStr) 
+    {   
+        JSONObject json = new JSONObject();
+        Optional<Ontology> optOntology = Optional.empty();
+        
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+        } 
+        
+        Set<OClass> oClasses = new HashSet<>();
+        
+        if(optOntology.isPresent()) {
+            try{
+                oClasses = optOntology.get().getAllClasses();
+            } catch(MatontoOntologyException ex) {
+                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
+            } 
+        }
+        
+        if(!oClasses.isEmpty()) {
+            Map<String, ArrayList<String>> oClassMap = new HashMap<String, ArrayList<String>>();
+            for(OClass oClass : oClasses) {
+                String namespace = oClass.getIRI().getNamespace();
+                String localName = oClass.getIRI().getLocalName();
+                if(oClassMap.isEmpty() || !oClassMap.containsKey(namespace)) {
+                    ArrayList<String> lnArray = new ArrayList<String>();
+                    lnArray.add(localName);
+                    oClassMap.put(namespace, lnArray);
+                }
+                
+                else {
+                    ArrayList<String> lnArray = oClassMap.get(namespace);
+                    if(!lnArray.contains(localName)) {
+                        lnArray.add(localName);
+                        oClassMap.put(namespace, lnArray);
+                    }
+                }             
+            }
+            json = mapToJson(oClassMap);
+        }
        
+        else {
+            json.put("error", "OntologyId doesn't exist.");
+        }
         return json;
     }
     
