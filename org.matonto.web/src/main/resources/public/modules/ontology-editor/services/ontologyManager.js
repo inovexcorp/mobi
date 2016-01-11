@@ -5,9 +5,9 @@
         .module('ontologyManager', [])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$http', '$q', '$timeout'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout'];
 
-        function ontologyManagerService($http, $q, $timeout) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout) {
             var self = this,
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
@@ -20,6 +20,8 @@
             initialize();
 
             function initialize() {
+                $rootScope.showSpinner = true;
+
                 $http.get(prefix + '/getAllOntologies')
                     .then(function(response) {
                         var i = response.data.length;
@@ -28,6 +30,9 @@
                         }
                     }, function(response) {
                         console.log(response);
+                    })
+                    .finally(function() {
+                        $rootScope.showSpinner = false;
                     });
             }
 
@@ -372,14 +377,21 @@
             }
 
             self.uploadThenGet = function(isValid, file, namespace, localName) {
+                $rootScope.showSpinner = true;
+
                 return self.upload(isValid, file, namespace, localName)
                     .then(function(response) {
                         if(!response.data.error) {
-                            return self.get(namespace, localName);
+                            return self.get(namespace, localName)
+                                .finally(function(response) {
+                                    $rootScope.showSpinner = false;
+                                });
                         } else {
                             // TODO: handle error better
                             console.log(response.data.error);
                         }
+                    }, function(response) {
+                        $rootScope.showSpinner = false;
                     });
             }
 

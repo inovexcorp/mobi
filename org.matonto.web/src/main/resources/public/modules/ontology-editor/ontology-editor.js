@@ -28,7 +28,10 @@
 
         /* Ontology Management */
         vm.uploadOntology = function(isValid, file, namespace, localName) {
-            ontologyManagerService.uploadThenGet(isValid, file, namespace, localName);
+            ontologyManagerService.uploadThenGet(isValid, file, namespace, localName)
+                .then(function(response) {
+                    vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
+                });
         }
 
         vm.selectItem = function(editor, oi, ci, pi) {
