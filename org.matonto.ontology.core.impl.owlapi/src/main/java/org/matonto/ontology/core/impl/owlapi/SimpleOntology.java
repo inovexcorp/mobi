@@ -3,6 +3,7 @@ package org.matonto.ontology.core.impl.owlapi;
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.axiom.Axiom;
+import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -40,6 +41,7 @@ public class SimpleOntology implements Ontology {
 	private OntologyId ontologyId;
 	private Set<Annotation> ontoAnnotations;
 	private Set<Annotation> annotations;
+	private Set<OClass> classes;
 	
 	//Owlapi variables
 	private OWLOntology ontology;
@@ -123,10 +125,17 @@ public class SimpleOntology implements Ontology {
 
 	@Override
 	public Set<Annotation> getAllAnnotations() throws MatontoOntologyException {
-	       if(annotations == null)
-	            getAnnotations();
+	    if(annotations == null)
+            getAnnotations();
 	        
 	    return annotations;
+	}
+	
+	public Set<OClass> getAllClasses() {
+	    return ontology.getClassesInSignature()
+	            .stream()
+	            .map(SimpleOntologyValues::matontoClass)
+	            .collect(Collectors.toSet());
 	}
 	
     @Override

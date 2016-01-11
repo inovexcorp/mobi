@@ -7,14 +7,13 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -31,7 +30,6 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
-import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.slf4j.Logger;
@@ -49,6 +47,7 @@ import net.sf.json.JSONObject;
 public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
+	private static Map<OntologyId, Ontology> retrievedOntologies = new HashMap<OntologyId, Ontology>();
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
 	@Activate
@@ -115,24 +114,22 @@ public class OntologyRestImpl {
         Map<OntologyId, String> ontologyRegistry = manager.getOntologyRegistry();
         JSONArray jsonArray = new JSONArray();
 
-        Optional<Ontology> ontology;
-        OutputStream outputStream = null;
+        Optional<Ontology> optOntology;
 
         if(!ontologyRegistry.isEmpty()) {
             for(OntologyId oid : ontologyRegistry.keySet()) {
-                ontology = manager.retrieveOntology(oid);
-                if(ontology.isPresent()) {
-                    try {
-                        outputStream = ontology.get().asJsonLD();
-                        if(outputStream != null) 
-                            jsonArray.add(outputStream.toString());
-                    } catch(MatontoOntologyException ex) {
-                        JSONObject json = new JSONObject();
-                        json.put("Error in retrieving ontology with ontologyId " + oid, ex.getMessage());
-                        jsonArray.add(json);              
-                    }
-             
+                try {
+                    optOntology = getOntology(oid.toString());
+                    
+                    if(optOntology.isPresent())
+                        jsonArray.add(optOntology.get().asJsonLD().toString());
+                    
+                } catch(MatontoOntologyException ex) {
+                    JSONObject json = new JSONObject();
+                    json.put("Error in retrieving ontology with ontologyId " + oid, ex.getMessage());
+                    jsonArray.add(json);              
                 }
+             
             }
         }
 
@@ -201,32 +198,30 @@ public class OntologyRestImpl {
 			return Response.status(400).entity("Output format is empty").build();
 		
 		JSONObject json = new JSONObject();
-        Optional<Ontology> ontology = Optional.empty();
+		Optional<Ontology> optOntology = Optional.empty();
 		String message = null;
-        IRI iri = manager.createOntologyIRI(ontologyIdStr);
-        OntologyId ontologyId = manager.createOntologyId(iri);
-		try{
-			ontology = manager.retrieveOntology(ontologyId);
-		} catch(MatontoOntologyException ex) {
-		    message = ex.getMessage();
-		    LOG.error("Exception occurred while retrieving ontology: " + message, ex);
-		} 
 		
+		try {
+		    optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            message = ex.getMessage();
+            LOG.error("Exception occurred while retrieving ontology: " + message, ex);
+        } 
 		
-		if(ontology.isPresent()) {
+		if(optOntology.isPresent()) {
 			OutputStream outputStream = null;
 			
 			if(rdfFormat.equalsIgnoreCase("rdf/xml"))
-				outputStream = ontology.get().asRdfXml();
+				outputStream = optOntology.get().asRdfXml();
 			
 			else if(rdfFormat.equalsIgnoreCase("owl/xml"))
-				outputStream = ontology.get().asOwlXml();
+				outputStream = optOntology.get().asOwlXml();
 			
 			else if(rdfFormat.equalsIgnoreCase("turtle"))
-				outputStream = ontology.get().asTurtle();
+				outputStream = optOntology.get().asTurtle();
 			
 			else if(rdfFormat.equalsIgnoreCase("jsonld"))
-                outputStream = ontology.get().asJsonLD();
+                outputStream = optOntology.get().asJsonLD();
             
             else 
                 return Response.status(400).entity("Output format is invalid").build();
@@ -238,7 +233,7 @@ public class OntologyRestImpl {
 			IOUtils.closeQuietly(outputStream);	
 				
 			json.put("document format", rdfFormat);
-            json.put("ontology id", ontologyId.getOntologyIdentifier().stringValue());
+            json.put("ontology id", ontologyIdStr);
             json.put("ontology", content);
 			
 		} else if(message == null) {
@@ -269,33 +264,30 @@ public class OntologyRestImpl {
 		if (rdfFormat == null || rdfFormat.length() == 0)
 			return Response.status(400).entity("Output format is empty").build();
 	
-		Optional<Ontology> ontology = Optional.empty();
-		
-		try{
-			IRI iri = manager.createOntologyIRI(ontologyIdStr);
-			OntologyId ontologyId = manager.createOntologyId(iri);
-			ontology = manager.retrieveOntology(ontologyId);
-		} catch(MatontoOntologyException ex) {
-		    LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-            return Response.status(500).entity(ex.getMessage()).build();
-		} 
-		
+        Optional<Ontology> optOntology = Optional.empty();
+        
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+        } 
+        
 		OutputStream outputStream = null;
 		StreamingOutput stream = null;
 		
-		if(ontology.isPresent()) {
+		if(optOntology.isPresent()) {
 			
 			if(rdfFormat.equalsIgnoreCase("rdf/xml"))
-				outputStream = ontology.get().asRdfXml();
+				outputStream = optOntology.get().asRdfXml();
 			
 			else if(rdfFormat.equalsIgnoreCase("owl/xml"))
-				outputStream = ontology.get().asOwlXml();
+				outputStream = optOntology.get().asOwlXml();
 			
 			else if(rdfFormat.equalsIgnoreCase("turtle"))
-				outputStream = ontology.get().asTurtle();
+				outputStream = optOntology.get().asTurtle();
 			
 			else if(rdfFormat.equalsIgnoreCase("jsonld"))
-                outputStream = ontology.get().asJsonLD();
+                outputStream = optOntology.get().asJsonLD();
             
             else 
                 return Response.status(400).entity("Output format is invalid").build();
@@ -324,7 +316,7 @@ public class OntologyRestImpl {
 			    public void write(OutputStream os) throws IOException, WebApplicationException 
 			    {
 			      Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-			      writer.write("");
+			      writer.write("Error - OntologyId doesn't exist.");
 			      writer.flush();
 			      writer.close();
 			    }
@@ -359,6 +351,10 @@ public class OntologyRestImpl {
 			IRI iri = manager.createOntologyIRI(ontologyIdStr);
 			OntologyId ontologyId = manager.createOntologyId(iri);
 			deleted = manager.deleteOntology(ontologyId);
+			
+			if(retrievedOntologies.containsKey(ontologyId))  
+			    retrievedOntologies.remove(ontologyId);
+			
 		} catch(MatontoOntologyException ex) {
 		    message = ex.getMessage();
 		    LOG.error("Exception occurred while deleting ontology: " + message, ex);
@@ -385,24 +381,29 @@ public class OntologyRestImpl {
             return Response.status(400).entity("OntologyID is empty").build();
         
         JSONObject json = new JSONObject();
-        Optional<Ontology> ontology = Optional.empty();
-        Set<Annotation> annotations = new HashSet<>();
-        String message = null;
-        IRI iri = manager.createOntologyIRI(ontologyIdStr);
-        OntologyId ontologyId = manager.createOntologyId(iri);
-        try{
-            ontology = manager.retrieveOntology(ontologyId);
+        json = getAnnotationIRIs(ontologyIdStr);
+            
+        return Response.status(200).entity(json.toString()).build();
+    }
+    
+    private JSONObject getAnnotationIRIs (@Nonnull String ontologyIdStr) 
+    {
+        JSONObject json = new JSONObject();
+        Optional<Ontology> optOntology = Optional.empty();
+        
+        try {
+            optOntology = getOntology(ontologyIdStr);
         } catch(MatontoOntologyException ex) {
-            message = ex.getMessage();
-            LOG.error("Exception occurred while retrieving ontology: " + message, ex);
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
         } 
         
-        if(ontology.isPresent()) {
+        Set<Annotation> annotations = new HashSet<>();
+        
+        if(optOntology.isPresent()) {
             try{
-                annotations = ontology.get().getAllAnnotations();
+                annotations = optOntology.get().getAllAnnotations();
             } catch(MatontoOntologyException ex) {
-                message = ex.getMessage();
-                LOG.error("Exception occurred while parsing annotations: " + message, ex);
+                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
             } 
         }
         
@@ -426,14 +427,44 @@ public class OntologyRestImpl {
                 }             
             }
             
-            for(String key : propertyMap.keySet()) {
-                JSONArray jsonArray = new JSONArray();
-                jsonArray.addAll(propertyMap.get(key));
-                json.put(key, jsonArray);
-            }
+            json = mapToJson(propertyMap);
         }
-            
-        return Response.status(200).entity(json.toString()).build();
+       
+        return json;
+    }
+    
+    private JSONObject mapToJson(@Nonnull Map<String, ArrayList<String>> mapObject)
+    {
+        JSONObject json = new JSONObject();
+
+        for(String key : mapObject.keySet()) {
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.addAll(mapObject.get(key));
+            json.put(key, jsonArray);
+        }
+        
+        return json;
+    }
+    
+    private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException
+    {
+        Ontology ontology = null;
+        
+        if(retrievedOntologies.containsKey(ontologyIdStr)) {
+            return Optional.of(retrievedOntologies.get(ontologyIdStr));
+        }
+        
+        else{
+            Optional<Ontology> optOntology = Optional.empty();
+            IRI iri = manager.createOntologyIRI(ontologyIdStr);
+            OntologyId ontologyId = manager.createOntologyId(iri);
+            optOntology = manager.retrieveOntology(ontologyId);
+        
+            if(optOntology.isPresent())
+                retrievedOntologies.put(ontologyId, ontology);
+              
+            return optOntology;
+        }
     }
 	
 }
