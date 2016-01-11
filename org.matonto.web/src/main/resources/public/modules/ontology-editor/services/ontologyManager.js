@@ -145,7 +145,7 @@
                             break;
                         case prefixes.owl + 'DatatypeProperty':
                         case prefixes.owl + 'ObjectProperty':
-                        case prefixes.rddfs + 'Property':
+                        case prefixes.rdfs + 'Property':
                             obj.matonto = {
                                 icon: chooseIcon(obj),
                                 originalId: obj['@id'],
