@@ -49,7 +49,7 @@ import net.sf.json.JSONObject;
 
 
 @Component (immediate=true)
-@Path("/ontology")
+@Path("/")
 public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
@@ -83,8 +83,8 @@ public class OntologyRestImpl {
 	{
 		return manager;
 	}
-	
-	
+
+
 	
 	@GET
 	@Path("getAllOntologyIds")
