@@ -2,6 +2,9 @@ package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -41,6 +44,14 @@ public interface Ontology {
 	Set<OClass> getAllClasses();
 
     Set<Axiom> getAxioms();
+    
+    Set<Datatype> getAllDatatypes();
+    
+    Set<ObjectProperty> getAllObjectProperties();
+    
+    Set<DataProperty> getAllDataProperties();
+    
+    Set<Individual> getAllIndividuals();
 
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 

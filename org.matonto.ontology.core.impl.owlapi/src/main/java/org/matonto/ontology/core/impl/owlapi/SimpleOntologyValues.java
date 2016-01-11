@@ -333,6 +333,24 @@ public class SimpleOntologyValues {
 		org.semanticweb.owlapi.model.IRI owlapiIri = owlapiIRI(matontoIri);
 		return new OWLNamedIndividualImpl(owlapiIri);
 	}
+	
+	public static Individual matontoIndividual(OWLIndividual owlapiIndividual)
+    {
+        if(owlapiIndividual instanceof OWLAnonymousIndividual)
+            return matontoAnonymousIndividual((OWLAnonymousIndividual) owlapiIndividual);
+        
+        else
+            return matontoNamedIndividual((OWLNamedIndividual) owlapiIndividual);
+    }
+    
+    public static OWLIndividual owlapiIndividual(Individual matontoIndividual)
+    {
+        if(matontoIndividual instanceof AnonymousIndividual)
+            return owlapiAnonymousIndividual((AnonymousIndividual) matontoIndividual);
+        
+        else
+            return owlapiNamedIndividual((NamedIndividual) matontoIndividual);
+    }
 
 	public static OntologyId matontoOntologyId(OWLOntologyID owlId)
 	{

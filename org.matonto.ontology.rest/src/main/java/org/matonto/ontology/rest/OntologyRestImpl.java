@@ -27,10 +27,15 @@ import javax.ws.rs.core.StreamingOutput;
 import com.sun.jersey.multipart.FormDataParam;
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.Individual;
+import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.slf4j.Logger;
@@ -368,10 +373,54 @@ public class OntologyRestImpl {
 	}
 	
 	
-	 /*
+	   /*
      * Returns JSON-formated annotation properties in the ontology with requested ontology ID
      */
     @GET
+    @Path("/getAllIRIs")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getIRIsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    {          
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+        
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            return Response.status(400).entity("OntologyID is empty").build();
+        
+        JSONArray array = new JSONArray();
+        
+        JSONObject annotations = new JSONObject();
+        annotations.put("annotation properties", getAnnotationIRIs(ontologyIdStr));
+        array.add(annotations);
+        
+        JSONObject classes = new JSONObject();
+        classes.put("classes", getClassIRIs(ontologyIdStr));
+        array.add(classes);
+        
+        JSONObject datatypes = new JSONObject();
+        datatypes.put("datatypes", getDatatypeIRIs(ontologyIdStr));
+        array.add(datatypes);
+        
+        JSONObject objectProperties = new JSONObject();
+        objectProperties.put("object properties", getObjectPropertyIRIs(ontologyIdStr));
+        array.add(objectProperties);
+        
+        JSONObject dataProperties = new JSONObject();
+        dataProperties.put("data properties", getDataPropertyIRIs(ontologyIdStr));
+        array.add(dataProperties);
+        
+        JSONObject namedIndividuals = new JSONObject();
+        namedIndividuals.put("named individuals", getNamedIndividualIRIs(ontologyIdStr));
+        array.add(namedIndividuals);
+            
+        return Response.status(200).entity(array.toString()).build();
+    }
+    
+	
+	/*
+     * Returns JSON-formated annotation properties in the ontology with requested ontology ID
+     */
+	@GET
     @Path("/getAnnotations")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAnnotationsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
@@ -390,37 +439,123 @@ public class OntologyRestImpl {
     
     
     /*
-    * Returns JSON-formated annotation properties in the ontology with requested ontology ID
+    * Returns JSON-formated classes in the ontology with requested ontology ID
     */
-   @GET
-   @Path("/getClasses")
-   @Produces(MediaType.APPLICATION_JSON)
-   public Response getClassesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
-   {          
-       if(manager == null)
-           return Response.status(500).entity("Ontology manager is null").build();
+    @GET
+    @Path("/getClasses")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getClassesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    {          
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+   
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            return Response.status(400).entity("OntologyID is empty").build();
        
-       if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-           return Response.status(400).entity("OntologyID is empty").build();
-       
-       JSONObject json = new JSONObject();
-       json = getClassIRIs(ontologyIdStr);
+        JSONObject json = new JSONObject();
+        json = getClassIRIs(ontologyIdStr);
            
-       return Response.status(200).entity(json.toString()).build();
-   }
+        return Response.status(200).entity(json.toString()).build();
+    }
     
-   private JSONObject getAnnotationIRIs (@Nonnull String ontologyIdStr) 
-   {
-       JSONObject json = new JSONObject();
-       Optional<Ontology> optOntology = Optional.empty();
     
-       try {
-           optOntology = getOntology(ontologyIdStr);
-       } catch(MatontoOntologyException ex) {
-           LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-       } 
+    /*
+    * Returns JSON-formated datatypes in the ontology with requested ontology ID
+    */
+    @GET
+    @Path("/getDatatypes")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDatatypesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    {          
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+   
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            return Response.status(400).entity("OntologyID is empty").build();
+       
+        JSONObject json = new JSONObject();
+        json = getDatatypeIRIs(ontologyIdStr);
+           
+        return Response.status(200).entity(json.toString()).build();
+    }
     
-       Set<Annotation> annotations = new HashSet<>();
+    
+    /*
+    * Returns JSON-formated object properties in the ontology with requested ontology ID
+    */
+    @GET
+    @Path("/getObjectProperties")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getObjectPropertiesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    {          
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+   
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            return Response.status(400).entity("OntologyID is empty").build();
+       
+        JSONObject json = new JSONObject();
+        json = getObjectPropertyIRIs(ontologyIdStr);
+           
+        return Response.status(200).entity(json.toString()).build();
+    }
+    
+    
+    /*
+    * Returns JSON-formated data properties in the ontology with requested ontology ID
+    */
+    @GET
+    @Path("/getDataProperties")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDataPropertiesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    {          
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+   
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            return Response.status(400).entity("OntologyID is empty").build();
+       
+        JSONObject json = new JSONObject();
+        json = getDataPropertyIRIs(ontologyIdStr);
+           
+        return Response.status(200).entity(json.toString()).build();
+    }
+    
+    
+    /*
+    * Returns JSON-formated named individuals in the ontology with requested ontology ID
+    */
+    @GET
+    @Path("/getNamedIndividuals")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getNamedIndividualsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    {          
+        if(manager == null)
+            return Response.status(500).entity("Ontology manager is null").build();
+   
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            return Response.status(400).entity("OntologyID is empty").build();
+       
+        JSONObject json = new JSONObject();
+        json = getNamedIndividualIRIs(ontologyIdStr);
+           
+        return Response.status(200).entity(json.toString()).build();
+    }
+    
+    
+    
+    private JSONObject getAnnotationIRIs (@Nonnull String ontologyIdStr) 
+    {
+        JSONObject json = new JSONObject();
+        Optional<Ontology> optOntology = Optional.empty();
+    
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+        }    
+    
+        Set<Annotation> annotations = new HashSet<>();
 
         if(optOntology.isPresent()) {
             try{
@@ -506,8 +641,212 @@ public class OntologyRestImpl {
         else {
             json.put("error", "OntologyId doesn't exist.");
         }
+        
         return json;
     }
+    
+    private JSONObject getDatatypeIRIs (@Nonnull String ontologyIdStr) 
+    {   
+        JSONObject json = new JSONObject();
+        Optional<Ontology> optOntology = Optional.empty();
+        
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+        } 
+        
+        Set<Datatype> datatypes = new HashSet<>();
+        
+        if(optOntology.isPresent()) {
+            try{
+                datatypes = optOntology.get().getAllDatatypes();
+            } catch(MatontoOntologyException ex) {
+                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
+            } 
+        }
+        
+        if(!datatypes.isEmpty()) {
+            Map<String, ArrayList<String>> datatypeMap = new HashMap<String, ArrayList<String>>();
+            for(Datatype datatype : datatypes) {
+                String namespace = datatype.getIRI().getNamespace();
+                String localName = datatype.getIRI().getLocalName();
+                if(datatypeMap.isEmpty() || !datatypeMap.containsKey(namespace)) {
+                    ArrayList<String> lnArray = new ArrayList<String>();
+                    lnArray.add(localName);
+                    datatypeMap.put(namespace, lnArray);
+                }
+                
+                else {
+                    ArrayList<String> lnArray = datatypeMap.get(namespace);
+                    if(!lnArray.contains(localName)) {
+                        lnArray.add(localName);
+                        datatypeMap.put(namespace, lnArray);
+                    }
+                }             
+            }
+            json = mapToJson(datatypeMap);
+        }
+       
+        else {
+            json.put("error", "OntologyId doesn't exist.");
+        }
+        
+        return json;
+    }
+    
+    private JSONObject getObjectPropertyIRIs (@Nonnull String ontologyIdStr) 
+    {   
+        JSONObject json = new JSONObject();
+        Optional<Ontology> optOntology = Optional.empty();
+        
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+        } 
+        
+        Set<ObjectProperty> objectProperties = new HashSet<>();
+        
+        if(optOntology.isPresent()) {
+            try{
+                objectProperties = optOntology.get().getAllObjectProperties();
+            } catch(MatontoOntologyException ex) {
+                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
+            } 
+        }
+        
+        if(!objectProperties.isEmpty()) {
+            Map<String, ArrayList<String>> propertyMap = new HashMap<String, ArrayList<String>>();
+            for(ObjectProperty property : objectProperties) {
+                String namespace = property.getIRI().getNamespace();
+                String localName = property.getIRI().getLocalName();
+                if(propertyMap.isEmpty() || !propertyMap.containsKey(namespace)) {
+                    ArrayList<String> lnArray = new ArrayList<String>();
+                    lnArray.add(localName);
+                    propertyMap.put(namespace, lnArray);
+                }
+                
+                else {
+                    ArrayList<String> lnArray = propertyMap.get(namespace);
+                    if(!lnArray.contains(localName)) {
+                        lnArray.add(localName);
+                        propertyMap.put(namespace, lnArray);
+                    }
+                }             
+            }
+            json = mapToJson(propertyMap);
+        }
+       
+        else {
+            json.put("error", "OntologyId doesn't exist.");
+        }
+        
+        return json;
+    }
+    
+    private JSONObject getDataPropertyIRIs (@Nonnull String ontologyIdStr) 
+    {   
+        JSONObject json = new JSONObject();
+        Optional<Ontology> optOntology = Optional.empty();
+        
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+        } 
+        
+        Set<DataProperty> dataProperties = new HashSet<>();
+        
+        if(optOntology.isPresent()) {
+            try{
+                dataProperties = optOntology.get().getAllDataProperties();
+            } catch(MatontoOntologyException ex) {
+                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
+            } 
+        }
+        
+        if(!dataProperties.isEmpty()) {
+            Map<String, ArrayList<String>> propertyMap = new HashMap<String, ArrayList<String>>();
+            for(DataProperty property : dataProperties) {
+                String namespace = property.getIRI().getNamespace();
+                String localName = property.getIRI().getLocalName();
+                if(propertyMap.isEmpty() || !propertyMap.containsKey(namespace)) {
+                    ArrayList<String> lnArray = new ArrayList<String>();
+                    lnArray.add(localName);
+                    propertyMap.put(namespace, lnArray);
+                }
+                
+                else {
+                    ArrayList<String> lnArray = propertyMap.get(namespace);
+                    if(!lnArray.contains(localName)) {
+                        lnArray.add(localName);
+                        propertyMap.put(namespace, lnArray);
+                    }
+                }             
+            }
+            json = mapToJson(propertyMap);
+        }
+       
+        else {
+            json.put("error", "OntologyId doesn't exist.");
+        }
+        
+        return json;
+    }
+    
+    private JSONObject getNamedIndividualIRIs (@Nonnull String ontologyIdStr) 
+    {   
+        JSONObject json = new JSONObject();
+        Optional<Ontology> optOntology = Optional.empty();
+        
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch(MatontoOntologyException ex) {
+            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+        } 
+        
+        Set<Individual> individuals = new HashSet<>();
+        
+        if(optOntology.isPresent()) {
+            try{
+                individuals = optOntology.get().getAllIndividuals();
+            } catch(MatontoOntologyException ex) {
+                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
+            } 
+        }
+        
+        if(!individuals.isEmpty()) {
+            Map<String, ArrayList<String>> individualMap = new HashMap<String, ArrayList<String>>();
+            for(Individual individual : individuals) {
+                if(individual instanceof NamedIndividual) {
+                    String namespace = ((NamedIndividual)individual).getIRI().getNamespace();
+                    String localName = ((NamedIndividual)individual).getIRI().getLocalName();
+                    if(individualMap.isEmpty() || !individualMap.containsKey(namespace)) {
+                        ArrayList<String> lnArray = new ArrayList<String>();
+                        lnArray.add(localName);
+                        individualMap.put(namespace, lnArray);
+                    }
+                    
+                    else {
+                        ArrayList<String> lnArray = individualMap.get(namespace);
+                        if(!lnArray.contains(localName)) {
+                            lnArray.add(localName);
+                            individualMap.put(namespace, lnArray);
+                        }
+                    }
+                }
+            }
+            json = mapToJson(individualMap);
+        }
+       
+        else {
+            json.put("error", "OntologyId doesn't exist.");
+        }
+        
+        return json;
+    }
+    
     
     private JSONObject mapToJson(@Nonnull Map<String, ArrayList<String>> mapObject)
     {

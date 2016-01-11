@@ -4,6 +4,9 @@ import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -131,6 +134,7 @@ public class SimpleOntology implements Ontology {
 	    return annotations;
 	}
 	
+	@Override
 	public Set<OClass> getAllClasses() {
 	    return ontology.getClassesInSignature()
 	            .stream()
@@ -143,6 +147,38 @@ public class SimpleOntology implements Ontology {
         return ontology.getAxioms()
                 .stream()
                 .map(SimpleOntologyValues::matontoAxiom)
+                .collect(Collectors.toSet());
+    }
+    
+    @Override
+    public Set<Datatype> getAllDatatypes() {
+        return ontology.getDatatypesInSignature()
+                .stream()
+                .map(SimpleOntologyValues::matontoDatatype)
+                .collect(Collectors.toSet());
+    }
+    
+    @Override
+    public Set<ObjectProperty> getAllObjectProperties() {
+        return ontology.getObjectPropertiesInSignature()
+                .stream()
+                .map(SimpleOntologyValues::matontoObjectProperty)
+                .collect(Collectors.toSet());
+    }
+    
+    @Override
+    public Set<DataProperty> getAllDataProperties() {
+        return ontology.getDataPropertiesInSignature()
+                .stream()
+                .map(SimpleOntologyValues::matontoDataProperty)
+                .collect(Collectors.toSet());
+    }
+    
+    @Override
+    public Set<Individual> getAllIndividuals() {
+        return ontology.getIndividualsInSignature()
+                .stream()
+                .map(SimpleOntologyValues::matontoIndividual)
                 .collect(Collectors.toSet());
     }
 
