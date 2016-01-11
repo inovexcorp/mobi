@@ -6,9 +6,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -405,9 +407,29 @@ public class OntologyRestImpl {
         }
         
         if(!annotations.isEmpty()) {
+            Map<String, ArrayList<String>> propertyMap = new HashMap<String, ArrayList<String>>();
             for(Annotation annotation : annotations) {
-                IRI propertyIRI = annotation.getProperty().getIRI();
-                json.put(propertyIRI.stringValue(), propertyIRI.getLocalName());             
+                String namespace = annotation.getProperty().getIRI().getNamespace();
+                String localName = annotation.getProperty().getIRI().getLocalName();
+                if(propertyMap.isEmpty() || !propertyMap.containsKey(namespace)) {
+                    ArrayList<String> lnArray = new ArrayList<String>();
+                    lnArray.add(localName);
+                    propertyMap.put(namespace, lnArray);
+                }
+                
+                else {
+                    ArrayList<String> lnArray = propertyMap.get(namespace);
+                    if(!lnArray.contains(localName)) {
+                        lnArray.add(localName);
+                        propertyMap.put(namespace, lnArray);
+                    }
+                }             
+            }
+            
+            for(String key : propertyMap.keySet()) {
+                JSONArray jsonArray = new JSONArray();
+                jsonArray.addAll(propertyMap.get(key));
+                json.put(key, jsonArray);
             }
         }
             
