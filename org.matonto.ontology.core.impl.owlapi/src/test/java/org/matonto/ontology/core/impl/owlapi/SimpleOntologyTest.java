@@ -161,13 +161,9 @@ public class SimpleOntologyTest {
     public void annotationsAreEmptyForEmptyOntology() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
 
-<<<<<<< HEAD
-        Ontology ontology = new SimpleOntology(ontologyIdMock, transformer);
-        Set<Annotation> annotations = ontology.getOntologyAnnotations();
-=======
         Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager);
-        Set<Annotation> annotations = ontology.getAnnotations();
->>>>>>> develop
+        Set<Annotation> annotations = ontology.getOntologyAnnotations();
+
         assertTrue(annotations.size() == 0);
     }
 

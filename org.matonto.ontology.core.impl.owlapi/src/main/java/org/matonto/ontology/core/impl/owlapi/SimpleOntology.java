@@ -10,7 +10,6 @@ import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -33,15 +32,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-<<<<<<< HEAD
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-=======
->>>>>>> develop
 
 
 public class SimpleOntology implements Ontology {
@@ -49,22 +39,15 @@ public class SimpleOntology implements Ontology {
 	private OntologyId ontologyId;
 	private Set<Annotation> ontoAnnotations;
 	private Set<Annotation> annotations;
-	private Set<OClass> classes;
 	
 	//Owlapi variables
 	private OWLOntology ontology;
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     private OntologyManager ontologyManager;
 
-<<<<<<< HEAD
 
-    private SesameTransformer transformer;
-
-	public SimpleOntology(OntologyId ontologyId, SesameTransformer transformer) throws MatontoOntologyException {
-=======
 	public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager) throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
->>>>>>> develop
         this.ontologyId = ontologyId;
 
 		try {
