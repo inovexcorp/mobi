@@ -120,25 +120,25 @@ public class SimpleOntologyManager implements OntologyManager {
 	@Override
 	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException
 	{
-		return new SimpleOntology(ontologyId, transformer);
+		return new SimpleOntology(ontologyId, this);
 	}
 
 
 	@Override
-	public Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException, FileNotFoundException {
-		return new SimpleOntology(file, ontologyId, transformer);
+	public Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException {
+		return new SimpleOntology(file, this);
 	}
 
 
 	@Override
-	public Ontology createOntology(IRI iri, OntologyId ontologyId) throws MatontoOntologyException {
-		return new SimpleOntology(iri, ontologyId, transformer);
+	public Ontology createOntology(IRI iri) throws MatontoOntologyException {
+		return new SimpleOntology(iri, this);
 	}
 
 
 	@Override
-	public Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException {
-		return new SimpleOntology(inputStream, ontologyId, transformer);
+	public Ontology createOntology(InputStream inputStream) throws MatontoOntologyException {
+		return new SimpleOntology(inputStream, this);
 	}
 	
 	/**
@@ -319,4 +319,8 @@ public class SimpleOntologyManager implements OntologyManager {
         }
     }
 
+    @Override
+	public SesameTransformer getTransformer() {
+        return transformer;
+    }
 }

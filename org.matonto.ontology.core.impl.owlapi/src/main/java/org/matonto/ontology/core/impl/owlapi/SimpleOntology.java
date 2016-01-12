@@ -1,5 +1,6 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import com.google.common.base.Optional;
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.axiom.Axiom;
@@ -19,15 +20,11 @@ import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import java.io.*;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLDocumentFormat;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 
 public class SimpleOntology implements Ontology {
@@ -37,54 +34,86 @@ public class SimpleOntology implements Ontology {
 	//Owlapi variables
 	private OWLOntology ontology;
 	private OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    private OntologyManager ontologyManager;
 
-    private SesameTransformer transformer;
-
-	public SimpleOntology(OntologyId ontologyId, SesameTransformer transformer) throws MatontoOntologyException {
+	public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager) throws MatontoOntologyException {
+        this.ontologyManager = ontologyManager;
         this.ontologyId = ontologyId;
-        this.transformer = transformer;
 
 		try {
-			ontology = manager.createOntology();
+            Optional<org.semanticweb.owlapi.model.IRI> oIri = Optional.absent();
+            Optional<org.semanticweb.owlapi.model.IRI> vIri = Optional.absent();
+
+            if (ontologyId.getOntologyIRI().isPresent()) {
+                oIri = Optional.of(SimpleOntologyValues.owlapiIRI(ontologyId.getOntologyIRI().get()));
+                if (ontologyId.getVersionIRI().isPresent()) {
+                    vIri = Optional.of(SimpleOntologyValues.owlapiIRI(ontologyId.getVersionIRI().get()));
+                }
+            }
+
+            OWLOntologyID owlOntologyID = new OWLOntologyID(oIri, vIri);
+            ontology = manager.createOntology(owlOntologyID);
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 	
-	public SimpleOntology(InputStream inputStream, OntologyId ontologyId, SesameTransformer transformer) throws MatontoOntologyException {
-        this.ontologyId = ontologyId;
-        this.transformer = transformer;
+	public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager) throws MatontoOntologyException {
+        this.ontologyManager = ontologyManager;
 
         try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
-		} catch (OWLOntologyCreationException e) {
+            createOntologyId();
+        } catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		} finally {
 			IOUtils.closeQuietly(inputStream);
 		}
 	}
-	
-	public SimpleOntology(File file, OntologyId ontologyId, SesameTransformer transformer) throws MatontoOntologyException, FileNotFoundException {
-        this(new FileInputStream(file), ontologyId, transformer);
+
+	public SimpleOntology(File file, OntologyManager ontologyManager) throws MatontoOntologyException, FileNotFoundException {
+        this(new FileInputStream(file), ontologyManager);
 	}
 	
-	public SimpleOntology(IRI iri, OntologyId ontologyId, SesameTransformer transformer) throws MatontoOntologyException {
-        this.ontologyId = ontologyId;
-        this.transformer = transformer;
+	public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager) throws MatontoOntologyException {
+        this.ontologyManager = ontologyManager;
 
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(SimpleOntologyValues.owlapiIRI(iri));
+            createOntologyId();
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 
-    protected SimpleOntology(OWLOntology ontology, OntologyId ontologyId, SesameTransformer transformer) {
-        this.ontologyId = ontologyId;
-        this.transformer = transformer;
+    protected SimpleOntology(OWLOntology ontology, OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
 
         this.ontology = ontology;
         this.manager = this.ontology.getOWLOntologyManager();
+
+        createOntologyId();
+    }
+
+    private void createOntologyId() {
+        Optional<org.semanticweb.owlapi.model.IRI> owlOntIriOptional = ontology.getOntologyID().getOntologyIRI();
+        Optional<org.semanticweb.owlapi.model.IRI> owlVerIriOptional = ontology.getOntologyID().getVersionIRI();
+
+        IRI matontoOntIri;
+        IRI matontoVerIri;
+
+        if (owlOntIriOptional.isPresent()) {
+            matontoOntIri = SimpleOntologyValues.matontoIRI(owlOntIriOptional.get());
+
+            if (owlVerIriOptional.isPresent()) {
+                matontoVerIri = SimpleOntologyValues.matontoIRI(owlVerIriOptional.get());
+                this.ontologyId = ontologyManager.createOntologyId(matontoOntIri, matontoVerIri);
+            } else {
+                this.ontologyId = ontologyManager.createOntologyId(matontoOntIri);
+            }
+        } else {
+            this.ontologyId = ontologyManager.createOntologyId();
+        }
     }
 	
 	@Override
@@ -195,7 +224,7 @@ public class SimpleOntology implements Ontology {
         Model matontoModel = factory.createModel();
 
         asSesameModel().forEach(stmt -> {
-            matontoModel.add(transformer.matontoStatement(stmt));
+            matontoModel.add(ontologyManager.getTransformer().matontoStatement(stmt));
         });
 
         return matontoModel;

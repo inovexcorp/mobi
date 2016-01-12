@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 
 
@@ -14,11 +15,11 @@ public interface OntologyManager {
 	
 	Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
 	
-	Ontology createOntology(File file, OntologyId ontologyId) throws MatontoOntologyException, FileNotFoundException;
+	Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException;
 	
-	Ontology createOntology(IRI iri, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(IRI iri) throws MatontoOntologyException;
 	
-	Ontology createOntology(InputStream inputStream, OntologyId ontologyId) throws MatontoOntologyException;
+	Ontology createOntology(InputStream inputStream) throws MatontoOntologyException;
 	
 	Optional<Ontology> retrieveOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException;
 
@@ -58,5 +59,6 @@ public interface OntologyManager {
 	IRI createOntologyIRI(String ns, String ln);
 	
 	IRI createOntologyIRI(String iriString);
-	
+
+	SesameTransformer getTransformer();
 }
