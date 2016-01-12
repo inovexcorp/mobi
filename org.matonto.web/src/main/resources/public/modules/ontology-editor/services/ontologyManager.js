@@ -29,7 +29,7 @@
                             addOntology(response.data[i]);
                         }
                     }, function(response) {
-                        console.log(response);
+                        console.log('Error in initialize:', response);
                     })
                     .finally(function() {
                         $rootScope.showSpinner = false;
@@ -338,9 +338,39 @@
                 return result;
             }
 
-            self.upload = function(isValid, file, namespace, localName) {
+            self.delete = function(ontologyId, state) {
+                if(state.editor === 'ontology-editor' && state.oi !== -1) {
+                    $rootScope.showSpinner = true;
+                    var config = {
+                            params: {
+                                ontologyIdStr: ontologyId
+                            }
+                        },
+                        deferred = $q.defer(),
+                        error = function(response) {
+                            deferred.reject(response.data.error);
+                            $rootScope.showSpinner = false;
+                        };
+
+                    $http.get(prefix + '/deleteOntology', config)
+                        .then(function(response) {
+                            if(response.data.result) {
+                                self.ontologies.splice(state.oi, 1);
+                                deferred.resolve(response);
+                                $rootScope.showSpinner = false;
+                            } else {
+                                error(response);
+                            }
+                        }, function(response) {
+                            error(response);
+                        });
+
+                    return deferred.promise;
+                }
+            }
+
+            self.upload = function(isValid, file) {
                 if(isValid && file) {
-                    // sets up the configurations for the post method
                     var fd = new FormData(),
                         config = {
                             transformRequest: angular.identity,
@@ -348,51 +378,57 @@
                                 'Content-Type': undefined
                             }
                         };
-                    // adds the data to the FormData
+
                     fd.append('file', file);
-                    fd.append('ontologyIdStr', namespace + '#' + localName);
-                    // uploads the ontology file
+
                     return $http.post(prefix + '/uploadOntology', fd, config);
                 }
             }
 
-            self.get = function(namespace, localName) {
+            self.get = function(ontologyId) {
                 var config = {
                         params: {
-                            ontologyIdStr: namespace + '#' + localName,
+                            ontologyIdStr: ontologyId,
                             rdfFormat: 'jsonld'
                         }
                     };
 
-                // TODO: look into how Joy is getting the json-ld format
-                return $http.get(prefix + '/getOntology', config)
-                    .then(function(response) {
-                        if(!response.data.error) {
-                            addOntology(response.data.ontology);
-                        } else {
-                            // TODO: handle error better
-                            console.log(response.data.error);
-                        }
-                    });
+                return $http.get(prefix + '/getOntology', config);
             }
 
-            self.uploadThenGet = function(isValid, file, namespace, localName) {
+            self.uploadThenGet = function(isValid, file) {
                 $rootScope.showSpinner = true;
 
-                return self.upload(isValid, file, namespace, localName)
+                var deferred = $q.defer(),
+                    error = function(response) {
+                        deferred.reject(response);
+                        $rootScope.showSpinner = false;
+                    };
+
+                self.upload(isValid, file)
                     .then(function(response) {
-                        if(!response.data.error) {
-                            return self.get(namespace, localName)
-                                .finally(function(response) {
-                                    $rootScope.showSpinner = false;
+                        if(response.data.result) {
+                            // TODO: change this to just response.data['ontology id'] once the REST bundle is updated
+                            self.get(response.data['ontology id'].namespace + response.data['ontology id'].localName)
+                                .then(function(response) {
+                                    if(!response.data.error) {
+                                        addOntology(response.data.ontology);
+                                        deferred.resolve(response);
+                                        $rootScope.showSpinner = false;
+                                    } else {
+                                        error(response);
+                                    }
+                                }, function(response) {
+                                    error(response);
                                 });
                         } else {
-                            // TODO: handle error better
-                            console.log(response.data.error);
+                            error(response);
                         }
                     }, function(response) {
-                        $rootScope.showSpinner = false;
+                        error(response);
                     });
+
+                return deferred.promise;
             }
 
             self.edit = function(isValid, obj, state) {
