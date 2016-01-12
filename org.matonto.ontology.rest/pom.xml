@@ -113,6 +113,7 @@
                             *
                         </Import-Package>
                         <Web-ContextPath>matontorest/ontology</Web-ContextPath>
+                        <Webapp-Context>matontorest/ontology</Webapp-Context>
                         <_wab>src/main/webapp</_wab>
                         <Service-Component>*</Service-Component>
                     </instructions>

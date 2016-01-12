@@ -30,7 +30,6 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWLFacet;
 
-import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
@@ -62,7 +61,7 @@ import aQute.bnd.annotation.component.Reference;
 public class SimpleOntologyValues {
     
     private static ValueFactory factory;
-    private static SesameTransformer transformer;
+	private static OntologyManager ontologyManager;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyValues.class);
     
     @Activate
@@ -80,30 +79,16 @@ public class SimpleOntologyValues {
         factory = vf;
     }
 
-    @Reference
-    protected void setTransformer(final SesameTransformer sTransformer) {
-        transformer = sTransformer;
-    }
+	@Reference
+	protected void setOntologyManager(final OntologyManager aOntologyManager) {
+		ontologyManager = aOntologyManager;
+	}
     
 	public SimpleOntologyValues() {}
 	
     public static Ontology matontoOntology(OWLOntology ontology) {
         if(ontology == null)
             return null;
-
-        OWLOntologyID owlApiID = ontology.getOntologyID();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = owlApiID.getOntologyIRI();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlApiID.getVersionIRI();
-        OntologyId ontologyId;
-        if (owlApiID.isAnonymous()) {
-            ontologyId = new SimpleOntologyId(factory);
-        } else if (vIRI.isPresent()) {
-            ontologyId = new SimpleOntologyId(factory, matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
-        } else if (oIRI.isPresent()){
-            ontologyId = new SimpleOntologyId(factory, matontoIRI(oIRI.get()));
-        } else {
-            ontologyId = new SimpleOntologyId(factory);
-        }
 
         OWLOntology tOntology = ontology;
 
@@ -117,7 +102,7 @@ public class SimpleOntologyValues {
             }
         }
 
-        return new SimpleOntology(tOntology, ontologyId, transformer);
+        return new SimpleOntology(tOntology, ontologyManager);
     }
     
     public static OWLOntology owlapiOntology(Ontology ontology)
