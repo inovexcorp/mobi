@@ -53,6 +53,7 @@ import net.sf.json.JSONObject;
 public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
+	private static Map<OntologyId, String> ontoIdRegistry = new HashMap<OntologyId, String>();
 	private static Map<OntologyId, Ontology> retrievedOntologies = new HashMap<OntologyId, Ontology>();
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -60,6 +61,7 @@ public class OntologyRestImpl {
     public void activate() 
     {
         LOG.info("Activating the OntologyRestImpl");
+        initOntoIdRegistry();
     }
  
     @Deactivate
@@ -94,13 +96,12 @@ public class OntologyRestImpl {
 		if(manager == null)
 		    return Response.status(500).entity("Ontology manager is null").build();
 
-		Map<OntologyId, String> ontologies = manager.getOntologyRegistry();
 		JSONObject json = new JSONObject();
 
-		if(!ontologies.isEmpty()) {
-			for(OntologyId oid : ontologies.keySet()) {
+		if(!ontoIdRegistry.isEmpty()) {
+			for(OntologyId oid : ontoIdRegistry.keySet()) {
 				String ontologyId = oid.getOntologyIdentifier().stringValue();
-				json.put(ontologyId, ontologies.get(oid));
+				json.put(ontologyId, ontoIdRegistry.get(oid));
 			}
 		}
 
@@ -117,13 +118,11 @@ public class OntologyRestImpl {
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
 
-        Map<OntologyId, String> ontologyRegistry = manager.getOntologyRegistry();
         JSONArray jsonArray = new JSONArray();
-
         Optional<Ontology> optOntology;
 
-        if(!ontologyRegistry.isEmpty()) {
-            for(OntologyId oid : ontologyRegistry.keySet()) {
+        if(!ontoIdRegistry.isEmpty()) {
+            for(OntologyId oid : ontoIdRegistry.keySet()) {
                 try {
                     optOntology = getOntology(oid.toString());
                     
@@ -158,7 +157,7 @@ public class OntologyRestImpl {
 
 		boolean persisted = false;
 		JSONObject json = new JSONObject();
-		Ontology ontology;
+		Ontology ontology = null;
 		String message;
 
 		try{
@@ -172,7 +171,14 @@ public class OntologyRestImpl {
 			IOUtils.closeQuietly(fileInputStream);
 		}
 		
+		if(persisted) {
+	        ontoIdRegistry.put(ontology.getOntologyId(), manager.getRepository().getConfig().id());
+	        retrievedOntologies.put(ontology.getOntologyId(), ontology);
+		    json.put("ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
+		}
+		
 		json.put("result", persisted);
+
 		return Response.status(200).entity(json.toString()).build();
 	}
 	
@@ -351,8 +357,10 @@ public class OntologyRestImpl {
 			OntologyId ontologyId = manager.createOntologyId(iri);
 			deleted = manager.deleteOntology(ontologyId);
 			
-			if(retrievedOntologies.containsKey(ontologyId))  
-			    retrievedOntologies.remove(ontologyId);
+			for(OntologyId id : retrievedOntologies.keySet()) {
+    			if(id.getOntologyIdentifier().equals(ontologyIdStr))  
+    			    retrievedOntologies.remove(id);
+			}
 			
 		} catch(MatontoOntologyException ex) {
 		    message = ex.getMessage();
@@ -858,21 +866,32 @@ public class OntologyRestImpl {
     {
         Ontology ontology = null;
         
-        if(retrievedOntologies.containsKey(ontologyIdStr)) {
-            return Optional.of(retrievedOntologies.get(ontologyIdStr));
+        for(OntologyId id : retrievedOntologies.keySet()) {
+            if(id.getOntologyIdentifier().equals(ontologyIdStr)) {
+                return Optional.of(retrievedOntologies.get(id));
+            }
         }
         
-        else{
-            Optional<Ontology> optOntology = Optional.empty();
-            IRI iri = manager.createOntologyIRI(ontologyIdStr);
-            OntologyId ontologyId = manager.createOntologyId(iri);
-            optOntology = manager.retrieveOntology(ontologyId);
-        
-            if(optOntology.isPresent())
-                retrievedOntologies.put(ontologyId, ontology);
-              
-            return optOntology;
+        Optional<Ontology> optOntology = Optional.empty();
+        IRI iri = manager.createOntologyIRI(ontologyIdStr);
+        OntologyId ontologyId = manager.createOntologyId(iri);
+        optOntology = manager.retrieveOntology(ontologyId);
+    
+        if(optOntology.isPresent()) {
+            ontology = optOntology.get();
+            retrievedOntologies.put(ontology.getOntologyId(), ontology);
         }
+          
+        return optOntology;
+    }
+    
+    
+    private void initOntoIdRegistry()
+    {
+        if(manager == null)
+            throw new IllegalStateException("ontology manager is null");
+
+        ontoIdRegistry = manager.getOntologyRegistry();
     }
 	
 }
