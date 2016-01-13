@@ -155,10 +155,15 @@ public class SimpleOntologyValues {
 		if(owlLiteral == null)
 			return null;
 		
-		if(owlLiteral.hasLang())
+		String datatypeIRIStr = owlLiteral.getDatatype().getIRI().toString();
+		
+		if(datatypeIRIStr.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")) 
+		    return factory.createLiteral(owlLiteral.getLiteral(), "en");
+		
+		else if(owlLiteral.hasLang()) 
 		    return factory.createLiteral(owlLiteral.getLiteral(), owlLiteral.getLang());
 		
-		else
+		else 
 		    return factory.createLiteral(owlLiteral.getLiteral(), matontoDatatype(owlLiteral.getDatatype()).getIRI());
 	}
 
@@ -313,6 +318,24 @@ public class SimpleOntologyValues {
 		org.semanticweb.owlapi.model.IRI owlapiIri = owlapiIRI(matontoIri);
 		return new OWLNamedIndividualImpl(owlapiIri);
 	}
+	
+	public static Individual matontoIndividual(OWLIndividual owlapiIndividual)
+    {
+        if(owlapiIndividual instanceof OWLAnonymousIndividual)
+            return matontoAnonymousIndividual((OWLAnonymousIndividual) owlapiIndividual);
+        
+        else
+            return matontoNamedIndividual((OWLNamedIndividual) owlapiIndividual);
+    }
+    
+    public static OWLIndividual owlapiIndividual(Individual matontoIndividual)
+    {
+        if(matontoIndividual instanceof AnonymousIndividual)
+            return owlapiAnonymousIndividual((AnonymousIndividual) matontoIndividual);
+        
+        else
+            return owlapiNamedIndividual((NamedIndividual) matontoIndividual);
+    }
 
 	public static OntologyId matontoOntologyId(OWLOntologyID owlId)
 	{
