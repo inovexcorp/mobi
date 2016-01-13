@@ -478,7 +478,7 @@
                             <ul>
                                 <li ng-repeat="item in vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}} <i class="fa fa-times"></i></li>
                             </ul>
-                            <input type="text" class="form-control" id="sub-class" name="sub-class" ng-model="vm.selected.newSubClass" disabled />
+                            <tags-input ng-model="vm.tags"></tags-input>
                         </div>
 
                         <!-- rdfs:label -->
