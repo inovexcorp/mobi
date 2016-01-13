@@ -64,16 +64,7 @@ public class SimpleOntologyId implements OntologyId {
 	
 	@Override
 	public String toString() {
-		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = ontologyId.getVersionIRI();
-		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = ontologyId.getOntologyIRI();
-
-        if (vIRI.isPresent()) {
-            return vIRI.get().toString();
-        } else if (oIRI.isPresent()) {
-            return oIRI.get().toString();
-        } else {
-            return identifier.stringValue();
-        }
+        return ontologyId.toString();
 	}
 	
 	@Override
