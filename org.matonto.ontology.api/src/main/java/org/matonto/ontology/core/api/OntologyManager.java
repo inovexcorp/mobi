@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.repository.api.Repository;
 
 
 public interface OntologyManager {
@@ -48,7 +49,7 @@ public interface OntologyManager {
      */
 	boolean deleteOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException;
 
-	Map<OntologyId, String> getOntologyRegistry() throws MatontoOntologyException;
+	Map<String, String> getOntologyRegistry() throws MatontoOntologyException;
 	
 	OntologyId createOntologyId();
 	
@@ -61,4 +62,6 @@ public interface OntologyManager {
 	IRI createOntologyIRI(String iriString);
 
 	SesameTransformer getTransformer();
+	
+	Repository getRepository();
 }

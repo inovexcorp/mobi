@@ -42,7 +42,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private RepositoryManager repositoryManager;
 	private static Repository repository;
     private static ValueFactory factory;
-	private static Map<OntologyId, String> ontologyRegistry = new HashMap<>();
+	private static Map<String, String> ontologyRegistry = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
@@ -113,7 +113,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 	
 	@Override
-	public Map<OntologyId, String> getOntologyRegistry() {
+	public Map<String, String> getOntologyRegistry() {
 		return ontologyRegistry;
 	}
 
@@ -148,7 +148,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	public boolean ontologyExists(@Nonnull OntologyId ontologyId) {
-        return ontologyRegistry.containsKey(ontologyId);
+        return ontologyRegistry.containsKey(ontologyId.getOntologyIdentifier().stringValue());
 	}
 	
 	/**
@@ -178,7 +178,6 @@ public class SimpleOntologyManager implements OntologyManager {
 
             org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
             stmts.forEach(stmt -> sesameModel.add(transformer.sesameStatement(stmt)));
-
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
 	    	parser.parse(new RioMemoryTripleSource(sesameModel), onto, new OWLOntologyLoaderConfiguration());
@@ -190,6 +189,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			closeConnection(conn);
 		}
 
+		System.out.println("inside SimpleOntologyManager - retrieveOntology. Ontology retrieved -> " + onto.toString());
 		return Optional.of(SimpleOntologyValues.matontoOntology(onto));
 	}
 	
@@ -210,7 +210,7 @@ public class SimpleOntologyManager implements OntologyManager {
             conn = repository.getConnection();
             conn.add(model, ontologyId.getOntologyIdentifier());
 
-			ontologyRegistry.put(ontologyId, repository.getConfig().id());
+			ontologyRegistry.put(ontologyId.getOntologyIdentifier().stringValue(), repository.getConfig().id());
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -233,7 +233,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		try {
 			conn = repository.getConnection();
             conn.clear(ontologyId.getOntologyIdentifier());
-			ontologyRegistry.remove(ontologyId, repository.getConfig().id());
+			ontologyRegistry.remove(ontologyId.getOntologyIdentifier().stringValue(), repository.getConfig().id());
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -259,18 +259,15 @@ public class SimpleOntologyManager implements OntologyManager {
 		RepositoryConnection conn = null;
 		RepositoryResult<Resource> contextIds = null;
 		
-		Map<OntologyId, String> ontologyMap = new HashMap<>();
-		
 		try {
 			conn = repository.getConnection();
 			contextIds = conn.getContextIDs();
 			
 			while (contextIds.hasNext()) {
 				Resource contextId = contextIds.next();
-			    ontologyMap.put(createOntologyId(factory.createIRI(contextId.stringValue())), repository.getConfig().id());
+				ontologyRegistry.put(contextId.stringValue(), repository.getConfig().id());
 			}
-			
-			ontologyRegistry = ontologyMap;
+
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -322,5 +319,10 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
 	public SesameTransformer getTransformer() {
         return transformer;
+    }
+    
+    @Override
+    public Repository getRepository() {
+        return repository;
     }
 }

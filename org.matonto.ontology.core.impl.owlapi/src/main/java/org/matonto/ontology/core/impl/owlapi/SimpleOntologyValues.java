@@ -1,6 +1,7 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -354,12 +355,26 @@ public class SimpleOntologyValues {
         }
 	}	
 	
-	public static OWLOntologyID owlapiOntologyId(SimpleOntologyId simpleId) 
+	public static OWLOntologyID owlapiOntologyId(OntologyId simpleId) 
 	{
 		if(simpleId == null)
 			return null;
 		
-		return simpleId.getOwlapiOntologyId();
+		if(simpleId instanceof SimpleOntologyId)
+		return ((SimpleOntologyId)simpleId).getOwlapiOntologyId();
+		
+		else {
+		    Optional<IRI> oIRI = simpleId.getOntologyIRI();
+		    Optional<IRI> vIRI = simpleId.getVersionIRI();
+		    
+	        if (vIRI.isPresent()) {
+	            return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(oIRI.get())), com.google.common.base.Optional.of(owlapiIRI(vIRI.get())));
+	        } else if (oIRI.isPresent()) {
+	            return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(oIRI.get())), com.google.common.base.Optional.absent());
+	        } else {
+	            return new OWLOntologyID();
+	        }
+		}
 	}
 	
 	public static OClass matontoClass(OWLClass owlapiClass)
