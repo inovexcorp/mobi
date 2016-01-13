@@ -5,9 +5,9 @@
         .module('ontology-editor', ['file-input', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'ngTagsInput'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['$scope', '$timeout', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
+    OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
 
-    function OntologyEditorController($scope, $timeout, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService) {
+    function OntologyEditorController($scope, $timeout, $filter, $q, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -61,6 +61,22 @@
             stateManagerService.setStateToNew(vm.state, vm.ontologies);
             stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
+        }
+
+        vm.getClasses = function(query) {
+            var dummies = [
+                    { "@id": "Jordan1" },
+                    { "@id": "Jordan2" },
+                    { "@id": "Jordan3" },
+                    { "@id": "Levi1" },
+                    { "@id": "Levi2" },
+                    { "@id": "Levi3" },
+                    { "@id": "Lewis1" },
+                    { "@id": "Lewis2" },
+                    { "@id": "Lewis3" }
+                ];
+
+            return $filter('filter')(dummies, query);
         }
 
         /* Prefix (Context) Management */

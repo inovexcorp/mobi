@@ -330,7 +330,7 @@
                         <!-- basic button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected['@id'] + vm.selected.matonto.delimiter) : 'New Ontology'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? vm.selected['@id'] : 'New Ontology'}}</small></a>
 
                         <!-- annotations button -->
                         <a class="btn btn-primary"
@@ -449,7 +449,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Class'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? vm.selected['@id'] : 'New Class'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
@@ -475,10 +475,9 @@
                         <!-- rdfs:subClassOf -->
                         <div class="form-group">
                             <label class="control-label" for="sub-class">Sub Class Of <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}subClassOf></small></label>
-                            <ul>
-                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}} <i class="fa fa-times"></i></li>
-                            </ul>
-                            <tags-input ng-model="vm.tags"></tags-input>
+                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" display-property="@id" add-from-autocomplete-only="true" placeholder="Add a Class">
+                                <auto-complete source="vm.getClasses($query);"></auto-complete>
+                            </tags-input>
                         </div>
 
                         <!-- rdfs:label -->
@@ -514,7 +513,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? ((vm.ontologies[vm.state.oi].matonto.prefix || (vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter)) + vm.selected['@id']) : 'New Property'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? vm.selected['@id'] : 'New Property'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
@@ -540,28 +539,25 @@
                         <!-- rdfs:subPropertyOf -->
                         <div class="form-group">
                             <label class="control-label" for="sub-property">Sub Property Of <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}subPropertyOf></small></label>
-                            <ul>
-                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subPropertyOf']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}} <i class="fa fa-times"></i></li>
-                            </ul>
-                            <input type="text" class="form-control" id="sub-property" name="sub-class" ng-model="vm.selected.newSubProperty" disabled />
+                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subPropertyOf']" display-property="@id">
+                                <!--auto-complete source="vm.getClasses($query);"></auto-complete-->
+                            </tags-input>
                         </div>
 
                         <!-- rdfs:domain -->
                         <div class="form-group">
                             <label class="control-label" for="domain">Domain <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}domain></small></label>
-                            <ul>
-                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'domain']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}}</li>
-                            </ul>
-                            <input type="text" class="form-control" id="domain" name="domain" ng-model="vm.selected.newDomain" disabled />
+                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'domain']" display-property="@id">
+                                <!--auto-complete source="vm.getClasses($query);"></auto-complete-->
+                            </tags-input>
                         </div>
 
                         <!-- rdfs:range -->
                         <div class="form-group">
                             <label class="control-label" for="range">Range <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}range></small></label>
-                            <ul>
-                                <li ng-repeat="item in vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'range']" class="bg-primary static-list-item">{{item['@id'] ? item['@id'] : item}} <i class="fa fa-times"></i></li>
-                            </ul>
-                            <input type="text" class="form-control" id="range" name="range" ng-model="vm.selected.newRange" disabled />
+                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'range']" display-property="@id">
+                                <!--auto-complete source="vm.getClasses($query);"></auto-complete-->
+                            </tags-input>
                         </div>
 
                         <!-- rdfs:label -->
