@@ -51,7 +51,7 @@
                     properties = [],
                     others = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
-                    i = list.length;
+                    i = 0;
 
                 initOntology = function(ontology, obj) {
                     var len = obj['@id'].length,
@@ -131,7 +131,7 @@
                     return icon;
                 }
 
-                while(i--) {
+                while(i < list.length) {
                     obj = list[i];
                     type = obj['@type'] ? obj['@type'][0] : undefined;
 
@@ -163,20 +163,22 @@
                             others.push(obj);
                             break;
                     }
+                    i++;
                 }
 
                 addToClass = function(id, property) {
-                    var i = classes.length;
-                    while(i--) {
+                    var i = 0;
+                    while(i < classes.length) {
                         if(classes[i]['@id'] === id) {
                             classes[i].matonto.properties.push(property);
                             break;
                         }
+                        i++;
                     }
                 }
 
-                i = properties.length;
-                while(i--) {
+                i = 0;
+                while(i < properties.length) {
                     domain = properties[i][prefixes.rdfs + 'domain'];
 
                     if(domain) {
@@ -191,6 +193,7 @@
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);
                     }
+                    i++;
                 }
 
                 objToArr = function(obj) {

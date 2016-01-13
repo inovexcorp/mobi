@@ -31,8 +31,9 @@
             ontologyManagerService.uploadThenGet(isValid, file)
                 .then(function(response) {
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
+                    vm.showUploadOverlay = false;
                 }, function(response) {
-                    console.log(response.data);
+                    vm.uploadError = response.data.error;
                 });
         }
 

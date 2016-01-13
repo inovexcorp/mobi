@@ -52,5 +52,10 @@
                 top: 0;
             }
         }
+
+        /* ensures that the overlay form heights are automatically set rather than 100% */
+        .overlay form {
+            height: auto;
+        }
     }
 }
