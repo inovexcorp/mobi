@@ -9,7 +9,7 @@
 
         function etlService($http, $q) {
             var self = this,
-                prefix = '/etl/csv';
+                prefix = '/matontorest/etl/csv';
 
             /**
              * HTTP POST to CSV.upload which uploads file to data/tmp/ directory.

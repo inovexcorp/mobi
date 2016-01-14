@@ -9,7 +9,7 @@
 
         function ontologyManagerService($http, $q, $timeout) {
             var self = this,
-                prefix = '/matonto/rest/ontology',
+                prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
                 defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
                 defaultXsd = 'http://www.w3.org/2001/XMLSchema#';
@@ -26,6 +26,8 @@
                         while(i--) {
                             addOntology(response.data[i]);
                         }
+                    }, function(response) {
+                        console.log(response);
                     });
             }
 
@@ -89,20 +91,30 @@
                     return result;
                 }
 
-                chooseIcon = function(property, rdfs, xsd) {
+                chooseIcon = function(property) {
                     var icon = '',
-                        range = property[rdfs + 'range'];
+                        range = property[prefixes.rdfs + 'range'];
                     // assigns the icon based on the range
                     if(range) {
-                        switch(range['@id']) {
-                            // TODO: pick better icon for Literal? since it can be for Integers as well
-                            case xsd + 'string':
-                            case rdfs + 'Literal':
-                                icon = 'fa-font';
-                                break;
-                            default:
-                                icon = 'fa-link';
-                                break;
+                        if(range.length === 1) {
+                            switch(range[0]['@id']) {
+                                // TODO: pick better icon for Literal? since it can be for Integers as well
+                                case prefixes.xsd + 'string':
+                                case prefixes.rdfs + 'Literal':
+                                    icon = 'fa-font';
+                                    break;
+                                case prefixes.xsd + 'double':
+                                case prefixes.xsd + 'nonNegativeInteger':
+                                    icon = 'fa-calculator';
+                                    break;
+                                default:
+                                    icon = 'fa-link';
+                                    break;
+                            }
+                        }
+                        // TODO: icon for multiple ranges
+                        else {
+                            icon = 'fa-cubes';
                         }
                     }
                     // TODO: figure out what to do if there isn't a range
@@ -133,7 +145,7 @@
                         case prefixes.owl + 'DatatypeProperty':
                         case prefixes.owl + 'ObjectProperty':
                             obj.matonto = {
-                                icon: chooseIcon(obj, prefixes.rdfs, prefixes.xsd),
+                                icon: chooseIcon(obj),
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
@@ -337,7 +349,7 @@
                 var config = {
                         params: {
                             ontologyIdStr: namespace + '#' + localName,
-                            rdfFormat: 'json-ld'
+                            rdfFormat: 'jsonld'
                         }
                     };
 
@@ -348,7 +360,7 @@
                             addOntology(response.data.ontology);
                         } else {
                             // TODO: handle error better
-                            console.warn(response.data.error);
+                            console.log(response.data.error);
                         }
                     });
             }
@@ -360,7 +372,7 @@
                             return self.get(namespace, localName);
                         } else {
                             // TODO: handle error better
-                            console.warn(response.data.error);
+                            console.log(response.data.error);
                         }
                     });
             }
