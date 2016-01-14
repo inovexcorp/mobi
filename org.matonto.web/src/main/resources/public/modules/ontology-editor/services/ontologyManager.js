@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontologyManager', [])
+        .module('ontologyManager', ['removeNamespace'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter) {
             var self = this,
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
@@ -47,7 +47,7 @@
             }
 
             function restructure(flattened, ontologyId, context, prefixes) {
-                var j, obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon, objToArr, annotations,
+                var j, obj, type, domain, addToClass, initOntology, chooseIcon, objToArr, annotations,
                     ontology = {
                         matonto: {
                             noDomains: [],
@@ -87,19 +87,6 @@
                         }
                     }
                     angular.merge(ontology, obj);
-                }
-
-                removeNamespace = function(id) {
-                    var colon = id.lastIndexOf(':') + 1,
-                        result = id.substring(colon),
-                        hash = id.indexOf('#') + 1,
-                        slash = id.lastIndexOf('/') + 1;
-                    if(hash !== 0) {
-                        result = id.substring(hash);
-                    } else if(slash !== 0) {
-                        result = id.substring(slash);
-                    }
-                    return result;
                 }
 
                 chooseIcon = function(property) {
@@ -150,7 +137,7 @@
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = removeNamespace(obj['@id']);
+                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             classes.push(obj);
                             break;
                         case prefixes.owl + 'DatatypeProperty':
@@ -161,7 +148,7 @@
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = removeNamespace(obj['@id']);
+                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             properties.push(obj);
                             break;
                         default:
@@ -190,10 +177,10 @@
                         if(Object.prototype.toString.call(domain) === '[object Array]') {
                             j = domain.length;
                             while(j--) {
-                                addToClass(removeNamespace(domain[j]['@id']), properties[i]);
+                                addToClass($filter('removeNamespace')(domain[j]['@id']), properties[i]);
                             }
                         } else {
-                            addToClass(removeNamespace(domain['@id']), properties[i]);
+                            addToClass($filter('removeNamespace')(domain['@id']), properties[i]);
                         }
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);

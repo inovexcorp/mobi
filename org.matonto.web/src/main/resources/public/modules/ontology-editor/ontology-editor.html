@@ -617,10 +617,10 @@
 <!-- annotation template -->
 <script type="text/ng-template" id="annotations-template">
     <!-- add annotation button -->
-    <a class="btn btn-link btn-annotation" ng-click="vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i> Add Annotation</a>
+    <a class="btn btn-link btn-annotation" ng-click="vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
     <!-- list of annotations -->
     <div class="annotation" ng-repeat="key in (vm.selected | annotationManagerFilter:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
-        <h5>{{key}}</h5>
+        <h5>{{key | removeNamespace}}</h5>
         <p>{{vm.selected[key][0]['@value'] || vm.selected[key][0]['@id']}}</p>
         <button type="button" class="btn btn-link" ng-click="vm.removeAnnotation(key)"><i class="fa fa-times"></i></button>
     </div>
