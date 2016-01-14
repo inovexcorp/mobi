@@ -3,6 +3,7 @@ package org.matonto.ontology.core.impl.owlapi;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -31,7 +32,6 @@ public class SimpleOntologyId implements OntologyId {
         ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
         this.identifier = factory.createIRI(versionIRI.toString());
 	}
-		
 	
 	@Override
 	public Optional<IRI> getOntologyIRI() {
@@ -53,7 +53,15 @@ public class SimpleOntologyId implements OntologyId {
             return Optional.empty();
         }
 	}
+	
 
+    @Override
+    public void setOntologyIdentifier(Resource identifier) {
+        if (!ontologyId.getOntologyIRI().isPresent())
+            this.identifier = identifier;
+    }
+
+    @Override
 	public Resource getOntologyIdentifier() {
 		return identifier;
 	}

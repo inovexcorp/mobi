@@ -30,9 +30,10 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWLFacet;
-
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;

@@ -42,7 +42,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private RepositoryManager repositoryManager;
 	private static Repository repository;
     private static ValueFactory factory;
-	private static Map<String, String> ontologyRegistry = new HashMap<>();
+	private static Map<Resource, String> ontologyRegistry = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
@@ -113,7 +113,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 	
 	@Override
-	public Map<String, String> getOntologyRegistry() {
+	public Map<Resource, String> getOntologyRegistry() {
 		return ontologyRegistry;
 	}
 
@@ -147,8 +147,8 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @return True if given context id exists in the repository, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
-	public boolean ontologyExists(@Nonnull OntologyId ontologyId) {
-        return ontologyRegistry.containsKey(ontologyId.getOntologyIdentifier().stringValue());
+	public boolean ontologyExists(@Nonnull Resource resource) {
+        return ontologyRegistry.containsKey(resource);
 	}
 	
 	/**
@@ -160,27 +160,26 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	@Override
-	public Optional<Ontology> retrieveOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException {
+	public Optional<Ontology> retrieveOntology(@Nonnull Resource resource) throws MatontoOntologyException {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
-		if(!ontologyExists(ontologyId))
+		if(!ontologyExists(resource))
 			return Optional.empty();
 
 		OWLOntologyManager mgr = OWLManager.createOWLOntologyManager();
 		OWLOntology onto = null;
-
 		RepositoryConnection conn = null;
 		
 		try {
 			conn = repository.getConnection();
-            RepositoryResult<Statement> stmts = conn.getStatements(null, null, null, ontologyId.getOntologyIdentifier());
-
+            RepositoryResult<Statement> stmts = conn.getStatements(null, null, null, resource);
             org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
             stmts.forEach(stmt -> sesameModel.add(transformer.sesameStatement(stmt)));
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
 	    	parser.parse(new RioMemoryTripleSource(sesameModel), onto, new OWLOntologyLoaderConfiguration());
+	    	
 		} catch (OWLOntologyCreationException | IOException e) {
 			throw new MatontoOntologyException("Unable to create an ontology object", e);
 		} catch (RepositoryException e) {
@@ -189,8 +188,10 @@ public class SimpleOntologyManager implements OntologyManager {
 			closeConnection(conn);
 		}
 
-		System.out.println("inside SimpleOntologyManager - retrieveOntology. Ontology retrieved -> " + onto.toString());
-		return Optional.of(SimpleOntologyValues.matontoOntology(onto));
+		Ontology matontoOntology = SimpleOntologyValues.matontoOntology(onto);
+		matontoOntology.getOntologyId().setOntologyIdentifier(resource);
+		
+		return Optional.of(matontoOntology);
 	}
 	
 	@Override
@@ -198,19 +199,17 @@ public class SimpleOntologyManager implements OntologyManager {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
    	 
-		OntologyId ontologyId = ontology.getOntologyId();
-		if(ontologyExists(ontologyId))
+		Resource resource = ontology.getOntologyId().getOntologyIdentifier();
+		if(ontologyExists(resource))
 			throw new MatontoOntologyException("Ontology with the ontology ID already exists.");
 		
 		RepositoryConnection conn = null;
 		
 		try {
 			Model model = ontology.asModel(modelFactory);
-
             conn = repository.getConnection();
-            conn.add(model, ontologyId.getOntologyIdentifier());
-
-			ontologyRegistry.put(ontologyId.getOntologyIdentifier().stringValue(), repository.getConfig().id());
+            conn.add(model, resource);
+			ontologyRegistry.put(resource, repository.getConfig().id());
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -221,19 +220,19 @@ public class SimpleOntologyManager implements OntologyManager {
 	}
 	
 	@Override
-	public boolean deleteOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException {
+	public boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException {
 		if(repository == null)
 			throw new IllegalStateException("Repository is null");
 		
-		if(!ontologyExists(ontologyId))
+		if(!ontologyExists(resource))
 			throw new MatontoOntologyException("Ontology ID does not exist.");
 		
 		RepositoryConnection conn = null;
 		
 		try {
 			conn = repository.getConnection();
-            conn.clear(ontologyId.getOntologyIdentifier());
-			ontologyRegistry.remove(ontologyId.getOntologyIdentifier().stringValue(), repository.getConfig().id());
+            conn.clear(resource);
+			ontologyRegistry.remove(resource, repository.getConfig().id());
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -265,7 +264,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			
 			while (contextIds.hasNext()) {
 				Resource contextId = contextIds.next();
-				ontologyRegistry.put(contextId.stringValue(), repository.getConfig().id());
+				ontologyRegistry.put(contextId, repository.getConfig().id());
 			}
 
 		} catch (RepositoryException e) {

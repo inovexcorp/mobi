@@ -39,7 +39,10 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import aQute.bnd.annotation.component.Activate;
@@ -55,7 +58,8 @@ import net.sf.json.JSONObject;
 public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
-	private static Map<String, String> ontoIdRegistry = new HashMap<>();
+    private static ValueFactory factory;
+	private static Map<Resource, String> ontoIdRegistry = new HashMap<>();
 	private static Map<OntologyId, Ontology> retrievedOntologies = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -82,13 +86,17 @@ public class OntologyRestImpl {
 	{
 		manager = null;
 	}
-	
-	protected OntologyManager getOntologyManager()
-	{
-		return manager;
-	}
 
-
+    @Reference
+    protected void setValueFactory(final ValueFactory vf) {
+        factory = vf;
+    }
+    
+    protected void unsetValueFactory(final ValueFactory vf) {
+        factory = null;
+    }
+    
+    
 	
 	@GET
 	@Path("getAllOntologyIds")
@@ -101,8 +109,8 @@ public class OntologyRestImpl {
 		JSONObject json = new JSONObject();
 
 		if(!ontoIdRegistry.isEmpty()) {
-			for(String oid : ontoIdRegistry.keySet()) 
-				json.put(oid, ontoIdRegistry.get(oid));
+			for(Resource oid : ontoIdRegistry.keySet()) 
+				json.put(oid.stringValue(), ontoIdRegistry.get(oid));
 		}
 
 		return Response.status(200).entity(json.toString()).build();
@@ -126,15 +134,15 @@ public class OntologyRestImpl {
         JSONArray jsonArray = new JSONArray();
 
         if(!ontoIdRegistry.isEmpty()) {
-            for(String oid : ontoIdRegistry.keySet()) 
+            for(Resource oid : ontoIdRegistry.keySet()) 
             {
                 JSONObject json = new JSONObject();
-                json.put("ontology id", oid);
+                json.put("ontology id", oid.stringValue());
                 Optional<Ontology> optOntology = Optional.empty();
                 String message = null;
                 
                 try {
-                    optOntology = getOntology(oid);
+                    optOntology = getOntology(oid.stringValue());
                 } catch(MatontoOntologyException ex) {
                     message = ex.getMessage();
                     LOG.error("Exception occurred while retrieving ontology with ontology id " + oid + ": " + message + ex);
@@ -292,10 +300,9 @@ public class OntologyRestImpl {
 		
 		if(persisted) {
 		    OntologyId oid = ontology.getOntologyId();
-		    String oidStr = oid.getOntologyIdentifier().stringValue();
-	        ontoIdRegistry.put(oidStr, manager.getRepository().getConfig().id());
+	        ontoIdRegistry.put(oid.getOntologyIdentifier(), manager.getRepository().getConfig().id());
 	        retrievedOntologies.put(oid, ontology);
-		    json.put("ontology id", oidStr);
+		    json.put("ontology id", oid.getOntologyIdentifier().stringValue());
 		}
 		
 		json.put("result", persisted);
@@ -477,9 +484,9 @@ public class OntologyRestImpl {
 		    Optional<Ontology> optOntology = getOntology(ontologyIdStr);
 			if(optOntology.isPresent()) {
 			    OntologyId oid = optOntology.get().getOntologyId();
-			    deleted = manager.deleteOntology(oid);
+			    deleted = manager.deleteOntology(oid.getOntologyIdentifier());
 			    retrievedOntologies.remove(oid);
-			    ontoIdRegistry.remove(oid.getOntologyIdentifier().stringValue(), manager.getRepository().getConfig().id());
+			    ontoIdRegistry.remove(oid.getOntologyIdentifier(), manager.getRepository().getConfig().id());
 			}
 			
 		} catch(MatontoOntologyException ex) {
@@ -687,29 +694,12 @@ public class OntologyRestImpl {
         }
     
         if(!annotations.isEmpty()) {
-            Map<String, ArrayList<String>> propertyMap = new HashMap<String, ArrayList<String>>();
             for(Annotation annotation : annotations) {
-                String namespace = annotation.getProperty().getIRI().getNamespace();
+                String iri = annotation.getProperty().getIRI().stringValue();
                 String localName = annotation.getProperty().getIRI().getLocalName();
-                if(propertyMap.isEmpty() || !propertyMap.containsKey(namespace)) {
-                    ArrayList<String> lnArray = new ArrayList<String>();
-                    lnArray.add(localName);
-                    propertyMap.put(namespace, lnArray);
-                }
-                
-                else {
-                    ArrayList<String> lnArray = propertyMap.get(namespace);
-                    if(!lnArray.contains(localName)) {
-                        lnArray.add(localName);
-                        propertyMap.put(namespace, lnArray);
-                    }
-                }             
+                json.put(iri, localName);
             }
-        
-            json = mapToJson(propertyMap);
-        }
-   
-        else {
+        } else {
             json.put("error", "OntologyId doesn't exist.");
         }
         
@@ -738,28 +728,12 @@ public class OntologyRestImpl {
         }
         
         if(!oClasses.isEmpty()) {
-            Map<String, ArrayList<String>> oClassMap = new HashMap<String, ArrayList<String>>();
             for(OClass oClass : oClasses) {
-                String namespace = oClass.getIRI().getNamespace();
+                String iri = oClass.getIRI().stringValue();
                 String localName = oClass.getIRI().getLocalName();
-                if(oClassMap.isEmpty() || !oClassMap.containsKey(namespace)) {
-                    ArrayList<String> lnArray = new ArrayList<String>();
-                    lnArray.add(localName);
-                    oClassMap.put(namespace, lnArray);
-                }
-                
-                else {
-                    ArrayList<String> lnArray = oClassMap.get(namespace);
-                    if(!lnArray.contains(localName)) {
-                        lnArray.add(localName);
-                        oClassMap.put(namespace, lnArray);
-                    }
-                }             
+                json.put(iri, localName); 
             }
-            json = mapToJson(oClassMap);
-        }
-       
-        else {
+        } else {
             json.put("error", "OntologyId doesn't exist.");
         }
         
@@ -788,28 +762,12 @@ public class OntologyRestImpl {
         }
         
         if(!datatypes.isEmpty()) {
-            Map<String, ArrayList<String>> datatypeMap = new HashMap<String, ArrayList<String>>();
             for(Datatype datatype : datatypes) {
-                String namespace = datatype.getIRI().getNamespace();
+                String iri = datatype.getIRI().stringValue();
                 String localName = datatype.getIRI().getLocalName();
-                if(datatypeMap.isEmpty() || !datatypeMap.containsKey(namespace)) {
-                    ArrayList<String> lnArray = new ArrayList<String>();
-                    lnArray.add(localName);
-                    datatypeMap.put(namespace, lnArray);
-                }
-                
-                else {
-                    ArrayList<String> lnArray = datatypeMap.get(namespace);
-                    if(!lnArray.contains(localName)) {
-                        lnArray.add(localName);
-                        datatypeMap.put(namespace, lnArray);
-                    }
-                }             
+                json.put(iri, localName);
             }
-            json = mapToJson(datatypeMap);
-        }
-       
-        else {
+        } else {
             json.put("error", "OntologyId doesn't exist.");
         }
         
@@ -838,28 +796,12 @@ public class OntologyRestImpl {
         }
         
         if(!objectProperties.isEmpty()) {
-            Map<String, ArrayList<String>> propertyMap = new HashMap<String, ArrayList<String>>();
             for(ObjectProperty property : objectProperties) {
-                String namespace = property.getIRI().getNamespace();
+                String iri = property.getIRI().stringValue();
                 String localName = property.getIRI().getLocalName();
-                if(propertyMap.isEmpty() || !propertyMap.containsKey(namespace)) {
-                    ArrayList<String> lnArray = new ArrayList<String>();
-                    lnArray.add(localName);
-                    propertyMap.put(namespace, lnArray);
-                }
-                
-                else {
-                    ArrayList<String> lnArray = propertyMap.get(namespace);
-                    if(!lnArray.contains(localName)) {
-                        lnArray.add(localName);
-                        propertyMap.put(namespace, lnArray);
-                    }
-                }             
+                json.put(iri, localName);
             }
-            json = mapToJson(propertyMap);
-        }
-       
-        else {
+        } else {
             json.put("error", "OntologyId doesn't exist.");
         }
         
@@ -888,28 +830,12 @@ public class OntologyRestImpl {
         }
         
         if(!dataProperties.isEmpty()) {
-            Map<String, ArrayList<String>> propertyMap = new HashMap<String, ArrayList<String>>();
             for(DataProperty property : dataProperties) {
-                String namespace = property.getIRI().getNamespace();
+                String iri = property.getIRI().stringValue();
                 String localName = property.getIRI().getLocalName();
-                if(propertyMap.isEmpty() || !propertyMap.containsKey(namespace)) {
-                    ArrayList<String> lnArray = new ArrayList<String>();
-                    lnArray.add(localName);
-                    propertyMap.put(namespace, lnArray);
-                }
-                
-                else {
-                    ArrayList<String> lnArray = propertyMap.get(namespace);
-                    if(!lnArray.contains(localName)) {
-                        lnArray.add(localName);
-                        propertyMap.put(namespace, lnArray);
-                    }
-                }             
+                json.put(iri, localName);
             }
-            json = mapToJson(propertyMap);
-        }
-       
-        else {
+        } else {
             json.put("error", "OntologyId doesn't exist.");
         }
         
@@ -938,30 +864,14 @@ public class OntologyRestImpl {
         }
         
         if(!individuals.isEmpty()) {
-            Map<String, ArrayList<String>> individualMap = new HashMap<String, ArrayList<String>>();
             for(Individual individual : individuals) {
                 if(individual instanceof NamedIndividual) {
-                    String namespace = ((NamedIndividual)individual).getIRI().getNamespace();
+                    String iri = ((NamedIndividual)individual).getIRI().stringValue();
                     String localName = ((NamedIndividual)individual).getIRI().getLocalName();
-                    if(individualMap.isEmpty() || !individualMap.containsKey(namespace)) {
-                        ArrayList<String> lnArray = new ArrayList<String>();
-                        lnArray.add(localName);
-                        individualMap.put(namespace, lnArray);
-                    }
-                    
-                    else {
-                        ArrayList<String> lnArray = individualMap.get(namespace);
-                        if(!lnArray.contains(localName)) {
-                            lnArray.add(localName);
-                            individualMap.put(namespace, lnArray);
-                        }
-                    }
+                    json.put(iri, localName);
                 }
-            }
-            json = mapToJson(individualMap);
-        }
-       
-        else {
+            }   
+        } else {
             json.put("error", "OntologyId doesn't exist.");
         }
         
@@ -984,25 +894,28 @@ public class OntologyRestImpl {
     
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException
     {
-        Ontology ontology = null;
-        
         for(OntologyId id : retrievedOntologies.keySet()) {
-            if(id.getOntologyIdentifier().equals(ontologyIdStr)) {
+            if(id.getOntologyIdentifier().stringValue().equals(ontologyIdStr)) 
                 return Optional.of(retrievedOntologies.get(id));
-            }
         }
         
         Optional<Ontology> optOntology = Optional.empty();
-        IRI iri = manager.createOntologyIRI(ontologyIdStr);
-        OntologyId ontologyId = manager.createOntologyId(iri);
-        optOntology = manager.retrieveOntology(ontologyId);
-    
+        IRI iri = factory.createIRI(ontologyIdStr);
+        optOntology = manager.retrieveOntology(iri);
+ 
         if(optOntology.isPresent()) {
-            ontology = optOntology.get();
-            retrievedOntologies.put(ontology.getOntologyId(), ontology);
+            retrievedOntologies.put(optOntology.get().getOntologyId(), optOntology.get());
+            return optOntology;
+        } else {
+            BNode bnode = factory.createBNode(ontologyIdStr);
+            optOntology = manager.retrieveOntology(bnode);
+            if(optOntology.isPresent()) {
+                retrievedOntologies.put(optOntology.get().getOntologyId(), optOntology.get());
+                return optOntology;
+            }
+            else
+                return Optional.empty();
         }
-          
-        return optOntology;
     }
     
     
