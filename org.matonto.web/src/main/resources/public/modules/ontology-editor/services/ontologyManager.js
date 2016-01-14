@@ -22,11 +22,17 @@
             function initialize() {
                 $rootScope.showSpinner = true;
 
-                $http.get(prefix + '/getAllOntologies')
+                var config = {
+                    params: {
+                        rdfFormat: 'jsonld'
+                    }
+                }
+
+                $http.get(prefix + '/getAllOntologies', config)
                     .then(function(response) {
                         var i = response.data.length;
                         while(i--) {
-                            addOntology(response.data[i]);
+                            addOntology(response.data[i].ontology, response.data[i]['ontology id']);
                         }
                     }, function(response) {
                         console.log('Error in initialize:', response);
@@ -36,7 +42,7 @@
                     });
             }
 
-            function restructure(flattened, context, prefixes) {
+            function restructure(flattened, ontologyId, context, prefixes) {
                 var j, obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon, objToArr, annotations,
                     ontology = {
                         matonto: {
@@ -44,7 +50,8 @@
                             owl: prefixes.owl,
                             rdfs: prefixes.rdfs,
                             annotations: [],
-                            currentAnnotationSelect: 'default'
+                            currentAnnotationSelect: 'default',
+                            ontologyId: ontologyId
                         }
                     },
                     classes = [],
@@ -213,7 +220,7 @@
                 return ontology;
             }
 
-            function addOntology(ontology) {
+            function addOntology(ontology, ontologyId) {
                 var getPrefixes,
                     context = ontology['@context'] || {};
                 ontology = ontology['@graph'] || ontology;
@@ -246,7 +253,7 @@
                 }
 
                 // TODO: integrate with latest develop ontology changes which flatten the JSON in the service layer
-                self.ontologies.push(restructure(ontology, context, getPrefixes(context)));
+                self.ontologies.push(restructure(ontology, ontologyId, context, getPrefixes(context)));
             }
 
             self.getList = function() {
@@ -411,8 +418,7 @@
                 self.upload(isValid, file)
                     .then(function(response) {
                         if(response.data.result) {
-                            // TODO: change this to just response.data['ontology id'] once the REST bundle is updated
-                            self.get(response.data['ontology id'].namespace + response.data['ontology id'].localName)
+                            self.get(response.data['ontology id'])
                                 .then(function(response) {
                                     if(!response.data.error) {
                                         addOntology(response.data.ontology);

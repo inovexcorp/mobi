@@ -474,7 +474,7 @@
 
                         <!-- rdfs:subClassOf -->
                         <div class="form-group">
-                            <label class="control-label" for="sub-class">Sub Class Of <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}subClassOf></small></label>
+                            <label class="control-label">Sub Class Of <small class="text-muted"><{{vm.ontologies[vm.state.oi].matonto.rdfs}}subClassOf></small></label>
                             <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" display-property="@id" add-from-autocomplete-only="true" placeholder="Add a Class">
                                 <auto-complete source="vm.getClasses($query);"></auto-complete>
                             </tags-input>
