@@ -39,17 +39,55 @@
             }
         }
 
+        /* Add annotation button styles */
+        .btn-annotation {
+            padding: 0px;
+
+            /* Remove underline when hovered */
+            &:hover {
+                text-decoration: none;
+            }
+        }
+
         /* Annotation styles */
         .annotation {
-            padding-right: 30px;
+            border-bottom: 1px dotted;
+            cursor: default;
+            padding: 5px 25px 5px 5px;
             position: relative;
 
+            /* Removes the border from the first item */
+            &:last-child {
+                border: 0;
+            }
+
+            /* Highlights the annotation you are hovering over */
+            &:hover {
+                background-color: $gray-lighter;
+            }
+
+            /* Spacing for the annotation header */
+            h5 {
+                margin: 0 5px 2px 0;
+            }
+
+            /* Removes paragraph margin from the annotation value */
+            p {
+                margin: 0;
+            }
+
             /* Places the button in the top right corner */
-            button {
-                padding: 5px;
+            .btn {
+                margin: 0 5px;
+                padding: 0px;
                 position: absolute;
                 right: 0;
                 top: 0;
+
+                /* Removes default padding from this button */
+                .fa {
+                    margin: 0;
+                }
             }
         }
 

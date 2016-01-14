@@ -218,10 +218,9 @@
 
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
-                        ontology.matonto.annotations = response.data['annotation properties'];
+                        ontology.matonto.annotations = response.data[0]['annotation properties'];
                         deferred.resolve(ontology);
                     }, function(response) {
-                        console.log(response.data.error);
                         deferred.reject(response);
                     });
 
@@ -437,9 +436,11 @@
                             self.get(response.data['ontology id'])
                                 .then(function(response) {
                                     if(!response.data.error) {
-                                        addOntology(response.data.ontology);
-                                        deferred.resolve(response);
-                                        $rootScope.showSpinner = false;
+                                        addOntology(response.data.ontology, response.data['ontology id'])
+                                            .then(function(response) {
+                                                deferred.resolve(response);
+                                                $rootScope.showSpinner = false;
+                                            });
                                     } else {
                                         error(response);
                                     }

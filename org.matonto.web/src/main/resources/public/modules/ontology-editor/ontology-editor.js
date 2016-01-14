@@ -93,12 +93,20 @@
         }
 
         /* Annotation Management */
-        vm.addAnnotation = function(key, value, select) {
-            annotationManagerService.add(vm.selected, key, value, select);
+        vm.addAnnotation = function() {
+            annotationManagerService.add(vm.selected);
+            vm.showAnnotationOverlay = false;
+            vm.selected.matonto.currentAnnotationKey = '';
+            vm.selected.matonto.currentAnnotationValue = '';
+            vm.selected.matonto.currentAnnotationSelect = 'default';
         }
 
         vm.removeAnnotation = function(key) {
             annotationManagerService.remove(vm.selected, key);
+        }
+
+        vm.getAnnotations = function(query) {
+            return annotationManagerService.searchList(vm.selected.matonto.annotations, query);
         }
     }
 })();

@@ -1,46 +1,3 @@
-<!-- annotation template -->
-<script type="text/ng-template" id="annotations-template">
-    <!-- list of annotations -->
-    <div class="well well-sm annotation" ng-repeat="key in (vm.selected | annotationManagerFilter:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
-        <span><strong>{{key}}</strong><br>{{vm.selected[key][0]['@value'] || vm.selected[key][0]['@id']}}</span>
-        <button type="button" class="btn btn-link" ng-click="vm.removeAnnotation(key)"><i class="fa fa-fw fa-times"></i></button>
-    </div>
-
-    <!-- annotation list -->
-    <div class="form-group">
-        <label class="control-label" for="ontology-annotation-list">Annotation</label>
-        <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.matonto.currentAnnotationSelect">
-            <option value="default">Please select an annotation to add</option>
-            <option ng-repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
-            <option value="other">Add a new annotation</option>
-        </select>
-        <!--tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" display-property="@id" add-from-autocomplete-only="true" placeholder="Add a Class">
-            <auto-complete source="vm.getClasses($query);"></auto-complete>
-        </tags-input-->
-    </div>
-
-    <!-- key, if new -->
-    <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other'" class="form-group">
-        <label class="control-label" for="ontology-annotation-key">Name</label>
-        <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" />
-    </div>
-
-    <!-- value -->
-    <div class="form-group">
-        <label class="control-label" for="ontology-annotation-value">Value</label>
-        <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.matonto.currentAnnotationValue"></textarea>
-    </div>
-
-    <!-- TODO: add a section here for comments -->
-    <!-- annotation buttons -->
-    <div class="btn-container clearfix">
-        <!-- adding a custom one -->
-        <button type="button" class="btn btn-primary pull-right"
-                ng-click="vm.addAnnotation(vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationSelect); vm.selected.matonto.currentAnnotationKey = ''; vm.selected.matonto.currentAnnotationValue = ''; vm.selected.matonto.currentAnnotationSelect = 'default';"
-                ng-disabled="!(((vm.selected.matonto.currentAnnotationSelect === 'other' && vm.selected.matonto.currentAnnotationKey) || (vm.selected.matonto.currentAnnotationSelect !== 'other' && vm.selected.matonto.currentAnnotationSelect !== 'default')) && vm.selected.matonto.currentAnnotationValue)"><i class="fa fa-plus fa-fw"></i>Add annotation</button>
-    </div>
-</script>
-
 <!-- ontology-editor.html -->
 <div class="ontology-editor clearfix" ng-controller="OntologyEditorController as vm">
     <div class="row">
@@ -588,7 +545,7 @@
                     </div>
                 </form>
 
-                <!-- upload ontology -->
+                <!-- upload ontology overlay -->
                 <div class="overlay sm" ng-if="vm.showUploadOverlay">
                     <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off"
                           ng-submit="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);">
@@ -610,7 +567,61 @@
                     </form>
                 </div>
 
+                <!-- annotation overlay -->
+                <div class="overlay" ng-if="vm.showAnnotationOverlay">
+                    <form name="vm.annotationForm" class="content clearfix" novalidate autocomplete="off"
+                          ng-submit="vm.addAnnotation();">
+                        <!-- section header -->
+                        <h6>Add Annotation</h6>
+
+                        <!-- annotation list -->
+                        <div class="form-group">
+                            <label class="control-label">Annotation</label>
+                            <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.matonto.currentAnnotationSelect">
+                                <option value="default">Please select an annotation to add</option>
+                                <optgroup ng-repeat="(key, value) in vm.ontologies[vm.state.oi].matonto.annotations" label="{{key}}">
+                                    <option ng-repeat="item in value" ng-show="!vm.selected[key + item]" value="{{key + item}}">{{item}}</option>
+                                </optgroup>
+                                <option value="other">Add a new annotation</option>
+                            </select>
+                        </div>
+
+                        <!-- key, if new -->
+                        <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other'" class="form-group">
+                            <label class="control-label" for="ontology-annotation-key">Name</label>
+                            <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" />
+                        </div>
+
+                        <!-- value -->
+                        <div class="form-group">
+                            <label class="control-label" for="ontology-annotation-value">Value</label>
+                            <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.matonto.currentAnnotationValue"></textarea>
+                        </div>
+
+                        <!-- TODO: add a section here for comments -->
+                        <!-- annotation buttons -->
+                        <div class="btn-container clearfix">
+                            <!-- adding a custom one -->
+                            <button type="submit" class="btn btn-primary pull-right"
+                                    ng-disabled="!(((vm.selected.matonto.currentAnnotationSelect === 'other' && vm.selected.matonto.currentAnnotationKey) || (vm.selected.matonto.currentAnnotationSelect !== 'other' && vm.selected.matonto.currentAnnotationSelect !== 'default')) && vm.selected.matonto.currentAnnotationValue)"><i class="fa fa-plus fa-fw"></i>Add annotation</button>
+                            <button type="button" class="btn btn-default pull-right" ng-click="vm.showAnnotationOverlay = false;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
             </div>
         </section>
     </div>
 </div>
+
+<!-- annotation template -->
+<script type="text/ng-template" id="annotations-template">
+    <!-- add annotation button -->
+    <a class="btn btn-link btn-annotation" ng-click="vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i> Add Annotation</a>
+    <!-- list of annotations -->
+    <div class="annotation" ng-repeat="key in (vm.selected | annotationManagerFilter:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
+        <h5>{{key}}</h5>
+        <p>{{vm.selected[key][0]['@value'] || vm.selected[key][0]['@id']}}</p>
+        <button type="button" class="btn btn-link" ng-click="vm.removeAnnotation(key)"><i class="fa fa-times"></i></button>
+    </div>
+</script>
