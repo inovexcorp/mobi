@@ -14,6 +14,9 @@
             <option ng-repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations" ng-show="!vm.selected['{{annotation}}']">{{annotation}}</option>
             <option value="other">Add a new annotation</option>
         </select>
+        <!--tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" display-property="@id" add-from-autocomplete-only="true" placeholder="Add a Class">
+            <auto-complete source="vm.getClasses($query);"></auto-complete>
+        </tags-input-->
     </div>
 
     <!-- key, if new -->

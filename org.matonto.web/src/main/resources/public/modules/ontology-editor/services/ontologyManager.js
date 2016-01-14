@@ -22,23 +22,27 @@
             function initialize() {
                 $rootScope.showSpinner = true;
 
-                var config = {
-                    params: {
-                        rdfFormat: 'jsonld'
-                    }
-                }
+                var promises = [],
+                    config = {
+                        params: {
+                            rdfFormat: 'jsonld'
+                        }
+                    };
 
                 $http.get(prefix + '/getAllOntologies', config)
                     .then(function(response) {
-                        var i = response.data.length;
-                        while(i--) {
-                            addOntology(response.data[i].ontology, response.data[i]['ontology id']);
+                        var i = 0;
+
+                        while(i < response.data.length) {
+                            promises.push(addOntology(response.data[i].ontology, response.data[i]['ontology id']));
+                            i++;
                         }
+                        $q.all(promises)
+                            .then(function(response) {
+                                $rootScope.showSpinner = false;
+                            });
                     }, function(response) {
                         console.log('Error in initialize:', response);
-                    })
-                    .finally(function() {
-                        $rootScope.showSpinner = false;
                     });
             }
 
@@ -58,7 +62,13 @@
                     properties = [],
                     others = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
-                    i = 0;
+                    i = 0,
+                    deferred = $q.defer(),
+                    config = {
+                        params: {
+                            ontologyIdStr: ontologyId
+                        }
+                    };
 
                 initOntology = function(ontology, obj) {
                     var len = obj['@id'].length,
@@ -76,18 +86,6 @@
                             originalId: ['@id']
                         }
                     }
-                    // TODO: replace with actual annotation list from web service
-                    obj.matonto.annotations = [
-                        prefixes.rdfs + 'seeAlso',
-                        prefixes.rdfs + 'isDefinedBy',
-                        prefixes.owl + 'deprecated',
-                        prefixes.owl + 'versionInfo',
-                        prefixes.owl + 'priorVersion',
-                        prefixes.owl + 'backwardCompatibleWith',
-                        prefixes.owl + 'incompatibleWith',
-                        'http://purl.org/dc/elements/1.1/description',
-                        'http://purl.org/dc/elements/1.1/title'
-                    ];
                     angular.merge(ontology, obj);
                 }
 
@@ -217,12 +215,23 @@
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
                 ontology.matonto.others = others;
-                return ontology;
+
+                $http.get(prefix + '/getAllIRIs', config)
+                    .then(function(response) {
+                        ontology.matonto.annotations = response.data['annotation properties'];
+                        deferred.resolve(ontology);
+                    }, function(response) {
+                        console.log(response.data.error);
+                        deferred.reject(response);
+                    });
+
+                return deferred.promise;
             }
 
             function addOntology(ontology, ontologyId) {
                 var getPrefixes,
-                    context = ontology['@context'] || {};
+                    context = ontology['@context'] || {},
+                    deferred = $q.defer();
                 ontology = ontology['@graph'] || ontology;
 
                 getPrefixes = function(context) {
@@ -252,8 +261,15 @@
 
                 }
 
-                // TODO: integrate with latest develop ontology changes which flatten the JSON in the service layer
-                self.ontologies.push(restructure(ontology, ontologyId, context, getPrefixes(context)));
+                restructure(ontology, ontologyId, context, getPrefixes(context))
+                    .then(function(response) {
+                        self.ontologies.push(response);
+                        deferred.resolve(response);
+                    }, function(response) {
+                        //TODO: handle error scenario
+                        deferred.reject('something went wrong');
+                    });
+                return deferred.promise;
             }
 
             self.getList = function() {
