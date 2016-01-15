@@ -54,6 +54,8 @@ public interface OntologyManager {
 	
 	OntologyId createOntologyId();
 	
+	OntologyId createOntologyId(Resource resource);
+	
 	OntologyId createOntologyId(IRI ontologyIRI);
 	
 	OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);

@@ -188,8 +188,7 @@ public class SimpleOntologyManager implements OntologyManager {
 			closeConnection(conn);
 		}
 
-		Ontology matontoOntology = SimpleOntologyValues.matontoOntology(onto);
-		matontoOntology.getOntologyId().setOntologyIdentifier(resource);
+		Ontology matontoOntology = SimpleOntologyValues.matontoOntology(onto, resource);
 		
 		return Optional.of(matontoOntology);
 	}
@@ -283,17 +282,22 @@ public class SimpleOntologyManager implements OntologyManager {
 
 	@Override
     public OntologyId createOntologyId() {
-        return new SimpleOntologyId(factory);
+        return new SimpleOntologyId.Builder(factory).build();
     }
+	
+	@Override
+	public OntologyId createOntologyId(Resource resource) {
+	    return new SimpleOntologyId.Builder(factory).id(resource).build();
+	}
 
 	@Override
     public OntologyId createOntologyId(IRI ontologyIRI) {
-        return new SimpleOntologyId(factory, ontologyIRI);
+        return new SimpleOntologyId.Builder(factory).ontologyIRI(ontologyIRI).build();
     }
 
 	@Override
     public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
-        return new SimpleOntologyId(factory, ontologyIRI, versionIRI);
+        return new SimpleOntologyId.Builder(factory).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
     }
 
 	@Override

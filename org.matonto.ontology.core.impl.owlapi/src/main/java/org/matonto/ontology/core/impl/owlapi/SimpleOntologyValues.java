@@ -88,7 +88,7 @@ public class SimpleOntologyValues {
     
 	public SimpleOntologyValues() {}
 	
-    public static Ontology matontoOntology(OWLOntology ontology) {
+    public static Ontology matontoOntology(OWLOntology ontology, Resource resource) {
         if(ontology == null)
             return null;
 
@@ -104,7 +104,7 @@ public class SimpleOntologyValues {
             }
         }
 
-        return new SimpleOntology(tOntology, ontologyManager);
+        return new SimpleOntology(tOntology, resource, ontologyManager);
     }
     
     public static OWLOntology owlapiOntology(Ontology ontology)
