@@ -51,7 +51,7 @@
             }
 
             self.edit = function(obj, key, value) {
-                obj[key] = value;
+                obj[key][0]['@value'] = value;
             }
 
             self.searchList = function(annotations, query) {
@@ -59,7 +59,7 @@
                     arr = [];
                 while(i < annotations.length) {
                     if(annotations[i].toLowerCase().indexOf(query.toLowerCase()) !== -1) {
-                        arr.push({ '@id': annotations[i] });
+                        arr.push({'@id': annotations[i]});
                     }
                     i++;
                 }

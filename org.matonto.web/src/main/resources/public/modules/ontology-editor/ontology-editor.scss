@@ -54,7 +54,7 @@
         .annotation {
             border-bottom: 1px dotted;
             cursor: default;
-            padding: 5px 25px 5px 5px;
+            padding: 5px;
             position: relative;
 
             /* Removes the border from the first item */
@@ -69,7 +69,7 @@
 
             /* Spacing for the annotation header */
             h5 {
-                margin: 0 5px 2px 0;
+                margin: 0 37px 2px 0;
             }
 
             /* Removes paragraph margin from the annotation value */
@@ -79,11 +79,21 @@
 
             /* Places the button in the top right corner */
             .btn {
-                margin: 2px 5px;
+                border: 0;
+                margin: 0 5px;
                 padding: 0px;
                 position: absolute;
-                right: 0;
                 top: 0;
+
+                /* Delete button placement */
+                &.btn-delete {
+                    right: 0;
+                }
+
+                /* Edit button placement */
+                &.btn-edit {
+                    right: 21px;
+                }
 
                 /* Removes default padding from this button */
                 .fa {

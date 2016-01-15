@@ -570,12 +570,12 @@
                 <!-- annotation overlay -->
                 <div class="overlay" ng-if="vm.showAnnotationOverlay">
                     <form name="vm.annotationForm" class="content clearfix" novalidate autocomplete="off"
-                          ng-submit="vm.addAnnotation();">
+                          ng-submit="">
                         <!-- section header -->
                         <h6>Add Annotation</h6>
 
                         <!-- annotation list -->
-                        <div class="form-group">
+                        <div class="form-group" ng-if="!vm.editingAnnotation">
                             <label class="control-label">Annotation</label>
                             <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.matonto.currentAnnotationSelect">
                                 <option value="default">Please select an annotation to add</option>
@@ -587,9 +587,9 @@
                         </div>
 
                         <!-- key, if new -->
-                        <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other'" class="form-group">
+                        <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other' || vm.editingAnnotation" class="form-group">
                             <label class="control-label" for="ontology-annotation-key">Name</label>
-                            <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" required />
+                            <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" ng-disabled="vm.editingAnnotation" required />
                         </div>
 
                         <!-- value -->
@@ -602,8 +602,14 @@
                         <!-- annotation buttons -->
                         <div class="btn-container clearfix">
                             <!-- adding a custom one -->
-                            <button type="submit" class="btn btn-primary pull-right"
-                                    ng-disabled="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default'"><i class="fa fa-plus fa-fw"></i>Add annotation</button>
+                            <button ng-if="!vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
+                                    ng-disabled="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default'"
+                                    ng-click="vm.addAnnotation();"><i class="fa fa-plus fa-fw"></i>Add annotation</button>
+
+                            <button ng-if="vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
+                                    ng-disabled="vm.annotationForm.$invalid"
+                                    ng-click="vm.editAnnotation();"><i class="fa fa-pencil fa-fw"></i>Edit annotation</button>
+
                             <button type="button" class="btn btn-default pull-right" ng-click="vm.showAnnotationOverlay = false;">Cancel</button>
                         </div>
                     </form>
@@ -617,11 +623,12 @@
 <!-- annotation template -->
 <script type="text/ng-template" id="annotations-template">
     <!-- add annotation button -->
-    <a class="btn btn-link btn-annotation" ng-click="vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
+    <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
     <!-- list of annotations -->
     <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
         <h5 title="{{key}}">{{key | removeNamespace | beautify}}</h5>
         <p>{{vm.selected[key][0]['@value'] || vm.selected[key][0]['@id']}}</p>
-        <button type="button" class="btn btn-link" ng-click="vm.removeAnnotation(key)"><i class="fa fa-times"></i></button>
+        <button type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(key);" title="Edit"><i class="fa fa-pencil"></i></button>
+        <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(key)" title="Delete"><i class="fa fa-times"></i></button>
     </div>
 </script>

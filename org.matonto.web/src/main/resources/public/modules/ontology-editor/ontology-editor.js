@@ -77,12 +77,28 @@
         }
 
         /* Annotation Management */
-        vm.addAnnotation = function() {
-            annotationManagerService.add(vm.selected);
+        function resetAnnotationOverlay() {
             vm.showAnnotationOverlay = false;
             vm.selected.matonto.currentAnnotationKey = '';
             vm.selected.matonto.currentAnnotationValue = '';
             vm.selected.matonto.currentAnnotationSelect = 'default';
+        }
+
+        vm.addAnnotation = function() {
+            annotationManagerService.add(vm.selected);
+            resetAnnotationOverlay();
+        }
+
+        vm.editClicked = function(key) {
+            vm.editingAnnotation = true;
+            vm.showAnnotationOverlay = true;
+            vm.selected.matonto.currentAnnotationKey = key;
+            vm.selected.matonto.currentAnnotationValue = vm.selected[key][0]['@value'];
+        }
+
+        vm.editAnnotation = function(key) {
+            annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue);
+            resetAnnotationOverlay();
         }
 
         vm.removeAnnotation = function(key) {
