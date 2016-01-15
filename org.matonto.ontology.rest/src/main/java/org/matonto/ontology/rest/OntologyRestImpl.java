@@ -120,14 +120,11 @@ public class OntologyRestImpl {
 	@GET
     @Path("/getAllOntologies")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllOntologies(@QueryParam("rdfFormat") String rdfFormat)
+    public Response getAllOntologies()
     {
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
             
-        if (rdfFormat == null || rdfFormat.length() == 0)
-            return Response.status(400).entity("Output format is empty").build();
-
         JSONArray jsonArray = new JSONArray();
         Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
         if(!ontoIdRegistry.isEmpty()) {
@@ -146,31 +143,13 @@ public class OntologyRestImpl {
                 } 
 
                 if(optOntology.isPresent()) {
-                    OutputStream outputStream = null;
-                    
-                    if(rdfFormat.equalsIgnoreCase("rdf/xml"))
-                        outputStream = optOntology.get().asRdfXml();
-                    
-                    else if(rdfFormat.equalsIgnoreCase("owl/xml"))
-                        outputStream = optOntology.get().asOwlXml();
-                    
-                    else if(rdfFormat.equalsIgnoreCase("turtle"))
-                        outputStream = optOntology.get().asTurtle();
-                    
-                    else if(rdfFormat.equalsIgnoreCase("jsonld"))
-                        outputStream = optOntology.get().asJsonLD();
-                    
-                    else 
-                        return Response.status(400).entity("Output format is invalid").build();
+                    OutputStream outputStream = optOntology.get().asJsonLD();
                 
                     String content = "";
                     if(outputStream != null)
-                        content = outputStream.toString();
+                        json.put("ontology", outputStream.toString());
                         
                     IOUtils.closeQuietly(outputStream); 
-                        
-                    json.put("document format", rdfFormat);
-                    json.put("ontology", content);
                     
                 } else if(message == null) {
                     json.put("error", "OntologyId doesn't exist.");
