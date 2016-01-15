@@ -41,29 +41,28 @@ class SimpleOntologyManagerSpec extends Specification {
         thrown(MatontoOntologyException)
     }
 
-//    def "storeOntology stores an Ontology when ontology does not exist"() {
-//        setup:
-//        def manager = [
-//                ontologyExists: { o -> return false }
-//        ] as SimpleOntologyManager
-//    
-//        def ontology
-//        manager.setRepositoryManager(repositoryManager)
-//        manager.setValueFactory(factory)
-//        manager.setTransformer(sesameTransformer)
-//        manager.setRepo(repository)
-//
-//        when:
-//        def result = manager.storeOntology(ontology)
-//
-//        then:
-//        ontology.getOntologyId() >> ontologyId
-//        ontology.asModel(_) >> model
-////        sesameTransformer.sesameResource(_) >> resource
-//        repository.getConnection() >> connection
-//        repository.getConfig() >> Mock(RepositoryConfig.class)
-//        result
-//    }
+    def "storeOntology stores an Ontology when ontology does not exist"() {
+        setup:
+        def manager = [
+                ontologyExists: { o -> return false }
+        ] as SimpleOntologyManager
+    
+        manager.setRepositoryManager(repositoryManager)
+        manager.setValueFactory(factory)
+        manager.setTransformer(sesameTransformer)
+        manager.setRepo(repository)
+
+        when:
+        def result = manager.storeOntology(ontology)
+
+        then:
+        ontology.getOntologyId() >> ontologyId
+        ontology.asModel(_) >> model
+//        sesameTransformer.sesameResource(_) >> resource
+        repository.getConnection() >> connection
+        repository.getConfig() >> Mock(RepositoryConfig.class)
+        result
+    }
 
     // TODO: Test retrieveOntology
 
