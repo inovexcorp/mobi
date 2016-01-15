@@ -27,8 +27,4 @@ public interface OntologyId {
      */
 	Resource getOntologyIdentifier();
 	
-	/**
-     * The identifier can be set to a resource if the Ontology IRI is not present, otherwise it remains unchanged;
-     */
-	void setOntologyIdentifier(Resource identifier);
 }

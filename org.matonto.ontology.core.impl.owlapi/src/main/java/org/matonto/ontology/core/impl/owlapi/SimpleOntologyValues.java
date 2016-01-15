@@ -348,11 +348,11 @@ public class SimpleOntologyValues {
 		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlId.getVersionIRI();
 
         if (vIRI.isPresent()) {
-            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get())).versionIRI(matontoIRI(vIRI.get())).build();
         } else if (oIRI.isPresent()) {
-            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()));
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get())).build();
         } else {
-            return new SimpleOntologyId(factory);
+            return new SimpleOntologyId.Builder(factory).build();
         }
 	}	
 	
