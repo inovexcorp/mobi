@@ -124,6 +124,7 @@
                                 </a>
                             </div>
                             <!-- end classes -->
+
                             <!-- start no domains -->
                             <ul ng-if="ontology.matonto.noDomains.length">
                                 <li>
@@ -146,6 +147,24 @@
                                 </li>
                             </ul>
                             <!-- end no domains -->
+
+                            <!-- start others -->
+                            <ul ng-if="ontology.matonto.others.length">
+                                <li>
+                                    <a ng-click="theOthers = !theOthers; $event.stopPropagation();">
+                                        <i class="fa fa-fw"
+                                           ng-class="{'fa-folder-open-o': theOthers, 'fa-folder-o': !theOthers}"></i>Others
+                                    </a>
+                                </li>
+                                <li class="container" ng-show="theOthers">
+                                    <ul ng-repeat="other in ontology.matonto.others">
+                                        <a>
+                                            <i class="fa fa-fw fa-question"></i>{{other[ontology.matonto.rdfs + 'label'[0]['@value']] || other['@id']}}
+                                        </a>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <!-- end others -->
                         </li>
                     </ul>
                     <div class="creator">

@@ -44,6 +44,7 @@
                     },
                     classes = [],
                     properties = [],
+                    others = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
                     i = list.length;
 
@@ -144,6 +145,7 @@
                             break;
                         case prefixes.owl + 'DatatypeProperty':
                         case prefixes.owl + 'ObjectProperty':
+                        case prefixes.rdfs + 'Property':
                             obj.matonto = {
                                 icon: chooseIcon(obj),
                                 originalId: obj['@id'],
@@ -151,6 +153,9 @@
                             };
                             obj['@id'] = removeNamespace(obj['@id']);
                             properties.push(obj);
+                            break;
+                        default:
+                            others.push(obj);
                             break;
                     }
                 }
@@ -196,6 +201,7 @@
 
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
+                ontology.matonto.others = others;
                 return ontology;
             }
 
