@@ -244,6 +244,14 @@ ul {
         &.active {
             color: #fff;
         }
+
+        /* Gray out text whenever the link is disabled */
+        &.disabled,
+        &.disabled:hover {
+            background-color: #fff;
+            color: $gray-lighter;
+            cursor: not-allowed;
+        }
     }
 
     /* General styles for the ul elements */

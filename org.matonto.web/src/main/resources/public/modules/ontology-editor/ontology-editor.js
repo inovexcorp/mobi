@@ -28,9 +28,19 @@
 
         /* Ontology Management */
         vm.uploadOntology = function(isValid, file, namespace, localName) {
-            ontologyManagerService.uploadThenGet(isValid, file, namespace, localName)
+            ontologyManagerService.uploadThenGet(isValid, file)
                 .then(function(response) {
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
+                }, function(response) {
+                    console.log(response.data);
+                });
+        }
+
+        vm.deleteOntology = function() {
+            ontologyManagerService.delete(vm.selected['@id'], vm.state)
+                .then(function(response) {
+                    stateManagerService.clearState(vm.state.oi);
+                    vm.selectItem('default', undefined, undefined, undefined);
                 });
         }
 
