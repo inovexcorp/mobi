@@ -501,7 +501,7 @@ public class OntologyRestImpl {
 	}
 	
 	
-	   /*
+	/*
      * Returns JSON-formated annotation properties in the ontology with requested ontology ID
      */
     @GET
@@ -518,27 +518,27 @@ public class OntologyRestImpl {
         JSONArray array = new JSONArray();
         
         JSONObject annotations = new JSONObject();
-        annotations.put("annotation properties", getAnnotationIRIs(ontologyIdStr));
+        annotations.put("annotation properties", iriListToJsonArray(getAnnotationIRIs(ontologyIdStr)));
         array.add(annotations);
         
         JSONObject classes = new JSONObject();
-        classes.put("classes", getClassIRIs(ontologyIdStr));
+        classes.put("classes", iriListToJsonArray(getClassIRIs(ontologyIdStr)));
         array.add(classes);
         
         JSONObject datatypes = new JSONObject();
-        datatypes.put("datatypes", getDatatypeIRIs(ontologyIdStr));
+        datatypes.put("datatypes", iriListToJsonArray(getDatatypeIRIs(ontologyIdStr)));
         array.add(datatypes);
         
         JSONObject objectProperties = new JSONObject();
-        objectProperties.put("object properties", getObjectPropertyIRIs(ontologyIdStr));
+        objectProperties.put("object properties", iriListToJsonArray(getObjectPropertyIRIs(ontologyIdStr)));
         array.add(objectProperties);
         
         JSONObject dataProperties = new JSONObject();
-        dataProperties.put("data properties", getDataPropertyIRIs(ontologyIdStr));
+        dataProperties.put("data properties", iriListToJsonArray(getDataPropertyIRIs(ontologyIdStr)));
         array.add(dataProperties);
         
         JSONObject namedIndividuals = new JSONObject();
-        namedIndividuals.put("named individuals", getNamedIndividualIRIs(ontologyIdStr));
+        namedIndividuals.put("named individuals", iriListToJsonArray(getNamedIndividualIRIs(ontologyIdStr)));
         array.add(namedIndividuals);
             
         return Response.status(200).entity(array.toString()).build();
@@ -557,10 +557,9 @@ public class OntologyRestImpl {
             return Response.status(500).entity("Ontology manager is null").build();
         
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
+            return Response.status(400).entity("OntologyID is empty").build();     
         
-        JSONObject json = new JSONObject();
-        json = getAnnotationIRIs(ontologyIdStr);
+        JSONObject json = iriListToJsonArray(getAnnotationIRIs(ontologyIdStr));
             
         return Response.status(200).entity(json.toString()).build();
     }
@@ -580,8 +579,7 @@ public class OntologyRestImpl {
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
        
-        JSONObject json = new JSONObject();
-        json = getClassIRIs(ontologyIdStr);
+        JSONObject json = iriListToJsonArray(getClassIRIs(ontologyIdStr));
            
         return Response.status(200).entity(json.toString()).build();
     }
@@ -601,8 +599,7 @@ public class OntologyRestImpl {
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
        
-        JSONObject json = new JSONObject();
-        json = getDatatypeIRIs(ontologyIdStr);
+        JSONObject json = iriListToJsonArray(getDatatypeIRIs(ontologyIdStr));
            
         return Response.status(200).entity(json.toString()).build();
     }
@@ -622,8 +619,7 @@ public class OntologyRestImpl {
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
        
-        JSONObject json = new JSONObject();
-        json = getObjectPropertyIRIs(ontologyIdStr);
+        JSONObject json = iriListToJsonArray(getObjectPropertyIRIs(ontologyIdStr));
            
         return Response.status(200).entity(json.toString()).build();
     }
@@ -643,8 +639,7 @@ public class OntologyRestImpl {
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
        
-        JSONObject json = new JSONObject();
-        json = getDataPropertyIRIs(ontologyIdStr);
+        JSONObject json = iriListToJsonArray(getDataPropertyIRIs(ontologyIdStr));
            
         return Response.status(200).entity(json.toString()).build();
     }
@@ -664,19 +659,17 @@ public class OntologyRestImpl {
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
        
-        JSONObject json = new JSONObject();
-        json = getNamedIndividualIRIs(ontologyIdStr);
+        JSONObject json = iriListToJsonArray(getNamedIndividualIRIs(ontologyIdStr));
            
         return Response.status(200).entity(json.toString()).build();
     }
     
     
     
-    private JSONObject getAnnotationIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getAnnotationIRIs (@Nonnull String ontologyIdStr) 
     {
-        JSONObject json = new JSONObject();
         Optional<Ontology> optOntology = Optional.empty();
-    
+        List<IRI> iris = new ArrayList<>();
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch(MatontoOntologyException ex) {
@@ -693,24 +686,16 @@ public class OntologyRestImpl {
             } 
         }
     
-        if(!annotations.isEmpty()) {
-            for(Annotation annotation : annotations) {
-                String iri = annotation.getProperty().getIRI().stringValue();
-                String localName = annotation.getProperty().getIRI().getLocalName();
-                json.put(iri, localName);
-            }
-        } else {
-            json.put("error", "OntologyId doesn't exist.");
-        }
+        if(!annotations.isEmpty()) 
+           annotations.forEach(annotation -> iris.add(annotation.getProperty().getIRI())); 
         
-        return json;
+        return iris;
     }
     
-    private JSONObject getClassIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getClassIRIs (@Nonnull String ontologyIdStr) 
     {   
-        JSONObject json = new JSONObject();
         Optional<Ontology> optOntology = Optional.empty();
-        
+        List<IRI> iris = new ArrayList<>();
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch(MatontoOntologyException ex) {
@@ -727,24 +712,16 @@ public class OntologyRestImpl {
             } 
         }
         
-        if(!oClasses.isEmpty()) {
-            for(OClass oClass : oClasses) {
-                String iri = oClass.getIRI().stringValue();
-                String localName = oClass.getIRI().getLocalName();
-                json.put(iri, localName); 
-            }
-        } else {
-            json.put("error", "OntologyId doesn't exist.");
-        }
+        if(!oClasses.isEmpty()) 
+            oClasses.forEach(oClass -> iris.add(oClass.getIRI()));
         
-        return json;
+        return iris;
     }
     
-    private JSONObject getDatatypeIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getDatatypeIRIs (@Nonnull String ontologyIdStr) 
     {   
-        JSONObject json = new JSONObject();
         Optional<Ontology> optOntology = Optional.empty();
-        
+        List<IRI> iris = new ArrayList<>();
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch(MatontoOntologyException ex) {
@@ -761,24 +738,16 @@ public class OntologyRestImpl {
             } 
         }
         
-        if(!datatypes.isEmpty()) {
-            for(Datatype datatype : datatypes) {
-                String iri = datatype.getIRI().stringValue();
-                String localName = datatype.getIRI().getLocalName();
-                json.put(iri, localName);
-            }
-        } else {
-            json.put("error", "OntologyId doesn't exist.");
-        }
+        if(!datatypes.isEmpty()) 
+            datatypes.forEach(datatype -> iris.add(datatype.getIRI()));
         
-        return json;
+        return iris;
     }
     
-    private JSONObject getObjectPropertyIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getObjectPropertyIRIs (@Nonnull String ontologyIdStr) 
     {   
-        JSONObject json = new JSONObject();
         Optional<Ontology> optOntology = Optional.empty();
-        
+        List<IRI> iris = new ArrayList<>();
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch(MatontoOntologyException ex) {
@@ -795,22 +764,15 @@ public class OntologyRestImpl {
             } 
         }
         
-        if(!objectProperties.isEmpty()) {
-            for(ObjectProperty property : objectProperties) {
-                String iri = property.getIRI().stringValue();
-                String localName = property.getIRI().getLocalName();
-                json.put(iri, localName);
-            }
-        } else {
-            json.put("error", "OntologyId doesn't exist.");
-        }
+        if(!objectProperties.isEmpty()) 
+            objectProperties.forEach(objectProperty -> iris.add(objectProperty.getIRI()));
         
-        return json;
+        return iris;
     }
     
-    private JSONObject getDataPropertyIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getDataPropertyIRIs (@Nonnull String ontologyIdStr) 
     {   
-        JSONObject json = new JSONObject();
+        List<IRI> iris = new ArrayList<>();
         Optional<Ontology> optOntology = Optional.empty();
         
         try {
@@ -829,22 +791,15 @@ public class OntologyRestImpl {
             } 
         }
         
-        if(!dataProperties.isEmpty()) {
-            for(DataProperty property : dataProperties) {
-                String iri = property.getIRI().stringValue();
-                String localName = property.getIRI().getLocalName();
-                json.put(iri, localName);
-            }
-        } else {
-            json.put("error", "OntologyId doesn't exist.");
-        }
+        if(!dataProperties.isEmpty()) 
+            dataProperties.forEach(dataProperty -> iris.add(dataProperty.getIRI()));
         
-        return json;
+        return iris;
     }
     
-    private JSONObject getNamedIndividualIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getNamedIndividualIRIs (@Nonnull String ontologyIdStr) 
     {   
-        JSONObject json = new JSONObject();
+        List<IRI> iris = new ArrayList<>();
         Optional<Ontology> optOntology = Optional.empty();
         
         try {
@@ -863,29 +818,46 @@ public class OntologyRestImpl {
             } 
         }
         
-        if(!individuals.isEmpty()) {
-            for(Individual individual : individuals) {
-                if(individual instanceof NamedIndividual) {
-                    String iri = ((NamedIndividual)individual).getIRI().stringValue();
-                    String localName = ((NamedIndividual)individual).getIRI().getLocalName();
-                    json.put(iri, localName);
-                }
-            }   
-        } else {
-            json.put("error", "OntologyId doesn't exist.");
-        }
-        
-        return json;
+        if(!individuals.isEmpty())
+            individuals.parallelStream()
+            .filter(individual -> individual instanceof NamedIndividual)
+            .forEach(individual -> iris.add(((NamedIndividual)individual).getIRI()));
+              
+        return iris;
     }
     
     
-    private JSONObject mapToJson(@Nonnull Map<String, ArrayList<String>> mapObject)
+    private JSONObject iriListToJson(@Nonnull List<IRI> iris)
     {
+        if(iris.isEmpty())
+            return new JSONObject();
+        
         JSONObject json = new JSONObject();
-
-        for(String key : mapObject.keySet()) {
+        iris.forEach(iri -> json.put(iri.stringValue(), iri.getLocalName()));       
+        return json;
+    }
+    
+    private JSONObject iriListToJsonArray(@Nonnull List<IRI> iris)
+    {
+        if(iris.isEmpty())
+            return new JSONObject();
+        
+        Map<String, ArrayList<String>> iriMap = new HashMap<>();
+        for(IRI iri : iris) {
+            if(iriMap.isEmpty() || !iriMap.containsKey(iri.getNamespace())) {
+                ArrayList<String> localnames = new ArrayList<>();
+                localnames.add(iri.getLocalName());
+                iriMap.put(iri.getNamespace(), localnames);
+            } else if(!iriMap.get(iri.getNamespace()).contains(iri.getLocalName())){
+                iriMap.get(iri.getNamespace()).add(iri.getLocalName());
+            }
+        }
+        
+        JSONObject json = new JSONObject();
+        
+        for(String key : iriMap.keySet()) {
             JSONArray jsonArray = new JSONArray();
-            jsonArray.addAll(mapObject.get(key));
+            jsonArray.addAll(iriMap.get(key));
             json.put(key, jsonArray);
         }
         
