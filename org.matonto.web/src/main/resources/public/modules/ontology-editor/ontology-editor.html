@@ -589,7 +589,7 @@
                         <!-- key, if new -->
                         <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other'" class="form-group">
                             <label class="control-label" for="ontology-annotation-key">Name</label>
-                            <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" required />
+                            <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" required />
                         </div>
 
                         <!-- value -->

@@ -92,5 +92,9 @@
         vm.getAnnotations = function(query) {
             return annotationManagerService.searchList(vm.selected.matonto.annotations, query);
         }
+
+        vm.getPattern = function() {
+            return annotationManagerService.getPattern();
+        }
     }
 })();

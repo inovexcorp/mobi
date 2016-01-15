@@ -10,7 +10,12 @@
         annotationManagerService.$inject = ['$filter'];
 
         function annotationManagerService($filter) {
-            var self = this;
+            var self = this,
+                reg = /^([^:\/?#]+):\/\/([^\/?#]*)([^?#]*)\\?([^#]*)(?:[#\/:](.+))+/;
+
+            self.getPattern = function() {
+                return reg;
+            }
 
             self.remove = function(obj, key) {
                 delete obj[key];
