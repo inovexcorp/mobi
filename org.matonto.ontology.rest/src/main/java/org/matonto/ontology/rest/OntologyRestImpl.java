@@ -59,7 +59,6 @@ public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
     private static ValueFactory factory;
-	private static Map<Resource, String> ontoIdRegistry = new HashMap<>();
 	private static Map<OntologyId, Ontology> retrievedOntologies = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -67,7 +66,6 @@ public class OntologyRestImpl {
     public void activate() 
     {
         LOG.info("Activating the OntologyRestImpl");
-        getOntologyRegistry();
     }
  
     @Deactivate
@@ -108,6 +106,7 @@ public class OntologyRestImpl {
 
 		JSONObject json = new JSONObject();
 
+		Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
 		if(!ontoIdRegistry.isEmpty()) {
 			for(Resource oid : ontoIdRegistry.keySet()) 
 				json.put(oid.stringValue(), ontoIdRegistry.get(oid));
@@ -132,7 +131,7 @@ public class OntologyRestImpl {
             return Response.status(400).entity("Output format is empty").build();
 
         JSONArray jsonArray = new JSONArray();
-
+        Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
         if(!ontoIdRegistry.isEmpty()) {
             for(Resource oid : ontoIdRegistry.keySet()) 
             {
@@ -300,7 +299,6 @@ public class OntologyRestImpl {
 		
 		if(persisted) {
 		    OntologyId oid = ontology.getOntologyId();
-	        ontoIdRegistry.put(oid.getOntologyIdentifier(), manager.getRepository().getConfig().id());
 	        retrievedOntologies.put(oid, ontology);
 		    json.put("ontology id", oid.getOntologyIdentifier().stringValue());
 		}
@@ -479,14 +477,13 @@ public class OntologyRestImpl {
 
 		JSONObject json = new JSONObject();
 		boolean deleted = false;
-		String message;
+		String message = null;
 		try{
 		    Optional<Ontology> optOntology = getOntology(ontologyIdStr);
 			if(optOntology.isPresent()) {
 			    OntologyId oid = optOntology.get().getOntologyId();
 			    deleted = manager.deleteOntology(oid.getOntologyIdentifier());
 			    retrievedOntologies.remove(oid);
-			    ontoIdRegistry.remove(oid.getOntologyIdentifier(), manager.getRepository().getConfig().id());
 			}
 			
 		} catch(MatontoOntologyException ex) {
@@ -496,6 +493,8 @@ public class OntologyRestImpl {
 		} 
 
 		json.put("result", deleted);
+		if(message == null)
+		    json.put("error", "ontology ID does not exist");
 		  
 		return Response.ok(json.toString()).build();
 	}
@@ -888,15 +887,6 @@ public class OntologyRestImpl {
             else
                 return Optional.empty();
         }
-    }
-    
-    
-    private void getOntologyRegistry()
-    {
-        if(manager == null)
-            throw new IllegalStateException("ontology manager is null");
-
-        ontoIdRegistry = manager.getOntologyRegistry();
     }
 	
 }
