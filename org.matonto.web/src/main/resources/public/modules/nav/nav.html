@@ -11,11 +11,13 @@
     </ul>
     <!-- static menu items -->
     <ul class="icon-container" ng-class="{'pull-right': !$root.leftLayout}">
-        <!-- help icon -->
+        <!-- help icon --
         <li><a><i class="fa fa-question fa-2x fa-fw"></i><span class="name">Help</span></a></li>
-        <!-- settings icon -->
+        <!-- settings icon --
         <li><a><i class="fa fa-cog fa-2x fa-fw"></i><span class="name">Settings</span></a></li>
-        <!-- hamburger menu -->
-        <li><a><i class="fa fa-bars fa-2x fa-fw"></i><span class="name">Menu</span></a></li>
+        <!-- hamburger menu --
+        <li><a><i class="fa fa-bars fa-2x fa-fw"></i><span class="name">Menu</span></a></li-->
+        <!-- logout -->
+        <li><a ng-click="vm.logout();"><i class="fa fa-sign-out fa-2x fa-fw"></i><span class="name">Logout</span></a></li>
     </ul>
 </div>

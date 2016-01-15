@@ -103,4 +103,34 @@ public interface RepositoryConnection extends AutoCloseable {
      * @throws RepositoryException
      */
     RepositoryResult<Resource> getContextIDs() throws RepositoryException;
+
+    /**
+     * Begins a transaction requiring commit() or rollback() to be called to end the transaction.
+     *
+     * @throws RepositoryException when a problem occurs starting the transaction
+     */
+    void begin() throws RepositoryException;
+
+    /**
+     * Commits the active transaction.
+     * @throws RepositoryException when there is a problem committing the transaction
+     * @throws UnknownTransactionStateException (Runtime) if the transaction state cannot be determined
+     */
+    void commit() throws RepositoryException;
+
+    /**
+     * Rolls back all updates in the active transaction. This operation ends the active transaction.
+     *
+     * @throws RepositoryException when the transaction cannot be rolled back.
+     */
+    void rollback() throws RepositoryException;
+
+    /**
+     * Indicates if a transaction is currently active on the connection. Transactions become active upon a call to
+     * begin() and inactive on a call to commit() or rollback()
+     * @return true if a transaction is active, or false if the transaction is inactive
+     * @throws RepositoryException if the connection to the repository could not be accessed to check for state.
+     */
+    boolean isActive() throws RepositoryException;
+
 }

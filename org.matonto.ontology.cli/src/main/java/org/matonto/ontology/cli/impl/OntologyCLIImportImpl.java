@@ -43,11 +43,7 @@ public class OntologyCLIImportImpl implements Action
 	//Command Line Arguments and Options	
 	@Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository", required = true, multiValued = false)
 	String fromFile = null;
-	
-	@Argument(index = 1, name = "ontologyId", description = "the ontology id/context id for ontology named graph to be created under", required = true, multiValued = false)
-	String ontologyId = null;
-	
-	
+
 	@Override
 	public Object execute() throws Exception 
 	{	
@@ -79,8 +75,7 @@ public class OntologyCLIImportImpl implements Action
 
 		File newFile = new File(fromFile);
 		if(newFile.exists()) {
-			IRI iri = manager.createOntologyIRI(ontologyId);
-			Ontology ontology = manager.createOntology(newFile, manager.createOntologyId(iri));
+			Ontology ontology = manager.createOntology(newFile);
 			persisted = manager.storeOntology(ontology);
 		}
 				

@@ -36,7 +36,7 @@ import net.sf.json.JSONObject;
 
 
 @Component (immediate=true)
-@Path("/ontology")
+@Path("/")
 public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
@@ -69,8 +69,8 @@ public class OntologyRestImpl {
 	{
 		return manager;
 	}
-	
-	
+
+
 	
 	@GET
 	@Path("getAllOntologyIds")
@@ -139,26 +139,19 @@ public class OntologyRestImpl {
 	@Path("/uploadOntology")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response uploadFile(
-							@FormDataParam("file") InputStream fileInputStream,
-							@FormDataParam("ontologyIdStr") String ontologyIdStr)
+	public Response uploadFile(@FormDataParam("file") InputStream fileInputStream)
 	{	     
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
-        
-		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-			return Response.status(400).entity("OntologyID is empty").build();
-		
+
 		boolean persisted = false;
 		JSONObject json = new JSONObject();
 		Ontology ontology;
 		String message;
-		
+
 		try{
-			IRI iri = manager.createOntologyIRI(ontologyIdStr);
-			ontology = manager.createOntology(fileInputStream, manager.createOntologyId(iri));
+			ontology = manager.createOntology(fileInputStream);
 			persisted = manager.storeOntology(ontology);
-			
 		} catch(MatontoOntologyException ex) {
 		    message = ex.getMessage();
             LOG.error("Exception occurred while uploading ontology: " + message, ex);
