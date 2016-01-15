@@ -39,7 +39,6 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -59,7 +58,6 @@ public class OntologyRestImpl {
 	
 	private static OntologyManager manager;
     private static ValueFactory factory;
-	private static Map<OntologyId, Ontology> retrievedOntologies = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
 	@Activate
@@ -196,19 +194,16 @@ public class OntologyRestImpl {
     @GET
     @Path("/getOntologies")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getOntologies(@QueryParam("ontologyIdList") String ontologyIdList,
-                                @QueryParam("rdfFormat") String rdfFormat) 
+    public Response getOntologies(@QueryParam("ontologyIdList") String ontologyIdList) 
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
         
         if (ontologyIdList == null || ontologyIdList.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
-        
-        if (rdfFormat == null || rdfFormat.length() == 0)
-            return Response.status(400).entity("Output format is empty").build();
  
-        List<String> ontologyIds = Arrays.asList(ontologyIdList.split("\\s*,\\s*"));
+        List<String> ontologyIds = Arrays.asList(ontologyIdList.trim().split("\\s*,\\s*"));
+        
         if(ontologyIds.isEmpty())
             return Response.status(400).entity("Invalid ontology id(s) on the list").build();
         
@@ -229,30 +224,12 @@ public class OntologyRestImpl {
             } 
             
             if(optOntology.isPresent()) {
-                OutputStream outputStream = null;
-                
-                if(rdfFormat.equalsIgnoreCase("rdf/xml"))
-                    outputStream = optOntology.get().asRdfXml();
-                
-                else if(rdfFormat.equalsIgnoreCase("owl/xml"))
-                    outputStream = optOntology.get().asOwlXml();
-                
-                else if(rdfFormat.equalsIgnoreCase("turtle"))
-                    outputStream = optOntology.get().asTurtle();
-                
-                else if(rdfFormat.equalsIgnoreCase("jsonld"))
-                    outputStream = optOntology.get().asJsonLD();
-                
-                else 
-                    return Response.status(400).entity("Output format is invalid").build();
-            
+                OutputStream outputStream = optOntology.get().asJsonLD();        
                 String content = "";
                 if(outputStream != null)
                     content = outputStream.toString();
                     
                 IOUtils.closeQuietly(outputStream); 
-                    
-                json.put("document format", rdfFormat);
                 json.put("ontology", content);
                 
             } else if(message == null) {
@@ -299,7 +276,6 @@ public class OntologyRestImpl {
 		
 		if(persisted) {
 		    OntologyId oid = ontology.getOntologyId();
-	        retrievedOntologies.put(oid, ontology);
 		    json.put("ontology id", oid.getOntologyIdentifier().stringValue());
 		}
 		
@@ -331,10 +307,10 @@ public class OntologyRestImpl {
 		JSONObject json = new JSONObject();
 		Optional<Ontology> optOntology = Optional.empty();
 		String message = null;
-        json.put("ontology id", ontologyIdStr);
+        json.put("ontology id", ontologyIdStr.trim());
         
 		try {
-		    optOntology = getOntology(ontologyIdStr);
+		    optOntology = getOntology(ontologyIdStr.trim());
         } catch(MatontoOntologyException ex) {
             message = ex.getMessage();
             LOG.error("Exception occurred while retrieving ontology with ontology id " + ontologyIdStr + ": " + message, ex);
@@ -398,7 +374,7 @@ public class OntologyRestImpl {
         Optional<Ontology> optOntology = Optional.empty();
         
         try {
-            optOntology = getOntology(ontologyIdStr);
+            optOntology = getOntology(ontologyIdStr.trim());
         } catch(MatontoOntologyException ex) {
             LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
         } 
@@ -479,13 +455,13 @@ public class OntologyRestImpl {
 		boolean deleted = false;
 		String message = null;
 		try{
-		    Optional<Ontology> optOntology = getOntology(ontologyIdStr);
-			if(optOntology.isPresent()) {
-			    OntologyId oid = optOntology.get().getOntologyId();
-			    deleted = manager.deleteOntology(oid.getOntologyIdentifier());
-			    retrievedOntologies.remove(oid);
-			}
-			
+	        Resource resource = null;	        
+	        if(isBNodeString(ontologyIdStr.trim()))
+	            resource = factory.createBNode(ontologyIdStr.trim());
+	        else 
+	            resource = factory.createIRI(ontologyIdStr.trim());
+	        
+		    deleted = manager.deleteOntology(resource);
 		} catch(MatontoOntologyException ex) {
 		    message = ex.getMessage();
 		    LOG.error("Exception occurred while deleting ontology: " + message, ex);
@@ -493,9 +469,7 @@ public class OntologyRestImpl {
 		} 
 
 		json.put("result", deleted);
-		if(message == null)
-		    json.put("error", "ontology ID does not exist");
-		  
+
 		return Response.ok(json.toString()).build();
 	}
 	
@@ -818,10 +792,11 @@ public class OntologyRestImpl {
         }
         
         if(!individuals.isEmpty())
-            individuals.parallelStream()
-            .filter(individual -> individual instanceof NamedIndividual)
-            .forEach(individual -> iris.add(((NamedIndividual)individual).getIRI()));
-              
+            for(Individual individual : individuals) {
+                if(individual instanceof NamedIndividual)
+                    iris.add(((NamedIndividual)individual).getIRI());
+            }
+            
         return iris;
     }
     
@@ -865,28 +840,19 @@ public class OntologyRestImpl {
     
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException
     {
-        for(OntologyId id : retrievedOntologies.keySet()) {
-            if(id.getOntologyIdentifier().stringValue().equals(ontologyIdStr)) 
-                return Optional.of(retrievedOntologies.get(id));
-        }
+        Resource resource = null;
+        String id = ontologyIdStr.trim();
+        if(isBNodeString(id))
+            resource = factory.createBNode(id);
+        else 
+            resource = factory.createIRI(id);
         
-        Optional<Ontology> optOntology = Optional.empty();
-        IRI iri = factory.createIRI(ontologyIdStr);
-        optOntology = manager.retrieveOntology(iri);
- 
-        if(optOntology.isPresent()) {
-            retrievedOntologies.put(optOntology.get().getOntologyId(), optOntology.get());
-            return optOntology;
-        } else {
-            BNode bnode = factory.createBNode(ontologyIdStr);
-            optOntology = manager.retrieveOntology(bnode);
-            if(optOntology.isPresent()) {
-                retrievedOntologies.put(optOntology.get().getOntologyId(), optOntology.get());
-                return optOntology;
-            }
-            else
-                return Optional.empty();
-        }
+        return manager.retrieveOntology(resource);
+    }
+    
+    private boolean isBNodeString(String string) 
+    {
+        return string.matches("^_:.*$");     
     }
 	
 }
