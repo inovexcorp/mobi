@@ -2,9 +2,10 @@
     'use strict';
 
     angular
-        .module('annotationManager', [])
+        .module('annotationManager', ['removeNamespace'])
         .service('annotationManagerService', annotationManagerService)
-        .filter('annotationManagerFilter', annotationManagerFilter);
+        .filter('showAnnotations', showAnnotations)
+        .filter('hideAnnotations', hideAnnotations);
 
         annotationManagerService.$inject = ['$filter'];
 
@@ -16,16 +17,31 @@
             }
 
             self.add = function(obj) {
-                var matonto = obj.matonto,
+                var prop, temp, stripped,
+                    found = false,
+                    matonto = obj.matonto,
                     key = matonto.currentAnnotationKey,
                     value = matonto.currentAnnotationValue,
                     select = matonto.currentAnnotationSelect,
                     item = [{'@value': value}];
 
                 if(select === 'other') {
-                    obj[key] = item;
+                    temp = key;
                 } else {
-                    obj[select] = item;
+                    temp = select;
+                }
+                obj[temp] = item;
+                stripped = $filter('removeNamespace')(temp);
+
+                for(prop in matonto.annotations) {
+                    if(temp.indexOf(prop) !== -1) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(!found) {
+                    matonto.annotations[temp.replace(stripped, '')] = [stripped];
                 }
             }
 
@@ -46,20 +62,45 @@
             }
         }
 
-        function annotationManagerFilter() {
+        function showAnnotations() {
             return function(obj, annotations) {
-                var i, prop,
+                var i, prop, temp,
                     results = [];
+
                 for(prop in annotations) {
                     i = 0;
                     while(i < annotations[prop].length) {
-                        if(obj[prop + annotations[prop][i]]) {
-                            results.push(prop + annotations[prop][i]);
+                        temp = prop + annotations[prop][i];
+                        if(obj.hasOwnProperty(temp)) {
+                            results.push(temp);
                         }
                         i++;
                     }
                 }
                 return results;
+            }
+        }
+
+        function hideAnnotations() {
+            return function(annotations, obj) {
+                var prop, i, count,
+                    result = [];
+
+                for(prop in annotations) {
+                    i = 0;
+                    count = 0;
+                    while(i < annotations[prop].length) {
+                        if(obj.hasOwnProperty(prop + annotations[prop][i])) {
+                            count++;
+                        }
+                        i++;
+                    }
+
+                    if(count < annotations[prop].length) {
+                        result.push(prop);
+                    }
+                }
+                return result;
             }
         }
 })();

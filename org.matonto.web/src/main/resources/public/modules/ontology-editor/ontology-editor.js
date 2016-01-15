@@ -63,22 +63,6 @@
             vm.state = stateManagerService.getState();
         }
 
-        vm.getClasses = function(query) {
-            var dummies = [
-                    { "@id": "Jordan1" },
-                    { "@id": "Jordan2" },
-                    { "@id": "Jordan3" },
-                    { "@id": "Levi1" },
-                    { "@id": "Levi2" },
-                    { "@id": "Levi3" },
-                    { "@id": "Lewis1" },
-                    { "@id": "Lewis2" },
-                    { "@id": "Lewis3" }
-                ];
-
-            return $filter('filter')(dummies, query);
-        }
-
         /* Prefix (Context) Management */
         vm.editPrefix = function(edit, old, index, value) {
             prefixManagerService.edit(edit, old, index, value, vm.selected);

@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontologyManager', ['removeNamespace'])
+        .module('ontologyManager', ['removeNamespace', 'beautify'])
         .service('ontologyManagerService', ontologyManagerService);
 
         ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter'];
@@ -12,7 +12,24 @@
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
                 defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
-                defaultXsd = 'http://www.w3.org/2001/XMLSchema#';
+                defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
+                defaultAnnotations = {
+                    'http://www.w3.org/2000/01/rdf-schema#': [
+                        'seeAlso',
+                        'isDefinedBy'
+                    ],
+                    'http://www.w3.org/2002/07/owl#': [
+                        'deprecated',
+                        'versionInfo',
+                        'priorVersion',
+                        'backwardCompatibleWith',
+                        'incompatibleWith'
+                    ],
+                    'http://purl.org/dc/elements/1.1/': [
+                        'description',
+                        'title'
+                    ]
+                };
 
             self.newItems = {};
             self.ontologies = [];
@@ -47,7 +64,8 @@
             }
 
             function restructure(flattened, ontologyId, context, prefixes) {
-                var j, obj, type, domain, addToClass, initOntology, chooseIcon, objToArr, annotations,
+                var j, obj, type, domain, annotations,
+                    addToClass, initOntology, chooseIcon, objToArr, addDefaultAnnotations,
                     ontology = {
                         matonto: {
                             noDomains: [],
@@ -203,9 +221,50 @@
                 ontology.matonto.context = objToArr(context);
                 ontology.matonto.others = others;
 
+                addDefaultAnnotations = function(annotations) {
+                    var index, prop, i,
+                        exclude = {
+                            'http://www.w3.org/2000/01/rdf-schema#': [
+                                'label',
+                                'comment'
+                            ]
+                        };
+
+                    for(prop in exclude) {
+                        i = 0;
+                        while(i < exclude[prop].length) {
+                            if(annotations.hasOwnProperty(prop)) {
+                                index = annotations[prop].indexOf(exclude[prop][i]);
+                                if(index !== -1) {
+                                    annotations[prop].splice(index, 1);
+                                }
+                            }
+                            i++;
+                        }
+                    }
+
+                    for(prop in defaultAnnotations) {
+                        i = 0;
+                        while(i < defaultAnnotations[prop].length) {
+                            if(annotations.hasOwnProperty(prop)) {
+                                index = annotations[prop].indexOf(defaultAnnotations[prop][i]);
+                                if(index === -1) {
+                                    annotations[prop].push(defaultAnnotations[prop][i]);
+                                }
+                            } else {
+                                annotations[prop] = defaultAnnotations[prop];
+                                break;
+                            }
+                            i++;
+                        }
+                    }
+
+                    return annotations;
+                }
+
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
-                        ontology.matonto.annotations = response.data[0]['annotation properties'];
+                        ontology.matonto.annotations = addDefaultAnnotations(response.data[0]['annotation properties']);
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -277,18 +336,7 @@
                             owl: 'owl:',
                             delimiter: '#',
                             classes: [],
-                            // TODO: get actual annotations from webservice
-                            annotations: [
-                                'rdfs:seeAlso',
-                                'rdfs:isDefinedBy',
-                                'owl:deprecated',
-                                'owl:versionInfo',
-                                'owl:priorVersion',
-                                'owl:backwardCompatibleWith',
-                                'owl:incompatibleWith',
-                                'http://purl.org/dc/elements/1.1/description',
-                                'http://purl.org/dc/elements/1.1/title'
-                            ],
+                            annotations: defaultAnnotations,
                             currentAnnotationSelect: 'default',
                             context: [
                                 { key: 'owl', value: defaultOwl },
