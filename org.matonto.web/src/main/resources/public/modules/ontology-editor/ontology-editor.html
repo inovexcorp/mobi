@@ -124,6 +124,7 @@
                                 </a>
                             </div>
                             <!-- end classes -->
+
                             <!-- start no domains -->
                             <ul ng-if="ontology.matonto.noDomains.length">
                                 <li>
@@ -146,16 +147,38 @@
                                 </li>
                             </ul>
                             <!-- end no domains -->
+
+                            <!-- start others -->
+                            <ul ng-if="ontology.matonto.others.length">
+                                <li>
+                                    <a ng-click="theOthers = !theOthers; $event.stopPropagation();">
+                                        <i class="fa fa-fw"
+                                           ng-class="{'fa-folder-open-o': theOthers, 'fa-folder-o': !theOthers}"></i>Others
+                                    </a>
+                                </li>
+                                <li class="container" ng-show="theOthers">
+                                    <ul ng-repeat="other in ontology.matonto.others">
+                                        <a>
+                                            <i class="fa fa-fw fa-question"></i>{{other[ontology.matonto.rdfs + 'label'[0]['@value']] || other['@id']}}
+                                        </a>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <!-- end others -->
                         </li>
                     </ul>
                     <div class="creator">
                         <a ng-click="vm.selectItem('ontology-editor', -1)"
                            ng-class="{'active': vm.state.oi == -1}">
-                            <i class="fa fa-plus fa-fw"></i> Create New Ontology
+                            <i class="fa fa-plus fa-fw"></i>Create New Ontology
                         </a>
                         <a ng-click="vm.selectItem('upload-form')"
                            ng-class="{'active': vm.state.editor === 'upload-form'}">
                             <i class="fa fa-upload fa-fw"></i>Upload Ontology
+                        </a>
+                        <a ng-click="vm.deleteOntology();"
+                           ng-class="{'disabled': vm.state.editor !== 'ontology-editor' || vm.state.oi === -1}">
+                            <i class="fa fa-trash-o fa-fw"></i>Delete Ontology
                         </a>
                     </div>
                     <!-- end ontologies -->
@@ -586,19 +609,9 @@
                             <label for="file">Select a file</label>
                             <div id="file" name="file" file-input="vm.upload.file"></div>
                         </div>
-                        <!-- namespace -->
-                        <div class="form-group">
-                            <label for="namespace">Namespace</label>
-                            <input class="form-control" type="text" name="namespace" id="namespace" required ng-model="vm.upload.namespace" />
-                        </div>
-                        <!-- local name -->
-                        <div class="form-group">
-                            <label for="localName">Local Name</label>
-                            <input class="form-control" type="text" name="localName" id="localName" required ng-model="vm.upload.localName" />
-                        </div>
                         <!-- buttons -->
                         <div class="btn-container clearfix">
-                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.uploadForm.$invalid || !vm.upload.file"><i class="fa fa-upload fa-fw"></i>Upload It</button>
+                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="!vm.upload.file"><i class="fa fa-upload fa-fw"></i>Upload It</button>
                         </div>
                     </div>
                 </form>
