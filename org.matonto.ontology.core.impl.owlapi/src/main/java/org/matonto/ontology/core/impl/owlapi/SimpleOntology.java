@@ -28,6 +28,8 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
+
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.util.Collections;
 import java.util.HashSet;
@@ -350,7 +352,7 @@ public class SimpleOntology implements Ontology {
         return this.manager;
     }
 
-	private OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat) throws MatontoOntologyException {
+	private @Nonnull OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat) throws MatontoOntologyException {
 		OutputStream os = null;
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		OWLDocumentFormat format = manager.getOntologyFormat(ontology);
@@ -370,9 +372,8 @@ public class SimpleOntology implements Ontology {
 		
 		if(os != null)
 			return MatOntoStringUtils.removeOWLGeneratorSignature(os);
-		
 		else
-			return os;
+			return new ByteArrayOutputStream();
 	}
 	
 	private void getAnnotations() throws MatontoOntologyException {

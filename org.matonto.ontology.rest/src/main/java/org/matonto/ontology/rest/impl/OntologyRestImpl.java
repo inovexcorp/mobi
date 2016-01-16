@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
@@ -192,10 +191,6 @@ public class OntologyRestImpl implements OntologyRest {
             // TODO: Format json correctly
             return Response.status(400).entity("OntologyID is empty").build();
 
-        // TODO: Make optional, default to jsonld
-        if (rdfFormat == null || rdfFormat.length() == 0)
-            return Response.status(400).entity("Output format is empty").build();
-
         JSONObject json = new JSONObject();
         Optional<Ontology> optOntology = Optional.empty();
         String message = null;
@@ -209,33 +204,11 @@ public class OntologyRestImpl implements OntologyRest {
         }
 
         if (optOntology.isPresent()) {
-            OutputStream outputStream;
+            String content = getOntologyAsRdf(optOntology.get(), rdfFormat);
 
-            // TODO: DRY
-            if (rdfFormat.equalsIgnoreCase("rdf/xml"))
-                outputStream = optOntology.get().asRdfXml();
-
-            else if (rdfFormat.equalsIgnoreCase("owl/xml"))
-                outputStream = optOntology.get().asOwlXml();
-
-            else if (rdfFormat.equalsIgnoreCase("turtle"))
-                outputStream = optOntology.get().asTurtle();
-
-            else if (rdfFormat.equalsIgnoreCase("jsonld"))
-                outputStream = optOntology.get().asJsonLD();
-
-            else
-                return Response.status(400).entity("Output format is invalid").build();
-
-            String content = "";
-            if (outputStream != null)
-                content = outputStream.toString();
-
-            IOUtils.closeQuietly(outputStream);
-
+            // TODO: Don't use spaces in JSON keys
             json.put("document format", rdfFormat);
             json.put("ontology", content);
-
         } else if (message == null) {
             json.put("error", "OntologyId doesn't exist.");
         } else {
@@ -253,9 +226,6 @@ public class OntologyRestImpl implements OntologyRest {
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
 
-        if (rdfFormat == null || rdfFormat.length() == 0)
-            return Response.status(400).entity("Output format is empty").build();
-
         Optional<Ontology> optOntology = Optional.empty();
 
         try {
@@ -264,30 +234,10 @@ public class OntologyRestImpl implements OntologyRest {
             LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
         }
 
-        OutputStream outputStream = null;
         StreamingOutput stream;
 
         if (optOntology.isPresent()) {
-
-            // TODO: DRY
-            if (rdfFormat.equalsIgnoreCase("rdf/xml"))
-                outputStream = optOntology.get().asRdfXml();
-
-            else if (rdfFormat.equalsIgnoreCase("owl/xml"))
-                outputStream = optOntology.get().asOwlXml();
-
-            else if (rdfFormat.equalsIgnoreCase("turtle"))
-                outputStream = optOntology.get().asTurtle();
-
-            else if (rdfFormat.equalsIgnoreCase("jsonld"))
-                outputStream = optOntology.get().asJsonLD();
-
-            else
-                return Response.status(400).entity("Output format is invalid").build();
-        }
-
-        if (outputStream != null) {
-            final String content = outputStream.toString();
+            final String content = getOntologyAsRdf(optOntology.get(), rdfFormat);
 
             stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
@@ -304,7 +254,6 @@ public class OntologyRestImpl implements OntologyRest {
             };
         }
 
-        IOUtils.closeQuietly(outputStream);
         return Response.ok(stream).build();
     }
 
@@ -655,5 +604,20 @@ public class OntologyRestImpl implements OntologyRest {
         String msg = "{ \"status\": \"failed\", \"message\": \"Ontology manager is null\" }";
         LOG.debug(msg);
         return Response.status(500).entity(msg).build();
+    }
+
+    private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
+        String normalizedFormat = rdfFormat.toLowerCase();
+
+        switch (normalizedFormat) {
+            case "rdf/xml":
+                return ontology.asRdfXml().toString();
+            case "owl/xml":
+                return ontology.asOwlXml().toString();
+            case "turtle":
+                return ontology.asTurtle().toString();
+            default:
+                return ontology.asJsonLD().toString();
+        }
     }
 }
