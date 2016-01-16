@@ -71,7 +71,7 @@ public class OntologyRestImpl implements OntologyRest {
         if (!ontoIdRegistry.isEmpty()) {
             for (Resource oid : ontoIdRegistry.keySet()) {
                 JSONObject json = new JSONObject();
-                json.put("ontology id", oid.stringValue());
+                json.put("ontologyId", oid.stringValue());
                 Optional<Ontology> optOntology = Optional.empty();
                 String message = null;
 
@@ -122,7 +122,7 @@ public class OntologyRestImpl implements OntologyRest {
             Optional<Ontology> optOntology = Optional.empty();
             JSONObject json = new JSONObject();
             String message = null;
-            json.put("ontology id", id);
+            json.put("ontologyId", id);
 
             try {
                 optOntology = getOntology(id);
@@ -174,7 +174,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         if (persisted) {
             OntologyId oid = ontology.getOntologyId();
-            json.put("ontology id", oid.getOntologyIdentifier().stringValue());
+            json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
         }
 
         json.put("result", persisted);
@@ -194,7 +194,7 @@ public class OntologyRestImpl implements OntologyRest {
         JSONObject json = new JSONObject();
         Optional<Ontology> optOntology = Optional.empty();
         String message = null;
-        json.put("ontology id", ontologyIdStr.trim());
+        json.put("ontologyId", ontologyIdStr.trim());
 
         try {
             optOntology = getOntology(ontologyIdStr.trim());
@@ -309,15 +309,15 @@ public class OntologyRestImpl implements OntologyRest {
         array.add(datatypes);
 
         JSONObject objectProperties = new JSONObject();
-        objectProperties.put("object properties", iriListToJsonArray(getObjectPropertyIRIs(ontologyIdStr)));
+        objectProperties.put("objectProperties", iriListToJsonArray(getObjectPropertyIRIs(ontologyIdStr)));
         array.add(objectProperties);
 
         JSONObject dataProperties = new JSONObject();
-        dataProperties.put("data properties", iriListToJsonArray(getDataPropertyIRIs(ontologyIdStr)));
+        dataProperties.put("dataProperties", iriListToJsonArray(getDataPropertyIRIs(ontologyIdStr)));
         array.add(dataProperties);
 
         JSONObject namedIndividuals = new JSONObject();
-        namedIndividuals.put("named individuals", iriListToJsonArray(getNamedIndividualIRIs(ontologyIdStr)));
+        namedIndividuals.put("namedIndividuals", iriListToJsonArray(getNamedIndividualIRIs(ontologyIdStr)));
         array.add(namedIndividuals);
 
         return Response.status(200).entity(array.toString()).build();
