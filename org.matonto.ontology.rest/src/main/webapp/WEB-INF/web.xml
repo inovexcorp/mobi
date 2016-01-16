@@ -17,7 +17,7 @@
 		
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-			<param-value>org.matonto.ontology.rest</param-value>
+			<param-value>org.matonto.ontology.rest.impl</param-value>
 		</init-param>
 		
 		<load-on-startup>1</load-on-startup>

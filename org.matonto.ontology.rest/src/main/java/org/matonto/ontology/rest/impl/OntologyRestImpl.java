@@ -1,4 +1,4 @@
-package org.matonto.ontology.rest;
+package org.matonto.ontology.rest.impl;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -39,6 +39,7 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -54,11 +55,11 @@ import net.sf.json.JSONObject;
 
 @Component (immediate=true)
 @Path("/")
-public class OntologyRestImpl {
-	
-	private static OntologyManager manager;
+public class OntologyRestImpl implements OntologyRest {
+
+    private static OntologyManager manager;
     private static ValueFactory factory;
-	private static final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
+    private final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
 	@Activate
     public void activate() 
@@ -91,16 +92,17 @@ public class OntologyRestImpl {
     protected void unsetValueFactory(final ValueFactory vf) {
         factory = null;
     }
-    
-    
-	
-	@GET
-	@Path("getAllOntologyIds")
-	@Produces(MediaType.APPLICATION_JSON)
+
+	@Override
 	public Response getAllOntologyIds()
 	{
-		if(manager == null)
-		    return Response.status(500).entity("Ontology manager is null").build();
+        LOG.debug("Request: getAllOntologyIds");
+
+		if(manager == null) {
+            String msg = "{ \"status\": \"failed\", \"message\": \"Ontology manager is null\" }";
+            LOG.debug(msg);
+            return Response.status(500).entity(msg).build();
+        }
 
 		JSONObject json = new JSONObject();
 
@@ -112,14 +114,8 @@ public class OntologyRestImpl {
 
 		return Response.status(200).entity(json.toString()).build();
 	}
-	
-	
-    /*
-     * Returns JSON-formated ontologies in the ontology registry
-     */
-	@GET
-    @Path("/getAllOntologies")
-    @Produces(MediaType.APPLICATION_JSON)
+
+    @Override
     public Response getAllOntologies()
     {
         if(manager == null)
@@ -164,16 +160,8 @@ public class OntologyRestImpl {
         return Response.status(200).entity(jsonArray.toString()).build();
     }
 
-	
-	   
-    /*
-     * Returns JSON-formated ontologies with requested ontology IDs; The ontology id list
-     * is provided as a comma separated string.  
-     */
-    @GET
-    @Path("/getOntologies")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getOntologies(@QueryParam("ontologyIdList") String ontologyIdList) 
+    @Override
+    public Response getOntologies(String ontologyIdList)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -223,16 +211,8 @@ public class OntologyRestImpl {
       return Response.status(200).entity(jsonArray.toString()).build();
     }
     
-	
-	
-	/*
-	 * Ingests/uploads an ontology file to a data store 
-	 */
-	@POST
-	@Path("/uploadOntology")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response uploadFile(@FormDataParam("file") InputStream fileInputStream)
+    @Override
+    public Response uploadFile(InputStream fileInputStream)
 	{	     
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -262,24 +242,19 @@ public class OntologyRestImpl {
 
 		return Response.status(200).entity(json.toString()).build();
 	}
-	
-	
-	
-	/*
-	 * Returns JSON-formated ontology with requested ontology ID
-	 */
-	@GET
-	@Path("/getOntology")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOntology(@QueryParam("ontologyIdStr") String ontologyIdStr,
-								@QueryParam("rdfFormat") String rdfFormat) 
+
+    @Override
+	public Response getOntology(String ontologyIdStr, String rdfFormat)
 	{	       
         if(manager == null)
+            // TODO: DRY
             return Response.status(500).entity("Ontology manager is null").build();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            // TODO: Format json correctly
 			return Response.status(400).entity("OntologyID is empty").build();
-		
+
+        // TODO: Make optional, default to jsonld
 		if (rdfFormat == null || rdfFormat.length() == 0)
 			return Response.status(400).entity("Output format is empty").build();
 		
@@ -297,7 +272,8 @@ public class OntologyRestImpl {
 		
 		if(optOntology.isPresent()) {
 			OutputStream outputStream = null;
-			
+
+            // TODO: DRY
 			if(rdfFormat.equalsIgnoreCase("rdf/xml"))
 				outputStream = optOntology.get().asRdfXml();
 			
@@ -331,15 +307,8 @@ public class OntologyRestImpl {
 	  return Response.status(200).entity(json.toString()).build();
 	}
 	
-	
-	/*
-	 * Downloads ontology with requested ontology ID to a file with given a file name 
-	*/
-	@GET
-	@Path("/downloadOntology")
-	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response downloadOntologyFile(@QueryParam("ontologyIdStr") String ontologyIdStr,
-										@QueryParam("rdfFormat") String rdfFormat) 
+    @Override
+	public Response downloadOntologyFile(String ontologyIdStr, String rdfFormat)
 	{  
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -362,7 +331,8 @@ public class OntologyRestImpl {
 		StreamingOutput stream = null;
 		
 		if(optOntology.isPresent()) {
-			
+
+            // TODO: DRY
 			if(rdfFormat.equalsIgnoreCase("rdf/xml"))
 				outputStream = optOntology.get().asRdfXml();
 			
@@ -383,7 +353,8 @@ public class OntologyRestImpl {
 		if(outputStream != null) 
 		{
 			final String content = outputStream.toString();
-			
+
+            // TODO: Replace with Lambda
 			stream = new StreamingOutput() {
 			    @Override
 			    public void write(OutputStream os) throws IOException, WebApplicationException 
@@ -414,14 +385,8 @@ public class OntologyRestImpl {
 		  
 		return Response.ok(stream).build();
 	}
-	
-	
-	/*
-	 * Delete ontology with requested ontology ID from the server
-	 */
-	@GET
-	@Path("/deleteOntology")
-	@Produces(MediaType.APPLICATION_JSON)
+
+    @Override
 	public Response deleteOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
 	{	       
         if(manager == null)
@@ -452,14 +417,8 @@ public class OntologyRestImpl {
 		return Response.ok(json.toString()).build();
 	}
 	
-	
-	/*
-     * Returns JSON-formated annotation properties in the ontology with requested ontology ID
-     */
-    @GET
-    @Path("/getAllIRIs")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getIRIsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    @Override
+    public Response getIRIsInOntology(String ontologyIdStr)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -496,14 +455,8 @@ public class OntologyRestImpl {
         return Response.status(200).entity(array.toString()).build();
     }
     
-	
-	/*
-     * Returns JSON-formated annotation properties in the ontology with requested ontology ID
-     */
-	@GET
-    @Path("/getAnnotations")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getAnnotationsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    @Override
+    public Response getAnnotationsInOntology(String ontologyIdStr)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -516,14 +469,8 @@ public class OntologyRestImpl {
         return Response.status(200).entity(json.toString()).build();
     }
     
-    
-    /*
-    * Returns JSON-formated classes in the ontology with requested ontology ID
-    */
-    @GET
-    @Path("/getClasses")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getClassesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    @Override
+    public Response getClassesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -535,15 +482,9 @@ public class OntologyRestImpl {
            
         return Response.status(200).entity(json.toString()).build();
     }
-    
-    
-    /*
-    * Returns JSON-formated datatypes in the ontology with requested ontology ID
-    */
-    @GET
-    @Path("/getDatatypes")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getDatatypesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+
+    @Override
+    public Response getDatatypesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -555,15 +496,9 @@ public class OntologyRestImpl {
            
         return Response.status(200).entity(json.toString()).build();
     }
-    
-    
-    /*
-    * Returns JSON-formated object properties in the ontology with requested ontology ID
-    */
-    @GET
-    @Path("/getObjectProperties")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getObjectPropertiesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+
+    @Override
+    public Response getObjectPropertiesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -576,14 +511,8 @@ public class OntologyRestImpl {
         return Response.status(200).entity(json.toString()).build();
     }
     
-    
-    /*
-    * Returns JSON-formated data properties in the ontology with requested ontology ID
-    */
-    @GET
-    @Path("/getDataProperties")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getDataPropertiesInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+    @Override
+    public Response getDataPropertiesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -595,15 +524,9 @@ public class OntologyRestImpl {
            
         return Response.status(200).entity(json.toString()).build();
     }
-    
-    
-    /*
-    * Returns JSON-formated named individuals in the ontology with requested ontology ID
-    */
-    @GET
-    @Path("/getNamedIndividuals")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getNamedIndividualsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
+
+    @Override
+    public Response getNamedIndividualsInOntology(String ontologyIdStr)
     {          
         if(manager == null)
             return Response.status(500).entity("Ontology manager is null").build();
@@ -616,9 +539,7 @@ public class OntologyRestImpl {
         return Response.status(200).entity(json.toString()).build();
     }
     
-    
-    
-    private List<IRI> getAnnotationIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getAnnotationIRIs(@Nonnull String ontologyIdStr)
     {
         Optional<Ontology> optOntology = Optional.empty();
         List<IRI> iris = new ArrayList<>();
@@ -644,7 +565,7 @@ public class OntologyRestImpl {
         return iris;
     }
     
-    private List<IRI> getClassIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getClassIRIs(@Nonnull String ontologyIdStr)
     {   
         Optional<Ontology> optOntology = Optional.empty();
         List<IRI> iris = new ArrayList<>();
@@ -670,7 +591,7 @@ public class OntologyRestImpl {
         return iris;
     }
     
-    private List<IRI> getDatatypeIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getDatatypeIRIs(@Nonnull String ontologyIdStr)
     {   
         Optional<Ontology> optOntology = Optional.empty();
         List<IRI> iris = new ArrayList<>();
@@ -696,7 +617,7 @@ public class OntologyRestImpl {
         return iris;
     }
     
-    private List<IRI> getObjectPropertyIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getObjectPropertyIRIs(@Nonnull String ontologyIdStr)
     {   
         Optional<Ontology> optOntology = Optional.empty();
         List<IRI> iris = new ArrayList<>();
@@ -722,7 +643,7 @@ public class OntologyRestImpl {
         return iris;
     }
     
-    private List<IRI> getDataPropertyIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getDataPropertyIRIs(@Nonnull String ontologyIdStr)
     {   
         List<IRI> iris = new ArrayList<>();
         Optional<Ontology> optOntology = Optional.empty();
@@ -749,7 +670,7 @@ public class OntologyRestImpl {
         return iris;
     }
     
-    private List<IRI> getNamedIndividualIRIs (@Nonnull String ontologyIdStr) 
+    private List<IRI> getNamedIndividualIRIs(@Nonnull String ontologyIdStr)
     {   
         List<IRI> iris = new ArrayList<>();
         Optional<Ontology> optOntology = Optional.empty();
