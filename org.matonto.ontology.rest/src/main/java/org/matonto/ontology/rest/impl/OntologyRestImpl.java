@@ -45,11 +45,8 @@ public class OntologyRestImpl implements OntologyRest {
 	{
         LOG.debug("Request: getAllOntologyIds");
 
-		if(manager == null) {
-            String msg = "{ \"status\": \"failed\", \"message\": \"Ontology manager is null\" }";
-            LOG.debug(msg);
-            return Response.status(500).entity(msg).build();
-        }
+		if(manager == null)
+            handleMissingManager();
 
 		JSONObject json = new JSONObject();
 
@@ -66,7 +63,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getAllOntologies()
     {
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
             
         JSONArray jsonArray = new JSONArray();
         Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
@@ -111,7 +108,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getOntologies(String ontologyIdList)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
         
         if (ontologyIdList == null || ontologyIdList.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
@@ -162,7 +159,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response uploadFile(InputStream fileInputStream)
 	{	     
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
 
 		boolean persisted = false;
 		JSONObject json = new JSONObject();
@@ -194,8 +191,7 @@ public class OntologyRestImpl implements OntologyRest {
 	public Response getOntology(String ontologyIdStr, String rdfFormat)
 	{	       
         if(manager == null)
-            // TODO: DRY
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             // TODO: Format json correctly
@@ -258,7 +254,7 @@ public class OntologyRestImpl implements OntologyRest {
 	public Response downloadOntologyFile(String ontologyIdStr, String rdfFormat)
 	{  
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(400).entity("OntologyID is empty").build();
@@ -337,7 +333,7 @@ public class OntologyRestImpl implements OntologyRest {
 	public Response deleteOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) 
 	{	       
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
         
 		if (ontologyIdStr == null || ontologyIdStr.length() == 0)
 			return Response.status(500).entity("OntologyID is empty").build();
@@ -368,7 +364,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getIRIsInOntology(String ontologyIdStr)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
         
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
@@ -406,7 +402,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getAnnotationsInOntology(String ontologyIdStr)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
         
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();     
@@ -420,7 +416,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
    
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
@@ -434,7 +430,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDatatypesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
    
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
@@ -448,7 +444,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getObjectPropertiesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
    
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
@@ -462,7 +458,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDataPropertiesInOntology(String ontologyIdStr)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
    
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
@@ -476,7 +472,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getNamedIndividualsInOntology(String ontologyIdStr)
     {          
         if(manager == null)
-            return Response.status(500).entity("Ontology manager is null").build();
+            handleMissingManager();
    
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             return Response.status(400).entity("OntologyID is empty").build();
@@ -701,5 +697,10 @@ public class OntologyRestImpl implements OntologyRest {
     {
         return string.matches("^_:.*$");     
     }
-	
+
+    private Response handleMissingManager() {
+        String msg = "{ \"status\": \"failed\", \"message\": \"Ontology manager is null\" }";
+        LOG.debug(msg);
+        return Response.status(500).entity(msg).build();
+    }
 }
