@@ -86,7 +86,6 @@ public class OntologyRestImpl implements OntologyRest {
                 if (optOntology.isPresent()) {
                     OutputStream outputStream = optOntology.get().asJsonLD();
 
-                    String content = "";
                     if (outputStream != null)
                         json.put("ontology", outputStream.toString());
 
@@ -141,7 +140,6 @@ public class OntologyRestImpl implements OntologyRest {
 
                 IOUtils.closeQuietly(outputStream);
                 json.put("ontology", content);
-
             } else if (message == null) {
                 json.put("error", "OntologyId doesn't exist.");
             } else {
@@ -211,7 +209,7 @@ public class OntologyRestImpl implements OntologyRest {
         }
 
         if (optOntology.isPresent()) {
-            OutputStream outputStream = null;
+            OutputStream outputStream;
 
             // TODO: DRY
             if (rdfFormat.equalsIgnoreCase("rdf/xml"))
@@ -267,7 +265,7 @@ public class OntologyRestImpl implements OntologyRest {
         }
 
         OutputStream outputStream = null;
-        StreamingOutput stream = null;
+        StreamingOutput stream;
 
         if (optOntology.isPresent()) {
 
@@ -288,35 +286,25 @@ public class OntologyRestImpl implements OntologyRest {
                 return Response.status(400).entity("Output format is invalid").build();
         }
 
-
         if (outputStream != null) {
             final String content = outputStream.toString();
 
-            // TODO: Replace with Lambda
-            stream = new StreamingOutput() {
-                @Override
-                public void write(OutputStream os) throws IOException, WebApplicationException {
-                    Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                    writer.write(content);
-                    writer.flush();
-                    writer.close();
-                }
+            stream = os -> {
+                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+                writer.write(content);
+                writer.flush();
+                writer.close();
             };
         } else {
-            stream = new StreamingOutput() {
-                @Override
-                public void write(OutputStream os) throws IOException, WebApplicationException {
-                    Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                    writer.write("Error - OntologyId doesn't exist.");
-                    writer.flush();
-                    writer.close();
-                }
+            stream = os -> {
+                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+                writer.write("Error - OntologyId doesn't exist.");
+                writer.flush();
+                writer.close();
             };
         }
 
         IOUtils.closeQuietly(outputStream);
-
-
         return Response.ok(stream).build();
     }
 
@@ -330,9 +318,8 @@ public class OntologyRestImpl implements OntologyRest {
 
         JSONObject json = new JSONObject();
         boolean deleted = false;
-        String message = null;
         try {
-            Resource resource = null;
+            Resource resource;
             if (isBNodeString(ontologyIdStr.trim()))
                 resource = factory.createBNode(ontologyIdStr.trim());
             else
@@ -340,7 +327,7 @@ public class OntologyRestImpl implements OntologyRest {
 
             deleted = manager.deleteOntology(resource);
         } catch (MatontoOntologyException ex) {
-            message = ex.getMessage();
+            String message = ex.getMessage();
             LOG.error("Exception occurred while deleting ontology: " + message, ex);
             json.put("error", "Exception occurred while deleting ontology: " + message);
         }
@@ -493,6 +480,7 @@ public class OntologyRestImpl implements OntologyRest {
     private List<IRI> getClassIRIs(@Nonnull String ontologyIdStr) {
         Optional<Ontology> optOntology = Optional.empty();
         List<IRI> iris = new ArrayList<>();
+
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
@@ -518,6 +506,7 @@ public class OntologyRestImpl implements OntologyRest {
     private List<IRI> getDatatypeIRIs(@Nonnull String ontologyIdStr) {
         Optional<Ontology> optOntology = Optional.empty();
         List<IRI> iris = new ArrayList<>();
+
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
@@ -543,6 +532,7 @@ public class OntologyRestImpl implements OntologyRest {
     private List<IRI> getObjectPropertyIRIs(@Nonnull String ontologyIdStr) {
         Optional<Ontology> optOntology = Optional.empty();
         List<IRI> iris = new ArrayList<>();
+
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
@@ -620,16 +610,6 @@ public class OntologyRestImpl implements OntologyRest {
         return iris;
     }
 
-
-    private JSONObject iriListToJson(@Nonnull List<IRI> iris) {
-        if (iris.isEmpty())
-            return new JSONObject();
-
-        JSONObject json = new JSONObject();
-        iris.forEach(iri -> json.put(iri.stringValue(), iri.getLocalName()));
-        return json;
-    }
-
     private JSONObject iriListToJsonArray(@Nonnull List<IRI> iris) {
         if (iris.isEmpty())
             return new JSONObject();
@@ -657,7 +637,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
-        Resource resource = null;
+        Resource resource;
         String id = ontologyIdStr.trim();
         if (isBNodeString(id))
             resource = factory.createBNode(id);
