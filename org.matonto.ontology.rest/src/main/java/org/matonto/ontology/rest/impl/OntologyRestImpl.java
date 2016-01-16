@@ -1,39 +1,11 @@
 package org.matonto.ontology.rest.impl;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import com.sun.jersey.multipart.FormDataParam;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.Individual;
-import org.matonto.ontology.core.api.NamedIndividual;
-import org.matonto.ontology.core.api.Ontology;
-import org.matonto.ontology.core.api.OntologyId;
-import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
@@ -45,53 +17,28 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Deactivate;
-import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+
+import javax.annotation.Nonnull;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.*;
+import java.util.*;
 
 
-@Component (immediate=true)
-@Path("/")
+@Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
 
-    private static OntologyManager manager;
-    private static ValueFactory factory;
+    private OntologyManager manager;
+    private ValueFactory factory;
     private final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
-	@Activate
-    public void activate() 
-    {
-        LOG.info("Activating the OntologyRestImpl");
-    }
- 
-    @Deactivate
-    public void deactivate() 
-    {
-        LOG.info("Deactivating the OntologyRestImpl");
-    }
-	
-	@Reference
-	protected void setOntologyManager(final OntologyManager ontoManager)
-	{
-		manager = ontoManager;
-	}
-	
-	protected void unsetOntologyManager(final OntologyManager ontoManager)
-	{
-		manager = null;
-	}
+    @Reference
+    public void setManager(OntologyManager manager) { this.manager = manager; }
 
     @Reference
-    protected void setValueFactory(final ValueFactory vf) {
-        factory = vf;
-    }
-    
-    protected void unsetValueFactory(final ValueFactory vf) {
-        factory = null;
-    }
+    public void setFactory(ValueFactory factory) { this.factory = factory; }
 
 	@Override
 	public Response getAllOntologyIds()

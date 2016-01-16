@@ -1,6 +1,8 @@
 package org.matonto.ontology.rest;
 
-import com.sun.jersey.multipart.FormDataParam;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -8,6 +10,8 @@ import javax.ws.rs.core.Response;
 import java.io.InputStream;
 
 
+@Path("/ontology")
+@Api( value = "/ontology" )
 public interface OntologyRest {
 
     /**
@@ -18,6 +22,7 @@ public interface OntologyRest {
     @GET
     @Path("getAllOntologyIds")
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Gets all Ontology Resource identifiers")
     Response getAllOntologyIds();
 
     /**
