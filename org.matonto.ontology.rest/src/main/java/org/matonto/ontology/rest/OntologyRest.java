@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -70,8 +71,9 @@ public interface OntologyRest {
     @GET
     @Path("/getOntology")
     @Produces(MediaType.APPLICATION_JSON)
-    Response getOntology(@QueryParam("ontologyIdStr") String ontologyIdStr,
-                         @QueryParam("rdfFormat") String rdfFormat);
+    Response getOntology(
+            @NotNull @QueryParam("ontologyIdStr") String ontologyIdStr,
+            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
 
     /**
      * Streams the ontology with requested ontology ID to an OutputStream.
@@ -85,7 +87,7 @@ public interface OntologyRest {
     @Path("/downloadOntology")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     Response downloadOntologyFile(@QueryParam("ontologyIdStr") String ontologyIdStr,
-                                  @QueryParam("rdfFormat") String rdfFormat);
+                                  @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
 
     /**
      * Delete ontology with requested ontology ID from the server.
