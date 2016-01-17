@@ -6,10 +6,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.*;
-import org.matonto.ontology.core.api.classexpression.OClass;
-import org.matonto.ontology.core.api.datarange.Datatype;
-import org.matonto.ontology.core.api.propertyexpression.DataProperty;
-import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.rdf.api.IRI;
@@ -19,11 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Component(immediate = true)
@@ -48,7 +45,7 @@ public class OntologyRestImpl implements OntologyRest {
         LOG.debug("Request: getAllOntologyIds");
 
         if (manager == null)
-            handleMissingManager();
+            return responseMessage(500, "Ontology Manager is null");
 
         JSONObject json = new JSONObject();
 
@@ -64,7 +61,7 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getAllOntologies() {
         if (manager == null)
-            handleMissingManager();
+            return responseMessage(500, "Ontology Manager is null");
 
         JSONArray jsonArray = new JSONArray();
         Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
@@ -106,10 +103,10 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getOntologies(String ontologyIdList) {
         if (manager == null)
-            handleMissingManager();
+            return responseMessage(500, "Ontology Manager is null");
 
         if (ontologyIdList == null || ontologyIdList.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
+            return responseMessage(400, "ontologyIdList is missing");
 
         List<String> ontologyIds = Arrays.asList(ontologyIdList.trim().split("\\s*,\\s*"));
 
@@ -154,119 +151,68 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response uploadFile(InputStream fileInputStream) {
         if (manager == null)
-            handleMissingManager();
+            return responseMessage(500, "Ontology Manager is null");
 
         boolean persisted = false;
-        JSONObject json = new JSONObject();
         Ontology ontology = null;
-        String message;
-
         try {
             ontology = manager.createOntology(fileInputStream);
             persisted = manager.storeOntology(ontology);
         } catch (MatontoOntologyException ex) {
-            message = ex.getMessage();
-            LOG.error("Exception occurred while uploading ontology: " + message, ex);
-            json.put("error", "Exception occurred while uploading ontology: " + message);
+            return responseMessage(500, "Exception occurred while uploading ontology: " + ex.getMessage());
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
+
+        JSONObject json = new JSONObject();
 
         if (persisted) {
             OntologyId oid = ontology.getOntologyId();
             json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
         }
 
-        json.put("result", persisted);
+        json.put("persisted", persisted);
 
         return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
     public Response getOntology(String ontologyIdStr, String rdfFormat) {
-        if (manager == null)
-            handleMissingManager();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            String content = getOntologyAsRdf(ontology, rdfFormat);
 
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            // TODO: Format json correctly
-            return Response.status(400).entity("OntologyID is empty").build();
-
-        JSONObject json = new JSONObject();
-        Optional<Ontology> optOntology = Optional.empty();
-        String message = null;
-        json.put("ontologyId", ontologyIdStr.trim());
-
-        try {
-            optOntology = getOntology(ontologyIdStr.trim());
-        } catch (MatontoOntologyException ex) {
-            message = ex.getMessage();
-            LOG.error("Exception occurred while retrieving ontology with ontology id " + ontologyIdStr + ": " + message, ex);
-        }
-
-        if (optOntology.isPresent()) {
-            String content = getOntologyAsRdf(optOntology.get(), rdfFormat);
-
-            // TODO: Don't use spaces in JSON keys
-            json.put("document format", rdfFormat);
+            JSONObject json = new JSONObject();
+            json.put("documentFormat", rdfFormat);
             json.put("ontology", content);
-        } else if (message == null) {
-            json.put("error", "OntologyId doesn't exist.");
-        } else {
-            json.put("error", "Exception occurred while retrieving ontology: " + message);
-        }
-
-        return Response.status(200).entity(json.toString()).build();
+            return Response.status(200).entity(json.toString()).build();
+        });
     }
 
     @Override
     public Response downloadOntologyFile(String ontologyIdStr, String rdfFormat) {
-        if (manager == null)
-            handleMissingManager();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            final String content = getOntologyAsRdf(ontology, rdfFormat);
 
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
-
-        Optional<Ontology> optOntology = Optional.empty();
-
-        try {
-            optOntology = getOntology(ontologyIdStr.trim());
-        } catch (MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-        }
-
-        StreamingOutput stream;
-
-        if (optOntology.isPresent()) {
-            final String content = getOntologyAsRdf(optOntology.get(), rdfFormat);
-
-            stream = os -> {
+            StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
                 writer.write(content);
                 writer.flush();
                 writer.close();
             };
-        } else {
-            stream = os -> {
-                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write("Error - OntologyId doesn't exist.");
-                writer.flush();
-                writer.close();
-            };
-        }
 
-        return Response.ok(stream).build();
+            return Response.ok(stream).build();
+        });
     }
 
     @Override
-    public Response deleteOntology(@QueryParam("ontologyIdStr") String ontologyIdStr) {
+    public Response deleteOntology(String ontologyIdStr) {
         if (manager == null)
-            handleMissingManager();
+            return responseMessage(500, "Ontology Manager is null");
 
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(500).entity("OntologyID is empty").build();
+            return responseMessage(400, "ontologyIdStr is missing");
 
-        JSONObject json = new JSONObject();
-        boolean deleted = false;
+        boolean deleted;
         try {
             Resource resource;
             if (isBNodeString(ontologyIdStr.trim()))
@@ -276,236 +222,185 @@ public class OntologyRestImpl implements OntologyRest {
 
             deleted = manager.deleteOntology(resource);
         } catch (MatontoOntologyException ex) {
-            String message = ex.getMessage();
-            LOG.error("Exception occurred while deleting ontology: " + message, ex);
-            json.put("error", "Exception occurred while deleting ontology: " + message);
+            return responseMessage(500, "Exception occurred while deleting ontology: " + ex.getMessage());
         }
 
-        json.put("result", deleted);
+        JSONObject json = new JSONObject();
+        json.put("deleted", deleted);
 
-        return Response.ok(json.toString()).build();
+        return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
-        if (manager == null)
-            handleMissingManager();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            JSONArray array = new JSONArray();
 
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
+            JSONObject annotations = new JSONObject();
+            annotations.put("annotationProperties", getAnnotationArray(ontology));
+            array.add(annotations);
 
-        JSONArray array = new JSONArray();
+            JSONObject classes = new JSONObject();
+            classes.put("classes", getClassArray(ontology));
+            array.add(classes);
 
-        JSONObject annotations = new JSONObject();
-        annotations.put("annotation properties", iriListToJsonArray(getAnnotationIRIs(ontologyIdStr)));
-        array.add(annotations);
+            JSONObject datatypes = new JSONObject();
+            datatypes.put("datatypes", getDatatypeArray(ontology));
+            array.add(datatypes);
 
-        JSONObject classes = new JSONObject();
-        classes.put("classes", iriListToJsonArray(getClassIRIs(ontologyIdStr)));
-        array.add(classes);
+            JSONObject objectProperties = new JSONObject();
+            objectProperties.put("objectProperties", getObjectPropertyArray(ontology));
+            array.add(objectProperties);
 
-        JSONObject datatypes = new JSONObject();
-        datatypes.put("datatypes", iriListToJsonArray(getDatatypeIRIs(ontologyIdStr)));
-        array.add(datatypes);
+            JSONObject dataProperties = new JSONObject();
+            dataProperties.put("dataProperties", getDataPropertyArray(ontology));
+            array.add(dataProperties);
 
-        JSONObject objectProperties = new JSONObject();
-        objectProperties.put("objectProperties", iriListToJsonArray(getObjectPropertyIRIs(ontologyIdStr)));
-        array.add(objectProperties);
+            JSONObject namedIndividuals = new JSONObject();
+            namedIndividuals.put("namedIndividuals", getNamedIndividualArray(ontology));
+            array.add(namedIndividuals);
 
-        JSONObject dataProperties = new JSONObject();
-        dataProperties.put("dataProperties", iriListToJsonArray(getDataPropertyIRIs(ontologyIdStr)));
-        array.add(dataProperties);
-
-        JSONObject namedIndividuals = new JSONObject();
-        namedIndividuals.put("namedIndividuals", iriListToJsonArray(getNamedIndividualIRIs(ontologyIdStr)));
-        array.add(namedIndividuals);
-
-        return Response.status(200).entity(array.toString()).build();
+            return Response.status(200).entity(array.toString()).build();
+        });
     }
 
     @Override
     public Response getAnnotationsInOntology(String ontologyIdStr) {
-        if (manager == null)
-            handleMissingManager();
-
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
-
-        JSONObject json = iriListToJsonArray(getAnnotationIRIs(ontologyIdStr));
-
-        return Response.status(200).entity(json.toString()).build();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            JSONObject json = getAnnotationArray(ontology);
+            return Response.status(200).entity(json.toString()).build();
+        });
     }
 
     @Override
     public Response getClassesInOntology(String ontologyIdStr) {
-        if (manager == null)
-            handleMissingManager();
-
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
-
-        JSONObject json = iriListToJsonArray(getClassIRIs(ontologyIdStr));
-
-        return Response.status(200).entity(json.toString()).build();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            JSONObject json = getClassArray(ontology);
+            return Response.status(200).entity(json.toString()).build();
+        });
     }
 
     @Override
     public Response getDatatypesInOntology(String ontologyIdStr) {
-        if (manager == null)
-            handleMissingManager();
-
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
-
-        JSONObject json = iriListToJsonArray(getDatatypeIRIs(ontologyIdStr));
-
-        return Response.status(200).entity(json.toString()).build();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            JSONObject json = getDatatypeArray(ontology);
+            return Response.status(200).entity(json.toString()).build();
+        });
     }
 
     @Override
     public Response getObjectPropertiesInOntology(String ontologyIdStr) {
-        if (manager == null)
-            handleMissingManager();
-
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
-
-        JSONObject json = iriListToJsonArray(getObjectPropertyIRIs(ontologyIdStr));
-
-        return Response.status(200).entity(json.toString()).build();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            JSONObject json = getObjectPropertyArray(ontology);
+            return Response.status(200).entity(json.toString()).build();
+        });
     }
 
     @Override
     public Response getDataPropertiesInOntology(String ontologyIdStr) {
-        if (manager == null)
-            handleMissingManager();
-
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
-
-        JSONObject json = iriListToJsonArray(getDataPropertyIRIs(ontologyIdStr));
-
-        return Response.status(200).entity(json.toString()).build();
+        return doWithOntology(ontologyIdStr, ontology -> {
+            JSONObject json = getDataPropertyArray(ontology);
+            return Response.status(200).entity(json.toString()).build();
+        });
     }
 
     @Override
     public Response getNamedIndividualsInOntology(String ontologyIdStr) {
+        return doWithOntology(ontologyIdStr, ontology -> {
+            JSONObject json = getNamedIndividualArray(ontology);
+            return Response.status(200).entity(json.toString()).build();
+        });
+    }
+
+    /**
+     * Gets Annotation JSONArray.
+     */
+    private JSONObject getAnnotationArray(@Nonnull Ontology ontology) {
+        List<IRI> iris = ontology.getAllAnnotations()
+                .stream()
+                .map(Annotation::getProperty)
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+
+        return iriListToJsonArray(iris);
+    }
+
+    /**
+     * Gets Class JSONArray.
+     */
+    private JSONObject getClassArray(@Nonnull Ontology ontology) {
+        List<IRI> iris = ontology.getAllClasses()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+
+        return iriListToJsonArray(iris);
+    }
+
+    /**
+     * Gets Datatype JSONArray.
+     */
+    private JSONObject getDatatypeArray(@Nonnull Ontology ontology) {
+        List<IRI> iris = ontology.getAllDatatypes()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+
+        return iriListToJsonArray(iris);
+    }
+
+    /**
+     * Gets ObjectProperty JSONArray.
+     */
+    private JSONObject getObjectPropertyArray(@Nonnull Ontology ontology) {
+        List<IRI> iris = ontology.getAllObjectProperties()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+
+        return iriListToJsonArray(iris);
+    }
+
+    /**
+     * Gets DataProperty JSONArray.
+     */
+    private JSONObject getDataPropertyArray(@Nonnull Ontology ontology) {
+        List<IRI> iris = ontology.getAllDataProperties()
+                .stream()
+                .map(Entity::getIRI)
+                .collect(Collectors.toList());
+
+        return iriListToJsonArray(iris);
+    }
+
+    /**
+     * Gets NamedIndividual JSONArray.
+     */
+    private JSONObject getNamedIndividualArray(Ontology ontology) {
+        List<IRI> iris = ontology.getAllIndividuals()
+                .stream()
+                .filter(ind -> ind instanceof NamedIndividual)
+                .map(ind -> ((NamedIndividual) ind).getIRI())
+                .collect(Collectors.toList());
+
+        return iriListToJsonArray(iris);
+    }
+
+    /**
+     * Gets the List of Entities in an Ontology identified by a lambda function.
+     *
+     * @param ontologyIdStr The Ontology to process.
+     * @param iriFunction The Function that takes an Ontology and returns a List of IRI corresponding to
+     *                    an Ontology component.
+     * @return The properly formatted JSON response with a List of a particular Ontology Component.
+     */
+    private Response doWithOntology(String ontologyIdStr, Function<Ontology, Response> iriFunction){
         if (manager == null)
-            handleMissingManager();
+            return responseMessage(500, "Ontology Manager is null");
 
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return Response.status(400).entity("OntologyID is empty").build();
+            return responseMessage(400, "ontologyIdStr is missing");
 
-        JSONObject json = iriListToJsonArray(getNamedIndividualIRIs(ontologyIdStr));
-
-        return Response.status(200).entity(json.toString()).build();
-    }
-
-    private List<IRI> getAnnotationIRIs(@Nonnull String ontologyIdStr) {
-        Optional<Ontology> optOntology = Optional.empty();
-        List<IRI> iris = new ArrayList<>();
-        try {
-            optOntology = getOntology(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-        }
-
-        Set<Annotation> annotations = new HashSet<>();
-
-        if (optOntology.isPresent()) {
-            try {
-                annotations = optOntology.get().getAllAnnotations();
-            } catch (MatontoOntologyException ex) {
-                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
-            }
-        }
-
-        if (!annotations.isEmpty())
-            annotations.forEach(annotation -> iris.add(annotation.getProperty().getIRI()));
-
-        return iris;
-    }
-
-    private List<IRI> getClassIRIs(@Nonnull String ontologyIdStr) {
-        Optional<Ontology> optOntology = Optional.empty();
-        List<IRI> iris = new ArrayList<>();
-
-        try {
-            optOntology = getOntology(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-        }
-
-        Set<OClass> oClasses = new HashSet<>();
-
-        if (optOntology.isPresent()) {
-            try {
-                oClasses = optOntology.get().getAllClasses();
-            } catch (MatontoOntologyException ex) {
-                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
-            }
-        }
-
-        if (!oClasses.isEmpty())
-            oClasses.forEach(oClass -> iris.add(oClass.getIRI()));
-
-        return iris;
-    }
-
-    private List<IRI> getDatatypeIRIs(@Nonnull String ontologyIdStr) {
-        Optional<Ontology> optOntology = Optional.empty();
-        List<IRI> iris = new ArrayList<>();
-
-        try {
-            optOntology = getOntology(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-        }
-
-        Set<Datatype> datatypes = new HashSet<>();
-
-        if (optOntology.isPresent()) {
-            try {
-                datatypes = optOntology.get().getAllDatatypes();
-            } catch (MatontoOntologyException ex) {
-                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
-            }
-        }
-
-        if (!datatypes.isEmpty())
-            datatypes.forEach(datatype -> iris.add(datatype.getIRI()));
-
-        return iris;
-    }
-
-    private List<IRI> getObjectPropertyIRIs(@Nonnull String ontologyIdStr) {
-        Optional<Ontology> optOntology = Optional.empty();
-        List<IRI> iris = new ArrayList<>();
-
-        try {
-            optOntology = getOntology(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-        }
-
-        Set<ObjectProperty> objectProperties = new HashSet<>();
-
-        if (optOntology.isPresent()) {
-            try {
-                objectProperties = optOntology.get().getAllObjectProperties();
-            } catch (MatontoOntologyException ex) {
-                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
-            }
-        }
-
-        if (!objectProperties.isEmpty())
-            objectProperties.forEach(objectProperty -> iris.add(objectProperty.getIRI()));
-
-        return iris;
-    }
-
-    private List<IRI> getDataPropertyIRIs(@Nonnull String ontologyIdStr) {
-        List<IRI> iris = new ArrayList<>();
         Optional<Ontology> optOntology = Optional.empty();
 
         try {
@@ -514,49 +409,11 @@ public class OntologyRestImpl implements OntologyRest {
             LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
         }
 
-        Set<DataProperty> dataProperties = new HashSet<>();
-
         if (optOntology.isPresent()) {
-            try {
-                dataProperties = optOntology.get().getAllDataProperties();
-            } catch (MatontoOntologyException ex) {
-                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
-            }
+            return iriFunction.apply(optOntology.get());
+        } else {
+            return responseMessage(400, "Ontology does not exist");
         }
-
-        if (!dataProperties.isEmpty())
-            dataProperties.forEach(dataProperty -> iris.add(dataProperty.getIRI()));
-
-        return iris;
-    }
-
-    private List<IRI> getNamedIndividualIRIs(@Nonnull String ontologyIdStr) {
-        List<IRI> iris = new ArrayList<>();
-        Optional<Ontology> optOntology = Optional.empty();
-
-        try {
-            optOntology = getOntology(ontologyIdStr);
-        } catch (MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
-        }
-
-        Set<Individual> individuals = new HashSet<>();
-
-        if (optOntology.isPresent()) {
-            try {
-                individuals = optOntology.get().getAllIndividuals();
-            } catch (MatontoOntologyException ex) {
-                LOG.error("Exception occurred while parsing annotations: " + ex.getMessage(), ex);
-            }
-        }
-
-        if (!individuals.isEmpty())
-            for (Individual individual : individuals) {
-                if (individual instanceof NamedIndividual)
-                    iris.add(((NamedIndividual) individual).getIRI());
-            }
-
-        return iris;
     }
 
     private JSONObject iriListToJsonArray(@Nonnull List<IRI> iris) {
@@ -565,7 +422,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         Map<String, ArrayList<String>> iriMap = new HashMap<>();
         for (IRI iri : iris) {
-            if (iriMap.isEmpty() || !iriMap.containsKey(iri.getNamespace())) {
+            if (!iriMap.containsKey(iri.getNamespace())) {
                 ArrayList<String> localnames = new ArrayList<>();
                 localnames.add(iri.getLocalName());
                 iriMap.put(iri.getNamespace(), localnames);
@@ -600,10 +457,9 @@ public class OntologyRestImpl implements OntologyRest {
         return string.matches("^_:.*$");
     }
 
-    private Response handleMissingManager() {
-        String msg = "{ \"status\": \"failed\", \"message\": \"Ontology manager is null\" }";
+    private Response responseMessage(int statusCode, String msg) {
         LOG.debug(msg);
-        return Response.status(500).entity(msg).build();
+        return Response.status(statusCode).type("text/plain").entity(msg).build();
     }
 
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
