@@ -80,6 +80,12 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
+                        <Import-Package>
+                            <!-- For some reason BND is not including these -->
+                            org.matonto.ontology.core.api.classexpression,
+                            org.matonto.ontology.core.api.datarange,
+                            *
+                        </Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
