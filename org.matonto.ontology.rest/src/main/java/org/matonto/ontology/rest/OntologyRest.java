@@ -4,7 +4,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -38,7 +37,8 @@ public interface OntologyRest {
 
     /**
      * Returns JSON-formatted ontologies with requested ontology IDs; The ontology id list
-     * is provided as a comma separated string.
+     * is provided as a comma separated string. NOTE: If an ontology in the list does not exist,
+     * it will be excluded from the response.
      *
      * @param ontologyIdList a comma separated String representing the ontology ids
      * @return all ontologies specified by ontologyIdList in JSON-LD format
@@ -72,7 +72,7 @@ public interface OntologyRest {
     @Path("/getOntology")
     @Produces(MediaType.APPLICATION_JSON)
     Response getOntology(
-            @NotNull @QueryParam("ontologyIdStr") String ontologyIdStr,
+            @QueryParam("ontologyIdStr") String ontologyIdStr,
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
 
     /**

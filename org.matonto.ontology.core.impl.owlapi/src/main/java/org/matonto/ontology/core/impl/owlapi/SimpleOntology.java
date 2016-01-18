@@ -309,7 +309,7 @@ public class SimpleOntology implements Ontology {
 	}
 
 	@Override
-	public OutputStream asJsonLD() throws MatontoOntologyException {
+	public @Nonnull OutputStream asJsonLD() throws MatontoOntologyException {
 		OutputStream outputStream = new ByteArrayOutputStream();
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);

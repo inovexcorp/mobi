@@ -5,7 +5,12 @@ import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.matonto.ontology.core.api.*;
+import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.Entity;
+import org.matonto.ontology.core.api.NamedIndividual;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.rdf.api.IRI;
@@ -15,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
@@ -42,124 +48,50 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getAllOntologyIds() {
-        LOG.debug("Request: getAllOntologyIds");
-
-        if (manager == null)
-            return responseMessage(500, "Ontology Manager is null");
-
         JSONObject json = new JSONObject();
 
         Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
-        if (!ontoIdRegistry.isEmpty()) {
-            for (Resource oid : ontoIdRegistry.keySet())
-                json.put(oid.stringValue(), ontoIdRegistry.get(oid));
-        }
+
+        ontoIdRegistry.keySet().forEach(oid ->
+                json.put(oid.stringValue(), ontoIdRegistry.get(oid))
+        );
 
         return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
     public Response getAllOntologies() {
-        if (manager == null)
-            return responseMessage(500, "Ontology Manager is null");
+        List<String> ontologyIds = manager.getOntologyRegistry().keySet()
+                .stream()
+                .map(Resource::stringValue)
+                .collect(Collectors.toList());
 
-        JSONArray jsonArray = new JSONArray();
-        Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
-        if (!ontoIdRegistry.isEmpty()) {
-            for (Resource oid : ontoIdRegistry.keySet()) {
-                JSONObject json = new JSONObject();
-                json.put("ontologyId", oid.stringValue());
-                Optional<Ontology> optOntology = Optional.empty();
-                String message = null;
-
-                try {
-                    optOntology = getOntology(oid.stringValue());
-                } catch (MatontoOntologyException ex) {
-                    message = ex.getMessage();
-                    LOG.error("Exception occurred while retrieving ontology with ontology id " + oid + ": " + message + ex);
-                }
-
-                if (optOntology.isPresent()) {
-                    OutputStream outputStream = optOntology.get().asJsonLD();
-
-                    if (outputStream != null)
-                        json.put("ontology", outputStream.toString());
-
-                    IOUtils.closeQuietly(outputStream);
-
-                } else if (message == null) {
-                    json.put("error", "OntologyId doesn't exist.");
-                } else {
-                    json.put("error", "Exception occurred while retrieving ontology: " + message);
-                }
-
-                jsonArray.add(json);
-            }
-        }
-
-        return Response.status(200).entity(jsonArray.toString()).build();
+        return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
     }
 
     @Override
     public Response getOntologies(String ontologyIdList) {
-        if (manager == null)
-            return responseMessage(500, "Ontology Manager is null");
-
         if (ontologyIdList == null || ontologyIdList.length() == 0)
-            return responseMessage(400, "ontologyIdList is missing");
+            throw sendError("ontologyIdList is missing", Response.Status.BAD_REQUEST);
 
         List<String> ontologyIds = Arrays.asList(ontologyIdList.trim().split("\\s*,\\s*"));
 
         if (ontologyIds.isEmpty())
-            return Response.status(400).entity("Invalid ontology id(s) on the list").build();
+            throw sendError("Invalid ontology id(s) on the list", Response.Status.BAD_REQUEST);
 
-        JSONArray jsonArray = new JSONArray();
-
-        for (String id : ontologyIds) {
-            Optional<Ontology> optOntology = Optional.empty();
-            JSONObject json = new JSONObject();
-            String message = null;
-            json.put("ontologyId", id);
-
-            try {
-                optOntology = getOntology(id);
-            } catch (MatontoOntologyException ex) {
-                message = ex.getMessage();
-                LOG.error("Exception occurred while retrieving ontology with ontology id " + id + ": " + message + ex);
-            }
-
-            if (optOntology.isPresent()) {
-                OutputStream outputStream = optOntology.get().asJsonLD();
-                String content = "";
-                if (outputStream != null)
-                    content = outputStream.toString();
-
-                IOUtils.closeQuietly(outputStream);
-                json.put("ontology", content);
-            } else if (message == null) {
-                json.put("error", "OntologyId doesn't exist.");
-            } else {
-                json.put("error", "Exception occurred while retrieving ontology: " + message);
-            }
-
-            jsonArray.add(json);
-        }
-
-        return Response.status(200).entity(jsonArray.toString()).build();
+        return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
     }
 
     @Override
     public Response uploadFile(InputStream fileInputStream) {
-        if (manager == null)
-            return responseMessage(500, "Ontology Manager is null");
-
         boolean persisted = false;
         Ontology ontology = null;
+
         try {
             ontology = manager.createOntology(fileInputStream);
             persisted = manager.storeOntology(ontology);
         } catch (MatontoOntologyException ex) {
-            return responseMessage(500, "Exception occurred while uploading ontology: " + ex.getMessage());
+            throw sendError(ex, "Exception occurred while processing ontology.", Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
@@ -206,11 +138,8 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response deleteOntology(String ontologyIdStr) {
-        if (manager == null)
-            return responseMessage(500, "Ontology Manager is null");
-
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return responseMessage(400, "ontologyIdStr is missing");
+            throw sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
 
         boolean deleted;
         try {
@@ -222,7 +151,7 @@ public class OntologyRestImpl implements OntologyRest {
 
             deleted = manager.deleteOntology(resource);
         } catch (MatontoOntologyException ex) {
-            return responseMessage(500, "Exception occurred while deleting ontology: " + ex.getMessage());
+            throw sendError(ex, "Exception occurred while deleting ontology.", Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         JSONObject json = new JSONObject();
@@ -395,24 +324,21 @@ public class OntologyRestImpl implements OntologyRest {
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
     private Response doWithOntology(String ontologyIdStr, Function<Ontology, Response> iriFunction){
-        if (manager == null)
-            return responseMessage(500, "Ontology Manager is null");
-
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            return responseMessage(400, "ontologyIdStr is missing");
+            throw sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
 
-        Optional<Ontology> optOntology = Optional.empty();
+        Optional<Ontology> optOntology;
 
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
-            LOG.error("Exception occurred while retrieving ontology: " + ex.getMessage(), ex);
+            throw sendError(ex, "Problem occurred while retrieving ontology", Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         if (optOntology.isPresent()) {
             return iriFunction.apply(optOntology.get());
         } else {
-            return responseMessage(400, "Ontology does not exist");
+            throw sendError("ontology does not exist", Response.Status.BAD_REQUEST);
         }
     }
 
@@ -453,13 +379,43 @@ public class OntologyRestImpl implements OntologyRest {
         return manager.retrieveOntology(resource);
     }
 
+    private JSONArray getOntologies(List<String> ontIds) {
+        JSONArray jsonArray = new JSONArray();
+
+        for (String id : ontIds) {
+            Optional<Ontology> optOntology;
+
+            try {
+                optOntology = getOntology(id);
+            } catch (MatontoOntologyException ex) {
+                throw sendError(ex, "Exception occurred while retrieving ontology.", Response.Status.INTERNAL_SERVER_ERROR);
+            }
+
+            if (optOntology.isPresent()) {
+                JSONObject json = new JSONObject();
+                json.put("ontologyId", id);
+                json.put("ontology", optOntology.get().asJsonLD().toString());
+                jsonArray.add(json);
+            } else {
+                LOG.debug("Ontology " + id + "does not exist");
+            }
+        }
+
+        return jsonArray;
+    }
+
     private boolean isBNodeString(String string) {
         return string.matches("^_:.*$");
     }
 
-    private Response responseMessage(int statusCode, String msg) {
-        LOG.debug(msg);
-        return Response.status(statusCode).type("text/plain").entity(msg).build();
+    private WebApplicationException sendError(Throwable t, String msg, Response.Status status) {
+        LOG.debug(String.format("%d: %s", status.getStatusCode(), msg), t);
+        throw new WebApplicationException(msg, status);
+    }
+
+    private WebApplicationException sendError(String msg, Response.Status status) throws WebApplicationException {
+        LOG.debug(String.format("%d: %s", status.getStatusCode(), msg));
+        return new  WebApplicationException(msg, status);
     }
 
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
