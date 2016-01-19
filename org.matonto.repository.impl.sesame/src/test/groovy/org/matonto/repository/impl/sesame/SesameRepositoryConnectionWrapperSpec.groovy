@@ -278,25 +278,31 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         def o2 = vf.createIRI("http://test.com/o2")
         def c = vf.createIRI("http://test.com/c")
         def c2 = vf.createIRI("http://test.com/c2")
+        def c3 = vf.createBNode()
 
         conn.add(s, p, o)
         conn.add(s, p, o, c)
         conn.add(s2, p2, o2)
         conn.add(s2, p2, o2, c2)
+        conn.add(s2, p2, o2, c3)
 
-        def factory = new LinkedHashModelFactory()
+        def factory = LinkedHashModelFactory.getInstance()
         def result1 = RepositoryResults.asModel(conn.getStatements(s, p, o), factory)
         def result2 = RepositoryResults.asModel(conn.getStatements(s, p, o, c), factory)
         def result3 = RepositoryResults.asModel(conn.getStatements(s, null, null), factory)
         def result4 = RepositoryResults.asModel(conn.getStatements(null, null, null), factory)
         def result5 = RepositoryResults.asModel(conn.getStatements(s, null, null, c), factory)
+        def result6 = RepositoryResults.asModel(conn.getStatements(null, null, null, c), factory)
+        def result7 = RepositoryResults.asModel(conn.getStatements(null, null, null, c3), factory)
 
         expect:
         result1.size() == 2
         result2.size() == 1
         result3.size() == 2
-        result4.size() == 4
+        result4.size() == 5
         result5.size() == 1
+        result6.size() == 1
+        result7.size() == 1
     }
     
     def "getContextIDs() returns correctly for empty repo"() {
@@ -323,4 +329,75 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         expect:
         RepositoryResults.asList(conn.getContextIDs()).size() == 2
     }
+
+    def "begin() starts a transaction"() {
+        setup:
+        conn.begin()
+
+        expect:
+        conn.isActive()
+    }
+
+    def "isActive() is false before starting a transaction"() {
+        expect:
+        !conn.isActive()
+    }
+
+    def "commit() ends current transaction"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.begin()
+        conn.add(s,p,o)
+        conn.commit()
+
+        expect:
+        conn.size() == 1
+        !conn.isActive()
+    }
+
+    def "rollback() reverts uncommitted removal of statement" (){
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.add(s,p,o)
+        conn.begin()
+        conn.clear()
+        conn.rollback()
+
+        expect:
+        conn.size() == 1
+    }
+
+    def "rollback() after uncommitted add causes no increase in size"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.begin()
+        conn.add(s,p,o)
+        conn.rollback()
+
+        expect:
+        conn.size() == 0
+    }
+
+    def "rollback() only affects current transaction"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.begin()
+        conn.add(o,p,s)
+        conn.commit()
+        conn.begin()
+        conn.add(s,p,o)
+        conn.rollback()
+
+        expect:
+        conn.size() == 1
+    }
+
 }
