@@ -591,7 +591,7 @@
 
                         <!-- key, if new -->
                         <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other' || vm.editingAnnotation" class="form-group">
-                            <label class="control-label" for="ontology-annotation-key">Name</label>
+                            <label class="control-label" for="ontology-annotation-key">Name <small class="text-muted">*Must be a valid IRI or you won't be able to add it.</small></label>
                             <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" ng-disabled="vm.editingAnnotation" required />
                         </div>
 
@@ -627,7 +627,7 @@
 <script type="text/ng-template" id="annotations-template">
     <!-- add annotation button -->
     <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
-    
+
     <!-- list of annotations -->
     <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
         <h5 title="{{key}}">{{key | removeNamespace | beautify}}</h5>

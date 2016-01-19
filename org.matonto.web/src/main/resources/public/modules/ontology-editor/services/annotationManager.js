@@ -5,7 +5,7 @@
         .module('annotationManager', ['removeNamespace'])
         .service('annotationManagerService', annotationManagerService)
         .filter('showAnnotations', showAnnotations)
-        .filter('hideAnnotations', hideAnnotations);
+        /*.filter('hideAnnotations', hideAnnotations)*/;
 
         annotationManagerService.$inject = ['$filter'];
 
@@ -96,7 +96,7 @@
             }
         }
 
-        function hideAnnotations() {
+        /*function hideAnnotations() {
             return function(annotations, obj) {
                 var prop, i, count,
                     result = [];
@@ -117,5 +117,5 @@
                 }
                 return result;
             }
-        }
+        }*/
 })();
