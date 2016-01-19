@@ -300,16 +300,6 @@ public class SimpleOntologyManager implements OntologyManager {
         return new SimpleOntologyId.Builder(factory).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
     }
 
-	@Override
-	public IRI createOntologyIRI(String ns, String ln) {
-		return factory.createIRI(ns, ln);
-	}
-	
-	@Override
-	public IRI createOntologyIRI(String iriString) {
-		return factory.createIRI(iriString);
-	}
-
     private void closeConnection(RepositoryConnection conn) {
         try {
             if(conn != null)
@@ -322,10 +312,5 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
 	public SesameTransformer getTransformer() {
         return transformer;
-    }
-    
-    @Override
-    public Repository getRepository() {
-        return repository;
     }
 }
