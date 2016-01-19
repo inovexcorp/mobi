@@ -579,8 +579,11 @@
                             <label class="control-label">Annotation</label>
                             <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.matonto.currentAnnotationSelect">
                                 <option value="default">Please select an annotation to add</option>
-                                <optgroup ng-repeat="key in (vm.ontologies[vm.state.oi].matonto.annotations | hideAnnotations:vm.selected)" label="{{key}}">
+                                <!--optgroup ng-repeat="key in (vm.ontologies[vm.state.oi].matonto.annotations | hideAnnotations:vm.selected)" label="{{key}}">
                                     <option ng-repeat="item in vm.ontologies[vm.state.oi].matonto.annotations[key]" ng-if="!vm.selected[key + item]" value="{{key + item}}">{{item}}</option>
+                                </optgroup-->
+                                <optgroup ng-repeat="(key, value) in vm.ontologies[vm.state.oi].matonto.annotations" label="{{key}}">
+                                    <option ng-repeat="item in value" value="{{key + item}}">{{item}}</option>
                                 </optgroup>
                                 <option value="other">Add a new annotation</option>
                             </select>
@@ -624,11 +627,14 @@
 <script type="text/ng-template" id="annotations-template">
     <!-- add annotation button -->
     <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
+    
     <!-- list of annotations -->
     <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
         <h5 title="{{key}}">{{key | removeNamespace | beautify}}</h5>
-        <p>{{vm.selected[key][0]['@value'] || vm.selected[key][0]['@id']}}</p>
-        <button type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(key);" title="Edit"><i class="fa fa-pencil"></i></button>
-        <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(key)" title="Delete"><i class="fa fa-times"></i></button>
+        <div class="value-container" ng-repeat="value in vm.selected[key]">
+            <p>{{value['@value']}}</p>
+            <button type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(key, $index);" title="Edit"><i class="fa fa-pencil"></i></button>
+            <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(key, $index)" title="Delete"><i class="fa fa-times"></i></button>
+        </div>
     </div>
 </script>

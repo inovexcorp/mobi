@@ -17,8 +17,12 @@
                 return reg;
             }
 
-            self.remove = function(obj, key) {
-                delete obj[key];
+            self.remove = function(obj, key, index) {
+                obj[key].splice(index, 1);
+
+                if(!obj[key].length) {
+                    delete obj[key];
+                }
             }
 
             self.add = function(obj) {
@@ -28,14 +32,20 @@
                     key = matonto.currentAnnotationKey,
                     value = matonto.currentAnnotationValue,
                     select = matonto.currentAnnotationSelect,
-                    item = [{'@value': value}];
+                    item = {'@value': value};
 
                 if(select === 'other') {
                     temp = key;
                 } else {
                     temp = select;
                 }
-                obj[temp] = item;
+
+                if(obj.hasOwnProperty(temp)) {
+                    obj[temp].push(item);
+                } else {
+                    obj[temp] = [item];
+                }
+
                 stripped = $filter('removeNamespace')(temp);
 
                 for(prop in matonto.annotations) {
@@ -50,8 +60,8 @@
                 }
             }
 
-            self.edit = function(obj, key, value) {
-                obj[key][0]['@value'] = value;
+            self.edit = function(obj, key, value, index) {
+                obj[key][index]['@value'] = value;
             }
 
             self.searchList = function(annotations, query) {

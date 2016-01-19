@@ -89,20 +89,21 @@
             resetAnnotationOverlay();
         }
 
-        vm.editClicked = function(key) {
+        vm.editClicked = function(key, index) {
             vm.editingAnnotation = true;
             vm.showAnnotationOverlay = true;
             vm.selected.matonto.currentAnnotationKey = key;
-            vm.selected.matonto.currentAnnotationValue = vm.selected[key][0]['@value'];
+            vm.selected.matonto.currentAnnotationValue = vm.selected[key][index]['@value'];
+            vm.selected.matonto.currentAnnotationIndex = index;
         }
 
-        vm.editAnnotation = function(key) {
-            annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue);
+        vm.editAnnotation = function() {
+            annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationIndex);
             resetAnnotationOverlay();
         }
 
-        vm.removeAnnotation = function(key) {
-            annotationManagerService.remove(vm.selected, key);
+        vm.removeAnnotation = function(key, index) {
+            annotationManagerService.remove(vm.selected, key, index);
         }
 
         vm.getAnnotations = function(query) {
