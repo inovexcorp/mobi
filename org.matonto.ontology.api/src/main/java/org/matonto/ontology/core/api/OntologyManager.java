@@ -59,12 +59,6 @@ public interface OntologyManager {
 	OntologyId createOntologyId(IRI ontologyIRI);
 	
 	OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
-	
-	IRI createOntologyIRI(String ns, String ln);
-	
-	IRI createOntologyIRI(String iriString);
 
 	SesameTransformer getTransformer();
-	
-	Repository getRepository();
 }
