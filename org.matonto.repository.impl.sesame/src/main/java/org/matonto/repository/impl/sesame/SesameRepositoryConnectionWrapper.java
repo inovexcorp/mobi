@@ -1,5 +1,8 @@
 package org.matonto.repository.impl.sesame;
 
+import org.matonto.query.api.GraphQuery;
+import org.matonto.query.api.Query;
+import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
@@ -10,6 +13,7 @@ import org.matonto.rdf.core.impl.sesame.factory.StatementValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
+import org.matonto.repository.exception.MalformedQueryException;
 import org.matonto.repository.exception.RepositoryException;
 
 public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
@@ -131,29 +135,65 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
     @Override
     public void commit() throws RepositoryException {
-        try{
+        try {
             sesameConn.commit();
-        } catch (org.openrdf.repository.RepositoryException e){
+        } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
 
     @Override
     public void rollback() throws RepositoryException {
-        try{
+        try {
             sesameConn.rollback();
-        } catch (org.openrdf.repository.RepositoryException e){
+        } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
 
     @Override
     public boolean isActive() throws RepositoryException {
-        try{
+        try {
             return sesameConn.isActive();
-        } catch (org.openrdf.repository.RepositoryException e){
+        } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
+    }
+
+    @Override
+    public Query prepareQuery(String query)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public Query prepareQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public TupleQuery prepareTupleQuery(String query)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public TupleQuery prepareTupleQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public GraphQuery prepareGraphQuery(String query)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public GraphQuery prepareGraphQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException {
+        return null;
     }
 
 }

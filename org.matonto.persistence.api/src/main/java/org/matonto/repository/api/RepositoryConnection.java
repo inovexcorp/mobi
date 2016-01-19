@@ -1,7 +1,11 @@
 package org.matonto.repository.api;
 
+import org.matonto.query.api.GraphQuery;
+import org.matonto.query.api.Query;
+import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.repository.base.RepositoryResult;
+import org.matonto.repository.exception.MalformedQueryException;
 import org.matonto.repository.exception.RepositoryException;
 
 public interface RepositoryConnection extends AutoCloseable {
@@ -132,5 +136,113 @@ public interface RepositoryConnection extends AutoCloseable {
      * @throws RepositoryException if the connection to the repository could not be accessed to check for state.
      */
     boolean isActive() throws RepositoryException;
+
+
+    /**
+     * Prepares a query for evaluation on this repository (optional operation).
+     *
+     * @param query
+     *        The query string.
+     * @return A query ready to be evaluated on this repository.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @throws UnsupportedOperationException
+     *         If the <tt>prepareQuery</tt> method is not supported by this
+     *         repository.
+     */
+    Query prepareQuery(String query)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares a query for evaluation on this repository (optional operation).
+     *
+     * @param query
+     *        The query string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the query
+     *        against, can be <tt>null</tt> if the query does not contain any
+     *        relative URIs.
+     * @return A query ready to be evaluated on this repository.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @throws UnsupportedOperationException
+     *         If the <tt>prepareQuery</tt> method is not supported by this
+     *         repository.
+     */
+    Query prepareQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares a SPARQL query that produces sets of value tuples, that is a
+     * SPARQL SELECT query.
+     *
+     * @param query
+     *        The query string, in SPARQL syntax.
+     * @return a {@link TupleQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a tuple query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @since 4.0
+     */
+    TupleQuery prepareTupleQuery(String query)
+            throws RepositoryException, MalformedQueryException;
+
+
+    /**
+     * Prepares a query that produces sets of value tuples.
+     *
+     * @param query
+     *        The query string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the query
+     *        against, can be <tt>null</tt> if the query does not contain any
+     *        relative URIs.
+     * @return a {@link TupleQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a tuple query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     */
+    public TupleQuery prepareTupleQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares SPARQL queries that produce RDF graphs, that is, SPARQL CONSTRUCT
+     * or DESCRIBE queries.
+     *
+     * @param query
+     *        The query string, in SPARQL syntax.
+     * @return a {@link GraphQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a graph query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @since 4.0
+     */
+    GraphQuery prepareGraphQuery(String query)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares queries that produce RDF graphs.
+     *
+     * @param query
+     *        The query string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the query
+     *        against, can be <tt>null</tt> if the query does not contain any
+     *        relative URIs.
+     * @return a {@link GraphQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a graph query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     */
+    GraphQuery prepareGraphQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException;
 
 }
