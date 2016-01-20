@@ -24,6 +24,23 @@ class SesameModelWrapperSpec extends Specification {
         model.add(s, p, o, c1, c2)
     }
 
+    def "add(s, p, o, c) with Bnode and IRI are treated separately"() {
+        setup:
+        def s1 = new SimpleIRI("urn:s1")
+        def s2 = new SimpleBNode("urn:s1")
+        def p = new SimpleIRI("http://test.com/p")
+        def o = new SimpleIRI("http://test.com/o")
+        def c1 = new SimpleIRI("urn:test1")
+        def c2 = new SimpleBNode("urn:test1")
+
+        expect:
+        model.add(s1, p, o, c1)
+        model.add(s1, p, o, c2)
+        model.add(s2, p, o, c2)
+        model.size() == 3
+        model.contexts().size() == 2
+    }
+
     def "add(stmt) returns boolean"() {
         setup:
         def s = new SimpleIRI("http://test.com/s")

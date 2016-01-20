@@ -14,22 +14,26 @@
             self.login = function(isValid, username, password) {
                 if(isValid) {
                     var config = {
-                        params: {
-                            username: username,
-                            password: password
-                        }
-                    }
+                            params: {
+                                username: username,
+                                password: password
+                            }
+                        },
+                        deferred = $q.defer();
+
                     $http.get('/matontorest/user/login', config)
                         .then(function(response) {
                             if(response.status === 200 && response.data.scope !== anon) {
                                 $state.go('root.home');
-                                return true;
+                                deferred.resolve(true);
                             } else {
-                                return false;
+                                deferred.resolve(false);
                             }
                         }, function(response) {
-                            return false;
+                            deferred.resolve(false);
                         });
+
+                    return deferred.promise;
                 }
             }
 

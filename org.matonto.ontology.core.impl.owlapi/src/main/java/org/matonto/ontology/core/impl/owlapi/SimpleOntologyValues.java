@@ -1,6 +1,7 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,10 +30,10 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWLFacet;
-
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -62,7 +63,7 @@ import aQute.bnd.annotation.component.Reference;
 public class SimpleOntologyValues {
     
     private static ValueFactory factory;
-    private static SesameTransformer transformer;
+	private static OntologyManager ontologyManager;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyValues.class);
     
     @Activate
@@ -80,30 +81,16 @@ public class SimpleOntologyValues {
         factory = vf;
     }
 
-    @Reference
-    protected void setTransformer(final SesameTransformer sTransformer) {
-        transformer = sTransformer;
-    }
+	@Reference
+	protected void setOntologyManager(final OntologyManager aOntologyManager) {
+		ontologyManager = aOntologyManager;
+	}
     
 	public SimpleOntologyValues() {}
 	
-    public static Ontology matontoOntology(OWLOntology ontology) {
+    public static Ontology matontoOntology(OWLOntology ontology, Resource resource) {
         if(ontology == null)
             return null;
-
-        OWLOntologyID owlApiID = ontology.getOntologyID();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = owlApiID.getOntologyIRI();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlApiID.getVersionIRI();
-        OntologyId ontologyId;
-        if (owlApiID.isAnonymous()) {
-            ontologyId = new SimpleOntologyId(factory);
-        } else if (vIRI.isPresent()) {
-            ontologyId = new SimpleOntologyId(factory, matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
-        } else if (oIRI.isPresent()){
-            ontologyId = new SimpleOntologyId(factory, matontoIRI(oIRI.get()));
-        } else {
-            ontologyId = new SimpleOntologyId(factory);
-        }
 
         OWLOntology tOntology = ontology;
 
@@ -117,7 +104,7 @@ public class SimpleOntologyValues {
             }
         }
 
-        return new SimpleOntology(tOntology, ontologyId, transformer);
+        return new SimpleOntology(tOntology, resource, ontologyManager);
     }
     
     public static OWLOntology owlapiOntology(Ontology ontology)
@@ -170,10 +157,15 @@ public class SimpleOntologyValues {
 		if(owlLiteral == null)
 			return null;
 		
-		if(owlLiteral.hasLang())
+		String datatypeIRIStr = owlLiteral.getDatatype().getIRI().toString();
+		
+		if(datatypeIRIStr.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")) 
+		    return factory.createLiteral(owlLiteral.getLiteral(), "en");
+		
+		else if(owlLiteral.hasLang()) 
 		    return factory.createLiteral(owlLiteral.getLiteral(), owlLiteral.getLang());
 		
-		else
+		else 
 		    return factory.createLiteral(owlLiteral.getLiteral(), matontoDatatype(owlLiteral.getDatatype()).getIRI());
 	}
 
@@ -328,6 +320,24 @@ public class SimpleOntologyValues {
 		org.semanticweb.owlapi.model.IRI owlapiIri = owlapiIRI(matontoIri);
 		return new OWLNamedIndividualImpl(owlapiIri);
 	}
+	
+	public static Individual matontoIndividual(OWLIndividual owlapiIndividual)
+    {
+        if(owlapiIndividual instanceof OWLAnonymousIndividual)
+            return matontoAnonymousIndividual((OWLAnonymousIndividual) owlapiIndividual);
+        
+        else
+            return matontoNamedIndividual((OWLNamedIndividual) owlapiIndividual);
+    }
+    
+    public static OWLIndividual owlapiIndividual(Individual matontoIndividual)
+    {
+        if(matontoIndividual instanceof AnonymousIndividual)
+            return owlapiAnonymousIndividual((AnonymousIndividual) matontoIndividual);
+        
+        else
+            return owlapiNamedIndividual((NamedIndividual) matontoIndividual);
+    }
 
 	public static OntologyId matontoOntologyId(OWLOntologyID owlId)
 	{
@@ -338,20 +348,34 @@ public class SimpleOntologyValues {
 		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlId.getVersionIRI();
 
         if (vIRI.isPresent()) {
-            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get())).versionIRI(matontoIRI(vIRI.get())).build();
         } else if (oIRI.isPresent()) {
-            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()));
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get())).build();
         } else {
-            return new SimpleOntologyId(factory);
+            return new SimpleOntologyId.Builder(factory).build();
         }
 	}	
 	
-	public static OWLOntologyID owlapiOntologyId(SimpleOntologyId simpleId) 
+	public static OWLOntologyID owlapiOntologyId(OntologyId simpleId) 
 	{
 		if(simpleId == null)
 			return null;
 		
-		return simpleId.getOwlapiOntologyId();
+		if(simpleId instanceof SimpleOntologyId)
+		return ((SimpleOntologyId)simpleId).getOwlapiOntologyId();
+		
+		else {
+		    Optional<IRI> oIRI = simpleId.getOntologyIRI();
+		    Optional<IRI> vIRI = simpleId.getVersionIRI();
+		    
+	        if (vIRI.isPresent()) {
+	            return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(oIRI.get())), com.google.common.base.Optional.of(owlapiIRI(vIRI.get())));
+	        } else if (oIRI.isPresent()) {
+	            return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(oIRI.get())), com.google.common.base.Optional.absent());
+	        } else {
+	            return new OWLOntologyID();
+	        }
+		}
 	}
 	
 	public static OClass matontoClass(OWLClass owlapiClass)

@@ -5,12 +5,13 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>ontology.api</artifactId>
+    <version>${matonto.ontology.api.version}</version>
 
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
@@ -27,6 +28,10 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
         </dependency>
 
         <dependency>
