@@ -414,7 +414,7 @@
 
                     $http.get(prefix + '/deleteOntology', config)
                         .then(function(response) {
-                            if(response.data.result) {
+                            if(response.data.deleted) {
                                 self.ontologies.splice(state.oi, 1);
                                 deferred.resolve(response);
                                 $rootScope.showSpinner = false;
@@ -467,7 +467,7 @@
 
                 self.upload(isValid, file)
                     .then(function(response) {
-                        if(response.data.result) {
+                        if(response.data.persisted) {
                             self.get(response.data.ontologyId)
                                 .then(function(response) {
                                     if(!response.data.error) {
