@@ -50,6 +50,14 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>com.eclipsesource.jaxrs</groupId>
+            <artifactId>features</artifactId>
+            <classifier>features</classifier>
+            <version>5.3</version>
+            <type>xml</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <!-- scope is runtime so the feature repo is listed in etc/org.apache.karaf.features.cfg file, and features will installed into the system directory if specify in the plugin configuration -->
             <groupId>org.apache.karaf.features</groupId>
             <artifactId>spring</artifactId>
@@ -138,6 +146,8 @@
                         <feature>camel-servlet</feature>
                         <feature>camel-blueprint</feature>
                         <feature>camel-swagger-java</feature>
+                        <feature>jax-rs-connector</feature>
+                        <feature>jax-rs-provider-multipart</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>
