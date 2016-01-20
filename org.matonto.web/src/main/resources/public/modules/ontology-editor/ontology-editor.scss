@@ -10,6 +10,8 @@
     /* removes the rounded corners so it fits in the box provided */
     .btn-group > .btn {
         border-radius: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Styles for the right side of the page */

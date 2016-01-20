@@ -290,7 +290,7 @@
                         <!-- basic button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? vm.selected['@id'] : 'New Ontology'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected[vm.selected.matonto.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Ontology'}}</small></a>
 
                         <!-- annotations button -->
                         <a class="btn btn-primary"
@@ -388,7 +388,7 @@
                                         <input type="text" ng-model="vm.value" placeholder="Enter new value..." />
                                     </td>
                                     <td class="action-button">
-                                        <button type="button" class="btn btn-link add" ng-click="vm.addPrefix(vm.key, vm.value); vm.key = ''; vm.value = '';"><i class="fa fa-plus"></i></button>
+                                        <button type="button" class="btn btn-link add" ng-disabled="!vm.key || !vm.value" ng-click="vm.addPrefix(vm.key, vm.value); vm.key = ''; vm.value = '';"><i class="fa fa-plus"></i></button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -409,7 +409,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? vm.selected['@id'] : 'New Class'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Class'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
@@ -423,13 +423,10 @@
                         <!-- iri -->
                         <div ng-class="{ 'has-warning': vm.classForm.iri.$invalid }" class="form-group">
                             <label class="control-label" for="class-iri">Local Name</label>
-                            <div class="input-group">
-                                <div class="input-group-addon">{{vm.ontologies[vm.state.oi].matonto.prefix || vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter}}</div>
-                                <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;" required>
-                            </div>
+                            <input type="text" class="form-control" id="class-iri" name="iri" ng-model="vm.selected['@id']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;" required>
                             <strong ng-if="vm.classForm.iri.$error.required" class="help-block">Please enter something.</strong>
                             <!--strong ng-if="vm.isTaken()" class="help-block">The entered value is already used elsewhere.</strong-->
-                            <strong ng-if="vm.classForm.iri.$invalid && !vm.classForm.iri.$error.required" class="help-block">Please remove all whitespace, ':', '#', and '/' characters.</strong>
+                            <!--strong ng-if="vm.classForm.iri.$invalid && !vm.classForm.iri.$error.required" class="help-block">Please remove all whitespace, ':', '#', and '/' characters.</strong-->
                         </div>
 
                         <!-- rdfs:subClassOf -->
@@ -473,7 +470,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? vm.selected['@id'] : 'New Property'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
@@ -487,13 +484,10 @@
                         <!-- iri -->
                         <div ng-class="{ 'has-warning': vm.propertyForm.iri.$invalid }" class="form-group">
                             <label class="control-label" for="property-iri">Local Name</label>
-                            <div class="input-group">
-                                <div class="input-group-addon">{{vm.ontologies[vm.state.oi].matonto.prefix || vm.ontologies[vm.state.oi]['@id'] + vm.ontologies[vm.state.oi].matonto.delimiter}}</div>
-                                <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^\s:\/#]+$/" ng-trim="false" required ng-change="vm.selected.matonto.unsaved = true;">
-                            </div>
+                            <input type="text" class="form-control" id="property-iri" name="iri" ng-model="vm.selected['@id']" ng-trim="false" required ng-change="vm.selected.matonto.unsaved = true;">
                             <strong ng-if="vm.propertyForm.iri.$error.required" class="help-block">Please enter something.</strong>
                             <!--strong ng-if="vm.isTaken()" class="help-block">The entered value is already used elsewhere.</strong-->
-                            <strong ng-if="vm.propertyForm.iri.$invalid && !vm.propertyForm.iri.$error.required" class="help-block">Please remove all whitespace, ':', '#', and '/' characters.</strong>
+                            <!--strong ng-if="vm.propertyForm.iri.$invalid && !vm.propertyForm.iri.$error.required" class="help-block">Please remove all whitespace, ':', '#', and '/' characters.</strong-->
                         </div>
 
                         <!-- rdfs:subPropertyOf -->

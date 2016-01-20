@@ -5,9 +5,9 @@
         .module('ontologyManager', ['removeNamespace', 'beautify'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout) {
             var self = this,
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
@@ -155,7 +155,6 @@
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             classes.push(obj);
                             break;
                         case prefixes.owl + 'DatatypeProperty':
@@ -166,7 +165,6 @@
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             properties.push(obj);
                             break;
                         default:
@@ -195,10 +193,10 @@
                         if(Object.prototype.toString.call(domain) === '[object Array]') {
                             j = domain.length;
                             while(j--) {
-                                addToClass($filter('removeNamespace')(domain[j]['@id']), properties[i]);
+                                addToClass(domain[j]['@id'], properties[i]);
                             }
                         } else {
-                            addToClass($filter('removeNamespace')(domain['@id']), properties[i]);
+                            addToClass(domain['@id'], properties[i]);
                         }
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);
