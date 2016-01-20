@@ -13,6 +13,7 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
 import org.openrdf.model.util.Models;
 import org.openrdf.rio.*;
 import org.openrdf.rio.helpers.JSONLDMode;
@@ -27,6 +28,8 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
+
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.util.Collections;
 import java.util.HashSet;
@@ -73,7 +76,7 @@ public class SimpleOntology implements Ontology {
 
         try {
 			ontology = manager.loadOntologyFromOntologyDocument(inputStream);
-            createOntologyId();
+            createOntologyId(null);
         } catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		} finally {
@@ -90,22 +93,22 @@ public class SimpleOntology implements Ontology {
 
 		try {
 			ontology = manager.loadOntologyFromOntologyDocument(SimpleOntologyValues.owlapiIRI(iri));
-            createOntologyId();
+            createOntologyId(null);
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 
-    protected SimpleOntology(OWLOntology ontology, OntologyManager ontologyManager) {
+    protected SimpleOntology(OWLOntology ontology, Resource resource, OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
 
         this.ontology = ontology;
         this.manager = this.ontology.getOWLOntologyManager();
 
-        createOntologyId();
+        createOntologyId(resource);
     }
 
-    private void createOntologyId() {
+    private void createOntologyId(Resource resource) {
         Optional<org.semanticweb.owlapi.model.IRI> owlOntIriOptional = ontology.getOntologyID().getOntologyIRI();
         Optional<org.semanticweb.owlapi.model.IRI> owlVerIriOptional = ontology.getOntologyID().getVersionIRI();
 
@@ -121,6 +124,8 @@ public class SimpleOntology implements Ontology {
             } else {
                 this.ontologyId = ontologyManager.createOntologyId(matontoOntIri);
             }
+        } else if (resource != null){
+            this.ontologyId = ontologyManager.createOntologyId(resource);
         } else {
             this.ontologyId = ontologyManager.createOntologyId();
         }
@@ -304,7 +309,7 @@ public class SimpleOntology implements Ontology {
 	}
 
 	@Override
-	public OutputStream asJsonLD() throws MatontoOntologyException {
+	public @Nonnull OutputStream asJsonLD() throws MatontoOntologyException {
 		OutputStream outputStream = new ByteArrayOutputStream();
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
@@ -347,7 +352,7 @@ public class SimpleOntology implements Ontology {
         return this.manager;
     }
 
-	private OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat) throws MatontoOntologyException {
+	private @Nonnull OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat) throws MatontoOntologyException {
 		OutputStream os = null;
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		OWLDocumentFormat format = manager.getOntologyFormat(ontology);
@@ -367,9 +372,8 @@ public class SimpleOntology implements Ontology {
 		
 		if(os != null)
 			return MatOntoStringUtils.removeOWLGeneratorSignature(os);
-		
 		else
-			return os;
+			return new ByteArrayOutputStream();
 	}
 	
 	private void getAnnotations() throws MatontoOntologyException {

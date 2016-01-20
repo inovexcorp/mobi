@@ -30,9 +30,10 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWLFacet;
-
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -87,7 +88,7 @@ public class SimpleOntologyValues {
     
 	public SimpleOntologyValues() {}
 	
-    public static Ontology matontoOntology(OWLOntology ontology) {
+    public static Ontology matontoOntology(OWLOntology ontology, Resource resource) {
         if(ontology == null)
             return null;
 
@@ -103,7 +104,7 @@ public class SimpleOntologyValues {
             }
         }
 
-        return new SimpleOntology(tOntology, ontologyManager);
+        return new SimpleOntology(tOntology, resource, ontologyManager);
     }
     
     public static OWLOntology owlapiOntology(Ontology ontology)
@@ -347,11 +348,11 @@ public class SimpleOntologyValues {
 		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlId.getVersionIRI();
 
         if (vIRI.isPresent()) {
-            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()), matontoIRI(vIRI.get()));
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get())).versionIRI(matontoIRI(vIRI.get())).build();
         } else if (oIRI.isPresent()) {
-            return new SimpleOntologyId(factory, matontoIRI(oIRI.get()));
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get())).build();
         } else {
-            return new SimpleOntologyId(factory);
+            return new SimpleOntologyId.Builder(factory).build();
         }
 	}	
 	
