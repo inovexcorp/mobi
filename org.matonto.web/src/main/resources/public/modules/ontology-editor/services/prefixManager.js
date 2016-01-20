@@ -70,17 +70,50 @@
                 }
             }
 
+            function updateContext(context, prop, old, fresh) {
+                var i = 0;
+                while(i < context.length) {
+                    if(context[i][prop] === old) {
+                        context[i][prop] = fresh;
+                        break;
+                    }
+                    i++;
+                }
+            }
+
+            self.editPrefix = function(edit, old, index, ontology) {
+                var input = document.getElementById('prefix-' + index);
+                if(edit) {
+                    updateRefs(ontology, old + ':', input.value + ':', ontology.matonto.owl);
+                    updateContext(ontology.matonto.context, 'key', old, input.value);
+                } else {
+                    input.focus();
+                }
+            }
+
+            self.editValue = function(edit, key, old, index, ontology) {
+                var input = document.getElementById('value-' + index);
+                if(edit) {
+                    updateRefs(ontology, key + ':', old, ontology.matonto.owl);
+                    updateRefs(ontology, input.value, key + ':', ontology.matonto.owl);
+                    updateContext(ontology.matonto.context, 'value', old, input.value);
+                } else {
+                    input.focus();
+                }
+            }
+
             self.add = function(key, value, ontology) {
                 var context = ontology.matonto.context,
                     duplicate = false,
                     empty = !key.length || !value.length,
-                    i = context.length;
+                    i = 0;
 
-                while(i--) {
-                    if(context[i].key == key || context[i].value == value) {
+                while(i < context.length) {
+                    if(context[i].key === key || context[i].value === value) {
                         duplicate = true;
                         break;
                     }
+                    i++;
                 }
 
                 if(!duplicate && !empty) {
@@ -101,22 +134,6 @@
                         ontology.matonto.context.splice(i, 1);
                         break;
                     }
-                }
-            }
-
-            self.edit = function(edit, old, index, value, ontology) {
-                var input = document.getElementById('prefix-' + index);
-                if(edit) {
-                    updateRefs(ontology, old + ':', input.value + ':', ontology.matonto.owl);
-                    var i = ontology.matonto.context.length;
-                    while(i--) {
-                        if(ontology.matonto.context[i].key == old) {
-                            ontology.matonto.context[i].key = input.value;
-                            break;
-                        }
-                    }
-                } else {
-                    input.focus();
                 }
             }
         }

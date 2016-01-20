@@ -366,13 +366,13 @@
                                 <tr ng-repeat="item in vm.selected.matonto.context track by $index">
                                     <td>
                                         <input id="prefix-{{$index}}" type="text" value="{{item.key}}" ng-readonly="!editKey" />
-                                        <button type="button" class="btn btn-link edit" ng-click="vm.editPrefix(editKey, item.key, $index, value); editKey = !editKey;">
+                                        <button type="button" class="btn btn-link edit" ng-click="vm.editPrefix(editKey, item.key, $index); editKey = !editKey;">
                                             <i class="fa fa-pencil" ng-class="{'fa-pencil': !editKey, 'fa-floppy-o': editKey}"></i>
                                         </button>
                                     </td>
                                     <td>
                                         <input id="value-{{$index}}" type="text" value="{{item.value}}" ng-readonly="!editValue" />
-                                        <button type="button" class="btn btn-link edit" ng-click="editValue = !editValue;">
+                                        <button type="button" class="btn btn-link edit" ng-click="vm.editValue(editValue, item.key, item.value, $index); editValue = !editValue;">
                                             <i class="fa fa-pencil" ng-class="{'fa-pencil': !editValue, 'fa-floppy-o': editValue}"></i>
                                         </button>
                                     </td>

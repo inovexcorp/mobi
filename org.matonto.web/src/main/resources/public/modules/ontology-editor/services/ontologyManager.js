@@ -92,7 +92,7 @@
                     var len = obj['@id'].length,
                         delimiter = obj['@id'].charAt(len - 1);
 
-                    if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
+                    if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
                         obj.matonto = {
                             delimiter: delimiter,
                             originalId: obj['@id']

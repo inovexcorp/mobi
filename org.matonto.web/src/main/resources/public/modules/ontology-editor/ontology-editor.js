@@ -64,8 +64,12 @@
         }
 
         /* Prefix (Context) Management */
-        vm.editPrefix = function(edit, old, index, value) {
-            prefixManagerService.edit(edit, old, index, value, vm.selected);
+        vm.editPrefix = function(edit, old, index) {
+            prefixManagerService.editPrefix(edit, old, index, vm.selected);
+        }
+
+        vm.editValue = function(edit, key, value, index) {
+            prefixManagerService.editValue(edit, key, value, index, vm.selected);
         }
 
         vm.addPrefix = function(key, value) {
