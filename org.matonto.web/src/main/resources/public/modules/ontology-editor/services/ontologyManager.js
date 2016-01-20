@@ -459,7 +459,8 @@
             self.uploadThenGet = function(isValid, file) {
                 $rootScope.showSpinner = true;
 
-                var deferred = $q.defer(),
+                var ontologyId,
+                    deferred = $q.defer(),
                     error = function(response) {
                         deferred.reject(response);
                         $rootScope.showSpinner = false;
@@ -468,10 +469,11 @@
                 self.upload(isValid, file)
                     .then(function(response) {
                         if(response.data.persisted) {
-                            self.get(response.data.ontologyId)
+                            ontologyId = response.data.ontologyId;
+                            self.get(ontologyId)
                                 .then(function(response) {
                                     if(!response.data.error) {
-                                        addOntology(response.data.ontology, response.data.ontologyId)
+                                        addOntology(response.data.ontology, ontologyId)
                                             .then(function(response) {
                                                 deferred.resolve(response);
                                                 $rootScope.showSpinner = false;
