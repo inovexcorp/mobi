@@ -9,6 +9,12 @@ import java.util.Set;
 
 public class SesameBindingSet implements BindingSet {
 
+    private org.openrdf.query.BindingSet bindingSet;
+
+    public SesameBindingSet(org.openrdf.query.BindingSet bindingSet) {
+        this.bindingSet = bindingSet;
+    }
+
     @Override
     public Iterator<Binding> iterator() {
         return null;

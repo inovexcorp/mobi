@@ -8,6 +8,12 @@ import java.util.List;
 
 public class SesameTupleQueryResult implements TupleQueryResult {
 
+    private org.openrdf.query.TupleQueryResult tupleQueryResult;
+
+    public SesameTupleQueryResult(org.openrdf.query.TupleQueryResult tupleQueryResult) {
+        this.tupleQueryResult = tupleQueryResult;
+    }
+
     @Override
     public List<String> getBindingNames() throws QueryEvaluationException {
         return null;

@@ -15,7 +15,7 @@ public abstract class TupleQueryResult extends QueryResult<BindingSet> {
      * @throws QueryEvaluationException
      */
 
-//    public List<String> getBindingNames()
-//            throws QueryEvaluationException;
+    public abstract List<String> getBindingNames()
+            throws QueryEvaluationException;
 
 }

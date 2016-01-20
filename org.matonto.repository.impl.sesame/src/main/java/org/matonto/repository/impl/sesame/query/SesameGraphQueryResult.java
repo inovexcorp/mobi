@@ -8,6 +8,12 @@ import java.util.Map;
 
 public class SesameGraphQueryResult implements GraphQueryResult {
 
+    org.openrdf.query.GraphQueryResult graphQueryResult;
+
+    public SesameGraphQueryResult(org.openrdf.query.GraphQueryResult graphQueryResult) {
+        this.graphQueryResult = graphQueryResult;
+    }
+
     @Override
     public Map<String, String> getNamespaces() throws QueryEvaluationException {
         return null;

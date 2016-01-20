@@ -16,6 +16,6 @@ public abstract class GraphQueryResult extends QueryResult<Statement> {
      * @throws QueryEvaluationException
      */
 
-//    Map<String, String> getNamespaces() throws QueryEvaluationException;
+    public abstract Map<String, String> getNamespaces() throws QueryEvaluationException;
 
 }
