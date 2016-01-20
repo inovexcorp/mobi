@@ -11,7 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>ontology.api</artifactId>
-    <version>2.0.0</version>
+    <version>${matonto.ontology.api.version}</version>
 
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>

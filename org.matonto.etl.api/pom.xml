@@ -11,6 +11,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>etl.api</artifactId>
+    <version>${matonto.etl.api.version}</version>
+
     <packaging>bundle</packaging>
 
     <name>${project.groupId}.${project.artifactId}</name>

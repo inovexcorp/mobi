@@ -11,7 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>repository.impl.sesame</artifactId>
-    <version>1.1.0</version>
+    <version>${matonto.repository.impl.sesame.version}</version>
 
     <name>${project.groupId}.${project.artifactId}</name>
 

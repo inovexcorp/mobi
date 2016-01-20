@@ -12,7 +12,7 @@
     <packaging>bundle</packaging>
 
     <artifactId>persistence.utils</artifactId>
-    <version>1.0.0</version>
+    <version>${matonto.persistence.utils.version}</version>
 
     <name>${project.groupId}.${project.artifactId}</name>
 
