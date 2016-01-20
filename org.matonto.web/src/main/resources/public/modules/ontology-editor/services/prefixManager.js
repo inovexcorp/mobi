@@ -5,13 +5,13 @@
         .module('prefixManager', [])
         .service('prefixManagerService', prefixManagerService);
 
-        prefixManagerService.$inject = [];
+        prefixManagerService.$inject = ['$q'];
 
-        function prefixManagerService() {
+        function prefixManagerService($q) {
             var self = this;
 
             function updateRefs(obj, old, fresh, owl) {
-                var temp, prop, i, arr, excluded,
+                var temp, prop, i, arr, excluded, isOntology,
                     exclude = [
                         '$$hashKey',
                         'context',
@@ -21,6 +21,8 @@
                 // iterates over all of the properties of the object
                 for(prop in obj) {
                     excluded = exclude.indexOf(prop);
+                    isOntology = obj['@type'] && obj['@type'].indexOf(owl + 'Ontology') !== -1;
+
                     // checks to see if the property contains the old string
                     if(prop.indexOf(old) !== -1 && excluded === -1) {
                         // copies current value
@@ -32,8 +34,8 @@
                         obj[prop] = temp;
                     }
 
-                    // if anything in exclude list
-                    if(excluded !== -1) {
+                    // do nothing for these situations
+                    if(excluded !== -1 || !obj[prop] || (prop === '@id' && isOntology)) {
                         // do nothing
                     }
                     // iterates through the array and recursively calls this function
@@ -53,15 +55,6 @@
                     // recursively call this function
                     else if(typeof obj[prop] === 'object') {
                         updateRefs(obj[prop], old, fresh, owl);
-                    }
-                    // sets the prefix value for this object
-                    else if(prop === '@id' && obj['@type'] === owl + 'Ontology') {
-                        obj.matonto.prefix = obj.matonto.prefix ? obj.matonto.prefix.replace(old, fresh) : fresh;
-                    }
-                    // saves the code from breaking by trying to find the indexOf some undefined property
-                    // TODO: remove this console.warn for production as it is just used for testing
-                    else if(!obj[prop]) {
-                        console.warn('*' + prop + '* is undefined ->', obj);
                     }
                     // remove the old prefix and replace it with the new
                     else if(obj[prop].indexOf(old) !== -1) {
@@ -103,9 +96,9 @@
             }
 
             self.add = function(key, value, ontology) {
-                var context = ontology.matonto.context,
+                var deferred = $q.defer(),
+                    context = ontology.matonto.context,
                     duplicate = false,
-                    empty = !key.length || !value.length,
                     i = 0;
 
                 while(i < context.length) {
@@ -116,24 +109,27 @@
                     i++;
                 }
 
-                if(!duplicate && !empty) {
+                if(!duplicate) {
                     context.push({key: key, value: value});
                     updateRefs(ontology, value, key + ':', ontology.matonto.owl);
+                    deferred.resolve();
                 } else if(duplicate) {
-                    console.log('this is a duplicate');
-                } else {
-                    console.log('this is empty');
+                    deferred.reject();
                 }
+
+                return deferred.promise;
             }
 
             self.remove = function(key, ontology) {
-                var i = ontology.matonto.context.length;
-                while(i--) {
+                var i = 0;
+
+                while(i < ontology.matonto.context.length) {
                     if(ontology.matonto.context[i].key === key) {
-                        updateRefs(ontology.matonto, key + ':', ontology.matonto.context[i].value, ontology.matonto.owl);
+                        updateRefs(ontology, key + ':', ontology.matonto.context[i].value, ontology.matonto.owl);
                         ontology.matonto.context.splice(i, 1);
                         break;
                     }
+                    i++;
                 }
             }
         }

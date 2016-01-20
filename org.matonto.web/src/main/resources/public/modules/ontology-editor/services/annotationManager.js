@@ -63,18 +63,6 @@
             self.edit = function(obj, key, value, index) {
                 obj[key][index]['@value'] = value;
             }
-
-            self.searchList = function(annotations, query) {
-                var i = 0,
-                    arr = [];
-                while(i < annotations.length) {
-                    if(annotations[i].toLowerCase().indexOf(query.toLowerCase()) !== -1) {
-                        arr.push({'@id': annotations[i]});
-                    }
-                    i++;
-                }
-                return arr;
-            }
         }
 
         function showAnnotations() {

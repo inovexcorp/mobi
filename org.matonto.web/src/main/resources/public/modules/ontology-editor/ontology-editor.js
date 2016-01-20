@@ -73,7 +73,13 @@
         }
 
         vm.addPrefix = function(key, value) {
-            prefixManagerService.add(key, value, vm.selected);
+            prefixManagerService.add(key, value, vm.selected)
+                .then(function(response) {
+                    vm.key = '';
+                    vm.value = '';
+                }, function(response) {
+                    vm.showDuplicateMessage = true;
+                });
         }
 
         vm.removePrefix = function(key) {
@@ -108,10 +114,6 @@
 
         vm.removeAnnotation = function(key, index) {
             annotationManagerService.remove(vm.selected, key, index);
-        }
-
-        vm.getAnnotations = function(query) {
-            return annotationManagerService.searchList(vm.selected.matonto.annotations, query);
         }
 
         vm.getPattern = function() {

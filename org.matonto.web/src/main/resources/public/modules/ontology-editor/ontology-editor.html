@@ -382,21 +382,20 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <input type="text" ng-model="vm.key" placeholder="Enter new prefix..." />
+                                        <input type="text" ng-model="vm.key" placeholder="Enter new prefix..." ng-change="vm.showDuplicateMessage = false;" />
                                     </td>
                                     <td>
-                                        <input type="text" ng-model="vm.value" placeholder="Enter new value..." />
+                                        <input type="text" ng-model="vm.value" placeholder="Enter new value..." ng-change="vm.showDuplicateMessage = false;" />
                                     </td>
                                     <td class="action-button">
-                                        <button type="button" class="btn btn-link add" ng-disabled="!vm.key || !vm.value" ng-click="vm.addPrefix(vm.key, vm.value); vm.key = ''; vm.value = '';"><i class="fa fa-plus"></i></button>
+                                        <button type="button" class="btn btn-link add" ng-disabled="!vm.key || !vm.value" ng-click="vm.addPrefix(vm.key, vm.value);"><i class="fa fa-plus"></i></button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                         <!-- error messages for empty or unique -->
-                        <div class="has-warning clearfix" ng-if="vm.showDuplicateMessage || vm.showEmptyMessage">
+                        <div class="has-warning clearfix" ng-if="vm.showDuplicateMessage">
                             <strong ng-if="vm.showDuplicateMessage" class="help-block">Both prefix and value must be unique.</strong>
-                            <strong ng-if="vm.showEmptyMessage" class="help-block">Both prefix and value must be provided.</strong>
                         </div>
                     </div>
                 </form>

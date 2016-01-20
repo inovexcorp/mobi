@@ -498,8 +498,9 @@
                     pi = state.pi,
                     tab = state.tab,
                     current = self.ontologies[oi],
-                    namespace = current.matonto.prefix || (current['@id'] + current.matonto.delimiter),
+                    namespace = current.matonto.originalId + current.matonto.delimiter,
                     result = angular.copy(obj);
+
                 if(isValid) {
                     if(pi !== undefined || ci !== undefined) {
                         result['@id'] = namespace + result['@id'];
@@ -509,6 +510,7 @@
                     delete result.matonto;
                     obj.matonto.unsaved = false;
                 }
+
                 // TODO: update obj.matonto.originalId in .then() after API call to update the @id if it changed
                 console.log('edit', result, obj.matonto.originalId, obj);
             }
@@ -540,7 +542,7 @@
                         self.ontologies.push(obj);
                     } else {
                         var current = self.ontologies[oi],
-                            namespace = current.matonto.prefix || current['@id'] + current.matonto.delimiter;
+                            namespace = current.matonto.originalId + current.matonto.delimiter;
                         obj.matonto.originalId = namespace + obj['@id'];
                         if(ci === -1) {
                             current.matonto.classes.push(obj);
@@ -551,6 +553,7 @@
                     delete self.newItems[unique];
                     delete result.matonto;
                 }
+
                 console.log('create', result, obj);
             }
         }
