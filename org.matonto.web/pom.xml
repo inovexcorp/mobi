@@ -11,8 +11,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>web</artifactId>
-    <packaging>bundle</packaging>
+    <version>1.1.0</version>
 
+    <packaging>bundle</packaging>
     <name>${project.groupId}.${project.artifactId}</name>
 
     <properties>
