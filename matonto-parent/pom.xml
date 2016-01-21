@@ -49,7 +49,7 @@
         <matonto.repository.impl.sesame.version>1.1.0</matonto.repository.impl.sesame.version>
         <matonto.semantic.service.version>1.0.0</matonto.semantic.service.version>
         <matonto.swagger.version>1.0.0</matonto.swagger.version>
-        <matonto.web.version>1.1.0</matonto.web.version>
+        <matonto.web.version>1.1.1</matonto.web.version>
     </properties>
 
     <dependencyManagement>
