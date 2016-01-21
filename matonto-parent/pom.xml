@@ -28,7 +28,7 @@
         <karaf.version>4.0.2</karaf.version>
 
         <matonto.api.version>1.0.0</matonto.api.version>
-        <matonto.distribution.version>1.0.1</matonto.distribution.version>
+        <matonto.distribution.version>1.0.2-SNAPSHOT</matonto.distribution.version>
         <matonto.etl.api.version>1.0.0</matonto.etl.api.version>
         <matonto.etl.cli.version>1.0.0</matonto.etl.cli.version>
         <matonto.etl.csv.version>1.0.0</matonto.etl.csv.version>
