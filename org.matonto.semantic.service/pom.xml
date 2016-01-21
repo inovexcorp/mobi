@@ -5,12 +5,13 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.1</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>semantic.service</artifactId>
+    <version>${matonto.semantic.service.version}</version>
 
     <name>${project.groupId}.${project.artifactId}</name>
 

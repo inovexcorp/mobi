@@ -6,7 +6,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
 
     <packaging>pom</packaging>
 
@@ -27,6 +27,29 @@
         <owlapi.version>4.1.3</owlapi.version>
         <karaf.version>4.0.2</karaf.version>
 
+        <matonto.api.version>1.0.0</matonto.api.version>
+        <matonto.distribution.version>1.0.1</matonto.distribution.version>
+        <matonto.etl.api.version>1.0.0</matonto.etl.api.version>
+        <matonto.etl.cli.version>1.0.0</matonto.etl.cli.version>
+        <matonto.etl.csv.version>1.0.0</matonto.etl.csv.version>
+        <matonto.etl.rdf.version>1.0.0</matonto.etl.rdf.version>
+        <matonto.etl.rest.version>1.0.0</matonto.etl.rest.version>
+        <matonto.feature.version>1.0.0</matonto.feature.version>
+        <matonto.itests.version>1.0.0</matonto.itests.version>
+        <matonto.ontology.api.version>2.0.0</matonto.ontology.api.version>
+        <matonto.ontology.cli.version>2.0.0</matonto.ontology.cli.version>
+        <matonto.ontology.core.impl.owlapi.version>2.0.0</matonto.ontology.core.impl.owlapi.version>
+        <matonto.ontology.rest.version>2.0.0</matonto.ontology.rest.version>
+        <matonto.ontology.utils.version>1.0.0</matonto.ontology.utils.version>
+        <matonto.persistence.api.version>1.1.0</matonto.persistence.api.version>
+        <matonto.persistence.cli.version>1.0.0</matonto.persistence.cli.version>
+        <matonto.persistence.utils.version>1.0.0</matonto.persistence.utils.version>
+        <matonto.rdf.impl.sesame.version>1.0.1</matonto.rdf.impl.sesame.version>
+        <matonto.repository.impl.core.version>1.0.0</matonto.repository.impl.core.version>
+        <matonto.repository.impl.sesame.version>1.1.0</matonto.repository.impl.sesame.version>
+        <matonto.semantic.service.version>1.0.0</matonto.semantic.service.version>
+        <matonto.swagger.version>1.0.0</matonto.swagger.version>
+        <matonto.web.version>1.1.0</matonto.web.version>
     </properties>
 
     <dependencyManagement>
@@ -35,52 +58,52 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>api</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.api.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.api</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.persistence.api.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.cli</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.persistence.cli.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>rdf.impl.sesame</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.rdf.impl.sesame.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>repository.impl.sesame</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.repository.impl.sesame.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>repository.impl.core</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.repository.impl.core.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>etl.api</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.etl.api.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>ontology.api</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.ontology.api.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>ontology.utils</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.ontology.utils.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>semantic.service</artifactId>
-                <version>1.0.1-SNAPSHOT</version>
+                <version>${matonto.semantic.service.version}</version>
             </dependency>
 
             <!-- Sesame Dependencies -->
