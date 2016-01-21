@@ -7,6 +7,7 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.types.DataRangeType;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
@@ -17,7 +18,7 @@ public class SimpleDatatype implements Datatype {
 	
 	private IRI iri;
 	private OWLDatatype owlDatatype;
-	private OWL2Datatype owl2Datatype;
+	private boolean builtin;
 
 	
 	public SimpleDatatype(@Nonnull IRI iri)
@@ -25,7 +26,7 @@ public class SimpleDatatype implements Datatype {
 		this.iri = iri;
 		org.semanticweb.owlapi.model.IRI owlIri = SimpleOntologyValues.owlapiIRI(iri);
 		owlDatatype = new OWLDatatypeImpl(owlIri);
-		owl2Datatype = OWL2Datatype.getDatatype(owlIri);
+		builtin = owlDatatype.isBuiltIn();
 	}
 	
 	
@@ -99,19 +100,28 @@ public class SimpleDatatype implements Datatype {
 	
 	public String getShortForm()
 	{
-		return owl2Datatype.getShortForm();
+	    if(builtin)
+	        return owlDatatype.getBuiltInDatatype().getShortForm();
+	    else
+	        throw new MatontoOntologyException(iri + " is not a built in datatype");
 	}
 	
 	
 	public String getPatternString()
 	{
-		return owl2Datatype.getPatternString();
+	    if(builtin)
+            return owlDatatype.getBuiltInDatatype().getPatternString();
+        else
+            throw new MatontoOntologyException(iri + " is not a built in datatype");
 	}
 	
 	
 	public String getPrefixedName()
 	{
-		return owl2Datatype.getPrefixedName();
+	    if(builtin)
+            return owlDatatype.getBuiltInDatatype().getPrefixedName();
+        else
+            throw new MatontoOntologyException(iri + " is not a built in datatype");
 	}
 	
 	

@@ -75,5 +75,18 @@
                 }
                 self.setState(editor, oi, ci, pi);
             }
+
+            self.clearState = function(oi) {
+                var prop, state;
+                for(prop in self.states) {
+                    if(self.states[prop].oi === oi) {
+                        state = self.states[prop];
+                        state.oi = undefined;
+                        state.ci = undefined;
+                        state.pi = undefined;
+                        state.editor = 'default';
+                    }
+                }
+            }
         }
 })();

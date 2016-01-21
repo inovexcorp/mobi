@@ -241,7 +241,6 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         conn.add(s, p, o, c)
         conn.add(s, p, o, c2)
         conn.clear(c)
-
         expect:
         conn.size() == 2
         !conn.getStatements(s, p, o, c).hasNext()

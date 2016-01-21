@@ -5,19 +5,27 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="images/favicon.ico">
-
     <title ng-bind="$state.current.data.title + ' | MatOnto'"></title>
+
     <!-- inject:css -->
     <!-- endinject -->
 </head>
 <!-- REMOVE BETA CLASS ONCE OUT OF BETA -->
 <body class="beta" ng-class="{'left-nav clearfix': ($root.leftLayout && $state.current.name !== 'login'), 'show-words': ($root.showWords && $state.current.name !== 'login')}">
+
     <!-- REMOVE BETA BANNER <P> ONCE OUT OF BETA -->
-    <p class="beta-banner"><i class="fa fa-fw fa-exclamation-circle"></i><strong>Warning:</strong> This is a beta version of the software.</p>
+    <p class="beta-banner"><i class="fa fa-fw fa-exclamation-circle"></i><strong>Warning:</strong> This is an alpha version of the software.</p>
+
     <!-- Basic header, container, and footer for all states -->
     <nav ui-view="header" ng-hide="$state.current.name === 'login'"></nav>
     <div ui-view="container" class="view-container"></div>
     <footer ui-view="footer"></footer>
+
+    <!-- spinner -->
+    <div class="spinner" ng-show="$root.showSpinner">
+        <i class="fa fa-4x fa-spin fa-spinner"></i>
+    </div>
+
     <!-- inject:js -->
     <!-- endinject -->
 </body>

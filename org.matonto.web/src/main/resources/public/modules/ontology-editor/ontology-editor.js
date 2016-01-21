@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
+        .module('ontology-editor', ['file-input', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'ngTagsInput'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['$scope', '$timeout', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
+    OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
 
-    function OntologyEditorController($scope, $timeout, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService) {
+    function OntologyEditorController($scope, $timeout, $filter, $q, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -28,7 +28,21 @@
 
         /* Ontology Management */
         vm.uploadOntology = function(isValid, file, namespace, localName) {
-            ontologyManagerService.uploadThenGet(isValid, file, namespace, localName);
+            ontologyManagerService.uploadThenGet(isValid, file)
+                .then(function(response) {
+                    vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
+                    vm.showUploadOverlay = false;
+                }, function(response) {
+                    vm.uploadError = response.data.error;
+                });
+        }
+
+        vm.deleteOntology = function() {
+            ontologyManagerService.delete(vm.selected.matonto.ontologyId, vm.state)
+                .then(function(response) {
+                    stateManagerService.clearState(vm.state.oi);
+                    vm.selectItem('default', undefined, undefined, undefined);
+                });
         }
 
         vm.selectItem = function(editor, oi, ci, pi) {
@@ -63,12 +77,41 @@
         }
 
         /* Annotation Management */
-        vm.addAnnotation = function(key, value, select) {
-            annotationManagerService.add(vm.selected, key, value, select);
+        function resetAnnotationOverlay() {
+            vm.showAnnotationOverlay = false;
+            vm.selected.matonto.currentAnnotationKey = '';
+            vm.selected.matonto.currentAnnotationValue = '';
+            vm.selected.matonto.currentAnnotationSelect = 'default';
         }
 
-        vm.removeAnnotation = function(key) {
-            annotationManagerService.remove(vm.selected, key);
+        vm.addAnnotation = function() {
+            annotationManagerService.add(vm.selected, vm.ontologies[vm.state.oi].matonto.annotations);
+            resetAnnotationOverlay();
+        }
+
+        vm.editClicked = function(key, index) {
+            vm.editingAnnotation = true;
+            vm.showAnnotationOverlay = true;
+            vm.selected.matonto.currentAnnotationKey = key;
+            vm.selected.matonto.currentAnnotationValue = vm.selected[key][index]['@value'];
+            vm.selected.matonto.currentAnnotationIndex = index;
+        }
+
+        vm.editAnnotation = function() {
+            annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationIndex);
+            resetAnnotationOverlay();
+        }
+
+        vm.removeAnnotation = function(key, index) {
+            annotationManagerService.remove(vm.selected, key, index);
+        }
+
+        vm.getAnnotations = function(query) {
+            return annotationManagerService.searchList(vm.selected.matonto.annotations, query);
+        }
+
+        vm.getPattern = function() {
+            return annotationManagerService.getPattern();
         }
     }
 })();

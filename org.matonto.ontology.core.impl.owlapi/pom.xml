@@ -5,12 +5,14 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.2-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>ontology.core.impl.owlapi</artifactId>
+    <version>${matonto.ontology.core.impl.owlapi.version}</version>
+
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
