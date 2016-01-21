@@ -25,7 +25,7 @@
                 }
             }
 
-            self.add = function(obj) {
+            self.add = function(obj, annotations) {
                 var prop, temp, stripped,
                     found = false,
                     matonto = obj.matonto,
@@ -48,7 +48,7 @@
 
                 stripped = $filter('removeNamespace')(temp);
 
-                for(prop in matonto.annotations) {
+                for(prop in annotations) {
                     if(temp.indexOf(prop) !== -1) {
                         found = true;
                         break;
@@ -56,7 +56,7 @@
                 }
 
                 if(!found) {
-                    matonto.annotations[temp.replace(stripped, '')] = [stripped];
+                    annotations[temp.replace(stripped, '')] = [stripped];
                 }
             }
 
