@@ -10,6 +10,31 @@ body {
     right: 0;
     top: 0;
 
+    &.beta {
+        /* adds extra space at the top for the banner */
+        &:not(.left-nav) > .view-container {
+            padding-top: 93px;
+        }
+        > .view-container {
+            padding-top: 44px;
+        }
+        &.left-nav nav .nav,
+        .nav {
+            margin-top: 29px;
+        }
+
+        /* beta banner styles */
+        .beta-banner {
+            background: #f00;
+            color: #fff;
+            margin: 0;
+            padding: 5px 10px;
+            position: absolute;
+            width: 100%;
+            z-index: 1;
+        }
+    }
+
     /* spinner background styles */
     .spinner {
         background: #fff;
@@ -19,7 +44,7 @@ body {
         position: absolute;
         top: 0;
         width: 100%;
-        z-index: 1;
+        z-index: 3;
 
         /* spinner icon styles */
         .fa-spinner {
@@ -55,6 +80,11 @@ body {
     /* view container spacing with extra on the bottom for the icon buttons */
     > .view-container {
         padding: 15px 15px 34px;
+
+        /* removes top margin from page headers */
+        h1 {
+            margin-top: 0;
+        }
     }
 }
 
@@ -213,6 +243,14 @@ ul {
         &:hover,
         &.active {
             color: #fff;
+        }
+
+        /* Gray out text whenever the link is disabled */
+        &.disabled,
+        &.disabled:hover {
+            background-color: #fff;
+            color: $gray-lighter;
+            cursor: not-allowed;
         }
     }
 

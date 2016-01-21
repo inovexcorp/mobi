@@ -67,7 +67,7 @@ public class MatOntoStringUtils {
 
 		return sb.toString();
 	}
-
+	
 	
 	/*
 	 * Uses Regex to address the language tag issue in OWL2 RDF mapping  where 

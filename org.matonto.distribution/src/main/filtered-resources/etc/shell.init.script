@@ -1,6 +1,30 @@
 #Place any startup scripting in here. To deploy an obr bundle, use:
-#wait -t 5 obr
+#wait -t 5000 obr
 #obr:start <bundle-name>
 
-wait -t 5 obr
-obr:start -d org.matonto.repository.impl.sesame
+wait -t 5000 obr
+
+matonto-deploy-bundles = {
+    obr:url-refresh
+    obr:start -d \
+        org.matonto.persistence.api \
+        org.matonto.persistence.cli \
+        org.matonto.rdf.impl.sesame \
+        org.matonto.repository.impl.sesame \
+        org.matonto.repository.impl.core \
+        org.matonto.etl.api \
+        org.matonto.etl.cli \
+        org.matonto.etl.csv \
+        org.matonto.etl.rdf \
+        org.matonto.etl.rest \
+        org.matonto.ontology.api \
+        org.matonto.ontology.cli \
+        org.matonto.ontology.core.impl.owlapi \
+        org.matonto.ontology.rest \
+        org.matonto.web \
+        com.eclipsesource.jaxrs.swagger-all \
+        com.eclipsesource.jaxrs.provider.swagger
+}
+
+
+
