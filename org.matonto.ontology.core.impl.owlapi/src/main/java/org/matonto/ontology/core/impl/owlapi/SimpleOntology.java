@@ -148,6 +148,22 @@ public class SimpleOntology implements Ontology {
 //
 //        manager.applyChange(change);
 //    }
+	
+	@Override
+    public Set<Ontology> getDirectImports() {
+	    return ontology.getDirectImports()
+	            .stream()
+	            .map(SimpleOntologyValues::matontoOntology)
+	            .collect(Collectors.toSet());
+	}
+	
+	@Override
+    public Set<Ontology> getImportsClosure() {
+        return ontology.getImportsClosure()
+                .stream()
+                .map(SimpleOntologyValues::matontoOntology)
+                .collect(Collectors.toSet());
+    }
 
 	@Override
 	public Set<Annotation> getOntologyAnnotations() throws MatontoOntologyException {

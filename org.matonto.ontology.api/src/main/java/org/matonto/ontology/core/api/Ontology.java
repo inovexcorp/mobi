@@ -36,6 +36,21 @@ public interface Ontology {
 	OntologyId getOntologyId();
 	
 	/**
+	 * Gets the set of loaded ontologies that this ontology is related to via the directlyImports relation.
+	 * 
+	 * @return set of ontologies
+	 */
+	Set<Ontology> getDirectImports();
+	
+	/**
+     * Gets the set of loaded ontologies that this ontology is related to via the reflexive transitive closure 
+     * of the directlyImports relation as defined in Section 3.4 of the OWL 2 Structural Specification.
+     * 
+     * @return set of ontologies
+     */
+	Set<Ontology> getImportsClosure();
+	
+	/**
 	 * Gets the ontology annotations, excluding annotations for other objects such as classes and entities
 	 * 
 	 * @return ontology annotations

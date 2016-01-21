@@ -1,10 +1,12 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import java.io.ByteArrayOutputStream;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
@@ -37,6 +39,8 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,18 +97,30 @@ public class SimpleOntologyValues {
             return null;
 
         OWLOntology tOntology = ontology;
-
+        
         if(ontology instanceof OWLMutableOntology) {
             try {
                 OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
                 tOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
-                
+                /*
+                 * copying import declarations is needed.
+                 */
+                Set<OWLImportsDeclaration> declarations = ontology.getImportsDeclarations();
+                for(OWLImportsDeclaration dec : declarations) {
+                    owlManager.makeLoadImportRequest(dec);
+                    owlManager.applyChange(new AddImport(tOntology, dec));
+                }
+
             } catch (OWLOntologyCreationException e) {
                 throw new MatontoOntologyException("Error in ontology creation", e);
             }
         }
 
         return new SimpleOntology(tOntology, resource, ontologyManager);
+    }
+    
+    public static Ontology matontoOntology(OWLOntology ontology) {
+        return matontoOntology(ontology, null);
     }
     
     public static OWLOntology owlapiOntology(Ontology ontology)
