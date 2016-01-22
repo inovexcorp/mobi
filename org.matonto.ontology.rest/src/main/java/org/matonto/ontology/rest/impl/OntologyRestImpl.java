@@ -204,49 +204,37 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getAnnotationsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            return getAnnotationArray(ontology);
-        });
+        JSONObject result = doWithOntology(ontologyIdStr, this::getAnnotationArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getClassesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            return getClassArray(ontology);
-        });
+        JSONObject result = doWithOntology(ontologyIdStr, this::getClassArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDatatypesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            return getDatatypeArray(ontology);
-        });
+        JSONObject result = doWithOntology(ontologyIdStr, this::getDatatypeArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getObjectPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            return getObjectPropertyArray(ontology);
-        });
+        JSONObject result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDataPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            return getDataPropertyArray(ontology);
-        });
+        JSONObject result = doWithOntology(ontologyIdStr, this::getDataPropertyArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getNamedIndividualsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            return getNamedIndividualArray(ontology);
-        });
+        JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray);
         return Response.status(200).entity(result.toString()).build();
     }
     
