@@ -38,7 +38,7 @@
         }
 
         vm.deleteOntology = function() {
-            ontologyManagerService.delete(vm.selected['@id'], vm.state)
+            ontologyManagerService.delete(vm.selected.matonto.ontologyId, vm.state)
                 .then(function(response) {
                     stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('default', undefined, undefined, undefined);
@@ -63,22 +63,6 @@
             vm.state = stateManagerService.getState();
         }
 
-        vm.getClasses = function(query) {
-            var dummies = [
-                    { "@id": "Jordan1" },
-                    { "@id": "Jordan2" },
-                    { "@id": "Jordan3" },
-                    { "@id": "Levi1" },
-                    { "@id": "Levi2" },
-                    { "@id": "Levi3" },
-                    { "@id": "Lewis1" },
-                    { "@id": "Lewis2" },
-                    { "@id": "Lewis3" }
-                ];
-
-            return $filter('filter')(dummies, query);
-        }
-
         /* Prefix (Context) Management */
         vm.editPrefix = function(edit, old, index, value) {
             prefixManagerService.edit(edit, old, index, value, vm.selected);
@@ -93,12 +77,41 @@
         }
 
         /* Annotation Management */
-        vm.addAnnotation = function(key, value, select) {
-            annotationManagerService.add(vm.selected, key, value, select);
+        function resetAnnotationOverlay() {
+            vm.showAnnotationOverlay = false;
+            vm.selected.matonto.currentAnnotationKey = '';
+            vm.selected.matonto.currentAnnotationValue = '';
+            vm.selected.matonto.currentAnnotationSelect = 'default';
         }
 
-        vm.removeAnnotation = function(key) {
-            annotationManagerService.remove(vm.selected, key);
+        vm.addAnnotation = function() {
+            annotationManagerService.add(vm.selected, vm.ontologies[vm.state.oi].matonto.annotations);
+            resetAnnotationOverlay();
+        }
+
+        vm.editClicked = function(key, index) {
+            vm.editingAnnotation = true;
+            vm.showAnnotationOverlay = true;
+            vm.selected.matonto.currentAnnotationKey = key;
+            vm.selected.matonto.currentAnnotationValue = vm.selected[key][index]['@value'];
+            vm.selected.matonto.currentAnnotationIndex = index;
+        }
+
+        vm.editAnnotation = function() {
+            annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationIndex);
+            resetAnnotationOverlay();
+        }
+
+        vm.removeAnnotation = function(key, index) {
+            annotationManagerService.remove(vm.selected, key, index);
+        }
+
+        vm.getAnnotations = function(query) {
+            return annotationManagerService.searchList(vm.selected.matonto.annotations, query);
+        }
+
+        vm.getPattern = function() {
+            return annotationManagerService.getPattern();
         }
     }
 })();
