@@ -1,8 +1,8 @@
 package org.matonto.ontology.core.impl.owlapi;
 
 import java.util.Optional;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -13,25 +13,73 @@ public class SimpleOntologyId implements OntologyId {
 
 	private Resource identifier;
 	private OWLOntologyID ontologyId;
-
-    public SimpleOntologyId(ValueFactory factory) {
-        this.identifier = factory.createBNode();
-        ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(), com.google.common.base.Optional.absent());
-    }
-
-	public SimpleOntologyId(ValueFactory factory, @Nonnull IRI ontologyIRI) {
-	    org.semanticweb.owlapi.model.IRI oIRI = SimpleOntologyValues.owlapiIRI(ontologyIRI);
-		ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.absent());
-		this.identifier = factory.createIRI(ontologyIRI.toString());
+	private ValueFactory factory;
+	
+	public static class Builder {
+	    private Resource identifier;
+	    private IRI ontologyIRI;
+	    private IRI versionIRI;
+        private ValueFactory factory;
+	    
+	    public Builder(ValueFactory factory) {
+	        this.factory = factory;
+	    }
+	    
+	    public Builder id(Resource identifier) {
+	        this.identifier = identifier;
+	        return this;
+	    }
+	    
+	    public Builder ontologyIRI(IRI ontologyIRI) {
+	        this.ontologyIRI = ontologyIRI;
+	        return this;
+	    }
+	    
+	    public Builder versionIRI(IRI versionIRI) {
+            this.versionIRI = versionIRI;
+            return this;
+        }
+	    
+	    public SimpleOntologyId build() {
+	        return new SimpleOntologyId(this);
+	    }
 	}
 
-	public SimpleOntologyId(ValueFactory factory, @Nonnull IRI ontologyIRI, @Nonnull IRI versionIRI) {
-	    org.semanticweb.owlapi.model.IRI oIRI =SimpleOntologyValues.owlapiIRI(ontologyIRI);
-	    org.semanticweb.owlapi.model.IRI vIRI = SimpleOntologyValues.owlapiIRI(versionIRI);
-        ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
-        this.identifier = factory.createIRI(versionIRI.toString());
+	private SimpleOntologyId(Builder b) {
+        if(b.versionIRI != null && b.ontologyIRI==null)
+            throw new MatontoOntologyException("ontology IRI must not be null if version IRI is not null");
+        
+	    this.factory = b.factory;
+	    org.semanticweb.owlapi.model.IRI oIRI = null;
+	    org.semanticweb.owlapi.model.IRI vIRI = null;
+	    
+	    if(b.versionIRI != null)
+	        vIRI = SimpleOntologyValues.owlapiIRI(b.versionIRI);
+	    if(b.ontologyIRI != null)
+	        oIRI = SimpleOntologyValues.owlapiIRI(b.ontologyIRI);
+	    
+	    if(vIRI != null) {
+	        ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.of(vIRI));
+	        this.identifier = factory.createIRI(b.versionIRI.toString());
+	    }
+	    
+	    else if(oIRI != null) {
+	        ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI), com.google.common.base.Optional.absent());
+	        this.identifier = factory.createIRI(b.ontologyIRI.toString());
+	    }
+	    
+	    else if(b.identifier != null) {
+	        this.identifier = b.identifier;
+	        ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(), com.google.common.base.Optional.absent());
+	    }
+	    
+	    else {
+	        this.identifier = factory.createBNode();
+	        ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(), com.google.common.base.Optional.absent());
+	    }
+	        
 	}
-		
+
 	
 	@Override
 	public Optional<IRI> getOntologyIRI() {
@@ -53,7 +101,9 @@ public class SimpleOntologyId implements OntologyId {
             return Optional.empty();
         }
 	}
+	
 
+    @Override
 	public Resource getOntologyIdentifier() {
 		return identifier;
 	}
@@ -64,16 +114,7 @@ public class SimpleOntologyId implements OntologyId {
 	
 	@Override
 	public String toString() {
-		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = ontologyId.getVersionIRI();
-		com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = ontologyId.getOntologyIRI();
-
-        if (vIRI.isPresent()) {
-            return vIRI.get().toString();
-        } else if (oIRI.isPresent()) {
-            return oIRI.get().toString();
-        } else {
-            return identifier.stringValue();
-        }
+        return ontologyId.toString();
 	}
 	
 	@Override

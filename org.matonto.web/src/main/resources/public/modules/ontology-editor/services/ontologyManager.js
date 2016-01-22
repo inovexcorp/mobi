@@ -2,17 +2,34 @@
     'use strict';
 
     angular
-        .module('ontologyManager', [])
+        .module('ontologyManager', ['removeNamespace', 'beautify'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$http', '$q', '$timeout'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter'];
 
-        function ontologyManagerService($http, $q, $timeout) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter) {
             var self = this,
-                prefix = '/matonto/rest/ontology',
+                prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
                 defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
-                defaultXsd = 'http://www.w3.org/2001/XMLSchema#';
+                defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
+                defaultAnnotations = {
+                    'http://www.w3.org/2000/01/rdf-schema#': [
+                        'seeAlso',
+                        'isDefinedBy'
+                    ],
+                    'http://www.w3.org/2002/07/owl#': [
+                        'deprecated',
+                        'versionInfo',
+                        'priorVersion',
+                        'backwardCompatibleWith',
+                        'incompatibleWith'
+                    ],
+                    'http://purl.org/dc/elements/1.1/': [
+                        'description',
+                        'title'
+                    ]
+                };
 
             self.newItems = {};
             self.ontologies = [];
@@ -20,30 +37,56 @@
             initialize();
 
             function initialize() {
-                $http.get(prefix + '/getAllOntologies')
-                    .then(function(response) {
-                        var i = response.data.length;
-                        while(i--) {
-                            addOntology(response.data[i]);
+                $rootScope.showSpinner = true;
+
+                var promises = [],
+                    config = {
+                        params: {
+                            rdfFormat: 'jsonld'
                         }
+                    };
+
+                $http.get(prefix + '/getAllOntologies', config)
+                    .then(function(response) {
+                        var i = 0;
+
+                        while(i < response.data.length) {
+                            promises.push(addOntology(response.data[i].ontology, response.data[i].ontologyId));
+                            i++;
+                        }
+                        $q.all(promises)
+                            .then(function(response) {
+                                $rootScope.showSpinner = false;
+                            });
+                    }, function(response) {
+                        console.log('Error in initialize:', response);
                     });
             }
 
-            function restructure(flattened, context, prefixes) {
-                var j, obj, type, domain, addToClass, removeNamespace, initOntology, chooseIcon, objToArr, annotations,
+            function restructure(flattened, ontologyId, context, prefixes) {
+                var j, obj, type, domain, annotations,
+                    addToClass, initOntology, chooseIcon, objToArr, addDefaultAnnotations,
                     ontology = {
                         matonto: {
                             noDomains: [],
                             owl: prefixes.owl,
                             rdfs: prefixes.rdfs,
                             annotations: [],
-                            currentAnnotationSelect: 'default'
+                            currentAnnotationSelect: 'default',
+                            ontologyId: ontologyId
                         }
                     },
                     classes = [],
                     properties = [],
+                    others = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
-                    i = list.length;
+                    i = 0,
+                    deferred = $q.defer(),
+                    config = {
+                        params: {
+                            ontologyIdStr: ontologyId
+                        }
+                    };
 
                 initOntology = function(ontology, obj) {
                     var len = obj['@id'].length,
@@ -61,48 +104,33 @@
                             originalId: ['@id']
                         }
                     }
-                    // TODO: replace with actual annotation list from web service
-                    obj.matonto.annotations = [
-                        prefixes.rdfs + 'seeAlso',
-                        prefixes.rdfs + 'isDefinedBy',
-                        prefixes.owl + 'deprecated',
-                        prefixes.owl + 'versionInfo',
-                        prefixes.owl + 'priorVersion',
-                        prefixes.owl + 'backwardCompatibleWith',
-                        prefixes.owl + 'incompatibleWith',
-                        'http://purl.org/dc/elements/1.1/description',
-                        'http://purl.org/dc/elements/1.1/title'
-                    ];
                     angular.merge(ontology, obj);
                 }
 
-                removeNamespace = function(id) {
-                    var colon = id.lastIndexOf(':') + 1,
-                        result = id.substring(colon),
-                        hash = id.indexOf('#') + 1,
-                        slash = id.lastIndexOf('/') + 1;
-                    if(hash !== 0) {
-                        result = id.substring(hash);
-                    } else if(slash !== 0) {
-                        result = id.substring(slash);
-                    }
-                    return result;
-                }
-
-                chooseIcon = function(property, rdfs, xsd) {
+                chooseIcon = function(property) {
                     var icon = '',
-                        range = property[rdfs + 'range'];
+                        range = property[prefixes.rdfs + 'range'];
                     // assigns the icon based on the range
                     if(range) {
-                        switch(range['@id']) {
-                            // TODO: pick better icon for Literal? since it can be for Integers as well
-                            case xsd + 'string':
-                            case rdfs + 'Literal':
-                                icon = 'fa-font';
-                                break;
-                            default:
-                                icon = 'fa-link';
-                                break;
+                        if(range.length === 1) {
+                            switch(range[0]['@id']) {
+                                // TODO: pick better icon for Literal? since it can be for Integers as well
+                                case prefixes.xsd + 'string':
+                                case prefixes.rdfs + 'Literal':
+                                    icon = 'fa-font';
+                                    break;
+                                case prefixes.xsd + 'double':
+                                case prefixes.xsd + 'nonNegativeInteger':
+                                    icon = 'fa-calculator';
+                                    break;
+                                default:
+                                    icon = 'fa-link';
+                                    break;
+                            }
+                        }
+                        // TODO: icon for multiple ranges
+                        else {
+                            icon = 'fa-cubes';
                         }
                     }
                     // TODO: figure out what to do if there isn't a range
@@ -113,7 +141,7 @@
                     return icon;
                 }
 
-                while(i--) {
+                while(i < list.length) {
                     obj = list[i];
                     type = obj['@type'] ? obj['@type'][0] : undefined;
 
@@ -127,48 +155,55 @@
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = removeNamespace(obj['@id']);
+                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             classes.push(obj);
                             break;
                         case prefixes.owl + 'DatatypeProperty':
                         case prefixes.owl + 'ObjectProperty':
+                        case prefixes.rdfs + 'Property':
                             obj.matonto = {
-                                icon: chooseIcon(obj, prefixes.rdfs, prefixes.xsd),
+                                icon: chooseIcon(obj),
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = removeNamespace(obj['@id']);
+                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             properties.push(obj);
                             break;
+                        default:
+                            others.push(obj);
+                            break;
                     }
+                    i++;
                 }
 
                 addToClass = function(id, property) {
-                    var i = classes.length;
-                    while(i--) {
+                    var i = 0;
+                    while(i < classes.length) {
                         if(classes[i]['@id'] === id) {
                             classes[i].matonto.properties.push(property);
                             break;
                         }
+                        i++;
                     }
                 }
 
-                i = properties.length;
-                while(i--) {
+                i = 0;
+                while(i < properties.length) {
                     domain = properties[i][prefixes.rdfs + 'domain'];
 
                     if(domain) {
                         if(Object.prototype.toString.call(domain) === '[object Array]') {
                             j = domain.length;
                             while(j--) {
-                                addToClass(removeNamespace(domain[j]['@id']), properties[i]);
+                                addToClass($filter('removeNamespace')(domain[j]['@id']), properties[i]);
                             }
                         } else {
-                            addToClass(removeNamespace(domain['@id']), properties[i]);
+                            addToClass($filter('removeNamespace')(domain['@id']), properties[i]);
                         }
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);
                     }
+                    i++;
                 }
 
                 objToArr = function(obj) {
@@ -184,12 +219,64 @@
 
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
-                return ontology;
+                ontology.matonto.others = others;
+
+                addDefaultAnnotations = function(annotations) {
+                    var index, prop, i,
+                        exclude = {
+                            'http://www.w3.org/2000/01/rdf-schema#': [
+                                'label',
+                                'comment'
+                            ]
+                        };
+
+                    for(prop in exclude) {
+                        i = 0;
+                        while(i < exclude[prop].length) {
+                            if(annotations.hasOwnProperty(prop)) {
+                                index = annotations[prop].indexOf(exclude[prop][i]);
+                                if(index !== -1) {
+                                    annotations[prop].splice(index, 1);
+                                }
+                            }
+                            i++;
+                        }
+                    }
+
+                    for(prop in defaultAnnotations) {
+                        i = 0;
+                        while(i < defaultAnnotations[prop].length) {
+                            if(annotations.hasOwnProperty(prop)) {
+                                index = annotations[prop].indexOf(defaultAnnotations[prop][i]);
+                                if(index === -1) {
+                                    annotations[prop].push(defaultAnnotations[prop][i]);
+                                }
+                            } else {
+                                annotations[prop] = defaultAnnotations[prop];
+                                break;
+                            }
+                            i++;
+                        }
+                    }
+
+                    return annotations;
+                }
+
+                $http.get(prefix + '/getAllIRIs', config)
+                    .then(function(response) {
+                        ontology.matonto.annotations = addDefaultAnnotations(response.data[0].annotationProperties);
+                        deferred.resolve(ontology);
+                    }, function(response) {
+                        deferred.reject(response);
+                    });
+
+                return deferred.promise;
             }
 
-            function addOntology(ontology) {
+            function addOntology(ontology, ontologyId) {
                 var getPrefixes,
-                    context = ontology['@context'] || {};
+                    context = ontology['@context'] || {},
+                    deferred = $q.defer();
                 ontology = ontology['@graph'] || ontology;
 
                 getPrefixes = function(context) {
@@ -219,8 +306,15 @@
 
                 }
 
-                // TODO: integrate with latest develop ontology changes which flatten the JSON in the service layer
-                self.ontologies.push(restructure(ontology, context, getPrefixes(context)));
+                restructure(ontology, ontologyId, context, getPrefixes(context))
+                    .then(function(response) {
+                        self.ontologies.push(response);
+                        deferred.resolve(response);
+                    }, function(response) {
+                        //TODO: handle error scenario
+                        deferred.reject('something went wrong');
+                    });
+                return deferred.promise;
             }
 
             self.getList = function() {
@@ -242,18 +336,7 @@
                             owl: 'owl:',
                             delimiter: '#',
                             classes: [],
-                            // TODO: get actual annotations from webservice
-                            annotations: [
-                                'rdfs:seeAlso',
-                                'rdfs:isDefinedBy',
-                                'owl:deprecated',
-                                'owl:versionInfo',
-                                'owl:priorVersion',
-                                'owl:backwardCompatibleWith',
-                                'owl:incompatibleWith',
-                                'http://purl.org/dc/elements/1.1/description',
-                                'http://purl.org/dc/elements/1.1/title'
-                            ],
+                            annotations: defaultAnnotations,
                             currentAnnotationSelect: 'default',
                             context: [
                                 { key: 'owl', value: defaultOwl },
@@ -315,9 +398,39 @@
                 return result;
             }
 
-            self.upload = function(isValid, file, namespace, localName) {
+            self.delete = function(ontologyId, state) {
+                if(state.editor === 'ontology-editor' && state.oi !== -1) {
+                    $rootScope.showSpinner = true;
+                    var config = {
+                            params: {
+                                ontologyIdStr: ontologyId
+                            }
+                        },
+                        deferred = $q.defer(),
+                        error = function(response) {
+                            deferred.reject(response.data.error);
+                            $rootScope.showSpinner = false;
+                        };
+
+                    $http.get(prefix + '/deleteOntology', config)
+                        .then(function(response) {
+                            if(response.data.deleted) {
+                                self.ontologies.splice(state.oi, 1);
+                                deferred.resolve(response);
+                                $rootScope.showSpinner = false;
+                            } else {
+                                error(response);
+                            }
+                        }, function(response) {
+                            error(response);
+                        });
+
+                    return deferred.promise;
+                }
+            }
+
+            self.upload = function(isValid, file) {
                 if(isValid && file) {
-                    // sets up the configurations for the post method
                     var fd = new FormData(),
                         config = {
                             transformRequest: angular.identity,
@@ -325,44 +438,60 @@
                                 'Content-Type': undefined
                             }
                         };
-                    // adds the data to the FormData
+
                     fd.append('file', file);
-                    fd.append('ontologyIdStr', namespace + '#' + localName);
-                    // uploads the ontology file
+
                     return $http.post(prefix + '/uploadOntology', fd, config);
                 }
             }
 
-            self.get = function(namespace, localName) {
+            self.get = function(ontologyId) {
                 var config = {
                         params: {
-                            ontologyIdStr: namespace + '#' + localName,
-                            rdfFormat: 'json-ld'
+                            ontologyIdStr: ontologyId,
+                            rdfFormat: 'jsonld'
                         }
                     };
 
-                // TODO: look into how Joy is getting the json-ld format
-                return $http.get(prefix + '/getOntology', config)
-                    .then(function(response) {
-                        if(!response.data.error) {
-                            addOntology(response.data.ontology);
-                        } else {
-                            // TODO: handle error better
-                            console.warn(response.data.error);
-                        }
-                    });
+                return $http.get(prefix + '/getOntology', config);
             }
 
-            self.uploadThenGet = function(isValid, file, namespace, localName) {
-                return self.upload(isValid, file, namespace, localName)
+            self.uploadThenGet = function(isValid, file) {
+                $rootScope.showSpinner = true;
+
+                var ontologyId,
+                    deferred = $q.defer(),
+                    error = function(response) {
+                        deferred.reject(response);
+                        $rootScope.showSpinner = false;
+                    };
+
+                self.upload(isValid, file)
                     .then(function(response) {
-                        if(!response.data.error) {
-                            return self.get(namespace, localName);
+                        if(response.data.persisted) {
+                            ontologyId = response.data.ontologyId;
+                            self.get(ontologyId)
+                                .then(function(response) {
+                                    if(!response.data.error) {
+                                        addOntology(response.data.ontology, ontologyId)
+                                            .then(function(response) {
+                                                deferred.resolve(response);
+                                                $rootScope.showSpinner = false;
+                                            });
+                                    } else {
+                                        error(response);
+                                    }
+                                }, function(response) {
+                                    error(response);
+                                });
                         } else {
-                            // TODO: handle error better
-                            console.warn(response.data.error);
+                            error(response);
                         }
+                    }, function(response) {
+                        error(response);
                     });
+
+                return deferred.promise;
             }
 
             self.edit = function(isValid, obj, state) {

@@ -26,4 +26,5 @@ public interface OntologyId {
 	 * @return The Resource that represents the ontology identifier.
      */
 	Resource getOntologyIdentifier();
+	
 }
