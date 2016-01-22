@@ -167,38 +167,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
-            JSONArray array = new JSONArray();
-
-            JSONObject annotations = new JSONObject();
-            annotations.put("annotationProperties", getAnnotationArray(ontology));
-            array.add(annotations);
-
-            JSONObject classes = new JSONObject();
-            classes.put("classes", getClassArray(ontology));
-            array.add(classes);
-
-            JSONObject datatypes = new JSONObject();
-            datatypes.put("datatypes", getDatatypeArray(ontology));
-            array.add(datatypes);
-
-            JSONObject objectProperties = new JSONObject();
-            objectProperties.put("objectProperties", getObjectPropertyArray(ontology));
-            array.add(objectProperties);
-
-            JSONObject dataProperties = new JSONObject();
-            dataProperties.put("dataProperties", getDataPropertyArray(ontology));
-            array.add(dataProperties);
-
-            JSONObject namedIndividuals = new JSONObject();
-            namedIndividuals.put("namedIndividuals", getNamedIndividualArray(ontology));
-            array.add(namedIndividuals);
-            
-            JSONObject json = new JSONObject();
-            json.put(ontologyIdStr, array);
-            return json;
-        });
-        
+        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
         return Response.status(200).entity(result.toString()).build();
     }
 
@@ -245,34 +214,7 @@ public class OntologyRestImpl implements OntologyRest {
             json.put("ontology id", ontologyIdStr);
             JSONArray ontoArray = new JSONArray();
             for(Ontology ontology : importedOntologies) {
-                JSONObject object = new JSONObject();
-                object.put("imported ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-                JSONArray array = new JSONArray();
-                
-                JSONObject annotations = new JSONObject();
-                annotations.put("annotationProperties", getAnnotationArray(ontology));
-                array.add(annotations);
-    
-                JSONObject classes = new JSONObject();
-                classes.put("classes", getClassArray(ontology));
-                array.add(classes);
-    
-                JSONObject datatypes = new JSONObject();
-                datatypes.put("datatypes", getDatatypeArray(ontology));
-                array.add(datatypes);
-    
-                JSONObject objectProperties = new JSONObject();
-                objectProperties.put("objectProperties", getObjectPropertyArray(ontology));
-                array.add(objectProperties);
-    
-                JSONObject dataProperties = new JSONObject();
-                dataProperties.put("dataProperties", getDataPropertyArray(ontology));
-                array.add(dataProperties);
-    
-                JSONObject namedIndividuals = new JSONObject();
-                namedIndividuals.put("namedIndividuals", getNamedIndividualArray(ontology));
-                array.add(namedIndividuals);
-                object.put("iris", array);
+                JSONObject object = getAllIRIs(ontology);
                 ontoArray.add(object);
             }
             json.put("imported ontologies", ontoArray);
@@ -614,5 +556,37 @@ public class OntologyRestImpl implements OntologyRest {
             default:
                 return ontology.asJsonLD().toString();
         }
+    }
+    
+    private JSONObject getAllIRIs(Ontology ontology) {
+        JSONArray array = new JSONArray();
+
+        JSONObject annotations = new JSONObject();
+        annotations.put("annotationProperties", getAnnotationArray(ontology));
+        array.add(annotations);
+
+        JSONObject classes = new JSONObject();
+        classes.put("classes", getClassArray(ontology));
+        array.add(classes);
+
+        JSONObject datatypes = new JSONObject();
+        datatypes.put("datatypes", getDatatypeArray(ontology));
+        array.add(datatypes);
+
+        JSONObject objectProperties = new JSONObject();
+        objectProperties.put("objectProperties", getObjectPropertyArray(ontology));
+        array.add(objectProperties);
+
+        JSONObject dataProperties = new JSONObject();
+        dataProperties.put("dataProperties", getDataPropertyArray(ontology));
+        array.add(dataProperties);
+
+        JSONObject namedIndividuals = new JSONObject();
+        namedIndividuals.put("namedIndividuals", getNamedIndividualArray(ontology));
+        array.add(namedIndividuals);
+        
+        JSONObject json = new JSONObject();
+        json.put(ontology.getOntologyId().getOntologyIdentifier().stringValue(), array);
+        return json;
     }
 }
