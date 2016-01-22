@@ -5,19 +5,16 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.2-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>ontology.rest</artifactId>
+    <version>${matonto.ontology.rest.version}</version>
 
     <packaging>bundle</packaging>
     <name>${project.groupId}.${project.artifactId}</name>
-
-    <properties>
-        <jersey.stack.version>1.19</jersey.stack.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -45,18 +42,22 @@
 	       <scope>provided</scope>
         </dependency>
 
-        <!-- Jersey dependencies -->
         <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-core</artifactId>
-            <version>${jersey.stack.version}</version>
-            <scope>provided</scope>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>2.0</version>
         </dependency>
+
         <dependency>
-            <groupId>com.sun.jersey.contribs</groupId>
-            <artifactId>jersey-multipart</artifactId>
-            <version>${jersey.stack.version}</version>
-            <scope>provided</scope>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+            <version>2.22.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>1.5.6</version>
         </dependency>
 
         <!-- Openrdf Sesame dependencies -->
@@ -65,24 +66,9 @@
             <artifactId>sesame-runtime-osgi</artifactId>
             <version>${ontology.openrdf.version}</version>
         </dependency>
-
     </dependencies>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>2.6</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-war-plugin</artifactId>
-                    <version>2.3</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -93,15 +79,14 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Ontology Service - Rest</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package></Export-Package>
+                        <Service-Component>*</Service-Component>
                         <Import-Package>
-                            com.sun.jersey.core.header.*,
-                            com.sun.jersey.api.core,
-                            com.sun.jersey.spi.container.servlet, 
+                            <!-- For some reason BND is not including these -->
+                            org.matonto.ontology.core.api.classexpression,
+                            org.matonto.ontology.core.api.datarange,
                             *
                         </Import-Package>
-                        <Web-ContextPath>matontorest/ontology</Web-ContextPath>
-                        <_wab>src/main/webapp</_wab>
-                        <Service-Component>*</Service-Component>
                     </instructions>
                 </configuration>
             </plugin>

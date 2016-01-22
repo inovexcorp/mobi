@@ -1,6 +1,10 @@
 package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.api.axiom.Axiom;
+import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -19,12 +23,44 @@ public interface Ontology {
 	OutputStream asOwlXml() throws MatontoOntologyException;
 	
 	OutputStream asJsonLD() throws MatontoOntologyException;
-	
+
+	/**
+	 * Returns the OntologyID that describes the Ontology IRI, Version IRI,
+     * and Ontology identifier. Note: If the serialized ontology contains an
+     * Ontology IRI or Version IRI, it must match the Ontology and Version IRIs in
+     * this OntologyId object.
+     *
+	 * @return the OntologyID that describes the Ontology IRI, Version IRI,
+     * and Ontology identifier
+     */
 	OntologyId getOntologyId();
 	
-	Set<Annotation> getAnnotations();
+	/**
+	 * Gets the ontology annotations, excluding annotations for other objects such as classes and entities
+	 * 
+	 * @return ontology annotations
+	 */
+	Set<Annotation> getOntologyAnnotations();
+		
+	/**
+     * Gets all the annotations in the ontology, excluding ontology annotations, annotations for other objects such as classes 
+     * and entities
+     * 
+     * @return ontology annotations
+     */
+	Set<Annotation> getAllAnnotations();
+	
+	Set<OClass> getAllClasses();
 
     Set<Axiom> getAxioms();
+    
+    Set<Datatype> getAllDatatypes();
+    
+    Set<ObjectProperty> getAllObjectProperties();
+    
+    Set<DataProperty> getAllDataProperties();
+    
+    Set<Individual> getAllIndividuals();
 
 	/**
 	 * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects, 
