@@ -50,6 +50,7 @@
         <matonto.semantic.service.version>1.0.0</matonto.semantic.service.version>
         <matonto.swagger.version>1.0.0</matonto.swagger.version>
         <matonto.web.version>1.1.1-SNAPSHOT</matonto.web.version>
+        <matonto.swagger.ui.version>1.0.0-SNAPSHOT</matonto.swagger.ui.version>
     </properties>
 
     <dependencyManagement>
