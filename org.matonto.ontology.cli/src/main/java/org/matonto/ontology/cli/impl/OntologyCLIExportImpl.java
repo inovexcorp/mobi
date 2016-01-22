@@ -11,7 +11,9 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.karaf.shell.api.action.Argument;
@@ -27,6 +29,7 @@ public class OntologyCLIExportImpl implements Action
 {
     @Reference
 	private static OntologyManager manager;
+    private static ValueFactory factory;
 	private static final Logger LOG = LoggerFactory.getLogger(OntologyCLIExportImpl.class);
     
 
@@ -39,11 +42,14 @@ public class OntologyCLIExportImpl implements Action
 	{
 		manager = null;
 	}
-	
-	protected OntologyManager getOntologyManager()
-	{
-		return manager;
-	}
+
+    protected void setValueFactory(final ValueFactory vf) {
+        factory = vf;
+    }
+    
+    protected void unsetValueFactory(final ValueFactory vf) {
+        factory = null;
+    }
 	
 	//Command Line Arguments and Options	
 	@Argument(index = 0, name = "ontologyId", description = "The ontology id/context id for the ontology named graph to be exported", required = true, multiValued = false)
@@ -93,26 +99,38 @@ public class OntologyCLIExportImpl implements Action
 			if (!newFile.exists())
 				newFile.createNewFile();
 			
-			IRI iri = manager.createOntologyIRI(ontologyId);
-			OntologyId id = manager.createOntologyId(iri);
-			Optional<Ontology> ontology = manager.retrieveOntology(id);
+			IRI iri = factory.createIRI(ontologyId);
+			Optional<Ontology> optOntology = manager.retrieveOntology(iri);
+			Ontology ontology = null;
 			
-			if(ontology.isPresent()) 
-			{
+			if(optOntology.isPresent()) 
+			    ontology = optOntology.get();
+			
+			else {
+	            BNode bnode = factory.createBNode(ontologyId);
+	            optOntology = manager.retrieveOntology(bnode);
+	            if(optOntology.isPresent()) {
+	                ontology = optOntology.get();
+	            }
+			}
+			   
+			if(ontology != null) {
 				if(dataFormat.equalsIgnoreCase("rdf"))
-					outputStream = ontology.get().asRdfXml();
+					outputStream = ontology.asRdfXml();
 				
 				else if(dataFormat.equalsIgnoreCase("owl"))
-					outputStream = ontology.get().asOwlXml();
+					outputStream = ontology.asOwlXml();
 				
 				else
-					outputStream = ontology.get().asTurtle();
+					outputStream = ontology.asTurtle();
 				
 				BufferedWriter bw = new BufferedWriter(new FileWriter(newFile.getAbsoluteFile()));
 				bw.write(outputStream.toString());
 				bw.flush();
 				bw.close();
 				exported = true;
+			} else {
+			    System.out.println("Ontology ID does not exist");
 			}
 			
 		} catch (IOException fileError) {

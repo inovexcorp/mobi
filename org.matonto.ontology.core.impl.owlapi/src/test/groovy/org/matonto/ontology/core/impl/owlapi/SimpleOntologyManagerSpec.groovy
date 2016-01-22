@@ -46,6 +46,7 @@ class SimpleOntologyManagerSpec extends Specification {
         def manager = [
                 ontologyExists: { o -> return false }
         ] as SimpleOntologyManager
+    
         manager.setRepositoryManager(repositoryManager)
         manager.setValueFactory(factory)
         manager.setTransformer(sesameTransformer)

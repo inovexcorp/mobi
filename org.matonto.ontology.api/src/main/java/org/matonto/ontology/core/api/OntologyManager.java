@@ -9,6 +9,8 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.repository.api.Repository;
 
 
 public interface OntologyManager {
@@ -21,7 +23,7 @@ public interface OntologyManager {
 	
 	Ontology createOntology(InputStream inputStream) throws MatontoOntologyException;
 	
-	Optional<Ontology> retrieveOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException;
+	Optional<Ontology> retrieveOntology(@Nonnull Resource resource) throws MatontoOntologyException;
 
 	/**
 	 * Persists Ontology object in the repository, and returns true if successfully persisted
@@ -46,19 +48,17 @@ public interface OntologyManager {
      * does not exist in the repository or if an owlapi exception or sesame exception is caught.
      * @throws IllegalStateException - if the repository is null
      */
-	boolean deleteOntology(@Nonnull OntologyId ontologyId) throws MatontoOntologyException;
+	boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
 
-	Map<OntologyId, String> getOntologyRegistry() throws MatontoOntologyException;
+	Map<Resource, String> getOntologyRegistry() throws MatontoOntologyException;
 	
 	OntologyId createOntologyId();
+	
+	OntologyId createOntologyId(Resource resource);
 	
 	OntologyId createOntologyId(IRI ontologyIRI);
 	
 	OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
-	
-	IRI createOntologyIRI(String ns, String ln);
-	
-	IRI createOntologyIRI(String iriString);
 
 	SesameTransformer getTransformer();
 }
