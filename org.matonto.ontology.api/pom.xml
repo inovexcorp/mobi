@@ -12,7 +12,6 @@
 
     <artifactId>ontology.api</artifactId>
     <version>${matonto.ontology.api.version}</version>
-
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
