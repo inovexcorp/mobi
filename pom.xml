@@ -38,6 +38,7 @@
         <module>org.matonto.persistence.utils</module>
         <module>org.matonto.feature</module>
         <module>org.matonto.ontology.utils</module>
+        <module>org.matonto.swagger.ui</module>
     </modules>
 
     <properties>
