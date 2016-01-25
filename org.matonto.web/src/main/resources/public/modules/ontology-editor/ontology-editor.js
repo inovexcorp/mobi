@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'ngTagsInput'])
+        .module('ontology-editor', ['file-input', 'ngTagsInput', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
@@ -38,7 +38,7 @@
         }
 
         vm.deleteOntology = function() {
-            ontologyManagerService.delete(vm.selected.matonto.ontologyId, vm.state)
+            ontologyManagerService.delete(vm.selected, vm.state)
                 .then(function(response) {
                     stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('default', undefined, undefined, undefined);
@@ -61,6 +61,15 @@
             stateManagerService.setStateToNew(vm.state, vm.ontologies);
             stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
+        }
+
+        vm.editIRI = function() {
+            ontologyManagerService.editIRI(vm.selected, vm.ontologies[vm.state.oi]);
+            vm.showIriOverlay = false;
+        }
+
+        vm.typeMatch = function(property, owl, type) {
+            return ontologyManagerService.typeMatch(property, owl, type);
         }
 
         /* Prefix (Context) Management */

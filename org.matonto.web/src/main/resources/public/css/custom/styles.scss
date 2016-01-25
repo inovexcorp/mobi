@@ -10,6 +10,11 @@ body {
     right: 0;
     top: 0;
 
+    /* All <a> tags have the pointer cursor */
+    a {
+        cursor: pointer;
+    }
+
     &.beta {
         /* adds extra space at the top for the banner */
         &:not(.left-nav) > .view-container {

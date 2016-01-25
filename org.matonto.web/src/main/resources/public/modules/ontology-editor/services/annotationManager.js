@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('annotationManager', ['removeNamespace'])
+        .module('annotationManager', ['splitIRI'])
         .service('annotationManagerService', annotationManagerService)
         .filter('showAnnotations', showAnnotations)
         /*.filter('hideAnnotations', hideAnnotations)*/;
@@ -46,7 +46,7 @@
                     obj[temp] = [item];
                 }
 
-                stripped = $filter('removeNamespace')(temp);
+                stripped = $filter('splitIRI')(temp);
 
                 for(prop in matonto.annotations) {
                     if(temp.indexOf(prop) !== -1) {
