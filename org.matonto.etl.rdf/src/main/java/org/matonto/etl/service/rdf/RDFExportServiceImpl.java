@@ -113,7 +113,7 @@ public class RDFExportServiceImpl implements RDFExportService {
         return file;
     }
 
-    org.openrdf.model.Model sesameModel(Model m){
+    private org.openrdf.model.Model sesameModel(Model m){
         Set<org.openrdf.model.Statement> stmts = m.stream()
                 .map(Values::sesameStatement)
                 .collect(Collectors.toSet());

@@ -113,7 +113,7 @@ public class CSV{
         return json;
     }
 
-    Model sesameModel(org.matonto.rdf.api.Model m){
+    private Model sesameModel(org.matonto.rdf.api.Model m){
         Set<org.openrdf.model.Statement> stmts = m.stream()
                 .map(Values::sesameStatement)
                 .collect(Collectors.toSet());
