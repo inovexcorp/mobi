@@ -37,7 +37,7 @@
         <matonto.feature.version>1.0.0</matonto.feature.version>
         <matonto.itests.version>1.0.0</matonto.itests.version>
         <matonto.ontology.api.version>2.1.0-SNAPSHOT</matonto.ontology.api.version>
-        <matonto.ontology.cli.version>1.0.0</matonto.ontology.cli.version>
+        <matonto.ontology.cli.version>2.0.0</matonto.ontology.cli.version>
         <matonto.ontology.core.impl.owlapi.version>2.1.0-SNAPSHOT</matonto.ontology.core.impl.owlapi.version>
         <matonto.ontology.rest.version>2.1.0-SNAPSHOT</matonto.ontology.rest.version>
         <matonto.ontology.utils.version>1.0.0</matonto.ontology.utils.version>

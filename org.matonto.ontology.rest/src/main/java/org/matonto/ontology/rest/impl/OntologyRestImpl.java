@@ -226,115 +226,43 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getAnnotationsInImportedOntologies(String ontologyIdStr) {
-        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies -> {
-            JSONObject json = new JSONObject();
-            json.put("ontology id", ontologyIdStr);
-            JSONArray ontoArray = new JSONArray();
-            for(Ontology ontology : importedOntologies) {
-                JSONObject annotations = new JSONObject();
-                annotations.put("imported ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-                annotations.put("annotationProperties", getAnnotationArray(ontology));
-                ontoArray.add(annotations);
-            }
-            json.put("imported ontologies", ontoArray);
-            return json;
-        });
-
+        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies ->
+                applyToImportedOntologies(ontologyIdStr, importedOntologies, "annotationProperties", this::getAnnotationArray));
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getClassesInImportedOntologies(String ontologyIdStr) {
-        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies -> {
-            JSONObject json = new JSONObject();
-            json.put("ontology id", ontologyIdStr);
-            JSONArray ontoArray = new JSONArray();
-            for(Ontology ontology : importedOntologies) {
-                JSONObject classes = new JSONObject();
-                classes.put("imported ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-                classes.put("classes", getClassArray(ontology));
-                ontoArray.add(classes);
-            }
-            json.put("imported ontologies", ontoArray);
-            return json;
-        });
-
+        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies ->
+                applyToImportedOntologies(ontologyIdStr, importedOntologies, "classes", this::getClassArray));
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDatatypesInImportedOntologies(String ontologyIdStr) {
-        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies -> {
-            JSONObject json = new JSONObject();
-            json.put("ontology id", ontologyIdStr);
-            JSONArray ontoArray = new JSONArray();
-            for(Ontology ontology : importedOntologies) {
-                JSONObject datatypes = new JSONObject();
-                datatypes.put("imported ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-                datatypes.put("datatypes", getDatatypeArray(ontology));
-                ontoArray.add(datatypes);
-            }
-            json.put("imported ontologies", ontoArray);
-            return json;
-        });
-
+        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies ->
+            applyToImportedOntologies(ontologyIdStr, importedOntologies, "datatypes", this::getDatatypeArray));
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getObjectPropertiesInImportedOntologies(String ontologyIdStr) {
-        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies -> {
-            JSONObject json = new JSONObject();
-            json.put("ontology id", ontologyIdStr);
-            JSONArray ontoArray = new JSONArray();
-            for(Ontology ontology : importedOntologies) {
-                JSONObject properties = new JSONObject();
-                properties.put("imported ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-                properties.put("object properties", getObjectPropertyArray(ontology));
-                ontoArray.add(properties);
-            }
-            json.put("imported ontologies", ontoArray);
-            return json;
-        });
-
+        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies ->
+        applyToImportedOntologies(ontologyIdStr, importedOntologies, "objectProperties", this::getObjectPropertyArray));
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDataPropertiesInImportedOntologies(String ontologyIdStr) {
-        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies -> {
-            JSONObject json = new JSONObject();
-            json.put("ontology id", ontologyIdStr);
-            JSONArray ontoArray = new JSONArray();
-            for(Ontology ontology : importedOntologies) {
-                JSONObject properties = new JSONObject();
-                properties.put("imported ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-                properties.put("data properties", getDataPropertyArray(ontology));
-                ontoArray.add(properties);
-            }
-            json.put("imported ontologies", ontoArray);
-            return json;
-        });
-
+        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies ->
+        applyToImportedOntologies(ontologyIdStr, importedOntologies, "dataProperties", this::getDataPropertyArray));
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getNamedIndividualsInImportedOntologies(String ontologyIdStr) {
-        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies -> {
-            JSONObject json = new JSONObject();
-            json.put("ontology id", ontologyIdStr);
-            JSONArray ontoArray = new JSONArray();
-            for(Ontology ontology : importedOntologies) {
-                JSONObject individuals = new JSONObject();
-                individuals.put("imported ontology id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-                individuals.put("named individuals", getNamedIndividualArray(ontology));
-                ontoArray.add(individuals);
-            }
-            json.put("imported ontologies", ontoArray);
-            return json;
-        });
-
+        JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies ->
+        applyToImportedOntologies(ontologyIdStr, importedOntologies, "namedIndividuals", this::getNamedIndividualArray));
         return Response.status(200).entity(result.toString()).build();
     }
 
@@ -587,6 +515,20 @@ public class OntologyRestImpl implements OntologyRest {
         
         JSONObject json = new JSONObject();
         json.put(ontology.getOntologyId().getOntologyIdentifier().stringValue(), array);
+        return json;
+    }
+    
+    private JSONObject applyToImportedOntologies(String ontologyIdStr, Set<Ontology> importedOntologies, String key, Function<Ontology, JSONObject> function) {
+        JSONObject json = new JSONObject();
+        json.put("ontologyId", ontologyIdStr);
+        JSONArray ontoArray = new JSONArray();
+        for (Ontology ontology : importedOntologies) {
+            JSONObject object = new JSONObject();
+            object.put("importedOntologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue());
+            object.put(key, function.apply(ontology));
+            ontoArray.add(object);
+        }
+        json.put("importedOntologies", ontoArray);
         return json;
     }
 }
