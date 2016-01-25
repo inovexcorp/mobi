@@ -93,7 +93,7 @@ public class RDFImportServiceImpl implements RDFImportService {
         }
     }
 
-    Model matontoModel(org.openrdf.model.Model m){
+    private Model matontoModel(org.openrdf.model.Model m){
         Set<Statement> stmts = m.stream()
                 .map(Values::matontoStatement)
                 .collect(Collectors.toSet());

@@ -30,10 +30,10 @@
         <matonto.api.version>1.0.0</matonto.api.version>
         <matonto.distribution.version>1.0.2-SNAPSHOT</matonto.distribution.version>
         <matonto.etl.api.version>2.0.0-SNAPSHOT</matonto.etl.api.version>
-        <matonto.etl.cli.version>2.0.0-SNAPSHOT</matonto.etl.cli.version>
+        <matonto.etl.cli.version>1.0.1-SNAPSHOT</matonto.etl.cli.version>
         <matonto.etl.csv.version>2.0.0-SNAPSHOT</matonto.etl.csv.version>
         <matonto.etl.rdf.version>2.0.0-SNAPSHOT</matonto.etl.rdf.version>
-        <matonto.etl.rest.version>1.1.0-SNAPSHOT</matonto.etl.rest.version>
+        <matonto.etl.rest.version>1.0.1-SNAPSHOT</matonto.etl.rest.version>
         <matonto.feature.version>1.0.0</matonto.feature.version>
         <matonto.itests.version>1.0.0</matonto.itests.version>
         <matonto.ontology.api.version>2.0.0</matonto.ontology.api.version>
