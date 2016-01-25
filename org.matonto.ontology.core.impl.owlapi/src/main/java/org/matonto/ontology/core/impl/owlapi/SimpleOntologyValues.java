@@ -35,8 +35,6 @@ import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,27 +89,7 @@ public class SimpleOntologyValues {
         if(ontology == null)
             return null;
 
-        OWLOntology tOntology = ontology;
-        
-        if(ontology instanceof OWLMutableOntology) {
-            try {
-                OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
-                tOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
-                /*
-                 * copying import declarations is needed.
-                 */
-                Set<OWLImportsDeclaration> declarations = ontology.getImportsDeclarations();
-                for(OWLImportsDeclaration dec : declarations) {
-                    owlManager.makeLoadImportRequest(dec);
-                    owlManager.applyChange(new AddImport(tOntology, dec));
-                }
-
-            } catch (OWLOntologyCreationException e) {
-                throw new MatontoOntologyException("Error in ontology creation", e);
-            }
-        }
-
-        return new SimpleOntology(tOntology, resource, ontologyManager);
+        return new SimpleOntology(ontology, resource, ontologyManager);
     }
     
     public static Ontology matontoOntology(OWLOntology ontology) {

@@ -211,13 +211,13 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getIRIsInImportedOntologies(String ontologyIdStr) {
         JSONObject result = doWithImportedOntologies(ontologyIdStr, importedOntologies -> {
             JSONObject json = new JSONObject();
-            json.put("ontology id", ontologyIdStr);
+            json.put("ontologyId", ontologyIdStr);
             JSONArray ontoArray = new JSONArray();
             for(Ontology ontology : importedOntologies) {
                 JSONObject object = getAllIRIs(ontology);
                 ontoArray.add(object);
             }
-            json.put("imported ontologies", ontoArray);
+            json.put("importedOntologies", ontoArray);
             return json;
         });
         
