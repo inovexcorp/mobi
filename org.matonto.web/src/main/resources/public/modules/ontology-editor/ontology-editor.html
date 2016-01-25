@@ -243,7 +243,6 @@
             </div>
         </aside>
 
-
         <!-- edit/create form section -->
         <section class="col-xs-8">
             <div class="editor boxed">
@@ -367,52 +366,42 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.ci !== -1 ? (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.ci !== -1 ? (vm.selected[ontology.matonto.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
                     </div>
 
                     <!-- basic tab -->
-                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
+                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix" ng-init="ontology = vm.ontologies[vm.state.oi]">
                         <!-- warning message -->
                         <p ng-show="vm.selected.matonto.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
-                        <!-- iri for editing entities -->
-                        <div class="form-group" ng-if="vm.state.ci !== -1">
-                            <label class="control-label">Class IRI <small><a ng-click="vm.showIriOverlay = true;">Edit</a></small></label>
-                            <p class="form-control-static">{{vm.selected['@id']}}</p>
-                        </div>
+                        <!-- static iri -->
+                        <p>
+                            <strong><small class="text-muted">{{vm.selected['@id'] ? vm.selected['@id'] : (vm.selected.matonto.namespace + (vm.selected[ontology.matonto.rdfs + 'label'][0]['@value'] | camelCase:'class'))}} <a ng-click="vm.iriType = 'class'; vm.showIriOverlay = true;">Advanced Options</a></small></strong>
+                        </p>
 
-                        <!-- iri for new entities -->
-                        <div class="form-group" ng-if="vm.state.ci === -1">
-                            <label class="control-label" for="class-iri">Class IRI <small><a ng-click="vm.showIriOverlay = true;">Advanced Options</a></small></label>
-                            <div class="input-group">
-                                <div class="input-group-addon">{{vm.selected.matonto.namespace}}</div>
-                                <input type="text" class="form-control" id="class-iri" name="class-iri" ng-model="vm.selected['@id']">
-                            </div>
+                        <!-- rdfs:label -->
+                        <div class="form-group">
+                            <label class="control-label" for="class-name">Label <small class="text-muted">&lt;{{ontology.matonto.rdfs}}label&gt;</small></label>
+                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[ontology.matonto.rdfs + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- rdfs:subClassOf -->
                         <div class="form-group">
-                            <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}subClassOf&gt;</small></label>
-                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" display-property="@id" placeholder="Add a Class"></tags-input>
-                        </div>
-
-                        <!-- rdfs:label -->
-                        <div class="form-group">
-                            <label class="control-label" for="class-name">Label <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}label&gt;</small></label>
-                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
+                            <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{ontology.matonto.rdfs}}subClassOf&gt;</small></label>
+                            <tags-input ng-model="vm.selected[ontology.matonto.rdfs + 'subClassOf']" display-property="@id" placeholder="Add a Class"></tags-input>
                         </div>
 
                         <!-- rdfs:comment -->
                         <div class="form-group">
-                            <label class="control-label" for="class-comments">Comment <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}comment&gt;</small></label>
-                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <label class="control-label" for="class-comments">Comment <small class="text-muted">&lt;{{ontology.matonto.rdfs}}comment&gt;</small></label>
+                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[ontology.matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- buttons -->
-                        <div ng-show="vm.ontologies[vm.state.oi].classes[vm.state.ci].tab !== 'annotations'" class="btn-container clearfix">
+                        <div ng-show="ontology.classes[vm.state.ci].tab !== 'annotations'" class="btn-container clearfix">
                             <button ng-if="vm.state.ci !== -1" type="button" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid" ng-click="vm.submitEdit(vm.classForm.$valid)"><i class="fa fa-floppy-o"></i> Save</button>
                             <button ng-if="vm.state.ci === -1" type="button" class="btn btn-primary pull-right" ng-disabled="vm.classForm.$invalid" ng-click="vm.submitCreate(vm.classForm.$valid)"><i class="fa fa-plus-circle"></i> Create</button>
                         </div>
@@ -439,23 +428,19 @@
                     </div>
 
                     <!-- basic tab -->
-                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
+                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix" ng-init="ontology = vm.ontologies[vm.state.oi]">
                         <!-- warning message -->
                         <p ng-show="vm.selected.matonto.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
-                        <!-- iri -->
-                        <div class="form-group" ng-if="vm.state.pi !== -1">
-                            <label class="control-label">Property IRI <small><a ng-click="vm.showIriOverlay = true;">Edit</a></small></label>
-                            <p class="form-control-static">{{vm.selected['@id']}}</p>
-                        </div>
+                        <!-- static iri -->
+                        <p>
+                            <strong><small class="text-muted">{{vm.selected['@id'] ? vm.selected['@id'] : (vm.selected.matonto.namespace + (vm.selected[ontology.matonto.rdfs + 'label'][0]['@value'] | camelCase:'property'))}} <a ng-click="vm.iriType = 'property'; vm.showIriOverlay = true;">Advanced Options</a></small></strong>
+                        </p>
 
-                        <!-- iri for new entities -->
-                        <div class="form-group" ng-if="vm.state.pi === -1">
-                            <label class="control-label" for="class-iri">Property IRI <small><a ng-click="vm.showIriOverlay = true;">Advanced Options</a></small></label>
-                            <div class="input-group">
-                                <div class="input-group-addon">{{vm.selected.matonto.namespace}}</div>
-                                <input type="text" class="form-control" id="property-iri" name="class-iri" ng-model="vm.selected['@id']">
-                            </div>
+                        <!-- rdfs:label -->
+                        <div class="form-group">
+                            <label class="control-label" for="property-name">Label <small class="text-muted">&lt;{{ontology.matonto.rdfs}}label&gt;</small></label>
+                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[ontology.matonto.rdfs + 'label'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
@@ -466,32 +451,26 @@
 
                         <!-- rdfs:subPropertyOf -->
                         <div class="form-group">
-                            <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}subPropertyOf&gt;</small></label>
-                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subPropertyOf']" display-property="@id" placeholder="Add a Property"></tags-input>
+                            <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{ontology.matonto.rdfs}}subPropertyOf&gt;</small></label>
+                            <tags-input ng-model="vm.selected[ontology.matonto.rdfs + 'subPropertyOf']" display-property="@id" placeholder="Add a Property"></tags-input>
                         </div>
 
                         <!-- rdfs:domain -->
                         <div class="form-group">
-                            <label class="control-label">Domain <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}domain&gt;</small></label>
-                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'domain']" display-property="@id" placeholder="Add a Domain"></tags-input>
+                            <label class="control-label">Domain <small class="text-muted">&lt;{{ontology.matonto.rdfs}}domain&gt;</small></label>
+                            <tags-input ng-model="vm.selected[ontology.matonto.rdfs + 'domain']" display-property="@id" placeholder="Add a Domain"></tags-input>
                         </div>
 
                         <!-- rdfs:range -->
                         <div class="form-group">
-                            <label class="control-label">Range <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}range&gt;</small></label>
-                            <tags-input ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'range']" display-property="@id" placeholder="Add a Range"></tags-input>
-                        </div>
-
-                        <!-- rdfs:label -->
-                        <div class="form-group">
-                            <label class="control-label" for="property-name">Label <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}label&gt;</small></label>
-                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;">
+                            <label class="control-label">Range <small class="text-muted">&lt;{{ontology.matonto.rdfs}}range&gt;</small></label>
+                            <tags-input ng-model="vm.selected[ontology.matonto.rdfs + 'range']" display-property="@id" placeholder="Add a Range"></tags-input>
                         </div>
 
                         <!-- rdfs:comment -->
                         <div class="form-group">
-                            <label class="control-label" for="property-comments">Comment <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}comment&gt;</small></label>
-                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <label class="control-label" for="property-comments">Comment <small class="text-muted">&lt;{{ontology.matonto.rdfs}}comment&gt;</small></label>
+                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[ontology.matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- buttons -->
@@ -508,39 +487,41 @@
                 </form>
 
                 <!-- iri editor overlay -->
-                <div class="overlay" ng-if="vm.showIriOverlay" ng-init="iri = (vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : vm.selected['@id'] | splitIRI)">
+                <div class="overlay" ng-if="vm.showIriOverlay"
+                     ng-init="iri = (vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : vm.selected['@id'] | splitIRI)">
                     <form name="vm.iriForm" class="content clearfix" novalidate autocomplete="off"
                           ng-submit="vm.editIRI();">
                         <!-- section header -->
                         <h6>Edit IRI</h6>
                         <!-- Begins with -->
-                        <div class="form-group">
-                            <label for="iri-begin">Begins with</label>
-                            <input class="form-control" id="iri-begin" name="iri-begin" value="{{iri.begin}}" />
+                        <div ng-class="{'has-error': vm.iriForm.iriBegin.$invalid}" class="form-group">
+                            <label for="iriBegin">Begins with</label>
+                            <input class="form-control" id="iriBegin" name="iriBegin" value="{{iri.begin}}" ng-pattern="/^([^:\/?#]+):\/\/([^\/?#]*)([^?#]*)[^#:\/]$/" required />
                         </div>
                         <!-- Then -->
                         <div class="form-group">
-                            <label for="iri-then">Then</label>
-                            <select class="form-control" id="iri-then" name="iri-then">
+                            <label for="iriThen">Then</label>
+                            <select class="form-control" id="iriThen" name="iriThen">
                                 <option value="#" ng-selected="iri.then === '#'">#</option>
                                 <option value="/" ng-selected="iri.then === '/'">/</option>
                                 <option value=":" ng-selected="iri.then === ':'">:</option>
                             </select>
                         </div>
                         <!-- Ends with -->
-                        <div class="form-group">
-                            <label for="iri-end">Ends with</label>
-                            <input class="form-control" id="iri-end" name="iri-end" value="{{iri.end}}" />
+                        <div ng-class="{'has-error': vm.iriForm.iriEnd.$invalid}" class="form-group">
+                            <label for="iriEnd">Ends with</label>
+                            <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9][^\s-]+$/" required
+                                   value="{{iri.end || (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] | camelCase:vm.iriType)}}" />
                         </div>
                         <!-- Update references -->
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" id="iri-update" checked /> Update all entities that referenced this IRI.
+                                <input type="checkbox" id="iriUpdate" checked /> Update all entities that referenced this IRI.
                             </label>
                         </div>
                         <!-- buttons -->
                         <div class="btn-container clearfix">
-                            <button type="submit" class="btn btn-primary pull-right"><i class="fa fa-pencil fa-fw"></i>Edit</button>
+                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.iriForm.$invalid"><i class="fa fa-pencil fa-fw"></i>Edit</button>
                             <button type="button" class="btn btn-default pull-right" ng-click="vm.showIriOverlay = false;">Cancel</button>
                         </div>
                     </form>

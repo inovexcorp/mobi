@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs'])
+        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', 'updateRefsService'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, updateRefsService) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService) {
             var self = this,
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
@@ -522,7 +522,7 @@
             }
 
             self.create = function(isValid, obj, state) {
-                var arrToObj,
+                var arrToObj, setId,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -542,19 +542,25 @@
                     return temp;
                 }
 
+                setId = function(obj, type, rdfs) {
+                    if(obj.matonto.hasOwnProperty('namespace')) {
+                        obj['@id'] = obj.matonto.namespace + $filter('camelCase')(obj[rdfs + 'label'][0]['@value'], type);
+                        delete obj.matonto.namespace;
+                    }
+                    obj.matonto.originalId = obj['@id'];
+                }
+
                 if(isValid) {
                     if(oi === -1) {
                         obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
                         self.ontologies.push(obj);
                     } else {
                         var current = self.ontologies[oi];
-                        obj['@id'] = obj.matonto.namespace + obj['@id'];
-                        obj.matonto.originalId = obj['@id'];
-                        delete obj.matonto.namespace;
-
                         if(ci === -1) {
+                            setId(obj, 'class', current.matonto.rdfs);
                             current.matonto.classes.push(obj);
                         } else {
+                            setId(obj, 'property', current.matonto.rdfs);
                             current.matonto.classes[ci].matonto.properties.push(obj);
                         }
                     }
@@ -566,21 +572,18 @@
             }
 
             self.editIRI = function(selected, ontology) {
-                var begin = document.getElementById('iri-begin').value,
-                    then = document.getElementById('iri-then').value,
-                    end = document.getElementById('iri-end').value,
-                    update = document.getElementById('iri-update').checked,
+                var begin = document.getElementById('iriBegin').value,
+                    then = document.getElementById('iriThen').value,
+                    end = document.getElementById('iriEnd').value,
+                    update = document.getElementById('iriUpdate').checked,
                     fresh = begin + then + end;
 
-                // New entity iri is being edited
-                if(selected.matonto.namespace) {
-                    selected.matonto.namespace = begin + then;
-                    selected['@id'] = end;
+                if(selected.matonto.hasOwnProperty('namespace')) {
+                    delete selected.matonto.namespace;
                 } else if(update) {
                     updateRefsService.update(ontology, selected['@id'], fresh, ontology.matonto.owl);
-                } else {
-                    selected['@id'] = fresh;
                 }
+                selected['@id'] = fresh;
             }
 
             self.typeMatch = function(property, owl, type) {
