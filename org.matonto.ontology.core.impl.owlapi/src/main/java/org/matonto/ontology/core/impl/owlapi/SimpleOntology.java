@@ -46,7 +46,7 @@ public class SimpleOntology implements Ontology {
 	
 	//Owlapi variables
 	private OWLOntology owlOntology;
-	private final OWLOntologyManager owlManager;
+	private final OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
     private OntologyManager ontologyManager;
 
 
@@ -66,7 +66,6 @@ public class SimpleOntology implements Ontology {
             }
 
             OWLOntologyID owlOntologyID = new OWLOntologyID(oIri, vIri);
-            owlManager = OWLManager.createOWLOntologyManager();
             owlOntology = owlManager.createOntology(owlOntologyID);
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
@@ -77,7 +76,6 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
 
         try {
-            owlManager = OWLManager.createOWLOntologyManager();
 			owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
             createOntologyId(null);
         } catch (OWLOntologyCreationException e) {
@@ -95,7 +93,6 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
 
 		try {
-		    owlManager = OWLManager.createOWLOntologyManager();
 			owlOntology = owlManager.loadOntologyFromOntologyDocument(SimpleOntologyValues.owlapiIRI(iri));
             createOntologyId(null);
 		} catch (OWLOntologyCreationException e) {
@@ -107,7 +104,6 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
 
         try {
-            owlManager = OWLManager.createOWLOntologyManager();
             owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
 
             // Copy Imports
