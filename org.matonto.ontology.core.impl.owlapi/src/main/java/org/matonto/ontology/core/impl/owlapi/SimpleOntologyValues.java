@@ -30,14 +30,11 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWLFacet;
-import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,19 +89,11 @@ public class SimpleOntologyValues {
         if(ontology == null)
             return null;
 
-        OWLOntology tOntology = ontology;
-
-        if(ontology instanceof OWLMutableOntology) {
-            try {
-                OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
-                tOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
-                
-            } catch (OWLOntologyCreationException e) {
-                throw new MatontoOntologyException("Error in ontology creation", e);
-            }
-        }
-
-        return new SimpleOntology(tOntology, resource, ontologyManager);
+        return new SimpleOntology(ontology, resource, ontologyManager);
+    }
+    
+    public static Ontology matontoOntology(OWLOntology ontology) {
+        return matontoOntology(ontology, null);
     }
     
     public static OWLOntology owlapiOntology(Ontology ontology)

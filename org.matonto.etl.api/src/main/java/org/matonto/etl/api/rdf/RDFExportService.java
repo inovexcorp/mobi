@@ -2,7 +2,8 @@ package org.matonto.etl.api.rdf;
 
 import java.io.File;
 import java.io.IOException;
-import org.openrdf.model.Model;
+
+import org.matonto.rdf.api.Model;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFFormat;
 
