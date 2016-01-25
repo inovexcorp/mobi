@@ -300,13 +300,11 @@ public class CSVConverterImpl implements CSVConverter {
      * @param m A Sesame Model
      * @return A Matonto Model
      */
-    private Model matontoModel(org.openrdf.model.Model m) {
+    protected Model matontoModel(org.openrdf.model.Model m) {
         Set<Statement> stmts = m.stream()
                 .map(Values::matontoStatement)
                 .collect(Collectors.toSet());
 
-        Model matontoModel = modelFactory.createModel(stmts);
-
-        return matontoModel;
+        return modelFactory.createModel(stmts);
     }
 }
