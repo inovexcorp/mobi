@@ -26,8 +26,8 @@ var jsFiles = function(prefix) {
             prefix + '**/angular-ui-router.min.js',
             prefix + '**/ui-bootstrap.min.js',
             prefix + '**/js/vendor/**/*.js',
-            prefix + '**/custom/filters/*.js',
-            prefix + '**/custom/directives/*.js',
+            prefix + '**/js/custom/filters/*.js',
+            prefix + '**/js/custom/directives/*.js',
             prefix + '**/modules/**/*/directives/**/*.js',
             prefix + '**/modules/**/*/services/**/*.js',
             prefix + '**/modules/**/*.js',
@@ -37,8 +37,10 @@ var jsFiles = function(prefix) {
     },
     styleFiles = function(prefix, suffix) {
         return [
-            prefix + '**/vendor/**/*.' + suffix,
-            prefix + '**/custom/**/*.' + suffix,
+            prefix + '**/css/vendor/ng-tags-input.min.' + suffix,
+            prefix + '**/css/vendor/ng-tags-input.bootstrap.min.' + suffix,
+            prefix + '**/css/vendor/**/*.' + suffix,
+            prefix + '**/css/custom/**/*.' + suffix,
             prefix + '**/modules/**/*.' + suffix
         ]
     };
