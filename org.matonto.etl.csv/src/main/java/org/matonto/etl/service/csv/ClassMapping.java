@@ -6,8 +6,8 @@ import java.util.Map;
 
 public class ClassMapping {
 
-    private Map<Integer, String> dataProperties = new LinkedHashMap<Integer, String>();
-    private Map<ClassMapping, String> objectProperties = new LinkedHashMap<ClassMapping, String>();
+    private Map<Integer, String> dataProperties = new LinkedHashMap<>();
+    private Map<ClassMapping, String> objectProperties = new LinkedHashMap<>();
     private boolean isInstance = false;
     private String prefix;
     private String mapping;
@@ -20,9 +20,9 @@ public class ClassMapping {
 
     public String getMapping() { return mapping; }
 
-    public Map<ClassMapping, String> getObjectProperties(){return new LinkedHashMap<ClassMapping, String>(objectProperties);}
+    public Map<ClassMapping, String> getObjectProperties(){return new LinkedHashMap<>(objectProperties);}
 
-    public Map<Integer, String> getDataProperties(){  return new LinkedHashMap<Integer, String>(dataProperties);  }
+    public Map<Integer, String> getDataProperties(){  return new LinkedHashMap<>(dataProperties);  }
 
     public String getLocalName(){return localName;}
 

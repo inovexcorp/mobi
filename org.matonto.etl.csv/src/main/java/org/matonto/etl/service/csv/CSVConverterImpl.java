@@ -85,7 +85,7 @@ public class CSVConverterImpl implements CSVConverter {
         Model documentModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()), valueFactory.createIRI(Delimited.DOCUMENT.stringValue()));
         if (documentModel.isEmpty())
             return ',';
-        IRI documentIRI = (IRI) documentModel.subjects().toArray()[0];
+        IRI documentIRI = Models.subjectIRI(documentModel).get();
         Model separatorModel = mappingModel.filter(documentIRI, valueFactory.createIRI(Delimited.SEPARATOR.stringValue()), null);
         if (separatorModel.isEmpty())
             return ',';
@@ -106,12 +106,7 @@ public class CSVConverterImpl implements CSVConverter {
     Model writeClassToModel(ClassMapping cm, String[] nextLine) {
         Model convertedRDF = modelFactory.createModel();
         //Generate new IRI if an instance of the class mapping has not been created in this row.
-        if(!cm.isInstance()) {
-            String classLocalName = generateLocalName(cm.getLocalName(), nextLine);
-            cm.setIRI(valueFactory.createIRI(cm.getPrefix() + classLocalName));
-            if(!"_".equals(classLocalName))
-                cm.setInstance(true);
-        }
+        cm = createInstance(cm, nextLine);
         //If there isn't enough data to create the local name, don't create the instance
         if (!cm.isInstance())
             return convertedRDF;
@@ -134,12 +129,7 @@ public class CSVConverterImpl implements CSVConverter {
         //Create the object properties
         Map<ClassMapping, String> objectProps = cm.getObjectProperties();
         for (ClassMapping objectMapping : objectProps.keySet()) {
-            if(!objectMapping.isInstance()) {
-                String localName = generateLocalName(objectMapping.getLocalName(), nextLine);
-                objectMapping.setIRI(valueFactory.createIRI(objectMapping.getPrefix() + localName));
-                if(!"_".equals(localName))
-                    objectMapping.setInstance(true);
-            }
+            objectMapping = createInstance(objectMapping, nextLine);
 
             //If there isn't enough data to create the local name, don't create the instance
             IRI property = valueFactory.createIRI(objectProps.get(objectMapping));
@@ -148,6 +138,23 @@ public class CSVConverterImpl implements CSVConverter {
         }
 
         return convertedRDF;
+    }
+
+    /**
+     * Creates a URI for the class mapping based off of a given line in a delimited file
+     * @param cm the class mapping object to create a URI for
+     * @param dataLine a Line in the delimited file
+     * @return An updated class mapping with setInstance true if it not already, and a URI created.
+     */
+    private ClassMapping createInstance(ClassMapping cm, String[] dataLine){
+        if(!cm.isInstance()) {
+            String classLocalName = generateLocalName(cm.getLocalName(), dataLine);
+            cm.setIRI(valueFactory.createIRI(cm.getPrefix() + classLocalName));
+            if(!"_".equals(classLocalName))
+                cm.setInstance(true);
+        }
+
+        return cm;
     }
 
     /**
@@ -200,9 +207,11 @@ public class CSVConverterImpl implements CSVConverter {
         //Used to join Object Properties
         Map<IRI,ClassMapping> uriToObject = new LinkedHashMap<>();
 
-        for (Resource classMappingIRI : classMappingModel.subjects()) {
+        for (Resource classMappingReource : classMappingModel.subjects()) {
             LOGGER.warn("Parsing mappings");
             ClassMapping classMapping;
+
+            IRI classMappingIRI = valueFactory.createIRI(classMappingReource.stringValue());
 
             if (uriToObject.containsKey(classMappingIRI)) {
                 classMapping = uriToObject.get(classMappingIRI);
@@ -230,19 +239,19 @@ public class CSVConverterImpl implements CSVConverter {
 
             //Parse the data properties
             Model dataPropertyModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.DATA_PROPERTY.stringValue()), null);
-            for (Statement s : dataPropertyModel) {
-
-                Model propertyModel = mappingModel.filter((IRI) s.getObject(), valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
+            dataPropertyModel.objects().forEach(dataProperty -> {
+                Model propertyModel = mappingModel.filter((IRI) dataProperty, valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
                 String property = Models.objectString(propertyModel).get();
 
-                Model indexModel = mappingModel.filter((IRI) s.getObject(), valueFactory.createIRI(Delimited.COLUMN_INDEX.stringValue()), null);
+                Model indexModel = mappingModel.filter((IRI) dataProperty, valueFactory.createIRI(Delimited.COLUMN_INDEX.stringValue()), null);
                 Integer columnIndexInt = Integer.parseInt(Models.objectLiteral(indexModel).get().stringValue());
+
                 classMapping.addDataProperty(columnIndexInt, property);
-            }
+            });
 
             //Parse the object properties
             Model objectPropertyModel = mappingModel.filter(classMappingIRI, valueFactory.createIRI(Delimited.OBJECT_PROPERTY.stringValue()), null);
-            for (Statement s : objectPropertyModel) {
+            objectPropertyModel.forEach(s -> {
 
                 Model propertyModel = mappingModel.filter((IRI) s.getObject(), valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
                 String property = Models.objectString(propertyModel).get();
@@ -257,7 +266,9 @@ public class CSVConverterImpl implements CSVConverter {
                     classMapping.addObjectProperty(objectMappingResult, property);
                     uriToObject.put(objectMappingResultIRI, objectMappingResult);
                 }
-            }
+            });
+
+
             classMappings.add(classMapping);
         }
         return classMappings;
@@ -272,34 +283,16 @@ public class CSVConverterImpl implements CSVConverter {
      * @throws IOException       Thrown if there is a problem reading the file.
      */
     private Model parseMapping(File mapping) throws RDFParseException, IOException {
+
         String extension = mapping.getName().split("\\.")[mapping.getName().split("\\.").length - 1];
         LOGGER.info("FileName = " + mapping.getName() + "\t Extension:" + extension);
         RDFFormat mapFormat;
-        if(extension.equals("jsonld"))
-            mapFormat = RDFFormat.JSONLD;
-        else
-            mapFormat = Rio.getParserFormatForFileName(mapping.getName()).get();
+        mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(IllegalArgumentException::new);
         FileReader r = new FileReader(mapping);
         Model m;
         m = matontoModel(Rio.parse(r, "", mapFormat));
 
         return m;
-    }
-
-    /**
-     * Convert a MatOnto Model into a Sesame Model
-     * @param m A MatOnto Model
-     * @return A Sesame Model
-     */
-    org.openrdf.model.Model sesameModel(Model m) {
-        Set<org.openrdf.model.Statement> stmts = m.stream()
-                                .map(Values::sesameStatement)
-                                .collect(Collectors.toSet());
-
-        org.openrdf.model.Model sesameModel = new LinkedHashModel();
-        sesameModel.addAll(stmts);
-
-        return sesameModel;
     }
 
     /**

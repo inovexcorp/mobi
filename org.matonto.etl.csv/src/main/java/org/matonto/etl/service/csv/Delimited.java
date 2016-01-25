@@ -14,7 +14,7 @@ public enum Delimited {
     DOCUMENT ("http://matonto.org/ontologies/delimited/Document"),
     SEPARATOR ("http://matonto.org/ontologies/delimited/separator");
 
-    String s;
+    private final String s;
 
     Delimited(String s){
         this.s = s;

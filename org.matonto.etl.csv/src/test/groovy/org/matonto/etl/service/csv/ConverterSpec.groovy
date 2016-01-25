@@ -22,8 +22,8 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
@@ -43,8 +43,8 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
@@ -64,8 +64,8 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
@@ -85,8 +85,8 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
@@ -106,8 +106,8 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testOutput.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl)
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
@@ -123,8 +123,8 @@ class ConverterSpec extends Specification {
         setup:
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
         CSVConverterImpl c = Spy(CSVConverterImpl)
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         def uuid = "12345"
@@ -150,8 +150,8 @@ class ConverterSpec extends Specification {
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("testInvalidMapping.ttl").getFile();
         CSVConverterImpl c = new CSVConverterImpl();
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
 
@@ -169,8 +169,8 @@ class ConverterSpec extends Specification {
         File out = new ClassPathResource("testPropertiesMissingOut.ttl").getFile();
         Model m = new LinkedHashModel();
         CSVConverterImpl c = Spy(CSVConverterImpl);
-        ModelFactory mf = new LinkedHashModelFactory();
-        ValueFactory vf = new SimpleValueFactory();
+        ModelFactory mf = new LinkedHashModelFactory().getInstance();
+        ValueFactory vf = new SimpleValueFactory().getInstance();
         c.setValueFactory(vf)
         c.setModelFactory(mf);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
