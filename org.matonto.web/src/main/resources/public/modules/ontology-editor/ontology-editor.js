@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'ngTagsInput'])
+        .module('ontology-editor', ['file-input', 'ngTagsInput', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
@@ -38,7 +38,7 @@
         }
 
         vm.deleteOntology = function() {
-            ontologyManagerService.delete(vm.selected.matonto.ontologyId, vm.state)
+            ontologyManagerService.delete(vm.selected, vm.state)
                 .then(function(response) {
                     stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('default', undefined, undefined, undefined);
@@ -63,13 +63,32 @@
             vm.state = stateManagerService.getState();
         }
 
+        vm.editIRI = function() {
+            ontologyManagerService.editIRI(vm.selected, vm.ontologies[vm.state.oi]);
+            vm.showIriOverlay = false;
+        }
+
+        vm.typeMatch = function(property, owl, type) {
+            return ontologyManagerService.typeMatch(property, owl, type);
+        }
+
         /* Prefix (Context) Management */
-        vm.editPrefix = function(edit, old, index, value) {
-            prefixManagerService.edit(edit, old, index, value, vm.selected);
+        vm.editPrefix = function(edit, old, index) {
+            prefixManagerService.editPrefix(edit, old, index, vm.selected);
+        }
+
+        vm.editValue = function(edit, key, value, index) {
+            prefixManagerService.editValue(edit, key, value, index, vm.selected);
         }
 
         vm.addPrefix = function(key, value) {
-            prefixManagerService.add(key, value, vm.selected);
+            prefixManagerService.add(key, value, vm.selected)
+                .then(function(response) {
+                    vm.key = '';
+                    vm.value = '';
+                }, function(response) {
+                    vm.showDuplicateMessage = true;
+                });
         }
 
         vm.removePrefix = function(key) {
@@ -104,10 +123,6 @@
 
         vm.removeAnnotation = function(key, index) {
             annotationManagerService.remove(vm.selected, key, index);
-        }
-
-        vm.getAnnotations = function(query) {
-            return annotationManagerService.searchList(vm.selected.matonto.annotations, query);
         }
 
         vm.getPattern = function() {
