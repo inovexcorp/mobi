@@ -261,7 +261,7 @@
                         <!-- basic button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected[vm.selected.matonto.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Ontology'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.oi !== -1 ? (vm.selected[vm.selected.matonto.rdfs + 'label'][0]['@value'] || (vm.selected['@id'] | splitIRI).end | beautify) : 'New Ontology'}}</small></a>
 
                         <!-- annotations button -->
                         <a class="btn btn-primary"
@@ -280,9 +280,10 @@
                         <p ng-show="vm.selected.matonto.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
                         <!-- IRI -->
-                        <div class="form-group">
+                        <div  ng-class="{'has-error': vm.ontologyForm.iri.$invalid}" class="form-group">
                             <label class="control-label" for="ontology-iri">Ontology IRI</label>
-                            <input type="text" class="form-control" id="ontology-iri" name="iri" ng-model="vm.selected['@id']" required>
+                            <input type="text" class="form-control" id="ontology-iri" name="iri" ng-model="vm.selected['@id']" ng-pattern="/^[^:\/?#]+:\/\/[^\/?#]*[^#\s]*[^#:\/\s]$/" required>
+                            <!--p class="error-msg" ng-if="vm.ontologyForm.iri.$invalid">This IRI is invalid.</p-->
                         </div>
 
                         <!-- label -->
@@ -488,35 +489,40 @@
 
                 <!-- iri editor overlay -->
                 <div class="overlay" ng-if="vm.showIriOverlay"
-                     ng-init="iri = (vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : vm.selected['@id'] | splitIRI)">
+                     ng-init="iri = (vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : vm.selected['@id'] | splitIRI);
+                              vm.iriBegin = iri.begin;
+                              vm.iriThen = iri.then;
+                              vm.iriEnd = iri.end || (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] | camelCase:vm.iriType);
+                              vm.iriUpdate = true;">
                     <form name="vm.iriForm" class="content clearfix" novalidate autocomplete="off"
                           ng-submit="vm.editIRI();">
                         <!-- section header -->
                         <h6>Edit IRI</h6>
                         <!-- Begins with -->
                         <div ng-class="{'has-error': vm.iriForm.iriBegin.$invalid}" class="form-group">
-                            <label for="iriBegin">Begins with</label>
-                            <input class="form-control" id="iriBegin" name="iriBegin" value="{{iri.begin}}" ng-pattern="/^([^:\/?#]+):\/\/([^\/?#]*)([^?#]*)[^#:\/]$/" required />
+                            <label class="control-label" for="iriBegin">Begins with</label>
+                            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="vm.iriBegin" ng-pattern="/^[^:\/?#]+:\/\/[^\/?#]*[^#\s]*[^#:\/\s]$/" required />
+                            <!--p class="error-msg" ng-if="vm.iriForm.iriBegin.$invalid">This IRI is invalid.</p-->
                         </div>
                         <!-- Then -->
                         <div class="form-group">
-                            <label for="iriThen">Then</label>
-                            <select class="form-control" id="iriThen" name="iriThen">
-                                <option value="#" ng-selected="iri.then === '#'">#</option>
-                                <option value="/" ng-selected="iri.then === '/'">/</option>
-                                <option value=":" ng-selected="iri.then === ':'">:</option>
+                            <label class="control-label" for="iriThen">Then</label>
+                            <select class="form-control" id="iriThen" name="iriThen" ng-model="vm.iriThen">
+                                <option value="#">#</option>
+                                <option value="/">/</option>
+                                <option value=":">:</option>
                             </select>
                         </div>
                         <!-- Ends with -->
                         <div ng-class="{'has-error': vm.iriForm.iriEnd.$invalid}" class="form-group">
-                            <label for="iriEnd">Ends with</label>
-                            <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9][^\s-]+$/" required
-                                   value="{{iri.end || (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] | camelCase:vm.iriType)}}" />
+                            <label class="control-label" for="iriEnd">Ends with</label>
+                            <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9-_]+$/" required ng-model="vm.iriEnd" ng-trim="false" />
+                            <!--p class="error-msg" ng-if="vm.iriForm.iriEnd.$invalid">This localname is invalid.</p-->
                         </div>
                         <!-- Update references -->
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" id="iriUpdate" checked /> Update all entities that referenced this IRI.
+                                <input type="checkbox" id="iriUpdate" ng-model="vm.iriUpdate" /> Update all entities that referenced this IRI.
                             </label>
                         </div>
                         <!-- buttons -->
