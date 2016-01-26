@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -18,6 +18,10 @@
     <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
@@ -43,6 +47,10 @@
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
         </dependency>
     </dependencies>
 

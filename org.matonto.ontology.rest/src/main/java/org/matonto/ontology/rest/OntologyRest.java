@@ -184,4 +184,88 @@ public interface OntologyRest {
     @Path("/getNamedIndividuals")
     @Produces(MediaType.APPLICATION_JSON)
     Response getNamedIndividualsInOntology(@QueryParam("ontologyIdStr") String ontologyIdStr);
+    
+    /**
+     * Returns IRIs in the direct imported ontologies of the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return IRIs in the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("/getAllImportedIRIs")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getIRIsInImportedOntologies(@QueryParam("ontologyIdStr") String ontologyIdStr);
+
+    /**
+     * Returns annotation properties in the direct imported ontologies of the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return annotation properties in the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("/getImportedAnnotations")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getAnnotationsInImportedOntologies(@QueryParam("ontologyIdStr") String ontologyIdStr);
+
+    /**
+     * Returns classes in the direct imported ontologies of the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return classes in the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("/getImportedClasses")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getClassesInImportedOntologies(@QueryParam("ontologyIdStr") String ontologyIdStr);
+
+    /**
+     * Returns datatypes in the direct imported ontologies of the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return datatypes in the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("/getImportedDatatypes")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getDatatypesInImportedOntologies(@QueryParam("ontologyIdStr") String ontologyIdStr);
+
+    /**
+     * Returns object properties in the direct imported ontologies of the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return object properties in the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("/getImportedObjectProperties")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getObjectPropertiesInImportedOntologies(@QueryParam("ontologyIdStr") String ontologyIdStr);
+
+    /**
+     * Returns data properties in the direct imported ontologies of the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return data properties in the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("/getImportedDataProperties")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getDataPropertiesInImportedOntologies(@QueryParam("ontologyIdStr") String ontologyIdStr);
+
+    /**
+     * Returns named individuals in the direct imported ontologies of the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return named individuals in the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("/getImportedNamedIndividuals")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response getNamedIndividualsInImportedOntologies(@QueryParam("ontologyIdStr") String ontologyIdStr);
 }

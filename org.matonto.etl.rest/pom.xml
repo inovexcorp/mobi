@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
 
     </parent>
@@ -60,6 +60,10 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
         </dependency>
     </dependencies>
 

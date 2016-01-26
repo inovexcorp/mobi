@@ -6,7 +6,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 
     <packaging>pom</packaging>
 
@@ -38,6 +38,7 @@
         <module>org.matonto.persistence.utils</module>
         <module>org.matonto.feature</module>
         <module>org.matonto.ontology.utils</module>
+        <module>org.matonto.swagger.ui</module>
     </modules>
 
     <properties>
