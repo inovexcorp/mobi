@@ -109,12 +109,8 @@ public class SimpleOntologyValues {
 		if (owlIri == null) {
             throw new IllegalArgumentException("IRI cannot be null.");
         }
-
-        if (!owlIri.getRemainder().isPresent()) {
-            throw new IllegalArgumentException("IRI must have a remainder.");
-        }
 		
-		return factory.createIRI(owlIri.getNamespace(), owlIri.getRemainder().get());
+		return factory.createIRI(owlIri.toString());
 	}
 	
 	public static org.semanticweb.owlapi.model.IRI owlapiIRI(IRI matontoIri) 
@@ -122,7 +118,7 @@ public class SimpleOntologyValues {
 		if (matontoIri == null)
 			return null;
 		
-		return org.semanticweb.owlapi.model.IRI.create(matontoIri.getNamespace(), matontoIri.getLocalName());
+		return org.semanticweb.owlapi.model.IRI.create(matontoIri.stringValue());
 	}
 	
 	public static AnonymousIndividual matontoAnonymousIndividual(OWLAnonymousIndividual owlIndividual)
