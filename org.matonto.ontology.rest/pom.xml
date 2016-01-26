@@ -12,7 +12,6 @@
 
     <artifactId>ontology.rest</artifactId>
     <version>${matonto.ontology.rest.version}</version>
-
     <packaging>bundle</packaging>
     <name>${project.groupId}.${project.artifactId}</name>
 

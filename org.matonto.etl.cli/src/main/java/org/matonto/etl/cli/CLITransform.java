@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
-import org.openrdf.model.Model;
+import org.matonto.rdf.api.Model;
 
 import java.io.File;
 
@@ -76,4 +76,5 @@ public class CLITransform implements Action {
 
         return null;
     }
+
 }

@@ -27,9 +27,10 @@ var jsFiles = function(prefix) {
             prefix + '**/ui-bootstrap.min.js',
             prefix + '**/js/vendor/**/*.js',
             prefix + '**/js/custom/filters/*.js',
+            prefix + '**/js/custom/services/*.js',
             prefix + '**/js/custom/directives/*.js',
-            prefix + '**/modules/**/*/directives/**/*.js',
             prefix + '**/modules/**/*/services/**/*.js',
+            prefix + '**/modules/**/*/directives/**/*.js',
             prefix + '**/modules/**/*.js',
             prefix + '**/app.module.js',
             prefix + '**/route.config.js'

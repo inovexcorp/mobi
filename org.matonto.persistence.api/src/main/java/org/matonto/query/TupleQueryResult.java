@@ -14,7 +14,6 @@ public abstract class TupleQueryResult extends QueryResult<BindingSet> {
      * @return The binding names, in order of projection.
      * @throws QueryEvaluationException
      */
-
     public abstract List<String> getBindingNames()
             throws QueryEvaluationException;
 
