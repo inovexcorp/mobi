@@ -39,7 +39,7 @@
         <matonto.ontology.api.version>2.1.0</matonto.ontology.api.version>
         <matonto.ontology.cli.version>2.0.0</matonto.ontology.cli.version>
         <matonto.ontology.core.impl.owlapi.version>2.1.0</matonto.ontology.core.impl.owlapi.version>
-        <matonto.ontology.rest.version>2.1.0</matonto.ontology.rest.version>
+        <matonto.ontology.rest.version>3.0.0-SNAPSHOT</matonto.ontology.rest.version>
         <matonto.ontology.utils.version>1.0.0</matonto.ontology.utils.version>
         <matonto.persistence.api.version>1.1.0</matonto.persistence.api.version>
         <matonto.persistence.cli.version>1.0.0</matonto.persistence.cli.version>
