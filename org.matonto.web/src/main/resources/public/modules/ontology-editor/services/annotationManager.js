@@ -46,7 +46,7 @@
                     obj[temp] = [item];
                 }
 
-                stripped = $filter('splitIRI')(temp);
+                stripped = $filter('splitIRI')(temp).end;
 
                 for(prop in annotations) {
                     if(temp.indexOf(prop) !== -1) {
