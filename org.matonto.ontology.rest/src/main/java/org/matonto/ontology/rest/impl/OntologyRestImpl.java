@@ -485,36 +485,23 @@ public class OntologyRestImpl implements OntologyRest {
                 return ontology.asJsonLD().toString();
         }
     }
-    
+
+    /**
+     * Return a JSONObject with the IRIs for all components of an ontology.
+     *
+     * @param ontology The Ontology from which to get component IRIs
+     * @return the JSONObject with the IRIs for all components of an ontology.
+     */
     private JSONObject getAllIRIs(Ontology ontology) {
-        JSONArray array = new JSONArray();
-
-        JSONObject annotations = new JSONObject();
-        annotations.put("annotationProperties", getAnnotationArray(ontology));
-        array.add(annotations);
-
-        JSONObject classes = new JSONObject();
-        classes.put("classes", getClassArray(ontology));
-        array.add(classes);
-
-        JSONObject datatypes = new JSONObject();
-        datatypes.put("datatypes", getDatatypeArray(ontology));
-        array.add(datatypes);
-
-        JSONObject objectProperties = new JSONObject();
-        objectProperties.put("objectProperties", getObjectPropertyArray(ontology));
-        array.add(objectProperties);
-
-        JSONObject dataProperties = new JSONObject();
-        dataProperties.put("dataProperties", getDataPropertyArray(ontology));
-        array.add(dataProperties);
-
-        JSONObject namedIndividuals = new JSONObject();
-        namedIndividuals.put("namedIndividuals", getNamedIndividualArray(ontology));
-        array.add(namedIndividuals);
-        
         JSONObject json = new JSONObject();
-        json.put(ontology.getOntologyId().getOntologyIdentifier().stringValue(), array);
+
+        json.put("annotationProperties", getAnnotationArray(ontology));
+        json.put("classes", getClassArray(ontology));
+        json.put("datatypes", getDatatypeArray(ontology));
+        json.put("objectProperties", getObjectPropertyArray(ontology));
+        json.put("dataProperties", getDataPropertyArray(ontology));
+        json.put("namedIndividuals", getNamedIndividualArray(ontology));
+
         return json;
     }
     
