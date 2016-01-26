@@ -15,7 +15,6 @@ public abstract class GraphQueryResult extends QueryResult<Statement> {
      * @return a Map<String, String> object containing (prefix, namespace) pairs.
      * @throws QueryEvaluationException
      */
-
-//    Map<String, String> getNamespaces() throws QueryEvaluationException;
+    public abstract Map<String, String> getNamespaces() throws QueryEvaluationException;
 
 }

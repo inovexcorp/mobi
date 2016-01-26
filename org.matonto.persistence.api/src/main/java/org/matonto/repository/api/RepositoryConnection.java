@@ -206,7 +206,7 @@ public interface RepositoryConnection extends AutoCloseable {
      * @throws MalformedQueryException
      *         If the supplied query is malformed.
      */
-    public TupleQuery prepareTupleQuery(String query, String baseURI)
+    TupleQuery prepareTupleQuery(String query, String baseURI)
             throws RepositoryException, MalformedQueryException;
 
     /**
