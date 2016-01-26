@@ -6,17 +6,21 @@
         .filter('beautify', beautify);
 
     function beautify() {
-        return function (value) {
-            var result = '',
-                reg = /[A-Z]/,
-                i = 1;
-            result += value[0].toUpperCase();
-            while(i < value.length) {
-                if(value[i].match(reg) !== null) {
-                    result += ' ';
+        return function(value) {
+            var result = '';
+
+            if(value) {
+                var reg = /[A-Z]/,
+                    i = 1;
+                result += value[0].toUpperCase();
+
+                while(i < value.length) {
+                    if(value[i].match(reg) !== null) {
+                        result += ' ';
+                    }
+                    result += value[i];
+                    i++;
                 }
-                result += value[i];
-                i++;
             }
             return result;
         }

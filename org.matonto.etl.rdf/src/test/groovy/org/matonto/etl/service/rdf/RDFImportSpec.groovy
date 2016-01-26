@@ -2,6 +2,8 @@ package org.matonto.etl.service.rdf
 
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.api.ModelFactory
+import org.matonto.rdf.api.Statement
+import org.matonto.rdf.core.impl.sesame.LinkedHashModel
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.api.RepositoryManager
 import org.matonto.repository.api.Repository
@@ -19,12 +21,15 @@ class RDFImportSpec extends Specification {
         RepositoryManager manager = Mock()
         RDFImportServiceImpl importService = new RDFImportServiceImpl()
         File testFile = new ClassPathResource("importer/testFile.trig").getFile();
+        ModelFactory mf = Mock()
+        importService.setModelFactory(mf)
 
         when:
         importService.setRepositoryManager(manager)
         importService.importFile("test", testFile, true)
 
         then:
+        1 * mf.createModel(_ as Collection<Statement>) >> new LinkedHashModel()
         1 * manager.getRepository("test") >> Optional.empty()
         thrown IllegalArgumentException
     }

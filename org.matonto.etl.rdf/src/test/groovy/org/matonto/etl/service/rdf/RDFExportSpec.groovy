@@ -1,5 +1,7 @@
 package org.matonto.etl.service.rdf
 
+import org.matonto.rdf.api.ModelFactory
+import org.matonto.rdf.core.impl.sesame.LinkedHashModel
 import org.matonto.repository.api.RepositoryManager
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
@@ -60,6 +62,8 @@ class RDFExportSpec extends Specification {
         Repository repo = Mock()
         RepositoryConnection connection = Mock()
         RepositoryResult result = Mock()
+        ModelFactory mf = Mock()
+        exportService.setModelFactory(mf)
 
         when:
         exportService.setRepositoryManager(manager)
@@ -69,6 +73,7 @@ class RDFExportSpec extends Specification {
         1 * manager.getRepository("test") >> Optional.of(repo)
         1 * repo.getConnection() >> connection
         1 * connection.getStatements(null, null, null) >> result
+        1 * mf.createModel() >> new LinkedHashModel()
     }
 
 }

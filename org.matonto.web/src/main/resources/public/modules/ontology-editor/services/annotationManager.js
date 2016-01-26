@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('annotationManager', ['removeNamespace'])
+        .module('annotationManager', ['splitIRI'])
         .service('annotationManagerService', annotationManagerService)
         .filter('showAnnotations', showAnnotations)
         /*.filter('hideAnnotations', hideAnnotations)*/;
@@ -46,7 +46,7 @@
                     obj[temp] = [item];
                 }
 
-                stripped = $filter('removeNamespace')(temp);
+                stripped = $filter('splitIRI')(temp);
 
                 for(prop in annotations) {
                     if(temp.indexOf(prop) !== -1) {
@@ -62,18 +62,6 @@
 
             self.edit = function(obj, key, value, index) {
                 obj[key][index]['@value'] = value;
-            }
-
-            self.searchList = function(annotations, query) {
-                var i = 0,
-                    arr = [];
-                while(i < annotations.length) {
-                    if(annotations[i].toLowerCase().indexOf(query.toLowerCase()) !== -1) {
-                        arr.push({'@id': annotations[i]});
-                    }
-                    i++;
-                }
-                return arr;
             }
         }
 

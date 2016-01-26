@@ -12,7 +12,6 @@
 
     <artifactId>ontology.core.impl.owlapi</artifactId>
     <version>${matonto.ontology.core.impl.owlapi.version}</version>
-
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
