@@ -54,6 +54,16 @@
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>4.11</version>
         </dependency>
+
+        <!-- REST Dependencies -->
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.rest</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>etl.rest</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -115,7 +125,13 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Bundle-Name>MatOnto Web</Bundle-Name>
                         <Export-Package></Export-Package>
+                        <Import-Package>
+                            org.matonto.ontology.rest,
+                            org.matonto.etl.rest
+                        </Import-Package>
                         <Service-Component>*</Service-Component>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>

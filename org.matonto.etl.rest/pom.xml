@@ -76,7 +76,9 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
+                        <Export-Package>
+                            org.matonto.etl.rest; provide:=true
+                        </Export-Package>
                         <Service-Component>*</Service-Component>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>

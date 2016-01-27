@@ -74,12 +74,22 @@
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
+                <artifactId>etl.rest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.matonto</groupId>
                 <artifactId>ontology.api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>ontology.utils</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.matonto</groupId>
+                <artifactId>ontology.rest</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
