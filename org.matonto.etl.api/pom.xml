@@ -16,6 +16,11 @@
 
     <name>${project.groupId}.${project.artifactId}</name>
 
+    <properties>
+        <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+        <osgi-version-qualifier>${maven.build.timestamp}</osgi-version-qualifier>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
@@ -25,6 +30,10 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
     </dependencies>
 
@@ -39,6 +48,7 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>org.matonto.etl.api*</Export-Package>
+                        <build>${maven.build.timestamp}</build>
                     </instructions>
                 </configuration>
             </plugin>
