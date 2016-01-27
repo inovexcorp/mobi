@@ -52,6 +52,7 @@
                         <Service-Component>*</Service-Component>
                         <Import-Package>*</Import-Package>
                         <Embed-Transitive>true</Embed-Transitive>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>
