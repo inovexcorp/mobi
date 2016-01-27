@@ -78,7 +78,6 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Ontology Service - Rest</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
                         <Import-Package>
                             <!-- For some reason BND is not including these -->

@@ -117,6 +117,10 @@
                         <Bundle-Name>MatOnto Web</Bundle-Name>
                         <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
+                        <Import-Package>
+                            org.matonto.ontology.rest;version="3.0.0.SNAPSHOT",
+                            *
+                        </Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
