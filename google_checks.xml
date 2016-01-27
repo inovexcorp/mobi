@@ -151,6 +151,8 @@
         <module name="AbbreviationAsWordInName">
             <property name="ignoreFinal" value="true"/>
             <property name="allowedAbbreviationLength" value="3"/>
+            <!--Add allowed abbreviations separated by commas(i.e HTML,HTTP)-->
+            <property name="allowedAbbreviations" value=""/>
         </module>
         <module name="OverloadMethodsDeclarationOrder"/>
         <module name="VariableDeclarationUsageDistance"/>
