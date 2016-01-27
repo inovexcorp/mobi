@@ -62,6 +62,8 @@
                         <Export-Package>
                         	org.matonto.ontology.core*
                         </Export-Package>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>
