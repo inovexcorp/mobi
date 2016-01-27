@@ -118,7 +118,7 @@
                         <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
                         <Import-Package>
-                            org.matonto.ontology.rest;version="3.0.0.SNAPSHOT",
+                            org.matonto.ontology.rest;version="[3,4)",
                             *
                         </Import-Package>
                     </instructions>
