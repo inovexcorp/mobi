@@ -11,11 +11,9 @@ class SesameTupleQueryResultSpec extends Specification{
         SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
         List<String> bindingSetNames = ["test"]
 
-
-        then:
-        bindingSetNames.equals(tupleQueryResult.getBindingNames())
         1 * sesameTQR.getBindingNames() >> bindingSetNames
 
+        assert bindingSetNames.equals(tupleQueryResult.getBindingNames())
     }
 
     def "hasNext() returns true if bindingSet has another value"() {
@@ -23,10 +21,9 @@ class SesameTupleQueryResultSpec extends Specification{
         TupleQueryResult sesameTQR = Mock()
         SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
 
-        then:
-        tupleQueryResult.hasNext()
         1 * sesameTQR.hasNext() >> true
 
+        assert tupleQueryResult.hasNext()
     }
 
     def "hasNext() returns false if bindingSet does not have another value"() {
@@ -34,9 +31,9 @@ class SesameTupleQueryResultSpec extends Specification{
         TupleQueryResult sesameTQR = Mock()
         SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
 
-        then:
-        !tupleQueryResult.hasNext()
         1 * sesameTQR.hasNext() >> false
+
+        assert !tupleQueryResult.hasNext()
     }
 
     def "next() returns next BindingSet result"(){

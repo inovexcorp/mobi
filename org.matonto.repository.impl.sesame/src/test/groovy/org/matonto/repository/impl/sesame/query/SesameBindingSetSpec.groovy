@@ -11,9 +11,10 @@ class SesameBindingSetSpec extends Specification{
         BindingSet sesBindingSet = Mock()
         SesameBindingSet bindingSet = new SesameBindingSet(sesBindingSet)
 
-        then:
-        bindingSet.hasBinding("test");
         1 * sesBindingSet.hasBinding("test") >> true
+
+        assert bindingSet.hasBinding("test");
+
 
     }
 
@@ -22,9 +23,9 @@ class SesameBindingSetSpec extends Specification{
         BindingSet sesBindingSet = Mock()
         SesameBindingSet bindingSet = new SesameBindingSet(sesBindingSet)
 
-        then:
-        !bindingSet.hasBinding("test");
         1 * sesBindingSet.hasBinding("test") >> false
+
+        assert !bindingSet.hasBinding("test");
     }
 
     def "getBindingNames() returns all binding names" () {
@@ -33,9 +34,10 @@ class SesameBindingSetSpec extends Specification{
         SesameBindingSet bindingSet = new SesameBindingSet(sesBindingSet)
         Set<String> bindingNames = ["test"]
 
-        then:
-        bindingSet.getBindingNames().equals(bindingNames)
-        1 * sesBindingSet >> bindingNames
+        1 * sesBindingSet.getBindingNames() >> bindingNames
+
+        assert bindingSet.getBindingNames().equals(bindingNames)
+
     }
 
 
