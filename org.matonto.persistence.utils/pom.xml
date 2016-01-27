@@ -29,6 +29,10 @@
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -44,6 +48,8 @@
                         <Import-Package>*</Import-Package>
                         <Export-Package>org.matonto.persistence.utils</Export-Package>
                         <Service-Component>*</Service-Component>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>
