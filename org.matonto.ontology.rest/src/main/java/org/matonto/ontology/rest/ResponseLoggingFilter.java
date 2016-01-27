@@ -21,12 +21,15 @@ public class ResponseLoggingFilter implements ContainerResponseFilter {
     public void filter(ContainerRequestContext containerRequestContext, ContainerResponseContext
             containerResponseContext) throws IOException {
         if (log.isDebugEnabled()) {
+            long start = (long) containerRequestContext.getProperty(Filters.REQ_START_TIME);
+            long responseTime = System.currentTimeMillis() - start;
+
             String path = containerRequestContext.getUriInfo().getPath();
             String method = containerRequestContext.getMethod();
             int statusCode = containerResponseContext.getStatusInfo().getStatusCode();
             String statusMsg = containerResponseContext.getStatusInfo().getReasonPhrase();
 
-            log.debug(String.format("%s: %s -> %d: %s", method, path, statusCode, statusMsg));
+            log.debug(String.format("%s: %s -> %d: %s (%dms)", method, path, statusCode, statusMsg, responseTime));
         }
     }
 }

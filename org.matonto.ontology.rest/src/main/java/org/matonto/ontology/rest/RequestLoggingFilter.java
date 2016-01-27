@@ -19,6 +19,8 @@ public class RequestLoggingFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext containerRequestContext) throws IOException {
         if (log.isDebugEnabled()) {
+            containerRequestContext.setProperty(Filters.REQ_START_TIME, System.currentTimeMillis());
+
             String path = containerRequestContext.getUriInfo().getPath();
             String method = containerRequestContext.getMethod();
             log.debug(String.format("%s: %s", method, path));
