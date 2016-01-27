@@ -85,6 +85,7 @@
                             org.matonto.ontology.core.api.datarange,
                             *
                         </Import-Package>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>
