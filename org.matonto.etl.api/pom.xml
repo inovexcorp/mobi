@@ -16,11 +16,6 @@
 
     <name>${project.groupId}.${project.artifactId}</name>
 
-    <properties>
-        <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
-        <osgi-version-qualifier>${maven.build.timestamp}</osgi-version-qualifier>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
