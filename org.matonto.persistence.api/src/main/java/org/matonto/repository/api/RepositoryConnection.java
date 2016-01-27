@@ -1,11 +1,14 @@
 package org.matonto.repository.api;
 
 import org.matonto.query.api.GraphQuery;
-import org.matonto.query.api.Query;
+import org.matonto.query.api.Operation;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.*;
+import org.matonto.query.exception.MalformedQueryException;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
 import org.matonto.repository.base.RepositoryResult;
-import org.matonto.repository.exception.MalformedQueryException;
 import org.matonto.repository.exception.RepositoryException;
 
 public interface RepositoryConnection extends AutoCloseable {
@@ -150,7 +153,7 @@ public interface RepositoryConnection extends AutoCloseable {
      *         If the <tt>prepareQuery</tt> method is not supported by this
      *         repository.
      */
-    Query prepareQuery(String query)
+    Operation prepareQuery(String query)
             throws RepositoryException, MalformedQueryException;
 
     /**
@@ -169,7 +172,7 @@ public interface RepositoryConnection extends AutoCloseable {
      *         If the <tt>prepareQuery</tt> method is not supported by this
      *         repository.
      */
-    Query prepareQuery(String query, String baseURI)
+    Operation prepareQuery(String query, String baseURI)
             throws RepositoryException, MalformedQueryException;
 
     /**

@@ -1,12 +1,12 @@
 package org.matonto.query.api;
 
 import org.matonto.query.GraphQueryResult;
-import org.matonto.repository.exception.QueryEvaluationException;
+import org.matonto.query.exception.QueryEvaluationException;
 
-public interface GraphQuery extends Query{
+public interface GraphQuery extends Operation {
 
     /**
-     * Evaluates a SPARQL Graph Query
+     * Evaluates a SPARQL Graph Query.
      * @return a GraphQueryResult based on the graph query given
      * @throws QueryEvaluationException If there is an error processing the query
      */
