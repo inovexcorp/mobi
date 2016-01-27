@@ -3,6 +3,7 @@ package org.matonto.repository.impl.sesame.query;
 import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.Value;
+import org.matonto.rdf.core.utils.Values;
 
 import java.util.Iterator;
 import java.util.Optional;
@@ -18,32 +19,51 @@ public class SesameBindingSet implements BindingSet {
 
     @Override
     public Iterator<Binding> iterator() {
-        return null;
+        return new SesameBindingSetIterator(bindingSet.iterator());
     }
 
     @Override
     public Set<String> getBindingNames() {
-        return null;
+        return bindingSet.getBindingNames();
     }
 
     @Override
     public Optional<Binding> getBinding(String bindingName) {
-        return null;
+        return Optional.of(new SesameBinding(bindingSet.getBinding(bindingName)));
     }
 
     @Override
     public boolean hasBinding(String bindingName) {
-        return false;
+        return bindingSet.hasBinding(bindingName);
     }
 
     @Override
     public Optional<Value> getValue(String bindingName) {
-        return null;
+        return Optional.of(Values.matontoValue(bindingSet.getValue(bindingName)));
     }
 
     @Override
     public int size() {
         return 0;
+    }
+
+    private class SesameBindingSetIterator implements Iterator<Binding> {
+
+        Iterator<org.openrdf.query.Binding> sesameBindingSetIterator;
+
+        public SesameBindingSetIterator(Iterator<org.openrdf.query.Binding> sesameBindingSetIterator) {
+            this.sesameBindingSetIterator = sesameBindingSetIterator;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return sesameBindingSetIterator.hasNext();
+        }
+
+        @Override
+        public Binding next() {
+            return new SesameBinding(sesameBindingSetIterator.next());
+        }
     }
 
 }

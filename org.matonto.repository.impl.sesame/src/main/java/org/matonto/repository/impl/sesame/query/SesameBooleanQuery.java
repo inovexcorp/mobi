@@ -12,7 +12,12 @@ public class SesameBooleanQuery extends SesameOperation implements BooleanQuery 
         this.sesBooleanQuery = sesBooleanQuery;
     }
 
+    @Override
     public boolean evaluate() throws QueryEvaluationException {
-        return false;
+        try {
+            return sesBooleanQuery.evaluate();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 }

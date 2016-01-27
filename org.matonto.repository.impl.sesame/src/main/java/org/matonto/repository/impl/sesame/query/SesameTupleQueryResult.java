@@ -16,27 +16,47 @@ public class SesameTupleQueryResult extends TupleQueryResult {
 
     @Override
     public List<String> getBindingNames() throws QueryEvaluationException {
-        return null;
+        try {
+            return tupleQueryResult.getBindingNames();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public void close() throws QueryEvaluationException {
-
+        try {
+            tupleQueryResult.close();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public boolean hasNext() throws QueryEvaluationException {
-        return false;
+        try {
+            return tupleQueryResult.hasNext();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public BindingSet next() throws QueryEvaluationException {
-        return null;
+        try {
+            return new SesameBindingSet(tupleQueryResult.next());
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public void remove() throws QueryEvaluationException {
-
+        try {
+            tupleQueryResult.close();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
 }

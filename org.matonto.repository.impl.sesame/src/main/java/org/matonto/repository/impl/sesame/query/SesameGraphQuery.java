@@ -21,7 +21,11 @@ public class SesameGraphQuery extends SesameOperation implements GraphQuery {
 
     @Override
     public GraphQueryResult evaluate() throws QueryEvaluationException {
-        return null;
+        try {
+            return new SesameGraphQueryResult(sesameGraphQuery.evaluate());
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
 }

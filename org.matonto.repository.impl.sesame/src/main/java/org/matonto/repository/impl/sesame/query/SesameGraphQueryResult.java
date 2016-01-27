@@ -1,12 +1,13 @@
 package org.matonto.repository.impl.sesame.query;
 
-import org.openrdf.model.Statement;
-import org.openrdf.query.GraphQueryResult;
-import org.openrdf.query.QueryEvaluationException;
+import org.matonto.query.GraphQueryResult;
+import org.matonto.query.exception.QueryEvaluationException;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.core.utils.Values;
 
 import java.util.Map;
 
-public class SesameGraphQueryResult implements GraphQueryResult {
+public class SesameGraphQueryResult extends GraphQueryResult {
 
     org.openrdf.query.GraphQueryResult graphQueryResult;
 
@@ -16,26 +17,46 @@ public class SesameGraphQueryResult implements GraphQueryResult {
 
     @Override
     public Map<String, String> getNamespaces() throws QueryEvaluationException {
-        return null;
+        try {
+            return graphQueryResult.getNamespaces();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public void close() throws QueryEvaluationException {
-
+        try {
+            graphQueryResult.close();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public boolean hasNext() throws QueryEvaluationException {
-        return false;
+        try {
+            return graphQueryResult.hasNext();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public Statement next() throws QueryEvaluationException {
-        return null;
+        try {
+            return Values.matontoStatement(graphQueryResult.next());
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 
     @Override
     public void remove() throws QueryEvaluationException {
-
+        try {
+            graphQueryResult.remove();
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+            throw new QueryEvaluationException(e);
+        }
     }
 }

@@ -20,13 +20,9 @@ public class SesameTupleQuery extends SesameOperation implements TupleQuery {
     @Override
     public TupleQueryResult evaluate() throws QueryEvaluationException {
         try {
-
             return new SesameTupleQueryResult(sesameTupleQuery.evaluate());
-
         } catch (org.openrdf.query.QueryEvaluationException e) {
-
             throw new QueryEvaluationException(e);
-
         }
     }
 }

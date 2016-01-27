@@ -15,7 +15,11 @@ public class SesameUpdate extends SesameOperation implements Update {
 
     @Override
     public void execute() throws UpdateExecutionException {
-
+        try {
+            sesUpdate.execute();
+        } catch (org.openrdf.query.UpdateExecutionException e) {
+            throw new UpdateExecutionException(e);
+        }
     }
 
 }
