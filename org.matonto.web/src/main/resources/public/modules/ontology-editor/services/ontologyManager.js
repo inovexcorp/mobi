@@ -262,7 +262,7 @@
 
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
-                        ontology.matonto.annotations = addDefaultAnnotations(response.data[0].annotationProperties);
+                        ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -571,11 +571,8 @@
                 console.log('create', result, obj);
             }
 
-            self.editIRI = function(selected, ontology) {
-                var begin = document.getElementById('iriBegin').value,
-                    then = document.getElementById('iriThen').value,
-                    end = document.getElementById('iriEnd').value,
-                    update = document.getElementById('iriUpdate').checked,
+            self.editIRI = function(begin, then, end, update, selected, ontology) {
+                var update = document.getElementById('iriUpdate').checked,
                     fresh = begin + then + end;
 
                 if(selected.matonto.hasOwnProperty('namespace')) {
