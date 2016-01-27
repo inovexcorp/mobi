@@ -1,14 +1,17 @@
 package org.matonto.repository.impl.sesame.query;
 
 import org.matonto.query.GraphQueryResult;
+import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.GraphQuery;
-import org.matonto.repository.exception.QueryEvaluationException;
+import org.matonto.query.exception.QueryEvaluationException;
+import org.matonto.rdf.api.Value;
 
-public class SesameGraphQuery implements GraphQuery {
+public class SesameGraphQuery extends SesameOperation implements GraphQuery {
 
     private org.openrdf.query.GraphQuery sesameGraphQuery;
 
     public SesameGraphQuery( org.openrdf.query.GraphQuery sesameGraphQuery) {
+        super(sesameGraphQuery);
         setDelegate(sesameGraphQuery);
     }
 

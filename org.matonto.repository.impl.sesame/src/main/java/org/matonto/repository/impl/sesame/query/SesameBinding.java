@@ -2,6 +2,7 @@ package org.matonto.repository.impl.sesame.query;
 
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.Value;
+import org.matonto.rdf.core.utils.Values;
 
 public class SesameBinding implements Binding {
 
@@ -13,12 +14,12 @@ public class SesameBinding implements Binding {
 
     @Override
     public String getName() {
-        return null;
+        return binding.getName();
     }
 
     @Override
     public Value getValue() {
-        return null;
+        return Values.matontoValue(binding.getValue());
     }
 
 }

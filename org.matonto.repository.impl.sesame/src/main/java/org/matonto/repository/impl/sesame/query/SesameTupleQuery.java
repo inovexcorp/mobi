@@ -2,13 +2,14 @@ package org.matonto.repository.impl.sesame.query;
 
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.repository.exception.QueryEvaluationException;
+import org.matonto.query.exception.QueryEvaluationException;
 
-public class SesameTupleQuery implements TupleQuery {
+public class SesameTupleQuery extends SesameOperation implements TupleQuery {
 
     org.openrdf.query.TupleQuery sesameTupleQuery;
 
     public SesameTupleQuery(org.openrdf.query.TupleQuery sesameTupleQuery) {
+        super(sesameTupleQuery);
         setDelegate(sesameTupleQuery);
     }
 
@@ -16,8 +17,16 @@ public class SesameTupleQuery implements TupleQuery {
         this.sesameTupleQuery = tupleQuery;
     }
 
-
+    @Override
     public TupleQueryResult evaluate() throws QueryEvaluationException {
-        return null;
+        try {
+
+            return new SesameTupleQueryResult(sesameTupleQuery.evaluate());
+
+        } catch (org.openrdf.query.QueryEvaluationException e) {
+
+            throw new QueryEvaluationException(e);
+
+        }
     }
 }

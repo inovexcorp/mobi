@@ -1,12 +1,12 @@
 package org.matonto.repository.impl.sesame.query;
 
-import org.openrdf.query.BindingSet;
-import org.openrdf.query.QueryEvaluationException;
-import org.openrdf.query.TupleQueryResult;
+import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.BindingSet;
+import org.matonto.query.exception.QueryEvaluationException;
 
 import java.util.List;
 
-public class SesameTupleQueryResult implements TupleQueryResult {
+public class SesameTupleQueryResult extends TupleQueryResult {
 
     private org.openrdf.query.TupleQueryResult tupleQueryResult;
 
@@ -38,4 +38,5 @@ public class SesameTupleQueryResult implements TupleQueryResult {
     public void remove() throws QueryEvaluationException {
 
     }
+
 }

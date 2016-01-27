@@ -61,8 +61,7 @@ public interface Operation {
      * Specifies the maximum time that an operation is allowed to run. The
      * operation will be interrupted when it exceeds the time limit. Any
      * consecutive requests to fetch query results will result in
-     * {@link QueryInterruptedException}s or {@link UpdateInterruptedException}s
-     * (depending on whether the operation is a query or an update).
+     * {@link QueryInterruptedException}
      *
      * @param maxExecTime
      *        The maximum query time, measured in seconds. A negative or zero

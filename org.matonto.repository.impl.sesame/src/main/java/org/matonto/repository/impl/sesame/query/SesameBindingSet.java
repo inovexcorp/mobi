@@ -5,6 +5,7 @@ import org.matonto.query.api.BindingSet;
 import org.matonto.rdf.api.Value;
 
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 
 public class SesameBindingSet implements BindingSet {
@@ -26,7 +27,7 @@ public class SesameBindingSet implements BindingSet {
     }
 
     @Override
-    public Binding getBinding(String bindingName) {
+    public Optional<Binding> getBinding(String bindingName) {
         return null;
     }
 
@@ -36,7 +37,7 @@ public class SesameBindingSet implements BindingSet {
     }
 
     @Override
-    public Value getValue(String bindingName) {
+    public Optional<Value> getValue(String bindingName) {
         return null;
     }
 
