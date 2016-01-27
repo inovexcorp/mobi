@@ -261,7 +261,7 @@
                         <!-- basic button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.oi !== -1 ? (vm.selected[vm.selected.matonto.rdfs + 'label'][0]['@value'] || (vm.selected['@id'] | splitIRI).end | beautify) : 'New Ontology'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.oi !== -1 ? (vm.selected[vm.selected.matonto.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'}}</small></a>
 
                         <!-- annotations button -->
                         <a class="btn btn-primary"
