@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontologyManager', ['removeNamespace', 'beautify'])
+        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService) {
             var self = this,
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
@@ -92,7 +92,7 @@
                     var len = obj['@id'].length,
                         delimiter = obj['@id'].charAt(len - 1);
 
-                    if(delimiter == '#' || delimiter == ':' || delimiter == '/') {
+                    if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
                         obj.matonto = {
                             delimiter: delimiter,
                             originalId: obj['@id']
@@ -155,7 +155,6 @@
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             classes.push(obj);
                             break;
                         case prefixes.owl + 'DatatypeProperty':
@@ -166,7 +165,6 @@
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: 'default'
                             };
-                            obj['@id'] = $filter('removeNamespace')(obj['@id']);
                             properties.push(obj);
                             break;
                         default:
@@ -195,10 +193,10 @@
                         if(Object.prototype.toString.call(domain) === '[object Array]') {
                             j = domain.length;
                             while(j--) {
-                                addToClass($filter('removeNamespace')(domain[j]['@id']), properties[i]);
+                                addToClass(domain[j]['@id'], properties[i]);
                             }
                         } else {
-                            addToClass($filter('removeNamespace')(domain['@id']), properties[i]);
+                            addToClass(domain['@id'], properties[i]);
                         }
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);
@@ -264,7 +262,7 @@
 
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
-                        ontology.matonto.annotations = addDefaultAnnotations(response.data[0].annotationProperties);
+                        ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -378,11 +376,13 @@
                     } else {
                         if(pi === -1) {
                             result = angular.copy(newProperty);
-                            // TODO: need to figure out what type of property
-                            result['@type'] = self.ontologies[oi].matonto.owl + 'DataTypeProperty';
+                            // TODO: let them pick from a drop down list of provided property options
+                            // result['@type'] = [self.ontologies[oi].matonto.owl + 'DataTypeProperty'];
+                            result.matonto.namespace = self.ontologies[oi]['@id'] + self.ontologies[oi].matonto.delimiter;
                         } else if(ci === -1) {
                             result = angular.copy(newClass);
-                            result['@type'] = self.ontologies[oi].matonto.owl + 'Class';
+                            result['@type'] = [self.ontologies[oi].matonto.owl + 'Class'];
+                            result.matonto.namespace = self.ontologies[oi]['@id'] + self.ontologies[oi].matonto.delimiter;
                         } else {
                             result = angular.copy(newOntology);
                         }
@@ -398,15 +398,16 @@
                 return result;
             }
 
-            self.delete = function(ontologyId, state) {
+            self.delete = function(selected, state) {
+                var deferred = $q.defer();
+
                 if(state.editor === 'ontology-editor' && state.oi !== -1) {
                     $rootScope.showSpinner = true;
                     var config = {
                             params: {
-                                ontologyIdStr: ontologyId
+                                ontologyIdStr: selected.matonto.ontologyId
                             }
                         },
-                        deferred = $q.defer(),
                         error = function(response) {
                             deferred.reject(response.data.error);
                             $rootScope.showSpinner = false;
@@ -425,8 +426,11 @@
                             error(response);
                         });
 
-                    return deferred.promise;
+                } else {
+                    deferred.reject();
                 }
+
+                return deferred.promise;
             }
 
             self.upload = function(isValid, file) {
@@ -500,8 +504,9 @@
                     pi = state.pi,
                     tab = state.tab,
                     current = self.ontologies[oi],
-                    namespace = current.matonto.prefix || (current['@id'] + current.matonto.delimiter),
+                    namespace = current.matonto.originalId + current.matonto.delimiter,
                     result = angular.copy(obj);
+
                 if(isValid) {
                     if(pi !== undefined || ci !== undefined) {
                         result['@id'] = namespace + result['@id'];
@@ -511,12 +516,13 @@
                     delete result.matonto;
                     obj.matonto.unsaved = false;
                 }
+
                 // TODO: update obj.matonto.originalId in .then() after API call to update the @id if it changed
                 console.log('edit', result, obj.matonto.originalId, obj);
             }
 
             self.create = function(isValid, obj, state) {
-                var arrToObj,
+                var arrToObj, setId,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -536,24 +542,49 @@
                     return temp;
                 }
 
+                setId = function(obj, type, rdfs) {
+                    if(obj.matonto.hasOwnProperty('namespace')) {
+                        obj['@id'] = obj.matonto.namespace + $filter('camelCase')(obj[rdfs + 'label'][0]['@value'], type);
+                        delete obj.matonto.namespace;
+                    }
+                    obj.matonto.originalId = obj['@id'];
+                }
+
                 if(isValid) {
                     if(oi === -1) {
                         obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
                         self.ontologies.push(obj);
                     } else {
-                        var current = self.ontologies[oi],
-                            namespace = current.matonto.prefix || current['@id'] + current.matonto.delimiter;
-                        obj.matonto.originalId = namespace + obj['@id'];
+                        var current = self.ontologies[oi];
                         if(ci === -1) {
+                            setId(obj, 'class', current.matonto.rdfs);
                             current.matonto.classes.push(obj);
                         } else {
+                            setId(obj, 'property', current.matonto.rdfs);
                             current.matonto.classes[ci].matonto.properties.push(obj);
                         }
                     }
                     delete self.newItems[unique];
                     delete result.matonto;
                 }
+
                 console.log('create', result, obj);
+            }
+
+            self.editIRI = function(begin, then, end, update, selected, ontology) {
+                var update = document.getElementById('iriUpdate').checked,
+                    fresh = begin + then + end;
+
+                if(selected.matonto.hasOwnProperty('namespace')) {
+                    delete selected.matonto.namespace;
+                } else if(update) {
+                    updateRefsService.update(ontology, selected['@id'], fresh, ontology.matonto.owl);
+                }
+                selected['@id'] = fresh;
+            }
+
+            self.typeMatch = function(property, owl, type) {
+                return property['@type'].indexOf(owl + type) !== -1;
             }
         }
 })();
