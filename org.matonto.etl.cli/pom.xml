@@ -44,6 +44,7 @@
                         <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
                         <Karaf-Commands>*</Karaf-Commands>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>

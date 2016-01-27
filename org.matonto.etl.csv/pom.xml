@@ -69,6 +69,7 @@
                         <Export-Service>org.matonto.etl.api.csv.CSVConverter</Export-Service>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>

@@ -78,6 +78,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package></Export-Package>
                         <Service-Component>*</Service-Component>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>
