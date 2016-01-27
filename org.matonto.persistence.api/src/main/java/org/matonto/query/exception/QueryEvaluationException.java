@@ -1,4 +1,4 @@
-package org.matonto.repository.exception;
+package org.matonto.query.exception;
 
 import org.matonto.exception.MatOntoException;
 
@@ -12,12 +12,12 @@ public class QueryEvaluationException extends MatOntoException {
         super(message);
     }
 
-    public QueryEvaluationException(Throwable t) {
-        super(t);
+    public QueryEvaluationException(Throwable exception) {
+        super(exception);
     }
 
-    public QueryEvaluationException(String message, Throwable t) {
-        super(message, t);
+    public QueryEvaluationException(String message, Throwable exception) {
+        super(message, exception);
     }
 
 }

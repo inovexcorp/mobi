@@ -2,6 +2,8 @@ package org.matonto.query.api;
 
 import org.matonto.rdf.api.Value;
 
+import javax.annotation.Nonnull;
+
 public interface Binding {
 
     /**
@@ -17,18 +19,19 @@ public interface Binding {
      *
      * @return The value of the binding, never <tt>null</tt>.
      */
+    @Nonnull
     Value getValue();
 
     /**
      * Compares a binding object to another object.
      *
-     * @param o
+     * @param object
      *        The object to compare this binding to.
      * @return <tt>true</tt> if the other object is an instance of
      *         {@link Binding} and both their names and values are equal,
      *         <tt>false</tt> otherwise.
      */
-    boolean equals(Object o);
+    boolean equals(Object object);
 
 
 }
