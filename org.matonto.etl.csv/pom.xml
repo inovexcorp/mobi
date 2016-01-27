@@ -63,9 +63,12 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
+                        <Export-Package>
+                            org.matonto.etl.api.csv; provide:=true
+                        </Export-Package>
                         <Export-Service>org.matonto.etl.api.csv.CSVConverter</Export-Service>
                         <Service-Component>*</Service-Component>
+                        <build>${maven.build.timestamp}</build>
                     </instructions>
                 </configuration>
             </plugin>
