@@ -1,8 +1,6 @@
 package org.matonto.repository.impl.sesame;
 
-import org.matonto.query.api.GraphQuery;
-import org.matonto.query.api.Operation;
-import org.matonto.query.api.TupleQuery;
+import org.matonto.query.api.*;
 import org.matonto.query.exception.MalformedQueryException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
@@ -193,6 +191,26 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public GraphQuery prepareGraphQuery(String query, String baseURI)
             throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public BooleanQuery prepareBooleanQuery(String query) throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public Update prepareUpdate(String update) throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
         return null;
     }
 
