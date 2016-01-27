@@ -62,12 +62,15 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
+                        <Export-Package>
+                            org.matonto.etl.api.rdf; provide:=true
+                        </Export-Package>
                         <Export-Service>
                             org.matonto.etl.api.rdf.RDFExportService,
                             org.matonto.etl.api.rdf.RDFImportService
                         </Export-Service>
                         <Service-Component>*</Service-Component>
+                        <build>${maven.build.timestamp}</build>
                     </instructions>
                 </configuration>
             </plugin>
