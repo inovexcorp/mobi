@@ -12,9 +12,7 @@ import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
-import org.matonto.repository.impl.sesame.query.SesameGraphQuery;
-import org.matonto.repository.impl.sesame.query.SesameOperation;
-import org.matonto.repository.impl.sesame.query.SesameTupleQuery;
+import org.matonto.repository.impl.sesame.query.*;
 import org.openrdf.query.QueryLanguage;
 
 public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
@@ -236,22 +234,46 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
     @Override
     public BooleanQuery prepareBooleanQuery(String query) throws RepositoryException, MalformedQueryException {
-        return null;
+        try {
+            return new SesameBooleanQuery(sesameConn.prepareBooleanQuery(query));
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        } catch (org.openrdf.query.MalformedQueryException e) {
+            throw new MalformedQueryException(e);
+        }
     }
 
     @Override
     public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        return null;
+        try {
+            return new SesameBooleanQuery(sesameConn.prepareBooleanQuery(QueryLanguage.SPARQL, query, baseURI));
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        } catch (org.openrdf.query.MalformedQueryException e) {
+            throw new MalformedQueryException(e);
+        }
     }
 
     @Override
     public Update prepareUpdate(String update) throws RepositoryException, MalformedQueryException {
-        return null;
+        try {
+            return new SesameUpdate(sesameConn.prepareUpdate(update));
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        } catch (org.openrdf.query.MalformedQueryException e) {
+            throw new MalformedQueryException(e);
+        }
     }
 
     @Override
     public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
-        return null;
+        try {
+            return new SesameUpdate(sesameConn.prepareUpdate(QueryLanguage.SPARQL, update, baseURI));
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        } catch (org.openrdf.query.MalformedQueryException e) {
+            throw new MalformedQueryException(e);
+        }
     }
 
 }
