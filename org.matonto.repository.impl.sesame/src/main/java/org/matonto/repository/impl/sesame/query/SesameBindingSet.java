@@ -44,7 +44,7 @@ public class SesameBindingSet implements BindingSet {
 
     @Override
     public int size() {
-        return 0;
+        return bindingSet.size();
     }
 
     private class SesameBindingSetIterator implements Iterator<Binding> {
