@@ -31,68 +31,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- MatOnto Part Dependencies -->
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>persistence.api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>persistence.cli</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>persistence.utils</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>rdf.impl.sesame</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>repository.impl.sesame</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>repository.impl.core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>etl.api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>etl.rest</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>ontology.api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>ontology.utils</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>ontology.rest</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <!-- Sesame Dependencies -->
             <dependency>
                 <groupId>org.openrdf.sesame</groupId>
