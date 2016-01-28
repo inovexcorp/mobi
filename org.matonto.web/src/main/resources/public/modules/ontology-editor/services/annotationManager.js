@@ -4,8 +4,7 @@
     angular
         .module('annotationManager', ['splitIRI'])
         .service('annotationManagerService', annotationManagerService)
-        .filter('showAnnotations', showAnnotations)
-        /*.filter('hideAnnotations', hideAnnotations)*/;
+        .filter('showAnnotations', showAnnotations);
 
         annotationManagerService.$inject = ['$filter'];
 
@@ -37,7 +36,7 @@
                 if(select === 'other') {
                     temp = key;
                 } else {
-                    temp = select;
+                    temp = select.namespace + select.localName;
                 }
 
                 if(obj.hasOwnProperty(temp)) {
@@ -46,17 +45,8 @@
                     obj[temp] = [item];
                 }
 
-                stripped = $filter('splitIRI')(temp).end;
-
-                for(prop in annotations) {
-                    if(temp.indexOf(prop) !== -1) {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if(!found) {
-                    annotations[temp.replace(stripped, '')] = [stripped];
+                if(annotations.indexOf(temp) === -1) {
+                    annotations.push({ namespace: select.namespace, localName: select.localName });
                 }
             }
 
@@ -65,45 +55,23 @@
             }
         }
 
-        function showAnnotations() {
+        showAnnotations.$inject = ['$filter'];
+
+        function showAnnotations($filter) {
             return function(obj, annotations) {
-                var i, prop, temp,
+                var temp,
+                    i = 0,
                     results = [];
 
-                for(prop in annotations) {
-                    i = 0;
-                    while(i < annotations[prop].length) {
-                        temp = prop + annotations[prop][i];
-                        if(obj.hasOwnProperty(temp)) {
-                            results.push(temp);
-                        }
-                        i++;
+                while(i < annotations.length) {
+                    temp = annotations[i].namespace + annotations[i].localName;
+                    if(obj.hasOwnProperty(temp)) {
+                        results.push(temp);
                     }
+                    i++;
                 }
+
                 return results;
             }
         }
-
-        /*function hideAnnotations() {
-            return function(annotations, obj) {
-                var prop, i, count,
-                    result = [];
-
-                for(prop in annotations) {
-                    i = 0;
-                    count = 0;
-                    while(i < annotations[prop].length) {
-                        if(obj.hasOwnProperty(prop + annotations[prop][i])) {
-                            count++;
-                        }
-                        i++;
-                    }
-
-                    if(count < annotations[prop].length) {
-                        result.push(prop);
-                    }
-                }
-                return result;
-            }
-        }*/
 })();

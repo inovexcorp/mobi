@@ -6,9 +6,12 @@
         .config(config)
         .run(run);
 
-    config.$inject = ['$stateProvider', '$urlRouterProvider'];
+    config.$inject = ['$stateProvider', '$urlRouterProvider', 'uiSelectConfig'];
 
-    function config($stateProvider, $urlRouterProvider) {
+    function config($stateProvider, $urlRouterProvider, uiSelectConfig) {
+        // Sets proper style for the ui-select directives
+        uiSelectConfig.theme = 'bootstrap';
+
         // Defaults to login
         $urlRouterProvider.otherwise('/login');
 

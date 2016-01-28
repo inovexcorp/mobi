@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'ngTagsInput', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
+        .module('ontology-editor', ['file-input', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
@@ -100,7 +100,7 @@
             vm.showAnnotationOverlay = false;
             vm.selected.matonto.currentAnnotationKey = '';
             vm.selected.matonto.currentAnnotationValue = '';
-            vm.selected.matonto.currentAnnotationSelect = 'default';
+            vm.selected.matonto.currentAnnotationSelect = null;
         }
 
         vm.addAnnotation = function() {
@@ -127,6 +127,10 @@
 
         vm.getPattern = function() {
             return annotationManagerService.getPattern();
+        }
+
+        vm.groupByNamespace = function(item) {
+            return item.namespace;
         }
     }
 })();

@@ -110,7 +110,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntology(String ontologyIdStr, String rdfFormat) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
+        JSONObject result = doWithOntology2(ontologyIdStr, ontology -> {
             String content = getOntologyAsRdf(ontology, rdfFormat);
 
             JSONObject json = new JSONObject();
@@ -124,7 +124,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response downloadOntologyFile(String ontologyIdStr, String rdfFormat) {
-        JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
+        JSONObject result = doWithOntology2(ontologyIdStr, ontology -> {
             final String content = getOntologyAsRdf(ontology, rdfFormat);
             JSONObject json = new JSONObject();
             json.put("ontology", content);
@@ -167,43 +167,43 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
+        JSONObject result = doWithOntology2(ontologyIdStr, this::getAllIRIs);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getAnnotationsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getAnnotationArray);
+        JSONArray result = doWithOntology(ontologyIdStr, this::getAnnotationArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getClassesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getClassArray);
+        JSONArray result = doWithOntology(ontologyIdStr, this::getClassArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDatatypesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDatatypeArray);
+        JSONArray result = doWithOntology(ontologyIdStr, this::getDatatypeArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getObjectPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray);
+        JSONArray result = doWithOntology(ontologyIdStr, this::getObjectPropertyArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getDataPropertiesInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getDataPropertyArray);
+        JSONArray result = doWithOntology(ontologyIdStr, this::getDataPropertyArray);
         return Response.status(200).entity(result.toString()).build();
     }
 
     @Override
     public Response getNamedIndividualsInOntology(String ontologyIdStr) {
-        JSONObject result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray);
+        JSONArray result = doWithOntology(ontologyIdStr, this::getNamedIndividualArray);
         return Response.status(200).entity(result.toString()).build();
     }
     
@@ -269,7 +269,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets Annotation JSONArray.
      */
-    private JSONObject getAnnotationArray(@Nonnull Ontology ontology) {
+    private JSONArray getAnnotationArray(@Nonnull Ontology ontology) {
         List<IRI> iris = ontology.getAllAnnotations()
                 .stream()
                 .map(Annotation::getProperty)
@@ -282,7 +282,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets Class JSONArray.
      */
-    private JSONObject getClassArray(@Nonnull Ontology ontology) {
+    private JSONArray getClassArray(@Nonnull Ontology ontology) {
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
@@ -294,7 +294,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets Datatype JSONArray.
      */
-    private JSONObject getDatatypeArray(@Nonnull Ontology ontology) {
+    private JSONArray getDatatypeArray(@Nonnull Ontology ontology) {
         List<IRI> iris = ontology.getAllDatatypes()
                 .stream()
                 .map(Entity::getIRI)
@@ -306,7 +306,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets ObjectProperty JSONArray.
      */
-    private JSONObject getObjectPropertyArray(@Nonnull Ontology ontology) {
+    private JSONArray getObjectPropertyArray(@Nonnull Ontology ontology) {
         List<IRI> iris = ontology.getAllObjectProperties()
                 .stream()
                 .map(Entity::getIRI)
@@ -318,7 +318,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets DataProperty JSONArray.
      */
-    private JSONObject getDataPropertyArray(@Nonnull Ontology ontology) {
+    private JSONArray getDataPropertyArray(@Nonnull Ontology ontology) {
         List<IRI> iris = ontology.getAllDataProperties()
                 .stream()
                 .map(Entity::getIRI)
@@ -330,7 +330,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets NamedIndividual JSONArray.
      */
-    private JSONObject getNamedIndividualArray(Ontology ontology) {
+    private JSONArray getNamedIndividualArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllIndividuals()
                 .stream()
                 .filter(ind -> ind instanceof NamedIndividual)
@@ -348,7 +348,26 @@ public class OntologyRestImpl implements OntologyRest {
      *                    an Ontology component.
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction){
+    private JSONArray doWithOntology(String ontologyIdStr, Function<Ontology, JSONArray> iriFunction){
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
+            throw sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+
+        Optional<Ontology> optOntology;
+
+        try {
+            optOntology = getOntology(ontologyIdStr);
+        } catch (MatontoOntologyException ex) {
+            throw sendError(ex, "Problem occurred while retrieving ontology", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        if (optOntology.isPresent()) {
+            return iriFunction.apply(optOntology.get());
+        } else {
+            throw sendError("ontology does not exist", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private JSONObject doWithOntology2(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction){
         if (ontologyIdStr == null || ontologyIdStr.length() == 0)
             throw sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
 
@@ -386,11 +405,11 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
-    private JSONObject iriListToJsonArray(@Nonnull List<IRI> iris) {
+    private JSONArray iriListToJsonArray(@Nonnull List<IRI> iris) {
         if (iris.isEmpty())
-            return new JSONObject();
+            return new JSONArray();
 
-        Map<String, ArrayList<String>> iriMap = new HashMap<>();
+        /*Map<String, ArrayList<String>> iriMap = new HashMap<>();
         for (IRI iri : iris) {
             if (!iriMap.containsKey(iri.getNamespace())) {
                 ArrayList<String> localnames = new ArrayList<>();
@@ -410,6 +429,23 @@ public class OntologyRestImpl implements OntologyRest {
         }
 
         return json;
+        */
+
+        JSONObject obj;
+        JSONArray arr = new JSONArray();
+
+        for (IRI iri : iris) {
+            obj = new JSONObject();
+
+            obj.put("namespace", iri.getNamespace());
+            obj.put("localName", iri.getLocalName());
+
+            if(!arr.contains(obj)) {
+                arr.add(obj);
+            }
+        }
+
+        return arr;
     }
 
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
@@ -505,7 +541,7 @@ public class OntologyRestImpl implements OntologyRest {
         return json;
     }
     
-    private JSONObject applyToImportedOntologies(String ontologyIdStr, Set<Ontology> importedOntologies, String key, Function<Ontology, JSONObject> function) {
+    private JSONObject applyToImportedOntologies(String ontologyIdStr, Set<Ontology> importedOntologies, String key, Function<Ontology, JSONArray> function) {
         JSONObject json = new JSONObject();
         json.put("ontologyId", ontologyIdStr);
         JSONArray ontoArray = new JSONArray();

@@ -385,3 +385,9 @@ section > form,
     margin: 0;
     padding: 6px 15px 10px;
 }
+
+/* static form display spacing */
+.form-control-static {
+    min-height: auto;
+    padding: 0 0 0 13px;
+}

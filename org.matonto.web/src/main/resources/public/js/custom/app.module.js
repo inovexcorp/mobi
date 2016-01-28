@@ -10,6 +10,9 @@
             'nav',
             'ontology-editor',
             'webtop',
-            'ui.router'
+            'trusted',
+            'removeMatonto',
+            'ui.router',
+            'ui.select'
         ]);
 })();
