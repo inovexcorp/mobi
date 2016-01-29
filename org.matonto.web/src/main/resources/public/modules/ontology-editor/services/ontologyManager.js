@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase'])
+        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj) {
             var self = this,
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
@@ -82,19 +82,6 @@
                     }, function(response) {
                         console.log('Error in initialize:', response);
                     });
-            }
-
-            function getDefaultAnnotationArray() {
-                var i = 0,
-                    arr = [],
-                    temp = angular.copy(defaultAnnotations);
-
-                while(i < temp.length) {
-                    arr.push(temp[i].namespace + temp[i].localName);
-                    i++;
-                }
-
-                return arr;
             }
 
             function restructure(flattened, ontologyId, context, prefixes) {
@@ -255,12 +242,14 @@
 
                 addDefaultAnnotations = function(annotations) {
                     var temp, index, split,
-                        i = 0,
+                        i = 1,
                         exclude = [
                             'http://www.w3.org/2000/01/rdf-schema#label',
                             'http://www.w3.org/2000/01/rdf-schema#comment'
                         ],
-                        defaults = getDefaultAnnotationArray();
+                        defaults = responseObj.stringify(defaultAnnotations);
+
+                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
 
                     while(i < annotations.length) {
                         temp = annotations[i].namespace + annotations[i].localName;
@@ -277,7 +266,7 @@
                     i = 0;
                     while(i < defaults.length) {
                         split = $filter('splitIRI')(defaults[i]);
-                        annotations.push({ namespace: split.begin, localName: split.end });
+                        annotations.push({ namespace: split.begin + split.then, localName: split.end });
                         i++;
                     }
 

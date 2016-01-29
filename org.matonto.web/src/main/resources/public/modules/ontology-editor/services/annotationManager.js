@@ -2,13 +2,13 @@
     'use strict';
 
     angular
-        .module('annotationManager', ['splitIRI'])
+        .module('annotationManager', ['responseObj', 'splitIRI'])
         .service('annotationManagerService', annotationManagerService)
         .filter('showAnnotations', showAnnotations);
 
-        annotationManagerService.$inject = ['$filter'];
+        annotationManagerService.$inject = ['$filter', 'responseObj']
 
-        function annotationManagerService($filter) {
+        function annotationManagerService($filter, responseObj) {
             var self = this,
                 reg = /^([^:\/?#]+):\/\/([^\/?#]*)([^?#]*)\\?([^#]*)(?:[#\/:](.+))+/;
 
@@ -33,8 +33,12 @@
                     select = matonto.currentAnnotationSelect,
                     item = {'@value': value};
 
-                if(select === 'other') {
+                if(select.namespace === 'New Annotation') {
                     temp = key;
+                    if(responseObj.stringify(annotations).indexOf(temp) === -1) {
+                        var split = $filter('splitIRI')(temp);
+                        annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                    }
                 } else {
                     temp = select.namespace + select.localName;
                 }
@@ -44,10 +48,6 @@
                 } else {
                     obj[temp] = [item];
                 }
-
-                if(annotations.indexOf(temp) === -1) {
-                    annotations.push({ namespace: select.namespace, localName: select.localName });
-                }
             }
 
             self.edit = function(obj, key, value, index) {
@@ -55,9 +55,7 @@
             }
         }
 
-        showAnnotations.$inject = ['$filter'];
-
-        function showAnnotations($filter) {
+        function showAnnotations() {
             return function(obj, annotations) {
                 var temp,
                     i = 0,

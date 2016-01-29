@@ -571,7 +571,7 @@
                             <div class="form-group">
                                 <label class="control-label">Annotation</label>
                                 <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
-                                    <ui-select-match placeholder="Select an annotation">{{$select.selected.namespace + $select.selected.localName}}</ui-select-match>
+                                    <ui-select-match placeholder="Select an annotation">{{($select.selected.namespace + $select.selected.localName) || $select.selected}}</ui-select-match>
                                     <ui-select-choices group-by="vm.groupByNamespace" repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations | filter: $select.search">
                                         <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                                     </ui-select-choices>
@@ -579,7 +579,7 @@
                             </div>
 
                             <!-- key, if new -->
-                            <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other'" class="form-group">
+                            <div ng-if="vm.selected.matonto.currentAnnotationSelect.namespace === 'New Annotation'" class="form-group">
                                 <label class="control-label" for="ontology-annotation-key">Name <small class="text-muted">*Must be a valid IRI or you won't be able to add it.</small></label>
                                 <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" required />
                             </div>
@@ -608,13 +608,13 @@
                             <!-- adding a custom one -->
                             <button ng-if="!vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
                                     ng-disabled="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default'"
-                                    ng-click="vm.addAnnotation();"><i class="fa fa-plus fa-fw"></i>Add</button>
+                                    ng-click="vm.addAnnotation();">Add</button>
 
                             <button ng-if="vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
                                     ng-disabled="vm.annotationForm.$invalid"
-                                    ng-click="vm.editAnnotation();"><i class="fa fa-pencil fa-fw"></i>Edit</button>
+                                    ng-click="vm.editAnnotation();">Edit</button>
 
-                            <button type="button" class="btn btn-default pull-right" ng-click="vm.showAnnotationOverlay = false;"><i class="fa fa-times fa-fw"></i>Cancel</button>
+                            <button type="button" class="btn btn-default pull-right" ng-click="vm.showAnnotationOverlay = false;">Cancel</button>
                         </div>
                     </form>
                 </div>
