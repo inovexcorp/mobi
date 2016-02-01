@@ -391,3 +391,12 @@ section > form,
     min-height: auto;
     padding: 0 0 0 13px;
 }
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 3px;
+
+    input.ui-select-search {
+        margin: 2px 0 1px;
+        padding: 0 9px;
+    }
+}

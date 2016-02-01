@@ -392,10 +392,12 @@
                         <!-- rdfs:subClassOf -->
                         <div class="form-group">
                             <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{rdfs}}subClassOf&gt;</small></label>
-                            <ui-select multiple ng-model="vm.selected[rdfs + 'subClassOf']">
-                                <ui-select-match placeholder="Select class...">{{$item['@id']}}</ui-select-match>
-                                <ui-select-choices repeat="class in ontology.matonto.subClasses">
-                                    {{item}}
+                            <ui-select multiple ng-model="vm.selected[rdfs + 'subClassOf']" on-select="vm.convertClass($item, $model);">
+                                <ui-select-match placeholder="Select Class">
+                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | filter: $select.search">
+                                    <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -622,6 +624,8 @@
             </div>
         </section>
     </div>
+
+    <pre>{{vm.selected | removeMatonto | json}}</pre>
 </div>
 
 <!-- annotation template -->
