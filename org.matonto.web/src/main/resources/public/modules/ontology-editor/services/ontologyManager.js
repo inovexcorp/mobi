@@ -262,7 +262,7 @@
 
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
-                        ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
+                        ontology.matonto.annotations = addDefaultAnnotations(response.data[ontologyId][0].annotationProperties);
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
