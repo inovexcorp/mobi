@@ -277,6 +277,7 @@
                     .then(function(response) {
                         ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
                         ontology.matonto.subClasses = response.data.classes;
+                        // ontology.matonto.annotations = addDefaultAnnotations(response.data[ontologyId][0].annotationProperties);
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);

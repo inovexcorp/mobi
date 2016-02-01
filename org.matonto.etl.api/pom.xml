@@ -5,13 +5,12 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.3-SNAPSHOT</version>
+        <version>1.0-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>etl.api</artifactId>
-    <version>${matonto.etl.api.version}</version>
 
     <packaging>bundle</packaging>
 
@@ -26,6 +25,11 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
     </dependencies>
 
@@ -40,6 +44,8 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>org.matonto.etl.api*</Export-Package>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>
