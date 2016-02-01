@@ -277,7 +277,8 @@
                     .then(function(response) {
                         ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
                         ontology.matonto.subClasses = response.data.classes;
-                        // ontology.matonto.annotations = addDefaultAnnotations(response.data[ontologyId][0].annotationProperties);
+                        ontology.matonto.subDataProperties = response.data.dataProperties;
+                        ontology.matonto.subObjectProperties = response.data.objectProperties;
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -598,8 +599,8 @@
                 selected['@id'] = fresh;
             }
 
-            self.typeMatch = function(property, owl, type) {
-                return property['@type'].indexOf(owl + type) !== -1;
+            self.typeMatch = function(obj, namespace, localName) {
+                return obj['@type'].indexOf(namespace + localName) !== -1;
             }
         }
 })();

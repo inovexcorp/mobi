@@ -68,8 +68,8 @@
             vm.showIriOverlay = false;
         }
 
-        vm.typeMatch = function(property, owl, type) {
-            return ontologyManagerService.typeMatch(property, owl, type);
+        vm.typeMatch = function(obj, namespace, localName) {
+            return ontologyManagerService.typeMatch(obj, namespace, localName);
         }
 
         /* Prefix (Context) Management */
