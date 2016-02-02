@@ -7,19 +7,17 @@
 
     function remove() {
         return function(arr, string) {
-            if(arr) {
-                var temp = angular.copy(arr),
-                    i = 0;
+            var temp = [],
+                i = 0;
 
-                while(i < temp.length) {
-                    if(string === (temp[i].namespace + temp[i].localName)) {
-                        temp.splice(i, 1);
-                        return temp;
-                    }
-                    i++;
+            while(i < arr.length) {
+                if(string !== (arr[i].namespace + arr[i].localName)) {
+                    temp.push(arr[i]);
                 }
+                i++;
             }
-            return arr;
+
+            return temp;
         }
     }
 })();
