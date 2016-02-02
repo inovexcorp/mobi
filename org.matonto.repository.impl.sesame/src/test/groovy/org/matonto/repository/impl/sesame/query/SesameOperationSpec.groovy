@@ -47,6 +47,20 @@ class SesameOperationSpec extends Specification{
         bindingSet.size() == 1
     }
 
+    def "removeBinding() removes a binding from the BindingSet"() {
+        setup:
+        Operation operation = conn.prepareTupleQuery("SELECT * WHERE {?s ?p ?o}")
+        IRI s = vf.createIRI("http://test.com/s")
+        operation.setBinding("s", s)
+
+        when:
+        operation.removeBinding("s")
+
+        then:
+        BindingSet bindingSet = operation.getBindings()
+        bindingSet.size() == 0
+    }
+
     def "clearBindings() removes all bindings"() {
         setup:
         Operation operation = conn.prepareTupleQuery("SELECT * WHERE {?s ?p ?o}")
