@@ -396,8 +396,8 @@
                                 <ui-select-match placeholder="Select Class">
                                     <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | filter: $select.search">
-                                    <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
+                                <ui-select-choices group-by="vm.groupByNamespace" ui-disable-choice="vm.selected['@id'] === (class.namespace + class.localName)" repeat="class in ontology.matonto.subClasses | filter:$select.search">
+                                    <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -464,7 +464,7 @@
                                 <ui-select-match placeholder="Select Property">
                                     <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in (vm.typeMatch(vm.selected, ontology.matonto.owl, 'ObjectProperty') ? ontology.matonto.subObjectProperties : ontology.matonto.subDataProperties) | filter: $select.search">
+                                <ui-select-choices group-by="vm.groupByNamespace" ui-disable-choice="vm.selected['@id'] === (property.namespace + property.localName)" repeat="property in (vm.typeMatch(vm.selected, ontology.matonto.owl, 'ObjectProperty') ? ontology.matonto.subObjectProperties : ontology.matonto.subDataProperties) | filter: $select.search">
                                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
