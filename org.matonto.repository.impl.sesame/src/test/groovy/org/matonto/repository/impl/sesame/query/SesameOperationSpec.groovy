@@ -4,5 +4,5 @@ import spock.lang.Specification
 
 class SesameOperationSpec extends Specification{
 
-    
+
 }
