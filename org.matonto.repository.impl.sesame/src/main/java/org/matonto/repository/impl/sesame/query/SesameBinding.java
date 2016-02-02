@@ -1,5 +1,6 @@
 package org.matonto.repository.impl.sesame.query;
 
+import org.jetbrains.annotations.NotNull;
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.core.utils.Values;
@@ -17,6 +18,7 @@ public class SesameBinding implements Binding {
         return binding.getName();
     }
 
+    @NotNull
     @Override
     public Value getValue() {
         return Values.matontoValue(binding.getValue());

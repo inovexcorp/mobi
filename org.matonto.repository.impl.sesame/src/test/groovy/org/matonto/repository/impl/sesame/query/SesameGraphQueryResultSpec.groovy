@@ -18,7 +18,7 @@ class SesameGraphQueryResultSpec extends Specification {
         assert graphQueryResult.getNamespaces().equals(nameSpaces)
     }
 
-    def "hasNext() returns true if sesGQR has statments"() {
+    def "hasNext() returns true if sesGQR has statements"() {
         org.openrdf.query.GraphQueryResult sesGQR = Mock()
         SesameGraphQueryResult graphQueryResult = new SesameGraphQueryResult(sesGQR)
 
@@ -27,7 +27,7 @@ class SesameGraphQueryResultSpec extends Specification {
         assert graphQueryResult.hasNext()
     }
 
-    def "next() returns next statment in result"() {
+    def "next() returns next statement in result"() {
         org.openrdf.query.GraphQueryResult sesGQR = Mock()
         SesameGraphQueryResult graphQueryResult = new SesameGraphQueryResult(sesGQR)
         ValueFactory vf = SimpleValueFactory.getInstance();
@@ -40,8 +40,6 @@ class SesameGraphQueryResultSpec extends Specification {
         1 * sesGQR.next() >> sesStatement
 
         assert s.equals(graphQueryResult.next())
-
-
     }
 
 }
