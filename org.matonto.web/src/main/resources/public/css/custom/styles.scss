@@ -15,6 +15,33 @@ body {
         cursor: pointer;
     }
 
+    /* Error message font */
+    .error-msg {
+        color: #f00;
+        font-weight: bold;
+    }
+
+    .has-error {
+        /* Error label font */
+        .control-label {
+            color: #f00;
+        }
+
+        /* Error message input border */
+        .form-control {
+            border-color: #f00;
+
+            &:focus {
+                border-color: #e00;
+            }
+        }
+
+        /* Error message spacing when below form inputs */
+        .error-msg {
+            margin-top: 5px;
+        }
+    }
+
     &.beta {
         /* adds extra space at the top for the banner */
         &:not(.left-nav) > .view-container {

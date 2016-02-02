@@ -64,7 +64,7 @@
         }
 
         vm.editIRI = function() {
-            ontologyManagerService.editIRI(vm.selected, vm.ontologies[vm.state.oi]);
+            ontologyManagerService.editIRI(vm.iriBegin, vm.iriThen, vm.iriEnd, vm.iriUpdate, vm.selected, vm.ontologies[vm.state.oi]);
             vm.showIriOverlay = false;
         }
 
