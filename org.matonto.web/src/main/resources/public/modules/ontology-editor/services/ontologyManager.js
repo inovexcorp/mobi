@@ -279,6 +279,7 @@
                         ontology.matonto.subClasses = response.data.classes;
                         ontology.matonto.subDataProperties = response.data.dataProperties;
                         ontology.matonto.subObjectProperties = response.data.objectProperties;
+                        ontology.matonto.datatypes = response.data.datatypes;
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
