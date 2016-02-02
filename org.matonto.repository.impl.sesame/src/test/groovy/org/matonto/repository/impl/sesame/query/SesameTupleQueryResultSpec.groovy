@@ -1,6 +1,5 @@
 package org.matonto.repository.impl.sesame.query
 
-import org.matonto.query.api.BindingSet
 import org.openrdf.query.TupleQueryResult
 import spock.lang.Specification
 
