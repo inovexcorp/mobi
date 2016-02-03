@@ -396,7 +396,7 @@
                                 <ui-select-match placeholder="Select Class">
                                     <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | orderBy:'localName' | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf'] | filter:{'localName':$select.search}">
                                     <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
@@ -464,7 +464,7 @@
                                 <ui-select-match placeholder="Select Property">
                                     <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in (vm.typeMatch(vm.selected, vm.ontologies[vm.state.oi].matonto.owl, 'ObjectProperty') ? vm.ontologies[vm.state.oi].matonto.subObjectProperties : vm.ontologies[vm.state.oi].matonto.subDataProperties) | orderBy:'localName' | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subPropertyOf'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in (vm.typeMatch(vm.selected, vm.ontologies[vm.state.oi].matonto.owl, 'ObjectProperty') ? vm.ontologies[vm.state.oi].matonto.subObjectProperties : vm.ontologies[vm.state.oi].matonto.subDataProperties) | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subPropertyOf'] | filter:{'localName':$select.search}">
                                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
@@ -477,7 +477,7 @@
                                 <ui-select-match placeholder="Select Domain">
                                     <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | orderBy:'localName' | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'domain'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'domain'] | filter:{'localName':$select.search}">
                                     <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
@@ -490,7 +490,7 @@
                                 <ui-select-match placeholder="Select Domain">
                                     <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses.concat(vm.ontologies[vm.state.oi].matonto.datatypes) | orderBy:'localName' | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'range'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses.concat(vm.ontologies[vm.state.oi].matonto.datatypes) | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'range'] | filter:{'localName':$select.search}">
                                     <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>

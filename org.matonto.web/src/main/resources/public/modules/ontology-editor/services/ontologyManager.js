@@ -249,8 +249,6 @@
                         ],
                         defaults = responseObj.stringify(defaultAnnotations);
 
-                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
-
                     while(i < annotations.length) {
                         temp = annotations[i].namespace + annotations[i].localName;
                         if(exclude.indexOf(temp) !== -1) {
@@ -270,16 +268,19 @@
                         i++;
                     }
 
+                    annotations = $filter('orderBy')(annotations, 'localName');
+                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
+
                     return annotations;
                 }
 
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
                         ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
-                        ontology.matonto.subClasses = response.data.classes;
-                        ontology.matonto.subDataProperties = response.data.dataProperties;
-                        ontology.matonto.subObjectProperties = response.data.objectProperties;
-                        ontology.matonto.datatypes = response.data.datatypes;
+                        ontology.matonto.subClasses = $filter('orderBy')(response.data.classes, 'localName');
+                        ontology.matonto.subDataProperties = $filter('orderBy')(response.data.dataProperties, 'localName');
+                        ontology.matonto.subObjectProperties = $filter('orderBy')(response.data.objectProperties, 'localName');
+                        ontology.matonto.datatypes = $filter('orderBy')(response.data.datatypes, 'localName');
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
