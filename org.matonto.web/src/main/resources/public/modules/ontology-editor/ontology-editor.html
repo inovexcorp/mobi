@@ -512,6 +512,19 @@
                             </ui-select>
                         </div>
 
+                        <!-- owl:equivalentProperty -->
+                        <div class="form-group">
+                            <label class="control-label">Equivalent Property <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.owl}}equivalentProperty&gt;</small></label>
+                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.owl + 'equivalentProperty']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
+                                <ui-select-match placeholder="Equivalent Property">
+                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in (vm.typeMatch(vm.selected, vm.ontologies[vm.state.oi].matonto.owl, 'ObjectProperty') ? vm.ontologies[vm.state.oi].matonto.subObjectProperties : vm.ontologies[vm.state.oi].matonto.subDataProperties) | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.owl + 'equivalentProperty'] | filter:{'localName':$select.search}">
+                                    <div ng-bind-html="property.localName | highlight:$select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+
                         <!-- rdfs:subPropertyOf -->
                         <div class="form-group">
                             <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}subPropertyOf&gt;</small></label>
