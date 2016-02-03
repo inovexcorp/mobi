@@ -11,6 +11,7 @@
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
+        vm.propertyTypes = ontologyManagerService.getPropertyTypes();
         vm.state = stateManagerService.getState();
         vm.selected = ontologyManagerService.getObject(vm.state);
 

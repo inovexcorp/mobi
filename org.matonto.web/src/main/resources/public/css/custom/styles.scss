@@ -385,3 +385,25 @@ section > form,
     margin: 0;
     padding: 6px 15px 10px;
 }
+
+/* static form display spacing */
+.form-control-static {
+    min-height: auto;
+    padding: 0 0 0 13px;
+}
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 3px;
+
+    &.open {
+        border-color: #66afe9;
+        outline: 0;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
+                box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
+    }
+
+    input.ui-select-search {
+        margin: 2px 0 1px;
+        padding: 0 9px;
+    }
+}

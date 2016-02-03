@@ -33,6 +33,10 @@
 
             self.newItems = {};
             self.ontologies = [];
+            self.propertyTypes = [
+                'http://www.w3.org/2002/07/owl#DatatypeProperty',
+                'http://www.w3.org/2002/07/owl#ObjectProperty'
+            ];
 
             initialize();
 
@@ -319,8 +323,12 @@
                 return self.ontologies;
             }
 
+            self.getPropertyTypes = function() {
+                return self.propertyTypes;
+            }
+
             self.getObject = function(state) {
-                var current, editing, creating,
+                var current, editing, creating, setDefaults,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -329,6 +337,8 @@
                     newOntology = {
                         '@id': '',
                         '@type': 'owl:Ontology',
+                        'rdfs:label': [{'@value': ''}],
+                        'rdfs:comment': [{'@value': ''}],
                         matonto: {
                             rdfs: 'rdfs:',
                             owl: 'owl:',
@@ -369,20 +379,22 @@
                     }
                 }
 
+                setDefaults = function(ontology, result) {
+                    result.matonto.namespace = ontology['@id'] + ontology.matonto.delimiter;
+                    return result;
+                }
+
                 creating = function() {
-                    var unique = tab + oi + ci + pi;
+                    var ontology = (oi !== -1) ? self.ontologies[oi] : null,
+                        unique = tab + oi + ci + pi;
                     if(self.newItems[unique]) {
                         result = self.newItems[unique];
                     } else {
                         if(pi === -1) {
-                            result = angular.copy(newProperty);
-                            // TODO: let them pick from a drop down list of provided property options
-                            // result['@type'] = [self.ontologies[oi].matonto.owl + 'DataTypeProperty'];
-                            result.matonto.namespace = self.ontologies[oi]['@id'] + self.ontologies[oi].matonto.delimiter;
+                            result = setDefaults(ontology, angular.copy(newProperty));
                         } else if(ci === -1) {
-                            result = angular.copy(newClass);
-                            result['@type'] = [self.ontologies[oi].matonto.owl + 'Class'];
-                            result.matonto.namespace = self.ontologies[oi]['@id'] + self.ontologies[oi].matonto.delimiter;
+                            result = setDefaults(ontology, angular.copy(newClass));
+                            result['@type'] = [ontology.matonto.owl + 'Class'];
                         } else {
                             result = angular.copy(newOntology);
                         }
