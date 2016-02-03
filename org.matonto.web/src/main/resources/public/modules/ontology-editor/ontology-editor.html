@@ -201,7 +201,7 @@
                             <!-- properties associated with classes -->
                             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-include="'object-property-template'" ng-init="properties = class.matonto.properties"></ul>
                             <!-- properties not associated with classes -->
-                            <ul ng-include="'object-property-template'" ng-init="properties = ontology.noDomains"></ul>
+                            <ul ng-include="'object-property-template'" ng-init="properties = ontology.matonto.noDomains"></ul>
                             <!-- create new object property -->
                             <div class="creator">
                                 <a ng-click="vm.selectItem('property-editor', oi, -1, -1)"
@@ -229,7 +229,7 @@
                             <!-- properties associated with classes -->
                             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-include="'datatype-property-template'" ng-init="properties = class.matonto.properties"></ul>
                             <!-- properties not associated with classes -->
-                            <ul ng-include="'datatype-property-template'" ng-init="properties = ontology.noDomains;"></ul>
+                            <ul ng-include="'datatype-property-template'" ng-init="properties = ontology.matonto.noDomains;"></ul>
                             <!-- create new datatype property -->
                             <div class="creator">
                                 <a ng-click="vm.selectItem('property-editor', oi, -1, -1)"
@@ -374,7 +374,7 @@
                     </div>
 
                     <!-- basic tab -->
-                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix" ng-init="ontology = vm.ontologies[vm.state.oi]">
+                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
                         <!-- warning message -->
                         <p ng-show="vm.selected.matonto.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
@@ -385,8 +385,8 @@
 
                         <!-- rdfs:label -->
                         <div class="form-group">
-                            <label class="control-label" for="class-name">Label <small class="text-muted">&lt;{{ontology.matonto.rdfs}}label&gt;</small></label>
-                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[ontology.matonto.rdfs + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
+                            <label class="control-label" for="class-name">Label <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}label&gt;</small></label>
+                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- rdfs:comment -->
@@ -439,7 +439,7 @@
                     </div>
 
                     <!-- basic tab -->
-                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix" ng-init="ontology = vm.ontologies[vm.state.oi]">
+                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
                         <!-- warning message -->
                         <p ng-show="vm.selected.matonto.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
@@ -450,8 +450,8 @@
 
                         <!-- rdfs:label -->
                         <div class="form-group">
-                            <label class="control-label" for="property-name">Label <small class="text-muted">&lt;{{ontology.matonto.rdfs}}label&gt;</small></label>
-                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[ontology.matonto.rdfs + 'label'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;">
+                            <label class="control-label" for="property-name">Label <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}label&gt;</small></label>
+                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- rdfs:comment -->
@@ -636,28 +636,37 @@
                 <!-- annotation overlay -->
                 <div class="overlay" ng-if="vm.showAnnotationOverlay">
                     <form name="vm.annotationForm" class="content clearfix" novalidate autocomplete="off">
-                        <!-- section header -->
-                        <h6>Add Annotation</h6>
+                        <div ng-if="!vm.editingAnnotation">
+                            <!-- section header -->
+                            <h6>Add Annotation</h6>
 
-                        <!-- annotation list -->
-                        <div class="form-group" ng-if="!vm.editingAnnotation">
-                            <label class="control-label">Annotation</label>
-                            <select class="form-control"  id="ontology-annotation-list" name="annotation-list" ng-model="vm.selected.matonto.currentAnnotationSelect">
-                                <option value="default">Please select an annotation to add</option>
-                                <!--optgroup ng-repeat="key in (vm.ontologies[vm.state.oi].matonto.annotations | hideAnnotations:vm.selected)" label="{{key}}">
-                                    <option ng-repeat="item in vm.ontologies[vm.state.oi].matonto.annotations[key]" ng-if="!vm.selected[key + item]" value="{{key + item}}">{{item}}</option>
-                                </optgroup-->
-                                <optgroup ng-repeat="(key, value) in vm.ontologies[vm.state.oi].matonto.annotations" label="{{key}}">
-                                    <option ng-repeat="item in value" value="{{key + item}}">{{item}}</option>
-                                </optgroup>
-                                <option value="other">Add a new annotation</option>
-                            </select>
+                            <!-- annotation list -->
+                            <div class="form-group">
+                                <label class="control-label">Annotation</label>
+                                <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
+                                    <ui-select-match placeholder="Select an annotation">{{($select.selected.namespace + $select.selected.localName) || $select.selected}}</ui-select-match>
+                                    <ui-select-choices group-by="vm.groupByNamespace" repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations | filter:{'localName':$select.search}">
+                                        <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
+                                    </ui-select-choices>
+                                </ui-select>
+                            </div>
+
+                            <!-- key, if new -->
+                            <div ng-if="vm.selected.matonto.currentAnnotationSelect.namespace === 'New Annotation'" class="form-group">
+                                <label class="control-label" for="ontology-annotation-key">Name <small class="text-muted">*Must be a valid IRI or you won't be able to add it.</small></label>
+                                <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" required />
+                            </div>
                         </div>
 
-                        <!-- key, if new -->
-                        <div ng-if="vm.selected.matonto.currentAnnotationSelect === 'other' || vm.editingAnnotation" class="form-group">
-                            <label class="control-label" for="ontology-annotation-key">Name <small class="text-muted">*Must be a valid IRI or you won't be able to add it.</small></label>
-                            <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" ng-disabled="vm.editingAnnotation" required />
+                        <div ng-if="vm.editingAnnotation">
+                            <!-- section header -->
+                            <h6>Edit Annotation</h6>
+
+                            <!-- static text showing which annotation you are editing -->
+                            <div ng-if="vm.editingAnnotation" class="form-group">
+                                <label class="control-label">Name</label>
+                                <p class="form-control-static">{{vm.selected.matonto.currentAnnotationKey}}</p>
+                            </div>
                         </div>
 
                         <!-- value -->
@@ -672,11 +681,11 @@
                             <!-- adding a custom one -->
                             <button ng-if="!vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
                                     ng-disabled="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default'"
-                                    ng-click="vm.addAnnotation();"><i class="fa fa-plus fa-fw"></i>Add annotation</button>
+                                    ng-click="vm.addAnnotation();">Add</button>
 
                             <button ng-if="vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
                                     ng-disabled="vm.annotationForm.$invalid"
-                                    ng-click="vm.editAnnotation();"><i class="fa fa-pencil fa-fw"></i>Edit annotation</button>
+                                    ng-click="vm.editAnnotation();">Edit</button>
 
                             <button type="button" class="btn btn-default pull-right" ng-click="vm.showAnnotationOverlay = false;">Cancel</button>
                         </div>

@@ -2,34 +2,55 @@
     'use strict';
 
     angular
-        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase'])
+        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj) {
             var self = this,
                 prefix = '/matontorest/ontology',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
                 defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
                 defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
-                defaultAnnotations = {
-                    'http://www.w3.org/2000/01/rdf-schema#': [
-                        'seeAlso',
-                        'isDefinedBy'
-                    ],
-                    'http://www.w3.org/2002/07/owl#': [
-                        'deprecated',
-                        'versionInfo',
-                        'priorVersion',
-                        'backwardCompatibleWith',
-                        'incompatibleWith'
-                    ],
-                    'http://purl.org/dc/elements/1.1/': [
-                        'description',
-                        'title'
-                    ]
-                };
+                defaultAnnotations = [
+                    {
+                        'namespace': 'http://www.w3.org/2000/01/rdf-schema#',
+                        'localName': 'seeAlso'
+                    },
+                    {
+                        'namespace': 'http://www.w3.org/2000/01/rdf-schema#',
+                        'localName': 'isDefinedBy'
+                    },
+                    {
+                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'localName': 'deprecated'
+                    },
+                    {
+                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'localName': 'versionInfo'
+                    },
+                    {
+                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'localName': 'priorVersion'
+                    },
+                    {
+                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'localName': 'backwardCompatibleWith'
+                    },
+                    {
+                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'localName': 'incompatibleWith'
+                    },
+                    {
+                        'namespace': 'http://purl.org/dc/elements/1.1/',
+                        'localName': 'description'
+                    },
+                    {
+                        'namespace': 'http://purl.org/dc/elements/1.1/',
+                        'localName': 'title'
+                    }
+                ];
 
             self.newItems = {};
             self.ontologies = [];
@@ -76,7 +97,7 @@
                             owl: prefixes.owl,
                             rdfs: prefixes.rdfs,
                             annotations: [],
-                            currentAnnotationSelect: 'default',
+                            currentAnnotationSelect: null,
                             ontologyId: ontologyId
                         }
                     },
@@ -157,7 +178,7 @@
                             obj.matonto = {
                                 properties: [],
                                 originalId: obj['@id'],
-                                currentAnnotationSelect: 'default'
+                                currentAnnotationSelect: null
                             };
                             classes.push(obj);
                             break;
@@ -167,7 +188,7 @@
                             obj.matonto = {
                                 icon: chooseIcon(obj),
                                 originalId: obj['@id'],
-                                currentAnnotationSelect: 'default'
+                                currentAnnotationSelect: null
                             };
                             properties.push(obj);
                             break;
@@ -224,49 +245,46 @@
                 ontology.matonto.others = others;
 
                 addDefaultAnnotations = function(annotations) {
-                    var index, prop, i,
-                        exclude = {
-                            'http://www.w3.org/2000/01/rdf-schema#': [
-                                'label',
-                                'comment'
-                            ]
-                        };
+                    var temp, index, split,
+                        i = 1,
+                        exclude = [
+                            'http://www.w3.org/2000/01/rdf-schema#label',
+                            'http://www.w3.org/2000/01/rdf-schema#comment'
+                        ],
+                        defaults = responseObj.stringify(defaultAnnotations);
 
-                    for(prop in exclude) {
-                        i = 0;
-                        while(i < exclude[prop].length) {
-                            if(annotations.hasOwnProperty(prop)) {
-                                index = annotations[prop].indexOf(exclude[prop][i]);
-                                if(index !== -1) {
-                                    annotations[prop].splice(index, 1);
-                                }
-                            }
-                            i++;
+                    while(i < annotations.length) {
+                        temp = annotations[i].namespace + annotations[i].localName;
+                        if(exclude.indexOf(temp) !== -1) {
+                            annotations.splice(i--, 1);
                         }
+                        index = defaults.indexOf(temp);
+                        if(index !== -1) {
+                            defaults.splice(index, 1);
+                        }
+                        i++;
                     }
 
-                    for(prop in defaultAnnotations) {
-                        i = 0;
-                        while(i < defaultAnnotations[prop].length) {
-                            if(annotations.hasOwnProperty(prop)) {
-                                index = annotations[prop].indexOf(defaultAnnotations[prop][i]);
-                                if(index === -1) {
-                                    annotations[prop].push(defaultAnnotations[prop][i]);
-                                }
-                            } else {
-                                annotations[prop] = defaultAnnotations[prop];
-                                break;
-                            }
-                            i++;
-                        }
+                    i = 0;
+                    while(i < defaults.length) {
+                        split = $filter('splitIRI')(defaults[i]);
+                        annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                        i++;
                     }
+
+                    annotations = $filter('orderBy')(annotations, 'localName');
+                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
 
                     return annotations;
                 }
 
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
-                        ontology.matonto.annotations = addDefaultAnnotations(response.data[ontologyId][0].annotationProperties);
+                        ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
+                        ontology.matonto.subClasses = $filter('orderBy')(response.data.classes, 'localName');
+                        ontology.matonto.subDataProperties = $filter('orderBy')(response.data.dataProperties, 'localName');
+                        ontology.matonto.subObjectProperties = $filter('orderBy')(response.data.objectProperties, 'localName');
+                        ontology.matonto.datatypes = $filter('orderBy')(response.data.datatypes, 'localName');
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -345,7 +363,7 @@
                             delimiter: '#',
                             classes: [],
                             annotations: defaultAnnotations,
-                            currentAnnotationSelect: 'default',
+                            currentAnnotationSelect: null,
                             context: [
                                 { key: 'owl', value: defaultOwl },
                                 { key: 'rdfs', value: defaultRdfs },
@@ -357,13 +375,13 @@
                         '@id': '',
                         matonto: {
                             properties: [],
-                            currentAnnotationSelect: 'default'
+                            currentAnnotationSelect: null
                         }
                     },
                     newProperty = {
                         '@id': '',
                         matonto: {
-                            currentAnnotationSelect: 'default'
+                            currentAnnotationSelect: null
                         }
                     };
 
@@ -595,8 +613,8 @@
                 selected['@id'] = fresh;
             }
 
-            self.typeMatch = function(property, owl, type) {
-                return property['@type'].indexOf(owl + type) !== -1;
+            self.typeMatch = function(obj, namespace, localName) {
+                return obj['@type'].indexOf(namespace + localName) !== -1;
             }
         }
 })();
