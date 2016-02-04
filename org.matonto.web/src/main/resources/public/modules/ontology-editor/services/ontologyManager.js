@@ -246,6 +246,7 @@
 
                 addDefaultAnnotations = function(annotations) {
                     var temp, index, split,
+                        results = [],
                         i = 1,
                         exclude = [
                             'http://www.w3.org/2000/01/rdf-schema#label',
@@ -255,8 +256,8 @@
 
                     while(i < annotations.length) {
                         temp = annotations[i].namespace + annotations[i].localName;
-                        if(exclude.indexOf(temp) !== -1) {
-                            annotations.splice(i--, 1);
+                        if(exclude.indexOf(temp) === -1) {
+                            results.push(annotations[i]);
                         }
                         index = defaults.indexOf(temp);
                         if(index !== -1) {
@@ -268,14 +269,14 @@
                     i = 0;
                     while(i < defaults.length) {
                         split = $filter('splitIRI')(defaults[i]);
-                        annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                        results.push({ namespace: split.begin + split.then, localName: split.end });
                         i++;
                     }
 
-                    annotations = $filter('orderBy')(annotations, 'localName');
-                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
+                    results = $filter('orderBy')(results, 'localName');
+                    results.splice(0, 0, { namespace: 'New Annotation ', localName: 'Create' });
 
-                    return annotations;
+                    return results;
                 }
 
                 $http.get(prefix + '/getAllIRIs', config)
