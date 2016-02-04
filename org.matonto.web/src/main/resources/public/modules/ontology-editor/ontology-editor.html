@@ -665,7 +665,7 @@
                             </div>
 
                             <!-- key, if new -->
-                            <div ng-if="vm.selected.matonto.currentAnnotationSelect.namespace === 'New Annotation'" class="form-group">
+                            <div ng-if="vm.selected.matonto.currentAnnotationSelect.localName === 'New Annotation'" class="form-group">
                                 <label class="control-label" for="ontology-annotation-key">Name <small class="text-muted">*Must be a valid IRI or you won't be able to add it.</small></label>
                                 <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" required />
                             </div>
@@ -716,7 +716,7 @@
     <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
 
     <!-- list of annotations -->
-    <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) track by $index">
+    <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations))">
         <h5 title="{{key}}">{{(key | splitIRI).end | beautify}}</h5>
         <div class="value-container" ng-repeat="value in vm.selected[key]">
             <p>{{value['@value']}}</p>

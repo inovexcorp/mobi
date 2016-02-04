@@ -33,7 +33,7 @@
                     select = matonto.currentAnnotationSelect,
                     item = {'@value': value};
 
-                if(select.namespace === 'New Annotation') {
+                if(select.localName === 'New Annotation') {
                     temp = key;
                     if(responseObj.stringify(annotations).indexOf(temp) === -1) {
                         var split = $filter('splitIRI')(temp);

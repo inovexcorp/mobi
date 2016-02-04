@@ -274,7 +274,7 @@
                     }
 
                     results = $filter('orderBy')(results, 'localName');
-                    results.splice(0, 0, { namespace: 'New Annotation ', localName: 'Create' });
+                    results.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
 
                     return results;
                 }
