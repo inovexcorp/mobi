@@ -53,6 +53,13 @@
             self.edit = function(obj, key, value, index) {
                 obj[key][index]['@value'] = value;
             }
+
+            self.sort = function(item) {
+                if(item.localName === 'New Annotation') {
+                    return -1;
+                }
+                return item.localName.toLowerCase();
+            }
         }
 
         function showAnnotations() {
@@ -64,7 +71,7 @@
                 while(i < annotations.length) {
                     temp = annotations[i].namespace + annotations[i].localName;
                     if(obj.hasOwnProperty(temp)) {
-                        results.push(temp);
+                        results.push(annotations[i]);
                     }
                     i++;
                 }

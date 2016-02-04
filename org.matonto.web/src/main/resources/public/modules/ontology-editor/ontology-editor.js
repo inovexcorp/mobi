@@ -133,5 +133,9 @@
         vm.groupByNamespace = function(item) {
             return item.namespace;
         }
+
+        vm.sortAnnotations = function(item) {
+            return annotationManagerService.sort(item);
+        }
     }
 })();

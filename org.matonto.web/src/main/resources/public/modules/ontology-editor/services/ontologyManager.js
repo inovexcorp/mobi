@@ -246,7 +246,7 @@
 
                 addDefaultAnnotations = function(annotations) {
                     var temp, index, split,
-                        results = [],
+                        results = [{namespace: 'Create ', localName: 'New Annotation'}],
                         i = 1,
                         exclude = [
                             'http://www.w3.org/2000/01/rdf-schema#label',
@@ -273,8 +273,8 @@
                         i++;
                     }
 
-                    results = $filter('orderBy')(results, 'localName');
-                    results.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
+                    //results = $filter('orderBy')(results, 'localName');
+                    //results.splice(0, 0, {namespace: 'Create ', localName: 'New Annotation'});
 
                     return results;
                 }

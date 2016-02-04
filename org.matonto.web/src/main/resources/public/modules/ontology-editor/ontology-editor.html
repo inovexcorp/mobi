@@ -658,7 +658,7 @@
                                 <label class="control-label">Annotation</label>
                                 <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
                                     <ui-select-match placeholder="Select an annotation">{{($select.selected.namespace + $select.selected.localName) || $select.selected}}</ui-select-match>
-                                    <ui-select-choices group-by="vm.groupByNamespace" repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations | filter:{'localName':$select.search}">
+                                    <ui-select-choices group-by="vm.groupByNamespace" repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations | filter:{'localName':$select.search} | orderBy:vm.sortAnnotations">
                                         <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                                     </ui-select-choices>
                                 </ui-select>
@@ -688,7 +688,6 @@
                             <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.matonto.currentAnnotationValue" required></textarea>
                         </div>
 
-                        <!-- TODO: add a section here for comments -->
                         <!-- annotation buttons -->
                         <div class="btn-container clearfix">
                             <!-- adding a custom one -->
@@ -716,12 +715,12 @@
     <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
 
     <!-- list of annotations -->
-    <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations))">
-        <h5 title="{{key}}">{{(key | splitIRI).end | beautify}}</h5>
-        <div class="value-container" ng-repeat="value in vm.selected[key]">
+    <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) | orderBy:vm.sortAnnotations">
+        <h5 title="{{key.namespace + key.localName}}">{{key.localName | beautify}}</h5>
+        <div class="value-container" ng-repeat="value in vm.selected[key.namespace + key.localName]">
             <p>{{value['@value']}}</p>
-            <button type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(key, $index);" title="Edit"><i class="fa fa-pencil"></i></button>
-            <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(key, $index)" title="Delete"><i class="fa fa-times"></i></button>
+            <button type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(key.namespace + key.localName, $index);" title="Edit"><i class="fa fa-pencil"></i></button>
+            <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(key.namespace + key.localName, $index)" title="Delete"><i class="fa fa-times"></i></button>
         </div>
     </div>
 </script>
