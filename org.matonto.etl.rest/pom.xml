@@ -5,19 +5,29 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.3-SNAPSHOT</version>
+        <version>1.0-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
 
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>etl.rest</artifactId>
-    <version>${matonto.etl.rest.version}</version>
 
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>etl.api</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-core</artifactId>
@@ -44,10 +54,6 @@
             <version>2.16.0</version>
         </dependency>
         <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>etl.api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
         </dependency>
@@ -61,10 +67,6 @@
             <artifactId>gson</artifactId>
             <version>2.3.1</version>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
@@ -77,8 +79,11 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
+                        <Export-Package>
+                            org.matonto.etl.rest; provide:=true
+                        </Export-Package>
                         <Service-Component>*</Service-Component>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
             </plugin>
