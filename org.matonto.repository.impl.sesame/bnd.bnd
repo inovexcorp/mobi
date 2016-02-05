@@ -1,4 +1,10 @@
+build = ${tstamp}
 Bundle-SymbolicName: org.matonto.repository.impl.sesame
 Bundle-Name: MatOnto Repository Sesame Impl
+Export-Package: \
+    org.matonto.repository.api; provide:=true, \
+    org.matonto.repository.base; provide:=true, \
+    org.matonto.repository.config; provide:=true, \
+    org.matonto.repository.exception; provide:=true
 -metatype: *
 Service-Component: *
