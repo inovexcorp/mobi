@@ -1,9 +1,12 @@
 package org.matonto.query.api;
 
 
+import org.matonto.query.exception.QueryInterruptedException;
+import org.matonto.query.exception.UpdateInterruptedException;
 import org.matonto.rdf.api.Value;
 
 public interface Operation {
+
     /**
      * Binds the specified variable to the supplied value. Any value that was
      * previously bound to the specified value will be overwritten.
