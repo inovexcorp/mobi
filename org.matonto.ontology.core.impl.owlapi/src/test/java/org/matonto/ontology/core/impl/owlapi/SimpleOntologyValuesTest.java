@@ -26,6 +26,8 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.DataRangeType;
@@ -41,11 +43,13 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLFacetRestriction;
 import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.vocab.OWLFacet;
@@ -141,13 +145,13 @@ public class SimpleOntologyValuesTest {
 //        Datatype datatype = mock(Datatype.class);
 //        
 //        expect(datatype.getIRI()).andReturn(iri).anyTimes();
-//        expect(literal.getLabel()).andReturn("testString");
+//        expect(literal.getLabel()).andReturn("testString").anyTimes();
 //        expect(iri.stringValue()).andReturn("http://www.w3.org/2001/XMLSchema#string").anyTimes();
 //        expect(factory.createLiteral(isA(String.class), isA(IRI.class))).andReturn(literal).anyTimes();
 //        
 //        mockStaticPartial(SimpleOntologyValues.class, "matontoDatatype");
-//        expect(SimpleOntologyValues.matontoDatatype(isA(OWLDatatype.class))).andReturn(datatype);
-//        replay(factory, owlLiteral, owlIRI, iri, literal, datatype, SimpleOntologyValues.class);
+//        expect(SimpleOntologyValues.matontoDatatype(isA(OWLDatatype.class))).andReturn(datatype).anyTimes();
+//        replay(factory, iri, literal, datatype, SimpleOntologyValues.class);
 //        
 //        assertEquals("testString", SimpleOntologyValues.matontoLiteral(owlLiteral).getLabel());
 //        assertEquals(iri, SimpleOntologyValues.matontoLiteral(owlLiteral).getDatatype());
@@ -624,32 +628,92 @@ public class SimpleOntologyValuesTest {
     
     @Test
     public void testMatontoObjectProperty() throws Exception {
+        OWLObjectProperty property = mock(OWLObjectProperty.class);
+        org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        IRI iri = mock(IRI.class);
         
+        expect(property.getIRI()).andReturn(owlIRI).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI");
+        expect(SimpleOntologyValues.matontoIRI(owlIRI)).andReturn(iri);
+        
+        replay(property, owlIRI, iri, SimpleOntologyValues.class);
+        
+        assertEquals(iri, SimpleOntologyValues.matontoObjectProperty(property).getIRI());
     }
     
     @Test
     public void testOwlapiObjectProperty() throws Exception {
+        ObjectProperty property = mock(ObjectProperty.class);
+        org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        IRI iri = mock(IRI.class);
         
+        expect(property.getIRI()).andReturn(iri).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
+        expect(SimpleOntologyValues.owlapiIRI(iri)).andReturn(owlIRI);
+        
+        replay(property, owlIRI, iri, SimpleOntologyValues.class);
+        
+        assertEquals(owlIRI, SimpleOntologyValues.owlapiObjectProperty(property).getIRI());
     }
     
     @Test
     public void testMatontoDataProperty() throws Exception {
+        OWLDataProperty property = mock(OWLDataProperty.class);
+        org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        IRI iri = mock(IRI.class);
         
+        expect(property.getIRI()).andReturn(owlIRI).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI");
+        expect(SimpleOntologyValues.matontoIRI(owlIRI)).andReturn(iri);
+        
+        replay(property, owlIRI, iri, SimpleOntologyValues.class);
+        
+        assertEquals(iri, SimpleOntologyValues.matontoDataProperty(property).getIRI());
     }
     
     @Test
     public void testOwlapiDataProperty() throws Exception {
+        DataProperty property = mock(DataProperty.class);
+        org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        IRI iri = mock(IRI.class);
         
+        expect(property.getIRI()).andReturn(iri).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
+        expect(SimpleOntologyValues.owlapiIRI(iri)).andReturn(owlIRI);
+        
+        replay(property, owlIRI, iri, SimpleOntologyValues.class);
+        
+        assertEquals(owlIRI, SimpleOntologyValues.owlapiDataProperty(property).getIRI());
     }
     
     @Test
     public void testMatontoAnnotationProperty() throws Exception {
+        OWLAnnotationProperty property = mock(OWLAnnotationProperty.class);
+        org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        IRI iri = mock(IRI.class);
         
+        expect(property.getIRI()).andReturn(owlIRI).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI");
+        expect(SimpleOntologyValues.matontoIRI(owlIRI)).andReturn(iri);
+        
+        replay(property, owlIRI, iri, SimpleOntologyValues.class);
+        
+        assertEquals(iri, SimpleOntologyValues.matontoAnnotationProperty(property).getIRI());
     }
     
     @Test
     public void testOwlapiAnnotationProperty() throws Exception {
+        AnnotationProperty property = mock(AnnotationProperty.class);
+        org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        IRI iri = mock(IRI.class);
         
+        expect(property.getIRI()).andReturn(iri).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
+        expect(SimpleOntologyValues.owlapiIRI(iri)).andReturn(owlIRI);
+        
+        replay(property, owlIRI, iri, SimpleOntologyValues.class);
+        
+        assertEquals(owlIRI, SimpleOntologyValues.owlapiAnnotationProperty(property).getIRI());
     }
     
     @Test
