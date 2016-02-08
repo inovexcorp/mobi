@@ -59,7 +59,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.rest</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.12</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -129,7 +129,8 @@
                         <Export-Package></Export-Package>
                         <Import-Package>
                             org.matonto.ontology.rest,
-                            org.matonto.etl.rest
+                            org.matonto.etl.rest,
+                            *
                         </Import-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
