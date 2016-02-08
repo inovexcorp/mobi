@@ -1,6 +1,11 @@
 package org.matonto.repository.api;
 
-import org.matonto.rdf.api.*;
+import org.matonto.query.api.*;
+import org.matonto.query.exception.MalformedQueryException;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 
@@ -133,4 +138,180 @@ public interface RepositoryConnection extends AutoCloseable {
      */
     boolean isActive() throws RepositoryException;
 
+
+    /**
+     * Prepares a query for evaluation on this repository (optional operation).
+     *
+     * @param query
+     *        The query string.
+     * @return A query ready to be evaluated on this repository.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @throws UnsupportedOperationException
+     *         If the <tt>prepareQuery</tt> method is not supported by this
+     *         repository.
+     */
+    Operation prepareQuery(String query)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares a query for evaluation on this repository (optional operation).
+     *
+     * @param query
+     *        The query string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the query
+     *        against, can be <tt>null</tt> if the query does not contain any
+     *        relative URIs.
+     * @return A query ready to be evaluated on this repository.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @throws UnsupportedOperationException
+     *         If the <tt>prepareQuery</tt> method is not supported by this
+     *         repository.
+     */
+    Operation prepareQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares a SPARQL query that produces sets of value tuples, that is a
+     * SPARQL SELECT query.
+     *
+     * @param query
+     *        The query string, in SPARQL syntax.
+     * @return a {@link TupleQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a tuple query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @since 4.0
+     */
+    TupleQuery prepareTupleQuery(String query)
+            throws RepositoryException, MalformedQueryException;
+
+
+    /**
+     * Prepares a query that produces sets of value tuples.
+     *
+     * @param query
+     *        The query string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the query
+     *        against, can be <tt>null</tt> if the query does not contain any
+     *        relative URIs.
+     * @return a {@link TupleQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a tuple query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     */
+    TupleQuery prepareTupleQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares SPARQL queries that produce RDF graphs, that is, SPARQL CONSTRUCT
+     * or DESCRIBE queries.
+     *
+     * @param query
+     *        The query string, in SPARQL syntax.
+     * @return a {@link GraphQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a graph query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     * @since 4.0
+     */
+    GraphQuery prepareGraphQuery(String query)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares queries that produce RDF graphs.
+     *
+     * @param query
+     *        The query string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the query
+     *        against, can be <tt>null</tt> if the query does not contain any
+     *        relative URIs.
+     * @return a {@link GraphQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a graph query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     */
+    GraphQuery prepareGraphQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException;
+
+
+    /**
+     * Prepares SPARQL queries that return <tt>true</tt> or <tt>false</tt>, that
+     * is, SPARQL ASK queries.
+     *
+     * @param query
+     *        The query string, in SPARQL syntax.
+     * @return a {@link BooleanQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a boolean query.
+     * @throws MalformedQueryException
+     *         If the supplied SPARQL query is malformed.
+     * @since 4.0
+     */
+    BooleanQuery prepareBooleanQuery(String query)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares queries that return <tt>true</tt> or <tt>false</tt>.
+     *
+     * @param query
+     *        The query string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the query
+     *        against, can be <tt>null</tt> if the query does not contain any
+     *        relative URIs.
+     * @return a {@link BooleanQuery} ready to be evaluated on this
+     *         {@link RepositoryConnection}.
+     * @throws IllegalArgumentException
+     *         If the supplied query is not a boolean query.
+     * @throws MalformedQueryException
+     *         If the supplied query is malformed.
+     */
+    BooleanQuery prepareBooleanQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException;
+
+    /**
+     * Prepares a SPARQL Update operation.
+     *
+     * @param update
+     *        The update operation string, in SPARQL syntax.
+     * @return a {@link Update} ready to be executed on this
+     *         {@link RepositoryConnection}.
+     * @throws MalformedQueryException
+     *         If the supplied update operation string is malformed.
+     * @since 4.0
+     */
+    Update prepareUpdate(String update)
+            throws RepositoryException, MalformedQueryException;
+
+
+    /**
+     * Prepares an Update operation.
+     *
+     * @param update
+     *        The update operation string.
+     * @param baseURI
+     *        The base URI to resolve any relative URIs that are in the update
+     *        against, can be <tt>null</tt> if the update does not contain any
+     *        relative URIs.
+     * @return a {@link Update} ready to be executed on this
+     *         {@link RepositoryConnection}.
+     * @throws MalformedQueryException
+     *         If the supplied update operation string is malformed.
+     */
+    Update prepareUpdate(String update, String baseURI)
+            throws RepositoryException, MalformedQueryException;
 }
