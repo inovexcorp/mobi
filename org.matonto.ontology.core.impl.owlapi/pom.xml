@@ -82,6 +82,14 @@
             <version>${jackson.version}</version>
         </dependency>
 
+
+        <!--  Test dependencies -->
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
+            <version>1.0.6</version>
+		    <scope>test</scope>
+	    </dependency>
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
