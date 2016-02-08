@@ -1,13 +1,14 @@
 package org.matonto.repository.impl.sesame;
 
+import org.matonto.query.api.*;
+import org.matonto.query.exception.MalformedQueryException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
-import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.core.impl.sesame.factory.ResourceValueFactory;
 import org.matonto.rdf.core.impl.sesame.factory.StatementValueFactory;
-import org.matonto.repository.api.Repository;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
@@ -92,7 +93,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     }
 
     @Override
-    public RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
+    public RepositoryResult<Statement>
+            getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
             throws RepositoryException {
         try {
             org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> sesameResults;
@@ -101,7 +103,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
                 sesameResults = sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
                         Values.sesameValue(object), Values.sesameResources(contexts));
             } else {
-                 sesameResults = sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
+                sesameResults = sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
                          Values.sesameValue(object));
             }
 
@@ -122,38 +124,94 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
     @Override
     public void begin() throws RepositoryException {
-        try{
+        try {
             sesameConn.begin();
-        } catch (org.openrdf.repository.RepositoryException e){
+        } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
 
     @Override
     public void commit() throws RepositoryException {
-        try{
+        try {
             sesameConn.commit();
-        } catch (org.openrdf.repository.RepositoryException e){
+        } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
 
     @Override
     public void rollback() throws RepositoryException {
-        try{
+        try {
             sesameConn.rollback();
-        } catch (org.openrdf.repository.RepositoryException e){
+        } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
 
     @Override
     public boolean isActive() throws RepositoryException {
-        try{
+        try {
             return sesameConn.isActive();
-        } catch (org.openrdf.repository.RepositoryException e){
+        } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
+    }
+
+    @Override
+    public Operation prepareQuery(String query)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public Operation prepareQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public TupleQuery prepareTupleQuery(String query)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public TupleQuery prepareTupleQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public GraphQuery prepareGraphQuery(String query)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public GraphQuery prepareGraphQuery(String query, String baseURI)
+            throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public BooleanQuery prepareBooleanQuery(String query) throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public Update prepareUpdate(String update) throws RepositoryException, MalformedQueryException {
+        return null;
+    }
+
+    @Override
+    public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
+        return null;
     }
 
 }
