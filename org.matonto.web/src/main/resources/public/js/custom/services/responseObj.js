@@ -8,14 +8,28 @@
     function responseObj() {
         var self = this;
 
-        self.stringify = function(response) {
-            var i = 0,
-                arr = [],
-                temp = angular.copy(response);
+        self.validateItem = function(item) {
+            return item.hasOwnProperty('namespace') && item.hasOwnProperty('localName');
+        }
 
-            while(i < temp.length) {
-                arr.push(temp[i].namespace + temp[i].localName);
-                i++;
+        self.validate = function(response) {
+            if(!Array.isArray(response) || !self.validateItem(response[0])) {
+                return false;
+            }
+            return true;
+        }
+
+        self.stringify = function(response) {
+            var arr = [];
+
+            if(self.validateArray(response)) {
+                var i = 0,
+                    temp = angular.copy(response);
+
+                while(i < temp.length) {
+                    arr.push(temp[i].namespace + temp[i].localName);
+                    i++;
+                }
             }
 
             return arr;

@@ -50,6 +50,8 @@
             stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
+            vm.ontology = vm.ontologies[vm.state.oi];
+            vm.rdfs = vm.ontology.matonto.rdfs;
         }
 
         vm.submitEdit = function(isValid) {
@@ -129,8 +131,8 @@
             return annotationManagerService.getPattern();
         }
 
-        vm.groupByNamespace = function(item) {
-            return item.namespace;
+        vm.getNamespace = function(item) {
+            return ontologyManagerService.getNamespace(item);
         }
     }
 })();

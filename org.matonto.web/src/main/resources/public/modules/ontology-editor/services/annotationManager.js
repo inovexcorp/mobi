@@ -33,20 +33,24 @@
                     select = matonto.currentAnnotationSelect,
                     item = {'@value': value};
 
-                if(select.namespace === 'New Annotation') {
-                    temp = key;
-                    if(responseObj.stringify(annotations).indexOf(temp) === -1) {
-                        var split = $filter('splitIRI')(temp);
-                        annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                if(responseObj.validateItem(select)) {
+                    if(select.localName === 'New Annotation') {
+                        temp = key;
+                        if(responseObj.stringify(annotations).indexOf(temp) === -1) {
+                            var split = $filter('splitIRI')(temp);
+                            annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                        }
+                    } else {
+                        temp = select.namespace + select.localName;
+                    }
+
+                    if(obj.hasOwnProperty(temp)) {
+                        obj[temp].push(item);
+                    } else {
+                        obj[temp] = [item];
                     }
                 } else {
-                    temp = select.namespace + select.localName;
-                }
-
-                if(obj.hasOwnProperty(temp)) {
-                    obj[temp].push(item);
-                } else {
-                    obj[temp] = [item];
+                    console.warn('The current selected item doesn\'t have a namespace or localName.', select);
                 }
             }
 
@@ -57,19 +61,25 @@
 
         function showAnnotations() {
             return function(obj, annotations) {
-                var temp,
-                    i = 0,
-                    results = [];
+                var arr = [];
 
-                while(i < annotations.length) {
-                    temp = annotations[i].namespace + annotations[i].localName;
-                    if(obj.hasOwnProperty(temp)) {
-                        results.push(temp);
+                if(Array.isArray(annotations)) {
+                    var temp, item,
+                        i = 0;
+
+                    while(i < annotations.length) {
+                        item = annotations[i];
+                        if(responseObj.validateItem(item)) {
+                            temp = item.namespace + item.localName;
+                            if(obj.hasOwnProperty(temp)) {
+                                arr.push(temp);
+                            }
+                        }
+                        i++;
                     }
-                    i++;
                 }
 
-                return results;
+                return arr;
             }
         }
 })();
