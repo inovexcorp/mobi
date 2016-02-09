@@ -50,6 +50,8 @@
             stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
+            vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.rdfs = ontologyManagerService.getOntologyRdfs(vm.ontology);
         }
 
         vm.submitEdit = function(isValid) {
@@ -129,8 +131,8 @@
             return annotationManagerService.getPattern();
         }
 
-        vm.groupByNamespace = function(item) {
-            return item.namespace;
+        vm.getItemNamespace = function(item) {
+            return ontologyManagerService.getItemNamespace(item);
         }
     }
 })();
