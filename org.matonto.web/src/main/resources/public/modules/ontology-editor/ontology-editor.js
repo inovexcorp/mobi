@@ -70,10 +70,6 @@
             vm.showIriOverlay = false;
         }
 
-        vm.getOntologyProperties = function() {
-            return ontologyManagerService.getOntologyProperties(vm.selected, vm.ontology);
-        }
-
         vm.isObjectProperty = function() {
             return ontologyManagerService.isObjectProperty(vm.selected, vm.ontology);
         }
