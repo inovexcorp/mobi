@@ -22,7 +22,7 @@
         self.stringify = function(response) {
             var arr = [];
 
-            if(self.validateArray(response)) {
+            if(self.validate(response)) {
                 var i = 0,
                     temp = angular.copy(response);
 

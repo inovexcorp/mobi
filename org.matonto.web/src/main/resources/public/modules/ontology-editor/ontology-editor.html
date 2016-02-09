@@ -573,7 +573,7 @@
                             <div class="form-group">
                                 <label class="control-label">Annotation</label>
                                 <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
-                                    <ui-select-match placeholder="Select an annotation">{{($select.selected.namespace + $select.selected.localName) || $select.selected}}</ui-select-match>
+                                    <ui-select-match placeholder="Select an annotation">{{$select.selected.namespace + $select.selected.localName}}</ui-select-match>
                                     <ui-select-choices group-by="vm.getNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search">
                                         <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                                     </ui-select-choices>
@@ -581,7 +581,7 @@
                             </div>
 
                             <!-- key, if new -->
-                            <div ng-if="vm.selected.matonto.currentAnnotationSelect.namespace === 'New Annotation'" class="form-group">
+                            <div ng-if="vm.selected.matonto.currentAnnotationSelect.localName === 'New Annotation'" class="form-group">
                                 <label class="control-label" for="ontology-annotation-key">Name <small class="text-muted">*Must be a valid IRI or you won't be able to add it.</small></label>
                                 <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" required />
                             </div>

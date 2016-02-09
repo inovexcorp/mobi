@@ -59,7 +59,9 @@
             }
         }
 
-        function showAnnotations() {
+        showAnnotations.$inject = ['responseObj'];
+
+        function showAnnotations(responseObj) {
             return function(obj, annotations) {
                 var arr = [];
 

@@ -249,7 +249,7 @@
                         ],
                         defaults = responseObj.stringify(defaultAnnotations);
 
-                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
+                    annotations.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
 
                     while(i < annotations.length) {
                         temp = annotations[i].namespace + annotations[i].localName;
@@ -606,6 +606,20 @@
 
             self.typeMatch = function(property, owl, type) {
                 return property['@type'].indexOf(owl + type) !== -1;
+            }
+
+            self.getOntology = function(oi) {
+                if(oi !== undefined && oi !== -1) {
+                    return self.ontologies[oi];
+                }
+                return undefined;
+            }
+
+            self.getRdfs = function(ontology) {
+                if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs')) {
+                    return ontology.matonto.rdfs;
+                }
+                return undefined;
             }
         }
 })();

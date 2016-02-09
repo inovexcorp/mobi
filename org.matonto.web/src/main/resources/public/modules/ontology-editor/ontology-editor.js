@@ -50,8 +50,8 @@
             stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
-            vm.ontology = vm.ontologies[vm.state.oi];
-            vm.rdfs = vm.ontology.matonto.rdfs;
+            vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.rdfs = ontologyManagerService.getRdfs(vm.ontology);
         }
 
         vm.submitEdit = function(isValid) {
