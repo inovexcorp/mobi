@@ -385,3 +385,18 @@ section > form,
     margin: 0;
     padding: 6px 15px 10px;
 }
+
+/* static form display spacing */
+.form-control-static {
+    min-height: auto;
+    padding: 0 0 0 13px;
+}
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 3px;
+
+    input.ui-select-search {
+        margin: 2px 0 1px;
+        padding: 0 9px;
+    }
+}

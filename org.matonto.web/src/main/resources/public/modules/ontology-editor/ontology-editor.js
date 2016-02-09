@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'ngTagsInput', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
+        .module('ontology-editor', ['file-input', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
@@ -50,6 +50,8 @@
             stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
+            vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.rdfs = ontologyManagerService.getOntologyRdfs(vm.ontology);
         }
 
         vm.submitEdit = function(isValid) {
@@ -100,7 +102,7 @@
             vm.showAnnotationOverlay = false;
             vm.selected.matonto.currentAnnotationKey = '';
             vm.selected.matonto.currentAnnotationValue = '';
-            vm.selected.matonto.currentAnnotationSelect = 'default';
+            vm.selected.matonto.currentAnnotationSelect = null;
         }
 
         vm.addAnnotation = function() {
@@ -127,6 +129,10 @@
 
         vm.getPattern = function() {
             return annotationManagerService.getPattern();
+        }
+
+        vm.getItemNamespace = function(item) {
+            return ontologyManagerService.getItemNamespace(item);
         }
     }
 })();
