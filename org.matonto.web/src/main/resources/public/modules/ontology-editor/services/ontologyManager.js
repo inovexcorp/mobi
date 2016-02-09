@@ -249,7 +249,7 @@
                         ],
                         defaults = responseObj.stringify(defaultAnnotations);
 
-                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
+                    annotations.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
 
                     while(i < annotations.length) {
                         temp = annotations[i].namespace + annotations[i].localName;
@@ -277,7 +277,6 @@
                     .then(function(response) {
                         ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
                         ontology.matonto.subClasses = response.data.classes;
-                        // ontology.matonto.annotations = addDefaultAnnotations(response.data[ontologyId][0].annotationProperties);
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -328,6 +327,13 @@
                         deferred.reject('something went wrong');
                     });
                 return deferred.promise;
+            }
+
+            self.getItemNamespace = function(item) {
+                if(item.hasOwnProperty('namespace')) {
+                    return item.namespace;
+                }
+                return 'No Namespace';
             }
 
             self.getList = function() {
@@ -600,6 +606,20 @@
 
             self.typeMatch = function(property, owl, type) {
                 return property['@type'].indexOf(owl + type) !== -1;
+            }
+
+            self.getOntology = function(oi) {
+                if(oi !== undefined && oi !== -1) {
+                    return self.ontologies[oi];
+                }
+                return undefined;
+            }
+
+            self.getOntologyRdfs = function(ontology) {
+                if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs')) {
+                    return ontology.matonto.rdfs;
+                }
+                return undefined;
             }
         }
 })();

@@ -10,13 +10,9 @@
 
     function removeMatonto() {
         return function(obj) {
-            if(obj) {
-                var temp = angular.copy(obj);
-                delete temp.matonto;
-                return temp;
-            } else {
-                return;
-            }
+            var temp = angular.copy(obj);
+            delete temp.matonto;
+            return temp;
         }
     }
 })();
