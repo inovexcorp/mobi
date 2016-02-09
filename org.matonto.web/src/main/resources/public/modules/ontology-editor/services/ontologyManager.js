@@ -241,24 +241,28 @@
                 ontology.matonto.others = others;
 
                 addDefaultAnnotations = function(annotations) {
-                    var temp, index, split,
+                    var temp, item, index, split,
                         i = 1,
                         exclude = [
                             'http://www.w3.org/2000/01/rdf-schema#label',
                             'http://www.w3.org/2000/01/rdf-schema#comment'
                         ],
-                        defaults = responseObj.stringify(defaultAnnotations);
+                        defaults = responseObj.stringify(defaultAnnotations),
+                        arr = angular.copy(annotations);
 
-                    annotations.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
+                    arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
 
-                    while(i < annotations.length) {
-                        temp = annotations[i].namespace + annotations[i].localName;
-                        if(exclude.indexOf(temp) !== -1) {
-                            annotations.splice(i--, 1);
-                        }
-                        index = defaults.indexOf(temp);
-                        if(index !== -1) {
-                            defaults.splice(index, 1);
+                    while(i < arr.length) {
+                        item = arr[i];
+                        if(responseObj.validateItem(item)) {
+                            temp = item.namespace + item.localName;
+                            if(exclude.indexOf(temp) !== -1) {
+                                arr.splice(i--, 1);
+                            }
+                            index = defaults.indexOf(temp);
+                            if(index !== -1) {
+                                defaults.splice(index, 1);
+                            }
                         }
                         i++;
                     }
@@ -266,11 +270,11 @@
                     i = 0;
                     while(i < defaults.length) {
                         split = $filter('splitIRI')(defaults[i]);
-                        annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                        arr.push({ namespace: split.begin + split.then, localName: split.end });
                         i++;
                     }
 
-                    return annotations;
+                    return arr;
                 }
 
                 $http.get(prefix + '/getAllIRIs', config)
