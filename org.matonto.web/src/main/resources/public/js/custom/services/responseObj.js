@@ -12,22 +12,19 @@
             return item.hasOwnProperty('namespace') && item.hasOwnProperty('localName');
         }
 
-        self.validate = function(response) {
-            if(!Array.isArray(response) || !self.validateItem(response[0])) {
-                return false;
-            }
-            return true;
-        }
-
         self.stringify = function(response) {
             var arr = [];
 
-            if(self.validate(response)) {
-                var i = 0,
+            if(Array.isArray(response)) {
+                var item,
+                    i = 0,
                     temp = angular.copy(response);
 
                 while(i < temp.length) {
-                    arr.push(temp[i].namespace + temp[i].localName);
+                    item = temp[i];
+                    if(self.validateItem(item)) {
+                        arr.push(item.namespace + item.localName);
+                    }
                     i++;
                 }
             }

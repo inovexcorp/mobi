@@ -329,7 +329,7 @@
                 return deferred.promise;
             }
 
-            self.getNamespace = function(item) {
+            self.getItemNamespace = function(item) {
                 if(item.hasOwnProperty('namespace')) {
                     return item.namespace;
                 }
@@ -615,7 +615,7 @@
                 return undefined;
             }
 
-            self.getRdfs = function(ontology) {
+            self.getOntologyRdfs = function(ontology) {
                 if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs')) {
                     return ontology.matonto.rdfs;
                 }

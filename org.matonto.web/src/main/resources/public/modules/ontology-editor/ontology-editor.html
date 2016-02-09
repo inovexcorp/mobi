@@ -436,7 +436,7 @@
                     </div>
 
                     <!-- basic tab -->
-                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix" ng-init="ontology = vm.ontology">
+                    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
                         <!-- warning message -->
                         <p ng-show="vm.selected.matonto.unsaved" class="text-warning"><i class="fa fa-exclamation-triangle fa-fw"></i>Not saved</p>
 
@@ -574,7 +574,7 @@
                                 <label class="control-label">Annotation</label>
                                 <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
                                     <ui-select-match placeholder="Select an annotation">{{$select.selected.namespace + $select.selected.localName}}</ui-select-match>
-                                    <ui-select-choices group-by="vm.getNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search">
+                                    <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search">
                                         <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                                     </ui-select-choices>
                                 </ui-select>

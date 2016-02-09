@@ -51,7 +51,7 @@
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
             vm.ontology = ontologyManagerService.getOntology(oi);
-            vm.rdfs = ontologyManagerService.getRdfs(vm.ontology);
+            vm.rdfs = ontologyManagerService.getOntologyRdfs(vm.ontology);
         }
 
         vm.submitEdit = function(isValid) {
@@ -131,8 +131,8 @@
             return annotationManagerService.getPattern();
         }
 
-        vm.getNamespace = function(item) {
-            return ontologyManagerService.getNamespace(item);
+        vm.getItemNamespace = function(item) {
+            return ontologyManagerService.getItemNamespace(item);
         }
     }
 })();
