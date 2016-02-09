@@ -610,8 +610,14 @@
                 selected['@id'] = fresh;
             }
 
-            self.typeMatch = function(obj, namespace, localName) {
-                return obj['@type'].indexOf(namespace + localName) !== -1;
+            self.isObjectProperty = function(property, ontology) {
+                var result = false;
+
+                if(property.hasOwnProperty('@type') && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs') && property['@type'].indexOf(ontology.matonto.owl + 'ObjectProperty') !== -1) {
+                    result = true;
+                }
+
+                return result;
             }
 
             self.getOntology = function(oi) {

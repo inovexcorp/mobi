@@ -394,9 +394,9 @@
                             <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{vm.rdfs}}subClassOf&gt;</small></label>
                             <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subClassOf']">
                                 <ui-select-match placeholder="Select Class">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.getItemNamespace" ui-disable-choice="vm.selected['@id'] === (class.namespace + class.localName)" repeat="class in vm.ontology.matonto.subClasses | filter: $select.search">
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | filter: $select.search">
                                     <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
@@ -458,13 +458,25 @@
                         </div>
 
                         <!-- rdfs:subPropertyOf -->
-                        <div class="form-group">
+                        <div ng-if="vm.isObjectProperty()" class="form-group">
                             <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.rdfs}}subPropertyOf&gt;</small></label>
                             <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subPropertyOf']">
                                 <ui-select-match placeholder="Select Property">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.getItemNamespace" ui-disable-choice="vm.selected['@id'] === (property.namespace + property.localName)" repeat="property in (vm.typeMatch(vm.selected, vm.ontology.matonto.owl, 'ObjectProperty') ? vm.ontology.matonto.subObjectProperties : vm.ontology.matonto.subDataProperties) | filter: $select.search">
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="property in vm.ontology.matonto.subObjectProperties | filter: $select.search">
+                                    <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+
+                        <div ng-if="!vm.isObjectProperty()" class="form-group">
+                            <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.rdfs}}subPropertyOf&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subPropertyOf']">
+                                <ui-select-match placeholder="Select Property">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="property in vm.ontology.matonto.subDataProperties | filter: $select.search">
                                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
@@ -580,7 +592,7 @@
                             <div class="form-group">
                                 <label class="control-label">Annotation</label>
                                 <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
-                                    <ui-select-match placeholder="Select an annotation">{{$select.selected.namespace + $select.selected.localName}}</ui-select-match>
+                                    <ui-select-match placeholder="Select an annotation">{{vm.getItemIri($select.selected)}}</ui-select-match>
                                     <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search">
                                         <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                                     </ui-select-choices>
