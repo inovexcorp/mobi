@@ -25,13 +25,13 @@
             var result = [];
 
             if(Array.isArray(arr) && arr.length && item) {
-                var temp, found,
+                var itemIri,
                     itemIsArray = Array.isArray(item),
                     i = 0;
 
                 while(i < arr.length) {
-                    temp = responseObj.getItemIri(arr[i]);
-                    if((itemIsArray && !hasItem(temp, item)) || (!itemIsArray && item !== temp)) {
+                    itemIri = responseObj.getItemIri(arr[i]);
+                    if((itemIsArray && !hasItem(itemIri, item)) || (!itemIsArray && item !== itemIri)) {
                         result.push(arr[i]);
                     }
                     i++;
