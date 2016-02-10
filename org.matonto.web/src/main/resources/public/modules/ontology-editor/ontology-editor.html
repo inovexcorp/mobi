@@ -261,7 +261,7 @@
                         <!-- basic button -->
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.oi !== -1 ? (vm.selected[vm.selected.matonto.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.oi !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'}}</small></a>
 
                         <!-- annotations button -->
                         <a class="btn btn-primary"
@@ -288,14 +288,14 @@
 
                         <!-- label -->
                         <div class="form-group">
-                            <label class="control-label" for="ontology-label">Label <small class="text-muted">&lt;{{vm.selected.matonto.rdfs}}label&gt;</small></label>
-                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[((vm.state.oi !== -1) ? vm.ontologies[vm.state.oi].matonto.rdfs : vm.selected.matonto.rdfs) + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
+                            <label class="control-label" for="ontology-label">Label <small class="text-muted">&lt;{{vm.rdfs}}label&gt;</small></label>
+                            <input type="text" class="form-control" id="ontology-label" name="label" ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- comments -->
                         <div class="form-group">
-                            <label class="control-label" for="ontology-comments">Comment <small class="text-muted">&lt;{{vm.selected.matonto.rdfs}}comment&gt;</small></label>
-                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[((vm.state.oi !== -1) ? vm.ontologies[vm.state.oi].matonto.rdfs : vm.selected.matonto.rdfs) + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <label class="control-label" for="ontology-comments">Comment <small class="text-muted">&lt;{{vm.rdfs}}comment&gt;</small></label>
+                            <textarea class="form-control" id="ontology-comments" name="comments" ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- buttons -->
@@ -367,7 +367,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.ci !== -1 ? (vm.selected[ontology.matonto.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.ci !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'annotations'}"
                            ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
@@ -380,7 +380,7 @@
 
                         <!-- static iri -->
                         <p>
-                            <strong><small class="text-muted">{{vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] | camelCase:'class')) : vm.selected['@id']}} <a ng-click="vm.iriType = 'class'; vm.showIriOverlay = true;">Advanced Options</a></small></strong>
+                            <strong><small class="text-muted">{{vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + (vm.selected[vm.rdfs + 'label'][0]['@value'] | camelCase:'class')) : vm.selected['@id']}} <a ng-click="vm.iriType = 'class'; vm.showIriOverlay = true;">Advanced Options</a></small></strong>
                         </p>
 
                         <!-- rdfs:label -->
@@ -391,19 +391,19 @@
 
                         <!-- rdfs:comment -->
                         <div class="form-group">
-                            <label class="control-label" for="class-comments">Comment <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}comment&gt;</small></label>
-                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <label class="control-label" for="class-comments">Comment <small class="text-muted">&lt;{{vm.rdfs}}comment&gt;</small></label>
+                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- rdfs:subClassOf -->
                         <div class="form-group">
-                            <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}subClassOf&gt;</small></label>
-                            <ui-select multiple ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
+                            <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{vm.rdfs}}subClassOf&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subClassOf']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
                                 <ui-select-match placeholder="Select Class">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subClassOf'] | filter:{'localName':$select.search}">
-                                    <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | removeIriFromArray:vm.selected['@id'] | removeIriFromArray:vm.selected[vm.rdfs + 'subClassOf'] | filter: $select.search">
+                                    <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -429,7 +429,7 @@
                     <div class="btn-group btn-group-justified" role="group">
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'basic'}"
-                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'}}</small></a>
+                           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'}}</small></a>
                         <a class="btn btn-primary"
                            ng-class="{'active': vm.state.editorTab === 'axioms'}"
                            ng-click="vm.setEditorTab('axioms');"><small>Axioms</small></a>
@@ -445,19 +445,19 @@
 
                         <!-- static iri -->
                         <p>
-                            <strong><small class="text-muted">{{vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] | camelCase:'property')) : vm.selected['@id']}} <a ng-click="vm.iriType = 'property'; vm.showIriOverlay = true;">Advanced Options</a></small></strong>
+                            <strong><small class="text-muted">{{vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + (vm.selected[vm.rdfs + 'label'][0]['@value'] | camelCase:'property')) : vm.selected['@id']}} <a ng-click="vm.iriType = 'property'; vm.showIriOverlay = true;">Advanced Options</a></small></strong>
                         </p>
 
                         <!-- rdfs:label -->
                         <div class="form-group">
-                            <label class="control-label" for="property-name">Label <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}label&gt;</small></label>
-                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;">
+                            <label class="control-label" for="property-name">Label <small class="text-muted">&lt;{{vm.rdfs}}label&gt;</small></label>
+                            <input type="text" class="form-control" id="property-name" name="name" ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;">
                         </div>
 
                         <!-- rdfs:comment -->
                         <div class="form-group">
-                            <label class="control-label" for="property-comments">Comment <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}comment&gt;</small></label>
-                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
+                            <label class="control-label" for="property-comments">Comment <small class="text-muted">&lt;{{vm.rdfs}}comment&gt;</small></label>
+                            <textarea class="form-control" id="property-comments" name="comments" ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
                         </div>
 
                         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
@@ -488,29 +488,43 @@
 
                         <!-- rdfs:domain -->
                         <div class="form-group">
-                            <label class="control-label">Domain <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}domain&gt;</small></label>
-                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'domain']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
-                                <ui-select-match placeholder="Domain">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                            <label class="control-label">Domain <small class="text-muted">&lt;{{vm.rdfs}}domain&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[rdfs + 'domain']">
+                                <ui-select-match placeholder="Select Domain">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'domain'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | filter:{'localName':$select.search}">
                                     <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
 
+
                         <!-- rdfs:range -->
-                        <div class="form-group">
-                            <label class="control-label">Range <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}range&gt;</small></label>
-                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'range']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
-                                <ui-select-match placeholder="Range">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                        <div ng-if="vm.isObjectProperty()" class="form-group">
+                            <label class="control-label">Range <small class="text-muted">&lt;{{vm.rdfs}}range&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'range']">
+                                <ui-select-match placeholder="Select Domain">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="class in vm.ontologies[vm.state.oi].matonto.subClasses.concat(vm.ontologies[vm.state.oi].matonto.datatypes) | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'range'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.objectPropertyRange | removeIriFromArray:vm.selected[vm.rdfs + 'range'] | filter:{'localName':$select.search}">
                                     <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
+
+                        <div ng-if="!vm.isObjectProperty()" class="form-group">
+                            <label class="control-label">Range <small class="text-muted">&lt;{{vm.rdfs}}range&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'range']">
+                                <ui-select-match placeholder="Select Domain">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.dataPropertyRange | removeIriFromArray:vm.selected[vm.rdfs + 'range'] | filter:{'localName':$select.search}">
+                                    <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+
 
                         <!-- owl:equivalentProperty -->
                         <div class="form-group">
@@ -526,39 +540,63 @@
                         </div>
 
                         <!-- rdfs:subPropertyOf -->
-                        <div class="form-group">
-                            <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.rdfs}}subPropertyOf&gt;</small></label>
-                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subPropertyOf']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
-                                <ui-select-match placeholder="Sub Property Of">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                        <div ng-if="vm.isObjectProperty()" class="form-group">
+                            <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.rdfs}}subPropertyOf&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subPropertyOf']">
+                                <ui-select-match placeholder="Select Property">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in (vm.typeMatch(vm.selected, vm.ontologies[vm.state.oi].matonto.owl, 'ObjectProperty') ? vm.ontologies[vm.state.oi].matonto.subObjectProperties : vm.ontologies[vm.state.oi].matonto.subDataProperties) | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'subPropertyOf'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="property in vm.ontology.matonto.subObjectProperties | filter: $select.search">
+                                    <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+
+                        <div ng-if="!vm.isObjectProperty()" class="form-group">
+                            <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.rdfs}}subPropertyOf&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subPropertyOf']">
+                                <ui-select-match placeholder="Select Property">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="property in vm.ontology.matonto.subDataProperties | filter: $select.search">
                                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
 
                         <!-- owl:inverseOf -->
-                        <div class="form-group" ng-if="vm.typeMatch(vm.selected, vm.ontologies[vm.state.oi].matonto.owl, 'ObjectProperty')">
-                            <label class="control-label">Inverse Of <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.owl}}inverseOf&gt;</small></label>
-                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.owl + 'inverseOf']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
+                        <div class="form-group" ng-if="vm.isObjectProperty()">
+                            <label class="control-label">Inverse Of <small class="text-muted">&lt;{{vm.ontology.matonto.owl}}inverseOf&gt;</small></label>
+                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.ontology.matonto.owl + 'inverseOf']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
                                 <ui-select-match placeholder="Inverse Of">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in vm.ontologies[vm.state.oi].matonto.subObjectProperties | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'inverseOf'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in vm.ontology.matonto.subObjectProperties | remove:vm.selected['@id'] | remove:vm.selected[vm.rdfs + 'inverseOf'] | filter:{'localName':$select.search}">
                                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
 
                         <!-- owl:disjointWith -->
-                        <div class="form-group">
-                            <label class="control-label">Disjoint With <small class="text-muted">&lt;{{vm.ontologies[vm.state.oi].matonto.owl}}disjointWith&gt;</small></label>
-                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontologies[vm.state.oi].matonto.owl + 'disjointWith']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
+                        <div class="form-group" ng-if="vm.isObjectProperty()">
+                            <label class="control-label">Disjoint With <small class="text-muted">&lt;{{vm.ontology.matonto.owl}}disjointWith&gt;</small></label>
+                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontology.matonto.owl + 'disjointWith']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
                                 <ui-select-match placeholder="Disjoint With">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in (vm.typeMatch(vm.selected, vm.ontologies[vm.state.oi].matonto.owl, 'ObjectProperty') ? vm.ontologies[vm.state.oi].matonto.subObjectProperties : vm.ontologies[vm.state.oi].matonto.subDataProperties) | remove:vm.selected['@id'] | remove:vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'disjointWith'] | filter:{'localName':$select.search}">
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in vm.ontology.matonto.subObjectProperties | remove:vm.selected['@id'] | remove:vm.selected[vm.rdfs + 'disjointWith'] | filter:{'localName':$select.search}">
+                                    <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+
+                        <div class="form-group" ng-if="!vm.isObjectProperty()">
+                            <label class="control-label">Disjoint With <small class="text-muted">&lt;{{vm.ontology.matonto.owl}}disjointWith&gt;</small></label>
+                            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.ontology.matonto.owl + 'disjointWith']" on-select="vm.selected.matonto.unsaved = true;" on-remove="vm.selected.matonto.unsaved = true;">
+                                <ui-select-match placeholder="Disjoint With">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.groupByNamespace" repeat="property in vm.ontology.matonto.subDataProperties | remove:vm.selected['@id'] | remove:vm.rdfs + 'disjointWith'] | filter:{'localName':$select.search}">
                                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
@@ -583,7 +621,7 @@
                      ng-init="iri = (vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : vm.selected['@id'] | splitIRI);
                               vm.iriBegin = iri.begin;
                               vm.iriThen = iri.then;
-                              vm.iriEnd = iri.end || (vm.selected[vm.ontologies[vm.state.oi].matonto.rdfs + 'label'][0]['@value'] | camelCase:vm.iriType);
+                              vm.iriEnd = iri.end || (vm.selected[vm.rdfs + 'label'][0]['@value'] | camelCase:vm.iriType);
                               vm.iriUpdate = true;">
                     <form name="vm.iriForm" class="content clearfix" novalidate autocomplete="off"
                           ng-submit="vm.editIRI();">
@@ -657,8 +695,8 @@
                             <div class="form-group">
                                 <label class="control-label">Annotation</label>
                                 <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
-                                    <ui-select-match placeholder="Select an annotation">{{($select.selected.namespace + $select.selected.localName) || $select.selected}}</ui-select-match>
-                                    <ui-select-choices group-by="vm.groupByNamespace" repeat="annotation in vm.ontologies[vm.state.oi].matonto.annotations | filter:{'localName':$select.search} | orderBy:vm.sortAnnotations">
+                                    <ui-select-match placeholder="Select an annotation">{{vm.getItemIri($select.selected)}}</ui-select-match>
+                                    <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search | orderBy:vm.sortAnnotations">
                                         <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                                     </ui-select-choices>
                                 </ui-select>
@@ -715,9 +753,9 @@
     <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
 
     <!-- list of annotations -->
-    <div class="annotation" ng-repeat="key in (vm.selected | showAnnotations:(vm.selected.matonto.annotations || vm.ontologies[vm.state.oi].matonto.annotations)) | orderBy:vm.sortAnnotations">
-        <h5 title="{{key.namespace + key.localName}}">{{key.localName | beautify}}</h5>
-        <div class="value-container" ng-repeat="value in vm.selected[key.namespace + key.localName]">
+    <div class="annotation" ng-repeat="key in vm.selected | showAnnotations:vm.ontology.matonto.annotations | orderBy:vm.sortAnnotations">
+        <h5 title="{{vm.getItemIri(key)}}">{{key.localName | beautify}}</h5>
+        <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(key)]">
             <p>{{value['@value']}}</p>
             <button type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(key.namespace + key.localName, $index);" title="Edit"><i class="fa fa-pencil"></i></button>
             <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(key.namespace + key.localName, $index)" title="Delete"><i class="fa fa-times"></i></button>

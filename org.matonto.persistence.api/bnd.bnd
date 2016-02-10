@@ -1,5 +1,8 @@
 build = ${tstamp}
 Bundle-SymbolicName: org.matonto.persistence.api
 Bundle-Name: MatOnto Persistence API
-Export-Package: org.matonto.rdf*,org.matonto.repository*
+Export-Package: \
+org.matonto.rdf*, \
+org.matonto.repository*, \
+org.matonto.query*
 -metatype: *
