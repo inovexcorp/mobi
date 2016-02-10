@@ -2,10 +2,12 @@
     'use strict';
 
     angular
-        .module('removeIriFromArray', [])
+        .module('removeIriFromArray', ['responseObj'])
         .filter('removeIriFromArray', removeIriFromArray);
 
-    function removeIriFromArray() {
+    removeIriFromArray.$inject = ['responseObj'];
+
+    function removeIriFromArray(responseObj) {
         return function(arr, string) {
             var temp = [];
 
@@ -13,7 +15,7 @@
                 var i = 0;
 
                 while(i < arr.length) {
-                    if(string !== (arr[i].namespace + arr[i].localName)) {
+                    if(string !== responseObj.getItemIri(arr[i])) {
                         temp.push(arr[i]);
                     }
                     i++;
