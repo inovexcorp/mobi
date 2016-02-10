@@ -2,10 +2,10 @@
     'use strict';
 
     angular
-        .module('remove', [])
-        .filter('remove', remove);
+        .module('removeIriFromArray', [])
+        .filter('removeIriFromArray', removeIriFromArray);
 
-    function remove() {
+    function removeIriFromArray() {
         return function(arr, string) {
             var temp = [],
                 i = 0;
