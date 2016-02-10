@@ -26,6 +26,7 @@ var jsFiles = function(prefix) {
             prefix + '**/angular-ui-router.min.js',
             prefix + '**/ui-bootstrap.min.js',
             prefix + '**/js/vendor/**/*.js',
+            prefix + '**/js/custom/services/responseObj.js',
             prefix + '**/js/custom/filters/*.js',
             prefix + '**/js/custom/services/*.js',
             prefix + '**/js/custom/directives/*.js',

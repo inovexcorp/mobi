@@ -396,7 +396,7 @@
                                 <ui-select-match placeholder="Select Class">
                                     <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
-                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | filter: $select.search">
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | removeIriFromArray:vm.selected['@id'] | filter: $select.search">
                                     <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
                                 </ui-select-choices>
                             </ui-select>
@@ -485,13 +485,19 @@
                         <!-- rdfs:domain -->
                         <div class="form-group">
                             <label class="control-label">Domain <small class="text-muted">&lt;{{vm.rdfs}}domain&gt;</small></label>
-
+                            <ui-select multiple ng-model="vm.selected[rdfs + 'domain']">
+                                <ui-select-match placeholder="Select Domain">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | filter:{'localName':$select.search}">
+                                    <div ng-bind-html="class.localName | highlight:$select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
                         </div>
 
                         <!-- rdfs:range -->
                         <div class="form-group">
                             <label class="control-label">Range <small class="text-muted">&lt;{{vm.rdfs}}range&gt;</small></label>
-
                         </div>
 
                         <!-- rdfs:comment -->
