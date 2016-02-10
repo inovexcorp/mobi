@@ -241,22 +241,28 @@
                 ontology.matonto.others = others;
 
                 addDefaultAnnotations = function(annotations) {
-                    var temp, index, split,
+                    var temp, item, index, split,
                         i = 1,
                         exclude = [
                             'http://www.w3.org/2000/01/rdf-schema#label',
                             'http://www.w3.org/2000/01/rdf-schema#comment'
                         ],
-                        defaults = responseObj.stringify(defaultAnnotations);
+                        defaults = responseObj.stringify(defaultAnnotations),
+                        arr = angular.copy(annotations);
 
-                    while(i < annotations.length) {
-                        temp = annotations[i].namespace + annotations[i].localName;
-                        if(exclude.indexOf(temp) !== -1) {
-                            annotations.splice(i--, 1);
-                        }
-                        index = defaults.indexOf(temp);
-                        if(index !== -1) {
-                            defaults.splice(index, 1);
+                    arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
+
+                    while(i < arr.length) {
+                        item = arr[i];
+                        if(responseObj.validateItem(item)) {
+                            temp = item.namespace + item.localName;
+                            if(exclude.indexOf(temp) !== -1) {
+                                arr.splice(i--, 1);
+                            }
+                            index = defaults.indexOf(temp);
+                            if(index !== -1) {
+                                defaults.splice(index, 1);
+                            }
                         }
                         i++;
                     }
@@ -264,14 +270,11 @@
                     i = 0;
                     while(i < defaults.length) {
                         split = $filter('splitIRI')(defaults[i]);
-                        annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                        arr.push({ namespace: split.begin + split.then, localName: split.end });
                         i++;
                     }
 
-                    annotations = $filter('orderBy')(annotations, 'localName');
-                    annotations.splice(0, 0, { namespace: 'New Annotation', localName: 'Create' });
-
-                    return annotations;
+                    return arr;
                 }
 
                 $http.get(prefix + '/getAllIRIs', config)
@@ -280,7 +283,9 @@
                         ontology.matonto.subClasses = $filter('orderBy')(response.data.classes, 'localName');
                         ontology.matonto.subDataProperties = $filter('orderBy')(response.data.dataProperties, 'localName');
                         ontology.matonto.subObjectProperties = $filter('orderBy')(response.data.objectProperties, 'localName');
-                        ontology.matonto.datatypes = $filter('orderBy')(response.data.datatypes, 'localName');
+                        ontology.matonto.propertyDomain = $filter('orderBy')(response.data.classes, 'localName');
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(response.data.classes.concat(response.data.datatypes), 'localName');
+                        ontology.matonto.objectPropertyRange = $filter('orderBy')(response.data.classes, 'localName');
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -331,6 +336,13 @@
                         deferred.reject('something went wrong');
                     });
                 return deferred.promise;
+            }
+
+            self.getItemNamespace = function(item) {
+                if(item.hasOwnProperty('namespace')) {
+                    return item.namespace;
+                }
+                return 'No Namespace';
             }
 
             self.getList = function() {
@@ -601,8 +613,28 @@
                 selected['@id'] = fresh;
             }
 
-            self.typeMatch = function(obj, namespace, localName) {
-                return obj['@type'].indexOf(namespace + localName) !== -1;
+            self.isObjectProperty = function(property, ontology) {
+                var result = false;
+
+                if(property.hasOwnProperty('@type') && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs') && property['@type'].indexOf(ontology.matonto.owl + 'ObjectProperty') !== -1) {
+                    result = true;
+                }
+
+                return result;
+            }
+
+            self.getOntology = function(oi) {
+                if(oi !== undefined && oi !== -1) {
+                    return self.ontologies[oi];
+                }
+                return undefined;
+            }
+
+            self.getOntologyRdfs = function(ontology) {
+                if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs')) {
+                    return ontology.matonto.rdfs;
+                }
+                return undefined;
             }
         }
 })();
