@@ -19,7 +19,7 @@
         }
 
         self.validateItem = function(item) {
-            return item.hasOwnProperty('namespace') && item.hasOwnProperty('localName');
+            return item && item.hasOwnProperty('namespace') && item.hasOwnProperty('localName');
         }
 
         self.stringify = function(response) {

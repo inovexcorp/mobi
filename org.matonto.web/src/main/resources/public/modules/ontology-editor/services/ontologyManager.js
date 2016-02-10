@@ -280,9 +280,12 @@
                 $http.get(prefix + '/getAllIRIs', config)
                     .then(function(response) {
                         ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
-                        ontology.matonto.subClasses = response.data.classes;
-                        ontology.matonto.subDataProperties = response.data.dataProperties;
-                        ontology.matonto.subObjectProperties = response.data.objectProperties;
+                        ontology.matonto.subClasses = $filter('orderBy')(response.data.classes, 'localName');
+                        ontology.matonto.subDataProperties = $filter('orderBy')(response.data.dataProperties, 'localName');
+                        ontology.matonto.subObjectProperties = $filter('orderBy')(response.data.objectProperties, 'localName');
+                        ontology.matonto.propertyDomain = $filter('orderBy')(response.data.classes, 'localName');
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(response.data.classes.concat(response.data.datatypes), 'localName');
+                        ontology.matonto.objectPropertyRange = $filter('orderBy')(response.data.classes, 'localName');
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);

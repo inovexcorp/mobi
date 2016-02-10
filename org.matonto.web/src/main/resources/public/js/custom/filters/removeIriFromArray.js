@@ -8,21 +8,39 @@
     removeIriFromArray.$inject = ['responseObj'];
 
     function removeIriFromArray(responseObj) {
-        return function(arr, string) {
-            var temp = [];
+        function hasItem(item, arr) {
+            var j = 0;
 
-            if(Array.isArray(arr)) {
-                var i = 0;
+            while(j < arr.length) {
+                if(arr[j].hasOwnProperty('@id') && item === arr[j]['@id']) {
+                    return true;
+                }
+                j++;
+            }
+
+            return false;
+        }
+
+        return function(arr, item) {
+            var result = [];
+
+            if(Array.isArray(arr) && arr.length && item) {
+                var itemIri,
+                    itemIsArray = Array.isArray(item),
+                    i = 0;
 
                 while(i < arr.length) {
-                    if(string !== responseObj.getItemIri(arr[i])) {
-                        temp.push(arr[i]);
+                    itemIri = responseObj.getItemIri(arr[i]);
+                    if((itemIsArray && !hasItem(itemIri, item)) || (!itemIsArray && item !== itemIri)) {
+                        result.push(arr[i]);
                     }
                     i++;
                 }
+            } else if(!item) {
+                result = result.concat(arr);
             }
 
-            return temp;
+            return result;
         }
     }
 })();
