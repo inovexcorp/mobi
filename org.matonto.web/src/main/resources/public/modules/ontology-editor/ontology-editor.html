@@ -201,7 +201,7 @@
                             <!-- properties associated with classes -->
                             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-include="'object-property-template'" ng-init="properties = class.matonto.properties"></ul>
                             <!-- properties not associated with classes -->
-                            <ul ng-include="'object-property-template'" ng-init="properties = ontology.noDomains"></ul>
+                            <ul ng-include="'object-property-template'" ng-init="properties = ontology.matonto.noDomains"></ul>
                             <!-- create new object property -->
                             <div class="creator">
                                 <a ng-click="vm.selectItem('property-editor', oi, -1, -1)"
@@ -229,7 +229,7 @@
                             <!-- properties associated with classes -->
                             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-include="'datatype-property-template'" ng-init="properties = class.matonto.properties"></ul>
                             <!-- properties not associated with classes -->
-                            <ul ng-include="'datatype-property-template'" ng-init="properties = ontology.noDomains;"></ul>
+                            <ul ng-include="'datatype-property-template'" ng-init="properties = ontology.matonto.noDomains;"></ul>
                             <!-- create new datatype property -->
                             <div class="creator">
                                 <a ng-click="vm.selectItem('property-editor', oi, -1, -1)"
@@ -392,9 +392,9 @@
                         <!-- rdfs:subClassOf -->
                         <div class="form-group">
                             <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{vm.rdfs}}subClassOf&gt;</small></label>
-                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subClassOf']" on-select="vm.convertClass($item, $model);">
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subClassOf']">
                                 <ui-select-match placeholder="Select Class">
-                                    <span title="{{$item['@id'] || ($item.namespace + $item.localName)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
                                 </ui-select-match>
                                 <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | filter: $select.search">
                                     <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
@@ -458,9 +458,28 @@
                         </div>
 
                         <!-- rdfs:subPropertyOf -->
-                        <div class="form-group">
+                        <div ng-if="vm.isObjectProperty()" class="form-group">
                             <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.rdfs}}subPropertyOf&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subPropertyOf']">
+                                <ui-select-match placeholder="Select Property">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="property in vm.ontology.matonto.subObjectProperties | filter: $select.search">
+                                    <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
 
+                        <div ng-if="!vm.isObjectProperty()" class="form-group">
+                            <label class="control-label">Sub Property Of <small class="text-muted">&lt;{{vm.rdfs}}subPropertyOf&gt;</small></label>
+                            <ui-select multiple ng-model="vm.selected[vm.rdfs + 'subPropertyOf']">
+                                <ui-select-match placeholder="Select Property">
+                                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
+                                </ui-select-match>
+                                <ui-select-choices group-by="vm.getItemNamespace" repeat="property in vm.ontology.matonto.subDataProperties | filter: $select.search">
+                                    <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
                         </div>
 
                         <!-- rdfs:domain -->
@@ -573,7 +592,7 @@
                             <div class="form-group">
                                 <label class="control-label">Annotation</label>
                                 <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
-                                    <ui-select-match placeholder="Select an annotation">{{$select.selected.namespace + $select.selected.localName}}</ui-select-match>
+                                    <ui-select-match placeholder="Select an annotation">{{vm.getItemIri($select.selected)}}</ui-select-match>
                                     <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search">
                                         <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                                     </ui-select-choices>

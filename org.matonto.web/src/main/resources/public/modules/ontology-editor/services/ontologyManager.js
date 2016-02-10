@@ -281,6 +281,8 @@
                     .then(function(response) {
                         ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
                         ontology.matonto.subClasses = response.data.classes;
+                        ontology.matonto.subDataProperties = response.data.dataProperties;
+                        ontology.matonto.subObjectProperties = response.data.objectProperties;
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -608,8 +610,14 @@
                 selected['@id'] = fresh;
             }
 
-            self.typeMatch = function(property, owl, type) {
-                return property['@type'].indexOf(owl + type) !== -1;
+            self.isObjectProperty = function(property, ontology) {
+                var result = false;
+
+                if(property.hasOwnProperty('@type') && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs') && property['@type'].indexOf(ontology.matonto.owl + 'ObjectProperty') !== -1) {
+                    result = true;
+                }
+
+                return result;
             }
 
             self.getOntology = function(oi) {
