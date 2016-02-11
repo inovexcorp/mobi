@@ -48,7 +48,6 @@
 
         vm.selectItem = function(editor, oi, ci, pi) {
             stateManagerService.setState(editor, oi, ci, pi);
-            stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
             vm.ontology = ontologyManagerService.getOntology(oi);

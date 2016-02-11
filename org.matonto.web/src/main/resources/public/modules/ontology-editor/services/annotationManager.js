@@ -73,15 +73,15 @@
                 var arr = [];
 
                 if(Array.isArray(annotations)) {
-                    var temp, item,
+                    var itemIri, item,
                         i = 0;
 
                     while(i < annotations.length) {
                         item = annotations[i];
                         if(responseObj.validateItem(item)) {
-                            temp = item.namespace + item.localName;
-                            if(obj.hasOwnProperty(temp)) {
-                                arr.push(temp);
+                            itemIri = responseObj.getItemIri(item);
+                            if(obj.hasOwnProperty(itemIri)) {
+                                arr.push(item);
                             }
                         }
                         i++;
