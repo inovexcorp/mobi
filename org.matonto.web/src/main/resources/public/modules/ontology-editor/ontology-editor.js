@@ -52,7 +52,8 @@
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
             vm.ontology = ontologyManagerService.getOntology(oi);
-            vm.rdfs = ontologyManagerService.getOntologyRdfs(vm.ontology);
+            vm.rdfs = ontologyManagerService.getOntologyProperty(vm.ontology, 'rdfs');
+            vm.owl = ontologyManagerService.getOntologyProperty(vm.ontology, 'owl');
         }
 
         vm.submitEdit = function(isValid) {

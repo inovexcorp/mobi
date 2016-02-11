@@ -287,7 +287,9 @@
                         ontology.matonto.subClasses = $filter('orderBy')(response.data.classes, 'localName');
                         ontology.matonto.subDataProperties = $filter('orderBy')(response.data.dataProperties, 'localName');
                         ontology.matonto.subObjectProperties = $filter('orderBy')(response.data.objectProperties, 'localName');
-                        ontology.matonto.datatypes = $filter('orderBy')(response.data.datatypes, 'localName');
+                        ontology.matonto.propertyDomain = $filter('orderBy')(response.data.classes, 'localName');
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(response.data.classes.concat(response.data.datatypes), 'localName');
+                        ontology.matonto.objectPropertyRange = $filter('orderBy')(response.data.classes, 'localName');
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -640,9 +642,9 @@
                 return undefined;
             }
 
-            self.getOntologyRdfs = function(ontology) {
-                if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs')) {
-                    return ontology.matonto.rdfs;
+            self.getOntologyProperty = function(ontology, prop) {
+                if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty(prop)) {
+                    return ontology.matonto[prop];
                 }
                 return undefined;
             }
