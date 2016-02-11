@@ -73,14 +73,14 @@
                 var arr = [];
 
                 if(Array.isArray(annotations)) {
-                    var temp, item,
+                    var itemIri, item,
                         i = 0;
 
                     while(i < annotations.length) {
                         item = annotations[i];
                         if(responseObj.validateItem(item)) {
-                            temp = responseObj.getItemIri(item);
-                            if(obj.hasOwnProperty(temp)) {
+                            itemIri = responseObj.getItemIri(item);
+                            if(obj.hasOwnProperty(itemIri)) {
                                 arr.push(item);
                             }
                         }
