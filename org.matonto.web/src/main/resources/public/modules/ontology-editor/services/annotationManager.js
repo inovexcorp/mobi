@@ -57,6 +57,13 @@
             self.edit = function(obj, key, value, index) {
                 obj[key][index]['@value'] = value;
             }
+
+            self.getLocalNameLowercase = function(item) {
+                if(item.localName === 'New Annotation') {
+                    return -1;
+                }
+                return item.localName.toLowerCase();
+            }
         }
 
         showAnnotations.$inject = ['responseObj'];
