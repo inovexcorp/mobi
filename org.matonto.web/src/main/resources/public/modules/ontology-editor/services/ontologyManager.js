@@ -451,22 +451,22 @@
                                 ontologyIdStr: selected.matonto.ontologyId
                             }
                         },
-                        error = function(response) {
+                        onError = function(response) {
                             deferred.reject(response.data.error);
                             $rootScope.showSpinner = false;
                         };
 
                     $http.get(prefix + '/deleteOntology', config)
                         .then(function(response) {
-                            if(response.data.deleted) {
+                            if(response.hasOwnProperty('data') && response.data.hasOwnProperty('deleted') && response.data.deleted) {
                                 self.ontologies.splice(state.oi, 1);
                                 deferred.resolve(response);
                                 $rootScope.showSpinner = false;
                             } else {
-                                error(response);
+                                onError(response);
                             }
                         }, function(response) {
-                            error(response);
+                            onError(response);
                         });
 
                 } else {
@@ -525,7 +525,7 @@
                 onUploadSuccess = function() {
                     self.get(ontologyId)
                         .then(function(response) {
-                            if(!response.data.error) {
+                            if(response.hasOwnProperty('data') && !response.data.hasOwnProperty('error')) {
                                 onGetSuccess(response);
                             } else {
                                 onError(response);
@@ -537,7 +537,7 @@
 
                 self.upload(isValid, file)
                     .then(function(response) {
-                        if(response.data.persisted) {
+                        if(response.hasOwnProperty('data') && response.data.hasOwnProperty('persisted') && response.data.persisted) {
                             ontologyId = response.data.ontologyId;
                             onUploadSuccess();
                         } else {
