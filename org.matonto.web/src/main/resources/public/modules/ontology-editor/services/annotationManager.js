@@ -58,7 +58,7 @@
                 obj[key][index]['@value'] = value;
             }
 
-            self.sort = function(item) {
+            self.getLocalNameLowercase = function(item) {
                 if(item.localName === 'New Annotation') {
                     return -1;
                 }

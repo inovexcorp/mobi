@@ -141,8 +141,8 @@
             return ontologyManagerService.getItemNamespace(item);
         }
 
-        vm.sortAnnotations = function(item) {
-            return annotationManagerService.sort(item);
+        vm.getAnnotationLocalNameLowercase = function(item) {
+            return annotationManagerService.getLocalNameLowercase(item);
         }
     }
 })();

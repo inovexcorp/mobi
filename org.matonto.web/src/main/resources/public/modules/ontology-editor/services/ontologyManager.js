@@ -358,7 +358,7 @@
             }
 
             self.getObject = function(state) {
-                var current, editing, creating, setDefaults,
+                var current, editEntity, createEntity, setDefaults,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -397,7 +397,7 @@
                         }
                     };
 
-                editing = function() {
+                editEntity = function() {
                     if(pi !== undefined && ci !== undefined) {
                         result = self.ontologies[oi].matonto.classes[ci].matonto.properties[pi];
                     } else if(pi !== undefined && ci === undefined) {
@@ -415,7 +415,7 @@
                     return result;
                 }
 
-                creating = function() {
+                createEntity = function() {
                     var ontology = (oi !== -1) ? self.ontologies[oi] : null,
                         unique = tab + oi + ci + pi;
                     if(self.newItems[unique]) {
@@ -434,9 +434,9 @@
                 }
 
                 if(pi === -1 || ci === -1 || oi === -1) {
-                    creating();
+                    createEntity();
                 } else {
-                    editing();
+                    editEntity();
                 }
                 return result;
             }
