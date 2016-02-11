@@ -409,7 +409,8 @@
                     }
                 }
 
-                setDefaults = function(ontology, result) {
+                setDefaults = function(ontology, obj) {
+                    var result = angular.copy(obj);
                     result.matonto.namespace = ontology['@id'] + ontology.matonto.delimiter;
                     return result;
                 }
