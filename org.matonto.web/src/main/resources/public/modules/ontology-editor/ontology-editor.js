@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'remove', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager'])
+        .module('ontology-editor', ['file-input', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService'];
+    OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj'];
 
-    function OntologyEditorController($scope, $timeout, $filter, $q, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService) {
+    function OntologyEditorController($scope, $timeout, $filter, $q, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -50,6 +50,9 @@
             stateManagerService.setState(editor, oi, ci, pi);
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
+            vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.rdfs = ontologyManagerService.getOntologyProperty(vm.ontology, 'rdfs');
+            vm.owl = ontologyManagerService.getOntologyProperty(vm.ontology, 'owl');
         }
 
         vm.submitEdit = function(isValid) {
@@ -68,8 +71,8 @@
             vm.showIriOverlay = false;
         }
 
-        vm.typeMatch = function(obj, namespace, localName) {
-            return ontologyManagerService.typeMatch(obj, namespace, localName);
+        vm.isObjectProperty = function() {
+            return ontologyManagerService.isObjectProperty(vm.selected, vm.ontology);
         }
 
         /* Prefix (Context) Management */
@@ -93,6 +96,10 @@
 
         vm.removePrefix = function(key) {
             prefixManagerService.remove(key, vm.selected);
+        }
+
+        vm.getItemIri = function(item) {
+            return responseObj.getItemIri(item);
         }
 
         /* Annotation Management */
@@ -129,12 +136,12 @@
             return annotationManagerService.getPattern();
         }
 
-        vm.groupByNamespace = function(item) {
-            return item.namespace;
+        vm.getItemNamespace = function(item) {
+            return ontologyManagerService.getItemNamespace(item);
         }
 
-        vm.sortAnnotations = function(item) {
-            return annotationManagerService.sort(item);
+        vm.getAnnotationLocalNameLowercase = function(item) {
+            return annotationManagerService.getLocalNameLowercase(item);
         }
     }
 })();

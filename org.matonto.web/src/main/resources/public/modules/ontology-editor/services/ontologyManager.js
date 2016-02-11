@@ -245,23 +245,28 @@
                 ontology.matonto.others = others;
 
                 addDefaultAnnotations = function(annotations) {
-                    var temp, index, split,
-                        results = [{namespace: 'Create ', localName: 'New Annotation'}],
+                    var temp, item, index, split,
                         i = 1,
                         exclude = [
                             'http://www.w3.org/2000/01/rdf-schema#label',
                             'http://www.w3.org/2000/01/rdf-schema#comment'
                         ],
-                        defaults = responseObj.stringify(defaultAnnotations);
+                        defaults = responseObj.stringify(defaultAnnotations),
+                        arr = angular.copy(annotations);
 
-                    while(i < annotations.length) {
-                        temp = annotations[i].namespace + annotations[i].localName;
-                        if(exclude.indexOf(temp) === -1) {
-                            results.push(annotations[i]);
-                        }
-                        index = defaults.indexOf(temp);
-                        if(index !== -1) {
-                            defaults.splice(index, 1);
+                    arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
+
+                    while(i < arr.length) {
+                        item = arr[i];
+                        if(responseObj.validateItem(item)) {
+                            temp = item.namespace + item.localName;
+                            if(exclude.indexOf(temp) !== -1) {
+                                arr.splice(i--, 1);
+                            }
+                            index = defaults.indexOf(temp);
+                            if(index !== -1) {
+                                defaults.splice(index, 1);
+                            }
                         }
                         i++;
                     }
@@ -269,11 +274,11 @@
                     i = 0;
                     while(i < defaults.length) {
                         split = $filter('splitIRI')(defaults[i]);
-                        results.push({ namespace: split.begin + split.then, localName: split.end });
+                        arr.push({ namespace: split.begin + split.then, localName: split.end });
                         i++;
                     }
 
-                    return results;
+                    return arr;
                 }
 
                 $http.get(prefix + '/getAllIRIs', config)
@@ -282,7 +287,9 @@
                         ontology.matonto.subClasses = $filter('orderBy')(response.data.classes, 'localName');
                         ontology.matonto.subDataProperties = $filter('orderBy')(response.data.dataProperties, 'localName');
                         ontology.matonto.subObjectProperties = $filter('orderBy')(response.data.objectProperties, 'localName');
-                        ontology.matonto.datatypes = $filter('orderBy')(response.data.datatypes, 'localName');
+                        ontology.matonto.propertyDomain = $filter('orderBy')(response.data.classes, 'localName');
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(response.data.classes.concat(response.data.datatypes), 'localName');
+                        ontology.matonto.objectPropertyRange = $filter('orderBy')(response.data.classes, 'localName');
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
@@ -335,6 +342,13 @@
                 return deferred.promise;
             }
 
+            self.getItemNamespace = function(item) {
+                if(item.hasOwnProperty('namespace')) {
+                    return item.namespace;
+                }
+                return 'No Namespace';
+            }
+
             self.getList = function() {
                 return self.ontologies;
             }
@@ -344,7 +358,7 @@
             }
 
             self.getObject = function(state) {
-                var current, editing, creating, setDefaults,
+                var current, editEntity, createEntity, setDefaults,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -383,7 +397,7 @@
                         }
                     };
 
-                editing = function() {
+                editEntity = function() {
                     if(pi !== undefined && ci !== undefined) {
                         result = self.ontologies[oi].matonto.classes[ci].matonto.properties[pi];
                     } else if(pi !== undefined && ci === undefined) {
@@ -395,12 +409,13 @@
                     }
                 }
 
-                setDefaults = function(ontology, result) {
+                setDefaults = function(ontology, obj) {
+                    var result = angular.copy(obj);
                     result.matonto.namespace = ontology['@id'] + ontology.matonto.delimiter;
                     return result;
                 }
 
-                creating = function() {
+                createEntity = function() {
                     var ontology = (oi !== -1) ? self.ontologies[oi] : null,
                         unique = tab + oi + ci + pi;
                     if(self.newItems[unique]) {
@@ -419,9 +434,9 @@
                 }
 
                 if(pi === -1 || ci === -1 || oi === -1) {
-                    creating();
+                    createEntity();
                 } else {
-                    editing();
+                    editEntity();
                 }
                 return result;
             }
@@ -491,36 +506,45 @@
             self.uploadThenGet = function(isValid, file) {
                 $rootScope.showSpinner = true;
 
-                var ontologyId,
-                    deferred = $q.defer(),
-                    error = function(response) {
-                        deferred.reject(response);
-                        $rootScope.showSpinner = false;
-                    };
+                var ontologyId, onUploadSuccess, onGetSuccess, onError,
+                    deferred = $q.defer();
+
+                onError = function(response) {
+                    deferred.reject(response);
+                    $rootScope.showSpinner = false;
+                }
+
+                onGetSuccess = function(response) {
+                    addOntology(response.data.ontology, ontologyId)
+                        .then(function(response) {
+                            deferred.resolve(response);
+                            $rootScope.showSpinner = false;
+                        });
+                }
+
+                onUploadSuccess = function() {
+                    self.get(ontologyId)
+                        .then(function(response) {
+                            if(!response.data.error) {
+                                onGetSuccess(response);
+                            } else {
+                                onError(response);
+                            }
+                        }, function(response) {
+                            onError(response);
+                        });
+                }
 
                 self.upload(isValid, file)
                     .then(function(response) {
                         if(response.data.persisted) {
                             ontologyId = response.data.ontologyId;
-                            self.get(ontologyId)
-                                .then(function(response) {
-                                    if(!response.data.error) {
-                                        addOntology(response.data.ontology, ontologyId)
-                                            .then(function(response) {
-                                                deferred.resolve(response);
-                                                $rootScope.showSpinner = false;
-                                            });
-                                    } else {
-                                        error(response);
-                                    }
-                                }, function(response) {
-                                    error(response);
-                                });
+                            onUploadSuccess();
                         } else {
-                            error(response);
+                            onError(response);
                         }
                     }, function(response) {
-                        error(response);
+                        onError(response);
                     });
 
                 return deferred.promise;
@@ -611,8 +635,28 @@
                 selected['@id'] = fresh;
             }
 
-            self.typeMatch = function(obj, namespace, localName) {
-                return obj['@type'].indexOf(namespace + localName) !== -1;
+            self.isObjectProperty = function(property, ontology) {
+                var result = false;
+
+                if(property.hasOwnProperty('@type') && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs') && property['@type'].indexOf(ontology.matonto.owl + 'ObjectProperty') !== -1) {
+                    result = true;
+                }
+
+                return result;
+            }
+
+            self.getOntology = function(oi) {
+                if(oi !== undefined && oi !== -1) {
+                    return self.ontologies[oi];
+                }
+                return undefined;
+            }
+
+            self.getOntologyProperty = function(ontology, prop) {
+                if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty(prop)) {
+                    return ontology.matonto[prop];
+                }
+                return undefined;
             }
         }
 })();
