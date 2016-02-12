@@ -4,7 +4,6 @@
   "description": "The web bundle for MatOnto.",
   "main": "index.html",
   "devDependencies": {
-    "bower": "^1.7.7",
     "del": "^2.0.2",
     "event-stream": "^3.3.1",
     "gulp": "^3.9.0",
@@ -28,5 +27,12 @@
     "prepare-for-bundle": "gulp prepare-for-bundle"
   },
   "author": "Jordan Lewis",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "angular": "1.4.8",
+    "angular-ui-router": "^0.2.18",
+    "bootstrap": "^3.3.6",
+    "font-awesome": "^4.5.0",
+    "ui-select": "^0.13.3"
+  }
 }
