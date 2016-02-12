@@ -18,28 +18,28 @@ var gulp = require('gulp'),
 // Project specific path variables
 var src = './src/main/resources/public/',
     dest = './target/classes/build/',
-    bowerDir = './bower_components/';
+    nodeDir = './node_modules/';
 
 // JS and CSS file lists
 // NOTE: This is where we determine the order in which JS files are loaded
 var jsFiles = function(prefix) {
         return [
-            prefix + '**/js/services/responseObj.js',
-            prefix + '**/js/filters/*.js',
-            prefix + '**/js/services/*.js',
-            prefix + '**/js/directives/*.js',
-            prefix + '**/modules/**/*/services/**/*.js',
-            prefix + '**/modules/**/*/directives/**/*.js',
-            prefix + '**/modules/**/*.js',
-            prefix + '**/app.module.js',
-            prefix + '**/route.config.js'
+            prefix + 'js/services/responseObj.js',
+            prefix + 'js/filters/*.js',
+            prefix + 'js/services/*.js',
+            prefix + 'js/directives/*.js',
+            prefix + 'modules/**/*/services/**/*.js',
+            prefix + 'modules/**/*/directives/**/*.js',
+            prefix + 'modules/**/*.js',
+            prefix + 'js/app.module.js',
+            prefix + 'js/route.config.js'
         ]
     },
-    bowerJsFiles = function(prefix) {
+    nodeJsFiles = function(prefix) {
         return [
-            prefix + '**/angular/angular.min.js',
-            prefix + '**/angular-ui-router/release/angular-ui-router.min.js',
-            prefix + '**/ui-select/dist/select.min.js'
+            prefix + '**/angular.min.js',
+            prefix + '**/angular-ui-router.min.js',
+            prefix + '**/select.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -48,11 +48,11 @@ var jsFiles = function(prefix) {
             prefix + '**/modules/**/*.' + suffix
         ]
     },
-    bowerStyleFiles = function(prefix) {
+    nodeStyleFiles = function(prefix) {
         return [
-            prefix + 'bootstrap/dist/css/bootstrap.min.css',
-            prefix + 'font-awesome/css/font-awesome.min.css',
-            prefix + 'ui-select/dist/select.min.css'
+            prefix + '**/bootstrap.min.css',
+            prefix + '**/font-awesome.min.css',
+            prefix + '**/select.min.css'
         ]
     };
 
@@ -68,7 +68,7 @@ var injectFiles = function(files) {
 
 // Concatenate and minifies JS Files, right now, manually selecting the bower js files we want
 gulp.task('minify-scripts', function() {
-    return gulp.src(bowerJsFiles(bowerDir).concat(jsFiles(src)))
+    return gulp.src(nodeJsFiles(nodeDir).concat(jsFiles(src)))
         .pipe(concat('main.js'))
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
@@ -79,7 +79,7 @@ gulp.task('minify-scripts', function() {
 gulp.task('minify-css', function() {
     var sassFiles = gulp.src(styleFiles(src, 'scss'))
             .pipe(sass().on('error', sass.logError)),
-        cssFiles = gulp.src(bowerStyleFiles(bowerDir).concat(styleFiles(src, 'css')));
+        cssFiles = gulp.src(nodeStyleFiles(nodeDir).concat(styleFiles(src, 'css')));
     return es.concat(cssFiles, sassFiles)
         .pipe(concat('main.css'))
         .pipe(rename({suffix: '.min'}))
@@ -112,14 +112,16 @@ gulp.task('html', function() {
 });
 
 // Moves all bower js files to build folder
-gulp.task('move-bower-js', function() {
-    return gulp.src(bowerJsFiles(bowerDir))
+gulp.task('move-node-js', function() {
+    return gulp.src(nodeJsFiles(nodeDir))
+        .pipe(flatten())
         .pipe(gulp.dest(dest + 'js'));
 });
 
 // Moves all bower css files to build folder
-gulp.task('move-bower-css', function() {
-    return gulp.src(bowerStyleFiles(bowerDir))
+gulp.task('move-node-css', function() {
+    return gulp.src(nodeStyleFiles(nodeDir))
+        .pipe(flatten())
         .pipe(gulp.dest(dest + 'css'));
 });
 
@@ -138,16 +140,16 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['move-custom', 'move-bower-js', 'move-bower-css', 'change-to-css'], function() {
-    var allJsFiles = bowerJsFiles(dest).concat(jsFiles(dest)),
-        allStyleFiles = bowerStyleFiles(dest).concat(styleFiles(dest, 'css')),
+gulp.task('inject-unminified', ['move-custom', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+    var allJsFiles = nodeJsFiles(dest).concat(jsFiles(dest)),
+        allStyleFiles = nodeStyleFiles(dest).concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);
     return injectFiles(allFiles);
 });
 
 // Get icons from font-awesome
 gulp.task('icons', function() {
-    return gulp.src(bowerDir + '/font-awesome/fonts/**.*')
+    return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
         .pipe(gulp.dest(dest + 'fonts'));
 });
 
