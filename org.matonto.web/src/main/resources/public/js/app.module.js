@@ -13,6 +13,8 @@
             'trusted',
             'removeMatonto',
             'ui.router',
-            'ui.select'
+            'ui.select',
+            'textInput',
+            'textArea'
         ]);
 })();

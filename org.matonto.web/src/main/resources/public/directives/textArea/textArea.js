@@ -2,10 +2,10 @@
     'use strict';
 
     angular
-        .module('textInput', ['customLabel'])
-        .directive('textInput', textInput);
+        .module('textArea', ['customLabel'])
+        .directive('textArea', textArea);
 
-        function textInput() {
+        function textArea() {
             return {
                 restrict: 'E',
                 transclude: true,

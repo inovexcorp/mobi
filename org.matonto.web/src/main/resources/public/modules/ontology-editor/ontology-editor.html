@@ -387,16 +387,10 @@
                         </p>
 
                         <!-- rdfs:label -->
-                        <div class="form-group">
-                            <label class="control-label" for="class-name">Label <small class="text-muted">&lt;{{vm.rdfs}}label&gt;</small></label>
-                            <input type="text" class="form-control" id="class-name" name="name" ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']" ng-trim="false" ng-change="vm.selected.matonto.unsaved = true;">
-                        </div>
+                        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']" display-text="'Label'" muted-text="vm.rdfs + 'label'"></text-input>
 
                         <!-- rdfs:comment -->
-                        <div class="form-group">
-                            <label class="control-label" for="class-comments">Comment <small class="text-muted">&lt;{{vm.rdfs}}comment&gt;</small></label>
-                            <textarea class="form-control" id="class-comments" name="comments" ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']" ng-change="vm.selected.matonto.unsaved = true;"></textarea>
-                        </div>
+                        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']" display-text="'Comment'" muted-text="vm.rdfs + 'comment'"></text-area>
 
                         <!-- buttons -->
                         <div ng-show="vm.ontology.classes[vm.state.ci].tab !== 'annotations'" class="btn-container clearfix">
@@ -794,6 +788,7 @@
             </div>
         </section>
     </div>
+    <pre>{{vm.selected | removeMatonto | json}}</pre>
 </div>
 
 <!-- annotation template -->
