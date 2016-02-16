@@ -550,7 +550,7 @@
                 return deferred.promise;
             }
 
-            self.edit = function(isValid, obj, state) {
+            self.edit = function(obj, state) {
                 var oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -559,21 +559,14 @@
                     namespace = current.matonto.originalId + current.matonto.delimiter,
                     result = angular.copy(obj);
 
-                if(isValid) {
-                    if(pi !== undefined || ci !== undefined) {
-                        result['@id'] = namespace + result['@id'];
-                    } else {
-                        result['@id'] = result['@id'] + result.matonto.delimiter;
-                    }
-                    delete result.matonto;
-                    obj.matonto.unsaved = false;
-                }
+                delete result.matonto;
+                obj.matonto.unsaved = false;
 
                 // TODO: update obj.matonto.originalId in .then() after API call to update the @id if it changed
-                console.log('edit', result, obj.matonto.originalId, obj);
+                console.log(result);
             }
 
-            self.create = function(isValid, obj, state) {
+            self.create = function(obj, state) {
                 var arrToObj, setId,
                     oi = state.oi,
                     ci = state.ci,
@@ -602,23 +595,21 @@
                     obj.matonto.originalId = obj['@id'];
                 }
 
-                if(isValid) {
-                    if(oi === -1) {
-                        obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
-                        self.ontologies.push(obj);
+                if(oi === -1) {
+                    obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
+                    self.ontologies.push(obj);
+                } else {
+                    var current = self.ontologies[oi];
+                    if(ci === -1) {
+                        setId(obj, 'class', current.matonto.rdfs);
+                        current.matonto.classes.push(obj);
                     } else {
-                        var current = self.ontologies[oi];
-                        if(ci === -1) {
-                            setId(obj, 'class', current.matonto.rdfs);
-                            current.matonto.classes.push(obj);
-                        } else {
-                            setId(obj, 'property', current.matonto.rdfs);
-                            current.matonto.classes[ci].matonto.properties.push(obj);
-                        }
+                        setId(obj, 'property', current.matonto.rdfs);
+                        current.matonto.classes[ci].matonto.properties.push(obj);
                     }
-                    delete self.newItems[unique];
-                    delete result.matonto;
                 }
+                delete self.newItems[unique];
+                delete result.matonto;
 
                 console.log('create', result, obj);
             }

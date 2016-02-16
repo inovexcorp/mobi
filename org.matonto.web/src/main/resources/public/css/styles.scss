@@ -111,7 +111,7 @@ body {
 
     /* view container spacing with extra on the bottom for the icon buttons */
     > .view-container {
-        padding: 15px 15px 34px;
+        padding: 15px;
 
         /* removes top margin from page headers */
         h1 {
@@ -127,14 +127,14 @@ ul {
     padding: 0;
 }
 
-/* icons to change the nav menu layout */
+/* icons to change the nav menu layout
 .nav-layout-options {
     bottom: 0;
     float: right;
     position: fixed;
     right: 15px;
 
-    /* icon styles */
+    /* icon styles
     .fa {
         display: inline-block;
         cursor: pointer;
@@ -142,12 +142,12 @@ ul {
         padding: 10px 6px;
         text-decoration: none;
 
-        /* change opacity on hover */
+        /* change opacity on hover
         &:hover {
             opacity: 1;
         }
     }
-}
+} */
 
 /* standard box style and height */
 .boxed {
@@ -405,5 +405,26 @@ section > form,
     input.ui-select-search {
         margin: 2px 0 1px;
         padding: 0 9px;
+    }
+}
+
+.btn.btn-circle {
+    border-radius: 24px;
+    box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
+    padding: 12px;
+
+    &:hover {
+        box-shadow: 0 0 6px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.32);
+        -webkit-transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
+                transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
+    }
+
+    &:focus {
+        outline: 0;
+    }
+
+    .fa {
+        font-size: 1.5em;
+        margin: 0;
     }
 }

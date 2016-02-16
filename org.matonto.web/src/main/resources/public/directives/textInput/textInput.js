@@ -11,6 +11,7 @@
                 transclude: true,
                 scope: {
                     bindModel: '=ngModel',
+                    changeEvent: '&',
                     displayText: '=',
                     mutedText: '='
                 },

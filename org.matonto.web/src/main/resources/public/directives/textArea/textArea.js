@@ -11,10 +11,11 @@
                 transclude: true,
                 scope: {
                     bindModel: '=ngModel',
+                    changeEvent: '&',
                     displayText: '=',
                     mutedText: '='
                 },
-                templateUrl: 'directives/textInput/textInput.html'
+                templateUrl: 'directives/textArea/textArea.html'
             }
         }
 })();

@@ -15,6 +15,7 @@
             'ui.router',
             'ui.select',
             'textInput',
-            'textArea'
+            'textArea',
+            'customButton'
         ]);
 })();
