@@ -327,62 +327,7 @@
                 </div>
 
                 <!-- annotation overlay -->
-                <div class="overlay" ng-if="vm.showAnnotationOverlay">
-                    <form name="vm.annotationForm" class="content clearfix" novalidate autocomplete="off">
-                        <div ng-if="!vm.editingAnnotation">
-                            <!-- section header -->
-                            <h6>Add Annotation</h6>
-
-                            <!-- annotation list -->
-                            <div class="form-group">
-                                <label class="control-label">Annotation</label>
-                                <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
-                                    <ui-select-match placeholder="Select an annotation">{{vm.getItemIri($select.selected)}}</ui-select-match>
-                                    <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search | orderBy:vm.sortAnnotations">
-                                        <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
-                                    </ui-select-choices>
-                                </ui-select>
-                            </div>
-
-                            <!-- key, if new -->
-                            <div ng-if="vm.selected.matonto.currentAnnotationSelect.localName === 'New Annotation'" class="form-group">
-                                <label class="control-label" for="ontology-annotation-key">Name <small class="text-muted">*Must be a valid IRI or you won't be able to add it.</small></label>
-                                <input type="text" class="form-control" id="ontology-annotation-key" name="annotation-key" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="vm.getPattern()" required />
-                            </div>
-                        </div>
-
-                        <div ng-if="vm.editingAnnotation">
-                            <!-- section header -->
-                            <h6>Edit Annotation</h6>
-
-                            <!-- static text showing which annotation you are editing -->
-                            <div ng-if="vm.editingAnnotation" class="form-group">
-                                <label class="control-label">Name</label>
-                                <p class="form-control-static">{{vm.selected.matonto.currentAnnotationKey}}</p>
-                            </div>
-                        </div>
-
-                        <!-- value -->
-                        <div class="form-group">
-                            <label class="control-label" for="ontology-annotation-value">Value</label>
-                            <textarea class="form-control" id="ontology-annotation-value" name="annotation-value" ng-model="vm.selected.matonto.currentAnnotationValue" required></textarea>
-                        </div>
-
-                        <!-- annotation buttons -->
-                        <div class="btn-container clearfix">
-                            <!-- adding a custom one -->
-                            <button ng-if="!vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
-                                    ng-disabled="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default'"
-                                    ng-click="vm.addAnnotation();">Add</button>
-
-                            <button ng-if="vm.editingAnnotation" type="button" class="btn btn-primary pull-right"
-                                    ng-disabled="vm.annotationForm.$invalid"
-                                    ng-click="vm.editAnnotation();">Edit</button>
-
-                            <button type="button" class="btn btn-default pull-right" ng-click="vm.showAnnotationOverlay = false;">Cancel</button>
-                        </div>
-                    </form>
-                </div>
+                <annotation-overlay ng-if="vm.showAnnotationOverlay"></annotation-overlay>
             </div>
         </section>
     </div>
