@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
+        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj'];
+    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj'];
 
-    function OntologyEditorController($scope, $timeout, $filter, $q, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj) {
+    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();

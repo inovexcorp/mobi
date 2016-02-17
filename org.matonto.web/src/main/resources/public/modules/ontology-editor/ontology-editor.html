@@ -389,19 +389,3 @@
     <pre>{{vm.selected | removeMatonto | json}}</pre>
     <button ng-if="vm.state.editor !== 'default'" type="button" class="btn btn-primary btn-circle" ng-click="vm.submitEdit()"><i class="fa fa-fw fa-floppy-o"></i></button>
 </div>
-
-<!-- annotation template -->
-<script type="text/ng-template" id="annotations-template">
-    <!-- add annotation button -->
-    <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
-
-    <!-- list of annotations -->
-    <div class="annotation" ng-repeat="key in vm.selected | showAnnotations:vm.ontology.matonto.annotations | orderBy:vm.getAnnotationLocalNameLowercase">
-        <h5 title="{{vm.getItemIri(key)}}">{{key.localName | beautify}}</h5>
-        <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(key)]">
-            <p>{{value['@value']}}</p>
-            <button type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(vm.getItemIri(key), $index);" title="Edit"><i class="fa fa-pencil"></i></button>
-            <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(vm.getItemIri(key), $index)" title="Delete"><i class="fa fa-times"></i></button>
-        </div>
-    </div>
-</script>
