@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
+        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'iriOverlay', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj'];

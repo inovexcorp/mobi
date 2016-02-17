@@ -1,0 +1,20 @@
+<div class="overlay sm">
+    <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off"
+          ng-submit="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);">
+        <!-- section header -->
+        <h6>Upload Ontology</h6>
+        <p class="text-danger" ng-show="vm.uploadError">
+            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.uploadError}}
+        </p>
+        <!-- file to upload -->
+        <div class="form-group">
+            <label for="file">Select a file</label>
+            <div id="file" name="file" file-input="vm.upload.file"></div>
+        </div>
+        <!-- buttons -->
+        <div class="btn-container clearfix">
+            <button type="submit" class="btn btn-primary pull-right" ng-disabled="!vm.upload.file" ng-click="vm.uploadError = false;"><i class="fa fa-upload fa-fw"></i>Upload It</button>
+            <button type="button" class="btn btn-default pull-right" ng-click="vm.showUploadOverlay = false; vm.uploadError = false;">Cancel</button>
+        </div>
+    </form>
+</div>

@@ -258,75 +258,10 @@
 
                 <property-editor ng-if="vm.state.editor === 'property-editor'"></property-editor>
 
-                <!-- iri editor overlay -->
-                <div class="overlay" ng-if="vm.showIriOverlay"
-                     ng-init="iri = (vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : vm.selected['@id'] | splitIRI);
-                              vm.iriBegin = iri.begin;
-                              vm.iriThen = iri.then;
-                              vm.iriEnd = iri.end || (vm.selected[vm.rdfs + 'label'][0]['@value'] | camelCase:vm.iriType);
-                              vm.iriUpdate = true;">
-                    <form name="vm.iriForm" class="content clearfix" novalidate autocomplete="off"
-                          ng-submit="vm.editIRI();">
-                        <!-- section header -->
-                        <h6>Edit IRI</h6>
-                        <!-- Begins with -->
-                        <div ng-class="{'has-error': vm.iriForm.iriBegin.$invalid}" class="form-group">
-                            <label class="control-label" for="iriBegin">Begins with</label>
-                            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="vm.iriBegin" ng-pattern="/^[^:\/?#]+:\/\/[^\/?#]*[^#\s]*[^#:\/\s]$/" required />
-                            <!--p class="error-msg" ng-if="vm.iriForm.iriBegin.$invalid">This IRI is invalid.</p-->
-                        </div>
-                        <!-- Then -->
-                        <div class="form-group">
-                            <label class="control-label" for="iriThen">Then</label>
-                            <select class="form-control" id="iriThen" name="iriThen" ng-model="vm.iriThen">
-                                <option value="#">#</option>
-                                <option value="/">/</option>
-                                <option value=":">:</option>
-                            </select>
-                        </div>
-                        <!-- Ends with -->
-                        <div ng-class="{'has-error': vm.iriForm.iriEnd.$invalid}" class="form-group">
-                            <label class="control-label" for="iriEnd">Ends with</label>
-                            <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9-_]+$/" required ng-model="vm.iriEnd" ng-trim="false" />
-                            <!--p class="error-msg" ng-if="vm.iriForm.iriEnd.$invalid">This localname is invalid.</p-->
-                        </div>
-                        <!-- Update references -->
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" id="iriUpdate" ng-model="vm.iriUpdate" /> Update all entities that referenced this IRI.
-                            </label>
-                        </div>
-                        <!-- buttons -->
-                        <div class="btn-container clearfix">
-                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.iriForm.$invalid"><i class="fa fa-pencil fa-fw"></i>Edit</button>
-                            <button type="button" class="btn btn-default pull-right" ng-click="vm.showIriOverlay = false;">Cancel</button>
-                        </div>
-                    </form>
-                </div>
+                <iri-overlay ng-if="vm.showIriOverlay"></iri-overlay>
 
-                <!-- upload ontology overlay -->
-                <div class="overlay sm" ng-if="vm.showUploadOverlay">
-                    <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off"
-                          ng-submit="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);">
-                        <!-- section header -->
-                        <h6>Upload Ontology</h6>
-                        <p class="text-danger" ng-show="vm.uploadError">
-                            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.uploadError}}
-                        </p>
-                        <!-- file to upload -->
-                        <div class="form-group">
-                            <label for="file">Select a file</label>
-                            <div id="file" name="file" file-input="vm.upload.file"></div>
-                        </div>
-                        <!-- buttons -->
-                        <div class="btn-container clearfix">
-                            <button type="submit" class="btn btn-primary pull-right" ng-disabled="!vm.upload.file" ng-click="vm.uploadError = false;"><i class="fa fa-upload fa-fw"></i>Upload It</button>
-                            <button type="button" class="btn btn-default pull-right" ng-click="vm.showUploadOverlay = false; vm.uploadError = false;">Cancel</button>
-                        </div>
-                    </form>
-                </div>
+                <ontology-upload-overlay ng-if="vm.showUploadOverlay"></ontology-upload-overlay>
 
-                <!-- annotation overlay -->
                 <annotation-overlay ng-if="vm.showAnnotationOverlay"></annotation-overlay>
             </div>
         </section>
