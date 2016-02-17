@@ -24,6 +24,9 @@ import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.io.IRIDocumentSource;
+import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
+import org.semanticweb.owlapi.io.StringDocumentSource;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.rio.RioRenderer;
@@ -48,6 +51,7 @@ public class SimpleOntology implements Ontology {
 	private OWLOntology owlOntology;
 	private final OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
     private OntologyManager ontologyManager;
+    private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration().setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
 
 
 	public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager) throws MatontoOntologyException {
@@ -76,7 +80,8 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
 
         try {
-			owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
+            OWLOntologyDocumentSource documentSource = new StringDocumentSource(MatOntoStringUtils.InputStreamToText(inputStream));
+			owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
             createOntologyId(null);
         } catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
@@ -93,7 +98,8 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
 
 		try {
-			owlOntology = owlManager.loadOntologyFromOntologyDocument(SimpleOntologyValues.owlapiIRI(iri));
+	        OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
+			owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
             createOntologyId(null);
 		} catch (OWLOntologyCreationException e) {
 			throw new MatontoOntologyException("Error in ontology creation", e);
@@ -109,7 +115,7 @@ public class SimpleOntology implements Ontology {
             // Copy Imports
             Set<OWLImportsDeclaration> declarations = ontology.getImportsDeclarations();
             for (OWLImportsDeclaration dec : declarations) {
-                this.owlManager.makeLoadImportRequest(dec);
+                this.owlManager.makeLoadImportRequest(dec, config);
                 this.owlManager.applyChange(new AddImport(this.owlOntology, dec));
             }
         } catch (OWLOntologyCreationException e) {
@@ -290,7 +296,8 @@ public class SimpleOntology implements Ontology {
 			bos = (ByteArrayOutputStream) this.asRdfXml();
 			is = new ByteArrayInputStream(bos.toByteArray());
 			OWLOntologyManager tempManager = OWLManager.createOWLOntologyManager();
-			OWLOntology tempOntology = tempManager.loadOntologyFromOntologyDocument(is);
+            OWLOntologyDocumentSource documentSource = new StringDocumentSource(MatOntoStringUtils.InputStreamToText(is));
+			OWLOntology tempOntology = tempManager.loadOntologyFromOntologyDocument(documentSource, config);
 			OWLDocumentFormat parsedFormat = tempManager.getOntologyFormat(tempOntology);
 			RDFHandler rdfHandler = new StatementCollector(sesameModel); 
 		    RioRenderer renderer = new RioRenderer(tempOntology, rdfHandler, parsedFormat);
