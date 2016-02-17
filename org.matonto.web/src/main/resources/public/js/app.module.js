@@ -16,6 +16,7 @@
             'ui.select',
             'textInput',
             'textArea',
-            'customButton'
+            'customButton',
+            'customSelect'
         ]);
 })();

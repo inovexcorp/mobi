@@ -4,9 +4,11 @@
         <a class="btn btn-primary"
            ng-class="{'active': vm.state.editorTab === 'basic'}"
            ng-click="vm.setEditorTab('basic');"><small>{{vm.state.ci !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'}}</small></a>
+
         <a class="btn btn-primary"
            ng-class="{'active': vm.state.editorTab === 'axioms'}"
            ng-click="vm.setEditorTab('axioms');"><small>Axioms</small></a>
+
         <a class="btn btn-primary"
            ng-class="{'active': vm.state.editorTab === 'annotations'}"
            ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
@@ -18,39 +20,33 @@
         <static-iri></static-iri>
 
         <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']" display-text="'Label'" muted-text="vm.rdfs + 'label'" change-event="vm.entityChanged()"></text-input>
+        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
+                    display-text="'Label'"
+                    muted-text="vm.rdfs + 'label'"
+                    change-event="vm.entityChanged()"></text-input>
 
         <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']" display-text="'Comment'" muted-text="vm.rdfs + 'comment'" change-event="vm.entityChanged()"></text-area>
+        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
+                   display-text="'Comment'"
+                   muted-text="vm.rdfs + 'comment'"
+                   change-event="vm.entityChanged()"></text-area>
     </div>
 
     <!-- axioms tab -->
     <div ng-show="vm.state.editorTab === 'axioms'" class="tab clearfix">
         <!-- rdfs:subClassOf -->
-        <div class="form-group">
-            <label class="control-label">Sub Class Of <small class="text-muted">&lt;{{vm.rdfs}}subClassOf&gt;</small></label>
-            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.rdfs + 'subClassOf']" on-select="vm.entityChanged()" on-remove="vm.entityChanged()">
-                <ui-select-match placeholder="Select Class">
-                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
-                </ui-select-match>
-                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | removeIriFromArray:vm.selected['@id'] | removeIriFromArray:vm.selected[vm.rdfs + 'subClassOf'] | filter:{'localName':$select.search}">
-                    <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
+        <custom-select ng-model="vm.selected[vm.rdfs + 'subClassOf']"
+                       display-text="'Sub Class Of'"
+                       muted-text="vm.rdfs + 'subClassOf'"
+                       change-event="vm.entityChanged()"
+                       select-list="vm.ontology.matonto.subClasses"></custom-select>
 
         <!-- owl:disjointWith -->
-        <div class="form-group">
-            <label class="control-label">Disjoint With <small class="text-muted">&lt;{{vm.owl}}disjointWith&gt;</small></label>
-            <ui-select multiple ng-disabled="vm.state.editorTab !== 'axioms'" ng-model="vm.selected[vm.owl + 'disjointWith']" on-select="vm.entityChanged()" on-remove="vm.entityChanged()">
-                <ui-select-match placeholder="Disjoint With">
-                    <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
-                </ui-select-match>
-                <ui-select-choices group-by="vm.getItemNamespace" repeat="class in vm.ontology.matonto.subClasses | removeIriFromArray:vm.selected['@id'] | removeIriFromArray:vm.selected[vm.owl + 'disjointWith'] | filter:{'localName':$select.search}">
-                    <div ng-bind-html="class.localName | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
+        <custom-select ng-model="vm.selected[vm.rdfs + 'disjointWith']"
+                       display-text="'Disjoint With'"
+                       muted-text="vm.rdfs + 'disjointWith'"
+                       change-event="vm.entityChanged()"
+                       select-list="vm.ontology.matonto.subClasses"></custom-select>
     </div>
 
     <!-- annotations tab -->
