@@ -1,18 +1,17 @@
 <form name="vm.ontologyForm" class="clearfix" novalidate autocomplete="off">
     <!-- tab toggles -->
     <div class="btn-group btn-group-justified" role="group">
-        <!-- basic button -->
-        <a class="btn btn-primary"
-           ng-class="{'active': vm.state.editorTab === 'basic'}"
-           ng-click="vm.setEditorTab('basic');"><small>{{vm.state.oi !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'}}</small></a>
-        <!-- annotations button -->
-        <a class="btn btn-primary"
-           ng-class="{'active': vm.state.editorTab === 'annotations'}"
-           ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
-        <!-- prefix button -->
-        <a class="btn btn-primary"
-           ng-class="{'active': vm.state.editorTab === 'prefix'}"
-           ng-click="vm.setEditorTab('prefix');"><small>Prefix</small></a>
+        <tab-button is-active="vm.state.editorTab === 'basic'"
+                    on-click="vm.setEditorTab('basic')"
+                    display-text="vm.state.oi !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'annotations'"
+                    on-click="vm.setEditorTab('annotations')"
+                    display-text="'Annotations'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'prefix'"
+                    on-click="vm.setEditorTab('prefix')"
+                    display-text="'Prefix'"></tab-button>
     </div>
 
     <!-- basic tab -->
