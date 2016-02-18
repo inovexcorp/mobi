@@ -1,0 +1,31 @@
+<div class="tree class-tree scroll-without-buttons">
+    <!-- class view -->
+    <strong>Classes</strong>
+    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
+        <li>
+            <a ng-click="opened = !opened; $event.stopPropagation();">
+                <i class="fa fa-fw"
+                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
+                ></i>{{ontology[ontology.matonto.rdfs + 'label'][0]['@value'] || ((ontology['@id'] | splitIRI).end | beautify)}}
+            </a>
+        </li>
+        <li class="container" ng-show="opened">
+            <ul>
+                <li ng-repeat="class in ontology.matonto.classes">
+                    <a class="text-only"
+                       ng-click="vm.selectItem('class-editor', oi, $index)"
+                       ng-class="{'unsaved': class.matonto.unsaved, 'active': vm.state.oi === oi && vm.state.ci === $index && vm.state.pi === undefined}">
+                        {{class[ontology.matonto.rdfs + 'label'][0]['@value'] || ((class['@id'] | splitIRI).end | beautify)}}
+                        <i ng-show="class.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
+                    </a>
+                </li>
+            </ul>
+            <div class="creator">
+                <a ng-click="vm.selectItem('class-editor', oi, -1)"
+                   ng-class="{'active': vm.state.oi === oi && vm.state.ci === -1}">
+                    <i class="fa fa-plus fa-fw"></i>New Class
+                </a>
+            </div>
+        </li>
+    </ul>
+</div>

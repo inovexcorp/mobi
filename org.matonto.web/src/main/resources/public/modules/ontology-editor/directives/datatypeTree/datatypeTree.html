@@ -1,0 +1,26 @@
+<div class="tree datatype-tree scroll-without-buttons">
+    <!-- property view -->
+    <strong>DataType Properties</strong>
+    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
+        <li>
+            <a ng-click="opened = !opened; $event.stopPropagation();">
+                <i class="fa fa-fw"
+                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
+                ></i>{{ontology[ontology.matonto.rdfs + 'label'][0]['@value'] || ((ontology['@id'] | splitIRI).end | beautify)}}
+            </a>
+        </li>
+        <li class="container" ng-show="opened">
+            <!-- properties associated with classes -->
+            <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-include="'datatype-property-template'" ng-init="properties = class.matonto.properties"></ul>
+            <!-- properties not associated with classes -->
+            <ul ng-include="'datatype-property-template'" ng-init="properties = ontology.matonto.noDomains;"></ul>
+            <!-- create new datatype property -->
+            <div class="creator">
+                <a ng-click="vm.selectItem('property-editor', oi, -1, -1)"
+                   ng-class="{'active': vm.state['datatype'].selected === 'create-property' && vm.state['datatype'].class === class}">
+                    <i class="fa fa-plus fa-fw"></i>New DataType Property
+                </a>
+            </div>
+        </li>
+    </ul>
+</div>
