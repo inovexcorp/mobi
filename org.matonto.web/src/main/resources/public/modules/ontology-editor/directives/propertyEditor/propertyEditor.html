@@ -1,15 +1,17 @@
 <form name="vm.propertyForm" class="clearfix" novalidate autocomplete="off">
-    <!-- property editor tabs -->
+    <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
-        <a class="btn btn-primary"
-           ng-class="{'active': vm.state.editorTab === 'basic'}"
-           ng-click="vm.setEditorTab('basic');"><small>{{vm.selected['@id'] ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'}}</small></a>
-        <a class="btn btn-primary"
-           ng-class="{'active': vm.state.editorTab === 'axioms'}"
-           ng-click="vm.setEditorTab('axioms');"><small>Axioms</small></a>
-        <a class="btn btn-primary"
-           ng-class="{'active': vm.state.editorTab === 'annotations'}"
-           ng-click="vm.setEditorTab('annotations');"><small>Annotations</small></a>
+        <tab-button is-active="vm.state.editorTab === 'basic'"
+                    on-click="vm.setEditorTab('basic')"
+                    display-text="vm.selected['@id'] ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'axioms'"
+                    on-click="vm.setEditorTab('axioms')"
+                    display-text="'Axioms'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'annotations'"
+                    on-click="vm.setEditorTab('annotations')"
+                    display-text="'Annotations'"></tab-button>
     </div>
 
     <!-- basic tab -->
@@ -30,96 +32,90 @@
                    change-event="vm.entityChanged()"></text-area>
 
         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
-        <div class="form-group">
-            <label class="control-label">Type <small class="text-muted">&lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&gt;</small></label>
-            <!--p class="form-control-static"><span ng-repeat="type in vm.selected['@type']">{{type}}{{$last ? '' : ', '}}</span></p-->
-            <ui-select ng-model="vm.selected['@type'][0]" search-enabled="false" on-select="vm.entityChanged()" on-remove="vm.entityChanged()">
-                <ui-select-match placeholder="Select Type">
-                    <span title="{{$item}}">{{($select.selected | splitIRI).end}}</span>
-                </ui-select-match>
-                <ui-select-choices repeat="type in vm.propertyTypes | filter:$select.search">
-                    <div ng-bind-html="(type | splitIRI).end | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
+        <string-select ng-model="vm.selected['@type']"
+                       display-text="'Type'"
+                       muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"
+                       change-event="vm.entityChanged()"
+                       select-list="vm.propertyTypes"
+                       only-strings="'true'"></string-select>
     </div>
 
     <!-- axioms tab -->
     <div ng-show="vm.state.editorTab === 'axioms'" class="tab clearfix">
         <!-- rdfs:domain -->
-        <custom-select ng-model="vm.selected[vm.rdfs + 'domain']"
+        <object-select ng-model="vm.selected[vm.rdfs + 'domain']"
                        display-text="'Domain'"
                        muted-text="vm.rdfs + 'domain'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"></custom-select>
+                       select-list="vm.ontology.matonto.subClasses"></object-select>
 
         <!-- object property -->
         <div ng-if="vm.isObjectProperty()">
             <!-- rdfs:range -->
-            <custom-select ng-model="vm.selected[vm.rdfs + 'range']"
+            <object-select ng-model="vm.selected[vm.rdfs + 'range']"
                            display-text="'Range'"
                            muted-text="vm.rdfs + 'range'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.objectPropertyRange"></custom-select>
+                           select-list="vm.ontology.matonto.objectPropertyRange"></object-select>
 
             <!-- owl:equivalentProperty -->
-            <custom-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"
+            <object-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"
                            display-text="'Equivalent Property'"
                            muted-text="vm.owl + 'equivalentProperty'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.subObjectProperties"></custom-select>
+                           select-list="vm.ontology.matonto.subObjectProperties"></object-select>
 
             <!-- rdfs:subPropertyOf -->
-            <custom-select ng-model="vm.selected[vm.rdfs + 'subPropertyOf']"
+            <object-select ng-model="vm.selected[vm.rdfs + 'subPropertyOf']"
                            display-text="'Sub Property Of'"
                            muted-text="vm.rdfs + 'subPropertyOf'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.subObjectProperties"></custom-select>
+                           select-list="vm.ontology.matonto.subObjectProperties"></object-select>
 
             <!-- owl:inverseOf -->
-            <custom-select ng-model="vm.selected[vm.owl + 'inverseOf']"
+            <object-select ng-model="vm.selected[vm.owl + 'inverseOf']"
                            display-text="'Inverse Of'"
                            muted-text="vm.owl + 'inverseOf'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.subObjectProperties"></custom-select>
+                           select-list="vm.ontology.matonto.subObjectProperties"></object-select>
 
             <!-- owl:disjointWith -->
-            <custom-select ng-model="vm.selected[vm.owl + 'disjointWith']"
+            <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
                            display-text="'Disjoint With'"
                            muted-text="vm.owl + 'disjointWith'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.subObjectProperties"></custom-select>
+                           select-list="vm.ontology.matonto.subObjectProperties"></object-select>
         </div>
 
         <!-- datatype property -->
         <div ng-if="!vm.isObjectProperty()">
             <!-- rdfs:range -->
-            <custom-select ng-model="vm.selected[vm.rdfs + 'range']"
+            <object-select ng-model="vm.selected[vm.rdfs + 'range']"
                            display-text="'Range'"
                            muted-text="vm.rdfs + 'range'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.dataPropertyRange"></custom-select>
+                           select-list="vm.ontology.matonto.dataPropertyRange"></object-select>
 
             <!-- owl:equivalentProperty -->
-            <custom-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"
+            <object-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"
                            display-text="'Equivalent Property'"
                            muted-text="vm.owl + 'equivalentProperty'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.subDataProperties"></custom-select>
+                           select-list="vm.ontology.matonto.subDataProperties"></object-select>
 
             <!-- rdfs:subPropertyOf -->
-            <custom-select ng-model="vm.selected[vm.rdfs + 'subPropertyOf']"
+            <object-select ng-model="vm.selected[vm.rdfs + 'subPropertyOf']"
                            display-text="'Sub Property Of'"
                            muted-text="vm.rdfs + 'subPropertyOf'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.subDataProperties"></custom-select>
+                           select-list="vm.ontology.matonto.subDataProperties"></object-select>
 
             <!-- owl:disjointWith -->
-            <custom-select ng-model="vm.selected[vm.owl + 'disjointWith']"
+            <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
                            display-text="'Disjoint With'"
                            muted-text="vm.owl + 'disjointWith'"
                            change-event="vm.entityChanged()"
-                           select-list="vm.ontology.matonto.subDataProperties"></custom-select>
+                           select-list="vm.ontology.matonto.subDataProperties"></object-select>
         </div>
     </div>
 

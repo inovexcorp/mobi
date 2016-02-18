@@ -1,5 +1,5 @@
 <form name="vm.ontologyForm" class="clearfix" novalidate autocomplete="off">
-    <!-- tab toggles -->
+    <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
         <tab-button is-active="vm.state.editorTab === 'basic'"
                     on-click="vm.setEditorTab('basic')"
@@ -16,17 +16,22 @@
 
     <!-- basic tab -->
     <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <!-- IRI -->
-        <div ng-class="{'has-error': vm.ontologyForm.iri.$invalid}" class="form-group">
-            <label class="control-label" for="ontology-iri">Ontology IRI</label>
-            <input type="text" class="form-control" id="ontology-iri" name="iri" ng-model="vm.selected['@id']" ng-change="vm.entityChanged()">
-        </div>
+        <!-- ontology iri -->
+        <text-input ng-model="vm.selected['@id']"
+                    display-text="'Ontology IRI'"
+                    change-event="vm.entityChanged()"></text-input>
 
         <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']" display-text="'Label'" muted-text="vm.rdfs + 'label'" change-event="vm.entityChanged()"></text-input>
+        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
+                    display-text="'Label'"
+                    muted-text="vm.rdfs + 'label'"
+                    change-event="vm.entityChanged()"></text-input>
 
         <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']" display-text="'Comment'" muted-text="vm.rdfs + 'comment'" change-event="vm.entityChanged()"></text-area>
+        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
+                   display-text="'Comment'"
+                   muted-text="vm.rdfs + 'comment'"
+                   change-event="vm.entityChanged()"></text-area>
     </div>
 
     <!-- annotations tab -->

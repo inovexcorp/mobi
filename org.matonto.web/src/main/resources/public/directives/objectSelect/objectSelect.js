@@ -2,10 +2,10 @@
     'use strict';
 
     angular
-        .module('customSelect', ['customLabel'])
-        .directive('customSelect', customSelect);
+        .module('objectSelect', ['customLabel'])
+        .directive('objectSelect', objectSelect);
 
-        function customSelect() {
+        function objectSelect() {
             return {
                 restrict: 'E',
                 transclude: true,
@@ -15,10 +15,11 @@
                     displayText: '=',
                     excludeSelf: '=',
                     groupBy: '&',
+                    onlyStrings: '=',
                     selectList: '=',
                     mutedText: '='
                 },
-                templateUrl: 'directives/customSelect/customSelect.html'
+                templateUrl: 'directives/objectSelect/objectSelect.html'
             }
         }
 })();

@@ -17,6 +17,7 @@
             'textInput',
             'textArea',
             'customButton',
-            'customSelect'
+            'objectSelect',
+            'stringSelect'
         ]);
 })();
