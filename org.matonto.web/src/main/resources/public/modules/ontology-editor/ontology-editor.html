@@ -77,5 +77,14 @@
         </section>
     </div>
     <pre>{{vm.selected | removeMatonto | json}}</pre>
-    <button ng-if="vm.state.editor !== 'default'" type="button" class="btn btn-primary btn-circle" ng-click="vm.submitEdit()"><i class="fa fa-fw fa-floppy-o"></i></button>
+    <circle-button ng-if="vm.state.editor !== 'default'"
+                   on-click="vm.submitEdit()"
+                   btn-icon="'fa-floppy-o'"
+                   is-enabled="vm.selected.matonto.unsaved"></circle-button>
+
+    <circle-button ng-if="vm.state.editor !== 'default'"
+                   on-click="vm.submitEdit()"
+                   btn-icon="'fa-floppy-o'"
+                   is-enabled="vm.selected.matonto.unsaved"
+                   btn-small="true"></circle-button>
 </div>

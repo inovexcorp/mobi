@@ -18,6 +18,7 @@
             'textArea',
             'customButton',
             'objectSelect',
-            'stringSelect'
+            'stringSelect',
+            'circleButton'
         ]);
 })();
