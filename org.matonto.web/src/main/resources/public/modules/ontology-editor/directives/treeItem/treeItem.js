@@ -2,10 +2,10 @@
     'use strict';
 
     angular
-        .module('treeItemWithSub', [])
-        .directive('treeItemWithSub', treeItemWithSub);
+        .module('treeItem', [])
+        .directive('treeItem', treeItem);
 
-        function treeItemWithSub() {
+        function treeItem() {
             return {
                 restrict: 'E',
                 transclude: true,
@@ -15,10 +15,9 @@
                     currentOntology: '=',
                     hasIcon: '=',
                     isActive: '=',
-                    isOpened: '=',
                     onClick: '&'
                 },
-                templateUrl: 'modules/ontology-editor/directives/treeItemWithSub/treeItemWithSub.html'
+                templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html'
             }
         }
 })();
