@@ -40,18 +40,34 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class SimpleOntology implements Ontology {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
+    
 	private OntologyId ontologyId;
+    private OntologyManager ontologyManager;
 	private Set<Annotation> ontoAnnotations;
 	private Set<Annotation> annotations;
+	private Set<IRI> missingImports = new HashSet<>();
 	
 	//Owlapi variables
 	private OWLOntology owlOntology;
+	private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration().setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
 	private final OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
-    private OntologyManager ontologyManager;
-    private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration().setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+	{
+	    owlManager.addMissingImportListener(new MissingImportListener(){
+            @Override public void importMissing(MissingImportEvent arg0){
+                missingImports.add(SimpleOntologyValues.matontoIRI(arg0.getImportedOntologyURI()));
+                LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
+            }
+          }
+        );
+	}
+    
 
 
 	public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager) throws MatontoOntologyException {
@@ -151,6 +167,11 @@ public class SimpleOntology implements Ontology {
 	@Override
 	public OntologyId getOntologyId() {
 		return ontologyId;
+	}
+	
+	@Override
+	public Set<IRI> getUnloadableImportIRIs() {
+	    return missingImports;
 	}
 
 //    @Override
