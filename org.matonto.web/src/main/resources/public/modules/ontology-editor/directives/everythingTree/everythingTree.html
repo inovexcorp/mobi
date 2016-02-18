@@ -3,16 +3,12 @@
     <strong>Everything</strong>
     <!-- start ontologies -->
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
-        <li>
-            <a ng-click="vm.selectItem('ontology-editor', $index)"
-               ng-class="{'unsaved': ontology.matonto.unsaved, 'active': vm.state.oi === $index && vm.state.ci === undefined && vm.state.pi === undefined}">
-                <i class="fa fa-fw"
-                   ng-class="{'fa-minus-square-o': opened, 'fa-plus-square-o': !opened}"
-                   ng-click="opened = !opened; $event.stopPropagation();"
-                ></i>{{ontology[ontology.matonto.rdfs + 'label'][0]['@value'] || ((ontology['@id'] | splitIRI).end | beautify)}}
-                <i ng-show="ontology.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
-            </a>
-        </li>
+        <tree-item-with-sub current-entity="ontology"
+                            current-ontology="ontology"
+                            is-active="vm.state.oi === $index && vm.state.ci === undefined && vm.state.pi === undefined"
+                            is-opened="opened"
+                            on-click="vm.selectItem('ontology-editor', $index)"></tree-item-with-sub>
+
         <li class="container" ng-show="opened">
             <!-- start classes -->
             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
