@@ -8,8 +8,10 @@
         function propertyTree() {
             return {
                 restrict: 'E',
-                scope: {},
-                templateUrl: 'modules/ontology-editor/directives/propertyTree/propertyTree.html'
+                templateUrl: 'modules/ontology-editor/directives/propertyTree/propertyTree.html',
+                link: function($scope, $element, $attrs) {
+                    $scope.propertyType = $attrs.propertyType;
+                }
             }
         }
 })();

@@ -9,7 +9,7 @@
         <li class="container" ng-show="opened">
             <!-- properties associated with classes -->
             <ul ng-repeat="(ci, class) in ontology.matonto.classes">
-                <tree-item ng-repeat="property in class.matonto.properties | getThisType:propertyType"
+                <tree-item ng-repeat="property in class.matonto.properties | getThisType:(ontology.matonto.owl + propertyType)"
                            current-entity="property"
                            current-ontology="ontology"
                            is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
@@ -18,7 +18,7 @@
 
             <!-- properties not associated with classes -->
             <ul>
-                <tree-item ng-repeat="property in ontology.matonto.noDomains | getThisType:propertyType"
+                <tree-item ng-repeat="property in ontology.matonto.noDomains | getThisType:(ontology.matonto.owl + propertyType)"
                            current-entity="property"
                            current-ontology="ontology"
                            is-active="vm.state.oi === oi && vm.state.ci === undefined && vm.state.pi === $index"
