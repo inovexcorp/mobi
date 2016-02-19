@@ -21,7 +21,7 @@
                 },
                 templateUrl: 'directives/objectSelect/objectSelect.html',
                 link: function($scope) {
-                    $scope.group = function(item) {
+                    $scope.getItemNamespace = function(item) {
                         return ontologyManagerService.getItemNamespace(item);
                     }
                 }

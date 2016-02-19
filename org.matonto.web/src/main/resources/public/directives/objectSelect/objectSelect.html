@@ -4,8 +4,9 @@
         <ui-select-match placeholder="{{'Select ' + displayText}}" on-select="changeEvent()" on-remove="changeEvent()">
             <span title="{{$item['@id'] || vm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="group" repeat="item in selectList | removeIriFromArray:bindModel">
+        <ui-select-choices group-by="getItemNamespace" repeat="item in selectList | removeIriFromArray:bindModel">
             <div ng-bind-html="item.localName | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
 </div>
+<pre>{{bindModel | json}}</pre>
