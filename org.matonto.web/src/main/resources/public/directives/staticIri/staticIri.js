@@ -8,7 +8,6 @@
         function staticIri() {
             return {
                 restrict: 'E',
-                transclude: true,
                 templateUrl: 'directives/staticIri/staticIri.html'
             }
         }

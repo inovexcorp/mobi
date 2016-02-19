@@ -8,12 +8,10 @@
         function treeItemWithSub() {
             return {
                 restrict: 'E',
-                transclude: true,
                 remove: true,
                 scope: {
                     currentEntity: '=',
                     currentOntology: '=',
-                    hasIcon: '=',
                     isActive: '=',
                     isOpened: '=',
                     onClick: '&'

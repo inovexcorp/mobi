@@ -2,24 +2,29 @@
     'use strict';
 
     angular
-        .module('objectSelect', ['customLabel'])
+        .module('objectSelect', ['customLabel', 'ontologyManager'])
         .directive('objectSelect', objectSelect);
 
-        function objectSelect() {
+        objectSelect.$inject = ['ontologyManagerService'];
+
+        function objectSelect(ontologyManagerService) {
             return {
                 restrict: 'E',
-                transclude: true,
                 scope: {
                     bindModel: '=ngModel',
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
-                    groupBy: '&',
                     onlyStrings: '=',
                     selectList: '=',
                     mutedText: '='
                 },
-                templateUrl: 'directives/objectSelect/objectSelect.html'
+                templateUrl: 'directives/objectSelect/objectSelect.html',
+                link: function($scope) {
+                    $scope.group = function(item) {
+                        return ontologyManagerService.getItemNamespace(item);
+                    }
+                }
             }
         }
 })();

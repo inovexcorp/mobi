@@ -8,7 +8,6 @@
         function iriOverlay() {
             return {
                 restrict: 'E',
-                transclude: true,
                 templateUrl: 'modules/ontology-editor/directives/iriOverlay/iriOverlay.html'
             }
         }

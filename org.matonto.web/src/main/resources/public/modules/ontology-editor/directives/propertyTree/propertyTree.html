@@ -1,4 +1,4 @@
-<div class="tree object-tree scroll-without-buttons">
+<div class="tree scroll-without-buttons">
     <!-- property view -->
     <strong>Object Properties</strong>
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
@@ -9,7 +9,7 @@
         <li class="container" ng-show="opened">
             <!-- properties associated with classes -->
             <ul ng-repeat="(ci, class) in ontology.matonto.classes">
-                <tree-item ng-repeat="property in class.matonto.properties"
+                <tree-item ng-repeat="property in class.matonto.properties | getThisType:propertyType"
                            current-entity="property"
                            current-ontology="ontology"
                            is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
@@ -18,7 +18,7 @@
 
             <!-- properties not associated with classes -->
             <ul>
-                <tree-item ng-repeat="property in ontology.matonto.noDomains"
+                <tree-item ng-repeat="property in ontology.matonto.noDomains | getThisType:propertyType"
                            current-entity="property"
                            current-ontology="ontology"
                            is-active="vm.state.oi === oi && vm.state.ci === undefined && vm.state.pi === $index"

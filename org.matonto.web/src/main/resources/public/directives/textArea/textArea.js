@@ -8,7 +8,6 @@
         function textArea() {
             return {
                 restrict: 'E',
-                transclude: true,
                 scope: {
                     bindModel: '=ngModel',
                     changeEvent: '&',

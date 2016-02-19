@@ -8,8 +8,7 @@
         function propertyTree() {
             return {
                 restrict: 'E',
-                transclude: true,
-                remove: true,
+                scope: {},
                 templateUrl: 'modules/ontology-editor/directives/propertyTree/propertyTree.html'
             }
         }
