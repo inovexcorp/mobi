@@ -29,6 +29,7 @@
 
         /* Ontology Management */
         vm.uploadOntology = function(isValid, file, namespace, localName) {
+            vm.uploadError = false;
             ontologyManagerService.uploadThenGet(isValid, file)
                 .then(function(response) {
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);

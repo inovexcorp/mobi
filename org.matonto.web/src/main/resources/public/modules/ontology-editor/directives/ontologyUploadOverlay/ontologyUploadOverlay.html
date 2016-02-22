@@ -1,6 +1,5 @@
 <div class="overlay sm">
-    <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off"
-          ng-submit="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);">
+    <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Upload Ontology</h6>
         <p class="text-danger" ng-show="vm.uploadError">
@@ -13,8 +12,13 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <button type="submit" class="btn btn-primary pull-right" ng-disabled="!vm.upload.file" ng-click="vm.uploadError = false;"><i class="fa fa-upload fa-fw"></i>Upload It</button>
-            <button type="button" class="btn btn-default pull-right" ng-click="vm.showUploadOverlay = false; vm.uploadError = false;">Cancel</button>
+            <custom-button display-text="'Upload It'"
+                           is-disabled-when="!vm.upload.file"
+                           on-click="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);"></custom-button>
+
+            <custom-button display-text="'Cancel'"
+                           on-click="vm.showUploadOverlay = false; vm.uploadError = false;"
+                           type="'secondary'"></custom-button>
         </div>
     </form>
 </div>
