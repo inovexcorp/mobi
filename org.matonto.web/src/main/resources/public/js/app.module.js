@@ -19,6 +19,7 @@
             'customButton',
             'objectSelect',
             'stringSelect',
-            'circleButton'
+            'circleButton',
+            'customButton'
         ]);
 })();

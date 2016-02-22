@@ -9,10 +9,10 @@
             return {
                 restrict: 'E',
                 scope: {
+                    type: '=',
                     displayText: '=',
                     isDisabledWhen: '=',
-                    isShown: '=',
-                    clickEvent: '&'
+                    onClick: '&'
                 },
                 templateUrl: 'directives/customButton/customButton.html'
             }

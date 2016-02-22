@@ -1,1 +1,1 @@
-<button type="button" class="btn btn-primary pull-right" ng-if="isShown" ng-disabled="isDisabledWhen" ng-click="clickEvent()">{{displayText}}</button>
+<button type="button" class="btn pull-right" ng-class="{'btn-primary': type !== 'secondary', 'btn-default': type === 'secondary'}" ng-disabled="isDisabledWhen" ng-click="onClick()">{{displayText}}</button>
