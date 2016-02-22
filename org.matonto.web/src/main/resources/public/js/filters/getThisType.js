@@ -14,7 +14,9 @@
                     i = 0;
 
                 while(i < arr.length) {
-                    lowercaseTypes = arr[i]['@type'].join('|').toLowerCase().split('|');
+                    lowercaseTypes = arr[i]['@type'].map(function(item) {
+                        return item.toLowerCase();
+                    });
                     if(lowercaseTypes.indexOf(type) !== -1) {
                         result.push(arr[i]);
                     }
