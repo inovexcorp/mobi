@@ -1,10 +1,5 @@
-<div class="overlay" ng-init="iri = (vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : vm.selected['@id'] | splitIRI);
-                              vm.iriBegin = iri.begin;
-                              vm.iriThen = iri.then;
-                              vm.iriEnd = iri.end || (vm.selected[vm.rdfs + 'label'][0]['@value'] | camelCase:vm.iriType);
-                              vm.iriUpdate = true;">
-    <form name="vm.iriForm" class="content clearfix" novalidate autocomplete="off"
-          ng-submit="vm.editIRI();">
+<div class="overlay">
+    <form name="vm.iriForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Edit IRI</h6>
         <!-- Begins with -->
@@ -36,8 +31,13 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <button type="submit" class="btn btn-primary pull-right" ng-disabled="vm.iriForm.$invalid"><i class="fa fa-pencil fa-fw"></i>Edit</button>
-            <button type="button" class="btn btn-default pull-right" ng-click="vm.showIriOverlay = false;">Cancel</button>
+            <custom-button display-text="'Edit'"
+                           is-disabled-when="vm.iriForm.$invalid"
+                           on-click="vm.editIRI()"></custom-button>
+
+            <custom-button display-text="'Cancel'"
+                           on-click="vm.showIriOverlay = false;"
+                           type="'secondary'"></custom-button>
         </div>
     </form>
 </div>
