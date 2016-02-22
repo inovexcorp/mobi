@@ -17,7 +17,7 @@
                     lowercaseTypes = arr[i]['@type'].map(function(item) {
                         return item.toLowerCase();
                     });
-                    if(lowercaseTypes.indexOf(type) !== -1) {
+                    if(lowercaseTypes.indexOf(type.toLowerCase()) !== -1) {
                         result.push(arr[i]);
                     }
                     i++;
