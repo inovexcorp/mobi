@@ -20,8 +20,8 @@
                     mutedText: '='
                 },
                 templateUrl: 'directives/objectSelect/objectSelect.html',
-                link: function($scope) {
-                    $scope.getItemNamespace = function(item) {
+                link: function(scope, element, attrs) {
+                    scope.getItemNamespace = function(item) {
                         return ontologyManagerService.getItemNamespace(item);
                     }
                 }

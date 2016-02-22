@@ -9,8 +9,8 @@
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/propertyTree/propertyTree.html',
-                link: function($scope, $element, $attrs) {
-                    $scope.propertyType = $attrs.propertyType;
+                link: function(scope, element, attrs) {
+                    scope.propertyType = attrs.propertyType;
                 }
             }
         }
