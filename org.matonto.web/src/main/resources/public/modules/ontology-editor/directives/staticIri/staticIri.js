@@ -8,7 +8,7 @@
         function staticIri() {
             return {
                 restrict: 'E',
-                templateUrl: 'directives/staticIri/staticIri.html'
+                templateUrl: 'modules/ontology-editor/directives/staticIri/staticIri.html'
             }
         }
 })();
