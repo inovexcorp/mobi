@@ -35,7 +35,7 @@
                 <li>
                     <a ng-click="opened = !opened; $event.stopPropagation();">
                         <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': noDomains, 'fa-folder-o': !noDomains}"></i>Properties
+                           ng-class="{'fa-folder-open-o': opened, 'fa-folder-o': !opened}"></i>Properties
                     </a>
                 </li>
                 <!-- properties without domains -->
@@ -55,7 +55,7 @@
                 <li>
                     <a ng-click="opened = !opened; $event.stopPropagation();">
                         <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': theOthers, 'fa-folder-o': !theOthers}"></i>Others
+                           ng-class="{'fa-folder-open-o': opened, 'fa-folder-o': !opened}"></i>Others
                     </a>
                 </li>
                 <li class="container" ng-show="opened">
