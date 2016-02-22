@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('objectSelect', ['customLabel', 'ontologyManager'])
+        .module('objectSelect', ['customLabel', 'ontologyManager', 'responseObj'])
         .directive('objectSelect', objectSelect);
 
-        objectSelect.$inject = ['ontologyManagerService'];
+        objectSelect.$inject = ['ontologyManagerService', 'responseObj'];
 
-        function objectSelect(ontologyManagerService) {
+        function objectSelect(ontologyManagerService, responseObj) {
             return {
                 restrict: 'E',
                 scope: {
@@ -25,8 +25,13 @@
                 controllerAs: 'vm',
                 controller: ['$scope', function($scope) {
                     var vm = this;
+
                     vm.getItemNamespace = function(item) {
                         return ontologyManagerService.getItemNamespace(item);
+                    }
+
+                    vm.getItemIri = function(item) {
+                        return responseObj.getItemIri(item);
                     }
                 }]
             }

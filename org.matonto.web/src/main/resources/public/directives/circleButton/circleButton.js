@@ -8,7 +8,7 @@
         function circleButton() {
             return {
                 restrict: 'E',
-                remove: true,
+                replace: true,
                 scope: {
                     btnIcon: '=',
                     btnSmall: '=',

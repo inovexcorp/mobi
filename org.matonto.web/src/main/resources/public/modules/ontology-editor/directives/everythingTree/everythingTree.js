@@ -8,7 +8,7 @@
         function everythingTree() {
             return {
                 restrict: 'E',
-                remove: true,
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/everythingTree/everythingTree.html'
             }
         }

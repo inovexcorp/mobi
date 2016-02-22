@@ -8,7 +8,7 @@
         function classTree() {
             return {
                 restrict: 'E',
-                remove: true,
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/classTree/classTree.html'
             }
         }

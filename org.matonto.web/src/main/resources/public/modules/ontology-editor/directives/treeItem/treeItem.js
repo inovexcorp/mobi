@@ -8,7 +8,7 @@
         function treeItem() {
             return {
                 restrict: 'E',
-                remove: true,
+                replace: true,
                 scope: {
                     currentEntity: '=',
                     currentOntology: '=',
