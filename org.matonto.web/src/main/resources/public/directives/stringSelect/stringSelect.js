@@ -18,6 +18,11 @@
                     selectList: '=',
                     mutedText: '='
                 },
+                bindToController: {
+                    bindModel: '=ngModel'
+                },
+                controllerAs: 'vm',
+                controller: function() {},
                 templateUrl: 'directives/stringSelect/stringSelect.html'
             }
         }

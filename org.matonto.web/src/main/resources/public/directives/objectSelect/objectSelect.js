@@ -11,7 +11,6 @@
             return {
                 restrict: 'E',
                 scope: {
-                    bindModel: '=ngModel',
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
@@ -20,11 +19,16 @@
                     mutedText: '='
                 },
                 templateUrl: 'directives/objectSelect/objectSelect.html',
-                link: function(scope, element, attrs) {
-                    scope.getItemNamespace = function(item) {
+                bindToController: {
+                    bindModel: '=ngModel'
+                },
+                controllerAs: 'vm',
+                controller: ['$scope', function($scope) {
+                    var vm = this;
+                    vm.getItemNamespace = function(item) {
                         return ontologyManagerService.getItemNamespace(item);
                     }
-                }
+                }]
             }
         }
 })();
