@@ -88,9 +88,117 @@
                     });
             }
 
+            function initOntology(ontology, obj) {
+                var len = obj['@id'].length,
+                    delimiter = obj['@id'].charAt(len - 1);
+
+                if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
+                    obj.matonto = {
+                        delimiter: delimiter,
+                        originalId: obj['@id']
+                    }
+                    obj['@id'] = obj['@id'].substring(0, len - 1);
+                } else {
+                    obj.matonto = {
+                        delimiter: '#',
+                        originalId: ['@id']
+                    }
+                }
+                angular.merge(ontology, obj);
+            }
+
+            function chooseIcon(property, prefixes) {
+                var icon = '',
+                    range = property[prefixes.rdfs + 'range'];
+                // assigns the icon based on the range
+                if(range) {
+                    if(range.length === 1) {
+                        switch(range[0]['@id']) {
+                            // TODO: pick better icon for Literal? since it can be for Integers as well
+                            case prefixes.xsd + 'string':
+                            case prefixes.rdfs + 'Literal':
+                                icon = 'fa-font';
+                                break;
+                            case prefixes.xsd + 'double':
+                            case prefixes.xsd + 'nonNegativeInteger':
+                                icon = 'fa-calculator';
+                                break;
+                            default:
+                                icon = 'fa-link';
+                                break;
+                        }
+                    }
+                    // TODO: icon for multiple ranges
+                    else {
+                        icon = 'fa-cubes';
+                    }
+                }
+                // TODO: figure out what to do if there isn't a range
+                else {
+                    icon = 'fa-question';
+                }
+                // return the class for an icon from Font Awesome
+                return icon;
+            }
+
+            function addToClass(id, property, classes) {
+                var i = 0;
+                while(i < classes.length) {
+                    if(classes[i]['@id'] === id) {
+                        classes[i].matonto.properties.push(property);
+                        break;
+                    }
+                    i++;
+                }
+            }
+
+            function objToArr(obj) {
+                var prop,
+                    temp = [];
+                for(prop in obj) {
+                    if(obj.hasOwnProperty(prop)) {
+                        temp.push({key: prop, value: obj[prop]});
+                    }
+                }
+                return temp;
+            }
+
+            function addDefaultAnnotations(annotations) {
+                var itemIri, index, split,
+                    i = 1,
+                    exclude = [
+                        'http://www.w3.org/2000/01/rdf-schema#label',
+                        'http://www.w3.org/2000/01/rdf-schema#comment'
+                    ],
+                    defaults = responseObj.stringify(defaultAnnotations),
+                    arr = angular.copy(annotations);
+
+                arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
+
+                while(i < arr.length) {
+                    itemIri = responseObj.getItemIri(arr[i]);
+                    if(exclude.indexOf(itemIri) !== -1) {
+                        arr.splice(i--, 1);
+                    }
+                    index = defaults.indexOf(itemIri);
+                    if(index !== -1) {
+                        defaults.splice(index, 1);
+                    }
+                    i++;
+                }
+
+                i = 0;
+                while(i < defaults.length) {
+                    split = $filter('splitIRI')(defaults[i]);
+                    arr.push({ namespace: split.begin + split.then, localName: split.end });
+                    i++;
+                }
+
+                return arr;
+            }
+
             function restructure(flattened, ontologyId, context, prefixes) {
                 var j, obj, type, domain, annotations,
-                    addToClass, initOntology, chooseIcon, objToArr, addDefaultAnnotations,
                     ontology = {
                         matonto: {
                             noDomains: [],
@@ -113,59 +221,6 @@
                         }
                     };
 
-                initOntology = function(ontology, obj) {
-                    var len = obj['@id'].length,
-                        delimiter = obj['@id'].charAt(len - 1);
-
-                    if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
-                        obj.matonto = {
-                            delimiter: delimiter,
-                            originalId: obj['@id']
-                        }
-                        obj['@id'] = obj['@id'].substring(0, len - 1);
-                    } else {
-                        obj.matonto = {
-                            delimiter: '#',
-                            originalId: ['@id']
-                        }
-                    }
-                    angular.merge(ontology, obj);
-                }
-
-                chooseIcon = function(property) {
-                    var icon = '',
-                        range = property[prefixes.rdfs + 'range'];
-                    // assigns the icon based on the range
-                    if(range) {
-                        if(range.length === 1) {
-                            switch(range[0]['@id']) {
-                                // TODO: pick better icon for Literal? since it can be for Integers as well
-                                case prefixes.xsd + 'string':
-                                case prefixes.rdfs + 'Literal':
-                                    icon = 'fa-font';
-                                    break;
-                                case prefixes.xsd + 'double':
-                                case prefixes.xsd + 'nonNegativeInteger':
-                                    icon = 'fa-calculator';
-                                    break;
-                                default:
-                                    icon = 'fa-link';
-                                    break;
-                            }
-                        }
-                        // TODO: icon for multiple ranges
-                        else {
-                            icon = 'fa-cubes';
-                        }
-                    }
-                    // TODO: figure out what to do if there isn't a range
-                    else {
-                        icon = 'fa-question';
-                    }
-                    // return the class for an icon from Font Awesome
-                    return icon;
-                }
-
                 while(i < list.length) {
                     obj = list[i];
                     type = obj['@type'] ? obj['@type'][0] : undefined;
@@ -186,7 +241,7 @@
                         case prefixes.owl + 'ObjectProperty':
                         case prefixes.rdfs + 'Property':
                             obj.matonto = {
-                                icon: chooseIcon(obj),
+                                icon: chooseIcon(obj, prefixes),
                                 originalId: obj['@id'],
                                 currentAnnotationSelect: null
                             };
@@ -199,17 +254,6 @@
                     i++;
                 }
 
-                addToClass = function(id, property) {
-                    var i = 0;
-                    while(i < classes.length) {
-                        if(classes[i]['@id'] === id) {
-                            classes[i].matonto.properties.push(property);
-                            break;
-                        }
-                        i++;
-                    }
-                }
-
                 i = 0;
                 while(i < properties.length) {
                     domain = properties[i][prefixes.rdfs + 'domain'];
@@ -218,10 +262,10 @@
                         if(Object.prototype.toString.call(domain) === '[object Array]') {
                             j = domain.length;
                             while(j--) {
-                                addToClass(domain[j]['@id'], properties[i]);
+                                addToClass(domain[j]['@id'], properties[i], classes);
                             }
                         } else {
-                            addToClass(domain['@id'], properties[i]);
+                            addToClass(domain['@id'], properties[i], classes);
                         }
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);
@@ -229,67 +273,55 @@
                     i++;
                 }
 
-                objToArr = function(obj) {
-                    var prop,
-                        temp = [];
-                    for(prop in obj) {
-                        if(obj.hasOwnProperty(prop)) {
-                            temp.push({key: prop, value: obj[prop]});
-                        }
-                    }
-                    return temp;
-                }
-
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
                 ontology.matonto.others = others;
 
-                addDefaultAnnotations = function(annotations) {
-                    var temp, item, index, split,
-                        i = 1,
-                        exclude = [
-                            'http://www.w3.org/2000/01/rdf-schema#label',
-                            'http://www.w3.org/2000/01/rdf-schema#comment'
-                        ],
-                        defaults = responseObj.stringify(defaultAnnotations),
-                        arr = angular.copy(annotations);
+                $q.all([
+                        $http.get(prefix + '/getAllIRIs', config),
+                        $http.get(prefix + '/getAllImportedIRIs', config)
+                    ]).then(function(response) {
+                        var ontologyIris = response[0],
+                            importedOntologyIris = response[1],
+                            annotations = ontologyIris.data.annotationProperties,
+                            classes = ontologyIris.data.classes,
+                            dataProperties = ontologyIris.data.dataProperties,
+                            objectProperties = ontologyIris.data.objectProperties,
+                            datatypes = ontologyIris.data.datatypes;
 
-                    arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
+                        if(importedOntologyIris.status === 200) {
+                            var data = importedOntologyIris.data,
+                                importedClasses = [],
+                                importedDataProperties = [],
+                                importedObjectProperties = [],
+                                i = 0;
 
-                    while(i < arr.length) {
-                        item = arr[i];
-                        if(responseObj.validateItem(item)) {
-                            temp = item.namespace + item.localName;
-                            if(exclude.indexOf(temp) !== -1) {
-                                arr.splice(i--, 1);
+                            while(i < data.length) {
+                                importedClasses = importedClasses.concat(data[i].classes);
+                                importedDataProperties = importedDataProperties.concat(data[i].dataProperties);
+                                importedObjectProperties = importedObjectProperties.concat(data[i].objectProperties);
+                                i++;
                             }
-                            index = defaults.indexOf(temp);
-                            if(index !== -1) {
-                                defaults.splice(index, 1);
-                            }
+
+                            classes = $filter('orderBy')(classes.concat(importedClasses), 'localName');
+                            dataProperties = $filter('orderBy')(dataProperties.concat(importedDataProperties), 'localName');
+                            objectProperties = $filter('orderBy')(objectProperties.concat(importedObjectProperties), 'localName');
+                        } else {
+                            classes = $filter('orderBy')(classes, 'localName');
+                            dataProperties = $filter('orderBy')(dataProperties, 'localName');
+                            objectProperties = $filter('orderBy')(objectProperties, 'localName');
                         }
-                        i++;
-                    }
 
-                    i = 0;
-                    while(i < defaults.length) {
-                        split = $filter('splitIRI')(defaults[i]);
-                        arr.push({ namespace: split.begin + split.then, localName: split.end });
-                        i++;
-                    }
+                        ontology.matonto.annotations = addDefaultAnnotations(annotations);
+                        ontology.matonto.subClasses = classes;
+                        ontology.matonto.subDataProperties = dataProperties;
+                        ontology.matonto.subObjectProperties = objectProperties;
 
-                    return arr;
-                }
+                        // For now, these just point to classes. They will eventually have some way to link back to class expressions
+                        ontology.matonto.propertyDomain = classes;
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(classes.concat(datatypes), 'localName');
+                        ontology.matonto.objectPropertyRange = classes;
 
-                $http.get(prefix + '/getAllIRIs', config)
-                    .then(function(response) {
-                        ontology.matonto.annotations = addDefaultAnnotations(response.data.annotationProperties);
-                        ontology.matonto.subClasses = $filter('orderBy')(response.data.classes, 'localName');
-                        ontology.matonto.subDataProperties = $filter('orderBy')(response.data.dataProperties, 'localName');
-                        ontology.matonto.subObjectProperties = $filter('orderBy')(response.data.objectProperties, 'localName');
-                        ontology.matonto.propertyDomain = $filter('orderBy')(response.data.classes, 'localName');
-                        ontology.matonto.dataPropertyRange = $filter('orderBy')(response.data.classes.concat(response.data.datatypes), 'localName');
-                        ontology.matonto.objectPropertyRange = $filter('orderBy')(response.data.classes, 'localName');
                         deferred.resolve(ontology);
                     }, function(response) {
                         deferred.reject(response);
