@@ -15,7 +15,7 @@
     </div>
 
     <!-- basic tab -->
-    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
+    <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
         <!-- ontology iri -->
         <text-input ng-model="vm.selected['@id']"
                     display-text="'Ontology IRI'"
@@ -35,12 +35,12 @@
     </div>
 
     <!-- annotations tab -->
-    <div ng-show="vm.state.editorTab === 'annotations'" class="tab clearfix">
+    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
         <annotation-tab></annotation-tab>
     </div>
 
     <!-- prefix tab -->
-    <div ng-show="vm.state.editorTab === 'prefix'" class="tab clearfix">
+    <div ng-if="vm.state.editorTab === 'prefix'" class="tab clearfix">
         <!-- prefixes -->
         <table class="table table-bordered input-table">
             <thead>
