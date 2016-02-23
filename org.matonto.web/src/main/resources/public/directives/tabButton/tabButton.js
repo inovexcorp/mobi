@@ -14,7 +14,7 @@
                     isActive: '=',
                     onClick: '&'
                 },
-                templateUrl: 'modules/ontology-editor/directives/tabButton/tabButton.html'
+                templateUrl: 'directives/tabButton/tabButton.html'
             }
         }
 })();

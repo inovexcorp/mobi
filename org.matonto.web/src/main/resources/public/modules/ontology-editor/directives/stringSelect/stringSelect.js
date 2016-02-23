@@ -31,7 +31,7 @@
                         return ontologyManagerService.getItemNamespace(item);
                     }
                 }],
-                templateUrl: 'directives/stringSelect/stringSelect.html'
+                templateUrl: 'modules/ontology-editor/directives/stringSelect/stringSelect.html'
             }
         }
 })();

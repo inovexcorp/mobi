@@ -18,7 +18,7 @@
                     selectList: '=',
                     mutedText: '='
                 },
-                templateUrl: 'directives/objectSelect/objectSelect.html',
+                templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 bindToController: {
                     bindModel: '=ngModel'
                 },
