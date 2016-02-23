@@ -13,6 +13,13 @@
             'trusted',
             'removeMatonto',
             'ui.router',
-            'ui.select'
+            'ui.select',
+            'textInput',
+            'textArea',
+            'customButton',
+            'objectSelect',
+            'stringSelect',
+            'circleButton',
+            'customButton'
         ]);
 })();

@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
+        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['$scope', '$timeout', '$filter', '$q', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj'];
+    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj'];
 
-    function OntologyEditorController($scope, $timeout, $filter, $q, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj) {
+    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -29,6 +29,7 @@
 
         /* Ontology Management */
         vm.uploadOntology = function(isValid, file, namespace, localName) {
+            vm.uploadError = false;
             ontologyManagerService.uploadThenGet(isValid, file)
                 .then(function(response) {
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
@@ -55,12 +56,12 @@
             vm.owl = ontologyManagerService.getOntologyProperty(vm.ontology, 'owl');
         }
 
-        vm.submitEdit = function(isValid) {
-            ontologyManagerService.edit(isValid, vm.selected, vm.state);
+        vm.submitEdit = function() {
+            ontologyManagerService.edit(vm.selected, vm.state);
         }
 
-        vm.submitCreate = function(isValid) {
-            ontologyManagerService.create(isValid, vm.selected, vm.state);
+        vm.submitCreate = function() {
+            ontologyManagerService.create(vm.selected, vm.state);
             stateManagerService.setStateToNew(vm.state, vm.ontologies);
             stateManagerService.setEditorTab('basic');
             vm.state = stateManagerService.getState();
@@ -73,6 +74,10 @@
 
         vm.isObjectProperty = function() {
             return ontologyManagerService.isObjectProperty(vm.selected, vm.ontology);
+        }
+
+        vm.entityChanged = function() {
+            vm.selected.matonto.unsaved = true;
         }
 
         /* Prefix (Context) Management */

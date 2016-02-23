@@ -8,14 +8,6 @@
     fileInput.$inject = ['$parse'];
 
         function fileInput($parse) {
-            var directive = {
-                    restrict: 'EA',
-                    template: '<input type="file" />',
-                    replace: true,
-                    link: link
-                };
-            return directive;
-
             function link(scope, element, attrs) {
                 var modelGet = $parse(attrs.fileInput),
                     modelSet = modelGet.assign,
@@ -26,8 +18,14 @@
                             onChange(scope);
                         });
                     };
-                // binds the change event to the element
                 element.bind('change', updateModel);
             }
+
+            return {
+                restrict: 'EA',
+                template: '<input type="file" />',
+                replace: true,
+                link: link
+            };
         }
 })();

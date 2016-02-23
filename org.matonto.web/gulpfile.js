@@ -27,7 +27,7 @@ var jsFiles = function(prefix) {
             prefix + 'js/services/responseObj.js',
             prefix + 'js/filters/*.js',
             prefix + 'js/services/*.js',
-            prefix + 'js/directives/*.js',
+            prefix + 'directives/**/*.js',
             prefix + 'modules/**/*/services/**/*.js',
             prefix + 'modules/**/*/directives/**/*.js',
             prefix + 'modules/**/*.js',

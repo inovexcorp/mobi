@@ -1,0 +1,89 @@
+<form name="vm.ontologyForm" class="clearfix" novalidate autocomplete="off">
+    <!-- tab buttons -->
+    <div class="btn-group btn-group-justified" role="group">
+        <tab-button is-active="vm.state.editorTab === 'basic'"
+                    on-click="vm.setEditorTab('basic')"
+                    display-text="vm.state.oi !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'annotations'"
+                    on-click="vm.setEditorTab('annotations')"
+                    display-text="'Annotations'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'prefix'"
+                    on-click="vm.setEditorTab('prefix')"
+                    display-text="'Prefix'"></tab-button>
+    </div>
+
+    <!-- basic tab -->
+    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
+        <!-- ontology iri -->
+        <text-input ng-model="vm.selected['@id']"
+                    display-text="'Ontology IRI'"
+                    change-event="vm.entityChanged()"></text-input>
+
+        <!-- rdfs:label -->
+        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
+                    display-text="'Label'"
+                    muted-text="vm.rdfs + 'label'"
+                    change-event="vm.entityChanged()"></text-input>
+
+        <!-- rdfs:comment -->
+        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
+                   display-text="'Comment'"
+                   muted-text="vm.rdfs + 'comment'"
+                   change-event="vm.entityChanged()"></text-area>
+    </div>
+
+    <!-- annotations tab -->
+    <div ng-show="vm.state.editorTab === 'annotations'" class="tab clearfix">
+        <annotation-tab></annotation-tab>
+    </div>
+
+    <!-- prefix tab -->
+    <div ng-show="vm.state.editorTab === 'prefix'" class="tab clearfix">
+        <!-- prefixes -->
+        <table class="table table-bordered input-table">
+            <thead>
+            <tr>
+                <th class="prefix-col">Prefix</th>
+                <th>Value</th>
+                <th class="action-button"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="item in vm.selected.matonto.context track by $index">
+                <td>
+                    <input id="prefix-{{$index}}" type="text" value="{{item.key}}" ng-readonly="!editKey" />
+                    <button type="button" class="btn btn-link edit" ng-click="vm.editPrefix(editKey, item.key, $index); editKey = !editKey;">
+                        <i class="fa fa-pencil" ng-class="{'fa-pencil': !editKey, 'fa-floppy-o': editKey}"></i>
+                    </button>
+                </td>
+                <td>
+                    <input id="value-{{$index}}" type="text" value="{{item.value}}" ng-readonly="!editValue" />
+                    <button type="button" class="btn btn-link edit" ng-click="vm.editValue(editValue, item.key, item.value, $index); editValue = !editValue;">
+                        <i class="fa fa-pencil" ng-class="{'fa-pencil': !editValue, 'fa-floppy-o': editValue}"></i>
+                    </button>
+                </td>
+                <td class="action-button">
+                    <button type="button" class="btn btn-link remove" ng-click="vm.removePrefix(item.key)"><i class="fa fa-minus"></i></button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="text" ng-model="vm.key" placeholder="Enter new prefix..." ng-change="vm.showDuplicateMessage = false;" />
+                </td>
+                <td>
+                    <input type="text" ng-model="vm.value" placeholder="Enter new value..." ng-change="vm.showDuplicateMessage = false;" />
+                </td>
+                <td class="action-button">
+                    <button type="button" class="btn btn-link add" ng-disabled="!vm.key || !vm.value" ng-click="vm.addPrefix(vm.key, vm.value);"><i class="fa fa-plus"></i></button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <!-- error messages for empty or unique -->
+        <div class="has-warning clearfix" ng-if="vm.showDuplicateMessage">
+            <strong ng-if="vm.showDuplicateMessage" class="help-block">Both prefix and value must be unique.</strong>
+        </div>
+    </div>
+</form>
