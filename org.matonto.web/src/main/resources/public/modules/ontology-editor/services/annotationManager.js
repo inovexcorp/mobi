@@ -2,14 +2,13 @@
     'use strict';
 
     angular
-        .module('annotationManager', ['splitIRI'])
+        .module('annotationManager', ['responseObj', 'splitIRI'])
         .service('annotationManagerService', annotationManagerService)
-        .filter('showAnnotations', showAnnotations)
-        /*.filter('hideAnnotations', hideAnnotations)*/;
+        .filter('showAnnotations', showAnnotations);
 
-        annotationManagerService.$inject = ['$filter'];
+        annotationManagerService.$inject = ['$filter', 'responseObj']
 
-        function annotationManagerService($filter) {
+        function annotationManagerService($filter, responseObj) {
             var self = this,
                 reg = /^([^:\/?#]+):\/\/([^\/?#]*)([^?#]*)\\?([^#]*)(?:[#\/:](.+))+/;
 
@@ -34,76 +33,62 @@
                     select = matonto.currentAnnotationSelect,
                     item = {'@value': value};
 
-                if(select === 'other') {
-                    temp = key;
-                } else {
-                    temp = select;
-                }
-
-                if(obj.hasOwnProperty(temp)) {
-                    obj[temp].push(item);
-                } else {
-                    obj[temp] = [item];
-                }
-
-                stripped = $filter('splitIRI')(temp).end;
-
-                for(prop in annotations) {
-                    if(temp.indexOf(prop) !== -1) {
-                        found = true;
-                        break;
+                if(responseObj.validateItem(select)) {
+                    if(select.localName === 'New Annotation') {
+                        temp = key;
+                        if(responseObj.stringify(annotations).indexOf(temp) === -1) {
+                            var split = $filter('splitIRI')(temp);
+                            annotations.push({ namespace: split.begin + split.then, localName: split.end });
+                        }
+                    } else {
+                        temp = select.namespace + select.localName;
                     }
-                }
 
-                if(!found) {
-                    annotations[temp.replace(stripped, '')] = [stripped];
+                    if(obj.hasOwnProperty(temp)) {
+                        obj[temp].push(item);
+                    } else {
+                        obj[temp] = [item];
+                    }
+                } else {
+                    console.warn('The current selected item doesn\'t have a namespace or localName.', select);
                 }
             }
 
             self.edit = function(obj, key, value, index) {
                 obj[key][index]['@value'] = value;
             }
+
+            self.getLocalNameLowercase = function(item) {
+                if(item.localName === 'New Annotation') {
+                    return -1;
+                }
+                return item.localName.toLowerCase();
+            }
         }
 
-        function showAnnotations() {
+        showAnnotations.$inject = ['responseObj'];
+
+        function showAnnotations(responseObj) {
             return function(obj, annotations) {
-                var i, prop, temp,
-                    results = [];
+                var arr = [];
 
-                for(prop in annotations) {
-                    i = 0;
-                    while(i < annotations[prop].length) {
-                        temp = prop + annotations[prop][i];
-                        if(obj.hasOwnProperty(temp)) {
-                            results.push(temp);
+                if(Array.isArray(annotations)) {
+                    var itemIri, item,
+                        i = 0;
+
+                    while(i < annotations.length) {
+                        item = annotations[i];
+                        if(responseObj.validateItem(item)) {
+                            itemIri = responseObj.getItemIri(item);
+                            if(obj.hasOwnProperty(itemIri)) {
+                                arr.push(item);
+                            }
                         }
                         i++;
                     }
                 }
-                return results;
+
+                return arr;
             }
         }
-
-        /*function hideAnnotations() {
-            return function(annotations, obj) {
-                var prop, i, count,
-                    result = [];
-
-                for(prop in annotations) {
-                    i = 0;
-                    count = 0;
-                    while(i < annotations[prop].length) {
-                        if(obj.hasOwnProperty(prop + annotations[prop][i])) {
-                            count++;
-                        }
-                        i++;
-                    }
-
-                    if(count < annotations[prop].length) {
-                        result.push(prop);
-                    }
-                }
-                return result;
-            }
-        }*/
 })();

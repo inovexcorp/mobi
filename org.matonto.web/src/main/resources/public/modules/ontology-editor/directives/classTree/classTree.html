@@ -1,0 +1,19 @@
+<div class="tree class-tree scroll-without-buttons">
+    <!-- class view -->
+    <strong>Classes</strong>
+    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
+        <tree-item-with-sub current-entity="ontology"
+                            current-ontology="ontology"
+                            is-opened="opened"></tree-item-with-sub>
+
+        <li class="container" ng-show="opened">
+            <ul>
+                <tree-item ng-repeat="class in ontology.matonto.classes"
+                           current-entity="class"
+                           current-ontology="ontology"
+                           is-active="vm.state.oi === oi && vm.state.ci === $index && vm.state.pi === undefined"
+                           on-click="vm.selectItem('class-editor', oi, $index)"></tree-item>
+            </ul>
+        </li>
+    </ul>
+</div>
