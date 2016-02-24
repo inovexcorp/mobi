@@ -14,9 +14,9 @@
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
+                    mutedText: '=',
                     onlyStrings: '=',
-                    selectList: '=',
-                    mutedText: '='
+                    selectList: '='
                 },
                 templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 bindToController: {
@@ -25,6 +25,8 @@
                 controllerAs: 'vm',
                 controller: ['$scope', function($scope) {
                     var vm = this;
+
+                    vm.id = $scope.$parent.vm.selected['@id'];
 
                     vm.getItemNamespace = function(item) {
                         return ontologyManagerService.getItemNamespace(item);
