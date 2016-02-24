@@ -15,7 +15,7 @@
     </div>
 
     <!-- basic tab -->
-    <div ng-show="vm.state.editorTab === 'basic'" class="tab clearfix">
+    <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
         <!-- static iri -->
         <static-iri></static-iri>
 
@@ -33,7 +33,7 @@
     </div>
 
     <!-- axioms tab -->
-    <div ng-show="vm.state.editorTab === 'axioms'" class="tab clearfix">
+    <div ng-if="vm.state.editorTab === 'axioms'" class="tab clearfix">
         <!-- rdfs:subClassOf -->
         <object-select ng-model="vm.selected[vm.rdfs + 'subClassOf']"
                        display-text="'Sub Class Of'"
@@ -50,7 +50,7 @@
     </div>
 
     <!-- annotations tab -->
-    <div ng-show="vm.state.editorTab === 'annotations'" class="tab clearfix">
+    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
         <annotation-tab></annotation-tab>
     </div>
 </form>

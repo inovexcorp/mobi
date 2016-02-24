@@ -23,11 +23,11 @@
                 bindToController: {
                     bindModel: '=ngModel'
                 },
-                controllerAs: 'vm',
+                controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
-                    var vm = this;
+                    var dvm = this;
 
-                    vm.getItemNamespace = function(item) {
+                    dvm.getItemNamespace = function(item) {
                         return ontologyManagerService.getItemNamespace(item);
                     }
                 }],
