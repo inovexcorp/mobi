@@ -164,7 +164,7 @@
             }
 
             function addDefaultAnnotations(annotations) {
-                var temp, item, index, split,
+                var itemIri, index, split,
                     i = 1,
                     exclude = [
                         'http://www.w3.org/2000/01/rdf-schema#label',
@@ -176,16 +176,13 @@
                 arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
 
                 while(i < arr.length) {
-                    item = arr[i];
-                    if(responseObj.validateItem(item)) {
-                        temp = item.namespace + item.localName;
-                        if(exclude.indexOf(temp) !== -1) {
-                            arr.splice(i--, 1);
-                        }
-                        index = defaults.indexOf(temp);
-                        if(index !== -1) {
-                            defaults.splice(index, 1);
-                        }
+                    itemIri = responseObj.getItemIri(arr[i]);
+                    if(exclude.indexOf(itemIri) !== -1) {
+                        arr.splice(i--, 1);
+                    }
+                    index = defaults.indexOf(itemIri);
+                    if(index !== -1) {
+                        defaults.splice(index, 1);
                     }
                     i++;
                 }
