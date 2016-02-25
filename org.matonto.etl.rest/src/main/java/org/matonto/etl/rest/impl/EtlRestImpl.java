@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONObject;
 import com.opencsv.CSVReader;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.rest.EtlRest;
@@ -43,8 +44,8 @@ public class EtlRestImpl implements EtlRest {
 
     @Override
     public Response upload(InputStream fileInputStream) {
-        String fileName = generateUuid() + ".csv";
-        Path filePath = Paths.get("data/tmp/" + fileName);
+        String fileName = generateUuid();
+        Path filePath = Paths.get("data/tmp/" + fileName + ".csv");
 
         try {
             Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -54,15 +55,16 @@ public class EtlRestImpl implements EtlRest {
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
         }
-        logger.info("Delimited File Uploaded: data/tmp/" + fileName);
+        logger.info("Delimited File Uploaded: data/tmp/" + fileName + ".csv");
 
         return Response.status(200).entity(fileName).build();
     }
 
     @Override
     public Response etlFile(String fileName, InputStream mappingInputStream) {
-        logger.info("ETL File: data/tmp/" + fileName);
-        Path mappingPath = Paths.get("data/tmp/mappingFile.jsonld");
+        logger.info("ETL File: data/tmp/" + fileName + ".csv");
+        String mappingFileName = generateUuid();
+        Path mappingPath = Paths.get("data/tmp/" + mappingFileName + ".jsonld");
 
         try {
             Files.copy(mappingInputStream, mappingPath, StandardCopyOption.REPLACE_EXISTING);
@@ -73,28 +75,31 @@ public class EtlRestImpl implements EtlRest {
 
         Model model;
         try {
-            model = sesameModel(csvConverter.convert(new File("data/tmp/" + fileName),
-                    new File("data/tmp/mappingFile.jsonld")));
+            model = sesameModel(csvConverter.convert(new File("data/tmp/" + fileName + ".csv"),
+                    new File("data/tmp/" + mappingFileName + ".jsonld")));
         } catch (Exception e) {
             throw ErrorUtils.sendError("Error converting CSV to JSON-LD", Response.Status.BAD_REQUEST);
         } 
 
         StringWriter sw = new StringWriter();
         Rio.write(model, sw, RDFFormat.JSONLD);
+        JSONObject json = new JSONObject();
+        json.put("fileName", mappingFileName);
+        json.put("data", sw.toString());
 
-        return Response.status(200).entity(sw.toString()).build();
+        return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
     public Response getRows(String fileName, int rowEnd) {
         File file = new File("data/tmp/" + fileName);
-        String json;
         int numRows = rowEnd;
         if (numRows <= 0) {
             numRows = 10;
         }
 
         logger.info("Getting " + numRows + " rows from " + fileName);
+        String json;
         try {
             json = convertRows(file, numRows);
         } catch (Exception e) {

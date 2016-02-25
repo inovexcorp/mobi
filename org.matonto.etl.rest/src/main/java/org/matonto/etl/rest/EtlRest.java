@@ -27,19 +27,21 @@ public interface EtlRest {
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream);
 
     /**
-     * Puts an uploaded delimited document through an ETL process that maps the data
-     * into RDF in JSON-lD format using a JSON-LD mapping file. The file must be  
+     * Maps the data in an uploaded delimited document into RDF in JSON-LD format
+     * using a JSON-LD mapping file that is saved to the server. The file must be
      * present in the data/tmp/ directory.
      *
      * @param fileName a string containing the name of the delimited document in the 
      *                 data/tmp/ directory
      * @param mappingInputStream an InputStream of the JSON-LD mapping file passed as
      *                           form data
-     * @return a response with a JSON-LD string containing the converted data
+     * @return a response with a JSON object containing the mapping file name and a
+     *      JSON-LD string containing the converted data
     */
     @POST
     @Path("csv/etl/{documentName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("ETL the document using a mapping file sent as form data.")
     Response etlFile(@PathParam("documentName") String fileName, 
             @FormDataParam("mappingFile") InputStream mappingInputStream);
