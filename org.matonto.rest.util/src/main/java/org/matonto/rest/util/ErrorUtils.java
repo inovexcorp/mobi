@@ -3,7 +3,6 @@ package org.matonto.rest.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 public class ErrorUtils {
@@ -18,10 +17,10 @@ public class ErrorUtils {
      * @param status the HTTP status code for the error
      * @return a WebApplicationException with the HTTP error status and message
      */
-    public static WebApplicationException sendError(Throwable thw, String msg, Response.Status status)
-            throws WebApplicationException {
+    public static MatOntoWebException sendError(Throwable thw, String msg, Response.Status status)
+            throws MatOntoWebException {
         logger.error(String.format("%d: %s", status.getStatusCode(), msg), thw);
-        return new WebApplicationException(msg, thw, status);
+        return new MatOntoWebException(msg, thw, status);
     }
 
     /**
@@ -32,8 +31,9 @@ public class ErrorUtils {
      * @param status the HTTP status code for the error
      * @return a WebApplicationException with the HTTP error status and message
      */
-    public static WebApplicationException sendError(String msg, Response.Status status) throws WebApplicationException {
+    public static MatOntoWebException sendError(String msg, Response.Status status)
+            throws MatOntoWebException {
         logger.error(String.format("%d: %s", status.getStatusCode(), msg));
-        return new WebApplicationException(msg, status);
+        return new MatOntoWebException(msg, status);
     }
 }
