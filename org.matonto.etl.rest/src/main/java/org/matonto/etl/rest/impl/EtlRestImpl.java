@@ -55,14 +55,13 @@ public class EtlRestImpl implements EtlRest {
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
         }
-        logger.info("Delimited File Uploaded: data/tmp/" + fileName + ".csv");
+        logger.info("Delimited File Uploaded: " + filePath);
 
         return Response.status(200).entity(fileName).build();
     }
 
     @Override
     public Response etlFile(String fileName, InputStream mappingInputStream) {
-        logger.info("ETL File: data/tmp/" + fileName + ".csv");
         String mappingFileName = generateUuid();
         Path mappingPath = Paths.get("data/tmp/" + mappingFileName + ".jsonld");
 
@@ -72,19 +71,21 @@ public class EtlRestImpl implements EtlRest {
         } catch (Exception e) {
             throw ErrorUtils.sendError("Error parsing mapping file", Response.Status.BAD_REQUEST);
         }
+        logger.info("Mapping File Uploaded: " + mappingPath);
 
         Model model;
+        File delimitedFile = new File("data/tmp/" + fileName + ".csv");
         try {
-            model = sesameModel(csvConverter.convert(new File("data/tmp/" + fileName + ".csv"),
-                    new File("data/tmp/" + mappingFileName + ".jsonld")));
+            model = sesameModel(csvConverter.convert(delimitedFile, new File(mappingPath.toString())));
         } catch (Exception e) {
             throw ErrorUtils.sendError("Error converting CSV to JSON-LD", Response.Status.BAD_REQUEST);
-        } 
+        }
+        logger.info("File mapped: " + delimitedFile.getPath());
 
         StringWriter sw = new StringWriter();
         Rio.write(model, sw, RDFFormat.JSONLD);
         JSONObject json = new JSONObject();
-        json.put("fileName", mappingFileName);
+        json.put("mappingFileName", mappingFileName);
         json.put("data", sw.toString());
 
         return Response.status(200).entity(json.toString()).build();
@@ -92,13 +93,13 @@ public class EtlRestImpl implements EtlRest {
 
     @Override
     public Response getRows(String fileName, int rowEnd) {
-        File file = new File("data/tmp/" + fileName);
+        File file = new File("data/tmp/" + fileName + ".csv");
         int numRows = rowEnd;
         if (numRows <= 0) {
             numRows = 10;
         }
 
-        logger.info("Getting " + numRows + " rows from " + fileName);
+        logger.info("Getting " + numRows + " rows from " + file.getName());
         String json;
         try {
             json = convertRows(file, numRows);
