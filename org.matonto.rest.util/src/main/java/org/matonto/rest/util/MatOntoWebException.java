@@ -69,7 +69,7 @@ public class MatOntoWebException extends WebApplicationException {
     }
     
     public MatOntoWebException(String message, Throwable ex) {
-        this(message, ex, 500);
+        this(message, ex, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     public MatOntoWebException(String message, Response.Status status) {
