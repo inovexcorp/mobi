@@ -1,6 +1,8 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+$sidebar-width: 150px;
+
 .mapper {
     /* styles for the right side */
     .viewer {
@@ -8,6 +10,52 @@
         table {
             font-size: 12px;
             margin-bottom: 0;
+        }
+    }
+    #mapper-content {
+        margin-left: $sidebar-width;
+        height: 100%;
+    }
+    #sidebar-wrapper {
+        background-color: lightgray;
+        height: 100%;
+        display: inline-block;
+        padding: 1em;
+        width: $sidebar-width;
+        float: left;
+
+        #step-through {
+            text-align: center;
+
+            .complete {
+                font-weight: normal;
+                color: black;
+            }
+            .active {
+                font-weight: bold;
+                color: black;
+            }
+            .upcoming {
+                font-weight: lighter;
+                color: #8A8A8A;
+            }
+        }
+    }
+    #file-form {
+        margin-bottom: 1em;
+    }
+    #table-container {
+        position: relative;
+        padding-top: 25px;
+        background-color: #fff;
+        overflow-y: auto;
+        -webkit-transition: all 0.5s linear;
+        transition: all 0.2s linear;
+
+        #toggle-table {
+            position: absolute;
+            top: 0;
+            right: 0;
         }
     }
 }

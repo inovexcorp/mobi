@@ -1,0 +1,17 @@
+<div id="fixed-height-container" ng-style="{'height': dvm.initialHeight + 'px'}">
+    <div id="table-container" ng-show="rows && rows.length" ng-style="{'height': dvm.containerHeight, 'top': dvm.containerTop}">
+        <button type="button" id="toggle-table" ng-click="dvm.toggleTable(); onClick({big: dvm.big})"><span class="fa" ng-class="{'fa-expand': !dvm.big, 'fa-compress': dvm.big}"></span></button>
+        <table id="file-preview" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th ng-repeat="item in headers">{{item}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="row in rows track by $index">
+                    <td ng-repeat="item in row track by $index">{{item}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

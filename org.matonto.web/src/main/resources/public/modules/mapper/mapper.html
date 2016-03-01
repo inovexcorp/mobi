@@ -1,89 +1,13 @@
 <!-- mapper.html -->
 <div class="mapper clearfix" ng-controller="MapperController as vm">
-    <div class="row">
-        <!-- navigation structure -->
-        <aside class="col-md-3 col-sm-4 col-xs-6">
-            <div class="boxed tree">
-                <!-- title for the links on this page -->
-                <strong>ETL Endpoint Links</strong>
-                <!-- delimited data files -->
-                <ul>
-                    <li ng-repeat="file in vm.files track by $index">
-                        <a ng-click="vm.index = $index;"
-                           ng-class="{'active': vm.index === $index && !vm.showUploadOverlay}">
-                            <i class="fa fa-fw fa-file-o"></i>{{file.name}}
-                        </a>
-                    </li>
-                </ul>
-                <!-- links -->
-                <div class="creator">
-                    <!-- upload link -->
-                    <a ng-click="vm.showUploadOverlay = true;"
-                       ng-class="{'active': vm.showUploadOverlay}">
-                        <i class="fa fa-upload fa-fw"></i>Upload Delimited File
-                    </a>
-                </div>
-            </div>
-        </aside>
-
-        <!-- dataset viewer -->
-        <section class="col-md-9 col-sm-8 col-xs-6">
-            <div class="boxed viewer">
-                <!-- default -->
-                <div ng-show="vm.index == undefined" class="tab default">
-                    <p class="lead">Welcome to the DataSet Mapper!</p>
-                    <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
-                </div>
-                <!-- dataset viewer -->
-                <div ng-show="vm.index != undefined">
-                    <!-- selected file name -->
-                    <h4 class="section-header">{{vm.files[vm.index].name}}</h4>
-                    <!-- preview of the file data -->
-                    <div class="tab">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th ng-repeat="item in vm.files[vm.index].header">{{item}}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="row in vm.files[vm.index].rows track by $index">
-                                    <td ng-repeat="item in row track by $index">{{item}}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- add data overlay -->
-        <div class="overlay sm" ng-show="vm.showUploadOverlay">
-            <!-- content container -->
-            <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off"
-                  ng-submit="vm.submitUpload(vm.uploadForm.$valid, vm.inputStream, vm.fileName);">
-                <!-- spinner -->
-                <div class="spinner" ng-show="vm.showSpinner">
-                    <i class="fa fa-spinner fa-spin fa-3x"></i>
-                </div>
-                <!-- section header -->
-                <h6>New Delimited Data</h6>
-                <!-- file -->
-                <div class="form-group">
-                    <label for="inputStream">Source file</label>
-                    <div id="inputStream" file-input="vm.inputStream"></div>
-                </div>
-                <!-- name -->
-                <div class="form-group">
-                    <label for="fileName">MatOnto File Label</label>
-                    <input type="text" class="form-control" id="fileName" ng-model="vm.fileName" required />
-                </div>
-                <!-- buttons -->
-                <div class="btn-container clearfix">
-                    <button type="submit" class="btn btn-primary pull-right" ng-disabled="!vm.inputStream || vm.uploadForm.$invalid">Add</button>
-                    <button type="button" class="btn btn-default pull-right" ng-click="vm.showUploadOverlay = false;">Cancel</button>
-                </div>
-            </form>
-        </div>
+    <step-through-sidebar active-index="vm.activeStep"></step-through-sidebar>
+    <div id="mapper-content" class="container-fluid">
+        <file-form ng-if="vm.activeStep === 0" 
+            ng-model="vm.delimitedFile" 
+            on-upload-click="vm.submitFileUpload()" 
+            on-continue-click="vm.displayChooseMapping()"
+            separator="vm.delimitedSeparator"
+            contains-headers="vm.delimitedContainsHeaders"></file-form>
+        <file-preview-table ng-if="vm.filePreview" rows="vm.filePreview.rows" headers="vm.filePreview.headers" on-click="vm.togglePreview(big)"></file-preview-table>
     </div>
 </div>

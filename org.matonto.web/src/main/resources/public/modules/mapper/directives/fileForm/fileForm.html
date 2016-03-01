@@ -1,0 +1,25 @@
+<form id="file-form">
+    <div class="form-group">
+        <h3>Choose File</h3>
+        <div file-input="dvm.delimitedFile"></div>
+    </div>
+    <div class="form-group">
+        <input type="checkbox" ng-model="dvm.containsHeaders">Contains headers</input>
+    </div>
+    <div class="form-group">
+        <div class="radio"><label>
+            <input type="radio" value="comma" ng-model="dvm.separator"/>
+            Comma
+        </label></div>
+        <div class="radio"><label>
+            <input type="radio" value="tab" ng-model="dvm.separator"/>
+            Tab
+        </label></div>
+        <div class="radio"><label>
+            <input type="radio" value="space" ng-model="dvm.separator"/>
+            Single space
+        </label></div>
+    </div>
+    <button id="upload-btn" type="button" class="btn btn-primary" ng-disabled="!dvm.delimitedFile" ng-click="dvm.uploaded = true; onUploadClick()">Upload</button>
+    <button id="continue-btn" type="button" class="btn btn-primary pull-right" ng-show="dvm.uploaded" ng-click="onContinueClick()">Continue</button>
+</form>
