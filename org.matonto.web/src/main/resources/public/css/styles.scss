@@ -1,0 +1,443 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+/* General page spacing */
+body {
+    bottom: 0;
+    left: 0;
+    max-height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    /* All <a> tags have the pointer cursor */
+    a {
+        cursor: pointer;
+    }
+
+    /* Error message font */
+    .error-msg {
+        color: #f00;
+        font-weight: bold;
+    }
+
+    .has-error {
+        /* Error label font */
+        .control-label {
+            color: #f00;
+        }
+
+        /* Error message input border */
+        .form-control {
+            border-color: #f00;
+
+            &:focus {
+                border-color: #e00;
+            }
+        }
+
+        /* Error message spacing when below form inputs */
+        .error-msg {
+            margin-top: 5px;
+        }
+    }
+
+    &.beta {
+        /* adds extra space at the top for the banner */
+        &:not(.left-nav) > .view-container {
+            padding-top: 93px;
+        }
+        > .view-container {
+            padding-top: 44px;
+        }
+        &.left-nav nav .nav,
+        .nav {
+            margin-top: 29px;
+        }
+
+        /* beta banner styles */
+        .beta-banner {
+            background: #f00;
+            color: #fff;
+            margin: 0;
+            padding: 5px 10px;
+            position: absolute;
+            width: 100%;
+            z-index: 1;
+        }
+    }
+
+    /* spinner background styles */
+    .spinner {
+        background: #fff;
+        height: 100%;
+        left: 0;
+        opacity: .5;
+        position: absolute;
+        top: 0;
+        width: 100%;
+        z-index: 3;
+
+        /* spinner icon styles */
+        .fa-spinner {
+            left: 50%;
+            position: absolute;
+            top: 50%;
+
+            -webkit-transform: translate(-50%, -50%);
+               -moz-transform: translate(-50%, -50%);
+                -ms-transform: translate(-50%, -50%);
+                    transform: translate(-50%, -50%);
+        }
+    }
+
+    /* styles for the left nav */
+    &.left-nav {
+        /* adds more padding if the words are shown */
+        &.show-words > .view-container {
+            padding-left: 140px;
+        }
+
+        /* adds extra padding to the left if the nav bar is positioned over there */
+        > .view-container {
+            padding-left: 75px;
+        }
+    }
+
+    /* adds extra padding top if the nav bar is positioned up there */
+    &:not(.left-nav) > .view-container {
+        padding-top: 64px;
+    }
+
+    /* view container spacing with extra on the bottom for the icon buttons */
+    > .view-container {
+        padding: 15px;
+
+        /* removes top margin from page headers */
+        h1 {
+            margin-top: 0;
+        }
+    }
+}
+
+/* clears out ul styles */
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* icons to change the nav menu layout
+.nav-layout-options {
+    bottom: 0;
+    float: right;
+    position: fixed;
+    right: 15px;
+
+    /* icon styles
+    .fa {
+        display: inline-block;
+        cursor: pointer;
+        opacity: .25;
+        padding: 10px 6px;
+        text-decoration: none;
+
+        /* change opacity on hover
+        &:hover {
+            opacity: 1;
+        }
+    }
+} */
+
+/* standard box style and height */
+.boxed {
+    border: 1px solid $gray-dark;
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Overlay styles */
+.overlay {
+    background-color: rgba(0,0,0,.5);
+    bottom: 0;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 3;
+
+    /* small sized overlay */
+    &.sm .content {
+        width: 350px;
+    }
+
+    /* large sized overlay */
+    &.lg .content {
+        width: 750px;
+    }
+
+    /* overlay content styles */
+    .content {
+        background: #fff;
+        border: 1px solid #fff;
+        border-radius: 5px;
+        left: 0;
+        margin: 100px auto 0;
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 500px;
+
+        /* header text style */
+        h6 {
+            background-color: $brand-primary;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            color: #fff;
+            font-size: 1.05em;
+            margin: -10px -10px 10px;
+            padding: 10px;
+        }
+    }
+}
+
+/* button styles */
+.btn-container {
+    .checkbox {
+        margin-bottom: 6px;
+        margin-top: 7px;
+    }
+
+    /* adds margin depending on which way the button is pulled */
+    .btn {
+        &.pull-left {
+            margin-right: 10px;
+        }
+        &.pull-right {
+            margin-left: 10px;
+        }
+    }
+}
+
+/* adds spacing for icons in buttons */
+.btn .fa {
+    margin-right: 2px;
+}
+
+/* tree styles */
+/* Styles for the left side of the screen */
+.tree {
+    padding: 10px;
+
+    /* Anchor inherits the color of parent and fills container completely */
+    a {
+        color: inherit;
+        cursor: pointer;
+        display: inline-block;
+        text-decoration: none;
+        padding: 3px 4px;
+        width: 100%;
+
+        /* Increases the padding for links without icons */
+        &.text-only {
+            padding: 3px 4px 3px 10px;
+        }
+
+        /* The tree node changes are unsaved */
+        &.unsaved .unsaved-icon {
+            color: $brand-danger;
+            line-height: 19px;
+            padding-left: 0;
+            padding-right: 5px;
+        }
+
+        /* Hover changes color and background color */
+        &:hover,
+        &.active,
+        &.active .unsaved-icon,
+        &.unsaved:hover .unsaved-icon {
+            background-color: $brand-primary;
+            color: #fff;
+        }
+
+        /* adds some spacing to the right of the icons */
+        > .fa.fa-fw {
+            margin-right: 2px;
+        }
+    }
+
+    /* The create links are a different color by default so need their own styles */
+    .creator a {
+        color: $brand-primary;
+
+        /* Changes color to white on hover */
+        &:hover,
+        &.active {
+            color: #fff;
+        }
+
+        /* Gray out text whenever the link is disabled */
+        &.disabled,
+        &.disabled:hover {
+            background-color: #fff;
+            color: $gray-lighter;
+            cursor: not-allowed;
+        }
+    }
+
+    /* General styles for the ul elements */
+    ul {
+        /* Padding to match the width of the icons */
+        ul,
+        .creator {
+            border-left: 1px solid $gray-lighter;
+            margin-left: 1.28571429em;
+        }
+
+        /* The list items which contain an anchor for all of the items in the tree */
+        li {
+            width: 100%;
+
+            /* Class identifying that it contains a <ul> element */
+            &.container {
+                margin: 0;
+                padding: 0;
+            }
+        }
+    }
+}
+
+/* makes the height of the containers 100% so scrolling works as expected */
+.view-container,
+.view-container > div,
+.view-container > div > .row,
+aside,
+section,
+section > form,
+.tree-container {
+    height: 100%;
+}
+
+/* scroll styles */
+.scroll-without-buttons,
+.tab:not(.default) {
+    bottom: 1px;
+    left: 16px;
+    overflow-y: auto;
+    position: absolute;
+    right: 16px;
+    top: 34px;
+}
+
+/* table with inputs */
+.input-table {
+    margin: 0;
+
+    /* table header cell styles */
+    > thead > tr > th.action-button {
+        width: 37px;
+    }
+
+    /* table body cell styles */
+    > tbody > tr > td {
+        padding: 0;
+        position: relative;
+
+        &.action-button {
+            text-align: center;
+        }
+
+        /* Removes all input styles to make the table look better */
+        input {
+            background-color: transparent;
+            border: 0;
+            padding: 8px 35px 8px 8px;
+            width: 100%;
+        }
+
+        /* The plus button in the prefix table to add new rows */
+        .add,
+        .remove {
+            padding: 7px 12px;
+        }
+
+        /* absolutely positions the edit button */
+        .edit {
+            bottom: 0;
+            padding: 7px 8px;
+            position: absolute;
+            right: 0;
+        }
+    }
+}
+
+/* pads the outside of the tab elements */
+.tab {
+    padding: 15px;
+}
+
+/* section title */
+.section-header {
+    background: $brand-primary;
+    color: #fff;
+    font-size: 16px;
+    margin: 0;
+    padding: 6px 15px 10px;
+}
+
+/* static form display spacing */
+.form-control-static {
+    min-height: auto;
+    padding: 0 0 0 13px;
+}
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 3px;
+
+    &.open {
+        border-color: #66afe9;
+        outline: 0;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
+                box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
+    }
+
+    input.ui-select-search {
+        margin: 2px 0 1px;
+        padding: 0 9px;
+    }
+
+    .ui-select-match-item {
+        margin-bottom: 2px;
+    }
+}
+
+.btn.btn-circle {
+    border-radius: 28px;
+    box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
+    padding: 16px 14px;
+
+    &.small {
+        border-radius: 25px;
+        padding: 13px 11px;
+
+        .fa {
+            font-size: 1.25em;
+        }
+    }
+
+    &:hover {
+        box-shadow: 0 0 6px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.32);
+        -webkit-transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
+                transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
+    }
+
+    &:focus {
+        outline: 0;
+    }
+
+    .fa {
+        font-size: 1.5em;
+        margin: 0;
+    }
+}
