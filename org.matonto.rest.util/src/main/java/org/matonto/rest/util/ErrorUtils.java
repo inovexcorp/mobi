@@ -9,13 +9,13 @@ public class ErrorUtils {
     private static final Logger logger = LoggerFactory.getLogger(ErrorUtils.class);
 
     /**
-     * Logs the HTTP error and throws a WebApplicationException with the error status,
+     * Logs the HTTP error and returns a WebApplicationException with the error status,
      * message, and original exception.
      *
      * @param thw the original exception thrown
      * @param msg the message to be displayed about the error
      * @param status the HTTP status code for the error
-     * @return a WebApplicationException with the HTTP error status and message
+     * @return a MatOntoWebException with the HTTP error status and message
      */
     public static MatOntoWebException sendError(Throwable thw, String msg, Response.Status status)
             throws MatOntoWebException {
@@ -24,12 +24,12 @@ public class ErrorUtils {
     }
 
     /**
-     * Logs the HTTP error and throws a WebApplicationException with the error status
+     * Logs the HTTP error and returns a WebApplicationException with the error status
      * and message.
      *
      * @param msg the message to be displayed about the error
      * @param status the HTTP status code for the error
-     * @return a WebApplicationException with the HTTP error status and message
+     * @return a MatOntoWebException with the HTTP error status and message
      */
     public static MatOntoWebException sendError(String msg, Response.Status status)
             throws MatOntoWebException {

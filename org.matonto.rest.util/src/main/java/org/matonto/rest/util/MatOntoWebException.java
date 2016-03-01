@@ -1,6 +1,5 @@
 package org.matonto.rest.util;
 
-import javax.swing.text.StringContent;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
@@ -45,7 +44,9 @@ public class MatOntoWebException extends WebApplicationException {
         }
     }
 
-    public MatOntoWebException() { }
+    public MatOntoWebException() {
+        super();
+    }
 
     public MatOntoWebException(int status) {
         super(status);
@@ -64,7 +65,7 @@ public class MatOntoWebException extends WebApplicationException {
     }
 
     public MatOntoWebException(String message) {
-        this(message, 500);
+        this(message, Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
     
     public MatOntoWebException(String message, Throwable ex) {
