@@ -33,6 +33,7 @@
     "angular-ui-router": "^0.2.18",
     "bootstrap": "^3.3.6",
     "font-awesome": "^4.5.0",
+    "lodash": "^4.6.0",
     "ui-select": "^0.13.3"
   }
 }
