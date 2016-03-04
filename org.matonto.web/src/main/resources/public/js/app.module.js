@@ -21,5 +21,6 @@
             'stringSelect',
             'circleButton',
             'customButton'
-        ]);
+        ])
+        .constant('_', window._);
 })();
