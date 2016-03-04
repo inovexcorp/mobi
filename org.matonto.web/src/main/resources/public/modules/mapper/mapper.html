@@ -1,11 +1,25 @@
 <!-- mapper.html -->
 <div class="mapper clearfix" ng-controller="MapperController as vm">
+    <!-- Step through sidebar -->
     <step-through-sidebar active-index="vm.activeStep"></step-through-sidebar>
+
+    <!-- Overlays -->
+    <mapping-select-overlay ng-if="vm.activeStep === 1" 
+        on-click-back="vm.closeMappingSelect()" 
+        on-click-continue="vm.displayOntologySelect(mappingType, mappingName)"></mapping-select-overlay>
+    <ontology-select-overlay ng-if="vm.activeStep === 2"
+        on-click-back="vm.displayMappingSelect()" 
+        on-click-continue="vm.displayBaseClassSelect(ontologyId)"></ontology-select-overlay>
+    <base-class-select-overlay ng-if="vm.activeStep === 3" ontology-id="vm.ontologyId"
+        on-click-back="vm.displayOntologySelect()" 
+        on-click-continue="vm.displayEditMapping(baseClassId)"></base-class-select-overlay>
+
+    <!-- Content besides step through sidebar -->
     <div id="mapper-content" class="container-fluid">
         <file-form ng-if="vm.activeStep === 0" 
             ng-model="vm.delimitedFile" 
             on-upload-click="vm.submitFileUpload()" 
-            on-continue-click="vm.displayChooseMapping()"
+            on-continue-click="vm.displayMappingSelect()"
             separator="vm.delimitedSeparator"
             contains-headers="vm.delimitedContainsHeaders"></file-form>
         <file-preview-table ng-if="vm.filePreview" rows="vm.filePreview.rows" headers="vm.filePreview.headers" on-click="vm.togglePreview(big)"></file-preview-table>

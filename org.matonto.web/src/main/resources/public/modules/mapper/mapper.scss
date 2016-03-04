@@ -2,6 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 $sidebar-width: 150px;
+$overlay-height: 450px;
 
 .mapper {
     /* styles for the right side */
@@ -56,6 +57,33 @@ $sidebar-width: 150px;
             position: absolute;
             top: 0;
             right: 0;
+        }
+    }
+    .content {
+        min-height: $overlay-height;
+    }
+    div.overlay-button-container {
+        clear: both;
+    }
+    #mapping-select-overlay {
+        div.form-group {
+            width: 50%;
+            float: left;
+            height: ($overlay-height - 75);
+        }
+    }
+    #ontology-select-overlay {
+        #ontology-select, .ontology-preview {
+            width: 50%;
+            float: left;
+            height: ($overlay-height - 75);
+        }
+    }
+    #base-class-select-overlay {
+        #class-select, .class-preview {
+            width: 50%;
+            float: left;
+            height: ($overlay-height - 75);
         }
     }
 }

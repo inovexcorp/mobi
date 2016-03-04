@@ -1,0 +1,31 @@
+<div id="mapping-select-overlay" class="overlay lg">
+    <form class="content" name="mappingForm">
+        <h6>Choose Mapping</h6>
+        <div id="new-mapping-radio" class="form-group">
+            <label>
+                <input type="radio" value="new" ng-model="dvm.mappingType"/>
+                New
+            </label>
+            <br/>
+            <label ng-show="dvm.mappingType === 'new'">
+                Name
+                <input type="text" name="mappingName" ng-model="dvm.mappingName" ng-required="dvm.mappingType === 'new'"/>
+            </label>
+        </div>
+        <div id="previous-mapping-radio" class="form-group">
+            <label>
+                <input type="radio" value="previous" ng-model="dvm.mappingType" ng-change="dvm.mappingName = ''"/>
+                Previous
+            </label>
+            </br/>
+<!--             <select ng-show="dvm.mappingType === 'previous'">
+                <option ng-repeat="mapping in previousMappings">{{}}</option>
+            </select> -->
+        </div>
+        
+        <div class="overlay-button-container">
+            <button type="button" class="btn btn-primary" ng-click="onClickBack()">Back</button>
+            <custom-button display-text="'Continue'" on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingName})" is-disabled-when="!dvm.mappingType || ( dvm.mappingType === 'new' && !mappingForm.mappingName.$valid)"></custom-button>
+        </div>
+    </form>
+</div>

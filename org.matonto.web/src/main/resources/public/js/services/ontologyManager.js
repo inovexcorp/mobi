@@ -675,9 +675,62 @@
                 return undefined;
             }
 
+            self.getOntologyById = function(ontologyId) {
+                if (ontologyId !== undefined) {
+                    return self.ontologies.find(function(ontology) {
+                        return ontology['@id'] === ontologyId;
+                    });
+                }
+                return undefined;
+            }
+
             self.getOntologyProperty = function(ontology, prop) {
                 if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty(prop)) {
                     return ontology.matonto[prop];
+                }
+                return undefined;
+            }
+
+            self.getClasses = function(ontologyId) {
+                var ontology = self.getOntologyById(ontologyId);
+                if (ontology && ontology.hasOwnProperty('matonto')) {
+                    return ontology.matonto.classes;
+                }
+                return [];
+            }
+
+            self.getClass = function(ontologyId, classId) {
+                var classes = self.getClasses(ontologyId);
+                if (classes.length) {
+                    return classes.find(function(classObj) {
+                        return classObj['@id'] === classId;
+                    });
+                }
+                return undefined;
+            }
+
+            self.getDelimiter = function(ontologyId) {
+                var ontology = self.getOntologyById(ontologyId);
+                if (ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('delimiter')) {
+                    return ontology.matonto.delimiter;
+                }
+                return '';
+            }
+
+            self.getClassProperties = function(ontologyId, classId) {
+                var classObj = self.getClass(ontologyId, classId);
+                if (classObj && classObj.hasOwnProperty('matonto') && classObj.matonto.hasOwnProperty('properties')) {
+                    return classObj.matonto.properties;
+                }
+                return [];
+            }
+
+            self.getClassProperty = function(ontologyId, classId, propId) {
+                var props = self.getClassProperties(ontologyId, classId);
+                if (props.length) {
+                    return props.find(function(prop) {
+                        return prop['@id'] === propId;
+                    });
                 }
                 return undefined;
             }

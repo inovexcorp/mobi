@@ -1,0 +1,17 @@
+<div id="base-class-select-overlay" class="overlay lg">
+    <form class="content">
+        <h6>Choose Base Class</h6>
+        <div id="class-select" class="form-group">
+            <select ng-model="dvm.selectedClassId">
+                <option ng-repeat="classObj in dvm.getClasses(dvm.ontologyId)" value="{{classObj['@id']}}">{{dvm.createOptionName(classObj)}}</option>
+            </select>
+        </div>
+
+        <class-preview class-obj="dvm.getClass(dvm.ontologyId, dvm.selectedClassId)"></class-preview>
+        
+        <div class="overlay-button-container">
+            <button type="button" class="btn btn-primary" ng-click="onClickBack()">Back</button>
+            <custom-button display-text="'Continue'" on-click="onClickContinue({baseClassId: dvm.selectedClassId})" is-disabled-when="!dvm.selectedClassId"></custom-button>
+        </div>
+    </form>
+</div>

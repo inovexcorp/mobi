@@ -1,0 +1,8 @@
+<div class="ontology-preview">
+    <h3>{{dvm.createTitle()}}</h3>
+    <p>{{dvm.createDescription()}}</p>
+    <h4 ng-show="dvm.ontology">Classes</h4>
+    <ul class="classes">
+        <li ng-repeat="class in dvm.createClassSubList()">{{class}}</li>
+    </ul>
+</div>

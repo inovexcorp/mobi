@@ -21,6 +21,9 @@
                 },
                 controller: function() {
                     var dvm = this;
+                    if (dvm.delimitedFile) {
+                        dvm.uploaded = true;
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/fileForm/fileForm.html'
             }

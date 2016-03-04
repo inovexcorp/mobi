@@ -1,0 +1,11 @@
+<div id="class-list-container">
+    <ul>
+        <li ng-repeat="classId in dvm.getClassIds()" class="class" ng-class="{'base': classId === dvm.baseClassId}">
+            <a>{{dvm.getClassName(classId)}}</a>
+            <ul>
+                <li ng-repeat="propId in dvm.getPropIds(classId)">{{dvm.getPropName(classId, propId)}}</li>
+                <li ng-show="!dvm.mappedAllProps(classId)"><a ng-click="clickAddProp({classId: classId})"><i class="fa fa-plus"></i> Add Property</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>

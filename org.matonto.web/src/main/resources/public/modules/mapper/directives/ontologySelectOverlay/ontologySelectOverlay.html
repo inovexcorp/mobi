@@ -1,0 +1,17 @@
+<div id="ontology-select-overlay" class="overlay lg">
+    <form class="content">
+        <h6>Choose Ontology</h6>
+        <div id="ontology-select" class="form-group">
+            <select ng-model="dvm.selectedOntologyId">
+                <option ng-repeat="ontology in dvm.getOntologies()" value="{{ontology['@id']}}">{{dvm.createOptionName(ontology)}}</option>
+            </select>
+        </div>
+
+        <ontology-preview ontology="dvm.getOntologyById(dvm.selectedOntologyId)"></ontology-preview>
+        
+        <div class="overlay-button-container">
+            <button type="button" class="btn btn-primary" ng-click="onClickBack()">Back</button>
+            <custom-button display-text="'Continue'" on-click="onClickContinue({ontologyId: dvm.selectedOntologyId})" is-disabled-when="!dvm.selectedOntologyId"></custom-button>
+        </div>
+    </form>
+</div>
