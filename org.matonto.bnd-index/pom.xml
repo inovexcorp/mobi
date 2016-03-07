@@ -21,6 +21,11 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>rest.util</artifactId>
+            <version>1.0.29-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
             <version>1.0.29-SNAPSHOT</version>
         </dependency>
