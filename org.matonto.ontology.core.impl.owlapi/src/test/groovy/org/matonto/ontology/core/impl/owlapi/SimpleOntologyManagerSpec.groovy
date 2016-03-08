@@ -68,11 +68,4 @@ class SimpleOntologyManagerSpec extends Specification {
 
     // TODO: Test deleteOntology
 
-    // TODO: Test createOntology
-
-    // TODO: Test getOntologyRegistry
-
-    // TODO: Test createOntologyId
-
-    // TODO: Test createOntologyIri
 }

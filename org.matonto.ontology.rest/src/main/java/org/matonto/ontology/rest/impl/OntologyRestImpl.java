@@ -16,18 +16,17 @@ import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rest.util.ErrorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
+import javax.annotation.Nonnull;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -71,13 +70,15 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntologies(String ontologyIdList) {
-        if (ontologyIdList == null || ontologyIdList.length() == 0)
-            throw sendError("ontologyIdList is missing", Response.Status.BAD_REQUEST);
+        if (ontologyIdList == null || ontologyIdList.length() == 0) {
+            throw ErrorUtils.sendError("ontologyIdList is missing", Response.Status.BAD_REQUEST);
+        }
 
         List<String> ontologyIds = Arrays.asList(ontologyIdList.trim().split("\\s*,\\s*"));
 
-        if (ontologyIds.isEmpty())
-            throw sendError("Invalid ontology id(s) on the list", Response.Status.BAD_REQUEST);
+        if (ontologyIds.isEmpty()) {
+            throw ErrorUtils.sendError("Invalid ontology id(s) on the list", Response.Status.BAD_REQUEST);
+        }
 
         return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
     }
@@ -91,7 +92,8 @@ public class OntologyRestImpl implements OntologyRest {
             ontology = manager.createOntology(fileInputStream);
             persisted = manager.storeOntology(ontology);
         } catch (MatontoOntologyException ex) {
-            throw sendError(ex, "Exception occurred while processing ontology.", Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
@@ -149,20 +151,23 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response deleteOntology(String ontologyIdStr) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            throw sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+        }
 
         boolean deleted;
         try {
             Resource resource;
-            if (isBNodeString(ontologyIdStr.trim()))
+            if (isBNodeString(ontologyIdStr.trim())) {
                 resource = factory.createBNode(ontologyIdStr.trim());
-            else
+            } else {
                 resource = factory.createIRI(ontologyIdStr.trim());
+            }
 
             deleted = manager.deleteOntology(resource);
         } catch (MatontoOntologyException ex) {
-            throw sendError(ex, "Exception occurred while deleting ontology.", Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         JSONObject json = new JSONObject();
@@ -350,35 +355,39 @@ public class OntologyRestImpl implements OntologyRest {
      *                    an Ontology component.
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction){
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            throw sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+    private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+        }
 
         Optional<Ontology> optOntology;
 
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
-            throw sendError(ex, "Problem occurred while retrieving ontology", Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, "Problem occurred while retrieving ontology",
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         if (optOntology.isPresent()) {
             return iriFunction.apply(optOntology.get());
         } else {
-            throw sendError("ontology does not exist", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("ontology does not exist", Response.Status.BAD_REQUEST);
         }
     }
     
-    private JSONArray doWithImportedOntologies(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction){
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0)
-            throw sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+    private JSONArray doWithImportedOntologies(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+        }
 
         Set<Ontology> importedOntologies;
 
         try {
             importedOntologies = getImportedOntologies(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
-            throw sendError(ex, "Problem occurred while retrieving imported ontologies", Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, "Problem occurred while retrieving imported ontologies",
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         if (!importedOntologies.isEmpty()) {
@@ -390,21 +399,23 @@ public class OntologyRestImpl implements OntologyRest {
             }
             return ontoArray;
         } else {
-            throw sendError("No imported ontologies found", Response.Status.NO_CONTENT);
+            throw ErrorUtils.sendError("No imported ontologies found", Response.Status.NO_CONTENT);
         }
     }
 
     private JSONArray iriListToJsonArray(@Nonnull List<IRI> iris) {
-        if (iris.isEmpty())
+        if (iris.isEmpty()) {
             return new JSONArray();
+        }
 
         JSONArray array = new JSONArray();
-        for(IRI iri : iris) {
+        for (IRI iri : iris) {
             JSONObject object = new JSONObject();
             object.put("namespace", iri.getNamespace());
             object.put("localName", iri.getLocalName());
-            if(!array.contains(object))
+            if (!array.contains(object)) {
                 array.add(object);
+            }
         }
         return array;
     }
@@ -412,21 +423,22 @@ public class OntologyRestImpl implements OntologyRest {
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
         Resource resource;
         String id = ontologyIdStr.trim();
-        if (isBNodeString(id))
+        if (isBNodeString(id)) {
             resource = factory.createBNode(id);
-        else
+        } else {
             resource = factory.createIRI(id);
+        }
 
         return manager.retrieveOntology(resource);
     }
     
     private Set<Ontology> getImportedOntologies(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
         Optional<Ontology> optOntology = getOntology(ontologyIdStr);
-        if(optOntology.isPresent()) 
+        if (optOntology.isPresent()) {
             return optOntology.get().getDirectImports();
- 
-        else
+        } else {
             return new HashSet<>();
+        }
     }
 
     private JSONArray getOntologies(List<String> ontIds) {
@@ -438,7 +450,8 @@ public class OntologyRestImpl implements OntologyRest {
             try {
                 optOntology = getOntology(id);
             } catch (MatontoOntologyException ex) {
-                throw sendError(ex, "Exception occurred while retrieving ontology.", Response.Status.INTERNAL_SERVER_ERROR);
+                throw ErrorUtils.sendError(ex, "Exception occurred while retrieving ontology.",
+                        Response.Status.INTERNAL_SERVER_ERROR);
             }
 
             if (optOntology.isPresent()) {
@@ -456,16 +469,6 @@ public class OntologyRestImpl implements OntologyRest {
 
     private boolean isBNodeString(String string) {
         return string.matches("^_:.*$");
-    }
-
-    private WebApplicationException sendError(Throwable t, String msg, Response.Status status) {
-        LOG.debug(String.format("%d: %s", status.getStatusCode(), msg), t);
-        throw new WebApplicationException(msg, status);
-    }
-
-    private WebApplicationException sendError(String msg, Response.Status status) throws WebApplicationException {
-        LOG.debug(String.format("%d: %s", status.getStatusCode(), msg));
-        return new  WebApplicationException(msg, status);
     }
 
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
@@ -497,11 +500,12 @@ public class OntologyRestImpl implements OntologyRest {
     
     
     private JSONObject combineJSONObjects(JSONObject... objects) {
-        if(objects.length == 0)
+        if (objects.length == 0) {
             return new JSONObject();
-        
+        }
+
         JSONObject json = new JSONObject();        
-        for(int i=0; i<objects.length; i++) {
+        for (int i = 0; i < objects.length; i++) {
             JSONObject each = objects[i];
             each.keySet().forEach(key -> json.put(key, each.get(key)));
         }
