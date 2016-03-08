@@ -56,6 +56,7 @@ public class SimpleOntology implements Ontology {
 	
 	//Owlapi variables
 	private OWLOntology owlOntology;
+	// Instance initialization block sets MissingImportListener for handling missing imports for an ontology.
 	private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration().setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
 	private final OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
 	{
