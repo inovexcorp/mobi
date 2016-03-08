@@ -1,0 +1,83 @@
+<div class="tree everything-tree scroll-without-buttons">
+    <!-- tree view -->
+    <strong>Everything</strong>
+    <!-- start ontologies -->
+    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
+        <tree-item-with-sub current-entity="ontology"
+                            current-ontology="ontology"
+                            is-active="vm.state.oi === $index && vm.state.ci === undefined && vm.state.pi === undefined"
+                            is-opened="opened"
+                            on-click="vm.selectItem('ontology-editor', $index)"></tree-item-with-sub>
+
+        <li class="container" ng-show="opened">
+            <!-- start classes -->
+            <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
+                <tree-item-with-sub current-entity="class"
+                                    current-ontology="ontology"
+                                    is-active="vm.state.oi === oi && vm.state.ci === $index && vm.state.pi === undefined"
+                                    is-opened="subOpened"
+                                    on-click="vm.selectItem('class-editor', oi, $index)"></tree-item-with-sub>
+
+                <li class="container" ng-show="subOpened">
+                    <!-- start properties -->
+                    <ul>
+                        <tree-item ng-repeat="property in class.matonto.properties"
+                                   current-entity="property"
+                                   current-ontology="ontology"
+                                   is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
+                                   on-click="vm.selectItem('property-editor', oi, ci, $index)"></tree-item>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- start no domains (these will be handled differently later) -->
+            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = false;">
+                <li>
+                    <a ng-click="opened = !opened; $event.stopPropagation();">
+                        <i class="fa fa-fw"
+                           ng-class="{'fa-folder-open-o': opened, 'fa-folder-o': !opened}"></i>Properties
+                    </a>
+                </li>
+                <!-- properties without domains -->
+                <li class="container" ng-show="opened">
+                    <ul>
+                        <tree-item ng-repeat="property in ontology.matonto.noDomains"
+                                   current-entity="property"
+                                   current-ontology="ontology"
+                                   is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
+                                   on-click="vm.selectItem('property-editor', oi, undefined, $index)"></tree-item>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- start others (these will also be handled differently) -->
+            <ul ng-if="ontology.matonto.others.length" ng-init="opened = false;">
+                <li>
+                    <a ng-click="opened = !opened; $event.stopPropagation();">
+                        <i class="fa fa-fw"
+                           ng-class="{'fa-folder-open-o': opened, 'fa-folder-o': !opened}"></i>Others
+                    </a>
+                </li>
+                <li class="container" ng-show="opened">
+                    <ul ng-repeat="other in ontology.matonto.others">
+                        <a>
+                            <i class="fa fa-fw fa-question"></i>{{other[ontology.matonto.rdfs + 'label'][0]['@value'] || ((other['@id'] | splitIRI).end | beautify)}}
+                        </a>
+                    </ul>
+                </li>
+            </ul>
+
+        </li>
+    </ul>
+    <div class="creator">
+        <a ng-click="vm.showUploadOverlay = true;"
+           ng-class="{'active': vm.showUploadOverlay}">
+            <i class="fa fa-upload fa-fw"></i>Upload Ontology
+        </a>
+        <a ng-click="vm.deleteOntology();"
+           ng-class="{'disabled': vm.state.editor !== 'ontology-editor' || vm.state.oi === -1}">
+            <i class="fa fa-trash-o fa-fw"></i>Delete Ontology
+        </a>
+    </div>
+    <!-- end ontologies -->
+</div>

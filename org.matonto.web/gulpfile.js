@@ -2,6 +2,7 @@
 var gulp = require('gulp'),
     cache = require('gulp-cache'),
     concat = require('gulp-concat'),
+    debug = require('gulp-debug'),
     del = require('del'),
     es = require('event-stream'),
     filelog = require('gulp-filelog'),
@@ -16,38 +17,48 @@ var gulp = require('gulp'),
 
 // Project specific path variables
 var src = './src/main/resources/public/',
-    dest = './target/classes/build/';
+    dest = './target/classes/build/',
+    nodeDir = './node_modules/';
 
 // JS and CSS file lists
 // NOTE: This is where we determine the order in which JS files are loaded
 var jsFiles = function(prefix) {
         return [
+            prefix + 'js/services/responseObj.js',
+            prefix + 'js/filters/*.js',
+            prefix + 'js/services/*.js',
+            prefix + 'directives/**/*.js',
+            prefix + 'modules/**/*/services/**/*.js',
+            prefix + 'modules/**/*/directives/**/*.js',
+            prefix + 'modules/**/*.js',
+            prefix + 'js/app.module.js',
+            prefix + 'js/route.config.js'
+        ]
+    },
+    nodeJsFiles = function(prefix) {
+        return [
+            prefix + '*/lodash.min.js',
             prefix + '**/angular.min.js',
             prefix + '**/angular-ui-router.min.js',
-            prefix + '**/ui-bootstrap.min.js',
-            prefix + '**/js/vendor/**/*.js',
-            prefix + '**/js/custom/filters/*.js',
-            prefix + '**/js/custom/services/*.js',
-            prefix + '**/js/custom/directives/*.js',
-            prefix + '**/modules/**/*/services/**/*.js',
-            prefix + '**/modules/**/*/directives/**/*.js',
-            prefix + '**/modules/**/*.js',
-            prefix + '**/app.module.js',
-            prefix + '**/route.config.js'
+            prefix + '**/select.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
         return [
-            prefix + '**/css/vendor/ng-tags-input.min.' + suffix,
-            prefix + '**/css/vendor/ng-tags-input.bootstrap.min.' + suffix,
-            prefix + '**/css/vendor/**/*.' + suffix,
-            prefix + '**/css/custom/**/*.' + suffix,
+            prefix + '**/css/**/*.' + suffix,
             prefix + '**/modules/**/*.' + suffix
+        ]
+    },
+    nodeStyleFiles = function(prefix) {
+        return [
+            prefix + '**/bootstrap.min.css',
+            prefix + '**/font-awesome.min.css',
+            prefix + '**/select.min.css'
         ]
     };
 
 // Inject method for minified and unminified
-var myInject = function(files) {
+var injectFiles = function(files) {
     return gulp.src(dest + 'index.html')
         .pipe(inject(
             gulp.src(files, {read: false}),
@@ -58,7 +69,7 @@ var myInject = function(files) {
 
 // Concatenate and minifies JS Files, right now, manually selecting the bower js files we want
 gulp.task('minify-scripts', function() {
-    return gulp.src(jsFiles(src))
+    return gulp.src(nodeJsFiles(nodeDir).concat(jsFiles(src)))
         .pipe(concat('main.js'))
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
@@ -69,7 +80,7 @@ gulp.task('minify-scripts', function() {
 gulp.task('minify-css', function() {
     var sassFiles = gulp.src(styleFiles(src, 'scss'))
             .pipe(sass().on('error', sass.logError)),
-        cssFiles = gulp.src(styleFiles(src, 'css'));
+        cssFiles = gulp.src(nodeStyleFiles(nodeDir).concat(styleFiles(src, 'css')));
     return es.concat(cssFiles, sassFiles)
         .pipe(concat('main.css'))
         .pipe(rename({suffix: '.min'}))
@@ -79,12 +90,12 @@ gulp.task('minify-css', function() {
 
 // Injects minified CSS and JS files
 gulp.task('inject-minified', ['minify-scripts', 'minify-css', 'html'], function() {
-    return myInject([dest + '**/*.js', dest + '**/*.css']);
+    return injectFiles([dest + '**/*.js', dest + '**/*.css']);
 });
 
 // Compresses images
 gulp.task('images', function() {
-    return gulp.src(src + 'img/**/*')
+    return gulp.src(src + 'images/**/*')
         .pipe(cache(
             imagemin({
                 optimizationLevel: 5,
@@ -101,21 +112,22 @@ gulp.task('html', function() {
         .pipe(gulp.dest(dest));
 });
 
-// Moves all of the html files to build folder
-gulp.task('fonts', function() {
-    return gulp.src([src + '**/fonts/*'])
+// Moves all bower js files to build folder
+gulp.task('move-node-js', function() {
+    return gulp.src(nodeJsFiles(nodeDir))
         .pipe(flatten())
-        .pipe(gulp.dest(dest + '/fonts'));
+        .pipe(gulp.dest(dest + 'js'));
 });
 
-// Moves the file to the bundle expected location
-gulp.task('prepare-for-bundle', function() {
-    return gulp.src([dest + '**/*', src + '**/*.json'])
-        .pipe(gulp.dest('target/classes/build'));
+// Moves all bower css files to build folder
+gulp.task('move-node-css', function() {
+    return gulp.src(nodeStyleFiles(nodeDir))
+        .pipe(flatten())
+        .pipe(gulp.dest(dest + 'css'));
 });
 
-// Moves all files to build folder
-gulp.task('move-all', function() {
+// Moves all custom files to build folder
+gulp.task('move-custom', function() {
     return gulp.src(src + '**/*')
         .pipe(ignore.exclude('**/*.scss'))
         .pipe(gulp.dest(dest));
@@ -129,17 +141,21 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['move-all', 'change-to-css'], function() {
-    return myInject(jsFiles(dest).concat(styleFiles(dest, 'css')));
+gulp.task('inject-unminified', ['move-custom', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+    var allJsFiles = nodeJsFiles(dest).concat(jsFiles(dest)),
+        allStyleFiles = nodeStyleFiles(dest).concat(styleFiles(dest, 'css')),
+        allFiles = allJsFiles.concat(allStyleFiles);
+    return injectFiles(allFiles);
 });
 
-// Deletes old build directory
-gulp.task('clean', function() {
-    del([dest]);
+// Get icons from font-awesome
+gulp.task('icons', function() {
+    return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
+        .pipe(gulp.dest(dest + 'fonts'));
 });
 
 // Production Task (minified)
-gulp.task('prod', ['minify-scripts', 'minify-css', 'images', 'html', 'fonts', 'inject-minified']);
+gulp.task('prod', ['minify-scripts', 'minify-css', 'images', 'html', 'inject-minified', 'icons']);
 
 // Default Task (un-minified)
-gulp.task('default', ['move-all', 'change-to-css', 'inject-unminified']);
+gulp.task('default', ['move-custom', 'change-to-css', 'inject-unminified', 'icons']);

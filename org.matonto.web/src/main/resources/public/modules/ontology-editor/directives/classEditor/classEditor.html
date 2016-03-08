@@ -1,0 +1,56 @@
+<form name="vm.classForm" class="clearfix" novalidate autocomplete="off">
+    <!-- tab buttons -->
+    <div class="btn-group btn-group-justified" role="group">
+        <tab-button is-active="vm.state.editorTab === 'basic'"
+                    on-click="vm.setEditorTab('basic')"
+                    display-text="vm.state.ci !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'axioms'"
+                    on-click="vm.setEditorTab('axioms')"
+                    display-text="'Axioms'"></tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'annotations'"
+                    on-click="vm.setEditorTab('annotations')"
+                    display-text="'Annotations'"></tab-button>
+    </div>
+
+    <!-- basic tab -->
+    <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
+        <!-- static iri -->
+        <static-iri></static-iri>
+
+        <!-- rdfs:label -->
+        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
+                    display-text="'Label'"
+                    muted-text="vm.rdfs + 'label'"
+                    change-event="vm.entityChanged()"></text-input>
+
+        <!-- rdfs:comment -->
+        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
+                   display-text="'Comment'"
+                   muted-text="vm.rdfs + 'comment'"
+                   change-event="vm.entityChanged()"></text-area>
+    </div>
+
+    <!-- axioms tab -->
+    <div ng-if="vm.state.editorTab === 'axioms'" class="tab clearfix">
+        <!-- rdfs:subClassOf -->
+        <object-select ng-model="vm.selected[vm.rdfs + 'subClassOf']"
+                       display-text="'Sub Class Of'"
+                       muted-text="vm.rdfs + 'subClassOf'"
+                       change-event="vm.entityChanged()"
+                       select-list="vm.ontology.matonto.subClasses"></object-select>
+
+        <!-- owl:disjointWith -->
+        <object-select ng-model="vm.selected[vm.rdfs + 'disjointWith']"
+                       display-text="'Disjoint With'"
+                       muted-text="vm.rdfs + 'disjointWith'"
+                       change-event="vm.entityChanged()"
+                       select-list="vm.ontology.matonto.subClasses"></object-select>
+    </div>
+
+    <!-- annotations tab -->
+    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
+        <annotation-tab></annotation-tab>
+    </div>
+</form>
