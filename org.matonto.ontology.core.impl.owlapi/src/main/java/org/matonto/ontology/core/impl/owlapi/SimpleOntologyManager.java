@@ -22,6 +22,7 @@ import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
@@ -179,7 +180,8 @@ public class SimpleOntologyManager implements OntologyManager {
             stmts.forEach(stmt -> sesameModel.add(transformer.sesameStatement(stmt)));
 	    	RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
 	    	onto = mgr.createOntology();
-	    	parser.parse(new RioMemoryTripleSource(sesameModel), onto, new OWLOntologyLoaderConfiguration());
+	    	OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration().setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+	    	parser.parse(new RioMemoryTripleSource(sesameModel), onto, config);
 	    	
 		} catch (OWLOntologyCreationException | IOException e) {
 			throw new MatontoOntologyException("Unable to create an ontology object", e);
