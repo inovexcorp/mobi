@@ -6,6 +6,7 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 
@@ -34,6 +35,14 @@ public interface Ontology {
      * and Ontology identifier
      */
 	OntologyId getOntologyId();
+	
+	/**
+	 * Returns the set of IRIs of unloadable imported ontologies.  The set is accumulated during loading the
+	 * ontology from an ontology document or an ontology IRI.
+	 * 
+	 * @return set of IRIs
+	 */
+	Set<IRI> getUnloadableImportIRIs();
 	
 	/**
 	 * Gets the set of loaded ontologies that this ontology is related to via the directlyImports relation.

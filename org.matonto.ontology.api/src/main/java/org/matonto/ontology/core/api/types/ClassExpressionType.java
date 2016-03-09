@@ -27,7 +27,7 @@ public enum ClassExpressionType {
 	OBJECT_COMPLEMENT_OF("ObjectComplementOf"), 
 	OBJECT_ONE_OF("ObjectOneOf");
 
-	private final String name;
+	private final String className;
 	private final String prefixedName;
 	private final IRI iri;
     private static ValueFactory factory;
@@ -38,32 +38,32 @@ public enum ClassExpressionType {
         factory = vf;
     }
     
-	ClassExpressionType(@Nonnull String name) {
-		this.name = name;
-		prefixedName = ("owl" + ':' + name);
-		iri = createIRI("http://www.w3.org/2002/07/owl#", name);
+	ClassExpressionType(@Nonnull String className) {
+		this.className = className;
+		prefixedName = ("owl" + ':' + className);
+		iri = createIRI("http://www.w3.org/2002/07/owl#", className);
 	}
 	
 	private IRI createIRI(String namespace, String localName)
     {
-        return factory.createIRI(namespace.toString(), localName);
+        return factory.createIRI(namespace, localName);
     }
    
 	public String getName()
 	{
-		return name;
+		return className;
 	}
 	
 	
 	public String toString()
 	{
-		return name;
+		return className;
 	}
 	
 	
 	public String getShortForm()
 	{
-		return name;
+		return className;
 	}
 	
 	

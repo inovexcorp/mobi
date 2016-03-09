@@ -103,6 +103,12 @@ public class OntologyRestImpl implements OntologyRest {
         if (persisted) {
             OntologyId oid = ontology.getOntologyId();
             json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
+            Set<IRI> missingImports = ontology.getUnloadableImportIRIs();
+            if(!missingImports.isEmpty()) {
+                JSONArray array = new JSONArray();
+                missingImports.forEach(iri -> array.add(iri.stringValue()));
+                json.put("unloadableImportedOntologies", array.toString());
+            }
         }
 
         json.put("persisted", persisted);

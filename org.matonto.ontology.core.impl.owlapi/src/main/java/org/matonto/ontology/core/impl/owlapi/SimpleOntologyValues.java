@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 import org.matonto.ontology.core.api.*;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
@@ -347,7 +349,7 @@ public class SimpleOntologyValues {
 			return null;
 		
 		if(simpleId instanceof SimpleOntologyId)
-		return ((SimpleOntologyId)simpleId).getOwlapiOntologyId();
+		    return ((SimpleOntologyId)simpleId).getOwlapiOntologyId();
 		
 		else {
 		    Optional<IRI> oIRI = simpleId.getOntologyIRI();
@@ -399,7 +401,7 @@ public class SimpleOntologyValues {
 		if(axiomType == null)
 			return null;
 		
-		return AxiomType.valueOf(axiomType.getName());
+		return AxiomType.valueOf(toEnumStandard(axiomType.getName()));
 	}
 	
 	public static org.semanticweb.owlapi.model.AxiomType owlapiAxiomType(AxiomType axiomType)
@@ -415,7 +417,7 @@ public class SimpleOntologyValues {
 		if(entityType == null)
 			return null;
 		
-		return EntityType.valueOf(entityType.getName());
+		return EntityType.valueOf(toEnumStandard(entityType.getName()));
 	}
 	
 	public static org.semanticweb.owlapi.model.EntityType owlapiEntityType(EntityType entityType)
@@ -462,7 +464,7 @@ public class SimpleOntologyValues {
 		if(classExpressionType == null)
 			return null;
 		
-		return ClassExpressionType.valueOf(classExpressionType.getName());
+		return ClassExpressionType.valueOf(toEnumStandard(classExpressionType.getName()));
 	}
 	
 	public static org.semanticweb.owlapi.model.ClassExpressionType owlapiClassExpressionType(ClassExpressionType classExpressionType)
@@ -478,7 +480,7 @@ public class SimpleOntologyValues {
 		if(dataRangeType == null)
 			return null;
 		
-		return DataRangeType.valueOf(dataRangeType.getName());
+		return DataRangeType.valueOf(toEnumStandard(dataRangeType.getName()));
 	}
 	
 	public static org.semanticweb.owlapi.model.DataRangeType owlapiDataRangeType(DataRangeType dataRangeType)
@@ -684,5 +686,25 @@ public class SimpleOntologyValues {
                 .collect(Collectors.toSet());
 
         return new OWLDeclarationAxiomImpl(owlapiEntity, owlapiAnnotations);
+	}
+	
+	/*
+	 * Adds "_" (underscore) between words in addition to converting all characters to uppercase.
+	 * For instance: NamedIndividual -> NAMED_INDIVIDUAL;  DataProperty -> DATA_PROPERTY
+	 */
+	private static String toEnumStandard(@Nonnull String str) {
+	    if(str.isEmpty())
+	        return "";
+	    
+	    StringBuilder insertedStr = new StringBuilder(str);
+        int count = 0;
+	    for(int i=1; i<str.length(); i++) {
+	        if(Character.isUpperCase(str.charAt(i))) {
+	            insertedStr.insert(i+count, "_");
+	            count++;
+	        }
+	    }
+	    
+	    return insertedStr.toString().toUpperCase();
 	}
 }

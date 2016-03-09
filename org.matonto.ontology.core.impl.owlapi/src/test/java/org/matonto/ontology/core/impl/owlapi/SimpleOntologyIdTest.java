@@ -8,7 +8,6 @@ import static org.powermock.api.easymock.PowerMock.mockStatic;
 import static org.powermock.api.easymock.PowerMock.replay;
 
 import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,7 +15,6 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -25,9 +23,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyIdTest {
 
-    Resource resourceMock;
     BNode bNodeMock;
-    IRI iriMock;
     OntologyManager ontologyManager;
     ValueFactory factory;
     IRI ontologyIRI;
@@ -37,9 +33,7 @@ public class SimpleOntologyIdTest {
     
     @Before
     public void setUp() {
-        resourceMock = mock(Resource.class);
         bNodeMock = mock(BNode.class);
-        iriMock = mock(IRI.class);
         factory = mock(ValueFactory.class);
         ontologyManager = mock(OntologyManager.class);       
         owlOntologyIRI = mock(org.semanticweb.owlapi.model.IRI.class);
