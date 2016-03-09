@@ -10,6 +10,7 @@
     "gulp-cache": "^0.3.0",
     "gulp-concat": "^2.6.0",
     "gulp-cssmin": "^0.1.7",
+    "gulp-debug": "^2.1.2",
     "gulp-filelog": "^0.4.1",
     "gulp-flatten": "^0.2.0",
     "gulp-ignore": "^2.0.1",
@@ -17,9 +18,7 @@
     "gulp-inject": "^3.0.0",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^2.0.4",
-    "gulp-uglify": "^1.4.1",
-    "ng-tags-input": "^3.0.0",
-    "xlsx": "^0.8.0"
+    "gulp-uglify": "^1.4.1"
   },
   "scripts": {
     "dev": "gulp",
@@ -28,5 +27,13 @@
     "prepare-for-bundle": "gulp prepare-for-bundle"
   },
   "author": "Jordan Lewis",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "angular": "1.4.8",
+    "angular-ui-router": "^0.2.18",
+    "bootstrap": "^3.3.6",
+    "font-awesome": "^4.5.0",
+    "lodash": "^4.6.0",
+    "ui-select": "^0.13.3"
+  }
 }

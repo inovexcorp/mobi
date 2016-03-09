@@ -1,0 +1,43 @@
+<div class="overlay">
+    <form name="vm.iriForm" class="content clearfix" novalidate autocomplete="off">
+        <!-- section header -->
+        <h6>Edit IRI</h6>
+        <!-- Begins with -->
+        <div ng-class="{'has-error': vm.iriForm.iriBegin.$invalid}" class="form-group">
+            <label class="control-label" for="iriBegin">Begins with</label>
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="vm.iriBegin" ng-pattern="/^[^:\/?#]+:\/\/[^\/?#]*[^#\s]*[^#:\/\s]$/" required />
+            <!--p class="error-msg" ng-if="vm.iriForm.iriBegin.$invalid">This IRI is invalid.</p-->
+        </div>
+        <!-- Then -->
+        <div class="form-group">
+            <label class="control-label" for="iriThen">Then</label>
+            <select class="form-control" id="iriThen" name="iriThen" ng-model="vm.iriThen">
+                <option value="#">#</option>
+                <option value="/">/</option>
+                <option value=":">:</option>
+            </select>
+        </div>
+        <!-- Ends with -->
+        <div ng-class="{'has-error': vm.iriForm.iriEnd.$invalid}" class="form-group">
+            <label class="control-label" for="iriEnd">Ends with</label>
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9-_]+$/" required ng-model="vm.iriEnd" ng-trim="false" />
+            <!--p class="error-msg" ng-if="vm.iriForm.iriEnd.$invalid">This localname is invalid.</p-->
+        </div>
+        <!-- Update references -->
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" id="iriUpdate" ng-model="vm.iriUpdate" /> Update all entities that referenced this IRI.
+            </label>
+        </div>
+        <!-- buttons -->
+        <div class="btn-container clearfix">
+            <custom-button display-text="'Edit'"
+                           is-disabled-when="vm.iriForm.$invalid"
+                           on-click="vm.editIRI()"></custom-button>
+
+            <custom-button display-text="'Cancel'"
+                           on-click="vm.showIriOverlay = false;"
+                           type="'secondary'"></custom-button>
+        </div>
+    </form>
+</div>

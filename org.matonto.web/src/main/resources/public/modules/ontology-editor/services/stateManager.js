@@ -48,6 +48,11 @@
 
             self.setState = function(editor, oi, ci, pi) {
                 var state = self.states[self.states.current];
+
+                if(editor !== state.editor) {
+                    state.editorTab = 'basic';
+                }
+
                 state.oi = oi;
                 state.ci = ci;
                 state.pi = pi;
