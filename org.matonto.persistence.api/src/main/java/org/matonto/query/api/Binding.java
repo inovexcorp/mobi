@@ -1,6 +1,5 @@
 package org.matonto.query.api;
 
-import org.jetbrains.annotations.NotNull;
 import org.matonto.rdf.api.Value;
 
 import javax.annotation.Nonnull;
@@ -20,7 +19,7 @@ public interface Binding {
      *
      * @return The value of the binding, never <tt>null</tt>.
      */
-    @NotNull @Nonnull
+    @Nonnull
     Value getValue();
 
     /**
