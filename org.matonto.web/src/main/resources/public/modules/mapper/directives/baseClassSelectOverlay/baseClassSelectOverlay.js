@@ -19,7 +19,7 @@
                 bindToController: {
                     ontologyId: '='
                 },
-                controller: function($filter) {
+                controller: function() {
                     var dvm = this;
 
                     dvm.getClasses = function(ontologyId) {
@@ -29,7 +29,7 @@
                         return ontologyManagerService.getClass(ontologyId, classId);
                     }
                     dvm.createOptionName = function(classObj) {
-                        return classObj.hasOwnProperty(prefixes.rdfs + 'label') ? classObj[prefixes.rdfs + 'label'][0]['@value'] : $filter('beautify')($filter('splitIRI')(classObj['@id']).end);
+                        return ontologyManagerService.getEntityName(classObj)
                     }
                 },
                 templateUrl: 'modules/mapper/directives/baseClassSelectOverlay/baseClassSelectOverlay.html'

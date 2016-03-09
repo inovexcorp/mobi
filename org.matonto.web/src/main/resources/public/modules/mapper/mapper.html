@@ -16,12 +16,81 @@
 
     <!-- Content besides step through sidebar -->
     <div id="mapper-content" class="container-fluid">
-        <file-form ng-if="vm.activeStep === 0" 
-            ng-model="vm.delimitedFile" 
-            on-upload-click="vm.submitFileUpload()" 
-            on-continue-click="vm.displayMappingSelect()"
-            separator="vm.delimitedSeparator"
-            contains-headers="vm.delimitedContainsHeaders"></file-form>
-        <file-preview-table ng-if="vm.filePreview" rows="vm.filePreview.rows" headers="vm.filePreview.headers" on-click="vm.togglePreview(big)"></file-preview-table>
+        <div id="main" ng-style="{paddingBottom: (vm.tableHeight + 'px')}">
+            <file-form ng-if="vm.activeStep === 0" 
+                ng-model="vm.delimitedFile" 
+                on-upload-click="vm.submitFileUpload()" 
+                on-continue-click="vm.displayMappingSelect()"
+                separator="vm.delimitedSeparator"
+                contains-headers="vm.delimitedContainsHeaders"></file-form>
+            <div id="edit-mapping-container" ng-if="vm.activeStep === 4">
+                <div id="mapping-actions">
+                    <div id="ontology-section">
+                        <a>{{(vm.ontologyId | splitIRI).end | beautify}}</a>
+                        <button class="btn btn-primary">Change</button>
+                    </div>
+                    <form id="submit-mapping">
+                        <label>
+                            <input type="checkbox" ng-model="vm.saveToServer"></input>
+                            Save mapping to server
+                        </label>
+                        <button class="btn btn-primary">Submit</button>
+                        <br/>
+                        <a>Cancel</a>
+                    </form>
+                </div>
+                <div id="edit-mapping">
+                    <class-list mapping="vm.mapping" 
+                        columns="vm.filePreview.headers"
+                        ontology-id="vm.ontologyId" 
+                        base-class-id="vm.baseClassId"
+                        click-add-prop="vm.displayPropForm(classId)"
+                        click-class="vm.displayEditClassForm(classId)"
+                        click-prop="vm.displayEditPropForm(classId, propId)"
+                        click-delete="vm.deleteEntity(classId, propId)"></class-list>
+                    <prop-form ng-if="vm.newProp" 
+                        ng-model="vm.selectedPropId" 
+                        props="vm.availableProps"
+                        is-datatype-prop="vm.displayColumnForm()"
+                        ontology-id="vm.ontologyId"
+                        class-id="vm.editingClassId"
+                        set="vm.setObjectProp()"
+                        setNext="vm.setNextObjectProp()"
+                        last-prop="vm.lastProp"></prop-form>
+                    <column-form ng-if="vm.isDatatypeProperty(vm.selectedPropId) && vm.newProp" 
+                        ng-model="vm.selectedColumn" 
+                        columns="vm.availableColumns"
+                        set="vm.setDatatypeProp(column)"
+                        set-next="vm.setNextDatatypeProp(column)"
+                        last-prop="vm.lastProp"></column-form>
+                    <edit-prop-form ng-if="vm.selectedPropId && !vm.newProp"
+                        columns="vm.availableColumns"
+                        set="vm.setDatatypeProp(column)"
+                        click-delete="vm.deleteEntity(classId, propId)"
+                        ontology-id="vm.ontologyId"
+                        class-id="vm.editingClassId"
+                        selected-prop="vm.selectedPropId"
+                        selected-column="vm.selectedColumn"></edit-prop-form>
+                    <edit-class-form ng-if="vm.editingClassId && !vm.newProp"
+                        ontology-id="vm.ontologyId"
+                        class-id="vm.editingClassId"
+                        base-class-id="vm.baseClassId"
+                        props="vm.availableProps"
+                        open-prop="vm.openAvailableProp"
+                        set-base="vm.setBaseClass()"
+                        click-delete="vm.deleteEntity(classId)"></edit-class-form>
+                    <a ng-if="vm.editingClassId" id="edit-cancel" ng-click="vm.resetEditingVars()">Cancel</a>
+                </div>
+            </div>
+        </div>
+        <file-preview-table ng-if="vm.filePreview" 
+            rows="vm.filePreview.rows" 
+            headers="vm.filePreview.headers" 
+            table-height="vm.tableHeight"
+            highlight-idx="vm.filePreview.headers.indexOf(vm.selectedColumn)"
+            on-click="vm.togglePreview(big)"></file-preview-table>
+
+        <button ng-click="vm.showMappingPreview = !vm.showMappingPreview" style="position: absolute; right: 0; top: 0;"><i class="fa fa-question-circle"></i></button>
+        <pre ng-if="vm.showMappingPreview" style="position: absolute; right: 25px; left: 0; top: 0; height: 100%; overflow: auto;">{{vm.mapping | json}}</pre>
     </div>
 </div>

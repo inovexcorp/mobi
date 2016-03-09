@@ -4,12 +4,12 @@
         <table id="file-preview" class="table table-bordered">
             <thead>
                 <tr>
-                    <th ng-repeat="item in headers">{{item}}</th>
+                    <th ng-repeat="item in headers" ng-class="{'highlight': $index === highlightIdx}">{{item}}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="row in rows track by $index">
-                    <td ng-repeat="item in row track by $index">{{item}}</td>
+                    <td ng-repeat="item in row track by $index" ng-class="{'highlight': $index === highlightIdx}">{{item}}</td>
                 </tr>
             </tbody>
         </table>

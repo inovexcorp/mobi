@@ -5,92 +5,23 @@
         .module('mappingManager', ['ontologyManager', 'prefixes'])
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['ontologyManagerService', 'prefixes'];
+        mappingManagerService.$inject = ['$filter', 'ontologyManagerService', 'prefixes', 'uuid'];
 
-
-        function mappingManagerService(ontologyManagerService, prefixes) {
+        function mappingManagerService($filter, ontologyManagerService, prefixes, uuid) {
             var self = this,
                 prefix = 'matontorest/etl';
             self.previousMappingNames = [];
-            self.propMappingIds = {
-                data: 1,
-                object: 1
-            };
 
             initialize();
 
             function initialize() {}
-            function getClassMappings(jsonld) {
-                return jsonld.filter(function(entity) {
-                    return entity.hasOwnProperty('@type') && angular.equals(entity['@type'], [prefixes.delim + 'ClassMapping']);
-                });
-            }
-            function getClassMapping(jsonld, classId) {
-                var classMappings = getClassMappings(jsonld);
-                return classMappings.find(function(entity) {
-                    return entity.hasOwnProperty(prefixes.delim + 'mapsTo') && entity[prefixes.delim + 'mapsTo'][0]['@id'] === classId;
-                });
-            }
-            function classMappingExists(jsonld, classId) {
-                !!getClassMapping(jsonld, classId);
-            }
-            function getAllDataMappings(jsonld) {
-                return jsonld.filter(function(entity) {
-                    return entity['@id'].indexOf('DataMapping') >= 0;
-                });
-            }
-            function getDataMappingsForProp(jsonld, propId) {
-                var dataMappings = getAllDataMappings(jsonld);
-                return dataMappings.filter(function(entity) {
-                    return entity.hasOwnProperty(prefixes.delim + 'hasProperty') && entity[prefixes.delim + 'mapsTo'][0]['@id'] === propId;
-                });
-            }
-            function getDataMappingFromClass(jsonld, classId, propId) {
-                var classMapping = getClassMapping(jsonld, classId);
-                var dataMappings = getDataMappingsForProp(jsonld, propId);
-                if (classMapping && dataMappings.length) {
-                    if (classMapping.hasOwnProperty(prefixes.delim + 'dataProperty')) {
-                        var dataProperties = classMapping[prefixes.delim + 'dataProperty'].map(function(entity) {
-                            return entity['@id'];
-                        });
-                        return dataMappings.filter(function(prop) {
-                            return dataProperties.indexOf(prop['@id']) !== -1;
-                        })[0];
-                    }
-                }
-                return undefined;
-            }
-            function dataPropertyExists(jsonld, classId, propId) {
-                return !!getDataMappingFromClass(jsonld, classId, propId);
-            }
-            function entityExists(jsonld, id) {
-                return !!jsonld.find(function(entity) {
-                    return  entity['@id'] === id;
-                });
-            }
-            function addSingleEntity(jsonld, idString) {
-                var newJsonld = angular.copy(jsonld);
-                if (!entityExists(newJsonld, idString)) {
-                    newJsonld.push({'@id': idString});
-                }
-                return newJsonld;
-            }
-            function newMappingId(type) {
-                var id;
-                if (type === 'data') {
-                    id = prefixes.dataDelim + 'DataMapping' + self.propMappingIds.data;
-                    self.propMappingIds.data++;
-                } else {
-                    id = prefixes.dataDelim + 'ObjectMapping' + self.propMappingIds.object;
-                    self.propMappingIds.object++;
-                }
-                return id;
-            }
 
-
+            /* REST endpoint calls */
             self.getMappingNames = function() {}
             self.getMapping = function(mappingName) {}
             self.getMappingColumns = function(mappingName) {}
+
+            /* Edit mapping methods */
             self.createNewMapping = function(mappingName, separator) {
                 var jsonld = [];
                 jsonld = addSingleEntity(jsonld, prefixes.delim + 'Document');
@@ -121,65 +52,221 @@
             self.addClass = function(mapping, ontologyId, classId, localNamePattern) {
                 var newMapping = angular.copy(mapping);
                 var classObj = ontologyManagerService.getClass(ontologyId, classId);
+                // Check if class exists in ontology and if it has been mapped already
                 if (classObj && !classMappingExists(newMapping.jsonld, classId)) {
+                    // Add entities for ontology class ids
                     newMapping.jsonld = addSingleEntity(newMapping.jsonld, prefixes.delim + 'ClassMapping');
                     newMapping.jsonld = addSingleEntity(newMapping.jsonld, classId);
-                    var ontologyDelimiter = ontologyManagerService.getDelimiter(ontologyId);
-                    var className = classId.split(ontologyDelimiter).pop();
-                    var ontologyDataName = classId.replace(ontologyDelimiter + className, '').split('/').pop();
+                    // Collect IRI sections for prefix and create class mapping
+                    var splitIri = $filter('splitIRI')(classId);
+                    var ontologyDataName = splitIri.begin.split('/').pop();
                     var classEntity = {
-                        '@id': prefixes.dataDelim + className,
+                        '@id': prefixes.dataDelim + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
-                    classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + className.toLowerCase() + '/'}];
+                    classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
                     classEntity[prefixes.delim + 'localName'] = [{'@value': "${" + localNamePattern + "}"}];
                     newMapping.jsonld.push(classEntity);
                 }
 
                 return newMapping;
             }
-
             self.addDataProp = function(mapping, ontologyId, classId, propId, columnIndex) {
                 var newMapping = angular.copy(mapping);
                 var propObj = ontologyManagerService.getClassProperty(ontologyId, classId, propId);
+                // Check if data property exists for class in ontology and if class mapping exists
                 if (propObj && classMappingExists(newMapping.jsonld, classId)) {
+                    // Add entity for property id
                     newMapping.jsonld = addSingleEntity(newMapping.jsonld, propId);
                     var dataEntity;
+                    // If the data property and mapping already exist, update the column index
                     if (dataPropertyExists(newMapping.jsonld, classId, propId)) {
-                        dataEntity = getDataMappingFromClass(mapping.jsonld, classId, propId);
+                        dataEntity = self.getDataMappingFromClass(mapping.jsonld, classId, propId);
                         dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
+                        _.remove(newMapping.jsonld, function(entity) {
+                            return entity['@id'] === dataEntity['@id'];
+                        });
                     } else {
+                        // Add new data mapping id to data properties of class mapping
                         var dataEntity = {
-                            '@id': newMappingId('data') 
+                            '@id': prefixes.dataDelim + uuid.v4()
                         };
                         var classMapping = getClassMapping(newMapping.jsonld, classId);
                         if (!classMapping.hasOwnProperty(prefixes.delim + 'dataProperty')) {
                             classMapping[prefixes.delim + 'dataProperty'] = [];
                         }
                         classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
+                        // Create data mapping
+                        dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
                         dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
                         dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                        newMapping.jsonld.push(dataEntity);
                     }
+                    // Add/update data mapping
+                    newMapping.jsonld.push(dataEntity);
                 }
                 return newMapping;
             }
             self.addObjectProp = function(mapping, ontologyId, classId, propId, localNamePattern) {
+                var newMapping = angular.copy(mapping);
+                var propObj = ontologyManagerService.getClassProperty(ontologyId, classId, propId);
+                // Check if object property exists for class in ontology and if class mapping exists
+                if (propObj && classMappingExists(newMapping.jsonld, classId)) {
+                    // Add entity for property id
+                    newMapping.jsonld = addSingleEntity(newMapping.jsonld, propId);
+                    // Add new object mapping id to object properties of class mapping
+                    var dataEntity = {
+                        '@id': prefixes.dataDelim + uuid.v4()
+                    };
+                    var classMapping = getClassMapping(newMapping.jsonld, classId);
+                    if (!classMapping.hasOwnProperty(prefixes.delim + 'objectProperty')) {
+                        classMapping[prefixes.delim + 'objectProperty'] = [];
+                    }
+                    classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(dataEntity));
+                    // Find the range of the object property (currently only supports a single class)
+                    var rangeClass = propObj[prefixes.rdfs + 'range'][0]['@id'];
+                    // Create object mapping
+                    dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
+                    dataEntity[prefixes.delim + 'classMapping'] = [{'@id': rangeClass}];
+                    dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                    newMapping.jsonld.push(dataEntity);
 
+                    // Create class mapping for range of object property
+                    newMapping = self.addClass(newMapping, ontologyId, rangeClass, localNamePattern);
+                }
+                return newMapping;
             }
+            self.removeProp = function(mapping, classId, propMappingId) {
+                var newMapping = angular.copy(mapping);
+                // Collect the property mapping, the property id entity, and the class mapping
+                var propMapping = _.find(newMapping.jsonld, {'@id': propMappingId});
+                var propEntity = _.find(newMapping.jsonld, {'@id': propMapping[prefixes.delim + 'hasProperty'][0]['@id']});
+                var propType = self.isObjectMapping(propMapping) ? 'objectProperty' : 'dataProperty';
+                var classMapping = getClassMapping(newMapping.jsonld, classId);
+                // Remove the property mapping and the property id entity if it isn't used elsewhere
+                _.pull(newMapping.jsonld, propMapping);
+                if (getDataMappingsForProp(newMapping.jsonld, propEntity['@id']).length === 0) {
+                    _.pull(newMapping.jsonld, propEntity);
+                }
+                // Remove the property mapping id from the class mapping's properties
+                _.remove(classMapping[prefixes.delim + propType], function(entity) {
+                    return entity['@id'] === propMappingId;
+                });
+                clearPropertyArray(classMapping, propType);
+                return newMapping;
+            }
+            self.removeClass = function(mapping, classId) {
+                var newMapping = angular.copy(mapping);
+                // Remove the class id entity
+                _.pull(newMapping.jsonld, _.find(newMapping.jsonld, {'@id': classId}));
+                // Collect class mapping and any object mappings that use the class mapping
+                var classMapping = getClassMapping(newMapping.jsonld, classId);
+                var objectMappings = _.filter(getAllObjectMappings(newMapping.jsonld), ["['" + prefixes.delim + "classMapping'][0]['@id']", classId]);
+                // If there are object mappings that use the class mapping, iterate through them
+                if (objectMappings.length > 0) {
+                    _.forEach(objectMappings, function(objectMapping) {
+                        // Collect the class mapping that uses the object mapping
+                        var classWithObjectMapping = findClassWithObjectMapping(newMapping.jsonld, objectMapping['@id']);
+                        // Remove the object property for the object mapping
+                        _.remove(classWithObjectMapping[prefixes.delim + 'objectProperty'], function(prop) {
+                            return prop['@id'] === objectMapping['@id'];
+                        });
+                        clearPropertyArray(classWithObjectMapping, 'objectProperty');
+                        // Remove object mapping
+                        _.pull(newMapping.jsonld, objectMapping);
+                        // Remove the property id entity for the object mapping if no other object mappings use it
+                        var propEntity = _.find(newMapping.jsonld, {'@id': objectMapping[prefixes.delim + 'hasProperty'][0]['@id']});
+                        if (getObjectMappingsForProp(newMapping.jsonld, propEntity['@id']).length === 0) {
+                            _.pull(newMapping.jsonld, propEntity);
+                        }
+                    });
+                }
+                // Remove all properties of the class mapping and the class mapping itself
+                var properties = _.concat(_.get(classMapping, prefixes.delim + 'dataProperty', []), _.get(classMapping, prefixes.delim + 'objectProperty', []));
+                _.forEach(properties, function(prop) {
+                    newMapping = self.removeProp(newMapping, classId, prop['@id']);
+                });
+                classMapping = getClassMapping(newMapping.jsonld, classId);
+                _.pull(newMapping.jsonld, classMapping);
+
+                return newMapping;
+            }
+
+            /* Public helper methods */
             self.getMappedClassIds = function(mapping) {
-                return getClassMappings(mapping.jsonld).map(function(classMapping) {
-                    return classMapping[prefixes.delim + 'mapsTo'][0]['@id'];
+                return _.map(getClassMappings(mapping.jsonld), "['" + prefixes.delim + "mapsTo'][0]['@id']");
+            }
+            self.getDataMappingFromClass = function(jsonld, classId, propId) {
+                var dataProperties = _.map(_.get(getClassMapping(jsonld, classId), "['" + prefixes.delim + "dataProperty']"), '@id');
+                var dataMappings = getDataMappingsForProp(jsonld, propId);
+                if (dataProperties && dataProperties.length && dataMappings.length) {
+                    return _.find(dataMappings, function(mapping) {
+                        return dataProperties.indexOf(mapping['@id']) >= 0;
+                    });
+                }
+                return undefined;
+            }
+            self.getPropMappingsByClass = function(mapping, classId) {
+                var classMapping = getClassMapping(mapping.jsonld, classId);
+                var objectProps = _.get(classMapping, "['" + prefixes.delim + "objectProperty']", []);
+                var dataProps = _.get(classMapping, "['" + prefixes.delim + "dataProperty']", []);
+                return _.intersectionBy(mapping.jsonld, _.concat(objectProps, dataProps), '@id');
+            }
+            self.isObjectMapping = function(entity) {
+                return _.get(entity, "['@type'][0]") === prefixes.delim + 'ObjectMapping';
+            }
+            self.isDataMapping = function(entity) {
+                return _.get(entity, "['@type'][0]") === prefixes.delim + 'DataMapping';
+            }
+
+            /* Private helper methods */
+            function getClassMappings(jsonld) {
+                return _.filter(jsonld, {'@type': [prefixes.delim + 'ClassMapping']});
+            }
+            function getClassMapping(jsonld, classId) {
+                return _.find(getClassMappings(jsonld), [prefixes.delim + 'mapsTo', [{'@id': classId}]]);
+            }
+            function classMappingExists(jsonld, classId) {
+                return !!getClassMapping(jsonld, classId);
+            }
+            function getAllDataMappings(jsonld) {
+                return _.filter(jsonld, {'@type': [prefixes.delim + 'DataMapping']});
+            }
+            function getAllObjectMappings(jsonld) {
+                return _.filter(jsonld, {'@type': [prefixes.delim + 'ObjectMapping']});
+            }
+            function getDataMappingsForProp(jsonld, propId) {
+                var dataMappings = getAllDataMappings(jsonld);
+                return _.filter(dataMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
+            }
+            function getObjectMappingsForProp(jsonld, propId) {
+                var objectMappings = getAllObjectMappings(jsonld);
+                return _.filter(objectMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
+            }
+            function dataPropertyExists(jsonld, classId, propId) {
+                return !!self.getDataMappingFromClass(jsonld, classId, propId);
+            }
+            function entityExists(jsonld, id) {
+                return !!_.find(jsonld, {'@id': id});
+            }
+            function addSingleEntity(jsonld, idString) {
+                var newJsonld = angular.copy(jsonld);
+                if (!entityExists(newJsonld, idString)) {
+                    newJsonld.push({'@id': idString});
+                }
+                return newJsonld;
+            }
+            function findClassWithObjectMapping(jsonld, objectMappingId) {
+                var classMappings = getClassMappings(jsonld);
+                return _.find(classMappings, function(classMapping) {
+                    var objectProperties = _.map(_.get(classMapping, prefixes.delim + 'objectProperty'), '@id');
+                    return objectProperties.indexOf(objectMappingId) >= 0;
                 });
             }
-            self.getMappedPropIdsByClass = function(mapping, classId) {
-                var classMapping = getClassMapping(mapping.jsonld, classId);
-                var objectProps = classMapping.hasOwnProperty(prefixes.delim + 'objectProperty') ? classMapping[prefixes.delim + 'objectProperty'] : [];
-                var dataProps = classMapping.hasOwnProperty(prefixes.delim + 'dataProperty') ? classMapping[prefixes.delim + 'dataProperty'] : [];
-                return objectProps.concat(dataProps).map(function(entity) {
-                    return entity['@id'];
-                });
+            function clearPropertyArray(classMapping, propType) {
+                if (_.get(classMapping, prefixes.delim + propType) && _.get(classMapping, prefixes.delim + propType).length === 0) {
+                    delete classMapping[prefixes.delim + propType];
+                }
             }
         }
 })();

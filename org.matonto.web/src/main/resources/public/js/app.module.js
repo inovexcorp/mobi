@@ -3,6 +3,7 @@
 
     angular
         .module('app', [
+            'angular-uuid',
             'catalog',
             'home',
             'login',

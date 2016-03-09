@@ -1,9 +1,14 @@
 <div id="class-list-container">
-    <ul>
+    <ul id="class-list">
         <li ng-repeat="classId in dvm.getClassIds()" class="class" ng-class="{'base': classId === dvm.baseClassId}">
-            <a>{{dvm.getClassName(classId)}}</a>
-            <ul>
-                <li ng-repeat="propId in dvm.getPropIds(classId)">{{dvm.getPropName(classId, propId)}}</li>
+            <a class="class-title" ng-click="clickClass({classId: classId})">{{dvm.getClassName(classId)}}</a>
+            <ul class="props">
+                <li ng-repeat="propMapping in dvm.getPropMappings(classId)">
+                    <a ng-click="clickProp({classId: classId, propId: dvm.getPropId(propMapping)})">{{dvm.getPropName(propMapping, classId)}}</a>
+                    <button class="delete" ng-click="clickDelete({classId: classId, propId: dvm.getPropId(propMapping)})">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </li>
                 <li ng-show="!dvm.mappedAllProps(classId)"><a ng-click="clickAddProp({classId: classId})"><i class="fa fa-plus"></i> Add Property</a></li>
             </ul>
         </li>

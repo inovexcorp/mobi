@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('classPreview', ['prefixes'])
+        .module('classPreview', ['prefixes', 'ontologyManager'])
         .directive('classPreview', classPreview);
 
-        classPreview.$inject = ['prefixes'];
+        classPreview.$inject = ['prefixes', 'ontologyManagerService'];
 
-        function classPreview(prefixes) {
+        function classPreview(prefixes, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -20,18 +20,12 @@
                     var dvm = this;
 
                     dvm.createTitle = function() {
-                        if (dvm.classObj) {
-                            return dvm.classObj.hasOwnProperty(prefixes.rdfs + 'label') ? dvm.classObj[prefixes.rdfs + 'label'][0]['@value'] : $filter('beautify')($filter('splitIRI')(dvm.classObj['@id']).end);
-                        }
-                        return '';
+                        return ontologyManagerService.getEntityName(dvm.classObj);
                     }
                     dvm.createPropList = function() {
-                        if (dvm.classObj) {
-                            return dvm.classObj.matonto.properties.map(function(prop) {
-                                return prop.hasOwnProperty(prefixes.rdfs + 'label') ? prop[prefixes.rdfs + 'label'][0]['@value'] : $filter('beautify')($filter('splitIRI')(prop['@id']).end);
-                            });                            
-                        }
-                        return [];
+                        return _.map(_.get(dvm.classObj, 'matonto.properties'), function(prop) {
+                            return ontologyManagerService.getEntityName(prop);
+                        });
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classPreview/classPreview.html'

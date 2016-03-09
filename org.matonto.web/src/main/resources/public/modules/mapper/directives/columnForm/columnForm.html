@@ -1,0 +1,9 @@
+<form id="column-form">
+    <div class="form-group">
+        <column-select columns="dvm.columns" selected-column="dvm.selectedColumn"></column-select>
+    </div>
+    <div id="column-form-btns" class="form-group" ng-if="dvm.selectedColumn">
+        <button type="button" class="btn btn-default" ng-click="set({column: dvm.selectedColumn})">Set</button>
+        <button type="button" class="btn btn-default" ng-click="setNext({column: dvm.selectedColumn})" ng-disabled="lastProp">Set &amp; Next</button>
+    </div>
+</form>

@@ -16,6 +16,35 @@ $overlay-height: 450px;
     #mapper-content {
         margin-left: $sidebar-width;
         height: 100%;
+        position: relative;
+
+        #main {
+            height: 100%;
+        }
+        #fixed-height-container {
+            position: absolute;
+            bottom: 0;
+            left: 15px;
+            right: 15px;
+
+            #table-container {
+                position: relative;
+                padding-top: 25px;
+                background-color: #fff;
+                overflow-y: auto;
+                -webkit-transition: all 0.4s linear;
+                transition: all 0.4s linear;
+
+                #toggle-table {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                }
+                .highlight {
+                    background-color: #EDEDED;
+                }
+            }
+        }
     }
     #sidebar-wrapper {
         background-color: lightgray;
@@ -40,23 +69,6 @@ $overlay-height: 450px;
                 font-weight: lighter;
                 color: #8A8A8A;
             }
-        }
-    }
-    #file-form {
-        margin-bottom: 1em;
-    }
-    #table-container {
-        position: relative;
-        padding-top: 25px;
-        background-color: #fff;
-        overflow-y: auto;
-        -webkit-transition: all 0.5s linear;
-        transition: all 0.2s linear;
-
-        #toggle-table {
-            position: absolute;
-            top: 0;
-            right: 0;
         }
     }
     .content {
@@ -84,6 +96,96 @@ $overlay-height: 450px;
             width: 50%;
             float: left;
             height: ($overlay-height - 75);
+        }
+    }
+    #file-form {
+        margin-top: -1em;
+    }
+    #edit-mapping-container {
+        height: 100%;
+
+        #mapping-actions {
+            width: 100%;
+            height: 10%;
+
+            #ontology-section {
+                display: inline-block;
+            }
+            #submit-mapping {
+                display: inline-block;
+                float: right;
+            }
+        }
+        .available-props {
+            width: 25%;
+            border-radius: 5px;
+            height: 20em;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 2px solid lightgray;    
+
+            li {
+                display: block;
+                position: relative;
+                padding: 0.25em 0.5em;
+                cursor: pointer;
+                text-overflow: ellipsis;
+                width: 100%;
+
+                &.active {
+                    background-color: #337AB7;
+                    color: #FFFFFF;
+                }
+                .open-prop {
+                    background-color: transparent;
+                    border: none;
+                    position: absolute;
+                    right: 0;
+
+                    &:hover {
+                        color: lightgrey;
+                    }
+                }
+            }
+        }
+        #edit-mapping {
+            height: 90%;
+
+            #edit-cancel, #prop-form, #column-form, #edit-prop, #edit-class {
+                width: 75%;
+                float: left;
+                padding: 0.5em;
+            }
+            #class-list-container {
+                width: 25%;
+                padding: 0.5em;
+                height: 100%;
+                float: left;
+                border: 1px solid lightgray;
+                overflow-y: auto;
+
+                #class-list {
+                    li.base a.class-title {
+                        font-weight: bold;
+                    }
+                    .props li {
+                        margin-left: 1em;
+                        display: block;
+                        position: relative;
+
+                        .delete {
+                            background-color: transparent;
+                            border: none;
+                            position: absolute;
+                            right: 0;
+
+                            &:hover {
+                                color: lightgrey;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

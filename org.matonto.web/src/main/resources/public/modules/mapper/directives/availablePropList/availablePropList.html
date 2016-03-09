@@ -1,0 +1,11 @@
+<div class="available-props">
+    <span ng-if="!props.length">None</span>
+    <ul ng-if="props.length">
+        <li ng-repeat="prop in props" ng-click="dvm.setSelectedProp(prop)" ng-class="{'active': dvm.isSelected(prop)}">
+            {{dvm.getPropName(prop)}}
+            <button ng-if="dvm.isSelected(prop)" class="open-prop" ng-click="openProp()(prop['@id'])">
+                <i class="fa fa-arrow-circle-right"></i>
+            </button>
+        </li>
+    </ul>
+</div>

@@ -15,38 +15,51 @@
                 scope: {
                     clickAddProp: '&',
                     clickClass: '&',
-                    clickProp: '&'
+                    clickProp: '&',
+                    clickDelete: '&'
                 },
                 bindToController: {
                     mapping: '=',
+                    columns: '=',
                     ontologyId: '=',
                     baseClassId: '='
                 },
                 controller: function($filter) {
                     var dvm = this;
 
+                    dvm.getPropId = function(propMapping) {
+                        return propMapping[prefixes.delim + 'hasProperty'][0]['@id'];
+                    }
                     dvm.getClassIds = function() {
                         return mappingManagerService.getMappedClassIds(dvm.mapping);
                     }
-                    dvm.getPropIds = function(classId) {
-                        return mappingManagerService.getMappedPropIdsByClass(dvm.mapping, classId);
+                    dvm.getPropMappings = function(classId) {
+                        return mappingManagerService.getPropMappingsByClass(dvm.mapping, classId);
                     }
                     dvm.getClassName = function(classId) {
                         var classObj = ontologyManagerService.getClass(dvm.ontologyId, classId);
-                        return classObj.hasOwnProperty(prefixes.rdfs + 'label') ? classObj[prefixes.rdfs + 'label'][0]['@value'] : $filter('beautify')($filter('splitIRI')(classId).end);
+                        return ontologyManagerService.getEntityName(classObj);
                     }
-                    dvm.getPropName = function(classId, propId) {
-                        var propObj = ontologyManagerService.getClassProperty(dvm.ontologyId, classId, propId);
-                        return propObj.hasOwnProperty(prefixes.rdfs + 'label') ? propObj[prefixes.rdfs + 'label'][0]['@value'] : $filter('beautify')($filter('splitIRI')(propId).end);
+                    dvm.getPropName = function(propMapping, classId) {
+                        var propId = propMapping[prefixes.delim + 'hasProperty'][0]['@id'];
+                        var propName = ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(dvm.ontologyId, classId, propId))
+                        var mappingName = '';
+                        if (mappingManagerService.isObjectMapping(propMapping)) {
+                            mappingName = dvm.getClassName(propMapping[prefixes.delim + 'classMapping'][0]['@id']);
+                        } else if (mappingManagerService.isDataMapping(propMapping)) {
+                            var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
+                            mappingName = dvm.columns[index];
+                        }
+                        return propName + ': ' + mappingName;
                     }
                     dvm.isBaseClass = function(classId) {
                         return id === dvm.baseClassId;
                     }
                     dvm.mappedAllProps = function(classId) {
-                        var mappedProps = mappingManagerService.getMappedPropIdsByClass(dvm.mapping, classId);
+                        var mappedProps = mappingManagerService.getPropMappingsByClass(dvm.mapping, classId);
                         var classProps = ontologyManagerService.getClassProperties(dvm.ontologyId, classId);
 
-                        return mappedProps.length < classProps;
+                        return mappedProps.length === classProps.length;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classList/classList.html'

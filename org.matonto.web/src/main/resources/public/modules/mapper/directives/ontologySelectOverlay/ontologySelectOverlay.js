@@ -16,7 +16,7 @@
                     onClickBack: '&',
                     onClickContinue: '&'
                 },
-                controller: function($filter) {
+                controller: function() {
                     var dvm = this;
                     
                     dvm.getOntologies = function() {
@@ -26,7 +26,7 @@
                         return ontologyManagerService.getOntologyById(ontologyId);
                     }
                     dvm.createOptionName = function(ontology) {
-                        return ontology.hasOwnProperty(prefixes.rdfs + 'label') ? ontology[prefixes.rdfs + 'label'][0]['@value'] : $filter('beautify')($filter('splitIRI')(ontology['@id']).end);
+                        return ontologyManagerService.getEntityName(ontology);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/ontologySelectOverlay/ontologySelectOverlay.html'
