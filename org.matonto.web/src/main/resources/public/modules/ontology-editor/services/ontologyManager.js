@@ -375,8 +375,8 @@
             }
 
             function addOntologyIriToElements(arr, ontologyIri) {
-                return _.map(arr, function(element) {
-                    return _.extend({}, element, {ontologyIri: ontologyIri});
+                return _.forEach(arr, function(element) {
+                    return element.ontologyIri = ontologyIri;
                 });
             }
 
