@@ -28,7 +28,6 @@ matonto-deploy-bundles = {
 }
 
 matonto-deploy-bundles-dev = {
-    obr:url-remove http://nexus.inovexcorp.com/nexus/content/shadows/matonto-releases-obr/.meta/obr.xml
     obr:url-add mvn:org.matonto/bnd-index/${bnd.index.version}/xml
     obr:url-refresh
     obr:start -d \
@@ -51,7 +50,6 @@ matonto-deploy-bundles-dev = {
         com.eclipsesource.jaxrs.swagger-all \
         com.eclipsesource.jaxrs.provider.swagger
     obr:url-remove mvn:org.matonto/bnd-index/${bnd.index.version}/xml
-    obr:url-add http://nexus.inovexcorp.com/nexus/content/shadows/matonto-releases-obr/.meta/obr.xml
 }
 
 
