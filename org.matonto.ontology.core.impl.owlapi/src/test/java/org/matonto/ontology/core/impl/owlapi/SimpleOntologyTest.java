@@ -1,5 +1,6 @@
 package org.matonto.ontology.core.impl.owlapi;
 
+import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -52,15 +53,21 @@ public class SimpleOntologyTest {
         expect(ontologyIRI.stringValue()).andReturn("http://test.com/ontology1").anyTimes();
 
         versionIRI = mock(IRI.class);
-        expect(versionIRI.stringValue()).andReturn("http://test.com/ontology1/1.0.0");
+        expect(versionIRI.stringValue()).andReturn("http://test.com/ontology1/1.0.0").anyTimes();
 
         replay(ontologyIRI, versionIRI);
 
         mockStatic(SimpleOntologyValues.class);
-        expect(SimpleOntologyValues.owlapiIRI(isA(IRI.class))).andReturn(org.semanticweb.owlapi.model.IRI.create(ontologyIRI.stringValue())).anyTimes();
-        expect(SimpleOntologyValues.owlapiIRI(isA(IRI.class))).andReturn(org.semanticweb.owlapi.model.IRI.create(versionIRI.stringValue())).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(ontologyIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(versionIRI).anyTimes();
+
+        Capture<IRI> capture = Capture.newInstance();
+        expect(SimpleOntologyValues.owlapiIRI(capture(capture)))
+                .andAnswer(() -> org.semanticweb.owlapi.model.IRI.create(capture.getValue().stringValue()))
+                .anyTimes();
+
+        Capture<org.semanticweb.owlapi.model.IRI> capture2 = Capture.newInstance();
+        expect(SimpleOntologyValues.matontoIRI(capture(capture2)))
+                .andAnswer(() -> mock(IRI.class))
+                .anyTimes();
 
         expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
         expect(ontologyIdMock.getVersionIRI()).andReturn(Optional.of(versionIRI)).anyTimes();
@@ -217,12 +224,10 @@ public class SimpleOntologyTest {
     public void missingDirectImportTest() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
 
-        File file = Paths.get(getClass().getResource("/protegeSample.rdf").toURI()).toFile();
+        File file = Paths.get(getClass().getResource("/protegeSample.owl").toURI()).toFile();
         Ontology ontology = new SimpleOntology(file, ontologyManager);
-        
-        assertTrue(ontology.getUnloadableImportIRIs().size() == 3);
-        assertTrue(ontology.getDirectImports().size() == 2);
-        
+
+        assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }
 
     // TODO: Test asModel
