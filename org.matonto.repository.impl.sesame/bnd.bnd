@@ -5,6 +5,7 @@ Export-Package: \
     org.matonto.repository.api; provide:=true, \
     org.matonto.repository.base; provide:=true, \
     org.matonto.repository.config; provide:=true, \
-    org.matonto.repository.exception; provide:=true
+    org.matonto.query.api; provide:=true, \
+    org.matonto.query; provide:=true
 -metatype: *
 Service-Component: *
