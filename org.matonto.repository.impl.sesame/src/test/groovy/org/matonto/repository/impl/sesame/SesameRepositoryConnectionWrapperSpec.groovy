@@ -109,7 +109,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         conn.add(vf.createStatement(s, p, o, c), c2)
         conn.add(vf.createStatement(s, p, o2, c), c2)
 
-        def factory = new LinkedHashModelFactory()
+        def factory = LinkedHashModelFactory.getInstance()
         def results = RepositoryResults.asModel(conn.getStatements(null, null, null, c2), factory)
 
         expect:
@@ -124,7 +124,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         def o = vf.createIRI("http://test.com/o")
         def c = vf.createIRI("http://test.com/c")
 
-        def factory = new LinkedHashModelFactory()
+        def factory = LinkedHashModelFactory.getInstance()
         def model = factory.createModel()
         model.add(s, p, o)
         model.add(s, p, o, c)
@@ -144,7 +144,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         def c = vf.createIRI("http://test.com/c")
         def c2 = vf.createIRI("http://test.com/c2")
 
-        def factory = new LinkedHashModelFactory()
+        def factory = LinkedHashModelFactory.getInstance()
         def model = factory.createModel()
         model.add(s, p, o)
         model.add(s, p, o, c)

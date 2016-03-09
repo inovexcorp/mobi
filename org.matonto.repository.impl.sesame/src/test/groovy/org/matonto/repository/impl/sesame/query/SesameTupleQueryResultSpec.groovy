@@ -1,59 +1,62 @@
 package org.matonto.repository.impl.sesame.query
 
+import org.openrdf.query.BindingSet
 import org.openrdf.query.TupleQueryResult
 import spock.lang.Specification
 
 class SesameTupleQueryResultSpec extends Specification{
     def "getBindingNames() returns list of the names of a binding"() {
         setup:
-        TupleQueryResult sesameTQR = Mock()
-        SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
+        def sesameTQR = Mock(TupleQueryResult)
+        def tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
         List<String> bindingSetNames = ["test"]
 
         1 * sesameTQR.getBindingNames() >> bindingSetNames
 
-        assert bindingSetNames.equals(tupleQueryResult.getBindingNames())
+        expect:
+        bindingSetNames.equals(tupleQueryResult.getBindingNames())
     }
 
     def "hasNext() returns true if bindingSet has another value"() {
         setup:
-        TupleQueryResult sesameTQR = Mock()
-        SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
+        def sesameTQR = Mock(TupleQueryResult)
+        def tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
 
         1 * sesameTQR.hasNext() >> true
 
-        assert tupleQueryResult.hasNext()
+        expect:
+        tupleQueryResult.hasNext()
     }
 
     def "hasNext() returns false if bindingSet does not have another value"() {
         setup:
-        TupleQueryResult sesameTQR = Mock()
-        SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
+        def sesameTQR = Mock(TupleQueryResult)
+        def tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
 
         1 * sesameTQR.hasNext() >> false
 
-        assert !tupleQueryResult.hasNext()
+        expect:
+        !tupleQueryResult.hasNext()
     }
 
-    def "next() returns next BindingSet result"(){
+    def "next() returns next BindingSet result"() {
         setup:
-        TupleQueryResult sesameTQR = Mock()
-        SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
-        org.openrdf.query.BindingSet sesBindingSet = Mock()
+        def sesameTQR = Mock(TupleQueryResult)
+        def tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
+        def sesBindingSet = Mock(BindingSet)
 
         when:
         tupleQueryResult.next()
 
         then:
-        noExceptionThrown()
         1 * sesameTQR.next() >> sesBindingSet
+        noExceptionThrown()
     }
 
-    def "remove() does not cause exception when tupleQueryResult has another value"(){
+    def "remove() does not cause exception when tupleQueryResult has another value"() {
         setup:
-        TupleQueryResult sesameTQR = Mock()
-        SesameTupleQueryResult tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
-        org.openrdf.query.BindingSet sesBindingSet = Mock()
+        def sesameTQR = Mock(TupleQueryResult)
+        def tupleQueryResult = new SesameTupleQueryResult(sesameTQR)
 
         when:
         tupleQueryResult.remove()
@@ -61,5 +64,4 @@ class SesameTupleQueryResultSpec extends Specification{
         then:
         noExceptionThrown()
     }
-
 }
