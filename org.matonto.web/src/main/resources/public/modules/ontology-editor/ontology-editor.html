@@ -55,6 +55,13 @@
                 <ontology-upload-overlay ng-if="vm.showUploadOverlay"></ontology-upload-overlay>
 
                 <annotation-overlay ng-if="vm.showAnnotationOverlay"></annotation-overlay>
+
+                <confirmation-overlay ng-if="vm.showDeleteConfirmation"
+                                      header-text="'Delete Ontology'"
+                                      confirm-click="vm.showDeleteConfirmation = false; vm.deleteOntology()"
+                                      cancel-click="vm.showDeleteConfirmation = false;"
+                                      confirm-text="'Yes'"
+                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong> from your workspace?</confirmation-overlay>
             </div>
         </section>
     </div>
