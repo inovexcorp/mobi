@@ -4,8 +4,8 @@
         <ui-select-match placeholder="{{'Select ' + displayText}}" on-select="changeEvent()" on-remove="changeEvent()">
             <span title="{{$item['@id'] || dvm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="dvm.getItemNamespace" repeat="item in selectList | removeIriFromArray:dvm.bindModel | removeIriFromArray:dvm.id | filter:$select.search">
-            <div ng-bind-html="item.localName | highlight:$select.search | trusted"></div>
+        <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="item in selectList | removeIriFromArray:dvm.bindModel | removeIriFromArray:dvm.id | filter:$select.search">
+            <div title="{{dvm.getItemIri(item)}}" ng-bind-html="item.localName | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
 </div>
