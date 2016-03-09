@@ -297,9 +297,9 @@
                                 i = 0;
 
                             while(i < data.length) {
-                                importedClasses = importedClasses.concat(data[i].classes);
-                                importedDataProperties = importedDataProperties.concat(data[i].dataProperties);
-                                importedObjectProperties = importedObjectProperties.concat(data[i].objectProperties);
+                                importedClasses = importedClasses.concat(addOntologyIriToElements(data[i].classes, data[i].id));
+                                importedDataProperties = importedDataProperties.concat(addOntologyIriToElements(data[i].dataProperties, data[i].id));
+                                importedObjectProperties = importedObjectProperties.concat(addOntologyIriToElements(data[i].objectProperties, data[i].id));
                                 i++;
                             }
 
@@ -372,6 +372,12 @@
                         deferred.reject('something went wrong');
                     });
                 return deferred.promise;
+            }
+
+            function addOntologyIriToElements(arr, ontologyIri) {
+                return _.forEach(arr, function(element) {
+                    return element.ontologyIri = ontologyIri;
+                });
             }
 
             self.getItemNamespace = function(item) {
