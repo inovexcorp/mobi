@@ -9,6 +9,7 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
+import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -17,7 +18,9 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
@@ -208,6 +211,18 @@ public class SimpleOntologyTest {
 
         // Assertions
         assertTrue(axioms.size() == 1);
+    }
+    
+    @Test
+    public void missingDirectImportTest() throws Exception {
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
+
+        File file = Paths.get(getClass().getResource("/protegeSample.rdf").toURI()).toFile();
+        Ontology ontology = new SimpleOntology(file, ontologyManager);
+        
+        assertTrue(ontology.getUnloadableImportIRIs().size() == 3);
+        assertTrue(ontology.getDirectImports().size() == 2);
+        
     }
 
     // TODO: Test asModel

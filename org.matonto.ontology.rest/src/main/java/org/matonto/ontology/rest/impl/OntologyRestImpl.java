@@ -107,7 +107,7 @@ public class OntologyRestImpl implements OntologyRest {
             if(!missingImports.isEmpty()) {
                 JSONArray array = new JSONArray();
                 missingImports.forEach(iri -> array.add(iri.stringValue()));
-                json.put("unloadable imported ontologies", array.toString());
+                json.put("unloadableImportedOntologies", array.toString());
             }
         }
 
