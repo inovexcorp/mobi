@@ -1,0 +1,19 @@
+<div class="overlay" ng-class="{'sm': size === 'small', 'lg': size === 'large'}">
+    <div class="content clearfix">
+        <!-- section header -->
+        <h6>{{headerText}}</h6>
+
+        <!-- main content -->
+        <div class="main" ng-transclude></div>
+
+        <!-- overlay buttons -->
+        <div class="btn-container clearfix">
+            <custom-button display-text="confirmText"
+                           on-click="confirmClick()"></custom-button>
+
+            <custom-button display-text="cancelText"
+                           on-click="cancelClick()"
+                           type="'secondary'"></custom-button>
+        </div>
+    </div>
+</div>
