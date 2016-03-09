@@ -47,7 +47,7 @@ public class SesameOperation implements Operation {
     public void setMaxExecutionTime(int maxExecTime) {
         try {
             sesameOperation.setMaxExecutionTime(maxExecTime);
-        } catch (org.openrdf.query.QueryInterruptedException e) {
+        } catch (org.openrdf.query.UpdateExecutionException | org.openrdf.query.QueryInterruptedException e) {
             throw new QueryInterruptedException(e);
         }
     }
