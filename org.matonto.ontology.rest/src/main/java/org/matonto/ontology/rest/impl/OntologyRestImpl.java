@@ -58,7 +58,6 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(200).entity(json.toString()).build();
     }
 
-    @Override
     public Response getAllOntologies() {
         List<String> ontologyIds = manager.getOntologyRegistry().keySet()
                 .stream()
@@ -71,7 +70,7 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getOntologies(String ontologyIdList) {
         if (ontologyIdList == null || ontologyIdList.length() == 0) {
-            throw ErrorUtils.sendError("ontologyIdList is missing", Response.Status.BAD_REQUEST);
+            return getAllOntologies();
         }
 
         List<String> ontologyIds = Arrays.asList(ontologyIdList.trim().split("\\s*,\\s*"));
