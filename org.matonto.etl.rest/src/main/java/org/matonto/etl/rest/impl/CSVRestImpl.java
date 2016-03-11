@@ -5,10 +5,11 @@ import com.google.gson.GsonBuilder;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONObject;
 import com.opencsv.CSVReader;
+import net.sf.json.JSONObject;
 import org.matonto.etl.api.csv.CSVConverter;
-import org.matonto.etl.rest.EtlRest;
+import org.matonto.etl.rest.CSVRest;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.Model;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,14 +34,20 @@ import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
-public class EtlRestImpl implements EtlRest {
+public class CSVRestImpl implements CSVRest {
 
     private CSVConverter csvConverter;
-    private final Logger logger = LoggerFactory.getLogger(EtlRestImpl.class);
+    private ModelFactory modelFactory;
+    private final Logger logger = LoggerFactory.getLogger(CSVRestImpl.class);
 
     @Reference
     public void setCsvConverter(CSVConverter csvConverter) {
         this.csvConverter = csvConverter;
+    }
+
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
     }
 
     @Override
@@ -61,25 +69,57 @@ public class EtlRestImpl implements EtlRest {
     }
 
     @Override
-    public Response etlFile(String fileName, InputStream mappingInputStream) {
-        String mappingFileName = generateUuid();
-        Path mappingPath = Paths.get("data/tmp/" + mappingFileName + ".jsonld");
+    public Response upload(InputStream fileInputStream, String fileName) {
+        Path filePath = Paths.get("data/tmp/" + fileName + ".csv");
+        if (!Files.exists(filePath)) {
+            throw ErrorUtils.sendError("Delimited file doesn't not exist", Response.Status.BAD_REQUEST);
+        }
 
         try {
-            Files.copy(mappingInputStream, mappingPath, StandardCopyOption.REPLACE_EXISTING);
-            mappingInputStream.close();
-        } catch (Exception e) {
-            throw ErrorUtils.sendError("Error parsing mapping file", Response.Status.BAD_REQUEST);
+            Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+            fileInputStream.close();
+        } catch (FileNotFoundException e) {
+            throw ErrorUtils.sendError("Error writing delimited file", Response.Status.BAD_REQUEST);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
         }
-        logger.info("Mapping File Uploaded: " + mappingPath);
+        logger.info("Delimited File Uploaded: " + filePath);
+
+        return Response.status(200).entity(fileName).build();
+    }
+
+    @Override
+    public Response etlFile(String fileName, String jsonld, String mappingFileName, boolean containsHeaders) {
+        if ((jsonld == null && mappingFileName == null) || (jsonld != null && mappingFileName != null)) {
+            throw ErrorUtils.sendError("Must provider either a JSON-LD string or a mapping file name",
+                    Response.Status.BAD_REQUEST);
+        }
 
         Model model;
         File delimitedFile = new File("data/tmp/" + fileName + ".csv");
-        try {
-            model = sesameModel(csvConverter.convert(delimitedFile, new File(mappingPath.toString())));
-        } catch (Exception e) {
-            throw ErrorUtils.sendError("Error converting CSV to JSON-LD", Response.Status.BAD_REQUEST);
+        if (mappingFileName != null) {
+            Path mappingPath = Paths.get("data/tmp/" + mappingFileName + ".jsonld");
+            try {
+                model = sesameModel(csvConverter.convert(delimitedFile,
+                        new File(mappingPath.toString()), containsHeaders));
+            } catch (Exception e) {
+                throw ErrorUtils.sendError("Error converting CSV to JSON-LD", Response.Status.BAD_REQUEST);
+            }
+        } else {
+            InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
+            Model mapping = null;
+            try {
+                mapping = Rio.parse(in, "", RDFFormat.JSONLD);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                model = sesameModel(csvConverter.convert(delimitedFile, matontoModel(mapping), containsHeaders));
+            } catch (IOException e) {
+                throw ErrorUtils.sendError("Error converting CSV to JSON-LD", Response.Status.BAD_REQUEST);
+            }
         }
+
         logger.info("File mapped: " + delimitedFile.getPath());
 
         StringWriter sw = new StringWriter();
@@ -92,7 +132,7 @@ public class EtlRestImpl implements EtlRest {
     }
 
     @Override
-    public Response getRows(String fileName, int rowEnd) {
+    public Response getRows(String fileName, int rowEnd, String separator) {
         File file = new File("data/tmp/" + fileName + ".csv");
         int numRows = rowEnd;
         if (numRows <= 0) {
@@ -102,7 +142,8 @@ public class EtlRestImpl implements EtlRest {
         logger.info("Getting " + numRows + " rows from " + file.getName());
         String json;
         try {
-            json = convertRows(file, numRows);
+            char separatorChar = separator.charAt(0);
+            json = convertRows(file, numRows, separatorChar);
         } catch (Exception e) {
             throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
         }
@@ -116,11 +157,12 @@ public class EtlRestImpl implements EtlRest {
      *
      * @param input the CSV file to convert into JSON
      * @param numRows the number of rows from the CSV file to convert
+     * @param separator a character with the character to separate the columns by
      * @return a string with the JSON of the CSV rows
      * @throws IOException csv file could not be read
      */
-    private String convertRows(File input, int numRows) throws IOException {
-        CSVReader reader = new CSVReader(new FileReader(input));
+    private String convertRows(File input, int numRows, char separator) throws IOException {
+        CSVReader reader = new CSVReader(new FileReader(input), separator);
         List<String[]> csvRows = reader.readAll();
         List<String[]> returnRows = new ArrayList<>();
         for (int i = 0; i <= numRows && i < csvRows.size(); i ++) {
@@ -128,7 +170,11 @@ public class EtlRestImpl implements EtlRest {
         }
 
         Gson gson = new GsonBuilder().create();
-        return gson.toJson(returnRows);
+        JSONObject json = new JSONObject();
+        json.put("columnNumber", returnRows.get(0).length);
+        json.put("rows", gson.toJson(returnRows));
+
+        return json.toString();
     }
 
     /**
@@ -146,6 +192,20 @@ public class EtlRestImpl implements EtlRest {
         sesameModel.addAll(statements);
 
         return sesameModel;
+    }
+
+    /**
+     * Convert Sesame model to MatOnto model.
+     *
+     * @param model A Sesame Model
+     * @return A Matonto Model
+     */
+    protected org.matonto.rdf.api.Model matontoModel(org.openrdf.model.Model model) {
+        Set<org.matonto.rdf.api.Statement> stmts = model.stream()
+                .map(Values::matontoStatement)
+                .collect(Collectors.toSet());
+
+        return modelFactory.createModel(stmts);
     }
 
     /**
