@@ -10,8 +10,8 @@ import javax.ws.rs.core.Response;
 import java.io.InputStream;
 
 
-@Path("/ontology")
-@Api( value = "/ontology" )
+@Path("/ontologies")
+@Api( value = "/ontologies" )
 public interface OntologyRest {
 
     /**
@@ -20,20 +20,19 @@ public interface OntologyRest {
      * @return all ontology Resource identifiers.
      */
     @GET
-    @Path("/ontologyids")
+    @Path("ontologyids")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Gets all Ontology Resource identifiers")
     Response getAllOntologyIds();
 
-    /**
-     * Returns JSON-formatted ontologies in the ontology registry
-     *
-     * @return all ontologies in JSON-LD format.
-     */
-    @GET
-    @Path("/ontologies")
-    @Produces(MediaType.APPLICATION_JSON)
-    Response getAllOntologies();
+//    /**
+//     * Returns JSON-formatted ontologies in the ontology registry
+//     *
+//     * @return all ontologies in JSON-LD format.
+//     */
+//    @GET
+//    @Produces(MediaType.APPLICATION_JSON)
+//    Response getAllOntologies();
 
     /**
      * Returns JSON-formatted ontologies with requested ontology IDs; The ontology id list
@@ -44,9 +43,8 @@ public interface OntologyRest {
      * @return all ontologies specified by ontologyIdList in JSON-LD format
      */
     @GET
-    @Path("/list/ontologies/{ontologyids}")
     @Produces(MediaType.APPLICATION_JSON)
-    Response getOntologies(@PathParam("ontologyids") String ontologyIdList);
+    Response getOntologies(@QueryParam("ontologyids") String ontologyIdList);
 
     /**
      * Ingests/uploads an ontology file to a data store
@@ -55,7 +53,7 @@ public interface OntologyRest {
      * @return true if persisted, false otherwise
      */
     @POST
-    @Path("/ontology")
+    @Path("upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     Response uploadFile(@FormDataParam("file") InputStream fileInputStream);
@@ -69,7 +67,7 @@ public interface OntologyRest {
      * @return ontology with requested ontology ID in the requested format
      */
     @GET
-    @Path("/ontology/{ontologyid}")
+    @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
     Response getOntology(
             @PathParam("ontologyid") String ontologyIdStr,
@@ -84,7 +82,7 @@ public interface OntologyRest {
      * @return the ontology with requested ontology ID as an OutputStream.
      */
     @GET
-    @Path("/download/ontology/{ontologyid}")
+    @Path("{ontologyid}/download")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
                                   @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
@@ -97,7 +95,7 @@ public interface OntologyRest {
      * @return true if deleted, false otherwise.
      */
     @DELETE
-    @Path("/ontology/{ontologyid}")
+    @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
     Response deleteOntology(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -109,7 +107,7 @@ public interface OntologyRest {
      * @return IRIs in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/iris/{ontologyid}")
+    @Path("/{ontologyid}/iris")
     @Produces(MediaType.APPLICATION_JSON)
     Response getIRIsInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -121,7 +119,7 @@ public interface OntologyRest {
      * @return annotation properties in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/annotations/{ontologyid}")
+    @Path("{ontologyid}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
     Response getAnnotationsInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -133,7 +131,7 @@ public interface OntologyRest {
      * @return classes in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/classes/{ontologyid}")
+    @Path("{ontologyid}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     Response getClassesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -145,7 +143,7 @@ public interface OntologyRest {
      * @return datatypes in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/datatypes/{ontologyid}")
+    @Path("{ontologyid}/datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     Response getDatatypesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -157,7 +155,7 @@ public interface OntologyRest {
      * @return object properties in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/object-properties/{ontologyid}")
+    @Path("{ontologyid}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     Response getObjectPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -169,7 +167,7 @@ public interface OntologyRest {
      * @return data properties in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/data-properties/{ontologyid}")
+    @Path("{ontologyid}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     Response getDataPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -181,7 +179,7 @@ public interface OntologyRest {
      * @return named individuals in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/named-individuals/{ontologyid}")
+    @Path("{ontologyid}/named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     Response getNamedIndividualsInOntology(@PathParam("ontologyid") String ontologyIdStr);
     
@@ -193,7 +191,7 @@ public interface OntologyRest {
      * @return IRIs in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/imported-iris/{ontologyid}")
+    @Path("{ontologyid}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     Response getIRIsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -205,7 +203,7 @@ public interface OntologyRest {
      * @return annotation properties in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/imported-annotations/{ontologyid}")
+    @Path("{ontologyid}/imported-annotations")
     @Produces(MediaType.APPLICATION_JSON)
     Response getAnnotationsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -217,7 +215,7 @@ public interface OntologyRest {
      * @return classes in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/imported-classes/{ontologyid}")
+    @Path("{ontologyid}/imported-classes")
     @Produces(MediaType.APPLICATION_JSON)
     Response getClassesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -229,7 +227,7 @@ public interface OntologyRest {
      * @return datatypes in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/imported-datatypes/{ontologyid}")
+    @Path("{ontologyid}/imported-datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     Response getDatatypesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -241,7 +239,7 @@ public interface OntologyRest {
      * @return object properties in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/imported-object-properties/{ontologyid}")
+    @Path("{ontologyid}/imported-object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     Response getObjectPropertiesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -253,7 +251,7 @@ public interface OntologyRest {
      * @return data properties in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/imported-data-properties/{ontologyid}")
+    @Path("{ontologyid}/imported-data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     Response getDataPropertiesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
@@ -265,7 +263,7 @@ public interface OntologyRest {
      * @return named individuals in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/imported-named-individuals/{ontologyid}")
+    @Path("{ontologyid}/imported-named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     Response getNamedIndividualsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 }
