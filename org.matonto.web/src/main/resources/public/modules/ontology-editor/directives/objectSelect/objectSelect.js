@@ -24,12 +24,13 @@
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
-                    var dvm = this;
+                    var dvm = this,
+                        vm = $scope.$parent.vm;
 
-                    dvm.id = $scope.$parent.vm.selected['@id'];
+                    dvm.id = vm.selected['@id'];
 
-                    dvm.getItemNamespace = function(item) {
-                        return ontologyManagerService.getItemNamespace(item);
+                    dvm.getItemOntologyIri = function(item) {
+                        return item.ontologyIri || vm.ontologies[vm.state.oi]['@id'];
                     }
 
                     dvm.getItemIri = function(item) {
