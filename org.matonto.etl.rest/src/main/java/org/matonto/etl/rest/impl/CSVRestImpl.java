@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.rest.CSVRest;
@@ -124,11 +125,8 @@ public class CSVRestImpl implements CSVRest {
 
         StringWriter sw = new StringWriter();
         Rio.write(model, sw, RDFFormat.JSONLD);
-        JSONObject json = new JSONObject();
-        json.put("mappingFileName", mappingFileName);
-        json.put("data", sw.toString());
 
-        return Response.status(200).entity(json.toString()).build();
+        return Response.status(200).entity(sw.toString()).build();
     }
 
     @Override
