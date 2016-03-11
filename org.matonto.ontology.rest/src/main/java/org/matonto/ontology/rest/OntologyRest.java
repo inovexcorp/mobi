@@ -25,21 +25,12 @@ public interface OntologyRest {
     @ApiOperation(value = "Gets all Ontology Resource identifiers")
     Response getAllOntologyIds();
 
-//    /**
-//     * Returns JSON-formatted ontologies in the ontology registry
-//     *
-//     * @return all ontologies in JSON-LD format.
-//     */
-//    @GET
-//    @Produces(MediaType.APPLICATION_JSON)
-//    Response getAllOntologies();
-
     /**
      * Returns JSON-formatted ontologies with requested ontology IDs; The ontology id list
      * is provided as a comma separated string. NOTE: If an ontology in the list does not exist,
      * it will be excluded from the response.
      *
-     * @param ontologyids a comma separated String representing the ontology ids
+     * @param ontologyIdList a comma separated String representing the ontology ids
      * @return all ontologies specified by ontologyIdList in JSON-LD format
      */
     @GET
@@ -53,7 +44,6 @@ public interface OntologyRest {
      * @return true if persisted, false otherwise
      */
     @POST
-    @Path("upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     Response uploadFile(@FormDataParam("file") InputStream fileInputStream);
@@ -61,7 +51,7 @@ public interface OntologyRest {
     /**
      * Returns ontology with requested ontology ID in the requested format
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return ontology with requested ontology ID in the requested format
@@ -76,13 +66,13 @@ public interface OntologyRest {
     /**
      * Streams the ontology with requested ontology ID to an OutputStream.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return the ontology with requested ontology ID as an OutputStream.
      */
     @GET
-    @Path("{ontologyid}/download")
+    @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
                                   @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
@@ -90,7 +80,7 @@ public interface OntologyRest {
     /**
      * Delete ontology with requested ontology ID from the server.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return true if deleted, false otherwise.
      */
@@ -102,19 +92,19 @@ public interface OntologyRest {
     /**
      * Returns IRIs in the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return IRIs in the ontology with requested ontology ID.
      */
     @GET
-    @Path("/{ontologyid}/iris")
+    @Path("{ontologyid}/iris")
     @Produces(MediaType.APPLICATION_JSON)
     Response getIRIsInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
      * Returns annotation properties in the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return annotation properties in the ontology with requested ontology ID.
      */
@@ -126,7 +116,7 @@ public interface OntologyRest {
     /**
      * Returns classes in the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return classes in the ontology with requested ontology ID.
      */
@@ -138,7 +128,7 @@ public interface OntologyRest {
     /**
      * Returns datatypes in the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return datatypes in the ontology with requested ontology ID.
      */
@@ -150,7 +140,7 @@ public interface OntologyRest {
     /**
      * Returns object properties in the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return object properties in the ontology with requested ontology ID.
      */
@@ -162,7 +152,7 @@ public interface OntologyRest {
     /**
      * Returns data properties in the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return data properties in the ontology with requested ontology ID.
      */
@@ -174,7 +164,7 @@ public interface OntologyRest {
     /**
      * Returns named individuals in the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return named individuals in the ontology with requested ontology ID.
      */
@@ -186,7 +176,7 @@ public interface OntologyRest {
     /**
      * Returns IRIs in the direct imported ontologies of the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return IRIs in the ontology with requested ontology ID.
      */
@@ -198,7 +188,7 @@ public interface OntologyRest {
     /**
      * Returns annotation properties in the direct imported ontologies of the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return annotation properties in the ontology with requested ontology ID.
      */
@@ -210,7 +200,7 @@ public interface OntologyRest {
     /**
      * Returns classes in the direct imported ontologies of the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return classes in the ontology with requested ontology ID.
      */
@@ -222,7 +212,7 @@ public interface OntologyRest {
     /**
      * Returns datatypes in the direct imported ontologies of the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return datatypes in the ontology with requested ontology ID.
      */
@@ -234,7 +224,7 @@ public interface OntologyRest {
     /**
      * Returns object properties in the direct imported ontologies of the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return object properties in the ontology with requested ontology ID.
      */
@@ -246,7 +236,7 @@ public interface OntologyRest {
     /**
      * Returns data properties in the direct imported ontologies of the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return data properties in the ontology with requested ontology ID.
      */
@@ -258,7 +248,7 @@ public interface OntologyRest {
     /**
      * Returns named individuals in the direct imported ontologies of the ontology with requested ontology ID.
      *
-     * @param ontologyid the String representing the ontology Resource id. NOTE: Assumes id represents
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @return named individuals in the ontology with requested ontology ID.
      */
