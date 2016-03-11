@@ -71,7 +71,7 @@ public interface OntologyRest {
      * @return the ontology with requested ontology ID as an OutputStream.
      */
     @GET
-    @Path("{ontologyid}/download")
+    @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
                                   @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
