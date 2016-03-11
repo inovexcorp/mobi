@@ -40,7 +40,7 @@
         }
 
         vm.deleteOntology = function() {
-            ontologyManagerService.delete(vm.selected, vm.state)
+            ontologyManagerService.delete(vm.selected.matonto.ontologyId, vm.state)
                 .then(function(response) {
                     stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('default', undefined, undefined, undefined);
