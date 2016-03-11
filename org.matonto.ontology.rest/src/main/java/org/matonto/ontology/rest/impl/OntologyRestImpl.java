@@ -58,7 +58,7 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(200).entity(json.toString()).build();
     }
 
-    public Response getAllOntologies() {
+    private Response getAllOntologies() {
         List<String> ontologyIds = manager.getOntologyRegistry().keySet()
                 .stream()
                 .map(Resource::stringValue)

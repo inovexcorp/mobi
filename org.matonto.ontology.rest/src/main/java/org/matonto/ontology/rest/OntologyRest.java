@@ -9,6 +9,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 
+
 @Path("/ontologies")
 @Api( value = "/ontologies" )
 public interface OntologyRest {
