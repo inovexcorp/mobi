@@ -45,11 +45,10 @@ public interface CSVRest {
      * delimited document using the specified separator. The file must be present
      * in the data/tmp/ directory.
      *
-     * @param fileName a string containing the name of the delimited document in the
-     *                 data/tmp/ directory
+     * @param fileName the name of the delimited document in the data/tmp/ directory
      * @param rowEnd the number of rows to retrieve from the delimited document. NOTE:
      *               the default number of rows is 10
-     * @param separator a string with the character the columns are separated by
+     * @param separator the character the columns are separated by
      * @return a response with a JSON array and the number of columns in the file. Each
      *         element in the array is a row in the document. The row is an array of
      *         strings which are the cells in the row in the document
@@ -67,21 +66,22 @@ public interface CSVRest {
      * using either an uploaded JSON-LD mapping file or a JSON-LD mapping string.
      * The file must be present in the data/tmp/ directory.
      *
-     * @param fileName a string containing the name of the delimited document in the 
-     *                 data/tmp/ directory
-     * @param jsonld a string with a mapping in JSON-LD
-     * @param mappingFileName a string containing the name of an uploaded mapping file
-     * @param containsHeaders a boolean indicating whether the delimited file has headers
+     * @param fileName the name of the delimited document in the data/tmp/ directory
+     * @param jsonld a mapping in JSON-LD
+     * @param mappingFileName the name of an uploaded mapping file
+     * @param containsHeaders whether the delimited file has headers
      * @return a response with a JSON object containing the mapping file name and a
      *      JSON-LD string containing the converted data
     */
     @POST
     @Path("{documentName}/map")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @ApiOperation("ETL the document using an uploaded mapping file or mapping JSON-LD")
     Response etlFile(@PathParam("documentName") String fileName, 
             @FormDataParam("jsonld") String jsonld,
             @FormDataParam("fileName") String mappingFileName,
-            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders);
+            @DefaultValue("jsonld") @QueryParam("Format") String format,
+            @DefaultValue("false") @QueryParam("Preview") boolean isPreview,
+            @DefaultValue("true") @QueryParam("Contains-Headers") boolean containsHeaders);
 }

@@ -90,52 +90,31 @@ public class CSVRestImpl implements CSVRest {
     }
 
     @Override
-    public Response etlFile(String fileName, String jsonld, String mappingFileName, boolean containsHeaders) {
+    public Response etlFile(String fileName, String jsonld, String mappingFileName,
+                            String format, boolean isPreview, boolean containsHeaders) {
         if ((jsonld == null && mappingFileName == null) || (jsonld != null && mappingFileName != null)) {
             throw ErrorUtils.sendError("Must provider either a JSON-LD string or a mapping file name",
                     Response.Status.BAD_REQUEST);
         }
 
-        Model model;
-        File delimitedFile = new File("data/tmp/" + fileName + ".csv");
-        if (mappingFileName != null) {
-            Path mappingPath = Paths.get("data/tmp/" + mappingFileName + ".jsonld");
-            try {
-                model = sesameModel(csvConverter.convert(delimitedFile,
-                        new File(mappingPath.toString()), containsHeaders));
-            } catch (Exception e) {
-                throw ErrorUtils.sendError("Error converting CSV to JSON-LD", Response.Status.BAD_REQUEST);
-            }
-        } else {
-            InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
-            Model mapping = null;
-            try {
-                mapping = Rio.parse(in, "", RDFFormat.JSONLD);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                model = sesameModel(csvConverter.convert(delimitedFile, matontoModel(mapping), containsHeaders));
-            } catch (IOException e) {
-                throw ErrorUtils.sendError("Error converting CSV to JSON-LD", Response.Status.BAD_REQUEST);
-            }
-        }
+        File delimitedFile = (isPreview) ? createPreviewFile(fileName, containsHeaders) :
+                new File("data/tmp/" + fileName + ".csv");
+        Model model = (mappingFileName != null) ? mapWithFile(delimitedFile, mappingFileName, containsHeaders) :
+                mapWithString(delimitedFile, jsonld, containsHeaders);
 
         logger.info("File mapped: " + delimitedFile.getPath());
-
         StringWriter sw = new StringWriter();
-        Rio.write(model, sw, RDFFormat.JSONLD);
-
+        Rio.write(model, sw, getRDFFormat(format));
+        if (isPreview) {
+            delimitedFile.delete();
+        }
         return Response.status(200).entity(sw.toString()).build();
     }
 
     @Override
     public Response getRows(String fileName, int rowEnd, String separator) {
         File file = new File("data/tmp/" + fileName + ".csv");
-        int numRows = rowEnd;
-        if (numRows <= 0) {
-            numRows = 10;
-        }
+        int numRows = (rowEnd <= 0) ? 10 : rowEnd;
 
         logger.info("Getting " + numRows + " rows from " + file.getName());
         String json;
@@ -147,6 +126,101 @@ public class CSVRestImpl implements CSVRest {
         }
 
         return Response.status(200).entity(json).build();
+    }
+
+    /**
+     * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
+     *
+     * @param format the abbreviated name of a RDFFormat
+     * @return a RDFFormat object with the requested format
+     */
+    private RDFFormat getRDFFormat(String format) {
+        RDFFormat rdfformat;
+        switch (format) {
+            case "turtle":
+                rdfformat = RDFFormat.TURTLE;
+                break;
+            case "rdfxml":
+                rdfformat = RDFFormat.RDFXML;
+                break;
+            case "jsonld":
+            default:
+                rdfformat = RDFFormat.JSONLD;
+                break;
+        }
+
+        return rdfformat;
+    }
+
+    /**
+     * Maps the delimited data in an uploaded file into RDF using the specified uploaded
+     * mapping file. Optionally skips a header row.
+     *
+     * @param delimitedFile an uploaded file with the delimited data
+     * @param mappingFileName the name of an uploaded mapping file
+     * @param containsHeaders whether or not the uploaded delimited file has a header row
+     * @return a Sesame Model with the mapped data from the delimited file
+     */
+    private Model mapWithFile(File delimitedFile, String mappingFileName, boolean containsHeaders) {
+        Model model;
+        try {
+            model = sesameModel(csvConverter.convert(delimitedFile,
+                    new File("data/tmp/" + mappingFileName + ".jsonld"), containsHeaders));
+        } catch (Exception e) {
+            throw ErrorUtils.sendError("Error converting CSV", Response.Status.BAD_REQUEST);
+        }
+
+        return model;
+    }
+
+    /**
+     * Maps the delimited data in an uploaded file into RDF using the JSON-LD in the
+     * passed String. Optionally skips a header row.
+     *
+     * @param delimitedFile an uploaded file with the delimited data
+     * @param jsonld a String of a JSON-LD mapping
+     * @param containsHeaders whether or not the uploaded delimited file has a header row
+     * @return a Sesame Model with the mapped data from the delimited file
+     */
+    private Model mapWithString(File delimitedFile, String jsonld, boolean containsHeaders) {
+        Model model;
+        Model mapping;
+        InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
+        try {
+            mapping = Rio.parse(in, "", RDFFormat.JSONLD);
+            model = sesameModel(csvConverter.convert(delimitedFile, matontoModel(mapping), containsHeaders));
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error converting CSV", Response.Status.BAD_REQUEST);
+        }
+
+        return model;
+    }
+
+    /**
+     * Generates a temporary file with the first 10 lines of an uploaded delimited file.
+     *
+     * @param fileName the name of the uploaded delimited file
+     * @param containsHeaders whether or not the uploaded delimited file has a header row
+     * @return a File object of the temporary file with the first 10 rows of the uploaded
+     *         delimited file
+     */
+    private File createPreviewFile(String fileName, boolean containsHeaders) {
+        File tempFile = new File("data/tmp/temp.csv");
+        try {
+            List<String> lines = Files.readAllLines(Paths.get("data/tmp/" + fileName + ".csv"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+            int numRows = (containsHeaders) ? 11 : 10;
+            for (int i = 0; i < numRows; i++) {
+                writer.write(lines.get(i));
+                writer.newLine();
+            }
+            writer.close();
+
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
+        }
+
+        return tempFile;
     }
 
     /**
