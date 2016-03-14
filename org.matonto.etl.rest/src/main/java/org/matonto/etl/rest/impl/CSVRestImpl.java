@@ -55,17 +55,7 @@ public class CSVRestImpl implements CSVRest {
     public Response upload(InputStream fileInputStream) {
         String fileName = generateUuid();
         Path filePath = Paths.get("data/tmp/" + fileName + ".csv");
-
-        try {
-            Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            fileInputStream.close();
-        } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Error writing delimited file", Response.Status.BAD_REQUEST);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
-        }
-        logger.info("Delimited File Uploaded: " + filePath);
-
+        uploadFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
     }
 
@@ -75,17 +65,7 @@ public class CSVRestImpl implements CSVRest {
         if (!Files.exists(filePath)) {
             throw ErrorUtils.sendError("Delimited file doesn't not exist", Response.Status.BAD_REQUEST);
         }
-
-        try {
-            Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            fileInputStream.close();
-        } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Error writing delimited file", Response.Status.BAD_REQUEST);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
-        }
-        logger.info("Delimited File Uploaded: " + filePath);
-
+        uploadFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
     }
 
@@ -221,6 +201,24 @@ public class CSVRestImpl implements CSVRest {
         }
 
         return tempFile;
+    }
+
+    /**
+     * Uploads the file in the InputStream to the specified path.
+     *
+     * @param fileInputStream a file in an InputStream
+     * @param filePath the location to upload the file to
+     */
+    private void uploadFile(InputStream fileInputStream, Path filePath) {
+        try {
+            Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+            fileInputStream.close();
+        } catch (FileNotFoundException e) {
+            throw ErrorUtils.sendError("Error writing delimited file", Response.Status.BAD_REQUEST);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+        }
+        logger.info("File Uploaded: " + filePath);
     }
 
     /**

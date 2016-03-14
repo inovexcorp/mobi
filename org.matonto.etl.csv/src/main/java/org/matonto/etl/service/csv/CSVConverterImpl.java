@@ -33,38 +33,6 @@ public class CSVConverterImpl implements CSVConverter {
         this.modelFactory = modelFactory;
     }
 
-
-    @Override
-    public Model convert(File csv, File mappingFile) throws IOException, RDFParseException {
-        Model converted = parseMapping(mappingFile);
-        return convert(csv, converted);
-    }
-
-    @Override
-    public Model convert(File csv, Model mappingModel) throws IOException {
-        char separator = getSeparator(mappingModel);
-        CSVReader reader = new CSVReader(new FileReader(csv), separator);
-        String[] nextLine;
-
-        Model convertedRDF = modelFactory.createModel();
-
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
-
-        //Skip headers
-        reader.readNext();
-        //Traverse each row and convert column into RDF
-        while ((nextLine = reader.readNext()) != null) {
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm,nextLine));
-            }
-            //Reset classMappings
-            for (ClassMapping cm : classMappings) {
-                cm.setInstance(false);
-            }
-        }
-        return convertedRDF;
-    }
-
     @Override
     public Model convert(File csv, File mappingFile, boolean containsHeaders) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
@@ -73,17 +41,16 @@ public class CSVConverterImpl implements CSVConverter {
 
     @Override
     public Model convert(File csv, Model mappingModel, boolean containsHeaders) throws IOException {
-        // If headers exist, skip them
-        if (containsHeaders) {
-            return convert(csv, mappingModel);
-        }
         char separator = getSeparator(mappingModel);
         CSVReader reader = new CSVReader(new FileReader(csv), separator);
         String[] nextLine;
-
         Model convertedRDF = modelFactory.createModel();
-
         ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+
+        // If headers exist, skip them
+        if (containsHeaders) {
+            reader.readNext();
+        }
 
         //Traverse each row and convert column into RDF
         while ((nextLine = reader.readNext()) != null) {
