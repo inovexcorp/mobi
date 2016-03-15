@@ -33,7 +33,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile);
+        Model convertedModel = c.convert(csv, mappingFile, true);
 
         expect:
         m.equals(convertedModel);
@@ -45,7 +45,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("semicolonMapping.ttl").getFile();
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile)
+        Model convertedModel = c.convert(csv, mappingFile, true)
 
         expect:
         m.equals(convertedModel);
@@ -57,7 +57,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("defaultSeparatorMapping.ttl").getFile();
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile);
+        Model convertedModel = c.convert(csv, mappingFile, true);
 
         expect:
         m.equals(convertedModel);
@@ -69,7 +69,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("tabMapping.ttl").getFile();
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile)
+        Model convertedModel = c.convert(csv, mappingFile, true)
 
         expect:
         m.equals(convertedModel);
@@ -81,7 +81,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("mappingNoLocalName.ttl").getFile();
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile)
+        Model convertedModel = c.convert(csv, mappingFile, true)
 
         expect:
         m.equals(convertedModel);
@@ -112,7 +112,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("testInvalidMapping.ttl").getFile();
 
         when:
-        c.convert(csv, mappingFile);
+        c.convert(csv, mappingFile, true);
 
         then:
         thrown RDFParseException;
@@ -126,7 +126,7 @@ class ConverterSpec extends Specification {
         r = new FileReader(out);
         c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile);
+        Model convertedModel = c.convert(csv, mappingFile, true);
 
         expect:
         m.equals(convertedModel);
