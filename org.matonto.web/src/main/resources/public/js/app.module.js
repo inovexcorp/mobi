@@ -20,6 +20,8 @@
             'objectSelect',
             'stringSelect',
             'circleButton',
-            'customButton'
-        ]);
+            'customButton',
+            'confirmationOverlay'
+        ])
+        .constant('_', window._);
 })();
