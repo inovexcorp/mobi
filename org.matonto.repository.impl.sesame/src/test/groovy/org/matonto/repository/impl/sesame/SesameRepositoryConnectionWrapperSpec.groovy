@@ -1,5 +1,15 @@
 package org.matonto.repository.impl.sesame
 
+import org.matonto.query.GraphQueryResult
+import org.matonto.query.TupleQueryResult
+import org.matonto.query.api.Binding
+import org.matonto.query.api.BindingSet
+import org.matonto.query.api.BooleanQuery
+import org.matonto.query.api.GraphQuery
+import org.matonto.query.api.TupleQuery
+import org.matonto.query.api.Update
+import org.matonto.query.exception.MalformedQueryException
+import org.matonto.rdf.api.Statement
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.repository.api.RepositoryConnection
@@ -99,7 +109,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         conn.add(vf.createStatement(s, p, o, c), c2)
         conn.add(vf.createStatement(s, p, o2, c), c2)
 
-        def factory = new LinkedHashModelFactory()
+        def factory = LinkedHashModelFactory.getInstance()
         def results = RepositoryResults.asModel(conn.getStatements(null, null, null, c2), factory)
 
         expect:
@@ -114,7 +124,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         def o = vf.createIRI("http://test.com/o")
         def c = vf.createIRI("http://test.com/c")
 
-        def factory = new LinkedHashModelFactory()
+        def factory = LinkedHashModelFactory.getInstance()
         def model = factory.createModel()
         model.add(s, p, o)
         model.add(s, p, o, c)
@@ -134,7 +144,7 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         def c = vf.createIRI("http://test.com/c")
         def c2 = vf.createIRI("http://test.com/c2")
 
-        def factory = new LinkedHashModelFactory()
+        def factory = LinkedHashModelFactory.getInstance()
         def model = factory.createModel()
         model.add(s, p, o)
         model.add(s, p, o, c)
@@ -397,6 +407,138 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
 
         expect:
         conn.size() == 1
+    }
+
+    def "prepareTupleQuery(String) provides simple working query"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+
+        conn.add(s,p,o)
+
+        TupleQuery tupleQuery = conn.prepareTupleQuery("SELECT ?s ?o WHERE { ?s <http://test.com/p> ?o . }")
+
+        TupleQueryResult tqr = tupleQuery.evaluate()
+
+        for(BindingSet bindingSet : tqr){
+            for(Binding binding : bindingSet){
+                if("o".equals(binding.getName()))
+                    assert o.equals(binding.getValue())
+                else if("s".equals(binding.getName()))
+                    assert s.equals(binding.getValue())
+            }
+        }
+    }
+
+    def "prepareTupleQuery(String) with malformed query causes exception"() {
+        setup:
+        def query = "SELECT ?s ?o WHERE { ?s <http://test.com/p> ?o . "
+
+        when:
+        conn.prepareTupleQuery(query)
+
+        then:
+        thrown MalformedQueryException
+    }
+
+    def "prepareBooleanQuery(String) provides working boolean query"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+
+        conn.add(s,p,o)
+
+        def query = "ASK { ?s <http://test.com/p> ?o . }"
+
+        when:
+        BooleanQuery booleanQuery = conn.prepareBooleanQuery(query)
+
+        then:
+        booleanQuery.evaluate()
+    }
+
+    def "prepareBooleanQuery(String) with bad query causes exception"() {
+        setup:
+        def query = "{}"
+
+        when:
+        conn.prepareBooleanQuery(query)
+
+        then:
+        thrown MalformedQueryException
+    }
+
+    def "prepareGraphQuery(String) provides working graph query"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+
+        conn.add(s,p,o)
+
+        def query = "DESCRIBE ?s WHERE {?s <http://test.com/p> ?o .}"
+        GraphQuery graphQuery = conn.prepareGraphQuery(query)
+
+        when:
+        GraphQueryResult graphQueryResult = graphQuery.evaluate()
+
+        then:
+        for(Statement statement : graphQueryResult){
+            statement.equals(vf.createStatement(s,p,o))
+        }
+    }
+
+    def "prepareGraphQuery(String) with bad query causes exception"() {
+        setup:
+        def query = "{}"
+
+        when:
+        conn.prepareGraphQuery(query)
+
+        then:
+        thrown MalformedQueryException
+    }
+
+    def "prepareUpdate(String) successfully adds statement"() {
+        setup:
+        def query = "INSERT { <http://test.com/s> <http://test.com/p> <http://test.com/o> } WHERE {}"
+        Update update = conn.prepareUpdate(query)
+
+        when:
+        update.execute()
+
+        then:
+        conn.size() == 1
+    }
+
+    def "prepareUpdate(String successfully removes statement"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.add(s,p,o)
+
+        def query = "DELETE { <http://test.com/s> <http://test.com/p> <http://test.com/o> } WHERE {}"
+        Update update = conn.prepareUpdate(query)
+
+        when:
+        update.execute()
+
+        then:
+        conn.size() == 0
+    }
+
+    def "prepareUpdate(String) with bad query causes exception"() {
+        setup:
+        def query = "{}"
+
+        when:
+        conn.prepareUpdate(query)
+
+        then:
+        thrown MalformedQueryException
     }
 
 }

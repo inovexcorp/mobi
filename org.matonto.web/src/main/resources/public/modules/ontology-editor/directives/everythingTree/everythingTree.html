@@ -74,7 +74,7 @@
            ng-class="{'active': vm.showUploadOverlay}">
             <i class="fa fa-upload fa-fw"></i>Upload Ontology
         </a>
-        <a ng-click="vm.deleteOntology();"
+        <a ng-click="vm.showDeleteConfirmation = true;"
            ng-class="{'disabled': vm.state.editor !== 'ontology-editor' || vm.state.oi === -1}">
             <i class="fa fa-trash-o fa-fw"></i>Delete Ontology
         </a>

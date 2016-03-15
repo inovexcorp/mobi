@@ -58,8 +58,7 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(200).entity(json.toString()).build();
     }
 
-    @Override
-    public Response getAllOntologies() {
+    private Response getAllOntologies() {
         List<String> ontologyIds = manager.getOntologyRegistry().keySet()
                 .stream()
                 .map(Resource::stringValue)
@@ -71,7 +70,7 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getOntologies(String ontologyIdList) {
         if (ontologyIdList == null || ontologyIdList.length() == 0) {
-            throw ErrorUtils.sendError("ontologyIdList is missing", Response.Status.BAD_REQUEST);
+            return getAllOntologies();
         }
 
         List<String> ontologyIds = Arrays.asList(ontologyIdList.trim().split("\\s*,\\s*"));
@@ -103,6 +102,12 @@ public class OntologyRestImpl implements OntologyRest {
         if (persisted) {
             OntologyId oid = ontology.getOntologyId();
             json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
+            Set<IRI> missingImports = ontology.getUnloadableImportIRIs();
+            if(!missingImports.isEmpty()) {
+                JSONArray array = new JSONArray();
+                missingImports.forEach(iri -> array.add(iri.stringValue()));
+                json.put("unloadableImportedOntologies", array.toString());
+            }
         }
 
         json.put("persisted", persisted);

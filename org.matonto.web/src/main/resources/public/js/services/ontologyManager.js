@@ -9,7 +9,7 @@
 
         function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes) {
             var self = this,
-                prefix = '/matontorest/ontology',
+                prefix = '/matontorest/ontologies',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
                 defaultRdfs = 'http://www.w3.org/2000/01/rdf-schema#',
                 defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
@@ -71,7 +71,7 @@
                         }
                     };
 
-                $http.get(prefix + '/getAllOntologies', config)
+                $http.get(prefix, config)
                     .then(function(response) {
                         var i = 0;
 
@@ -215,12 +215,7 @@
                     others = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
                     i = 0,
-                    deferred = $q.defer(),
-                    config = {
-                        params: {
-                            ontologyIdStr: ontologyId
-                        }
-                    };
+                    deferred = $q.defer();
 
                 while(i < list.length) {
                     obj = list[i];
@@ -279,8 +274,8 @@
                 ontology.matonto.others = others;
 
                 $q.all([
-                        $http.get(prefix + '/getAllIRIs', config),
-                        $http.get(prefix + '/getAllImportedIRIs', config)
+                        $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
+                        $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris')
                     ]).then(function(response) {
                         var ontologyIris = response[0],
                             importedOntologyIris = response[1],
@@ -298,9 +293,9 @@
                                 i = 0;
 
                             while(i < data.length) {
-                                importedClasses = importedClasses.concat(data[i].classes);
-                                importedDataProperties = importedDataProperties.concat(data[i].dataProperties);
-                                importedObjectProperties = importedObjectProperties.concat(data[i].objectProperties);
+                                importedClasses = importedClasses.concat(addOntologyIriToElements(data[i].classes, data[i].id));
+                                importedDataProperties = importedDataProperties.concat(addOntologyIriToElements(data[i].dataProperties, data[i].id));
+                                importedObjectProperties = importedObjectProperties.concat(addOntologyIriToElements(data[i].objectProperties, data[i].id));
                                 i++;
                             }
 
@@ -373,6 +368,12 @@
                         deferred.reject('something went wrong');
                     });
                 return deferred.promise;
+            }
+
+            function addOntologyIriToElements(arr, ontologyIri) {
+                return _.forEach(arr, function(element) {
+                    return element.ontologyIri = ontologyIri;
+                });
             }
 
             self.getItemNamespace = function(item) {
@@ -474,22 +475,17 @@
                 return result;
             }
 
-            self.delete = function(selected, state) {
+            self.delete = function(ontologyId, state) {
                 var deferred = $q.defer();
 
                 if(state.editor === 'ontology-editor' && state.oi !== -1) {
                     $rootScope.showSpinner = true;
-                    var config = {
-                            params: {
-                                ontologyIdStr: selected.matonto.ontologyId
-                            }
-                        },
-                        onError = function(response) {
+                    var onError = function(response) {
                             deferred.reject(response.data.error);
                             $rootScope.showSpinner = false;
                         };
 
-                    $http.get(prefix + '/deleteOntology', config)
+                    $http.delete(prefix + '/' + encodeURIComponent(ontologyId))
                         .then(function(response) {
                             if(response.hasOwnProperty('data') && response.data.hasOwnProperty('deleted') && response.data.deleted) {
                                 self.ontologies.splice(state.oi, 1);
@@ -521,19 +517,18 @@
 
                     fd.append('file', file);
 
-                    return $http.post(prefix + '/uploadOntology', fd, config);
+                    return $http.post(prefix, fd, config);
                 }
             }
 
             self.get = function(ontologyId) {
                 var config = {
                         params: {
-                            ontologyIdStr: ontologyId,
                             rdfFormat: 'jsonld'
                         }
                     };
 
-                return $http.get(prefix + '/getOntology', config);
+                return $http.get(prefix + '/' + encodeURIComponent(ontologyId), config);
             }
 
             self.uploadThenGet = function(isValid, file) {
