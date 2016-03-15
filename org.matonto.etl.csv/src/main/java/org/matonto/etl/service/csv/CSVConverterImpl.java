@@ -36,13 +36,28 @@ public class CSVConverterImpl implements CSVConverter {
     @Override
     public Model convert(File csv, File mappingFile, boolean containsHeaders) throws IOException, RDFParseException {
         Model converted = parseMapping(mappingFile);
-        return convert(csv, converted, containsHeaders);
+        return convert(new FileReader(csv), converted, containsHeaders);
     }
 
     @Override
     public Model convert(File csv, Model mappingModel, boolean containsHeaders) throws IOException {
+        return convert(new FileReader(csv), mappingModel, containsHeaders);
+    }
+
+    @Override
+    public Model convert(InputStream csv, File mappingFile, boolean containsHeaders) throws IOException {
+        Model converted = parseMapping(mappingFile);
+        return convert(new InputStreamReader(csv), converted, containsHeaders);
+    }
+
+    @Override
+    public Model convert(InputStream csv, Model mappingModel, boolean containsHeaders) throws IOException {
+        return convert(new InputStreamReader(csv), mappingModel, containsHeaders);
+    }
+
+    private Model convert(Reader csv, Model mappingModel, boolean containsHeaders) throws IOException {
         char separator = getSeparator(mappingModel);
-        CSVReader reader = new CSVReader(new FileReader(csv), separator);
+        CSVReader reader = new CSVReader(csv, separator);
         String[] nextLine;
         Model convertedRDF = modelFactory.createModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
