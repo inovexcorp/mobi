@@ -27,10 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
 
@@ -41,7 +38,7 @@ public class CSVRestImpl implements CSVRest {
     private ModelFactory modelFactory;
     private final Logger logger = LoggerFactory.getLogger(CSVRestImpl.class);
 
-    private final static int NUM_LINE_PREVIEW = 10;
+    private static final int NUM_LINE_PREVIEW = 10;
 
     @Reference
     public void setCsvConverter(CSVConverter csvConverter) {
@@ -89,7 +86,7 @@ public class CSVRestImpl implements CSVRest {
             try {
                 dataToConvert = new FileInputStream(delimitedFile);
             } catch (FileNotFoundException e) {
-                throw ErrorUtils.sendError(e, "Error converting CSV", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(e, "Error locating CSV", Response.Status.BAD_REQUEST);
             }
         }
 
@@ -169,6 +166,7 @@ public class CSVRestImpl implements CSVRest {
             int numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
             for (int i = 0; i < numRows; i++) {
                 byteArrayOutputStream.write(br.readLine().getBytes());
+                byteArrayOutputStream.write("\n".getBytes());
             }
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
