@@ -62,7 +62,7 @@ public class CLITransform implements Action {
         }
 
         try {
-            Model model = csvConverter.convert(newFile, mappingFile);
+            Model model = csvConverter.convert(newFile, mappingFile, true);
 
             if(repositoryID != null)
                 rdfImportService.importModel(repositoryID, model);
