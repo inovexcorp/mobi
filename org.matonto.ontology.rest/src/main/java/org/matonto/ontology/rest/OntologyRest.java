@@ -59,9 +59,8 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
-    Response getOntology(
-            @PathParam("ontologyid") String ontologyIdStr,
-            @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
+    Response getOntology(@PathParam("ontologyid") String ontologyIdStr,
+                         @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
 
     /**
      * Streams the ontology with requested ontology ID to an OutputStream.
@@ -78,9 +77,16 @@ public interface OntologyRest {
                                   @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
 
     /**
+     * Replaces the ontology's resource with the new data
      *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceIdStr the String representing the edited Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the edited Resource.
+     * @return true if updated, false otherwise
      */
-    @PUT
+    @POST
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
     Response updateOntology(@PathParam("ontologyid") String ontologyIdStr,

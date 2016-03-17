@@ -13,14 +13,16 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.api.*;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -146,6 +148,48 @@ public class OntologyRestImpl implements OntologyRest {
         };
 
         return Response.ok(stream).build();
+    }
+
+    @Override
+    public Response updateOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+        }
+
+        if (resourceIdStr == null || resourceIdStr.length() == 0) {
+            throw ErrorUtils.sendError("resourceIdStr is missing", Response.Status.BAD_REQUEST);
+        }
+
+        if (resourceJson == null || resourceJson.length() == 0) {
+            throw ErrorUtils.sendError("resourceJson is missing", Response.Status.BAD_REQUEST);
+        }
+
+        boolean updated;
+        try {
+            Resource ontologyResource;
+            if (isBNodeString(ontologyIdStr.trim())) {
+                ontologyResource = factory.createBNode(ontologyIdStr.trim());
+            } else {
+                ontologyResource = factory.createIRI(ontologyIdStr.trim());
+            }
+
+            Resource changedResource;
+            if (isBNodeString(resourceIdStr.trim())) {
+                changedResource = factory.createBNode(resourceIdStr.trim());
+            } else {
+                changedResource = factory.createIRI(resourceIdStr.trim());
+            }
+
+            updated = manager.updateOntology(ontologyResource, changedResource, resourceJson);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while updating ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("updated", updated);
+
+        return Response.status(200).entity(json.toString()).build();
     }
 
     @Override

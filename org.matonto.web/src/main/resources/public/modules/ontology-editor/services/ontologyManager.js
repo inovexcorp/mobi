@@ -64,14 +64,9 @@
             function initialize() {
                 $rootScope.showSpinner = true;
 
-                var promises = [],
-                    config = {
-                        params: {
-                            rdfFormat: 'jsonld'
-                        }
-                    };
+                var promises = [];
 
-                $http.get(prefix, config)
+                $http.get(prefix)
                     .then(function(response) {
                         var i = 0;
 
@@ -92,18 +87,17 @@
                 var len = obj['@id'].length,
                     delimiter = obj['@id'].charAt(len - 1);
 
+                obj.matonto = {
+                    originalId: obj['@id']
+                }
+
                 if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
-                    obj.matonto = {
-                        delimiter: delimiter,
-                        originalId: obj['@id']
-                    }
+                    obj.matonto.delimiter = delimiter;
                     obj['@id'] = obj['@id'].substring(0, len - 1);
                 } else {
-                    obj.matonto = {
-                        delimiter: '#',
-                        originalId: ['@id']
-                    }
+                    obj.matonto.delimiter = '#';
                 }
+
                 angular.merge(ontology, obj);
             }
 
@@ -363,7 +357,7 @@
                         self.ontologies.push(response);
                         deferred.resolve(response);
                     }, function(response) {
-                        //TODO: handle error scenario
+                        // TODO: handle error scenario
                         deferred.reject('something went wrong');
                     });
                 return deferred.promise;
@@ -577,20 +571,35 @@
                 return deferred.promise;
             }
 
-            self.edit = function(obj, state) {
-                var oi = state.oi,
-                    ci = state.ci,
-                    pi = state.pi,
-                    tab = state.tab,
-                    current = self.ontologies[oi],
-                    namespace = current.matonto.originalId + current.matonto.delimiter,
-                    result = angular.copy(obj);
+            self.edit = function(ontologyId, obj) {
+                $rootScope.showSpinner = true;
 
-                delete result.matonto;
-                obj.matonto.unsaved = false;
+                var config,
+                    resourceId = obj.matonto.originalId,
+                    resourceJson = angular.copy(obj);
 
-                // TODO: update obj.matonto.originalId in .then() after API call to update the @id if it changed
-                console.log(result);
+                delete resourceJson.matonto;
+
+                config = {
+                    params: {
+                        resourceid: resourceId,
+                        resourcejson: resourceJson
+                    }
+                }
+
+                $http.post(prefix + '/' + encodeURIComponent(ontologyId), null, config)
+                    .then(function(response) {
+                        if(response.data.updated) {
+                            console.log('Update successful');
+                            obj.matonto.unsaved = false;
+                        } else {
+                            console.log('Not successful');
+                        }
+                        $rootScope.showSpinner = false;
+                    }, function(response) {
+                        console.error('It broke!!');
+                        $rootScope.showSpinner = false;
+                    });
             }
 
             self.create = function(obj, state) {

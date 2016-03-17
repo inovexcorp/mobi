@@ -35,6 +35,16 @@ public interface OntologyManager {
 	 */
 	boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException;
 
+	/**
+	 * Updates Ontology object with the changed resource
+	 *
+	 * @param ontologyResource Ontology Resource
+	 * @param changedResource The IRI of the changed resource
+	 * @param changedModel The Model of the changed resource
+	 * @return True if successfully updated, false otherwise
+	 */
+	boolean updateOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
+
     /**
      * Deletes the ontology with the given OntologyId, and returns true if successfully removed. The identifier
      * used matches the rules for OntologyId.getOntologyIdentifier():
@@ -50,15 +60,6 @@ public interface OntologyManager {
      * @throws IllegalStateException - if the repository is null
      */
 	boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
-
-    /**
-     *
-     * @param ontologyId
-     * @param resourceChanged
-     * @param resourceModel
-     * @return
-     */
-    boolean updatedOntology(OntologyId ontologyId, Resource resourceChanged, Model resourceModel);
 
 	Map<Resource, String> getOntologyRegistry() throws MatontoOntologyException;
 	

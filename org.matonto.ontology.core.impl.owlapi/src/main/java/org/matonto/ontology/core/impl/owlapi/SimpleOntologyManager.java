@@ -1,9 +1,7 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +18,8 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
@@ -220,6 +220,34 @@ public class SimpleOntologyManager implements OntologyManager {
 		
 		return true;
 	}
+
+	@Override
+    public boolean updateOntology(Resource ontologyResource, Resource changedResource, String resourceJson) throws MatontoOntologyException {
+        if (repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        if(!ontologyExists(ontologyResource))
+            throw new MatontoOntologyException("Ontology ID does not exist.");
+
+        RepositoryConnection conn = null;
+
+        try {
+            InputStream in = new ByteArrayInputStream(resourceJson.getBytes(StandardCharsets.UTF_8));
+            Model changedModel = transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
+
+            conn = repository.getConnection();
+            conn.clear(changedResource);
+            conn.add(changedModel, ontologyResource);
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } catch (IOException|org.openrdf.rio.RDFParseException e) {
+            throw new MatontoOntologyException("Error in parsing resourceJson", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+        return true;
+    }
 	
 	@Override
 	public boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException {
