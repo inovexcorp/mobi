@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.repository.api.Repository;
 
@@ -49,6 +50,15 @@ public interface OntologyManager {
      * @throws IllegalStateException - if the repository is null
      */
 	boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
+
+    /**
+     *
+     * @param ontologyId
+     * @param resourceChanged
+     * @param resourceModel
+     * @return
+     */
+    boolean updatedOntology(OntologyId ontologyId, Resource resourceChanged, Model resourceModel);
 
 	Map<Resource, String> getOntologyRegistry() throws MatontoOntologyException;
 	

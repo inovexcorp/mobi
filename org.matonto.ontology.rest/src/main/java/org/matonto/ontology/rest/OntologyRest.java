@@ -78,6 +78,16 @@ public interface OntologyRest {
                                   @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
 
     /**
+     *
+     */
+    @PUT
+    @Path("{ontologyid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response updateOntology(@PathParam("ontologyid") String ontologyIdStr,
+                            @QueryParam("resourceid") String resourceIdStr,
+                            @QueryParam("resourcejson") String resourceJson);
+
+    /**
      * Delete ontology with requested ontology ID from the server.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
