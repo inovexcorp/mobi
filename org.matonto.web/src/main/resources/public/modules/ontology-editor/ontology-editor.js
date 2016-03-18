@@ -57,9 +57,8 @@
         }
 
         vm.submitEdit = function() {
-            ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.selected)
+            ontologyManagerService.edit()
                 .then(function(response) {
-                    vm.selected.matonto.unsaved = false;
                     ontologyManagerService.clearChangedList();
                 }, function(response) {
                     console.error(response);
@@ -84,7 +83,7 @@
 
         vm.entityChanged = function() {
             vm.selected.matonto.unsaved = true;
-            ontologyManagerService.addToChangedList(vm.ontology['@id'], vm.selected.matonto.originalId);
+            ontologyManagerService.addToChangedList(vm.ontology['@id'], vm.selected.matonto.originalId, vm.state);
         }
 
         /* Prefix (Context) Management */

@@ -51,7 +51,7 @@
                         'localName': 'title'
                     }
                 ],
-                changedEntities = [],
+                changedEntries = [],
                 newItems = {},
                 ontologies = [],
                 propertyTypes = [
@@ -572,38 +572,47 @@
                 return deferred.promise;
             }
 
-            self.edit = function(ontologyId, obj) {
-                $rootScope.showSpinner = true;
+            self.edit = function() {
+                if(changedEntries.length) {
+                    $rootScope.showSpinner = true;
 
-                var config,
-                    resourceId = obj.matonto.originalId,
-                    resourceJson = angular.copy(obj),
-                    deferred = $q.defer();
+                    var config, resourceJson, obj,
+                        promises = [],
+                        deferred = $q.defer();
 
-                delete resourceJson.matonto;
+                    _.forEach(changedEntries, function(changedEntry) {
+                        obj = self.getObject(changedEntry.state);
+                        obj.matonto.unsaved = false;
 
-                config = {
-                    params: {
-                        resourceid: resourceId,
-                        resourcejson: resourceJson
-                    }
-                }
+                        resourceJson = angular.copy(obj);
+                        delete resourceJson.matonto;
 
-                $http.post(prefix + '/' + encodeURIComponent(ontologyId), null, config)
-                    .then(function(response) {
-                        if(response.data.updated) {
-                            deferred.resolve(response);
-                        } else {
-                            deferred.reject(response);
+                        config = {
+                            params: {
+                                resourceid: changedEntry.entityId,
+                                resourcejson: resourceJson
+                            }
                         }
-                    }, function(response) {
-                        deferred.reject(response);
-                    })
-                    .then(function() {
-                        $rootScope.showSpinner = false;
+
+                        promises.push($http.post(prefix + '/' + encodeURIComponent(changedEntry.ontologyId), null, config));
                     });
 
-                return deferred.promise;
+                    $q.all(promises)
+                        .then(function(response) {
+                            if(!_.find(response.data, { updated: false })) {
+                                deferred.resolve(response);
+                            } else {
+                                deferred.reject(response);
+                            }
+                        }, function(response) {
+                            deferred.reject(response);
+                        })
+                        .then(function() {
+                            $rootScope.showSpinner = false;
+                        });
+
+                    return deferred.promise;
+                }
             }
 
             self.create = function(obj, state) {
@@ -690,15 +699,19 @@
                 return undefined;
             }
 
-            self.addToChangedList = function(entityId) {
-                if(changedEntities.indexOf(entityId) === -1) {
-                    changedEntities.push(entityId);
+            self.addToChangedList = function(ontologyId, entityId, state) {
+                var changedEntry = {
+                    ontologyId: ontologyId,
+                    entityId: entityId,
+                    state: angular.copy(state)
+                }
+                if(!_.find(changedEntries, changedEntry)) {
+                    changedEntries.push(changedEntry);
                 }
             }
 
             self.clearChangedList = function() {
-                console.log(changedEntities);
-                changedEntities = [];
+                changedEntries = [];
             }
         }
 })();
