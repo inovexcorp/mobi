@@ -236,9 +236,14 @@ public class SimpleOntologyManager implements OntologyManager {
             Model changedModel = transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
 
             conn = repository.getConnection();
-			RepositoryResult<Statement> changedStatements = conn.getStatements(changedResource, null, null, ontologyResource);
-            conn.remove(changedStatements, ontologyResource);
-            conn.add(changedModel, ontologyResource);
+            RepositoryResult<Statement> changedStatements = conn.getStatements(changedResource, null, null, ontologyResource);
+
+            if(changedModel.contains(changedResource, null, null, ontologyResource)) {
+                conn.remove(changedStatements, ontologyResource);
+                conn.add(changedModel, ontologyResource);
+            } else {
+                // TODO: something different because this breaks all the things =)
+            }
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         } catch (IOException|org.openrdf.rio.RDFParseException e) {

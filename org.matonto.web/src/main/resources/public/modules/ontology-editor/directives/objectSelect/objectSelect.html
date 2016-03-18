@@ -1,7 +1,7 @@
 <div class="form-group">
     <custom-label display-text="displayText" muted-text="mutedText"></custom-label>
-    <ui-select multiple ng-model="dvm.bindModel">
-        <ui-select-match placeholder="{{'Select ' + displayText}}" on-select="changeEvent()" on-remove="changeEvent()">
+    <ui-select multiple ng-model="dvm.bindModel" on-select="changeEvent()" on-remove="changeEvent()">
+        <ui-select-match placeholder="{{'Select ' + displayText}}">
             <span title="{{$item['@id'] || dvm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>
         </ui-select-match>
         <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="item in selectList | removeIriFromArray:dvm.bindModel | removeIriFromArray:dvm.id | filter:$select.search">

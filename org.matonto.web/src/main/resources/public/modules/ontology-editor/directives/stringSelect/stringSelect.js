@@ -11,7 +11,6 @@
             return {
                 restrict: 'E',
                 scope: {
-                    bindModel: '=ngModel',
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
