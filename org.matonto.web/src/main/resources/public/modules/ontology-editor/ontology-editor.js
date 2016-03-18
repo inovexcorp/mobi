@@ -57,7 +57,12 @@
         }
 
         vm.submitEdit = function() {
-            ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.selected);
+            ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.selected)
+                .then(function(response) {
+                    vm.selected.matonto.unsaved = false;
+                }, function(response) {
+                    console.error(response);
+                });
         }
 
         vm.submitCreate = function() {

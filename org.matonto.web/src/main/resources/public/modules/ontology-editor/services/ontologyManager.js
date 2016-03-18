@@ -576,7 +576,8 @@
 
                 var config,
                     resourceId = obj.matonto.originalId,
-                    resourceJson = angular.copy(obj);
+                    resourceJson = angular.copy(obj),
+                    deferred = $q.defer();
 
                 delete resourceJson.matonto;
 
@@ -590,17 +591,18 @@
                 $http.post(prefix + '/' + encodeURIComponent(ontologyId), null, config)
                     .then(function(response) {
                         if(response.data.updated) {
-                            console.log('Update successful!');
-                            obj.matonto.unsaved = false;
+                            deferred.resolve(response);
                         } else {
-                            console.log('Not successful');
+                            deferred.reject(response);
                         }
                     }, function(response) {
-                        console.error(response);
+                        deferred.reject(response);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
                     });
+
+                return deferred.promise;
             }
 
             self.create = function(obj, state) {
