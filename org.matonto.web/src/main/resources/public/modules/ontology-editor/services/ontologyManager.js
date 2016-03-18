@@ -50,14 +50,15 @@
                         'namespace': 'http://purl.org/dc/elements/1.1/',
                         'localName': 'title'
                     }
+                ],
+                changedEntities = [],
+                newItems = {},
+                ontologies = [],
+                propertyTypes = [
+                    'http://www.w3.org/2002/07/owl#DatatypeProperty',
+                    'http://www.w3.org/2002/07/owl#ObjectProperty'
                 ];
 
-            self.newItems = {};
-            self.ontologies = [];
-            self.propertyTypes = [
-                'http://www.w3.org/2002/07/owl#DatatypeProperty',
-                'http://www.w3.org/2002/07/owl#ObjectProperty'
-            ];
 
             initialize();
 
@@ -354,7 +355,7 @@
 
                 restructure(ontology, ontologyId, context, getPrefixes(context))
                     .then(function(response) {
-                        self.ontologies.push(response);
+                        ontologies.push(response);
                         deferred.resolve(response);
                     }, function(response) {
                         // TODO: handle error scenario
@@ -377,11 +378,11 @@
             }
 
             self.getList = function() {
-                return self.ontologies;
+                return ontologies;
             }
 
             self.getPropertyTypes = function() {
-                return self.propertyTypes;
+                return propertyTypes;
             }
 
             self.getObject = function(state) {
@@ -426,13 +427,13 @@
 
                 editEntity = function() {
                     if(pi !== undefined && ci !== undefined) {
-                        result = self.ontologies[oi].matonto.classes[ci].matonto.properties[pi];
+                        result = ontologies[oi].matonto.classes[ci].matonto.properties[pi];
                     } else if(pi !== undefined && ci === undefined) {
-                        result = self.ontologies[oi].matonto.noDomains[pi];
+                        result = ontologies[oi].matonto.noDomains[pi];
                     } else if(ci !== undefined) {
-                        result = self.ontologies[oi].matonto.classes[ci];
+                        result = ontologies[oi].matonto.classes[ci];
                     } else if(oi !== undefined) {
-                        result = self.ontologies[oi];
+                        result = ontologies[oi];
                     }
                 }
 
@@ -443,10 +444,10 @@
                 }
 
                 createEntity = function() {
-                    var ontology = (oi !== -1) ? self.ontologies[oi] : null,
+                    var ontology = (oi !== -1) ? ontologies[oi] : null,
                         unique = tab + oi + ci + pi;
-                    if(self.newItems[unique]) {
-                        result = self.newItems[unique];
+                    if(newItems[unique]) {
+                        result = newItems[unique];
                     } else {
                         if(pi === -1) {
                             result = setDefaults(ontology, angular.copy(newProperty));
@@ -456,7 +457,7 @@
                         } else {
                             result = angular.copy(newOntology);
                         }
-                        self.newItems[unique] = result;
+                        newItems[unique] = result;
                     }
                 }
 
@@ -481,7 +482,7 @@
                     $http.delete(prefix + '/' + encodeURIComponent(ontologyId))
                         .then(function(response) {
                             if(response.hasOwnProperty('data') && response.data.hasOwnProperty('deleted') && response.data.deleted) {
-                                self.ontologies.splice(state.oi, 1);
+                                ontologies.splice(state.oi, 1);
                                 deferred.resolve(response);
                                 $rootScope.showSpinner = false;
                             } else {
@@ -636,9 +637,9 @@
 
                 if(oi === -1) {
                     obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
-                    self.ontologies.push(obj);
+                    ontologies.push(obj);
                 } else {
-                    var current = self.ontologies[oi];
+                    var current = ontologies[oi];
                     if(ci === -1) {
                         setId(obj, 'class', current.matonto.rdfs);
                         current.matonto.classes.push(obj);
@@ -647,7 +648,7 @@
                         current.matonto.classes[ci].matonto.properties.push(obj);
                     }
                 }
-                delete self.newItems[unique];
+                delete newItems[unique];
                 delete result.matonto;
 
                 console.log('create', result, obj);
@@ -677,7 +678,7 @@
 
             self.getOntology = function(oi) {
                 if(oi !== undefined && oi !== -1) {
-                    return self.ontologies[oi];
+                    return ontologies[oi];
                 }
                 return undefined;
             }
@@ -687,6 +688,17 @@
                     return ontology.matonto[prop];
                 }
                 return undefined;
+            }
+
+            self.addToChangedList = function(entityId) {
+                if(changedEntities.indexOf(entityId) === -1) {
+                    changedEntities.push(entityId);
+                }
+            }
+
+            self.clearChangedList = function() {
+                console.log(changedEntities);
+                changedEntities = [];
             }
         }
 })();
