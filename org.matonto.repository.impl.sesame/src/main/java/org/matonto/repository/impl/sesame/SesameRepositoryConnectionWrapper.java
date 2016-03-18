@@ -15,6 +15,9 @@ import org.matonto.repository.exception.RepositoryException;
 import org.matonto.repository.impl.sesame.query.*;
 import org.openrdf.query.QueryLanguage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
     org.openrdf.repository.RepositoryConnection sesameConn;
@@ -42,10 +45,17 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        if (contexts.length > 0) {
-            statements.forEach(stmt -> add(stmt, contexts));
-        } else {
-            statements.forEach(this::add);
+        try {
+            List<org.openrdf.model.Statement> sesameStatements = new ArrayList<>();
+            statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
+
+            if (contexts.length > 0) {
+                sesameConn.add(sesameStatements, Values.sesameResources(contexts));
+            } else {
+                sesameConn.add(sesameStatements);
+            }
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
         }
     }
 
@@ -78,10 +88,17 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        if (contexts.length > 0) {
-            statements.forEach(stmt -> remove(stmt, contexts));
-        } else {
-            statements.forEach(this::remove);
+        try {
+            List<org.openrdf.model.Statement> sesameStatements = new ArrayList<>();
+            statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
+
+            if (contexts.length > 0) {
+                sesameConn.remove(sesameStatements, Values.sesameResources(contexts));
+            } else {
+                sesameConn.remove(sesameStatements);
+            }
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
         }
     }
 

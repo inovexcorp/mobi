@@ -59,7 +59,7 @@ public interface RepositoryConnection extends AutoCloseable {
     /**
      * Removes the supplied statement from this repository, optionally from one or more named contexts.
      *
-     * @param stmt -  The statement to add.
+     * @param stmt -  The statement to remove.
      * @param contexts - The contexts to remove the statements from. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, the statement is removed from any context specified
      *                 in each statement, or if the statement contains no context, it is added without context.
