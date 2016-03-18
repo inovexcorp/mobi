@@ -590,14 +590,15 @@
                 $http.post(prefix + '/' + encodeURIComponent(ontologyId), null, config)
                     .then(function(response) {
                         if(response.data.updated) {
-                            console.log('Update successful');
+                            console.log('Update successful!');
                             obj.matonto.unsaved = false;
                         } else {
                             console.log('Not successful');
                         }
-                        $rootScope.showSpinner = false;
                     }, function(response) {
-                        console.error('It broke!!');
+                        console.error(response);
+                    })
+                    .then(function() {
                         $rootScope.showSpinner = false;
                     });
             }
