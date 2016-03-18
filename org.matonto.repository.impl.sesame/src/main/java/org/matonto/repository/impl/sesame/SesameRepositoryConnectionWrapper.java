@@ -64,6 +64,42 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     }
 
     @Override
+    public void remove(Statement stmt, Resource... contexts) throws RepositoryException {
+        try {
+            if (contexts.length > 0) {
+                sesameConn.remove(Values.sesameStatement(stmt), Values.sesameResources(contexts));
+            } else {
+                sesameConn.remove(Values.sesameStatement(stmt));
+            }
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        }
+    }
+
+    @Override
+    public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        if (contexts.length > 0) {
+            statements.forEach(stmt -> remove(stmt, contexts));
+        } else {
+            statements.forEach(this::remove);
+        }
+    }
+
+    @Override
+    public void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+        try {
+            if (contexts.length <= 0) {
+                sesameConn.remove(Values.sesameResource(subject), Values.sesameIRI(predicate), Values.sesameValue(object));
+            } else {
+                sesameConn.remove(Values.sesameResource(subject), Values.sesameIRI(predicate),
+                        Values.sesameValue(object), Values.sesameResources(contexts));
+            }
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        }
+    }
+
+    @Override
     public void clear(Resource... contexts) throws RepositoryException {
         try {
             if (contexts.length > 0) {
