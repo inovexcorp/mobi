@@ -5,13 +5,13 @@
         <!-- Begins with -->
         <div ng-class="{'has-error': vm.iriForm.iriBegin.$invalid}" class="form-group">
             <label class="control-label" for="iriBegin">Begins with</label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="vm.iriBegin" ng-pattern="/^[^:\/?#]+:\/\/[^\/?#]*[^#\s]*[^#:\/\s]$/" required />
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="vm.iriBegin" ng-pattern="/^[^:\/?#]+:\/\/[^\/?#]*[^#\s]*[^#:\/\s]$/" ng-change="vm.entityChanged()" required />
             <!--p class="error-msg" ng-if="vm.iriForm.iriBegin.$invalid">This IRI is invalid.</p-->
         </div>
         <!-- Then -->
         <div class="form-group">
             <label class="control-label" for="iriThen">Then</label>
-            <select class="form-control" id="iriThen" name="iriThen" ng-model="vm.iriThen">
+            <select class="form-control" id="iriThen" name="iriThen" ng-model="vm.iriThen" ng-change="vm.entityChanged()">
                 <option value="#">#</option>
                 <option value="/">/</option>
                 <option value=":">:</option>
@@ -20,7 +20,7 @@
         <!-- Ends with -->
         <div ng-class="{'has-error': vm.iriForm.iriEnd.$invalid}" class="form-group">
             <label class="control-label" for="iriEnd">Ends with</label>
-            <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9-_]+$/" required ng-model="vm.iriEnd" ng-trim="false" />
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9-_]+$/" required ng-model="vm.iriEnd" ng-trim="false" ng-change="vm.entityChanged()" />
             <!--p class="error-msg" ng-if="vm.iriForm.iriEnd.$invalid">This localname is invalid.</p-->
         </div>
         <!-- Update references -->
