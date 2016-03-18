@@ -24,6 +24,12 @@
             <artifactId>persistence.api</artifactId>
             <version>1.0.29</version>
         </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
