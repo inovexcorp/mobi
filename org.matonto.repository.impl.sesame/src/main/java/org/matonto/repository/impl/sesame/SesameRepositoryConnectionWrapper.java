@@ -15,8 +15,8 @@ import org.matonto.repository.exception.RepositoryException;
 import org.matonto.repository.impl.sesame.query.*;
 import org.openrdf.query.QueryLanguage;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
@@ -46,7 +46,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         try {
-            List<org.openrdf.model.Statement> sesameStatements = new ArrayList<>();
+            Set<org.openrdf.model.Statement> sesameStatements = new HashSet<>();
             statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
 
             if (contexts.length > 0) {
@@ -89,7 +89,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         try {
-            List<org.openrdf.model.Statement> sesameStatements = new ArrayList<>();
+            Set<org.openrdf.model.Statement> sesameStatements = new HashSet<>();
             statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
 
             if (contexts.length > 0) {
