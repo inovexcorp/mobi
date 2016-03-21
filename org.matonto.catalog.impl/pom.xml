@@ -1,7 +1,7 @@
-<?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
@@ -10,21 +10,21 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>catalog.api</artifactId>
+    <artifactId>org.matonto.catalog.impl</artifactId>
     <packaging>bundle</packaging>
     <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>persistence.api</artifactId>
-            <version>1.0.29</version>
+            <artifactId>catalog.api</artifactId>
+            <version>1.0.33-SNAPSHOT</version>
         </dependency>
 
+        <!-- Test Dependencies -->
         <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.api</artifactId>
-            <version>1.0.33-SNAPSHOT</version>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
         </dependency>
     </dependencies>
 
@@ -37,9 +37,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto Catalog API</Bundle-Name>
+                        <Bundle-Name>MatOnto Catalog Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>org.matonto.catalog.api</Export-Package>
+                        <Export-Package></Export-Package>
+                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>

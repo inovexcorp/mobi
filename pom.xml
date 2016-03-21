@@ -40,7 +40,8 @@
         <module>org.matonto.swagger.ui</module>
         <module>org.matonto.bnd-index</module>
         <module>org.matonto.rest.util</module>
-        <module>org.matonto.catalog</module>
+        <module>org.matonto.catalog.api</module>
+        <module>org.matonto.catalog.impl</module>
     </modules>
 
     <properties>
