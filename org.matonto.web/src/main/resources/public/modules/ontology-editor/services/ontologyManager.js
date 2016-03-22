@@ -15,6 +15,10 @@
                 defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
                 defaultAnnotations = [
                     {
+                        "namespace": "Create ",
+                        "localName": "New Annotation"
+                    },
+                    {
                         'namespace': 'http://www.w3.org/2000/01/rdf-schema#',
                         'localName': 'seeAlso'
                     },
@@ -77,15 +81,15 @@
                         }
                         $q.all(promises)
                             .then(function(response) {
-                                console.log('Successfully loaded ontologies.');
+                                console.log('Successfully loaded ontologies');
                             }, function(response) {
-                                console.error('Not able to load ontologies');
+                                console.warn('Not able to load ontologies');
                             })
                             .then(function() {
                                 $rootScope.showSpinner = false;
                             });
                     }, function(response) {
-                        console.log('Error in initialize:', response);
+                        console.error('Error in initialize() function');
                         $rootScope.showSpinner = false;
                     });
             }
@@ -155,13 +159,22 @@
 
             function objToArr(obj) {
                 var prop,
-                    temp = [];
+                    result = [];
                 for(prop in obj) {
                     if(obj.hasOwnProperty(prop)) {
-                        temp.push({key: prop, value: obj[prop]});
+                        result.push({key: prop, value: obj[prop]});
                     }
                 }
-                return temp;
+                return result;
+            }
+
+            function arrToObj(context) {
+                var result = {},
+                    i = context.length;
+                while(i--) {
+                    result[context[i].key] = context[i].value;
+                }
+                return result;
             }
 
             function addDefaultAnnotations(annotations) {
@@ -173,8 +186,6 @@
                     ],
                     defaults = responseObj.stringify(defaultAnnotations),
                     arr = angular.copy(annotations);
-
-                arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
 
                 while(i < arr.length) {
                     itemIri = responseObj.getItemIri(arr[i]);
@@ -206,8 +217,7 @@
                             owl: prefixes.owl,
                             rdfs: prefixes.rdfs,
                             annotations: [],
-                            currentAnnotationSelect: null,
-                            ontologyId: ontologyId
+                            currentAnnotationSelect: null
                         }
                     },
                     classes = [],
@@ -376,6 +386,81 @@
                 });
             }
 
+            function setId(obj, type, rdfs) {
+                if(obj.matonto.hasOwnProperty('namespace')) {
+                    obj['@id'] = obj.matonto.namespace + $filter('camelCase')(obj[rdfs + 'label'][0]['@value'], type);
+                    delete obj.matonto.namespace;
+                }
+                obj.matonto.originalId = obj['@id'];
+            }
+
+            function restructureLabelAndComment(obj, rdfs) {
+                var copy = angular.copy(obj);
+
+                copy[rdfs + 'comment'] = [obj[rdfs + 'comment'][0]];
+                copy[rdfs + 'label'] = [obj[rdfs + 'label'][0]];
+
+                return copy;
+            }
+
+            function createOntology(ontology) {
+                var ontologyjson,
+                    copy = angular.copy(ontology),
+                    deferred = $q.defer();
+
+                ontology.matonto.originalId = ontology['@id'];
+                ontology = restructureLabelAndComment(ontology, ontology.matonto.rdfs);
+                ontologies.push(ontology);
+
+                delete copy.matonto;
+
+                if(ontology.matonto.hasOwnProperty('context') && ontology.matonto.context.length) {
+                    ontologyjson = {
+                        '@context': arrToObj(ontology.matonto.context),
+                        '@graph': [copy]
+                    }
+                } else {
+                    ontologyjson = copy;
+                }
+
+                var config = {
+                        params: {
+                            ontologyjson: ontologyjson
+                        }
+                    };
+
+                $http.post(prefix, null, config)
+                    .then(function(response) {
+                        if(response.data.persisted) {
+                            console.log('Successfully persisted');
+                            deferred.resolve(response);
+                        } else {
+                            console.warn('Not persisted');
+                            deferred.reject(response);
+                        }
+                    }, function(response) {
+                        console.error('Error in createOntology() function');
+                        deferred.reject(response);
+                    })
+                    .then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+
+                return deferred.promise;
+            }
+
+            function createClass(classObj) {
+                var copy = angular.copy(classObj);
+
+
+            }
+
+            function createProperty(property) {
+                var copy = angular.copy(property);
+
+
+            }
+
             self.getItemNamespace = function(item) {
                 if(item.hasOwnProperty('namespace')) {
                     return item.namespace;
@@ -400,7 +485,7 @@
                     result = {},
                     newOntology = {
                         '@id': '',
-                        '@type': 'owl:Ontology',
+                        '@type': ['owl:Ontology'],
                         'rdfs:label': [{'@value': ''}],
                         'rdfs:comment': [{'@value': ''}],
                         matonto: {
@@ -582,20 +667,30 @@
                 if(changedEntries.length) {
                     $rootScope.showSpinner = true;
 
-                    var config, resourceJson, obj,
+                    var config, entityjson, obj, copy, ontology,
                         promises = [];
 
                     _.forEach(changedEntries, function(changedEntry) {
                         obj = self.getObject(changedEntry.state);
                         obj.matonto.unsaved = false;
+                        copy = angular.copy(obj);
+                        ontology = ontologies[changedEntry.state.oi];
 
-                        resourceJson = angular.copy(obj);
-                        delete resourceJson.matonto;
+                        delete copy.matonto;
+
+                        if(ontology.matonto.hasOwnProperty('context') && ontology.matonto.context.length) {
+                            entityjson = {
+                                '@context': arrToObj(ontology.matonto.context),
+                                '@graph': [copy]
+                            }
+                        } else {
+                            entityjson = copy;
+                        }
 
                         config = {
                             params: {
                                 resourceid: changedEntry.entityId,
-                                resourcejson: resourceJson
+                                resourcejson: entityjson
                             }
                         }
 
@@ -622,91 +717,29 @@
             self.create = function(obj, state) {
                 $rootScope.showSpinner = true;
 
-                var arrToObj, setId, restructureLabelAndComment, currentOntology, ontologyjson,
+                var currentOntology,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
                     tab = state.tab,
-                    copy = angular.copy(obj),
                     unique = tab + oi + ci + pi;
                 obj.matonto.unsaved = false;
 
-                arrToObj = function(context) {
-                    var result = {},
-                        i = context.length;
-                    while(i--) {
-                        result[context[i].key] = context[i].value;
-                    }
-                    return result;
-                }
-
-                setId = function(obj, type, rdfs) {
-                    if(obj.matonto.hasOwnProperty('namespace')) {
-                        obj['@id'] = obj.matonto.namespace + $filter('camelCase')(obj[rdfs + 'label'][0]['@value'], type);
-                        delete obj.matonto.namespace;
-                    }
-                    obj.matonto.originalId = obj['@id'];
-                }
-
-                restructureLabelAndComment = function(obj, rdfs) {
-                    var copy = angular.copy(obj);
-
-                    copy[rdfs + 'comment'] = [obj[rdfs + 'comment'][0]];
-                    copy[rdfs + 'label'] = [obj[rdfs + 'label'][0]];
-
-                    return copy;
-                }
-
                 if(oi === -1) {
-                    obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
-                    obj = restructureLabelAndComment(obj, obj.matonto.rdfs);
-                    ontologies.push(obj);
-
-                    delete copy.matonto;
-
-                    if(obj.matonto.hasOwnProperty('context') && obj.matonto.context.length) {
-                        ontologyjson = {
-                            '@context': arrToObj(obj.matonto.context),
-                            '@graph': [copy]
-                        }
-                    } else {
-                        ontologyjson = copy;
-                    }
-
-                    var config = {
-                            params: {
-                                ontologyjson: ontologyjson
-                            }
-                        };
-
-                    console.log(config.params.ontologyjson);
-
-                    $http.post(prefix, null, config)
-                        .then(function(response) {
-                            if(response.data.persisted) {
-                                console.log('successfully persisted!');
-                            } else {
-                                console.log('um, something broke');
-                            }
-                        }, function(response) {
-                            console.error('yeah, not good at all', response);
-                        })
-                        .then(function() {
-                            $rootScope.showSpinner = false;
-                        });
-
+                    return createOntology(obj);
                 } else {
                     currentOntology = ontologies[oi];
                     if(ci === -1) {
-                        setId(obj, 'class', current.matonto.rdfs);
+                        setId(obj, 'class', currentOntology.matonto.rdfs);
                         currentOntology.matonto.classes.push(obj);
+                        return createClass(obj);
                     } else {
-                        setId(obj, 'property', current.matonto.rdfs);
+                        setId(obj, 'property', currentOntology.matonto.rdfs);
                         currentOntology.matonto.classes[ci].matonto.properties.push(obj);
+                        return createProperty(obj);
                     }
                 }
                 delete newItems[unique];
-                delete copy.matonto;
             }
 
             self.editIRI = function(begin, then, end, update, selected, ontology) {
@@ -750,11 +783,11 @@
 
             self.addToChangedList = function(ontologyId, entityId, state) {
                 var changedEntry = {
-                    ontologyId: ontologyId,
-                    entityId: entityId,
+                    ontologyId: angular.copy(ontologyId),
+                    entityId: angular.copy(entityId),
                     state: angular.copy(state)
                 }
-                if(!_.find(changedEntries, changedEntry)) {
+                if(entityId && !_.find(changedEntries, changedEntry)) {
                     changedEntries.push(changedEntry);
                 }
             }

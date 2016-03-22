@@ -28,6 +28,14 @@
         }
 
         /* Ontology Management */
+        function setVariables(oi) {
+            vm.state = stateManagerService.getState();
+            vm.selected = ontologyManagerService.getObject(vm.state);
+            vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.rdfs = ontologyManagerService.getOntologyProperty(vm.ontology, 'rdfs');
+            vm.owl = ontologyManagerService.getOntologyProperty(vm.ontology, 'owl');
+        }
+
         vm.uploadOntology = function(isValid, file, namespace, localName) {
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(isValid, file)
@@ -40,7 +48,7 @@
         }
 
         vm.deleteOntology = function() {
-            ontologyManagerService.delete(vm.selected.matonto.ontologyId, vm.state)
+            ontologyManagerService.delete(vm.ontology['@id'], vm.state)
                 .then(function(response) {
                     stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('default', undefined, undefined, undefined);
@@ -49,11 +57,7 @@
 
         vm.selectItem = function(editor, oi, ci, pi) {
             stateManagerService.setState(editor, oi, ci, pi);
-            vm.state = stateManagerService.getState();
-            vm.selected = ontologyManagerService.getObject(vm.state);
-            vm.ontology = ontologyManagerService.getOntology(oi);
-            vm.rdfs = ontologyManagerService.getOntologyProperty(vm.ontology, 'rdfs');
-            vm.owl = ontologyManagerService.getOntologyProperty(vm.ontology, 'owl');
+            setVariables(oi);
         }
 
         vm.submitEdit = function() {
@@ -61,10 +65,11 @@
         }
 
         vm.submitCreate = function() {
-            ontologyManagerService.create(vm.selected, vm.state);
-            stateManagerService.setStateToNew(vm.state, vm.ontologies);
-            stateManagerService.setEditorTab('basic');
-            vm.state = stateManagerService.getState();
+            ontologyManagerService.create(vm.selected, vm.state)
+                .then(function() {
+                    var oi = stateManagerService.setStateToNew(vm.state, vm.ontologies);
+                    setVariables(oi);
+                });
         }
 
         vm.editIRI = function() {
@@ -138,6 +143,7 @@
 
         vm.removeAnnotation = function(key, index) {
             annotationManagerService.remove(vm.selected, key, index);
+            vm.entityChanged();
         }
 
         vm.getPattern = function() {
