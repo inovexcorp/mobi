@@ -15,10 +15,6 @@
                 defaultXsd = 'http://www.w3.org/2001/XMLSchema#',
                 defaultAnnotations = [
                     {
-                        "namespace": "Create ",
-                        "localName": "New Annotation"
-                    },
-                    {
                         'namespace': 'http://www.w3.org/2000/01/rdf-schema#',
                         'localName': 'seeAlso'
                     },
@@ -186,6 +182,8 @@
                     ],
                     defaults = responseObj.stringify(defaultAnnotations),
                     arr = angular.copy(annotations);
+
+                arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
 
                 while(i < arr.length) {
                     itemIri = responseObj.getItemIri(arr[i]);
