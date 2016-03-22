@@ -20,21 +20,19 @@ import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
-import org.semanticweb.owlapi.io.IRIDocumentSource;
-import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
-import org.semanticweb.owlapi.io.StringDocumentSource;
+import org.semanticweb.owlapi.formats.*;
+import org.semanticweb.owlapi.io.*;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
+import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
+import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 
 import javax.annotation.Nonnull;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -68,8 +66,6 @@ public class SimpleOntology implements Ontology {
           }
         );
 	}
-    
-
 
 	public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager) throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
@@ -122,6 +118,22 @@ public class SimpleOntology implements Ontology {
 			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
+
+    public SimpleOntology(String json, OntologyManager ontologyManager) throws MatontoOntologyException {
+        this.ontologyManager = ontologyManager;
+
+        OWLParserFactory factory = new RioJsonLDParserFactory();
+        OWLParser parser = factory.createParser();
+
+		try {
+            OWLOntologyDocumentSource source = new RioMemoryTripleSource(Rio.parse(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
+            owlOntology = owlManager.createOntology();
+			parser.parse(source, owlOntology, config);
+            createOntologyId(null);
+		} catch (IOException|RDFParseException|OWLOntologyCreationException e) {
+			throw new MatontoOntologyException("Error in ontology creation", e);
+		}
+    }
 	
     protected SimpleOntology(OWLOntology ontology, Resource resource, OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;

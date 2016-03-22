@@ -67,8 +67,14 @@
             </div>
         </section>
     </div>
-    <circle-button ng-if="vm.state.editor !== 'default'"
-                   on-click="vm.submitEdit()"
-                   btn-icon="'fa-floppy-o'"
-                   is-enabled="vm.selected.matonto.unsaved"></circle-button>
+    <div ng-if="vm.state.editor !== 'default'">
+        <circle-button ng-if="vm.state.oi !== -1"
+                       on-click="vm.submitEdit()"
+                       btn-icon="'fa-floppy-o'"
+                       is-enabled="true"></circle-button>
+        <circle-button ng-if="vm.state.oi === -1"
+                       on-click="vm.submitCreate()"
+                       btn-icon="'fa-floppy-o'"
+                       is-enabled="true"></circle-button>
+    </div>
 </div>

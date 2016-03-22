@@ -77,10 +77,16 @@
                         }
                         $q.all(promises)
                             .then(function(response) {
+                                console.log('Successfully loaded ontologies.');
+                            }, function(response) {
+                                console.error('Not able to load ontologies');
+                            })
+                            .then(function() {
                                 $rootScope.showSpinner = false;
                             });
                     }, function(response) {
                         console.log('Error in initialize:', response);
+                        $rootScope.showSpinner = false;
                     });
             }
 
@@ -577,8 +583,7 @@
                     $rootScope.showSpinner = true;
 
                     var config, resourceJson, obj,
-                        promises = [],
-                        deferred = $q.defer();
+                        promises = [];
 
                     _.forEach(changedEntries, function(changedEntry) {
                         obj = self.getObject(changedEntry.state);
@@ -600,40 +605,39 @@
                     $q.all(promises)
                         .then(function(response) {
                             if(!_.find(response.data, { updated: false })) {
-                                deferred.resolve(response);
+                                self.clearChangedList();
+                                console.log('Successful update');
                             } else {
-                                deferred.reject(response);
+                                console.warn('Something wasn\'t updated properly');
                             }
                         }, function(response) {
-                            deferred.reject(response);
+                            console.error('Error during edit');
                         })
                         .then(function() {
                             $rootScope.showSpinner = false;
                         });
-
-                    return deferred.promise;
                 }
             }
 
             self.create = function(obj, state) {
-                var arrToObj, setId,
+                $rootScope.showSpinner = true;
+
+                var arrToObj, setId, restructureLabelAndComment, currentOntology, ontologyjson,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
                     tab = state.tab,
-                    item = angular.copy(obj),
-                    result = angular.copy(obj),
+                    copy = angular.copy(obj),
                     unique = tab + oi + ci + pi;
                 obj.matonto.unsaved = false;
 
-                // TODO: get this involved with passing the context back to joy
                 arrToObj = function(context) {
-                    var temp = {},
+                    var result = {},
                         i = context.length;
                     while(i--) {
-                        temp[context[i].key] = context[i].value;
+                        result[context[i].key] = context[i].value;
                     }
-                    return temp;
+                    return result;
                 }
 
                 setId = function(obj, type, rdfs) {
@@ -644,23 +648,65 @@
                     obj.matonto.originalId = obj['@id'];
                 }
 
+                restructureLabelAndComment = function(obj, rdfs) {
+                    var copy = angular.copy(obj);
+
+                    copy[rdfs + 'comment'] = [obj[rdfs + 'comment'][0]];
+                    copy[rdfs + 'label'] = [obj[rdfs + 'label'][0]];
+
+                    return copy;
+                }
+
                 if(oi === -1) {
                     obj.matonto.originalId = obj['@id'] + obj.matonto.delimiter;
+                    obj = restructureLabelAndComment(obj, obj.matonto.rdfs);
                     ontologies.push(obj);
+
+                    delete copy.matonto;
+
+                    if(obj.matonto.hasOwnProperty('context') && obj.matonto.context.length) {
+                        ontologyjson = {
+                            '@context': arrToObj(obj.matonto.context),
+                            '@graph': [copy]
+                        }
+                    } else {
+                        ontologyjson = copy;
+                    }
+
+                    var config = {
+                            params: {
+                                ontologyjson: ontologyjson
+                            }
+                        };
+
+                    console.log(config.params.ontologyjson);
+
+                    $http.post(prefix, null, config)
+                        .then(function(response) {
+                            if(response.data.persisted) {
+                                console.log('successfully persisted!');
+                            } else {
+                                console.log('um, something broke');
+                            }
+                        }, function(response) {
+                            console.error('yeah, not good at all', response);
+                        })
+                        .then(function() {
+                            $rootScope.showSpinner = false;
+                        });
+
                 } else {
-                    var current = ontologies[oi];
+                    currentOntology = ontologies[oi];
                     if(ci === -1) {
                         setId(obj, 'class', current.matonto.rdfs);
-                        current.matonto.classes.push(obj);
+                        currentOntology.matonto.classes.push(obj);
                     } else {
                         setId(obj, 'property', current.matonto.rdfs);
-                        current.matonto.classes[ci].matonto.properties.push(obj);
+                        currentOntology.matonto.classes[ci].matonto.properties.push(obj);
                     }
                 }
                 delete newItems[unique];
-                delete result.matonto;
-
-                console.log('create', result, obj);
+                delete copy.matonto;
             }
 
             self.editIRI = function(begin, then, end, update, selected, ontology) {
@@ -686,10 +732,13 @@
             }
 
             self.getOntology = function(oi) {
-                if(oi !== undefined && oi !== -1) {
-                    return ontologies[oi];
+                var state = {
+                    oi: oi,
+                    ci: undefined,
+                    pi: undefined,
+                    tab: undefined
                 }
-                return undefined;
+                return self.getObject(state);
             }
 
             self.getOntologyProperty = function(ontology, prop) {

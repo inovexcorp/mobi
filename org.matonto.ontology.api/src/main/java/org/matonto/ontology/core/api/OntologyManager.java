@@ -23,6 +23,8 @@ public interface OntologyManager {
 	Ontology createOntology(IRI iri) throws MatontoOntologyException;
 	
 	Ontology createOntology(InputStream inputStream) throws MatontoOntologyException;
+
+    Ontology createOntology(String json) throws MatontoOntologyException;
 	
 	Optional<Ontology> retrieveOntology(@Nonnull Resource resource) throws MatontoOntologyException;
 

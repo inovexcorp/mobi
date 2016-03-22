@@ -118,6 +118,37 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    public Response uploadOntologyJson(String ontologyJson) {
+        boolean persisted = false;
+        Ontology ontology = null;
+
+        try {
+            ontology = manager.createOntology(ontologyJson);
+            persisted = manager.storeOntology(ontology);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        JSONObject json = new JSONObject();
+
+        if (persisted) {
+            OntologyId oid = ontology.getOntologyId();
+            json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
+            Set<IRI> missingImports = ontology.getUnloadableImportIRIs();
+            if(!missingImports.isEmpty()) {
+                JSONArray array = new JSONArray();
+                missingImports.forEach(iri -> array.add(iri.stringValue()));
+                json.put("unloadableImportedOntologies", array.toString());
+            }
+        }
+
+        json.put("persisted", persisted);
+
+        return Response.status(200).entity(json.toString()).build();
+    }
+
+    @Override
     public Response getOntology(String ontologyIdStr, String rdfFormat) {
         JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
             String content = getOntologyAsRdf(ontology, rdfFormat);

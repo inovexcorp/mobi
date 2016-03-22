@@ -49,6 +49,17 @@ public interface OntologyRest {
     Response uploadFile(@FormDataParam("file") InputStream fileInputStream);
 
     /**
+     * Ingests an ontology json-ld string to a data store
+     *
+     * @param ontologyjson The ontology json-ld to upload
+     * @return true if persisted, false otherwise
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response uploadOntologyJson(@QueryParam("ontologyjson") String ontologyJson);
+
+    /**
      * Returns ontology with requested ontology ID in the requested format
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents

@@ -57,12 +57,7 @@
         }
 
         vm.submitEdit = function() {
-            ontologyManagerService.edit()
-                .then(function(response) {
-                    ontologyManagerService.clearChangedList();
-                }, function(response) {
-                    console.error(response);
-                });
+            ontologyManagerService.edit();
         }
 
         vm.submitCreate = function() {
@@ -124,6 +119,7 @@
         vm.addAnnotation = function() {
             annotationManagerService.add(vm.selected, vm.ontologies[vm.state.oi].matonto.annotations);
             resetAnnotationOverlay();
+            vm.entityChanged();
         }
 
         vm.editClicked = function(key, index) {
@@ -137,6 +133,7 @@
         vm.editAnnotation = function() {
             annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationIndex);
             resetAnnotationOverlay();
+            vm.entityChanged();
         }
 
         vm.removeAnnotation = function(key, index) {
