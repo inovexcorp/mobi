@@ -29,7 +29,6 @@
 
         /* Ontology Management */
         function setVariables(oi) {
-            vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
             vm.ontology = ontologyManagerService.getOntology(oi);
             vm.rdfs = ontologyManagerService.getOntologyProperty(vm.ontology, 'rdfs');
@@ -57,6 +56,7 @@
 
         vm.selectItem = function(editor, oi, ci, pi) {
             stateManagerService.setState(editor, oi, ci, pi);
+            vm.state = stateManagerService.getState();
             setVariables(oi);
         }
 
@@ -68,6 +68,7 @@
             ontologyManagerService.create(vm.selected, vm.state)
                 .then(function() {
                     var oi = stateManagerService.setStateToNew(vm.state, vm.ontologies);
+                    vm.state = stateManagerService.getState();
                     setVariables(oi);
                 });
         }
@@ -89,17 +90,21 @@
         /* Prefix (Context) Management */
         vm.editPrefix = function(edit, old, index) {
             prefixManagerService.editPrefix(edit, old, index, vm.selected);
+            vm.entityChanged();
         }
 
         vm.editValue = function(edit, key, value, index) {
             prefixManagerService.editValue(edit, key, value, index, vm.selected);
+            vm.entityChanged();
         }
 
         vm.addPrefix = function(key, value) {
             prefixManagerService.add(key, value, vm.selected)
                 .then(function(response) {
+                    setVariables(vm.state.oi);
                     vm.key = '';
                     vm.value = '';
+                    vm.entityChanged();
                 }, function(response) {
                     vm.showDuplicateMessage = true;
                 });
@@ -107,6 +112,7 @@
 
         vm.removePrefix = function(key) {
             prefixManagerService.remove(key, vm.selected);
+            vm.entityChanged();
         }
 
         vm.getItemIri = function(item) {
