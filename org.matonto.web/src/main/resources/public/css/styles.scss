@@ -47,7 +47,7 @@ body {
         > .view-container {
             padding-top: 82px;
         }
-        .nav {
+        nav .nav {
             margin-top: 30px;
         }
 
@@ -273,7 +273,6 @@ ul {
 .view-container,
 .view-container > div,
 .view-container > div > .row,
-aside,
 section,
 section > form,
 .tree-container {
@@ -400,5 +399,69 @@ section > form,
     .fa {
         font-size: 1.5em;
         margin: 0;
+    }
+}
+
+.nav li {
+    color: #fff;
+    display: inline-block;
+
+    button {
+        background: transparent;
+        border: 0;
+        outline: 0;
+    }
+
+    /* Styles the icon itself */
+    a,
+    button {
+        color: inherit;
+        cursor: pointer;
+        display: inline-block;
+        padding: 6px;
+        text-decoration: none;
+
+        &.disabled,
+        &[disabled] {
+            color: $gray-light;
+        }
+
+        /* Changes the color of the icons as you hover over them. */
+        &:not(.disabled):not([disabled]):hover {
+            color: $brand-info;
+        }
+
+        .fa {
+            font-size: 1.5em;
+        }
+
+        /* The words that appear next to the icon */
+        .name {
+            display: none;
+            line-height: 2em;
+            padding-left: 10px;
+            vertical-align: top;
+        }
+    }
+}
+
+.left-nav {
+    background-color: $gray;
+    height: 100%;
+    left: 0;
+    max-width: 39px;
+    padding-top: 82px;
+    position: absolute;
+    top: 0;
+
+    .separator {
+        border-top: 1px solid $gray-lighter;
+        margin: 5px 20%;
+        width: 60%;
+    }
+
+    li a.active,
+    li button.active {
+        color: $brand-info;
     }
 }

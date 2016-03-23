@@ -35,6 +35,19 @@
             vm.owl = ontologyManagerService.getOntologyProperty(vm.ontology, 'owl');
         }
 
+        function submitEdit() {
+            ontologyManagerService.edit(vm.ontology.matonto.originalId);
+        }
+
+         function submitCreate() {
+            ontologyManagerService.create(vm.selected, vm.state)
+                .then(function() {
+                    var oi = stateManagerService.setStateToNew(vm.state, vm.ontologies);
+                    vm.state = stateManagerService.getState();
+                    setVariables(oi);
+                });
+        }
+
         vm.uploadOntology = function(isValid, file, namespace, localName) {
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(isValid, file)
@@ -60,17 +73,12 @@
             setVariables(oi);
         }
 
-        vm.submitEdit = function() {
-            ontologyManagerService.edit(vm.ontology.matonto.originalId);
-        }
-
-        vm.submitCreate = function() {
-            ontologyManagerService.create(vm.selected, vm.state)
-                .then(function() {
-                    var oi = stateManagerService.setStateToNew(vm.state, vm.ontologies);
-                    vm.state = stateManagerService.getState();
-                    setVariables(oi);
-                });
+        vm.save = function() {
+            if(vm.state.oi === -1 || vm.state.ci === -1 || vm.state.pi === -1) {
+                submitCreate();
+            } else {
+                submitEdit();
+            }
         }
 
         vm.editIRI = function() {

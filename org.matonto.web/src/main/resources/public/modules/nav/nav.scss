@@ -14,6 +14,7 @@ nav {
     position: absolute;
     right: 0;
     top: 0;
+    z-index: 1;
 
     .nav {
         background-color: $gray;
@@ -24,40 +25,8 @@ nav {
             margin: 0;
             padding: 0;
 
-            .fa {
-                font-size: 1.5em;
-            }
-
             .sign-out-wrapper {
                 padding: 7px;
-            }
-
-            /* Adding the proper spacing to the icons */
-            li {
-                color: #fff;
-                display: inline-block;
-
-                /* Styles the icon itself */
-                a {
-                    color: inherit;
-                    cursor: pointer;
-                    display: inline-block;
-                    padding: 6px;
-                    text-decoration: none;
-
-                    /* Changes the color of the icons as you hover over them. */
-                    &:hover {
-                        color: $gray-light;
-                    }
-
-                    /* The words that appear next to the icon */
-                    .name {
-                        display: none;
-                        line-height: 2em;
-                        padding-left: 10px;
-                        vertical-align: top;
-                    }
-                }
             }
         }
 
