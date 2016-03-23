@@ -2,7 +2,7 @@
     <form class="content">
         <h6>Choose Ontology</h6>
         <div id="ontology-select" class="form-group">
-            <select ng-model="dvm.selectedOntologyId">
+            <select class="form-control" ng-model="dvm.selectedOntologyId">
                 <option ng-repeat="ontology in dvm.getOntologies()" value="{{ontology['@id']}}">{{dvm.createOptionName(ontology)}}</option>
             </select>
         </div>

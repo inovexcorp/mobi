@@ -1,0 +1,17 @@
+<div id="rdf-preview" class="slide out" ng-class="{'out': dvm.visible, 'in': !dvm.visible}">
+    <a id="toggle-btn" ng-click="dvm.visible = !dvm.visible">
+        <i class="fa fa-chevron-left" ng-class="{'fa-chevron-left': !dvm.visible, 'fa-chevron-right': dvm.visible}"></i> Preview
+    </a>
+    <form class="form-inline">
+        <div class="form-group">
+            <label>
+                Serialization
+                <select ng-model="serializeOption" class="form-control">
+                    <option ng-repeat="option in dvm.options" value="{{option.value}}">{{option.name}}</option>
+                </select>
+            </label>
+        </div>
+        <button class="btn btn-default" ng-click="createPreview({format: serializeOption})">Refresh</button>
+        <textarea format-rdf id="text-preview" class="form-control" ng-style="{'height': dvm.textareaHeight + 'px'}" ng-model="preview" readonly></textarea>
+    </form>
+</div>

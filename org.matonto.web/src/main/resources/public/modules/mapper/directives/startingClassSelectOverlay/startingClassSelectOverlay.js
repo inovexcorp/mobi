@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('baseClassSelectOverlay', ['prefixes', 'ontologyManager'])
-        .directive('baseClassSelectOverlay', baseClassSelectOverlay);
+        .module('startingClassSelectOverlay', ['prefixes', 'ontologyManager'])
+        .directive('startingClassSelectOverlay', startingClassSelectOverlay);
 
-        baseClassSelectOverlay.$inject = ['prefixes', 'ontologyManagerService'];
+        startingClassSelectOverlay.$inject = ['prefixes', 'ontologyManagerService'];
 
-        function baseClassSelectOverlay(prefixes, ontologyManagerService) {
+        function startingClassSelectOverlay(prefixes, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -17,7 +17,7 @@
                     onClickContinue: '&'
                 },
                 bindToController: {
-                    ontologyId: '='
+                    ontologyId: '@'
                 },
                 controller: function() {
                     var dvm = this;
@@ -32,7 +32,7 @@
                         return ontologyManagerService.getEntityName(classObj)
                     }
                 },
-                templateUrl: 'modules/mapper/directives/baseClassSelectOverlay/baseClassSelectOverlay.html'
+                templateUrl: 'modules/mapper/directives/startingClassSelectOverlay/startingClassSelectOverlay.html'
             }
         }
 })();

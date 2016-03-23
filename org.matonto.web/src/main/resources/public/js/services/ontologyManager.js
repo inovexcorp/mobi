@@ -82,7 +82,6 @@
                         $q.all(promises)
                             .then(function(response) {
                                 $rootScope.showSpinner = false;
-                                console.log(self.ontologies);
                             });
                     }, function(response) {
                         console.log('Error in initialize:', response);

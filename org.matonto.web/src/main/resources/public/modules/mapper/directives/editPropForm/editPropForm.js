@@ -18,31 +18,27 @@
                     clickDelete: '&'
                 },
                 bindToController: {
-                    ontologyId: '=',
+                    ontologyId: '@',
                     classId: '=',
                     selectedProp: '=',
                     selectedColumn: '='
                 },
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
-                    var selectedPropObj = ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp);
-
-                    $scope.$watch('dvm.selectedProp', function(oldval, newval) {
-                        if (oldval !== newval) {
-                            selectedPropObj = ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp);
-                        }
-                    });
 
                     dvm.getTitle = function() {
                         var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontologyId, dvm.classId));
-                        var propName = ontologyManagerService.getEntityName(selectedPropObj);
+                        var propName = ontologyManagerService.getEntityName(getClassProp());
                         return className + ': ' + propName;
                     }
                     dvm.isDatatypeProperty = function() {
-                        return ontologyManagerService.isDatatypeProperty(selectedPropObj);
+                        return ontologyManagerService.isDatatypeProperty(getClassProp());
                     }
                     dvm.isObjectProperty = function() {
-                        return ontologyManagerService.isObjectProp(selectedPropObj);
+                        return ontologyManagerService.isObjectProp(getClassProp());
+                    }
+                    function getClassProp() {
+                        return ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editPropForm/editPropForm.html'

@@ -5,11 +5,11 @@
         .module('etl', [])
         .service('etlService', etlService);
 
-        etlService.$inject = ['$http', '$q'];
+        etlService.$inject = ['$rootScope', '$http', '$q'];
 
-        function etlService($http, $q) {
+        function etlService($rootScope, $http, $q) {
             var self = this,
-                prefix = '/matontorest/etl/csv';
+                prefix = '/matontorest/csv';
 
             /**
              * HTTP POST to csv/upload which uploads a delimited file to data/tmp/ directory.
@@ -17,6 +17,7 @@
              * @return {promise} The response data with the name of the uploaded file
              */
             self.upload = function(file) {
+                var deferred = $q.defer();
                 var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
@@ -24,13 +25,19 @@
                             'Content-Type': undefined
                         }
                     };
+                fd.append('delimitedFile', file);
 
-                fd.append('delimitedFile', file)
-
-                return $http.post(prefix + '/upload', fd, config)
+                $rootScope.showSpinner = true;
+                $http.post(prefix, fd, config)
                     .then(function(response) {
-                        return response.data;
+                        $rootScope.showSpinner = false;
+                        deferred.resolve(response.data);
+                    }, function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.reject(response);
                     });
+
+                return deferred.promise;
             }
 
             /**
@@ -39,19 +46,127 @@
              * @param {number} [rowEnd=10] The number of lines to show in the preview
              * @return {Object} A JavaScript object with headers and rows from the preview data
              */
-            self.preview = function(fileName, rowEnd) {
+            self.previewFile = function(fileName, rowEnd, separator, containsHeaders) {
+                var deferred = $q.defer();
                 var config = {
                         params: {
-                            'Row-Count': rowEnd ? rowEnd : 0
+                            'Row-Count': rowEnd ? rowEnd : 0,
+                            'Separator': separator
                         }
                     };
-                return $http.get(prefix + '/preview/' + fileName, config)
+
+                $http.get(prefix + '/' + encodeURIComponent(fileName), config)
                     .then(function(response) {
-                        return {
-                            headers: response.data[0],
-                            rows: response.data.slice(1, response.data.length)
-                        };
+                        var filePreview = {};
+                        filePreview.headers = containsHeaders ? response.data.rows[0] : [];
+                        filePreview.rows = containsHeaders ? response.data.rows.slice(1, response.data.length) : response.data;
+                        deferred.resolve(filePreview);
+                    }, function(response) {
+                        deferred.reject(response);
                     });
+                return deferred.promise;
+            }
+
+            self.update = function(fileName, file) {
+                var deferred = $q.defer();
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+
+                fd.append('delimitedFile', file);
+
+                $rootScope.showSpinner = true;
+                $http.put(prefix + '/' + encodeURIComponent(fileName), fd, config)
+                    .then(function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.resolve(response.data);
+                    }, function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.reject(response);
+                    });
+                return deferred.promise;
+            }
+
+            self.mapByFile = function(fileName, mappingFileName, containsHeaders) {
+                var deferred = $q.defer();
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        params: {
+                            'Contains-Headers': containsHeaders
+                        },
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                fd.append('fileName', mappingFileName);
+
+                $rootScope.showSpinner = true;
+                $http.post(prefix + '/' + fileName + '/map', fd, config)
+                    .then(function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.resolve(response.data);
+                    }, function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.reject(response);
+                    });
+                return deferred.promise;
+            }
+
+            self.mapByString = function(fileName, jsonld, containsHeaders) {
+                var deferred = $q.defer();
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        params: {
+                            'Contains-Headers': containsHeaders
+                        },
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                fd.append('jsonld', angular.toJson(jsonld));
+
+                $rootScope.showSpinner = true;
+                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
+                    .then(function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.resolve(response.data);
+                    }, function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.reject(response);
+                    });
+                return deferred.promise;
+            }
+
+            self.previewMap = function(fileName, jsonld, containsHeaders, format) {
+                var deferred = $q.defer();
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        params: {
+                            'Preview': true,
+                            'Format': format,
+                            'Contains-Headers': containsHeaders
+                        },
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': (format === 'jsonld') ? 'application/json' : 'text/plain'
+                        }
+                    };
+                fd.append('jsonld', angular.toJson(jsonld));
+
+                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
+                    .then(function(response) {
+                        deferred.resolve(response.data);
+                    }, function(response) {
+                        deferred.reject(response);
+                    });
+                return deferred.promise;
             }
         }
 })();

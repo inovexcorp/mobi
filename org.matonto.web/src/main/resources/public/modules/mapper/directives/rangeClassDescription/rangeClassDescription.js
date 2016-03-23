@@ -18,23 +18,18 @@
                     classId: '=',
                     selectedProp: '='
                 },
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
-                    var rangeClass = ontologyManagerService.getClass(dvm.ontologyId, 
-                        ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp)[prefixes.rdfs + 'range'][0]['@id']);
-
-                    $scope.$watch('dvm.selectedProp', function(oldval, newval) {
-                        if (oldval !== newval) {
-                            rangeClassObj = ontologyManagerService.getClass(dvm.ontologyId, 
-                                ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp)[prefixes.rdfs + 'range'][0]['@id']);
-                        }
-                    });
 
                     dvm.getRangeClassName = function() {
-                        return ontologyManagerService.getEntityName(rangeClass);
+                        return ontologyManagerService.getEntityName(getRangeClass());
                     }
                     dvm.getRangeClassDescription = function() {
-                        return _.get(rangeClass, "['" + prefixes.rdfs + "comment'][0]['@value']", '');
+                        return _.get(getRangeClass(), "['" + prefixes.rdfs + "comment'][0]['@value']", '');
+                    }
+                    function getRangeClass() {
+                        return ontologyManagerService.getClass(dvm.ontologyId, 
+                        ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp)[prefixes.rdfs + 'range'][0]['@id'])
                     }
                 },
                 templateUrl: 'modules/mapper/directives/rangeClassDescription/rangeClassDescription.html'

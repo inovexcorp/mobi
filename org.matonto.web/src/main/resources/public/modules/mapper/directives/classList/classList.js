@@ -21,10 +21,9 @@
                 bindToController: {
                     mapping: '=',
                     columns: '=',
-                    ontologyId: '=',
-                    baseClassId: '='
+                    invalidPropIds: '='
                 },
-                controller: function($filter) {
+                controller: function() {
                     var dvm = this;
 
                     dvm.getPropId = function(propMapping) {
@@ -37,27 +36,27 @@
                         return mappingManagerService.getPropMappingsByClass(dvm.mapping, classId);
                     }
                     dvm.getClassName = function(classId) {
-                        var classObj = ontologyManagerService.getClass(dvm.ontologyId, classId);
+                        var classObj = ontologyManagerService.getClass(mappingManagerService.getSourceOntology(dvm.mapping), classId);
                         return ontologyManagerService.getEntityName(classObj);
                     }
                     dvm.getPropName = function(propMapping, classId) {
                         var propId = propMapping[prefixes.delim + 'hasProperty'][0]['@id'];
-                        var propName = ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(dvm.ontologyId, classId, propId))
+                        var propName = ontologyManagerService.getEntityName(
+                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntology(dvm.mapping), classId, propId)
+                        );
                         var mappingName = '';
                         if (mappingManagerService.isObjectMapping(propMapping)) {
-                            mappingName = dvm.getClassName(propMapping[prefixes.delim + 'classMapping'][0]['@id']);
+                            var classMapping = _.find(dvm.mapping.jsonld, {'@id': propMapping[prefixes.delim + 'classMapping'][0]['@id']});
+                            mappingName = dvm.getClassName(classMapping[prefixes.delim + 'mapsTo'][0]['@id']);
                         } else if (mappingManagerService.isDataMapping(propMapping)) {
                             var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                            mappingName = dvm.columns[index];
+                            mappingName = dvm.columns[index - 1];
                         }
                         return propName + ': ' + mappingName;
                     }
-                    dvm.isBaseClass = function(classId) {
-                        return id === dvm.baseClassId;
-                    }
                     dvm.mappedAllProps = function(classId) {
                         var mappedProps = mappingManagerService.getPropMappingsByClass(dvm.mapping, classId);
-                        var classProps = ontologyManagerService.getClassProperties(dvm.ontologyId, classId);
+                        var classProps = ontologyManagerService.getClassProperties(mappingManagerService.getSourceOntology(dvm.mapping), classId);
 
                         return mappedProps.length === classProps.length;
                     }

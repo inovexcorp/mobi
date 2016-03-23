@@ -14,7 +14,8 @@
                 replace: true,
                 scope: {
                     props: '=',
-                    selectedProp: '='
+                    selectedProp: '=',
+                    onChange: '&'
                 },
                 controller: function() {
                     var dvm = this;

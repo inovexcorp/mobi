@@ -13,17 +13,16 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    baseClassId: '=',
                     props: '=',
                     setBase: '&',
                     clickDelete: '&',
                     openProp: '&'
                 },
                 bindToController: {
-                    ontologyId: '=',
+                    ontologyId: '@',
                     classId: '='
                 },
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
 
                     dvm.getTitle = function() {

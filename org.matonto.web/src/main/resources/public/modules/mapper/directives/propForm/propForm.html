@@ -1,6 +1,6 @@
 <form id="prop-form">
     <div class="form-group">
-        <prop-select props="dvm.props" selected-prop="dvm.selectedProp"></prop-select>
+        <prop-select props="dvm.props" selected-prop="dvm.selectedProp" on-change="dvm.update()"></prop-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 
         ontology-id="ontologyId" 
@@ -8,6 +8,6 @@
         selected-prop="dvm.selectedProp"></range-class-description>
     <div id="prop-form-btns" class="form-group" ng-show="dvm.showPropBtns">
         <button type="button" class="btn btn-default" ng-click="set()">Set</button>
-        <button type="button" class="btn btn-default" ng-click="setNext()" ng-disabled="lastProp">Set &amp; Next</button>
+        <button type="button" class="btn btn-default" ng-click="dvm.showPropBtns = false; setNext()" ng-disabled="lastProp">Set &amp; Next</button>
     </div>
 </form>

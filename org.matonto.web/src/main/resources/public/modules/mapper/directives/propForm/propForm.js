@@ -5,16 +5,16 @@
         .module('propForm', ['prefixes', 'ontologyManager'])
         .directive('propForm', propForm);
 
-        propForm.$inject = ['prefixes', 'ontologyManagerService'];
+        propForm.$inject = ['$timeout', 'prefixes', 'ontologyManagerService'];
 
-        function propForm(prefixes, ontologyManagerService) {
+        function propForm($timeout, prefixes, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
                     lastProp: '=',
-                    ontologyId: '=',
+                    ontologyId: '@',
                     classId: '=',
                     set: '&',
                     setNext: '&'
@@ -22,25 +22,29 @@
                 bindToController: {
                     props: '=',
                     selectedProp: '=ngModel',
-                    isDatatypeProp: '&'
+                    isDatatypeProp: '&',
+                    isObjectProp: '&'
                 },
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
                     dvm.showPropBtns = false;
 
-                    $scope.$watch('dvm.selectedProp', function(val) {
-                        if (val) {
-                            var propObj =_.find(dvm.props, {'@id': val});
-                            if (ontologyManagerService.isObjectProp(propObj)) {
-                                dvm.showPropBtns = true;
-                            } else if (ontologyManagerService.isDatatypeProperty(propObj)) {
-                                dvm.showPropBtns = false;
-                                dvm.isDatatypeProp();
-                            } else {
-                                throw new Error("Can't find prop", val, "in", dvm.props);
+                    dvm.update = function() {
+                        $timeout(function() {
+                            if (dvm.selectedProp) {
+                                var propObj =_.find(dvm.props, {'@id': dvm.selectedProp});
+                                if (ontologyManagerService.isObjectProp(propObj)) {
+                                    dvm.showPropBtns = true;
+                                    dvm.isObjectProp();
+                                } else if (ontologyManagerService.isDatatypeProperty(propObj)) {
+                                    dvm.showPropBtns = false;
+                                    dvm.isDatatypeProp();
+                                } else {
+                                    throw new Error("Can't find prop", dvm.selectedProp, "in", dvm.props);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
 
                     dvm.isObjectProperty = function() {
                         return ontologyManagerService.isObjectProp(_.find(dvm.props, {'@id': dvm.selectedProp}));

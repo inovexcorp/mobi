@@ -10,14 +10,14 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
+                scope: {
+                    onUploadClick: '&',
+                    onContinueClick: '&'
+                },
                 bindToController: {
                     delimitedFile: '=ngModel',
                     separator: '=',
                     containsHeaders: '='
-                },
-                scope: {
-                    onUploadClick: '&',
-                    onContinueClick: '&'
                 },
                 controller: function() {
                     var dvm = this;

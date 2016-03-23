@@ -16,7 +16,7 @@
                 bindToController: {
                     classObj: '='
                 },
-                controller: function($filter) {
+                controller: function() {
                     var dvm = this;
 
                     dvm.createTitle = function() {

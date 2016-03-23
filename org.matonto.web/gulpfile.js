@@ -41,6 +41,8 @@ var jsFiles = function(prefix) {
             prefix + '**/angular.min.js',
             prefix + '**/angular-ui-router.min.js',
             prefix + '**/angular-uuid.js',
+            prefix + '**/angular-cookies.min.js',
+            prefix + '**/angular-file-saver.bundle.min.js',
             prefix + '**/select.min.js'
         ]
     },

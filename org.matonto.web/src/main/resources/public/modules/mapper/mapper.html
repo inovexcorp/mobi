@@ -4,15 +4,39 @@
     <step-through-sidebar active-index="vm.activeStep"></step-through-sidebar>
 
     <!-- Overlays -->
-    <mapping-select-overlay ng-if="vm.activeStep === 1" 
+    <mapping-select-overlay ng-if="vm.activeStep === 1 && !vm.displayPreviousCheck" 
         on-click-back="vm.closeMappingSelect()" 
         on-click-continue="vm.displayOntologySelect(mappingType, mappingName)"></mapping-select-overlay>
     <ontology-select-overlay ng-if="vm.activeStep === 2"
-        on-click-back="vm.displayMappingSelect()" 
-        on-click-continue="vm.displayBaseClassSelect(ontologyId)"></ontology-select-overlay>
-    <base-class-select-overlay ng-if="vm.activeStep === 3" ontology-id="vm.ontologyId"
+        on-click-back="vm.changeOntology ? vm.closeOntologyChange() : vm.displayMappingSelect()" 
+        on-click-continue="vm.displayStartingClassSelect(ontologyId)"></ontology-select-overlay>
+    <starting-class-select-overlay ng-if="vm.activeStep === 3" ontology-id="{{vm.getOntologyId()}}"
         on-click-back="vm.displayOntologySelect()" 
-        on-click-continue="vm.displayEditMapping(baseClassId)"></base-class-select-overlay>
+        on-click-continue="vm.displayEditMapping(classId)"></starting-class-select-overlay>
+    <finish-overlay ng-if="vm.activeStep === 5"
+        save="vm.saveMapping()"
+        finish="vm.initialize()"></finish-overlay>
+    <ontology-preview-overlay ng-if="vm.displayOntologyPreview" 
+        close="vm.toggleOntologyPreview()"
+        ontology-id="{{vm.getOntologyId()}}"></ontology-preview-overlay>
+    <previous-check-overlay ng-if="vm.displayPreviousCheck"
+        mapping="vm.mapping"
+        file-preview="vm.filePreview"
+        separator="vm.delimitedSeparator"
+        on-click-back="vm.displayMappingSelect()"
+        on-click-continue="vm.displayEditMapping()"></previous-check-overlay>
+    <confirmation-overlay ng-if="vm.displayDeleteConfirm"
+        header-text="'Delete ' + vm.deleteEntity.name"
+        confirm-click="vm.displayDeleteConfirm = false; vm.deleteMappingEntity()"
+        cancel-click="vm.displayDeleteConfirm = false; vm.deleteEntity = undefined"
+        confirm-text="'Yes'"
+        cancel-text="'No'">Are you sure you want to delete <strong>{{vm.deleteEntity.name}}</strong>? <p ng-if="!vm.deleteEntity.hasOwnProperty('propId')" class="help-block">Deleting a class will remove any properties that link to it.</p></confirmation-overlay>
+    <confirmation-overlay ng-if="vm.displayCancelConfirm"
+        header-text="'Cancel Mapping'"
+        confirm-click="vm.displayCancelConfirm = false; vm.initialize()"
+        cancel-click="vm.displayCancelConfirm = false"
+        confirm-text="'Yes'"
+        cancel-text="'No'">Are you sure you want to cancel mapping?</confirmation-overlay>
 
     <!-- Content besides step through sidebar -->
     <div id="mapper-content" class="container-fluid">
@@ -24,38 +48,43 @@
                 separator="vm.delimitedSeparator"
                 contains-headers="vm.delimitedContainsHeaders"></file-form>
             <div id="edit-mapping-container" ng-if="vm.activeStep === 4">
-                <div id="mapping-actions">
+                <div id="mapping-header">
                     <div id="ontology-section">
-                        <a>{{(vm.ontologyId | splitIRI).end | beautify}}</a>
-                        <button class="btn btn-primary">Change</button>
+                        <a ng-click="vm.toggleOntologyPreview()">{{vm.getOntologyName()}}</a>
+                        <button class="btn btn-primary" ng-click="vm.displayOntologySelect()">Change</button>
                     </div>
                     <form id="submit-mapping">
-                        <label>
+                        <label ng-hide="vm.isPreviousMapping && vm.saveToServer === false">
                             <input type="checkbox" ng-model="vm.saveToServer"></input>
                             Save mapping to server
                         </label>
-                        <button class="btn btn-primary">Submit</button>
-                        <br/>
-                        <a>Cancel</a>
+                        <div class="actions">
+                            <button class="btn btn-primary" ng-click="vm.displayFinish()" 
+                                ng-disabled="vm.invalidPropMappings.length > 0">Submit</button>
+                            <br/>
+                            <a ng-click="vm.displayCancelConfirm = true">Cancel</a>
+                        </div>
                     </form>
+                    <div id="mapping-title"><h1>{{vm.mapping.name}}</h1></div>
                 </div>
                 <div id="edit-mapping">
+                    <rdf-preview create-preview="vm.generateRdfPreview(format)" preview="vm.rdfPreview"></rdf-preview>
                     <class-list mapping="vm.mapping" 
                         columns="vm.filePreview.headers"
-                        ontology-id="vm.ontologyId" 
-                        base-class-id="vm.baseClassId"
+                        invalid-prop-ids="vm.invalidPropMappings"
                         click-add-prop="vm.displayPropForm(classId)"
                         click-class="vm.displayEditClassForm(classId)"
                         click-prop="vm.displayEditPropForm(classId, propId)"
-                        click-delete="vm.deleteEntity(classId, propId)"></class-list>
+                        click-delete="vm.displayDeleteConfirmation(classId, propId)"></class-list>
                     <prop-form ng-if="vm.newProp" 
                         ng-model="vm.selectedPropId" 
                         props="vm.availableProps"
                         is-datatype-prop="vm.displayColumnForm()"
-                        ontology-id="vm.ontologyId"
+                        is-object-prop="vm.clearSelectedColumn()"
+                        ontology-id="{{vm.getOntologyId()}}"
                         class-id="vm.editingClassId"
                         set="vm.setObjectProp()"
-                        setNext="vm.setNextObjectProp()"
+                        set-next="vm.setNextObjectProp()"
                         last-prop="vm.lastProp"></prop-form>
                     <column-form ng-if="vm.isDatatypeProperty(vm.selectedPropId) && vm.newProp" 
                         ng-model="vm.selectedColumn" 
@@ -66,19 +95,17 @@
                     <edit-prop-form ng-if="vm.selectedPropId && !vm.newProp"
                         columns="vm.availableColumns"
                         set="vm.setDatatypeProp(column)"
-                        click-delete="vm.deleteEntity(classId, propId)"
-                        ontology-id="vm.ontologyId"
+                        click-delete="vm.displayDeleteConfirmation(classId, propId)"
+                        ontology-id="{{vm.getOntologyId()}}"
                         class-id="vm.editingClassId"
                         selected-prop="vm.selectedPropId"
                         selected-column="vm.selectedColumn"></edit-prop-form>
-                    <edit-class-form ng-if="vm.editingClassId && !vm.newProp"
-                        ontology-id="vm.ontologyId"
+                    <edit-class-form ng-if="vm.editingClassId && !vm.selectedPropId && !vm.newProp"
+                        ontology-id="{{vm.getOntologyId()}}"
                         class-id="vm.editingClassId"
-                        base-class-id="vm.baseClassId"
                         props="vm.availableProps"
                         open-prop="vm.openAvailableProp"
-                        set-base="vm.setBaseClass()"
-                        click-delete="vm.deleteEntity(classId)"></edit-class-form>
+                        click-delete="vm.displayDeleteConfirmation(classId)"></edit-class-form>
                     <a ng-if="vm.editingClassId" id="edit-cancel" ng-click="vm.resetEditingVars()">Cancel</a>
                 </div>
             </div>
@@ -87,10 +114,12 @@
             rows="vm.filePreview.rows" 
             headers="vm.filePreview.headers" 
             table-height="vm.tableHeight"
-            highlight-idx="vm.filePreview.headers.indexOf(vm.selectedColumn)"
-            on-click="vm.togglePreview(big)"></file-preview-table>
+            highlight-idx="vm.isDatatypeProperty(vm.selectedPropId) ? vm.filePreview.headers.indexOf(vm.selectedColumn) : undefined"
+            toggle-click="vm.togglePreview(big)"
+            on-click="vm.clickColumn(colIndex)"
+            is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
 
-        <button ng-click="vm.showMappingPreview = !vm.showMappingPreview" style="position: absolute; right: 0; top: 0;"><i class="fa fa-question-circle"></i></button>
-        <pre ng-if="vm.showMappingPreview" style="position: absolute; right: 25px; left: 0; top: 0; height: 100%; overflow: auto;">{{vm.mapping | json}}</pre>
+        <!-- <button ng-click="vm.showMappingPreview = !vm.showMappingPreview" style="position: absolute; right: 0; top: 0; z-index: 5000;"><i class="fa fa-question-circle"></i></button>
+        <pre ng-if="vm.showMappingPreview" style="position: absolute; right: 25px; left: 0; top: 0; height: 100%; overflow: auto; z-index: 5000;">{{vm.mapping | json}}</pre> -->
     </div>
 </div>

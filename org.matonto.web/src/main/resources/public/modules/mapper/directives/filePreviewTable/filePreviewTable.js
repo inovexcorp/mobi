@@ -5,6 +5,8 @@
         .module('filePreviewTable', [])
         .directive('filePreviewTable', filePreviewTable);
 
+        filePreviewTable.$inject = ['$timeout'];
+
         function filePreviewTable($timeout) {
             return {
                 restrict: 'E',
@@ -13,30 +15,42 @@
                 scope: {
                     headers: '=',
                     rows: '=',
-                    onClick: '&',
-                    highlightIdx: '='
+                    highlightIdx: '=',
+                    isClickable: '=',
+                    toggleClick: '&',
+                    onClick: '&'
                 },
                 bindToController: {
                     tableHeight: '='
                 },
+                link: function(scope, elem, attrs, ctrl) {
+                    ["transitionend","webkitTransitionEnd","mozTransitionEnd"].forEach(function(transitionEnd) {
+                        elem[0].querySelector("#table-container").addEventListener(transitionEnd, function() {
+                            ctrl.small = ctrl.big ? false : true;
+                            scope.$digest();
+                        });
+                    });
+                },
                 controller: function($scope, $element) {
                     var dvm = this;
-
+                    var buttonHeight = $element[0].querySelector("#toggle-table").offsetHeight;
                     dvm.big = false;
+                    dvm.small = true;
                     dvm.containerTop = '0px';
-                    $timeout(function() {
-                        dvm.tableHeight = dvm.initialHeight = $element[0].offsetHeight;
-                        dvm.containerHeight = dvm.initialHeight + 'px';
-                    });
-                    $scope.$watch('$scope.rows', function(newVal, oldVal) {
-                        if (!angular.equals(newVal, oldVal)) {
+
+                    $scope.$watch('rows', function(newVal, oldVal) {
+                        if (!dvm.big && !angular.equals(newVal, oldVal)) {
                             $timeout(function() {
-                                dvm.tableHeight = dvm.initialHeight = $element[0].offsetHeight;
+                                dvm.tableHeight = dvm.initialHeight = $element[0].querySelector("#file-preview").offsetHeight + buttonHeight;
                                 dvm.containerHeight = dvm.initialHeight + 'px';
                             });
                         }
                     });
-                    
+
+                    $timeout(function() {
+                        dvm.tableHeight = dvm.initialHeight = $element[0].querySelector("#file-preview").offsetHeight + buttonHeight;
+                        dvm.containerHeight = dvm.initialHeight + 'px';
+                    });
                     dvm.toggleTable = function() {
                         dvm.big = !dvm.big;
                         if (dvm.big) {
