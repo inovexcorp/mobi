@@ -661,14 +661,14 @@
                 return deferred.promise;
             }
 
-            self.edit = function() {
+            self.edit = function(ontologyId) {
                 if(changedEntries.length) {
                     $rootScope.showSpinner = true;
 
                     var config, entityjson, obj, copy, ontology,
                         promises = [];
 
-                    _.forEach(changedEntries, function(changedEntry) {
+                    _.forEach(_.filter(changedEntries, { ontologyId: ontologyId }), function(changedEntry) {
                         obj = self.getObject(changedEntry.state);
                         obj.matonto.unsaved = false;
                         copy = angular.copy(obj);
@@ -698,7 +698,7 @@
                     $q.all(promises)
                         .then(function(response) {
                             if(!_.find(response.data, { updated: false })) {
-                                self.clearChangedList();
+                                self.clearChangedList(ontologyId);
                                 console.log('Successful update');
                             } else {
                                 console.warn('Something wasn\'t updated properly');
@@ -790,8 +790,8 @@
                 }
             }
 
-            self.clearChangedList = function() {
-                changedEntries = [];
+            self.clearChangedList = function(ontologyId) {
+                changedEntries = _.reject(changedEntries, { ontologyId: ontologyId });
             }
         }
 })();
