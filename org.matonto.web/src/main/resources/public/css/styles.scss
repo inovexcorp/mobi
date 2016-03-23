@@ -44,15 +44,11 @@ body {
 
     &.beta {
         /* adds extra space at the top for the banner */
-        &:not(.left-nav) > .view-container {
-            padding-top: 93px;
-        }
         > .view-container {
-            padding-top: 44px;
+            padding-top: 82px;
         }
-        &.left-nav nav .nav,
         .nav {
-            margin-top: 29px;
+            margin-top: 30px;
         }
 
         /* beta banner styles */
@@ -91,27 +87,9 @@ body {
         }
     }
 
-    /* styles for the left nav */
-    &.left-nav {
-        /* adds more padding if the words are shown */
-        &.show-words > .view-container {
-            padding-left: 140px;
-        }
-
-        /* adds extra padding to the left if the nav bar is positioned over there */
-        > .view-container {
-            padding-left: 75px;
-        }
-    }
-
-    /* adds extra padding top if the nav bar is positioned up there */
-    &:not(.left-nav) > .view-container {
-        padding-top: 64px;
-    }
-
     /* view container spacing with extra on the bottom for the icon buttons */
     > .view-container {
-        padding: 15px;
+        padding: 52px 15px 15px 15px;
 
         /* removes top margin from page headers */
         h1 {
@@ -126,28 +104,6 @@ ul {
     margin: 0;
     padding: 0;
 }
-
-/* icons to change the nav menu layout
-.nav-layout-options {
-    bottom: 0;
-    float: right;
-    position: fixed;
-    right: 15px;
-
-    /* icon styles
-    .fa {
-        display: inline-block;
-        cursor: pointer;
-        opacity: .25;
-        padding: 10px 6px;
-        text-decoration: none;
-
-        /* change opacity on hover
-        &:hover {
-            opacity: 1;
-        }
-    }
-} */
 
 /* standard box style and height */
 .boxed {

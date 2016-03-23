@@ -6,18 +6,22 @@
         <li ng-repeat="per in vm.perspectives">
             <a ng-class="{'active': per.isActive}"
                ui-sref-active="active"
-               ui-sref="{{per.sref}}"><i class="fa fa-{{per.icon}} fa-2x fa-fw"></i><span class="name">{{per.name}}</span></a>
+               ui-sref="{{per.sref}}"><i class="fa fa-{{per.icon}} fa-fw"></i><span class="name">{{per.name}}</span></a>
         </li>
     </ul>
     <!-- static menu items -->
     <ul class="icon-container" ng-class="{'pull-right': !$root.leftLayout}">
         <!-- help icon --
-        <li><a><i class="fa fa-question fa-2x fa-fw"></i><span class="name">Help</span></a></li>
+        <li><a><i class="fa fa-question fa-fw"></i><span class="name">Help</span></a></li>
         <!-- settings icon --
-        <li><a><i class="fa fa-cog fa-2x fa-fw"></i><span class="name">Settings</span></a></li>
+        <li><a><i class="fa fa-cog fa-fw"></i><span class="name">Settings</span></a></li>
         <!-- hamburger menu --
-        <li><a><i class="fa fa-bars fa-2x fa-fw"></i><span class="name">Menu</span></a></li-->
+        <li><a><i class="fa fa-bars fa-fw"></i><span class="name">Menu</span></a></li-->
         <!-- logout -->
-        <li><a ng-click="vm.logout();"><i class="fa fa-sign-out fa-2x fa-fw"></i><span class="name">Logout</span></a></li>
+        <li>
+            <a class="sign-out-wrapper" ng-click="vm.logout();">
+                <i class="fa fa-sign-out fa-fw"></i><span class="name">Logout</span>
+            </a>
+        </li>
     </ul>
 </div>
