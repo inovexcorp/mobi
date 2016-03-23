@@ -8,14 +8,14 @@ import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.Values;
-import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.rio.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.util.stream.Collectors;
 
-@Component(provide= CSVConverter.class)
+@Component(provide = CSVConverter.class)
 public class CSVConverterImpl implements CSVConverter {
 
     private static final Logger LOGGER = Logger.getLogger(CSVConverterImpl.class);
@@ -85,7 +85,7 @@ public class CSVConverterImpl implements CSVConverter {
      *
      * @return A String with a Universally Unique Identifier
      */
-    public String generateUUID() {
+    public String generateUuid() {
         return UUID.randomUUID().toString();
     }
 
@@ -139,7 +139,7 @@ public class CSVConverterImpl implements CSVConverter {
         for (Integer i : dataProps.keySet()) {
             IRI property = valueFactory.createIRI(dataProps.get(i));
             try {
-                convertedRDF.add(classInstance, property, valueFactory.createLiteral(nextLine[i - 1]));
+                convertedRDF.add(classInstance, property, valueFactory.createLiteral(nextLine[i]));
             } catch (ArrayIndexOutOfBoundsException e) {
                 //Cell does not contain any data. No need to throw exception.
                 LOGGER.info("Missing data for " + classInstance + ": " + property);
@@ -188,11 +188,9 @@ public class CSVConverterImpl implements CSVConverter {
      * @return The local name portion of a IRI used in RDF data
      */
     String generateLocalName(String localNameTemplate, String[] currentLine) {
-        String uuid = "";
         if ("".equals(localNameTemplate) || localNameTemplate == null) {
             //Only generate UUIDs when necessary. If you really have to waste a UUID go here: http://wasteaguid.info/
-            uuid = generateUUID();
-            return uuid;
+            return generateUuid();
         }
         Pattern pat = Pattern.compile("(\\$\\{)(\\d+|UUID)(\\})");
         Matcher mat = pat.matcher(localNameTemplate);
@@ -200,11 +198,11 @@ public class CSVConverterImpl implements CSVConverter {
         while (mat.find()) {
             if ("UUID".equals(mat.group(2))) {
                 //Once again, only generate UUIDs when necessary
-                mat.appendReplacement(result, generateUUID());
+                mat.appendReplacement(result, generateUuid());
             } else {
                 int colIndex = Integer.parseInt(mat.group(2));
                 try {
-                    mat.appendReplacement(result, currentLine[colIndex - 1]);
+                    mat.appendReplacement(result, currentLine[colIndex]);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     LOGGER.info("Data not available for local name. Using '_'");
                     mat.appendReplacement(result, "_");
@@ -222,7 +220,7 @@ public class CSVConverterImpl implements CSVConverter {
      * @return An ArrayList of ClassMapping Objects created from the mapping model.
      */
     private ArrayList<ClassMapping> parseClassMappings(Model mappingModel) {
-        ArrayList<ClassMapping> classMappings = new ArrayList<ClassMapping>();
+        ArrayList<ClassMapping> classMappings = new ArrayList<>();
 
         Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()),
                 valueFactory.createIRI(Delimited.CLASS_MAPPING_OBJ.stringValue()));
@@ -241,7 +239,7 @@ public class CSVConverterImpl implements CSVConverter {
                 classMapping = uriToObject.get(classMappingIRI);
             } else {
                 classMapping = new ClassMapping();
-                uriToObject.put((IRI) classMappingIRI, classMapping);
+                uriToObject.put(classMappingIRI, classMapping);
             }
 
             //Parse the properties from the Class Mappings
@@ -249,20 +247,23 @@ public class CSVConverterImpl implements CSVConverter {
             //Prefix
             Model prefixModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.HAS_PREFIX.stringValue()), null);
-            if (!prefixModel.isEmpty())
+            if (!prefixModel.isEmpty()) {
                 classMapping.setPrefix(Models.objectString(prefixModel).get());
+            }
 
             //Class that the Class Mapping Maps to
             Model mapsToModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.MAPS_TO.stringValue()), null);
-            if (!mapsToModel.isEmpty())
+            if (!mapsToModel.isEmpty()) {
                 classMapping.setMapping(Models.objectString(mapsToModel).get());
+            }
 
             //Local Name
             Model localNameModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.LOCAL_NAME.stringValue()), null);
-            if (!localNameModel.isEmpty())
+            if (!localNameModel.isEmpty()) {
                 classMapping.setLocalName(Models.objectString(localNameModel).get());
+            }
 
             //Parse the data properties
             Model dataPropertyModel = mappingModel.filter(classMappingIRI,
@@ -308,7 +309,7 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     /**
-     * Parses a Mapping file into a Model
+     * Parses a Mapping file into a Model.
      *
      * @param mapping the mapping file to be parsed to a model
      * @return An RDF Model containing the data from the mapping file
@@ -329,12 +330,12 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     /**
-     * Convert Sesame model to MatOnto model
-     * @param m A Sesame Model
+     * Convert Sesame model to MatOnto model.
+     * @param model A Sesame Model
      * @return A Matonto Model
      */
-    protected Model matontoModel(org.openrdf.model.Model m) {
-        Set<Statement> stmts = m.stream()
+    protected Model matontoModel(org.openrdf.model.Model model) {
+        Set<Statement> stmts = model.stream()
                 .map(Values::matontoStatement)
                 .collect(Collectors.toSet());
 
