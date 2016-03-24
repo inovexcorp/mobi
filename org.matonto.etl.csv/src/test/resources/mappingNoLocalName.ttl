@@ -14,16 +14,16 @@ delim-data:Material rdfs:type               delim:ClassMapping ;
 delim-data:CrystalStructure rdfs:type           delim:ClassMapping ;
                             delim:mapsTo        uhtc:CrystalStructure ;
                             delim:hasPrefix        "http://matonto.org/data/uhtc/crystalstructure/" ;
-                            delim:localName     "${3}" .
+                            delim:localName     "${2}" .
 
 
-delim-data:DataMapping1     delim:columnIndex       "2" ;
+delim-data:DataMapping1     delim:columnIndex       "1" ;
                             delim:hasProperty       uhtc:formula .
 
-delim-data:DataMapping2     delim:columnIndex       "7" ;
+delim-data:DataMapping2     delim:columnIndex       "6" ;
                             delim:hasProperty       uhtc:density .
 
-delim-data:DataMapping3     delim:columnIndex       "4" ;
+delim-data:DataMapping3     delim:columnIndex       "3" ;
                             delim:hasProperty       uhtc:latticeParameter .
 
 delim-data:ObjectMapping1   delim:classMapping      delim-data:CrystalStructure ;

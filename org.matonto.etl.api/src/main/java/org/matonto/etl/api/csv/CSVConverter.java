@@ -10,8 +10,8 @@ import java.io.InputStream;
 public interface CSVConverter {
 
     /**
-     * Converts a CSV to RDF using a mapping file. Optionally skip a header row. Returns
-     * the RDF data as a Model
+     * Converts a CSV to RDF using a mapping file. Optionally skip a header row. Column
+     * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
      * @param csv The CSV file to be loaded
      * @param mappingFile The mapping file in RDF Format. See the MatOnto Wiki for details
@@ -23,8 +23,8 @@ public interface CSVConverter {
     Model convert(File csv, File mappingFile, boolean containsHeaders) throws IOException, RDFParseException;
 
     /**
-     * Converts a CSV to RDF using a mapping Model. Optionally skip a header row. Returns
-     * the RDF data as a Model
+     * Converts a CSV to RDF using a mapping Model. Optionally skip a header row. Column
+     * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
      * @param csv The CSV file to be loaded
      * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
@@ -35,8 +35,8 @@ public interface CSVConverter {
     Model convert(File csv, Model mappingModel, boolean containsHeaders) throws IOException;
 
     /**
-     * Converts a CSV to RDF using a mapping file. Optionally skip a header row. Returns
-     * the RDF data as a Model
+     * Converts a CSV to RDF using a mapping file. Optionally skip a header row. Column
+     * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
      * @param csv The CSV InputStream to be loaded
      * @param mappingFile The mapping file in RDF Format. See the MatOnto Wiki for details
@@ -48,8 +48,8 @@ public interface CSVConverter {
     Model convert(InputStream csv, File mappingFile, boolean containsHeaders) throws IOException;
 
     /**
-     * Converts a CSV to RDF using a mapping Model. Optionally skip a header row. Returns
-     * the RDF data as a Model
+     * Converts a CSV to RDF using a mapping Model. Optionally skip a header row. Column
+     * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
      * @param csv The CSV InputStream to be loaded
      * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
