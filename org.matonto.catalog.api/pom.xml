@@ -20,11 +20,15 @@
             <artifactId>persistence.api</artifactId>
             <version>1.0.29</version>
         </dependency>
-
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
             <version>1.0.33-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
     </dependencies>
 

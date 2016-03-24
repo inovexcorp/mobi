@@ -9,9 +9,11 @@ public interface CatalogManager {
 
     <T extends PublishedResource> Set<T> findResource(String searchTerm);
 
-    <T extends PublishedResource> Optional<T> getResource(Resource resource);
+    Optional<PublishedResource> getResource(Resource resource);
+
+//    <T extends PublishedResource> Optional<T> getResource(Resource resource, Class<T> clazz);
 
     <T extends PublishedResource> T removeResource(Resource resource);
 
-    Ontology createOntology(org.matonto.ontology.core.api.Ontology ontology);
+    void createOntology(org.matonto.ontology.core.api.Ontology ontology);
 }
