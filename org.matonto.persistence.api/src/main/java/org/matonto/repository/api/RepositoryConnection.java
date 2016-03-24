@@ -57,6 +57,51 @@ public interface RepositoryConnection extends AutoCloseable {
     void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
 
     /**
+     * Removes the supplied statement from this repository, optionally from one or more named contexts.
+     *
+     * @param stmt -  The statement to remove.
+     * @param contexts - The contexts to remove the statements from. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statement is removed from any context specified
+     *                 in each statement, or if the statement contains no context, it is added without context.
+     *                 If one or more contexts are specified the statement is removed from these contexts, ignoring
+     *                 any context information in the statement itself.
+     * @throws RepositoryException - If the statement could not be removed from the repository, for example because
+     * the repository is not writable.
+     */
+    void remove(Statement stmt, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Removes the supplied statements from this repository, optionally from one or more named contexts.
+     *
+     * @param statements - The statements that should be removed.
+     * @param contexts - The contexts to remove the statements from. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, each statement is removed from any context specified
+     *                 in the statement, or if the statement contains no context, it is removed without context.
+     *                 If one or more contexts are specified each statement is removed from those contexts, ignoring
+     *                 any context information in the statement itself.
+     * @throws RepositoryException - If the data could not be removed from the repository, for example because
+     * the repository is not writable.
+     */
+    void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Removes a statement with the specified subject, predicate and object from this repository, optionally
+     * from one or more named contexts.
+     *
+     * @param subject - The statement's subject.
+     * @param predicate - The statement's subject.
+     * @param object - The statement's object.
+     * @param contexts - The contexts to remove the data from. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the data is removed from any context specified
+     *                 in the actual data file, or if the data contains no context, it is added without context.
+     *                 If one or more contexts are specified the data is removed from these contexts, ignoring any
+     *                 context information in the data itself.
+     * @throws RepositoryException - If the data could not be removed from the repository, for example because
+     * the repository is not writable.
+     */
+    void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
+
+    /**
      * Removes all statements from a specific contexts in the repository.
      *
      * @param contexts - The context(s) to remove the data from. Note that this parameter is a vararg and as

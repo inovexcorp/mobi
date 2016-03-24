@@ -31,7 +31,7 @@ class ConverterSpec extends Specification {
         setup:
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true);
 
@@ -43,7 +43,7 @@ class ConverterSpec extends Specification {
         setup:
         File csv = new ClassPathResource("semicolonFile.csv").getFile();
         File mappingFile = new ClassPathResource("semicolonMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true)
 
@@ -55,7 +55,7 @@ class ConverterSpec extends Specification {
         setup:
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("defaultSeparatorMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true);
 
@@ -67,7 +67,7 @@ class ConverterSpec extends Specification {
         setup:
         File csv = new ClassPathResource("tabFile.csv").getFile();
         File mappingFile = new ClassPathResource("tabMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true)
 
@@ -79,7 +79,7 @@ class ConverterSpec extends Specification {
         setup:
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("mappingNoLocalName.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true)
 
@@ -90,7 +90,7 @@ class ConverterSpec extends Specification {
     def "Test Generation of Local Name"(){
         setup:
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
-        c.generateUUID() >> "12345"
+        c.generateUuid() >> "12345"
 
         expect:
         result.equals(c.generateLocalName(localName, nextLine))
@@ -98,11 +98,11 @@ class ConverterSpec extends Specification {
         where:
         result              | localName
         "12345"             | "\${UUID}"
-        "12345/abcd"        | "\${UUID}/\${1}"
-        "abcd"              | "\${1}"
-        "abcd/12345"        | "\${1}/\${UUID}"
-        "abcd/12345/ijkl"   | "\${1}/\${UUID}/\${3}"
-        "abcd/abcd"         | "\${1}/\${1}"
+        "12345/abcd"        | "\${UUID}/\${0}"
+        "abcd"              | "\${0}"
+        "abcd/12345"        | "\${0}/\${UUID}"
+        "abcd/12345/ijkl"   | "\${0}/\${UUID}/\${2}"
+        "abcd/abcd"         | "\${0}/\${0}"
         "12345"             | ""
     }
 
@@ -124,7 +124,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
         out = new ClassPathResource("testPropertiesMissingOut.ttl").getFile();
         r = new FileReader(out);
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true);
 

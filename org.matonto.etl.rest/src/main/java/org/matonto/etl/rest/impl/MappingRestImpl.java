@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import aQute.bnd.annotation.component.Component;
+import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import org.matonto.etl.rest.MappingRest;
 import org.matonto.rest.util.ErrorUtils;
@@ -76,10 +77,10 @@ public class MappingRestImpl implements MappingRest {
         File file = new File("data/tmp/" + fileName + ".jsonld");
         logger.info("Getting mapping from " + file.getName());
 
-        JSONArray json = new JSONArray();
+        JSONArray json;
         try {
-            List<String> fileLines = Files.readAllLines(file.toPath());
-            json.addAll(fileLines);
+            String fileContent = new String(Files.readAllBytes(file.toPath()));
+            json = JSONArray.fromObject(fileContent);
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error reading mapping file", Response.Status.BAD_REQUEST);
         }
