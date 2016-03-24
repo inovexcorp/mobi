@@ -1,14 +1,14 @@
 <form id="edit-prop">
     <h4>{{dvm.getTitle()}}</h4>
     <div class="form-group">
-        <column-select ng-if="dvm.isDatatypeProperty()" columns="columns" selected-column="dvm.selectedColumn"></column-select>
+        <column-select ng-if="!dvm.isObjectProperty()" columns="columns" selected-column="dvm.selectedColumn"></column-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 
         ontology-id="dvm.ontologyId" 
         class-id="dvm.classId" 
         selected-prop="dvm.selectedProp"></range-class-description>
     <div id="edit-prop-form-btns" class="form-group">
-        <button type="button" class="btn btn-default" ng-if="dvm.isDatatypeProperty()" ng-click="set({column: dvm.selectedColumn})">Set</button>
+        <button type="button" class="btn btn-default" ng-if="!dvm.isObjectProperty()" ng-click="set({column: dvm.selectedColumn})">Set</button>
         <button type="button" class="btn btn-default" ng-click="clickDelete({classId: dvm.classId, propId: dvm.selectedProp})">Delete</button>
     </div>
 </form>

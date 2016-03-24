@@ -26,7 +26,7 @@
         </div>
 
         <div class="overlay-button-container">
-            <p ng-hide="validateForm.$error.matchingSeparators" class="help-block">Any changes to the mapping will create a new mapping</p>
+            <p ng-hide="validateForm.$error.matchingSeparators" class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
             <button type="button" class="btn btn-primary" ng-click="onClickBack()">Back</button>
             <custom-button display-text="(validateForm.$invalid) ? 'Fix' : 'Continue'" 
                 on-click="onClickContinue()"

@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('startingClassSelectOverlay', ['prefixes', 'ontologyManager'])
+        .module('startingClassSelectOverlay', ['ontologyManager'])
         .directive('startingClassSelectOverlay', startingClassSelectOverlay);
 
-        startingClassSelectOverlay.$inject = ['prefixes', 'ontologyManagerService'];
+        startingClassSelectOverlay.$inject = ['ontologyManagerService'];
 
-        function startingClassSelectOverlay(prefixes, ontologyManagerService) {
+        function startingClassSelectOverlay(ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',

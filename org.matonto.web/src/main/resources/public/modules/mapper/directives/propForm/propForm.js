@@ -13,7 +13,6 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    lastProp: '=',
                     ontologyId: '@',
                     classId: '=',
                     set: '&',
@@ -27,27 +26,23 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.showPropBtns = false;
 
                     dvm.update = function() {
                         $timeout(function() {
                             if (dvm.selectedProp) {
-                                var propObj =_.find(dvm.props, {'@id': dvm.selectedProp});
-                                if (ontologyManagerService.isObjectProp(propObj)) {
-                                    dvm.showPropBtns = true;
+                                if (dvm.isObjectProperty()) {
                                     dvm.isObjectProp();
-                                } else if (ontologyManagerService.isDatatypeProperty(propObj)) {
-                                    dvm.showPropBtns = false;
-                                    dvm.isDatatypeProp();
                                 } else {
-                                    throw new Error("Can't find prop", dvm.selectedProp, "in", dvm.props);
+                                    dvm.isDatatypeProp();
                                 }
                             }
                         });
                     }
-
                     dvm.isObjectProperty = function() {
-                        return ontologyManagerService.isObjectProp(_.find(dvm.props, {'@id': dvm.selectedProp}));
+                        return ontologyManagerService.isObjectProperty(
+                            _.get(_.find(dvm.props, {'@id': dvm.selectedProp}), '@type', []), 
+                            prefixes.owl
+                        );
                     }
                 },
                 templateUrl: 'modules/mapper/directives/propForm/propForm.html'

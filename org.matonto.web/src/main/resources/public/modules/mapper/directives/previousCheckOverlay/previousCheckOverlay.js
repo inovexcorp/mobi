@@ -30,9 +30,9 @@
                 controller: function() {
                     var dvm = this;
                     var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
-                    dvm.invalidColumns = _.filter(mappedColumns, function(obj) {
+                    dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
                         return obj.index > dvm.filePreview.headers.length - 1;
-                    });
+                    }), 'index');
                     dvm.mappingSeparator = mappingManagerService.getSeparator(dvm.mapping);
 
                     dvm.getDataMappingName = function(dataMappingId) {
@@ -40,11 +40,11 @@
                             "['" + prefixes.delim + "hasProperty'][0]['@id']");
                         var classId = _.get(mappingManagerService.findClassWithDataMapping(dvm.mapping.jsonld, dataMappingId), 
                             "['" + prefixes.delim + "mapsTo'][0]['@id']");
-                        var className = ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClass(mappingManagerService.getSourceOntology(dvm.mapping), classId)
-                        );
                         var propName = ontologyManagerService.getEntityName(
                             ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntology(dvm.mapping), classId, propId)
+                        );
+                        var className = ontologyManagerService.getEntityName(
+                            ontologyManagerService.getClass(mappingManagerService.getSourceOntology(dvm.mapping), classId)
                         );
                         return className + ": " + propName;
                     }

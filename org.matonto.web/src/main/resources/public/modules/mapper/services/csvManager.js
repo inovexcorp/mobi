@@ -2,23 +2,23 @@
     'use strict';
 
     angular
-        .module('etl', [])
-        .service('etlService', etlService);
+        .module('csvManager', [])
+        .service('csvManagerService', csvManagerService);
 
-        etlService.$inject = ['$rootScope', '$http', '$q'];
+        csvManagerService.$inject = ['$rootScope', '$http', '$q'];
 
-        function etlService($rootScope, $http, $q) {
+        function csvManagerService($rootScope, $http, $q) {
             var self = this,
                 prefix = '/matontorest/csv';
 
             /**
-             * HTTP POST to csv/upload which uploads a delimited file to data/tmp/ directory.
-             * @param file - The selected file from <input type="file" />
+             * HTTP POST to csv which uploads a delimited file to data/tmp/ directory.
+             * @param {object} file - The selected file from <input type="file" />
              * @return {promise} The response data with the name of the uploaded file
              */
             self.upload = function(file) {
-                var deferred = $q.defer();
-                var fd = new FormData(),
+                var deferred = $q.defer(),
+                    fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -41,14 +41,18 @@
             }
 
             /**
-             * HTTP GET to csv/preview which returns rows to display in a table
-             * @param {fileName} The name of the file to preview
-             * @param {number} [rowEnd=10] The number of lines to show in the preview
-             * @return {Object} A JavaScript object with headers and rows from the preview data
+             * HTTP GET to csv/{fileName} which returns rows from an uploaded delimited file to 
+             * display in a table.
+             * @param {fileName} - The name of the delimited file to preview
+             * @param {number} [rowEnd=10] - The number of lines to show in the preview
+             * @param {string} separator - The character to use when separating columns in rows
+             * @param {boolean} containsHeaders - Whether the delimited file contains a header row
+             * @return {promise} The response data with a JavaScript object with headers and 
+             *                   rows from the preview data
              */
             self.previewFile = function(fileName, rowEnd, separator, containsHeaders) {
-                var deferred = $q.defer();
-                var config = {
+                var deferred = $q.defer(),
+                    config = {
                         params: {
                             'Row-Count': rowEnd ? rowEnd : 0,
                             'Separator': separator
@@ -57,9 +61,10 @@
 
                 $http.get(prefix + '/' + encodeURIComponent(fileName), config)
                     .then(function(response) {
-                        var filePreview = {};
-                        filePreview.headers = containsHeaders ? response.data.rows[0] : [];
-                        filePreview.rows = containsHeaders ? response.data.rows.slice(1, response.data.length) : response.data;
+                        var filePreview = {
+                            headers: containsHeaders ? response.data.rows[0] : [],
+                            rows: containsHeaders ? response.data.rows.slice(1, response.data.length) : response.data
+                        };
                         deferred.resolve(filePreview);
                     }, function(response) {
                         deferred.reject(response);
@@ -67,9 +72,15 @@
                 return deferred.promise;
             }
 
+            /**
+             * HTTP PUT to csv/{fileName} which updates the content of an uploaded delimited file.
+             * @param {string} fileName - The name of the uploaded file to update
+             * @param {object} file - The selected file from <input type="file">
+             * @return {promise} The response data with the name of the uploaded file
+             */
             self.update = function(fileName, file) {
-                var deferred = $q.defer();
-                var fd = new FormData(),
+                var deferred = $q.defer(),
+                    fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -91,9 +102,17 @@
                 return deferred.promise;
             }
 
+            /**
+             * HTTP POST to csv/{fileName}/map which maps the data in an uploaded delimited file 
+             * into RDF using an uploaded mapping file.
+             * @param {string} fileName - The name of the uploaded file to map
+             * @param {string} mappingFileName - The name of the uploaded mapping file
+             * @param {boolean} containsHeaders - Whether the delimited file contains a header row
+             * @return {promise} The response data with the mapped data in JSON-LD format
+             */
             self.mapByFile = function(fileName, mappingFileName, containsHeaders) {
-                var deferred = $q.defer();
-                var fd = new FormData(),
+                var deferred = $q.defer(),
+                    fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
@@ -106,7 +125,7 @@
                 fd.append('fileName', mappingFileName);
 
                 $rootScope.showSpinner = true;
-                $http.post(prefix + '/' + fileName + '/map', fd, config)
+                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
                     .then(function(response) {
                         $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
@@ -117,9 +136,17 @@
                 return deferred.promise;
             }
 
+            /**
+             * HTTP POST to csv/{fileName}/map which maps the data in an uploaded delimited file 
+             * into RDF using a JSON-LD mapping.
+             * @param {string} fileName - The name of the uploaded file to map
+             * @param {object} jsonld - The mapping JSON-LD
+             * @param {boolean} containsHeaders - Whether the delimited file contains a header row
+             * @return {promise} The response data with the mapped data in JSON-LD format
+             */
             self.mapByString = function(fileName, jsonld, containsHeaders) {
-                var deferred = $q.defer();
-                var fd = new FormData(),
+                var deferred = $q.defer(),
+                    fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
@@ -143,9 +170,19 @@
                 return deferred.promise;
             }
 
+            /**
+             * HTTP POST to csv/{fileName}/map which maps the first 10 rows of data in an uploaded 
+             * delimited file into RDF using an uploaded mapping file.
+             * @param {string} fileName - The name of the uploaded file to map
+             * @param {object} jsonld - The JSON-LD mapping
+             * @param {boolean} containsHeaders - Whether the delimited file contains a header row
+             * @param {string} format - The format to preview the mapped in. Only supports JSON-LD
+             *                          Turtle, and RDF/XML.
+             * @return {promise} The response data with the mapped data preview in the specified format
+             */
             self.previewMap = function(fileName, jsonld, containsHeaders, format) {
-                var deferred = $q.defer();
-                var fd = new FormData(),
+                var deferred = $q.defer(),
+                    fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {

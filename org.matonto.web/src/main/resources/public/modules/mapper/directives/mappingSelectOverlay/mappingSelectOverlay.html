@@ -7,16 +7,20 @@
                 New
             </label>
             <br/>
-            <label ng-if="dvm.mappingType === 'new'" ng-class="{'has-success': mappingForm.mappingName.$touched && mappingForm.mappingName.$valid, 'has-error': mappingForm.mappingName.$touched && mappingForm.mappingName.$invalid}">
+            <label ng-if="dvm.mappingType === 'new'" ng-class="mappingForm.mappingName.$touched ? (mappingForm.mappingName.$valid ? 'has-success' : 'has-error') : ''">
                 Name
                 <input type="text" name="mappingName" class="form-control"
                     ng-blur="dvm.check()"
                     ng-model="dvm.mappingName" 
-                    ng-required="dvm.mappingType === 'new'"/>
+                    ng-required="dvm.mappingType === 'new'"
+                    ng-maxlength="50"/>
             </label>
             <br/>
             <div class="text-danger" ng-show="dvm.mappingType === 'new' && mappingForm.mappingName.$error.uniqueName">
                 Mapping name must be unique
+            </div>
+            <div class="text-danger" ng-show="dvm.mappingType === 'new' && mappingForm.mappingName.$error.maxlength">
+                Mapping name is too long
             </div>
         </div>
         <div id="previous-mapping-radio" class="form-group">
@@ -26,7 +30,7 @@
                 Previous
             </label>
             </br/>
-            <select class="form-control" 
+            <select class="form-control" size="10" 
                 ng-if="dvm.mappingType === 'previous'" 
                 ng-model="dvm.mappingName" 
                 ng-required="dvm.mappingType === 'previous'">

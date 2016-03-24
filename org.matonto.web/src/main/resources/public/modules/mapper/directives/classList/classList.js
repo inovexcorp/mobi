@@ -40,7 +40,7 @@
                         return ontologyManagerService.getEntityName(classObj);
                     }
                     dvm.getPropName = function(propMapping, classId) {
-                        var propId = propMapping[prefixes.delim + 'hasProperty'][0]['@id'];
+                        var propId = dvm.getPropId(propMapping);
                         var propName = ontologyManagerService.getEntityName(
                             ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntology(dvm.mapping), classId, propId)
                         );

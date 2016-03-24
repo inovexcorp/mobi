@@ -2,18 +2,19 @@
     'use strict';
 
     angular
-        .module('editClassForm', ['prefixes', 'ontologyManager'])
+        .module('editClassForm', ['ontologyManager'])
         .directive('editClassForm', editClassForm);
 
-        editClassForm.$inject = ['prefixes', 'ontologyManagerService'];
+        editClassForm.$inject = ['ontologyManagerService'];
 
-        function editClassForm(prefixes, ontologyManagerService) {
+        function editClassForm(ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
                     props: '=',
+                    isLastClass: '=',
                     setBase: '&',
                     clickDelete: '&',
                     openProp: '&'

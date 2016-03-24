@@ -2,7 +2,7 @@
     <h3>{{dvm.createTitle()}}</h3>
     <p>{{dvm.createDescription()}}</p>
     <h4 ng-show="dvm.classObj">Properties</h4>
-    <ul class="props">
+    <ul>
         <li ng-show="dvm.classObj && !dvm.createPropList().length">None</li>
         <li ng-repeat="prop in dvm.createPropList()">{{prop}}</li>
     </ul>

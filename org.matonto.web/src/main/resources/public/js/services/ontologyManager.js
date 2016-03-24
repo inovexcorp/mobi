@@ -82,6 +82,7 @@
                         $q.all(promises)
                             .then(function(response) {
                                 $rootScope.showSpinner = false;
+                                console.log(self.ontologies);
                             });
                     }, function(response) {
                         console.log('Error in initialize:', response);
@@ -653,22 +654,8 @@
                 selected['@id'] = fresh;
             }
 
-            self.isObjectProperty = function(property, ontology) {
-                var result = false;
-
-                if(property.hasOwnProperty('@type') && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs') && property['@type'].indexOf(ontology.matonto.owl + 'ObjectProperty') !== -1) {
-                    result = true;
-                }
-
-                return result;
-            }
-
-            self.isObjectProp = function(property) {
-                return _.get(property, "['@type']", '').indexOf(prefixes.owl + 'ObjectProperty') >= 0
-            }
-
-            self.isDatatypeProperty = function(property) {
-                return _.get(property, "['@type']", '').indexOf(prefixes.owl + 'DatatypeProperty') >= 0
+            self.isObjectProperty = function(types, owl) {
+                return types.indexOf(owl + 'ObjectProperty') !== -1;
             }
 
             self.getOntology = function(oi) {

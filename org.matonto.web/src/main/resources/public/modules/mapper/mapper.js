@@ -2,16 +2,16 @@
     'use strict';
 
     angular
-        .module('mapper', ['etl', 'file-input', 'ontologyManager', 'prefixes', 'mappingManager', 'stepThroughSidebar', 
+        .module('mapper', ['csvManager', 'file-input', 'ontologyManager', 'prefixes', 'mappingManager', 'stepThroughSidebar', 
             'fileForm', 'filePreviewTable', 'mappingSelectOverlay', 'ontologySelectOverlay', 'ontologyPreview', 
             'startingClassSelectOverlay', 'classPreview', 'classList', 'propForm', 'propSelect', 'columnForm', 'columnSelect',
             'rangeClassDescription', 'editPropForm', 'editClassForm', 'availablePropList', 'finishOverlay', 'ontologyPreviewOverlay',
             'rdfPreview', 'previousCheckOverlay'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$q', 'FileSaver', 'Blob', 'prefixes', 'etlService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($q, FileSaver, Blob, prefixes, etlService, ontologyManagerService, mappingManagerService) {
+    function MapperController($q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var previousOntologyId;
         var originalMappingName;
@@ -20,6 +20,7 @@
             jsonld: []
         };
 
+        vm.steps = ['Choose File', 'Choose Mapping', 'Choose Ontology', 'Choose Starting Class', 'Build Mapping', 'Upload as RDF'];
         vm.deleteEntity = undefined;
 
         // These get initialized in vm.intitialize()
@@ -62,7 +63,7 @@
         // Handler for uploading delimited file
         vm.submitFileUpload = function() {
             if (vm.delimitedFileName) {
-                etlService.update(vm.delimitedFileName, vm.delimitedFile)
+                csvManagerService.update(vm.delimitedFileName, vm.delimitedFile)
                     .then(function(data) {
                         vm.delimitedFileName = data;
                         vm.getSmallPreview();
@@ -71,7 +72,7 @@
                         vm.filePreview = undefined;
                     });
             } else {
-                etlService.upload(vm.delimitedFile)
+                csvManagerService.upload(vm.delimitedFile)
                     .then(function(data) {
                         vm.delimitedFileName = data;
                         vm.getSmallPreview();
@@ -82,7 +83,7 @@
             }
         }
 
-        // Handler for saving mapping file
+        // Handler for downloading mapping file
         vm.saveMapping = function() {
             var deferred = $q.defer();
             if (vm.saveToServer) {
@@ -106,7 +107,7 @@
         /* Public helper methods */
         vm.isDatatypeProperty = function(propId) {
             var propObj = ontologyManagerService.getClassProperty(vm.getOntologyId(), vm.editingClassId, propId);
-            return ontologyManagerService.isDatatypeProperty(propObj);
+            return propObj ? !ontologyManagerService.isObjectProperty(_.get(propObj, '@type', []), prefixes.owl) : false;
         }
         vm.resetEditingVars = function() {
             vm.editingClassId = '';
@@ -153,7 +154,7 @@
             }
         }
         vm.getBigPreview = function() {
-            etlService.previewFile(vm.delimitedFileName, 100, vm.delimitedSeparator, vm.delimitedContainsHeaders)
+            csvManagerService.previewFile(vm.delimitedFileName, 100, vm.delimitedSeparator, vm.delimitedContainsHeaders)
                 .then(function(data) {
                     vm.filePreview = data;
                 }, function(error) {
@@ -162,7 +163,7 @@
                 });
         }
         vm.getSmallPreview = function() {
-            etlService.previewFile(vm.delimitedFileName, 5, vm.delimitedSeparator, vm.delimitedContainsHeaders)
+            csvManagerService.previewFile(vm.delimitedFileName, 5, vm.delimitedSeparator, vm.delimitedContainsHeaders)
                 .then(function(data) {
                     vm.filePreview = data;
                 }, function(error) {
@@ -198,8 +199,6 @@
                     vm.activeStep = 2;
                     break;
                 case 'previous':
-                    /*console.log("TODO");
-                    return;*/
                     mappingManagerService.getMapping(mappingName)
                         .then(function(data) {
                             vm.mapping = {
@@ -233,13 +232,13 @@
             if (vm.saveToServer) {
                 mappingManagerService.upload(vm.mapping.jsonld, vm.mapping.name)
                     .then(function(uuid) {
-                        return etlService.mapByFile(vm.delimitedFileName, uuid, vm.delimitedContainsHeaders);
+                        return csvManagerService.mapByFile(vm.delimitedFileName, uuid, vm.delimitedContainsHeaders);
                     })
                     .then(function(mappedData) {
                         deferred.resolve(mappedData);
                     }, reject);
             } else {
-                etlService.mapByString(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders)
+                csvManagerService.mapByString(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders)
                     .then(function(mappedData) {
                         deferred.resolve(mappedData);
                     }, reject);
@@ -267,7 +266,7 @@
                 changedMapping();
             }
             if (classId) {
-                vm.mapping = mappingManagerService.addClass(vm.mapping, classId, 'UUID');            
+                vm.mapping = mappingManagerService.addClass(vm.mapping, classId, '${UUID}');            
             } else {
                 vm.isPreviousMapping = true;
                 vm.saveToServer = false;
@@ -292,7 +291,6 @@
             vm.resetEditingVars();
             vm.editingClassId = classId;
             vm.availableProps = getAvailableProps(vm.editingClassId);
-            vm.lastProp = vm.availableProps.length <= 1;
             vm.newProp = true;
         }
         vm.displayColumnForm = function(extraHeader) {
@@ -319,6 +317,7 @@
             vm.resetEditingVars();
             vm.editingClassId = classId;
             vm.availableProps = getAvailableProps(vm.editingClassId);
+            vm.numMappedClasses = mappingManagerService.getMappedClassIds(vm.mapping.jsonld).length;
         }
         vm.openAvailableProp = function(propId) {
             vm.displayPropForm(vm.editingClassId);
@@ -340,7 +339,7 @@
             }
         }
         vm.generateRdfPreview = function(format) {
-            etlService.previewMap(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, format)
+            csvManagerService.previewMap(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, format)
                 .then(function(preview) {
                     vm.rdfPreview = preview;
                 }, function(error) {
@@ -375,7 +374,7 @@
             vm.displayPropForm(editingClassId);
         }
         vm.setObjectProp = function() {
-            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.editingClassId, vm.selectedPropId, 'UUID');
+            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.editingClassId, vm.selectedPropId, '${UUID}');
             changedMapping();
             vm.resetEditingVars();
         }

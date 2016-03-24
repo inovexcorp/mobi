@@ -3,19 +3,8 @@
 
 $sidebar-width: 150px;
 $overlay-height: 450px;
-$light-grey: #EDEDED;
-$grey: #A3A3A3;
-$dark-grey: #555;
 
 .mapper {
-    /* styles for the right side */
-    .viewer {
-        /* makes the font smaller for the table */
-        table {
-            font-size: 12px;
-            margin-bottom: 0;
-        }
-    }
     #mapper-content {
         margin-left: $sidebar-width;
         height: 100%;
@@ -62,21 +51,21 @@ $dark-grey: #555;
                     right: 0;
                 }
                 th {
-                    background-color: $light-grey;
+                    background-color: $gray-lighter;
                     &.highlight {
-                        background-color: $grey;
+                        background-color: $gray-light;
                     }
                 }
                 td {
                     &.highlight {
-                        background-color: $light-grey;
+                        background-color: $gray-lighter;
                     }
                 }
             }
         }
     }
     #sidebar-wrapper {
-        background-color: $light-grey;
+        background-color: $gray-lighter;
         height: 100%;
         display: inline-block;
         padding: 1em;
@@ -88,20 +77,29 @@ $dark-grey: #555;
 
             .complete {
                 font-weight: normal;
-                color: black;
+                color: $gray-base;
             }
             .active {
                 font-weight: bold;
-                color: black;
+                color: $gray-base;
             }
             .upcoming {
                 font-weight: lighter;
-                color: #8A8A8A;
+                /*color: #8A8A8A;*/
+                color: $gray-light;
             }
         }
     }
     div.overlay-button-container {
         clear: both;
+    }
+    .ontology-preview {
+        overflow-y: auto;
+    }
+    #ontology-preview-overlay {
+        .content {
+            max-height: $overlay-height;
+        }
     }
     #mapping-select-overlay {
         .content {
@@ -167,7 +165,6 @@ $dark-grey: #555;
             #mapping-title {
                 height: 100%;
                 text-align: center;
-
             }
             #ontology-section {
                 display: inline-block;
@@ -191,7 +188,7 @@ $dark-grey: #555;
             height: 100%;
             position: absolute;
             top: 0;
-            background-color: $dark-grey;
+            background-color: $gray;
             color: #fff;
 
             &.slide {
@@ -207,7 +204,7 @@ $dark-grey: #555;
                 right: calc(-35% - 30px);
             }
             #toggle-btn {
-                background-color: $dark-grey;
+                background-color: $gray;
                 position: absolute;
                 padding: 0.2em;
                 width: 80px;
@@ -234,7 +231,7 @@ $dark-grey: #555;
             height: 20em;
             overflow-y: auto;
             overflow-x: hidden;
-            border: 2px solid lightgray;    
+            border: 2px solid $gray-lighter;    
 
             li {
                 display: block;
@@ -246,7 +243,7 @@ $dark-grey: #555;
 
                 &.active {
                     background-color: #337AB7;
-                    color: #FFFFFF;
+                    color: #fff;
                 }
                 .open-prop {
                     background-color: transparent;
@@ -255,7 +252,7 @@ $dark-grey: #555;
                     right: 0;
 
                     &:hover {
-                        color: lightgrey;
+                        color: $gray-lighter;
                     }
                 }
             }
@@ -277,7 +274,7 @@ $dark-grey: #555;
                 padding: 0.5em;
                 height: 100%;
                 float: left;
-                border: 1px solid lightgray;
+                border: 1px solid $gray-light;
                 overflow-y: auto;
 
                 #class-list {
@@ -293,7 +290,7 @@ $dark-grey: #555;
                             right: 0;
 
                             &:hover {
-                                color: lightgrey;
+                                color: $gray-lighter;
                             }
                         }
                     }

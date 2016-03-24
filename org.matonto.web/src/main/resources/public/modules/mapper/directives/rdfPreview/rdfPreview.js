@@ -8,13 +8,11 @@
 
         function formatRdf($filter) {
             return {
+                restrict: 'A',
                 require: 'ngModel',
                 link: function(scope, element, attrs, modelCtrl) {
-                    var formatJSON = function(preview) {
-                        if (!preview) { 
-                            preview = '';
-                        }
-                        var formatted = (typeof preview === 'object') ? $filter('json')(preview) : preview;
+                    var formatJSON = function(data) {
+                        var formatted = (typeof data === 'object') ? $filter('json')(data) : (data || '');
                         return formatted;
                     }
                         
@@ -33,13 +31,14 @@
                     createPreview: '&'
                 },
                 link: function(scope, elem, attrs, ctrl) {
-                    var textarea = elem[0].querySelector("#text-preview");
-                    ctrl.textareaHeight = elem[0].offsetHeight - textarea.offsetTop - 10;
-
-                    angular.element($window).bind('resize', function() {
+                    var updateHeight = function() {
                         var textarea = elem[0].querySelector("#text-preview");
                         ctrl.textareaHeight = elem[0].offsetHeight - textarea.offsetTop - 10;
+                    }
 
+                    updateHeight();
+                    angular.element($window).bind('resize', function() {
+                        updateHeight();
                         scope.$digest();
                     });
                 },

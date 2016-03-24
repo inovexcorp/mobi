@@ -31,11 +31,8 @@
                         var propName = ontologyManagerService.getEntityName(getClassProp());
                         return className + ': ' + propName;
                     }
-                    dvm.isDatatypeProperty = function() {
-                        return ontologyManagerService.isDatatypeProperty(getClassProp());
-                    }
                     dvm.isObjectProperty = function() {
-                        return ontologyManagerService.isObjectProp(getClassProp());
+                        return ontologyManagerService.isObjectProperty(_.get(getClassProp(), '@type', []), prefixes.owl);
                     }
                     function getClassProp() {
                         return ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp);

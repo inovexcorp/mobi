@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('classPreview', ['prefixes', 'ontologyManager'])
+        .module('classPreview', ['ontologyManager'])
         .directive('classPreview', classPreview);
 
-        classPreview.$inject = ['prefixes', 'ontologyManagerService'];
+        classPreview.$inject = ['ontologyManagerService'];
 
-        function classPreview(prefixes, ontologyManagerService) {
+        function classPreview(ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',

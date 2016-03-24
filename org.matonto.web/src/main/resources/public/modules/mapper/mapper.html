@@ -1,7 +1,7 @@
 <!-- mapper.html -->
 <div class="mapper clearfix" ng-controller="MapperController as vm">
     <!-- Step through sidebar -->
-    <step-through-sidebar active-index="vm.activeStep"></step-through-sidebar>
+    <step-through-sidebar active-index="vm.activeStep" steps="vm.steps"></step-through-sidebar>
 
     <!-- Overlays -->
     <mapping-select-overlay ng-if="vm.activeStep === 1 && !vm.displayPreviousCheck" 
@@ -30,7 +30,11 @@
         confirm-click="vm.displayDeleteConfirm = false; vm.deleteMappingEntity()"
         cancel-click="vm.displayDeleteConfirm = false; vm.deleteEntity = undefined"
         confirm-text="'Yes'"
-        cancel-text="'No'">Are you sure you want to delete <strong>{{vm.deleteEntity.name}}</strong>? <p ng-if="!vm.deleteEntity.hasOwnProperty('propId')" class="help-block">Deleting a class will remove any properties that link to it.</p></confirmation-overlay>
+        cancel-text="'No'">Are you sure you want to delete <strong>{{vm.deleteEntity.name}}</strong>?
+            <p ng-if="!vm.deleteEntity.hasOwnProperty('propId')" class="help-block">
+                Deleting a class will remove any properties that link to it.
+            </p>
+        </confirmation-overlay>
     <confirmation-overlay ng-if="vm.displayCancelConfirm"
         header-text="'Cancel Mapping'"
         confirm-click="vm.displayCancelConfirm = false; vm.initialize()"
@@ -84,14 +88,13 @@
                         ontology-id="{{vm.getOntologyId()}}"
                         class-id="vm.editingClassId"
                         set="vm.setObjectProp()"
-                        set-next="vm.setNextObjectProp()"
-                        last-prop="vm.lastProp"></prop-form>
+                        set-next="vm.setNextObjectProp()"></prop-form>
                     <column-form ng-if="vm.isDatatypeProperty(vm.selectedPropId) && vm.newProp" 
                         ng-model="vm.selectedColumn" 
                         columns="vm.availableColumns"
                         set="vm.setDatatypeProp(column)"
                         set-next="vm.setNextDatatypeProp(column)"
-                        last-prop="vm.lastProp"></column-form>
+                        last-prop="vm.availableProps.length <= 1"></column-form>
                     <edit-prop-form ng-if="vm.selectedPropId && !vm.newProp"
                         columns="vm.availableColumns"
                         set="vm.setDatatypeProp(column)"
@@ -103,10 +106,11 @@
                     <edit-class-form ng-if="vm.editingClassId && !vm.selectedPropId && !vm.newProp"
                         ontology-id="{{vm.getOntologyId()}}"
                         class-id="vm.editingClassId"
+                        is-last-class="vm.numMappedClasses === 1"
                         props="vm.availableProps"
                         open-prop="vm.openAvailableProp"
                         click-delete="vm.displayDeleteConfirmation(classId)"></edit-class-form>
-                    <a ng-if="vm.editingClassId" id="edit-cancel" ng-click="vm.resetEditingVars()">Cancel</a>
+                    <a id="edit-cancel" ng-if="vm.editingClassId" ng-click="vm.resetEditingVars()">Cancel</a>
                 </div>
             </div>
         </div>
@@ -119,7 +123,7 @@
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
 
-        <!-- <button ng-click="vm.showMappingPreview = !vm.showMappingPreview" style="position: absolute; right: 0; top: 0; z-index: 5000;"><i class="fa fa-question-circle"></i></button>
-        <pre ng-if="vm.showMappingPreview" style="position: absolute; right: 25px; left: 0; top: 0; height: 100%; overflow: auto; z-index: 5000;">{{vm.mapping | json}}</pre> -->
+        <button ng-click="vm.showMappingPreview = !vm.showMappingPreview" style="position: absolute; right: 0; top: 0; z-index: 5000;"><i class="fa fa-question-circle"></i></button>
+        <pre ng-if="vm.showMappingPreview" style="position: absolute; right: 25px; left: 0; top: 0; height: 100%; overflow: auto; z-index: 5000;">{{vm.mapping | json}}</pre>
     </div>
 </div>

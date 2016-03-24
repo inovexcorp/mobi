@@ -1,8 +1,11 @@
 <div class="ontology-preview">
-    <h3>{{dvm.createTitle()}}</h3>
-    <p>{{dvm.createDescription()}}</p>
-    <h4 ng-show="dvm.ontology">Classes</h4>
-    <ul class="classes">
-        <li ng-repeat="class in dvm.createClassSubList()">{{class}}</li>
-    </ul>
+    <div ng-show="dvm.ontology">
+        <h3>{{dvm.createTitle()}}</h3>
+        <p>{{dvm.createDescription()}}</p>
+        <h4>Classes</h4>
+        <ul class="classes">
+            <li ng-repeat="class in dvm.getClassList() track by $index">{{class}}</li>
+        </ul>
+        <a ng-if="dvm.getClassList().length > dvm.numClassPreview" ng-click="dvm.full = !dvm.full; dvm.createClassList()">See {{dvm.full ? 'Less' : 'More'}}</a>
+    </div>
 </div>

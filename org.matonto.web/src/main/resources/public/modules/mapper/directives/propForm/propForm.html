@@ -6,8 +6,8 @@
         ontology-id="ontologyId" 
         class-id="classId" 
         selected-prop="dvm.selectedProp"></range-class-description>
-    <div id="prop-form-btns" class="form-group" ng-show="dvm.showPropBtns">
+    <div id="prop-form-btns" class="form-group" ng-show="dvm.isObjectProperty()">
         <button type="button" class="btn btn-default" ng-click="set()">Set</button>
-        <button type="button" class="btn btn-default" ng-click="dvm.showPropBtns = false; setNext()" ng-disabled="lastProp">Set &amp; Next</button>
+        <button type="button" class="btn btn-default" ng-click="setNext()" ng-disabled="dvm.props.length <= 1">Set &amp; Next</button>
     </div>
 </form>

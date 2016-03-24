@@ -26,8 +26,10 @@
                 link: function(scope, elem, attrs, ctrl) {
                     ["transitionend","webkitTransitionEnd","mozTransitionEnd"].forEach(function(transitionEnd) {
                         elem[0].querySelector("#table-container").addEventListener(transitionEnd, function() {
-                            ctrl.small = ctrl.big ? false : true;
-                            scope.$digest();
+                            if (ctrl.big) {
+                                ctrl.small = false;
+                                scope.$digest();
+                            }
                         });
                     });
                 },
@@ -40,17 +42,10 @@
 
                     $scope.$watch('rows', function(newVal, oldVal) {
                         if (!dvm.big && !angular.equals(newVal, oldVal)) {
-                            $timeout(function() {
-                                dvm.tableHeight = dvm.initialHeight = $element[0].querySelector("#file-preview").offsetHeight + buttonHeight;
-                                dvm.containerHeight = dvm.initialHeight + 'px';
-                            });
+                            setHeightDefaults();
                         }
                     });
 
-                    $timeout(function() {
-                        dvm.tableHeight = dvm.initialHeight = $element[0].querySelector("#file-preview").offsetHeight + buttonHeight;
-                        dvm.containerHeight = dvm.initialHeight + 'px';
-                    });
                     dvm.toggleTable = function() {
                         dvm.big = !dvm.big;
                         if (dvm.big) {
@@ -61,8 +56,17 @@
                         } else {
                             dvm.containerTop = '0px';
                             dvm.containerHeight = dvm.initialHeight + 'px';
+                            dvm.small = true;
                         }
                     }
+                    function setHeightDefaults() {
+                        $timeout(function() {
+                            dvm.tableHeight = dvm.initialHeight = $element[0].querySelector("#file-preview").offsetHeight + buttonHeight;
+                            dvm.containerHeight = dvm.initialHeight + 'px';
+                        });
+                    }
+
+                    setHeightDefaults();
                 },
                 templateUrl: 'modules/mapper/directives/filePreviewTable/filePreviewTable.html'
             }

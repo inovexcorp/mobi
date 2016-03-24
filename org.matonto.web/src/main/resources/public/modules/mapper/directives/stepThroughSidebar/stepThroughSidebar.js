@@ -11,11 +11,11 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    activeIndex: '='
+                    activeIndex: '=',
+                    steps: '='
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.steps = ['Choose File', 'Choose Mapping', 'Choose Ontology', 'Choose Starting Class', 'Build Mapping', 'Upload as RDF'];
                 },
                 templateUrl: 'modules/mapper/directives/stepThroughSidebar/stepThroughSidebar.html'
             }
