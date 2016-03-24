@@ -10,7 +10,7 @@
         <class-preview class-obj="dvm.getClass(dvm.ontologyId, dvm.selectedClassId)"></class-preview>
         
         <div class="overlay-button-container">
-            <button type="button" class="btn btn-primary" ng-click="onClickBack()">Back</button>
+            <custom-button display-text="'Back'" on-click="onClickBack()" pull="'left'">Back</custom-button>
             <custom-button display-text="'Continue'" on-click="onClickContinue({classId: dvm.selectedClassId})" is-disabled-when="!dvm.selectedClassId"></custom-button>
         </div>
     </form>

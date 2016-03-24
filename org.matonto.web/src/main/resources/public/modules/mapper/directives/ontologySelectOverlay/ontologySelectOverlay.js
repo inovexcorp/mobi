@@ -18,10 +18,8 @@
                 },
                 controller: function() {
                     var dvm = this;
+                    dvm.ontologies = ontologyManagerService.getList();
                     
-                    dvm.getOntologies = function() {
-                        return ontologyManagerService.getList();
-                    }
                     dvm.getOntologyById = function(ontologyId) {
                         return ontologyManagerService.getOntologyById(ontologyId);
                     }

@@ -1,7 +1,7 @@
 <form id="file-form">
     <div class="form-group">
         <h3>Choose Delimited File</h3>
-        <div file-input="dvm.delimitedFile"></div>
+        <file-input ng-model="dvm.delimitedFile" accept=".csv,tsv"></file-input>
     </div>
     <div class="form-group">
         <input type="checkbox" ng-model="dvm.containsHeaders">Contains headers</input>

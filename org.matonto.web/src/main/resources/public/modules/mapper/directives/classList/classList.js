@@ -50,7 +50,8 @@
                             mappingName = dvm.getClassName(classMapping[prefixes.delim + 'mapsTo'][0]['@id']);
                         } else if (mappingManagerService.isDataMapping(propMapping)) {
                             var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                            mappingName = dvm.columns[index - 1];
+                            mappingName = dvm.columns[index];
+                            // mappingName = dvm.columns[index - 1];
                         }
                         return propName + ': ' + mappingName;
                     }

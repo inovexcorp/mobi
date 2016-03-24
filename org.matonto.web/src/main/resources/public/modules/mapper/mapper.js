@@ -202,7 +202,7 @@
                     mappingManagerService.getMapping(mappingName)
                         .then(function(data) {
                             vm.mapping = {
-                                jsonld: _.flatten(data),
+                                jsonld: data,
                                 name: mappingName
                             };
                             vm.displayPreviousCheck = true;
@@ -213,9 +213,9 @@
                 default:
                     previousOntologyId = previousOntologyId ? previousOntologyId : vm.getOntologyId();
                     vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, '');
+                    vm.changeOntology = vm.activeStep === 4 ? true : false;
                     vm.activeStep = 2;
                     vm.displayPreviousCheck = false;
-                    vm.changeOntology = true;
             }
         }
         vm.displayStartingClassSelect = function(ontologyId) {
@@ -308,7 +308,8 @@
             );
             if (mappingManagerService.isDataMapping(propMapping)) {
                 var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                var extraColumn = vm.filePreview.headers[index - 1];
+                var extraColumn = vm.filePreview.headers[index];
+                // var extraColumn = vm.filePreview.headers[index - 1];
                 vm.displayColumnForm(extraColumn);
                 vm.selectedColumn = extraColumn;
             }
@@ -349,11 +350,13 @@
 
         /** Set and Delete methods **/
         vm.setDatatypeProp = function(column) {
-            var columnIdx = vm.filePreview.headers.indexOf(column) + 1;
+            var columnIdx = vm.filePreview.headers.indexOf(column);
+            // var columnIdx = vm.filePreview.headers.indexOf(column) + 1;
             if (!vm.newProp) {
                 var propMapping = mappingManagerService.getDataMappingFromClass(vm.mapping.jsonld, vm.editingClassId, vm.selectedPropId);
                 var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                var originalColumn = vm.filePreview.headers[index - 1];
+                var originalColumn = vm.filePreview.headers[index];
+                // var originalColumn = vm.filePreview.headers[index - 1];
                 _.pull(vm.mappedColumns, originalColumn);
             }
             vm.mapping = mappingManagerService.addDataProp(vm.mapping, vm.editingClassId, vm.selectedPropId, columnIdx);
@@ -389,7 +392,8 @@
                     var propMapping = _.find(vm.mapping.jsonld, ["['" + prefixes.delim + "hasProperty'][0]['@id']", vm.deleteEntity.propId]);
                     if (mappingManagerService.isDataMapping(propMapping)) {
                         var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                        _.pull(vm.mappedColumns, vm.filePreview.headers[index - 1]);
+                        _.pull(vm.mappedColumns, vm.filePreview.headers[index]);
+                        // _.pull(vm.mappedColumns, vm.filePreview.headers[index - 1]);
                     }
                     vm.mapping = mappingManagerService.removeProp(vm.mapping, vm.deleteEntity.classId, propMapping['@id']);                    
                 } else {

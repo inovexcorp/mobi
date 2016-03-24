@@ -324,7 +324,8 @@
             }
             self.getMappedColumns = function(mapping) {
                 return _.map(getAllDataMappings(mapping.jsonld), function(dataMapping) {
-                    var index = dataMapping[prefixes.delim + 'columnIndex'][0]['@value'] - 1;
+                    var index = dataMapping[prefixes.delim + 'columnIndex'][0]['@value'];
+                    // var index = dataMapping[prefixes.delim + 'columnIndex'][0]['@value'] - 1;
                     return {
                         index,
                         propId: dataMapping['@id']
