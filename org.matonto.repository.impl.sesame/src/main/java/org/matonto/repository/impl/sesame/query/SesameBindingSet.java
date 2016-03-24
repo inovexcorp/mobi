@@ -29,7 +29,12 @@ public class SesameBindingSet implements BindingSet {
 
     @Override
     public Optional<Binding> getBinding(String bindingName) {
-        return Optional.of(new SesameBinding(bindingSet.getBinding(bindingName)));
+        org.openrdf.query.Binding sesameBinding = bindingSet.getBinding(bindingName);
+        if (sesameBinding == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new SesameBinding(sesameBinding));
+        }
     }
 
     @Override
@@ -39,7 +44,12 @@ public class SesameBindingSet implements BindingSet {
 
     @Override
     public Optional<Value> getValue(String bindingName) {
-        return Optional.of(Values.matontoValue(bindingSet.getValue(bindingName)));
+        org.openrdf.model.Value value = bindingSet.getValue(bindingName);
+        if (value == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(Values.matontoValue(value));
+        }
     }
 
     @Override
