@@ -42,7 +42,7 @@ public interface OntologyManager {
 	 *
 	 * @param ontologyResource Ontology Resource
 	 * @param changedResource The IRI of the changed resource
-	 * @param changedModel The Model of the changed resource
+	 * @param resourceJson The json-ld of the changed resource
 	 * @return True if successfully updated, false otherwise
 	 */
 	boolean updateOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
@@ -62,6 +62,8 @@ public interface OntologyManager {
      * @throws IllegalStateException - if the repository is null
      */
 	boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
+
+	boolean deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException;
 
 	Map<Resource, String> getOntologyRegistry() throws MatontoOntologyException;
 	

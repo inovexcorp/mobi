@@ -59,9 +59,10 @@
                 });
         }
 
-        vm.deleteOntology = function() {
-            ontologyManagerService.delete(vm.ontology['@id'], vm.state)
+        vm.deleteEntity = function() {
+            ontologyManagerService.delete(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state)
                 .then(function(response) {
+                    vm.showDeleteConfirmation = false;
                     stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('default', undefined, undefined, undefined);
                 });
@@ -87,7 +88,7 @@
         }
 
         vm.isObjectProperty = function() {
-            return ontologyManagerService.isObjectProperty(vm.selected, vm.ontology);
+            return ontologyManagerService.isObjectProperty(vm.selected['@type'], vm.ontology.matonto.owl);
         }
 
         vm.entityChanged = function() {

@@ -286,6 +286,32 @@ public class SimpleOntologyManager implements OntologyManager {
 		return true;
 	}
 
+    @Override
+    public boolean deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException {
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        if(!ontologyExists(ontologyResource))
+            throw new MatontoOntologyException("Ontology ID does not exist.");
+
+        RepositoryConnection conn = null;
+
+        try {
+            conn = repository.getConnection();
+            RepositoryResult<Statement> entitySubjectStatements = conn.getStatements(entityResource, null, null, ontologyResource);
+            RepositoryResult<Statement> entityObjectStatements = conn.getStatements(null, null, entityResource, ontologyResource);
+
+            conn.remove(entitySubjectStatements, ontologyResource);
+            conn.remove(entityObjectStatements, ontologyResource);
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+        return true;
+    }
+
 	/**
 	 * The ontology registry facilitates the list of the association of ontologies 
 	 * stored in different repositories. When the registry is initialized (loaded) when

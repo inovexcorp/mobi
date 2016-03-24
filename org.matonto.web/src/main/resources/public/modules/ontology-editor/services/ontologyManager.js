@@ -459,6 +459,113 @@
 
             }
 
+            function deleteOntology(ontologyId, state) {
+                $rootScope.showSpinner = true;
+
+                var deferred = $q.defer();
+
+                $http.delete(prefix + '/' + encodeURIComponent(ontologyId))
+                    .then(function(response) {
+                        if(response.hasOwnProperty('data') && response.data.hasOwnProperty('deleted') && response.data.deleted) {
+                            console.log('Successfully deleted');
+                            ontologies.splice(state.oi, 1);
+                            deferred.resolve(response);
+                        } else {
+                            console.log('Not deleted');
+                            deferred.reject(response);
+                        }
+                    }, function(response) {
+                        console.error('Error in deleteOntology() function');
+                        deferred.reject(response.data.error);
+                    })
+                    .then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+
+                return deferred.promise;
+            }
+
+            function deleteClass(ontologyId, classId, state) {
+                $rootScope.showSpinner = true;
+
+                var deferred = $q.defer();
+
+                $http.delete(prefix + '/' + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classId))
+                    .then(function(response) {
+                        if(response.data.deleted) {
+                            var ontology = ontologies[state.oi];
+
+                            console.log('Successfully deleted');
+                            // TODO: properly handle this action
+                            ontology =
+                            ontology.matonto.noDomains = ontology.matonto.noDomains.concat(angular.copy(ontology.matonto.classes[state.ci].matonto.properties));
+
+
+
+                            ontology.matonto.classes.splice(state.ci, 1);
+                            deferred.resolve(response);
+                        } else {
+                            console.log('Not deleted');
+                            deferred.reject(response);
+                        }
+                    }, function(response) {
+                        console.error('Error in deleteClass() function');
+                        deferred.reject(response);
+                    })
+                    .then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+
+                return deferred.promise;
+            }
+
+            function deleteProperty(ontologyId, propertyId, state) {
+                $rootScope.showSpinner = true;
+
+                var type, ontology, property,
+                    classObj = undefined,
+                    deferred = $q.defer();
+
+                if(state.ci === undefined) {
+                    ontology = ontologies[state.oi];
+                    property = ontology.matonto.noDomains[state.pi];
+                } else {
+                    ontology = ontologies[state.oi];
+                    classObj = ontology.matonto.classes[state.ci];
+                    property = classObj.matonto.properties[state.pi];
+                }
+
+                if(self.isObjectProperty(property['@type'], ontology.matonto.owl)) {
+                    type = 'object-properties';
+                } else {
+                    type = 'data-properties';
+                }
+
+                $http.delete(prefix + '/' + encodeURIComponent(ontologyId) + '/' + type + '/' + encodeURIComponent(propertyId))
+                    .then(function(response) {
+                        if(response.data.deleted) {
+                            console.log('Successfully deleted');
+                            if(classObj) {
+                                classObj.matonto.properties.splice(state.pi, 1);
+                            } else {
+                                ontology.matonto.noDomains.splice(state.pi, 1);
+                            }
+                            deferred.resolve(response);
+                        } else {
+                            console.log('Not deleted');
+                            deferred.reject(response);
+                        }
+                    }, function(response) {
+                        console.error('Error in deleteClass() function');
+                        deferred.reject(response);
+                    })
+                    .then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+
+                return deferred.promise;
+            }
+
             self.getItemNamespace = function(item) {
                 if(item.hasOwnProperty('namespace')) {
                     return item.namespace;
@@ -558,34 +665,14 @@
                 return result;
             }
 
-            self.delete = function(ontologyId, state) {
-                var deferred = $q.defer();
-
-                if(state.editor === 'ontology-editor' && state.oi !== -1) {
-                    $rootScope.showSpinner = true;
-                    var onError = function(response) {
-                            deferred.reject(response.data.error);
-                            $rootScope.showSpinner = false;
-                        };
-
-                    $http.delete(prefix + '/' + encodeURIComponent(ontologyId))
-                        .then(function(response) {
-                            if(response.hasOwnProperty('data') && response.data.hasOwnProperty('deleted') && response.data.deleted) {
-                                ontologies.splice(state.oi, 1);
-                                deferred.resolve(response);
-                                $rootScope.showSpinner = false;
-                            } else {
-                                onError(response);
-                            }
-                        }, function(response) {
-                            onError(response);
-                        });
-
+            self.delete = function(ontologyId, entityId, state) {
+                if(state.pi !== undefined) {
+                    return deleteProperty(ontologyId, entityId, state);
+                } else if(state.ci !== undefined) {
+                    return deleteClass(ontologyId, entityId, state);
                 } else {
-                    deferred.reject();
+                    return deleteOntology(ontologyId, state);
                 }
-
-                return deferred.promise;
             }
 
             self.upload = function(isValid, file) {
@@ -752,14 +839,8 @@
                 selected['@id'] = fresh;
             }
 
-            self.isObjectProperty = function(property, ontology) {
-                var result = false;
-
-                if(property.hasOwnProperty('@type') && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs') && property['@type'].indexOf(ontology.matonto.owl + 'ObjectProperty') !== -1) {
-                    result = true;
-                }
-
-                return result;
+            self.isObjectProperty = function(types, owl) {
+                return types.indexOf(owl + 'ObjectProperty') !== -1;
             }
 
             self.getOntology = function(oi) {

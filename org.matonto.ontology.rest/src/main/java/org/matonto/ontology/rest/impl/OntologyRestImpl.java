@@ -250,6 +250,58 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(200).entity(json.toString()).build();
     }
 
+    private Response deleteEntityFromOntology(String ontologyIdStr, String entityIdStr) {
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+        }
+
+        if (entityIdStr == null || entityIdStr.length() == 0) {
+            throw ErrorUtils.sendError("entityIdStr is missing", Response.Status.BAD_REQUEST);
+        }
+
+        boolean deleted;
+        try {
+            Resource ontologyResource;
+            if (isBNodeString(ontologyIdStr.trim())) {
+                ontologyResource = factory.createBNode(ontologyIdStr.trim());
+            } else {
+                ontologyResource = factory.createIRI(ontologyIdStr.trim());
+            }
+
+            Resource entityResource;
+            if (isBNodeString(entityIdStr.trim())) {
+                entityResource = factory.createBNode(entityIdStr.trim());
+            } else {
+                entityResource = factory.createIRI(entityIdStr.trim());
+            }
+
+            deleted = manager.deleteEntityFromOntology(ontologyResource, entityResource);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("deleted", deleted);
+
+        return Response.status(200).entity(json.toString()).build();
+    }
+
+    @Override
+    public Response deleteClassFromOntology(String ontologyIdStr, String classIdStr) {
+        return deleteEntityFromOntology(ontologyIdStr, classIdStr);
+    }
+
+    @Override
+    public Response deleteObjectPropertyFromOntology(String ontologyIdStr, String propertyIdStr) {
+        return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
+    }
+
+    @Override
+    public Response deleteDataPropertyFromOntology(String ontologyIdStr, String propertyIdStr) {
+        return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
+    }
+
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
         JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
