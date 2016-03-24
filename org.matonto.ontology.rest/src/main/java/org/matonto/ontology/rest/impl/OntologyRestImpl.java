@@ -2,6 +2,7 @@ package org.matonto.ontology.rest.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.Sets;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -17,7 +18,11 @@ import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.Rio;
+import org.openrdf.rio.WriterConfig;
+import org.openrdf.rio.helpers.JSONLDMode;
+import org.openrdf.rio.helpers.JSONLDSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -259,7 +264,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("entityIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
-        boolean deleted;
+        Map<String, Set> changedEntities;
         try {
             Resource ontologyResource;
             if (isBNodeString(ontologyIdStr.trim())) {
@@ -275,14 +280,34 @@ public class OntologyRestImpl implements OntologyRest {
                 entityResource = factory.createIRI(entityIdStr.trim());
             }
 
-            deleted = manager.deleteEntityFromOntology(ontologyResource, entityResource);
+            changedEntities = manager.deleteEntityFromOntology(ontologyResource, entityResource);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
+        JSONArray strings = new JSONArray();
+        strings.addAll(changedEntities.get("strings"));
+
+        JSONArray models = new JSONArray();
+        for(Object model : changedEntities.get("models")) {
+            OutputStream outputStream = new ByteArrayOutputStream();
+            WriterConfig config = new WriterConfig();
+            config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
+
+            try {
+                Rio.write((org.openrdf.model.Model)model, outputStream, RDFFormat.JSONLD, config);
+            } catch (RDFHandlerException e) {
+                throw new MatontoOntologyException("Error while parsing changed entity.");
+            }
+
+            models.add(outputStream.toString());
+        }
+
         JSONObject json = new JSONObject();
-        json.put("deleted", deleted);
+        json.put("deleted", true);
+        json.put("strings", strings);
+        json.put("models", models);
 
         return Response.status(200).entity(json.toString()).build();
     }

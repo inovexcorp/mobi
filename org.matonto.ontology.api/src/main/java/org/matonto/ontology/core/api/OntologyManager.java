@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -63,7 +64,7 @@ public interface OntologyManager {
      */
 	boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
 
-	boolean deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException;
+	Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException;
 
 	Map<Resource, String> getOntologyRegistry() throws MatontoOntologyException;
 	

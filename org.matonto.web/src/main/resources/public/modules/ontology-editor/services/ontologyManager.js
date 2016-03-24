@@ -466,7 +466,7 @@
 
                 $http.delete(prefix + '/' + encodeURIComponent(ontologyId))
                     .then(function(response) {
-                        if(response.hasOwnProperty('data') && response.data.hasOwnProperty('deleted') && response.data.deleted) {
+                        if(response.data.deleted) {
                             console.log('Successfully deleted');
                             ontologies.splice(state.oi, 1);
                             deferred.resolve(response);
@@ -496,11 +496,8 @@
                             var ontology = ontologies[state.oi];
 
                             console.log('Successfully deleted');
-                            // TODO: properly handle this action
-                            ontology =
-                            ontology.matonto.noDomains = ontology.matonto.noDomains.concat(angular.copy(ontology.matonto.classes[state.ci].matonto.properties));
 
-
+                            console.log(response.data.changedEntities);
 
                             ontology.matonto.classes.splice(state.ci, 1);
                             deferred.resolve(response);
@@ -545,6 +542,9 @@
                     .then(function(response) {
                         if(response.data.deleted) {
                             console.log('Successfully deleted');
+
+                            console.log(response.data.changedEntities);
+
                             if(classObj) {
                                 classObj.matonto.properties.splice(state.pi, 1);
                             } else {

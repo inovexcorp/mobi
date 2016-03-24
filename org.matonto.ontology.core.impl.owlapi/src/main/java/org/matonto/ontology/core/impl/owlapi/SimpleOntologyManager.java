@@ -287,7 +287,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	}
 
     @Override
-    public boolean deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException {
+    public Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException {
         if(repository == null)
             throw new IllegalStateException("Repository is null");
 
@@ -295,21 +295,38 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new MatontoOntologyException("Ontology ID does not exist.");
 
         RepositoryConnection conn = null;
-
+        Map<String, Set> changedEntities = new HashMap<>();
         try {
             conn = repository.getConnection();
             RepositoryResult<Statement> entitySubjectStatements = conn.getStatements(entityResource, null, null, ontologyResource);
             RepositoryResult<Statement> entityObjectStatements = conn.getStatements(null, null, entityResource, ontologyResource);
+            Set<Statement> cachedObjectStatements = new HashSet<>();
+            Set<String> changedIriStrings = new HashSet<>();
+            Set<org.openrdf.model.Model> changedModels = new HashSet<>();
+
+            for(Statement stmt : entityObjectStatements) {
+                RepositoryResult<Statement> changedEntity = conn.getStatements(stmt.getSubject(), null, null, ontologyResource);
+                Model model = modelFactory.createModel();
+
+                changedEntity.forEach(model::add);
+                changedModels.add(transformer.sesameModel(model));
+
+                changedIriStrings.add(stmt.getSubject().stringValue());
+                cachedObjectStatements.add(stmt);
+            }
+
+            changedEntities.put("strings", changedIriStrings);
+            changedEntities.put("models", changedModels);
 
             conn.remove(entitySubjectStatements, ontologyResource);
-            conn.remove(entityObjectStatements, ontologyResource);
+            conn.remove(cachedObjectStatements, ontologyResource);
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         } finally {
             closeConnection(conn);
         }
 
-        return true;
+        return changedEntities;
     }
 
 	/**
