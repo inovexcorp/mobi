@@ -1,0 +1,14 @@
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX matontocat: <http://matonto.org/ontologies/catalog#>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+
+SELECT * WHERE {
+	?resource a ?type ;
+		dc:title ?title ;
+		dc:issued ?issued ;
+		dc:modified ?modified .
+	
+	OPTIONAL { dc:description ?description } .
+	OPTIONAL { dc:identifier ?identifier } . 	OPTIONAL { dcat:keyword ?keyword } .
+} GROUP BY ?resource
+		

@@ -51,12 +51,13 @@ class SimpleCatalogSpec extends Specification {
         catalog.getIssued() == catalog.getModified()
     }
 
-    def "modified is greater then issued if issued is not provided"() {
+    def "modified is greater than or equal to issued if issued is not provided"() {
         def now = OffsetDateTime.now()
+        sleep(1)
         def catalog = catalogBuilder.modified(now).build()
 
         expect:
-        catalog.getIssued() == catalog.getModified()
+        catalog.getIssued() <= catalog.getModified()
     }
 
     def "modified can be greater than issued"() {
