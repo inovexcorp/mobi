@@ -8,9 +8,9 @@
         function customButton() {
             return {
                 restrict: 'E',
+                transclude: true,
                 scope: {
                     type: '=',
-                    displayText: '=',
                     isDisabledWhen: '=',
                     onClick: '&',
                     pull: '='

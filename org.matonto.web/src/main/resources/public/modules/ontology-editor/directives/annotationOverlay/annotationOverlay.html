@@ -40,18 +40,14 @@
         <!-- annotation buttons -->
         <div class="btn-container clearfix">
             <custom-button ng-if="!vm.editingAnnotation"
-                           display-text="'Add'"
                            is-disabled-when="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default'"
-                           on-click="vm.addAnnotation()"></custom-button>
+                           on-click="vm.addAnnotation()">Add</custom-button>
 
             <custom-button ng-if="vm.editingAnnotation"
-                           display-text="'Edit'"
                            is-disabled-when="vm.annotationForm.$invalid"
-                           on-click="vm.editAnnotation()"></custom-button>
+                           on-click="vm.editAnnotation()">Edit</custom-button>
 
-            <custom-button display-text="'Cancel'"
-                           on-click="vm.showAnnotationOverlay = false;"
-                           type="'secondary'"></custom-button>
+            <custom-button on-click="vm.showAnnotationOverlay = false;" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

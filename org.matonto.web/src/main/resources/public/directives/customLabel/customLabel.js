@@ -8,8 +8,8 @@
         function customLabel() {
             return {
                 restrict: 'E',
+                transclude: true,
                 scope: {
-                    displayText: '=',
                     mutedText: '='
                 },
                 templateUrl: 'directives/customLabel/customLabel.html'

@@ -12,13 +12,10 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button display-text="'Upload It'"
-                           is-disabled-when="!vm.upload.file"
-                           on-click="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);"></custom-button>
+            <custom-button is-disabled-when="!vm.upload.file"
+                           on-click="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);">Upload it</custom-button>
 
-            <custom-button display-text="'Cancel'"
-                           on-click="vm.showUploadOverlay = false; vm.uploadError = false;"
-                           type="'secondary'"></custom-button>
+            <custom-button on-click="vm.showUploadOverlay = false; vm.uploadError = false;" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>
