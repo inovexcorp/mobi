@@ -31,13 +31,9 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button display-text="'Edit'"
-                           is-disabled-when="vm.iriForm.$invalid"
-                           on-click="vm.editIRI()"></custom-button>
+            <custom-button is-disabled-when="vm.iriForm.$invalid" on-click="vm.editIRI()">Edit</custom-button>
 
-            <custom-button display-text="'Cancel'"
-                           on-click="vm.showIriOverlay = false;"
-                           type="'secondary'"></custom-button>
+            <custom-button on-click="vm.showIriOverlay = false;" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

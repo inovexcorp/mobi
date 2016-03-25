@@ -6,7 +6,6 @@ import com.google.gson.GsonBuilder;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.rest.CSVRest;
@@ -17,7 +16,9 @@ import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,7 +109,8 @@ public class CSVRestImpl implements CSVRest {
         // Write data back to Response
         logger.info("File mapped: " + delimitedFile.getPath());
         StringWriter sw = new StringWriter();
-        Rio.write(model, sw, getRDFFormat(format));
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
+        Rio.write(model, rdfWriter);
         return Response.status(200).entity(sw.toString()).build();
     }
 

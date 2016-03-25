@@ -51,20 +51,16 @@
                 <!-- tab buttons -->
                 <div class="btn-group btn-group-justified" role="group">
                     <tab-button is-active="vm.state.tab === 'everything'"
-                                on-click="vm.setTreeTab('everything')"
-                                display-text="'Tree'"></tab-button>
+                                on-click="vm.setTreeTab('everything')">Tree</tab-button>
 
                     <tab-button is-active="vm.state.tab === 'class'"
-                                on-click="vm.setTreeTab('class')"
-                                display-text="'Class'"></tab-button>
+                                on-click="vm.setTreeTab('class')">Class</tab-button>
 
                     <tab-button is-active="vm.state.tab === 'object'"
-                                on-click="vm.setTreeTab('object')"
-                                display-text="'Object'"></tab-button>
+                                on-click="vm.setTreeTab('object')">Object</tab-button>
 
                     <tab-button is-active="vm.state.tab === 'datatype'"
-                                on-click="vm.setTreeTab('datatype')"
-                                display-text="'Data'"></tab-button>
+                                on-click="vm.setTreeTab('datatype')">Data</tab-button>
                 </div>
 
                 <everything-tree ng-if="vm.state.tab === 'everything'"></everything-tree>
