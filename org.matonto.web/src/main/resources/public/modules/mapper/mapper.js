@@ -20,6 +20,9 @@
             jsonld: []
         };
 
+        vm.areOntologies = function() {
+            return ontologyManagerService.getList().length > 0;
+        }
         vm.steps = ['Choose File', 'Choose Mapping', 'Choose Ontology', 'Choose Starting Class', 'Build Mapping', 'Upload as RDF'];
         vm.deleteEntity = undefined;
 
@@ -213,7 +216,6 @@
                 default:
                     previousOntologyId = previousOntologyId ? previousOntologyId : vm.getOntologyId();
                     vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, '');
-                    vm.changeOntology = vm.activeStep === 4 ? true : false;
                     vm.activeStep = 2;
                     vm.displayPreviousCheck = false;
             }

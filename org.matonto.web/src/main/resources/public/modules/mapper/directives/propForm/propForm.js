@@ -24,7 +24,7 @@
                     isDatatypeProp: '&',
                     isObjectProp: '&'
                 },
-                controller: function() {
+                controller: function($scope) {
                     var dvm = this;
 
                     dvm.update = function() {
@@ -43,6 +43,9 @@
                             _.get(_.find(dvm.props, {'@id': dvm.selectedProp}), '@type', []), 
                             prefixes.owl
                         );
+                    }
+                    dvm.getClassName = function(ontologyId, classId) {
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontologyId, classId));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/propForm/propForm.html'

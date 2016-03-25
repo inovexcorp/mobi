@@ -1,5 +1,6 @@
 <form id="prop-form">
     <div class="form-group">
+        <custom-label display-text="dvm.getClassName(ontologyId, classId) + ' Properties'"></custom-label>
         <prop-select props="dvm.props" selected-prop="dvm.selectedProp" on-change="dvm.update()"></prop-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 

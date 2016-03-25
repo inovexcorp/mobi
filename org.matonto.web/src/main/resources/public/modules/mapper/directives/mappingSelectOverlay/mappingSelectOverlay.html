@@ -20,7 +20,7 @@
                 Mapping name must be unique
             </div>
             <div class="text-danger" ng-show="dvm.mappingType === 'new' && mappingForm.mappingName.$error.maxlength">
-                Mapping name is too long
+                Mapping name must be 50 characters or less
             </div>
         </div>
         <div id="previous-mapping-radio" class="form-group">
@@ -40,7 +40,7 @@
         
         <div class="overlay-button-container">
             <custom-button display-text="'Back'" on-click="onClickBack()" pull="'left'"></custom-button>
-            <custom-button display-text="'Continue'" on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingName})" is-disabled-when="!dvm.mappingType || ( dvm.mappingType === 'new' && mappingForm.mappingName.$invalid)"></custom-button>
+            <custom-button display-text="'Continue'" on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingName})" is-disabled-when="!dvm.mappingType || (dvm.mappingType === 'new' && mappingForm.mappingName.$invalid) || (dvm.mappingType === 'previous' && !dvm.mappingName)"></custom-button>
         </div>
     </form>
 </div>

@@ -3,7 +3,7 @@
         <h6>Validate Mapping {{dvm.mapping.name}}</h6>
         <div class="result" ng-if="validateForm.$invalid">
             <div ng-if="validateForm.$error.matchingSeparators">
-                <h3 class="text-danger">Conflicting Separators!</h3>
+                <h3 class="text-danger">Conflicting Separators</h3>
                 <p class="help-block">You cannot continue if the separators do not match</p>
                 <dl>
                     <dt>Separator from Mapping {{dvm.mapping.name}}</dt>
@@ -13,11 +13,10 @@
                 </dl>
             </div>
             <div ng-if="validateForm.$error.validColumnMappings">
-                <h3 class="text-danger">Missing Columns!</h3>
+                <h3 class="text-danger">Missing Columns</h3>
                 <ul>
                     <li ng-repeat="columnObj in dvm.invalidColumns">
-                        Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj.propId)}}
-                        <!-- Column {{columnObj.index + 1}} - {{dvm.getDataMappingName(columnObj.propId)}} -->
+                        Column {{columnObj.index + 1}} - {{dvm.getDataMappingName(columnObj.propId)}}
                     </li>
                 </ul>
             </div>

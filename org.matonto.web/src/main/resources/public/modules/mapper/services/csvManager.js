@@ -61,10 +61,17 @@
 
                 $http.get(prefix + '/' + encodeURIComponent(fileName), config)
                     .then(function(response) {
-                        var filePreview = {
-                            headers: containsHeaders ? response.data.rows[0] : [],
-                            rows: containsHeaders ? response.data.rows.slice(1, response.data.length) : response.data
-                        };
+                        var filePreview = {};
+                        if (containsHeaders) {
+                            filePreview.headers = response.data.rows[0];
+                            filePreview.rows = _.drop(response.data.rows, 1);
+                        } else {
+                            filePreview.headers = [];
+                            _.times(response.data.columnNumber, function(index) {
+                                filePreview.headers.push('Column ' + (index + 1));
+                            });
+                            filePreview.rows = response.data.rows;
+                        }
                         deferred.resolve(filePreview);
                     }, function(response) {
                         deferred.reject(response);

@@ -44,8 +44,9 @@
 
     <!-- Content besides step through sidebar -->
     <div id="mapper-content" class="container-fluid">
+        <h3 ng-if="!vm.areOntologies()">No available ontologies to map with</h3>
         <div id="main" ng-style="{paddingBottom: (vm.tableHeight + 'px')}">
-            <file-form ng-if="vm.activeStep === 0" 
+            <file-form ng-if="vm.activeStep === 0 && vm.areOntologies()" 
                 ng-model="vm.delimitedFile" 
                 on-upload-click="vm.submitFileUpload()" 
                 on-continue-click="vm.displayMappingSelect()"
@@ -55,7 +56,7 @@
                 <div id="mapping-header">
                     <div id="ontology-section">
                         <a ng-click="vm.toggleOntologyPreview()">{{vm.getOntologyName()}}</a>
-                        <button class="btn btn-primary" ng-click="vm.displayOntologySelect()">Change</button>
+                        <button class="btn btn-primary" ng-click="vm.changeOntology = true; vm.displayOntologySelect()">Change</button>
                     </div>
                     <form id="submit-mapping">
                         <label ng-hide="vm.isPreviousMapping && vm.saveToServer === false">
@@ -122,8 +123,5 @@
             toggle-click="vm.togglePreview(big)"
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
-
-        <button ng-click="vm.showMappingPreview = !vm.showMappingPreview" style="position: absolute; right: 0; top: 0; z-index: 5000;"><i class="fa fa-question-circle"></i></button>
-        <pre ng-if="vm.showMappingPreview" style="position: absolute; right: 25px; left: 0; top: 0; height: 100%; overflow: auto; z-index: 5000;">{{vm.mapping | json}}</pre>
     </div>
 </div>

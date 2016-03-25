@@ -25,8 +25,8 @@
     <button id="upload-btn" type="button" class="btn btn-primary" 
         ng-disabled="!dvm.delimitedFile" 
         ng-click="dvm.uploaded = true; onUploadClick()">{{dvm.uploaded ? 'Update' : 'Upload'}}</button>
-    <button id="continue-btn" type="button" class="btn btn-primary pull-right" 
+    <button id="continue-btn" type="button" class="btn btn-primary" 
         ng-show="dvm.uploaded" 
         ng-click="onContinueClick()">Continue</button>
-    <p class="help-block" ng-if="dvm.uploaded">To update the file, make the desired changes and then click update.</p>
+    <p class="help-block" ng-if="dvm.uploaded">Click update with desired changes or click continue.</p>
 </form>

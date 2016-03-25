@@ -1,15 +1,12 @@
 <div id="ontology-select-overlay" class="overlay lg">
     <form class="content">
         <h6>Choose Ontology</h6>
-        <div ng-if="dvm.ontologies.length > 0">
-            <div id="ontology-select" class="form-group">
-                <select class="form-control" ng-model="dvm.selectedOntologyId">
-                    <option ng-repeat="ontology in dvm.ontologies" value="{{ontology['@id']}}">{{dvm.createOptionName(ontology)}}</option>
-                </select>
-            </div>
-            <ontology-preview ontology="dvm.getOntologyById(dvm.selectedOntologyId)"></ontology-preview>
+        <div id="ontology-select" class="form-group">
+            <select class="form-control" ng-model="dvm.selectedOntologyId">
+                <option ng-repeat="ontology in dvm.ontologies" value="{{ontology['@id']}}">{{dvm.createOptionName(ontology)}}</option>
+            </select>
         </div>
-        <p ng-if="dvm.ontologies.length === 0" class="text-danger">No ontologies available!</p>
+        <ontology-preview ontology="dvm.getOntologyById(dvm.selectedOntologyId)"></ontology-preview>
         <div class="overlay-button-container">
             <custom-button display-text="'Back'" on-click="onClickBack()" pull="'left'"></custom-button>
             <custom-button display-text="'Continue'" on-click="onClickContinue({ontologyId: dvm.selectedOntologyId})" is-disabled-when="!dvm.selectedOntologyId"></custom-button>
