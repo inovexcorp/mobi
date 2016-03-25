@@ -8,12 +8,9 @@
 
         <!-- overlay buttons -->
         <div class="btn-container clearfix">
-            <custom-button display-text="confirmText"
-                           on-click="confirmClick()"></custom-button>
+            <custom-button on-click="confirmClick()">{{confirmText}}</custom-button>
 
-            <custom-button display-text="cancelText"
-                           on-click="cancelClick()"
-                           type="'secondary'"></custom-button>
+            <custom-button on-click="cancelClick()" type="'secondary'">{{cancelText}}</custom-button>
         </div>
     </div>
 </div>

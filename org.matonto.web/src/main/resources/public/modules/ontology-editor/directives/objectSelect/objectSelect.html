@@ -1,5 +1,5 @@
 <div class="form-group">
-    <custom-label display-text="displayText" muted-text="mutedText"></custom-label>
+    <custom-label muted-text="mutedText">{{displayText}}</custom-label>
     <ui-select multiple ng-model="dvm.bindModel">
         <ui-select-match placeholder="{{'Select ' + displayText}}" on-select="changeEvent()" on-remove="changeEvent()">
             <span title="{{$item['@id'] || dvm.getItemIri($item)}}">{{$item['@id'] ? ($item['@id'] | splitIRI).end : $item.localName}}</span>

@@ -2,16 +2,13 @@
     <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')"
-                    display-text="vm.state.ci !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'"></tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.state.ci !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
-                    on-click="vm.setEditorTab('axioms')"
-                    display-text="'Axioms'"></tab-button>
+                    on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')"
-                    display-text="'Annotations'"></tab-button>
+                    on-click="vm.setEditorTab('annotations')">Annotations</tab-button>
     </div>
 
     <!-- basic tab -->
