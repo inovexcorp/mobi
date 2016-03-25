@@ -2,27 +2,37 @@ package org.matonto.catalog.impl;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.catalog.api.Ontology;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.*;
+import org.matonto.rdf.core.impl.sesame.LinkedHashNamedGraphFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleIRI;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.impl.sesame.query.SesameBindingSet;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.SimpleValueFactory;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.impl.MapBindingSet;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SimpleCatalogManagerTest {
@@ -38,6 +48,9 @@ public class SimpleCatalogManagerTest {
 
     @Mock
     TupleQueryResult result;
+
+    @Mock
+    RepositoryResult<Statement> repositoryResult;
 
     private SimpleCatalogManager manager;
 
@@ -135,5 +148,54 @@ public class SimpleCatalogManagerTest {
         expectedKeywords.add("Keywords");
 
         assertEquals(expectedKeywords, resource.getKeywords());
+    }
+
+    @Test
+    public void testCreateOntologyWithoutDistribution() throws Exception {
+        // given
+        String dc = "http://purl.org/dc/elements/1.1/";
+        Ontology ontology = mock(Ontology.class);
+        IRI ontologyIri = new SimpleIRI("http://matonto.org/catalog/1");
+        NamedGraphFactory ngf = LinkedHashNamedGraphFactory.getInstance();
+        manager.setNamedGraphFactory(ngf);
+        org.matonto.rdf.api.ValueFactory vf = org.matonto.rdf.core.impl.sesame.SimpleValueFactory.getInstance();
+        manager.setValueFactory(vf);
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // when
+        when(conn.getStatements(any(), any(), any(), any())).thenReturn(repositoryResult);
+        when(repositoryResult.hasNext()).thenReturn(false);
+
+        when(ontology.getResource()).thenReturn(ontologyIri);
+        when(ontology.getType()).thenReturn(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        when(ontology.getTitle()).thenReturn("MatOnto Catalog");
+        when(ontology.getDescription()).thenReturn("Catalog of MatOnto Resources");
+        when(ontology.getIssued()).thenReturn(now);
+        when(ontology.getModified()).thenReturn(now);
+
+        manager.createOntology(ontology);
+
+        // then
+        NamedGraph expectedGraph = ngf.createNamedGraph(ontologyIri);
+        expectedGraph.add(ontologyIri, Values.matontoIRI(RDF.TYPE), vf.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        expectedGraph.add(ontologyIri, vf.createIRI(dc + "title"), vf.createLiteral("MatOnto Catalog"));
+        expectedGraph.add(ontologyIri, vf.createIRI(dc + "description"), vf.createLiteral("Catalog of MatOnto Resources"));
+        expectedGraph.add(ontologyIri, vf.createIRI(dc + "issued"), vf.createLiteral(now));
+        expectedGraph.add(ontologyIri, vf.createIRI(dc + "modified"), vf.createLiteral(now));
+
+        System.out.println(expectedGraph.toString());
+
+        ArgumentCaptor<NamedGraph> argument = ArgumentCaptor.forClass(NamedGraph.class);
+        verify(conn).add(argument.capture());
+
+        NamedGraph actualGraph = argument.getValue();
+        try {
+            assertEquals(expectedGraph, actualGraph);
+        } catch (AssertionError e) {
+            // Print contents to aid in fix
+            expectedGraph.forEach(System.out::println);
+            actualGraph.forEach(System.out::println);
+            throw e;
+        }
     }
 }

@@ -1,35 +1,54 @@
 package org.matonto.catalog.impl;
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
+import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Ontology;
 import org.matonto.catalog.api.PublishedResource;
+import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.query.TupleQueryResult;
-import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.*;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-@Component
+@Component(
+        configurationPolicy = ConfigurationPolicy.require,
+        designateFactory = CatalogConfig.class
+)
 public class SimpleCatalogManager implements CatalogManager {
 
     private Repository repo;
+    private ValueFactory vf;
+    private NamedGraphFactory ngf;
 
     @Reference(target = "(id=system)")
     protected void setRepo(Repository repo) {
         this.repo = repo;
+    }
+
+    @Reference
+    protected void setValueFactory(ValueFactory valueFactory) {
+        vf = valueFactory;
+    }
+
+    @Reference
+    protected void setNamedGraphFactory(NamedGraphFactory namedGraphFactory) {
+        ngf = namedGraphFactory;
     }
 
     private static final String GET_RESOURCE_QUERY;
@@ -43,6 +62,33 @@ public class SimpleCatalogManager implements CatalogManager {
             );
         } catch (IOException e) {
             throw new MatOntoException(e);
+        }
+    }
+
+    private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+    private static final String PR_TYPE = "http://matonto.org/ontologies/catalog#PublishedResource";
+    private static final String CATALOG_TYPE = "http://www.w3.org/ns/dcat#Catalog";
+    private static final String DC = "http://purl.org/dc/elements/1.1/";
+
+    @Activate
+    protected void start(Map<String, Object> props) {
+        CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
+        IRI catalogIri = vf.createIRI(config.iri());
+
+        // Create Catalog if it doesn't exist
+        if (!resourceExists(catalogIri)) {
+            OffsetDateTime now = OffsetDateTime.now();
+
+            NamedGraph namedGraph = ngf.createNamedGraph(catalogIri);
+            namedGraph.add(catalogIri, vf.createIRI(RDF_TYPE), vf.createIRI(CATALOG_TYPE));
+            namedGraph.add(catalogIri, vf.createIRI(DC + "title"), vf.createLiteral(config.title()));
+            namedGraph.add(catalogIri, vf.createIRI(DC + "description"), vf.createLiteral(config.description()));
+            namedGraph.add(catalogIri, vf.createIRI(DC + "issued"), vf.createLiteral(now));
+            namedGraph.add(catalogIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
+
+            RepositoryConnection conn = repo.getConnection();
+            conn.add(namedGraph);
+            conn.close();
         }
     }
 
@@ -60,7 +106,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
         TupleQueryResult result = query.evaluate();
 
-        // TODO: See if we can use the Model API
         if (result.hasNext()) {
             BindingSet bindingSet = result.next();
 
@@ -96,59 +141,35 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-//    @Override
-//    public <T extends PublishedResource> Optional<T> getResource(Resource resource, Class<T> clazz) {
-//        RepositoryConnection conn = repo.getConnection();
-//
-//        TupleQuery query = conn.prepareTupleQuery(GET_RESOURCE_QUERY);
-//        query.setBinding(RESOURCE_BINDING, resource);
-//
-//        TupleQueryResult result = query.evaluate();
-//
-//        // TODO: See if we can use the Model API
-//        if (result.hasNext()) {
-//            BindingSet bindingSet = result.next();
-//
-//            String title = bindingSet.getBinding("title").get().getValue().stringValue();
-//
-//            SimpleOntology.Builder builder = new SimpleOntology.Builder(title);
-//            builder.issued(OffsetDateTime.parse(bindingSet.getBinding("issued").get().getValue().stringValue()));
-//            builder.modified(OffsetDateTime.parse(bindingSet.getBinding("modified").get().getValue().stringValue()));
-//
-//            if (bindingSet.hasBinding("description")) {
-//                builder.description(bindingSet.getBinding("description").get().getValue().stringValue());
-//            }
-//
-//            if (bindingSet.hasBinding("identifier")) {
-//                builder.identifier(bindingSet.getBinding("identifier").get().getValue().stringValue());
-//            }
-//
-//            if (bindingSet.hasBinding("keyword")) {
-//                String[] keywords =
-//                        StringUtils.split(bindingSet.getBinding("keyword").get().getValue().stringValue(), ",");
-//
-//                for (String keyword : keywords) {
-//                    builder.addKeyword(keyword);
-//                }
-//            }
-//
-//            result.close();
-//            conn.close();
-//            return null;
-//        } else {
-//            result.close();
-//            conn.close();
-//            return Optional.empty();
-//        }
-//    }
-
     @Override
     public <T extends PublishedResource> T removeResource(Resource resource) {
         return null;
     }
 
     @Override
-    public void createOntology(org.matonto.ontology.core.api.Ontology ontology) {
-        return;
+    public void createOntology(Ontology ontology) {
+        Resource resource = ontology.getResource();
+
+        if (resourceExists(resource)) {
+            throw new IllegalArgumentException("Published Resource [" + resource.stringValue() + "] already exists.");
+        }
+
+        NamedGraph namedGraph = ngf.createNamedGraph(resource);
+        namedGraph.add(resource, vf.createIRI(RDF_TYPE), ontology.getType());
+        namedGraph.add(resource, vf.createIRI(DC + "title"), vf.createLiteral(ontology.getTitle()));
+        namedGraph.add(resource, vf.createIRI(DC + "description"), vf.createLiteral(ontology.getDescription()));
+        namedGraph.add(resource, vf.createIRI(DC + "issued"), vf.createLiteral(ontology.getIssued()));
+        namedGraph.add(resource, vf.createIRI(DC + "modified"), vf.createLiteral(ontology.getModified()));
+
+        RepositoryConnection conn = repo.getConnection();
+        conn.add(namedGraph);
+        conn.close();
+    }
+
+    private boolean resourceExists(Resource resource) {
+        RepositoryConnection conn = repo.getConnection();
+        boolean catalogExists = conn.getStatements(null, null, null, resource).hasNext();
+        conn.close();
+        return catalogExists;
     }
 }

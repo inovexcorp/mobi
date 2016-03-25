@@ -15,5 +15,5 @@ public interface CatalogManager {
 
     <T extends PublishedResource> T removeResource(Resource resource);
 
-    void createOntology(org.matonto.ontology.core.api.Ontology ontology);
+    void createOntology(Ontology ontology);
 }

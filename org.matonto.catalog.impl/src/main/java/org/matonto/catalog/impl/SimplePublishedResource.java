@@ -2,6 +2,7 @@ package org.matonto.catalog.impl;
 
 import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.api.PublishedResource;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 
 import java.time.OffsetDateTime;

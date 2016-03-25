@@ -4,11 +4,12 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
 @base <http://matonto.org/ontologies/catalog> .
 
 <http://matonto.org/ontologies/catalog> a owl:Ontology ;
                                         owl:versionIRI <http://matonto.org/ontologies/catalog/1.0.0> ;
-                                        owl:imports <http://www.w3.org/ns/dcat> .
+                                        owl:imports <http://www.w3.org/ns/dcat> , <http://purl.org/dc/elements/1.1/> .
 
 
 #################################################################
@@ -17,10 +18,13 @@
 #
 #################################################################
 
+###  http://matonto.org/ontologies/catalog#PublishedResource
+
+:PublishedResource rdf:type owl:Class .
 
 ###  http://matonto.org/ontologies/catalog#Ontology
 
-:Ontology rdf:type owl:Class .
+:Ontology rdf:type owl:Class ; rdfs:subClassOf :PublishedResource .
 
 
 
