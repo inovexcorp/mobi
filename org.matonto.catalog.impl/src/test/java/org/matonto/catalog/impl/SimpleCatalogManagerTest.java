@@ -2,6 +2,7 @@ package org.matonto.catalog.impl;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.api.Ontology;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.query.TupleQueryResult;
@@ -53,6 +54,11 @@ public class SimpleCatalogManagerTest {
     RepositoryResult<Statement> repositoryResult;
 
     private SimpleCatalogManager manager;
+    private NamedGraphFactory ngf = LinkedHashNamedGraphFactory.getInstance();
+    private org.matonto.rdf.api.ValueFactory vf = org.matonto.rdf.core.impl.sesame.SimpleValueFactory.getInstance();
+
+    private static final String DC = "http://purl.org/dc/terms/";
+    private static final String DCAT = "http://www.w3.org/ns/dcat#";
 
     @Before
     public void setUp() {
@@ -60,9 +66,12 @@ public class SimpleCatalogManagerTest {
 
         manager = new SimpleCatalogManager();
         manager.setRepo(repo);
+        manager.setNamedGraphFactory(ngf);
+        manager.setValueFactory(vf);
 
         when(repo.getConnection()).thenReturn(conn);
         when(conn.prepareTupleQuery(anyString())).thenReturn(query);
+        when(conn.getStatements(any(), any(), any(), any())).thenReturn(repositoryResult);
         when(query.evaluate()).thenReturn(result);
     }
 
@@ -153,17 +162,12 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testCreateOntologyWithoutDistribution() throws Exception {
         // given
-        String dc = "http://purl.org/dc/elements/1.1/";
-        Ontology ontology = mock(Ontology.class);
         IRI ontologyIri = new SimpleIRI("http://matonto.org/catalog/1");
-        NamedGraphFactory ngf = LinkedHashNamedGraphFactory.getInstance();
-        manager.setNamedGraphFactory(ngf);
-        org.matonto.rdf.api.ValueFactory vf = org.matonto.rdf.core.impl.sesame.SimpleValueFactory.getInstance();
-        manager.setValueFactory(vf);
         OffsetDateTime now = OffsetDateTime.now();
 
+        Ontology ontology = mock(Ontology.class);
+
         // when
-        when(conn.getStatements(any(), any(), any(), any())).thenReturn(repositoryResult);
         when(repositoryResult.hasNext()).thenReturn(false);
 
         when(ontology.getResource()).thenReturn(ontologyIri);
@@ -178,23 +182,79 @@ public class SimpleCatalogManagerTest {
         // then
         NamedGraph expectedGraph = ngf.createNamedGraph(ontologyIri);
         expectedGraph.add(ontologyIri, Values.matontoIRI(RDF.TYPE), vf.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
-        expectedGraph.add(ontologyIri, vf.createIRI(dc + "title"), vf.createLiteral("MatOnto Catalog"));
-        expectedGraph.add(ontologyIri, vf.createIRI(dc + "description"), vf.createLiteral("Catalog of MatOnto Resources"));
-        expectedGraph.add(ontologyIri, vf.createIRI(dc + "issued"), vf.createLiteral(now));
-        expectedGraph.add(ontologyIri, vf.createIRI(dc + "modified"), vf.createLiteral(now));
-
-        System.out.println(expectedGraph.toString());
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "title"), vf.createLiteral("MatOnto Catalog"));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "description"), vf.createLiteral("Catalog of MatOnto Resources"));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "issued"), vf.createLiteral(now));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
 
         ArgumentCaptor<NamedGraph> argument = ArgumentCaptor.forClass(NamedGraph.class);
         verify(conn).add(argument.capture());
+        checkNamedGraphs(expectedGraph, argument.getValue());
+    }
 
-        NamedGraph actualGraph = argument.getValue();
+    @Test
+    public void testCreateOntologyWithDistribution() throws Exception {
+        // given
+        IRI ontologyIri = new SimpleIRI("http://matonto.org/catalog/1");
+        IRI distributionIri = new SimpleIRI("http://matonto.org/distribution/1");
+        OffsetDateTime now = OffsetDateTime.now();
+
+        Ontology ontology = mock(Ontology.class);
+        Distribution distribution = mock(Distribution.class);
+        Set<Distribution> distributions = new HashSet<>();
+        distributions.add(distribution);
+
+        // when
+        when(repositoryResult.hasNext()).thenReturn(false);
+
+        when(ontology.getResource()).thenReturn(ontologyIri);
+        when(ontology.getType()).thenReturn(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        when(ontology.getTitle()).thenReturn("MatOnto Catalog");
+        when(ontology.getDescription()).thenReturn("Catalog of MatOnto Resources");
+        when(ontology.getIssued()).thenReturn(now);
+        when(ontology.getModified()).thenReturn(now);
+        when(ontology.getDistributions()).thenReturn(distributions);
+
+        when(distribution.getResource()).thenReturn(distributionIri);
+
+        manager.createOntology(ontology);
+
+        // then
+        NamedGraph expectedGraph = ngf.createNamedGraph(ontologyIri);
+        expectedGraph.add(ontologyIri, Values.matontoIRI(RDF.TYPE), vf.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "title"), vf.createLiteral("MatOnto Catalog"));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "description"), vf.createLiteral("Catalog of MatOnto Resources"));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "issued"), vf.createLiteral(now));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
+        expectedGraph.add(ontologyIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
+        expectedGraph.add(ontologyIri, vf.createIRI(DCAT + "distribution"), distributionIri);
+
+        ArgumentCaptor<NamedGraph> argument = ArgumentCaptor.forClass(NamedGraph.class);
+        verify(conn).add(argument.capture());
+        checkNamedGraphs(expectedGraph, argument.getValue());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateOntologyThrowsExceptionWhenAlreadyExists() throws Exception {
+        // given
+        Ontology ontology = mock(Ontology.class);
+
+        // when
+        when(repositoryResult.hasNext()).thenReturn(true);
+        when(ontology.getResource()).thenReturn(mock(IRI.class));
+
+        manager.createOntology(ontology);
+    }
+
+    private void checkNamedGraphs(NamedGraph expected, NamedGraph actual) throws Exception {
         try {
-            assertEquals(expectedGraph, actualGraph);
+            assertEquals(expected, actual);
         } catch (AssertionError e) {
             // Print contents to aid in fix
-            expectedGraph.forEach(System.out::println);
-            actualGraph.forEach(System.out::println);
+            System.out.println("Expected Graph:");
+            expected.forEach(System.out::println);
+            System.out.println("Actual Graph:");
+            actual.forEach(System.out::println);
             throw e;
         }
     }

@@ -1,5 +1,7 @@
 package org.matonto.catalog.api;
 
+import org.matonto.rdf.api.Resource;
+
 import java.net.URL;
 import java.time.OffsetDateTime;
 
@@ -26,4 +28,6 @@ public interface Distribution {
     String getFormat();
 
     long getByteSize();
+
+    Resource getResource();
 }

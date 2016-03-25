@@ -68,7 +68,8 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
     private static final String PR_TYPE = "http://matonto.org/ontologies/catalog#PublishedResource";
     private static final String CATALOG_TYPE = "http://www.w3.org/ns/dcat#Catalog";
-    private static final String DC = "http://purl.org/dc/elements/1.1/";
+    private static final String DC = "http://purl.org/dc/terms/";
+    private static final String DCAT = "http://www.w3.org/ns/dcat#";
 
     @Activate
     protected void start(Map<String, Object> props) {
@@ -160,6 +161,10 @@ public class SimpleCatalogManager implements CatalogManager {
         namedGraph.add(resource, vf.createIRI(DC + "description"), vf.createLiteral(ontology.getDescription()));
         namedGraph.add(resource, vf.createIRI(DC + "issued"), vf.createLiteral(ontology.getIssued()));
         namedGraph.add(resource, vf.createIRI(DC + "modified"), vf.createLiteral(ontology.getModified()));
+
+        ontology.getDistributions().forEach(distribution -> {
+            namedGraph.add(resource, vf.createIRI(DCAT + "distribution"), distribution.getResource());
+        });
 
         RepositoryConnection conn = repo.getConnection();
         conn.add(namedGraph);
