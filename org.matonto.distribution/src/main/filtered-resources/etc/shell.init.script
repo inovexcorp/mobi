@@ -21,6 +21,8 @@ matonto-deploy-bundles = {
         org.matonto.ontology.cli \
         org.matonto.ontology.core.impl.owlapi \
         org.matonto.ontology.rest \
+        org.matonto.catalog.api \
+        org.matonto.catalog.impl \
         org.matonto.swagger.ui \
         org.matonto.web \
         com.eclipsesource.jaxrs.swagger-all \
@@ -45,6 +47,8 @@ matonto-deploy-bundles-dev = {
         org.matonto.ontology.cli \
         org.matonto.ontology.core.impl.owlapi \
         org.matonto.ontology.rest \
+        org.matonto.catalog.api \
+        org.matonto.catalog.impl \
         org.matonto.swagger.ui \
         org.matonto.web \
         com.eclipsesource.jaxrs.swagger-all \
