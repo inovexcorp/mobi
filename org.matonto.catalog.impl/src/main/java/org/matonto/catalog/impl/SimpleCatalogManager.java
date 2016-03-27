@@ -17,6 +17,7 @@ import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
+import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 
@@ -36,7 +37,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private ValueFactory vf;
     private NamedGraphFactory ngf;
 
-    @Reference(target = "(id=system)")
+    @Reference(service = DelegatingRepository.class, target = "(id=system)")
     protected void setRepo(Repository repo) {
         this.repo = repo;
     }

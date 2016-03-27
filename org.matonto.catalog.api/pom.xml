@@ -45,7 +45,8 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             org.matonto.catalog.api,
-                            org.matonto.catalog.config
+                            org.matonto.catalog.config,
+                            org.matonto.catalog
                         </Export-Package>
                         <_metatype>*</_metatype>
                         <build>${maven.build.timestamp}</build>
