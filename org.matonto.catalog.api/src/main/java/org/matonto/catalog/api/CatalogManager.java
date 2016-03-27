@@ -13,7 +13,9 @@ public interface CatalogManager {
 
 //    <T extends PublishedResource> Optional<T> getResource(Resource resource, Class<T> clazz);
 
-    <T extends PublishedResource> T removeResource(Resource resource);
+//    <T extends PublishedResource> T removeResource(Resource resource);
+
+    void removeResource(PublishedResource resource);
 
     void createOntology(Ontology ontology);
 }

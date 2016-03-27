@@ -144,8 +144,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends PublishedResource> T removeResource(Resource resource) {
-        return null;
+    public void removeResource(PublishedResource resource) {
     }
 
     @Override

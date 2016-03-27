@@ -246,6 +246,18 @@ public class SimpleCatalogManagerTest {
         manager.createOntology(ontology);
     }
 
+    @Test
+    public void testRemoveResource() {
+        // given
+        Ontology ontology = mock(Ontology.class);
+
+        // when
+//        when(repositoryResult.hasNext()).thenReturn(true);
+//        when(ontology.getResource()).thenReturn(mock(IRI.class));
+
+        manager.removeResource(ontology);
+    }
+
     private void checkNamedGraphs(NamedGraph expected, NamedGraph actual) throws Exception {
         try {
             assertEquals(expected, actual);
