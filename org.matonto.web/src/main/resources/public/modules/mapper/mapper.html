@@ -123,9 +123,6 @@
             toggle-click="vm.togglePreview(big)"
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
-
-        <button ng-click="vm.showMappingPreview = !vm.showMappingPreview" style="position: absolute; right: 0; top: 0; z-index: 5000;"><i class="fa fa-question-circle"></i></button>
-        <pre ng-if="vm.showMappingPreview" style="position: absolute; right: 25px; left: 0; top: 0; height: 100%; overflow: auto; z-index: 5000;">{{vm.mapping | json}}</pre>
     </div>
     </div>
 </div>
