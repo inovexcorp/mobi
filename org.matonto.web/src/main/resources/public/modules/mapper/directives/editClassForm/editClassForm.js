@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('editClassForm', ['ontologyManager'])
+        .module('editClassForm', ['prefixes', 'mappingManager', 'ontologyManager'])
         .directive('editClassForm', editClassForm);
 
-        editClassForm.$inject = ['ontologyManagerService'];
+        editClassForm.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService'];
 
-        function editClassForm(ontologyManagerService) {
+        function editClassForm(prefixes, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -20,14 +20,16 @@
                     openProp: '&'
                 },
                 bindToController: {
-                    ontologyId: '@',
-                    classId: '='
+                    mapping: '=',
+                    classMappingId: '='
                 },
                 controller: function() {
                     var dvm = this;
 
                     dvm.getTitle = function() {
-                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontologyId, dvm.classId));
+                        var ontologyId = mappingManagerService.getSourceOntology(dvm.mapping);
+                        var classId = mappingManagerService.getClassByMappingId(dvm.mapping, dvm.classMappingId);
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontologyId, classId));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editClassForm/editClassForm.html'

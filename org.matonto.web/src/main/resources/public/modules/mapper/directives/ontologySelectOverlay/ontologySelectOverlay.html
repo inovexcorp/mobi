@@ -8,8 +8,8 @@
         </div>
         <ontology-preview ontology="dvm.getOntologyById(dvm.selectedOntologyId)"></ontology-preview>
         <div class="overlay-button-container">
-            <custom-button display-text="'Back'" on-click="onClickBack()" pull="'left'"></custom-button>
-            <custom-button display-text="'Continue'" on-click="onClickContinue({ontologyId: dvm.selectedOntologyId})" is-disabled-when="!dvm.selectedOntologyId"></custom-button>
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue({ontologyId: dvm.selectedOntologyId})" is-disabled-when="!dvm.selectedOntologyId">Continue</custom-button>
         </div>
     </form>
 </div>

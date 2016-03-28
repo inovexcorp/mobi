@@ -12,7 +12,7 @@
                 require: 'ngModel',
                 link: function(scope, element, attrs, modelCtrl) {
                     var formatJSON = function(data) {
-                        var formatted = (typeof data === 'object') ? $filter('json')(data) : (data || '');
+                        var formatted = (typeof data === 'object') ? $filter('json')(data, 4) : (data || '');
                         return formatted;
                     }
                         

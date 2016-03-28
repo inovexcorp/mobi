@@ -9,9 +9,9 @@
             'rdfPreview', 'previousCheckOverlay'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var previousOntologyId;
         var originalMappingName;
@@ -19,6 +19,9 @@
             name: '',
             jsonld: []
         };
+        var onError = function(response) {
+            console.error(response);
+        }
 
         vm.areOntologies = function() {
             return ontologyManagerService.getList().length > 0;
@@ -40,7 +43,9 @@
         vm.rdfPreview;
         vm.invalidPropMappings;
         vm.isPreviousMapping;
+        vm.editingClassMappingId;
         vm.selectedPropId;
+        vm.selectedPropMappingId;
         vm.selectedColumn;
         vm.newProp;
 
@@ -65,24 +70,22 @@
 
         // Handler for uploading delimited file
         vm.submitFileUpload = function() {
+            var csvError = function(response) {
+                onError(response);
+                vm.filePreview = undefined;
+            }
             if (vm.delimitedFileName) {
                 csvManagerService.update(vm.delimitedFileName, vm.delimitedFile)
                     .then(function(data) {
                         vm.delimitedFileName = data;
                         vm.getSmallPreview();
-                    }, function(error) {
-                        console.log(error);
-                        vm.filePreview = undefined;
-                    });
+                    }, csvError);
             } else {
                 csvManagerService.upload(vm.delimitedFile)
                     .then(function(data) {
                         vm.delimitedFileName = data;
                         vm.getSmallPreview();
-                    }, function(error) {
-                        console.log(error);
-                        vm.filePreview = undefined;
-                    });
+                    }, csvError);
             }
         }
 
@@ -102,20 +105,19 @@
             deferred.promise.then(function(data) {
                 var mapping = new Blob([angular.toJson(data)], {type: 'application/json'});
                 FileSaver.saveAs(mapping, vm.mapping.name + '.jsonld');
-            }, function(error) {
-                console.log(error);
-            });
+            }, onError);
         }
 
         /* Public helper methods */
         vm.isDatatypeProperty = function(propId) {
-            var propObj = ontologyManagerService.getClassProperty(vm.getOntologyId(), vm.editingClassId, propId);
+            var propObj = ontologyManagerService.getClassProperty(vm.getOntologyId(), vm.getClassId(vm.editingClassMappingId), propId);
             return propObj ? !ontologyManagerService.isObjectProperty(_.get(propObj, '@type', []), prefixes.owl) : false;
         }
         vm.resetEditingVars = function() {
-            vm.editingClassId = '';
+            vm.editingClassMappingId = '';
             vm.selectedColumn = '';
             vm.selectedPropId = '';
+            vm.selectedPropMappingId = '';
             vm.newProp = false;
         }
         vm.clearSelectedColumn = function() {
@@ -127,13 +129,17 @@
         vm.getOntologyId = function() {
             return mappingManagerService.getSourceOntology(vm.mapping);
         }
+        vm.getClassId = function(classMappingId) {
+            return mappingManagerService.getClassByMappingId(vm.mapping, classMappingId);
+        }
 
         /* Private helper methods */
         function getAvailableColumns(columnsToRemove) {
             return _.difference(vm.filePreview.headers, columnsToRemove);
         }
-        function getAvailableProps(classId) {
-            var mappedProps = _.map(mappingManagerService.getPropMappingsByClass(vm.mapping, classId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
+        function getAvailableProps(classMappingId) {
+            var mappedProps = _.map(mappingManagerService.getPropMappingsByClass(vm.mapping, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
+            var classId = vm.getClassId(classMappingId);
             return _.filter(ontologyManagerService.getClassProperties(vm.getOntologyId(), classId), function(prop) {
                 return mappedProps.indexOf(prop['@id']) < 0;
             });
@@ -209,9 +215,7 @@
                                 name: mappingName
                             };
                             vm.displayPreviousCheck = true;
-                        }, function(error) {
-                            console.log(error);
-                        });
+                        }, onError);
                     break;
                 default:
                     previousOntologyId = previousOntologyId ? previousOntologyId : vm.getOntologyId();
@@ -249,9 +253,7 @@
                 var blob = new Blob([angular.toJson(data)], {type: 'application/json'});
                 FileSaver.saveAs(blob, vm.delimitedFileName + '.jsonld');
                 vm.activeStep = 5;
-            }, function(error) {
-                console.log(error);
-            });
+            }, onError);
         }
         vm.toggleOntologyPreview = function() {
             vm.displayOntologyPreview = !vm.displayOntologyPreview;
@@ -289,10 +291,10 @@
             vm.resetEditingVars();
             vm.clearSelectedColumn();
         }
-        vm.displayPropForm = function(classId) {
+        vm.displayPropForm = function(classMappingId) {
             vm.resetEditingVars();
-            vm.editingClassId = classId;
-            vm.availableProps = getAvailableProps(vm.editingClassId);
+            vm.editingClassMappingId = classMappingId;
+            vm.availableProps = getAvailableProps(vm.editingClassMappingId);
             vm.newProp = true;
         }
         vm.displayColumnForm = function(extraHeader) {
@@ -300,43 +302,42 @@
             var columnsToRemove = _.without(vm.mappedColumns, extraHeader) ;
             vm.availableColumns = getAvailableColumns(columnsToRemove);
         }
-        vm.displayEditPropForm = function(classId, propId) {
+        vm.displayEditPropForm = function(classMappingId, propMappingId) {
             vm.resetEditingVars();
-            vm.editingClassId = classId;
-            vm.selectedPropId = propId;
-            var propMapping = _.find(
-                mappingManagerService.getPropMappingsByClass(vm.mapping, vm.editingClassId), 
-                ["['" + prefixes.delim + "hasProperty'][0]['@id']", propId]
-            );
+            vm.editingClassMappingId = classMappingId;
+            vm.selectedPropMappingId = propMappingId;
+            var propMapping = _.find(vm.mapping.jsonld, {'@id': propMappingId});
+            vm.selectedPropId = mappingManagerService.getPropByMapping(propMapping);
             if (mappingManagerService.isDataMapping(propMapping)) {
                 var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
                 var extraColumn = vm.filePreview.headers[index];
-                // var extraColumn = vm.filePreview.headers[index - 1];
                 vm.displayColumnForm(extraColumn);
                 vm.selectedColumn = extraColumn;
             }
         }
-        vm.displayEditClassForm = function(classId) {
+        vm.displayEditClassForm = function(classMappingId) {
             vm.resetEditingVars();
-            vm.editingClassId = classId;
-            vm.availableProps = getAvailableProps(vm.editingClassId);
+            vm.editingClassMappingId = classMappingId;
+            vm.availableProps = getAvailableProps(vm.editingClassMappingId);
             vm.numMappedClasses = mappingManagerService.getMappedClassIds(vm.mapping.jsonld).length;
         }
         vm.openAvailableProp = function(propId) {
-            vm.displayPropForm(vm.editingClassId);
+            vm.displayPropForm(vm.editingClassMappingId);
             vm.selectedPropId = propId;
         }
-        vm.displayDeleteConfirmation = function(classId, propId) {
-            if (!classId) {
+        vm.displayDeleteConfirmation = function(classMappingId, propMappingId) {
+            if (!classMappingId) {
                 throw new Error('Not enough information to delete mapping entity');                
             }
             vm.displayDeleteConfirm = true;
-            vm.deleteEntity = {classId};
-            if (propId) {
+            vm.deleteEntity = {classMappingId};
+            var classId = vm.getClassId(classMappingId);
+            if (propMappingId) {
+                var propId = mappingManagerService.getPropByMappingId(vm.mapping, propMappingId);
                 vm.deleteEntity.name = ontologyManagerService.getEntityName(
                     ontologyManagerService.getClassProperty(vm.getOntologyId(), classId, propId)
                 );
-                vm.deleteEntity.propId = propId;
+                vm.deleteEntity.propMappingId = propMappingId;
             } else {
                 vm.deleteEntity.name = ontologyManagerService.getEntityName(ontologyManagerService.getClass(vm.getOntologyId(), classId));
             }
@@ -345,26 +346,22 @@
             csvManagerService.previewMap(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, format)
                 .then(function(preview) {
                     vm.rdfPreview = preview;
-                }, function(error) {
-                    console.log(error);
-                });
+                }, onError);
         }
 
         /** Set and Delete methods **/
         vm.setDatatypeProp = function(column) {
             var columnIdx = vm.filePreview.headers.indexOf(column);
-            // var columnIdx = vm.filePreview.headers.indexOf(column) + 1;
             if (!vm.newProp) {
-                var propMapping = mappingManagerService.getDataMappingFromClass(vm.mapping.jsonld, vm.editingClassId, vm.selectedPropId);
+                var propMapping = mappingManagerService.getDataMappingFromClass(vm.mapping.jsonld, vm.editingClassMappingId, vm.selectedPropId);
                 var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
                 var originalColumn = vm.filePreview.headers[index];
-                // var originalColumn = vm.filePreview.headers[index - 1];
                 _.pull(vm.mappedColumns, originalColumn);
             }
-            vm.mapping = mappingManagerService.addDataProp(vm.mapping, vm.editingClassId, vm.selectedPropId, columnIdx);
+            vm.mapping = mappingManagerService.addDataProp(vm.mapping, vm.editingClassMappingId, vm.selectedPropId, columnIdx);
             vm.mappedColumns.push(column);
             var propMappingId = _.get(
-                mappingManagerService.getDataMappingFromClass(vm.mapping.jsonld, vm.editingClassId, vm.selectedPropId),
+                mappingManagerService.getDataMappingFromClass(vm.mapping.jsonld, vm.editingClassMappingId, vm.selectedPropId),
                 '@id'
             );
             if (vm.invalidPropMappings.indexOf(propMappingId) >= 0) {
@@ -374,32 +371,31 @@
             vm.resetEditingVars();
         }
         vm.setNextDatatypeProp = function(column) {
-            var editingClassId = vm.editingClassId;
+            var editingClassMappingId = vm.editingClassMappingId;
             vm.setDatatypeProp(column);
-            vm.displayPropForm(editingClassId);
+            vm.displayPropForm(editingClassMappingId);
         }
         vm.setObjectProp = function() {
-            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.editingClassId, vm.selectedPropId, '${UUID}');
+            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.editingClassMappingId, vm.selectedPropId, '${UUID}');
             changedMapping();
             vm.resetEditingVars();
         }
         vm.setNextObjectProp = function() {
-            var editingClassId = vm.editingClassId;
+            var editingClassMappingId = vm.editingClassMappingId;
             vm.setObjectProp();
-            vm.displayPropForm(editingClassId);
+            vm.displayPropForm(editingClassMappingId);
         }
         vm.deleteMappingEntity = function() {
             if (vm.deleteEntity) {
-                if (_.get(vm.deleteEntity, 'propId')) {
-                    var propMapping = _.find(vm.mapping.jsonld, ["['" + prefixes.delim + "hasProperty'][0]['@id']", vm.deleteEntity.propId]);
+                if (_.get(vm.deleteEntity, 'propMappingId')) {
+                    var propMapping = _.find(vm.mapping.jsonld, {'@id': vm.deleteEntity.propMappingId});
                     if (mappingManagerService.isDataMapping(propMapping)) {
                         var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
                         _.pull(vm.mappedColumns, vm.filePreview.headers[index]);
-                        // _.pull(vm.mappedColumns, vm.filePreview.headers[index - 1]);
                     }
-                    vm.mapping = mappingManagerService.removeProp(vm.mapping, vm.deleteEntity.classId, propMapping['@id']);                    
+                    vm.mapping = mappingManagerService.removeProp(vm.mapping, vm.deleteEntity.classMappingId, propMapping['@id']);                    
                 } else {
-                    vm.mapping = mappingManagerService.removeClass(vm.mapping, vm.deleteEntity.classId);
+                    vm.mapping = mappingManagerService.removeClass(vm.mapping, vm.deleteEntity.classMappingId);
                 }
             }
             changedMapping();

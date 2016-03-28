@@ -27,10 +27,9 @@
 
         <div class="overlay-button-container">
             <p ng-hide="validateForm.$error.matchingSeparators" class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
-            <custom-button display-text="'Back'" on-click="onClickBack()" pull="'left'"></custom-button>
-            <custom-button display-text="(validateForm.$invalid) ? 'Fix' : 'Continue'" 
-                on-click="onClickContinue()"
-                is-disabled-when="validateForm.$error.matchingSeparators"></custom-button>
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue()"
+                is-disabled-when="validateForm.$error.matchingSeparators">{{(validateForm.$invalid) ? 'Fix' : 'Continue'}}</custom-button>
         </div>
     </form>
 </div>

@@ -14,7 +14,7 @@
                 replace: true,
                 scope: {
                     ontologyId: '@',
-                    classId: '=',
+                    classId: '@',
                     set: '&',
                     setNext: '&'
                 },
@@ -24,7 +24,7 @@
                     isDatatypeProp: '&',
                     isObjectProp: '&'
                 },
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
 
                     dvm.update = function() {

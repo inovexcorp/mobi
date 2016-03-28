@@ -21,6 +21,7 @@
                     var classList = [];
                     var ontologyId = '';
                     dvm.numClassPreview = 5;
+                    dvm.numClasses = 0;
                     dvm.full = false;
 
                     dvm.createTitle = function() {
@@ -31,6 +32,7 @@
                     }
                     dvm.createClassList = function() {
                         var classes = _.get(dvm.ontology, 'matonto.classes');
+                        dvm.numClasses = classes ? classes.length : 0;
                         if (!dvm.full) {
                             classes = _.take(classes, dvm.numClassPreview);
                         }

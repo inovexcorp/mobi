@@ -6,12 +6,11 @@
                 <option ng-repeat="classObj in dvm.getClasses(dvm.ontologyId)" value="{{classObj['@id']}}">{{dvm.createOptionName(classObj)}}</option>
             </select>
         </div>
-
         <class-preview class-obj="dvm.getClass(dvm.ontologyId, dvm.selectedClassId)"></class-preview>
         
         <div class="overlay-button-container">
-            <custom-button display-text="'Back'" on-click="onClickBack()" pull="'left'">Back</custom-button>
-            <custom-button display-text="'Continue'" on-click="onClickContinue({classId: dvm.selectedClassId})" is-disabled-when="!dvm.selectedClassId"></custom-button>
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue({classId: dvm.selectedClassId})" is-disabled-when="!dvm.selectedClassId">Continue</custom-button>
         </div>
     </form>
 </div>

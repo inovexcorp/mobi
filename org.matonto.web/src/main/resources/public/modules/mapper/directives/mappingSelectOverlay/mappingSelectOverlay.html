@@ -39,8 +39,8 @@
         </div>
         
         <div class="overlay-button-container">
-            <custom-button display-text="'Back'" on-click="onClickBack()" pull="'left'"></custom-button>
-            <custom-button display-text="'Continue'" on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingName})" is-disabled-when="!dvm.mappingType || (dvm.mappingType === 'new' && mappingForm.mappingName.$invalid) || (dvm.mappingType === 'previous' && !dvm.mappingName)"></custom-button>
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingName})" is-disabled-when="!dvm.mappingType || (dvm.mappingType === 'new' && mappingForm.mappingName.$invalid) || (dvm.mappingType === 'previous' && !dvm.mappingName)">Continue</custom-button>
         </div>
     </form>
 </div>

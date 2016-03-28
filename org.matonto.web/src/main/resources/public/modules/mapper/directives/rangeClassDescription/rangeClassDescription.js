@@ -15,8 +15,8 @@
                 scope: {},
                 bindToController: {
                     ontologyId: '=',
-                    classId: '=',
-                    selectedProp: '='
+                    classId: '@',
+                    selectedProp: '@'
                 },
                 controller: function() {
                     var dvm = this;
