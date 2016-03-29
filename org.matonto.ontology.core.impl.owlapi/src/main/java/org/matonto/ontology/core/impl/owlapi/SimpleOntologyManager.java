@@ -315,7 +315,7 @@ public class SimpleOntologyManager implements OntologyManager {
                 cachedObjectStatements.add(stmt);
             }
 
-            changedEntities.put("strings", changedIriStrings);
+            changedEntities.put("iris", changedIriStrings);
             changedEntities.put("models", changedModels);
 
             conn.remove(entitySubjectStatements, ontologyResource);

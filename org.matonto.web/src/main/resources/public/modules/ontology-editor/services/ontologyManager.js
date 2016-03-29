@@ -497,7 +497,7 @@
 
                             console.log('Successfully deleted');
 
-                            console.log(response.data.changedEntities);
+                            console.log(response.data.models);
 
                             ontology.matonto.classes.splice(state.ci, 1);
                             deferred.resolve(response);

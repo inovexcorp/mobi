@@ -286,8 +286,8 @@ public class OntologyRestImpl implements OntologyRest {
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        JSONArray strings = new JSONArray();
-        strings.addAll(changedEntities.get("strings"));
+        JSONArray iris = new JSONArray();
+        iris.addAll(changedEntities.get("iris"));
 
         JSONArray models = new JSONArray();
         for(Object model : changedEntities.get("models")) {
@@ -306,7 +306,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         JSONObject json = new JSONObject();
         json.put("deleted", true);
-        json.put("strings", strings);
+        json.put("iris", iris);
         json.put("models", models);
 
         return Response.status(200).entity(json.toString()).build();
