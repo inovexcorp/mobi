@@ -89,21 +89,7 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
     }
 
-    @Override
-    public Response uploadFile(InputStream fileInputStream) {
-        boolean persisted = false;
-        Ontology ontology = null;
-
-        try {
-            ontology = manager.createOntology(fileInputStream);
-            persisted = manager.storeOntology(ontology);
-        } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        } finally {
-            IOUtils.closeQuietly(fileInputStream);
-        }
-
+    private Response getUploadResponse(boolean persisted, Ontology ontology) {
         JSONObject json = new JSONObject();
 
         if (persisted) {
@@ -123,34 +109,29 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    public Response uploadOntologyJson(String ontologyJson) {
+    public Response uploadFile(InputStream fileInputStream) {
         boolean persisted = false;
         Ontology ontology = null;
 
         try {
-            ontology = manager.createOntology(ontologyJson);
+            ontology = manager.createOntology(fileInputStream);
             persisted = manager.storeOntology(ontology);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
                     Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            IOUtils.closeQuietly(fileInputStream);
         }
 
-        JSONObject json = new JSONObject();
+        return getUploadResponse(persisted, ontology);
+    }
 
-        if (persisted) {
-            OntologyId oid = ontology.getOntologyId();
-            json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
-            Set<IRI> missingImports = ontology.getUnloadableImportIRIs();
-            if(!missingImports.isEmpty()) {
-                JSONArray array = new JSONArray();
-                missingImports.forEach(iri -> array.add(iri.stringValue()));
-                json.put("unloadableImportedOntologies", array.toString());
-            }
-        }
+    @Override
+    public Response uploadOntologyJson(String ontologyJson) {
+        Ontology ontology = manager.createOntology(ontologyJson);
+        boolean persisted = manager.storeOntology(ontology);
 
-        json.put("persisted", persisted);
-
-        return Response.status(200).entity(json.toString()).build();
+        return getUploadResponse(persisted, ontology);
     }
 
     @Override
