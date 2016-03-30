@@ -6,6 +6,9 @@ $overlay-height: 450px;
 $rdf-padding: 10px;
 $rdf-controls-height: 34px + $rdf-padding/2;
 
+.float-container {
+    overflow: hidden;
+}
 .mapper {
     #mapper-content {
         margin-left: $sidebar-width;
