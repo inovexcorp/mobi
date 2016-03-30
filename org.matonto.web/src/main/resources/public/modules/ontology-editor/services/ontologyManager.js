@@ -459,6 +459,21 @@
 
             }
 
+            function updateChangedEntities(ontology, changedEntities) {
+                var ontologyCopy = angular.copy(ontology);
+
+                console.log('ontology:', ontologyCopy);
+
+                _.forEach(changedEntities, function(entity) {
+                    var entityGraph = _.get(entity, '[0][\'@graph\'][0]', {});
+                    var oldEntity = _.get(ontologyCopy, {'@id': _.get(entityGraph, '@id')}, '');
+                    console.log('old:', oldEntity);
+                    console.log('new:', entity);
+                });
+
+                return ontologyCopy;
+            }
+
             function deleteOntology(ontologyId, state) {
                 $rootScope.showSpinner = true;
 
@@ -497,7 +512,9 @@
 
                             console.log('Successfully deleted');
 
-                            console.log(response.data.models);
+                            if(_.get(response, 'data.models', []).length) {
+                                ontology = updateChangedEntities(ontology, response.data.models);
+                            }
 
                             ontology.matonto.classes.splice(state.ci, 1);
                             deferred.resolve(response);
@@ -543,7 +560,9 @@
                         if(response.data.deleted) {
                             console.log('Successfully deleted');
 
-                            console.log(response.data.changedEntities);
+                            if(_.get(response, 'data.models', []).length) {
+                                ontology = updateChangedEntities(ontology, response.data.models);
+                            }
 
                             if(classObj) {
                                 classObj.matonto.properties.splice(state.pi, 1);
