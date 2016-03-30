@@ -9,9 +9,9 @@
             'rdfPreview', 'previousCheckOverlay'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$window', '$q', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($window, $q, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var previousOntologyId;
         var originalMappingName;
@@ -101,8 +101,6 @@
                 deferred.resolve(vm.mapping,jsonld);
             }
             deferred.promise.then(function(data) {
-                var mapping = new Blob([angular.toJson(data)], {type: 'application/json'});
-                FileSaver.saveAs(mapping, vm.mapping.name + '.jsonld');
             }, onError);
         }
 
@@ -233,8 +231,6 @@
                     }, reject);
             }
             deferred.promise.then(function(data) {
-                var blob = new Blob([angular.toJson(data)], {type: 'application/json'});
-                FileSaver.saveAs(blob, vm.delimitedFileName + '.jsonld');
                 vm.activeStep = 5;
             }, onError);
         }
