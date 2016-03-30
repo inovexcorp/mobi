@@ -1,0 +1,17 @@
+<div class="class-list-container">
+    <ul class="class-list">
+        <li ng-repeat="classMapping in dvm.getClassMappings()">
+            <a ng-click="clickClass({classMappingId: classMapping['@id']})">{{dvm.getClassTitle(classMapping)}}</a>
+            <ul class="props">
+                <li ng-repeat="propMapping in dvm.getPropMappings(classMapping)">
+                    <a ng-click="clickProp({classMappingId: classMapping['@id'], propMappingId: propMapping['@id']})"
+                        ng-class="{'text-danger': dvm.invalidPropIds.indexOf(propMapping['@id']) >= 0}">{{dvm.getPropTitle(propMapping, classMapping)}}</a>
+                    <button class="delete" ng-click="clickDelete({classMappingId: classMapping['@id'], propMappingId: propMapping['@id']})">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </li>
+                <li ng-show="!dvm.mappedAllProps(classMapping)"><a ng-click="clickAddProp({classMappingId: classMapping['@id']})"><i class="fa fa-plus"></i> Add Property</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>

@@ -27,7 +27,11 @@
                     end: iri.substring(index + 1)
                 }
             } else {
-                return;
+                return {
+                    begin: '',
+                    then: '',
+                    end: ''
+                };
             }
         }
     }
