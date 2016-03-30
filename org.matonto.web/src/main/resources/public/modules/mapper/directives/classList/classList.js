@@ -25,7 +25,6 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.delim = prefixes.delim;
 
                     dvm.getClassMappings = function() {
                         return _.filter(dvm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']});
@@ -55,7 +54,7 @@
                     }
                     dvm.mappedAllProps = function(classMapping) {
                         var mappedProps = mappingManagerService.getPropMappingsByClass(dvm.mapping, classMapping['@id']);
-                        var classProps = ontologyManagerService.getClassProperties(mappingManagerService.getSourceOntology(dvm.mapping), getClassId(classMapping));
+                        var classProps = ontologyManagerService.getClassProperties(mappingManagerService.getSourceOntologyId(dvm.mapping), getClassId(classMapping));
 
                         return mappedProps.length === classProps.length;
                     }
@@ -76,21 +75,21 @@
                     }
                     function getClassName(classMapping) {
                         var classObj = ontologyManagerService.getClass(
-                            mappingManagerService.getSourceOntology(dvm.mapping), getClassId(classMapping));
+                            mappingManagerService.getSourceOntologyId(dvm.mapping), getClassId(classMapping));
                         return ontologyManagerService.getEntityName(classObj);
                     }
                     function getPropName(propMapping, classMapping) {
                         var propId = getPropId(propMapping);
                         var classId = getClassId(classMapping);
                         return ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntology(dvm.mapping), classId, propId)
+                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntologyId(dvm.mapping), classId, propId)
                         );
                     }
                     function getClassId(classMapping) {
-                        return mappingManagerService.getClassByMapping(classMapping);
+                        return mappingManagerService.getClassIdByMapping(classMapping);
                     }
                     function getPropId(propMapping) {
-                        return mappingManagerService.getPropByMapping(propMapping);
+                        return mappingManagerService.getPropIdByMapping(propMapping);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classList/classList.html'

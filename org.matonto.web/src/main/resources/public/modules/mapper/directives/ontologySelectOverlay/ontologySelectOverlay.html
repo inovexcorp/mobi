@@ -1,13 +1,18 @@
-<div id="ontology-select-overlay" class="overlay lg">
+<div class="ontology-select-overlay overlay lg">
     <form class="content">
         <h6>Choose Ontology</h6>
-        <div id="ontology-select" class="form-group">
-            <select class="form-control" ng-model="dvm.selectedOntologyId">
-                <option ng-repeat="ontology in dvm.ontologies" value="{{ontology['@id']}}">{{dvm.createOptionName(ontology)}}</option>
-            </select>
+        <div class="ontology-select form-group">
+            <ui-select ng-model="dvm.selectedOntologyId">
+                <ui-select-match placeholder="Select a ontology">
+                    <span title="{{$select.selected['@id']}}">{{dvm.getName($select.selected)}}</span>
+                </ui-select-match>
+                <ui-select-choices repeat="ontology['@id'] as ontology in dvm.ontologies | filter:$select.search">
+                    <div title="{{ontology['@id']}}" ng-bind-html="dvm.getName(ontology) | highlight:$select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
         </div>
         <ontology-preview ontology="dvm.getOntologyById(dvm.selectedOntologyId)"></ontology-preview>
-        <div class="overlay-button-container">
+        <div class="btn-container clearfix">
             <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
             <custom-button on-click="onClickContinue({ontologyId: dvm.selectedOntologyId})" is-disabled-when="!dvm.selectedOntologyId">Continue</custom-button>
         </div>

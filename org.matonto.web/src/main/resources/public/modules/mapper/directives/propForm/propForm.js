@@ -20,7 +20,7 @@
                 },
                 bindToController: {
                     props: '=',
-                    selectedProp: '=ngModel',
+                    selectedProp: '=',
                     isDatatypeProp: '&',
                     isObjectProp: '&'
                 },

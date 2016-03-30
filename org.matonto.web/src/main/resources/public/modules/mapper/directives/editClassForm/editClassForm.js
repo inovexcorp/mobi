@@ -23,12 +23,15 @@
                     mapping: '=',
                     classMappingId: '='
                 },
-                controller: function() {
+                controller: function($scope) {
                     var dvm = this;
 
+                    dvm.openProperty = function(propId) {
+                        $scope.openProp({propId: propId});
+                    }
                     dvm.getTitle = function() {
-                        var ontologyId = mappingManagerService.getSourceOntology(dvm.mapping);
-                        var classId = mappingManagerService.getClassByMappingId(dvm.mapping, dvm.classMappingId);
+                        var ontologyId = mappingManagerService.getSourceOntologyId(dvm.mapping);
+                        var classId = mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
                         return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontologyId, classId));
                     }
                 },

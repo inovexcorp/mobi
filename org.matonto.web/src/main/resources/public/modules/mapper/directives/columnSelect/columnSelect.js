@@ -11,12 +11,12 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    columns: '=',
+                    columns: '='
+                },
+                bindToController: {
                     selectedColumn: '='
                 },
-                controller: function() {
-                    var dvm = this;
-                },
+                controller: angular.noop,
                 templateUrl: 'modules/mapper/directives/columnSelect/columnSelect.html'
             }
         }

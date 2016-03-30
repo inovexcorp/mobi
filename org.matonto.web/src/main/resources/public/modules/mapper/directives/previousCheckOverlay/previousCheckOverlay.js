@@ -36,15 +36,15 @@
                     dvm.mappingSeparator = mappingManagerService.getSeparator(dvm.mapping);
 
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var propId = mappingManagerService.getPropByMappingId(dvm.mapping, dataMappingId);
-                        var classId = mappingManagerService.getClassByMapping(
+                        var propId = mappingManagerService.getPropIdByMappingId(dvm.mapping, dataMappingId);
+                        var classId = mappingManagerService.getClassIdByMapping(
                             mappingManagerService.findClassWithDataMapping(dvm.mapping.jsonld, dataMappingId)
                         );
                         var propName = ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntology(dvm.mapping), classId, propId)
+                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntologyId(dvm.mapping), classId, propId)
                         );
                         var className = ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClass(mappingManagerService.getSourceOntology(dvm.mapping), classId)
+                            ontologyManagerService.getClass(mappingManagerService.getSourceOntologyId(dvm.mapping), classId)
                         );
                         return className + ": " + propName;
                     }

@@ -82,7 +82,6 @@
                         $q.all(promises)
                             .then(function(response) {
                                 $rootScope.showSpinner = false;
-                                console.log(self.ontologies);
                             });
                     }, function(response) {
                         console.log('Error in initialize:', response);
@@ -693,7 +692,7 @@
             }
 
             self.getEntityName = function(entity) {
-                return _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || $filter('beautify')(_.get($filter('splitIRI')(_.get(entity, '@id')), 'end'));        
+                return _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || $filter('beautify')($filter('splitIRI')(_.get(entity, '@id')).end);        
             }
         }
 })();

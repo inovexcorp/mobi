@@ -3,6 +3,8 @@
 
 $sidebar-width: 150px;
 $overlay-height: 450px;
+$rdf-padding: 10px;
+$rdf-controls-height: 34px + $rdf-padding/2;
 
 .mapper {
     #mapper-content {
@@ -26,7 +28,7 @@ $overlay-height: 450px;
                 overflow-x: auto;
                 width: 100%;
                 -webkit-transition: all 0.4s ease-in-out;
-                transition: all 0.4s ease-in-out;
+                        transition: all 0.4s ease-in-out;
                 
                 #file-preview-container {
                     height: 100%;
@@ -68,7 +70,7 @@ $overlay-height: 450px;
             }
         }
     }
-    #sidebar-wrapper {
+    .sidebar-wrapper {
         background-color: $gray-lighter;
         height: 100%;
         display: inline-block;
@@ -76,9 +78,13 @@ $overlay-height: 450px;
         width: $sidebar-width;
         float: left;
 
-        #step-through {
+        .step-through {
             text-align: center;
 
+            span {
+                width: 100%;
+                display: block;
+            }
             .complete {
                 font-weight: normal;
                 color: $gray-base;
@@ -89,13 +95,9 @@ $overlay-height: 450px;
             }
             .upcoming {
                 font-weight: lighter;
-                /*color: #8A8A8A;*/
                 color: $gray-light;
             }
         }
-    }
-    div.overlay-button-container {
-        clear: both;
     }
     .ontology-preview {
         overflow-y: auto;
@@ -103,34 +105,40 @@ $overlay-height: 450px;
             font-size: 14px;
         }
     }
-    #ontology-preview-overlay {
+    .ontology-preview-overlay {
         .content {
             max-height: $overlay-height;
         }
     }
-    #mapping-select-overlay {
+    .mapping-select-overlay {
+        .mapping-radio {
+            width: 100%;
+        }
+        .content {
+            min-height: $overlay-height;
+
+            &>div.form-group {
+                width: 50%;
+                float: left;
+                height: ($overlay-height - 75);
+                padding: 0.5em;
+                margin-bottom: 0;
+            }
+        }
+    }
+    .ontology-select-overlay {
         .content {
             min-height: $overlay-height;
         }
-        div.form-group {
+        .ontology-select, .ontology-preview {
             width: 50%;
             float: left;
             height: ($overlay-height - 75);
             padding: 0.5em;
+            margin-bottom: 0;
         }
     }
-    #ontology-select-overlay {
-        .content {
-            min-height: $overlay-height;
-        }
-        #ontology-select, .ontology-preview {
-            width: 50%;
-            float: left;
-            height: ($overlay-height - 75);
-            padding: 0.5em;
-        }
-    }
-    #previous-check-overlay {
+    .previous-check-overlay {
         .content {
             min-height: $overlay-height;
         }
@@ -141,25 +149,26 @@ $overlay-height: 450px;
             padding: 0.5em;
         }
     }
-    #starting-class-select-overlay {
+    .starting-class-select-overlay {
         .content {
             min-height: $overlay-height;
         }
-        #class-select, .class-preview {
+        .class-select, .class-preview {
             width: 50%;
             float: left;
             height: ($overlay-height - 75);
             padding: 0.5em;
+            margin-bottom: 0;
         }
     }
-    #finish-overlay {
+    .finish-overlay {
         div.form-group {
             width: 100%;
             float: left;
             padding: 0.5em;
         }
     }
-    #file-form {
+    .file-form {
         margin-top: -1em;
     }
     #edit-mapping-container {
@@ -190,7 +199,7 @@ $overlay-height: 450px;
                 }
             }
         }
-        #rdf-preview {
+        .rdf-preview {
             width: 35%;
             height: 100%;
             position: absolute;
@@ -200,17 +209,17 @@ $overlay-height: 450px;
 
             &.slide {
                 -webkit-transition: all 0.8s ease-in-out;
-                transition: all 0.8s ease-in-out;
+                        transition: all 0.8s ease-in-out;
             }
             &.out {
                 right: -30px;
             }
             &.in {
                 right: -webkit-calc(-35% - 30px);
-                right: -moz-calc(-35% - 30px);
-                right: calc(-35% - 30px);
+                right:    -moz-calc(-35% - 30px);
+                right:         calc(-35% - 30px);
             }
-            #toggle-btn {
+            .toggle-btn {
                 background-color: $gray;
                 position: absolute;
                 padding: 0.2em;
@@ -225,15 +234,21 @@ $overlay-height: 450px;
             form {
                 width: 100%;
                 height: 100%;
-                padding: 10px;
+                padding: $rdf-padding;
+
+                .controls {
+                    height: $rdf-controls-height;
+                }
                 textarea {
                     width: 100%;
                     resize: none;
+                    height: -webkit-calc(100% - #{$rdf-controls-height});
+                    height:    -moz-calc(100% - #{$rdf-controls-height});
+                    height:         calc(100% - #{$rdf-controls-height});
                 }
             }
         }
         .available-props {
-            width: 25%;
             border-radius: 5px;
             height: 20em;
             overflow-y: auto;
@@ -268,18 +283,19 @@ $overlay-height: 450px;
             height: 90%;
             position: relative;
 
-            #edit-cancel, #prop-form, #column-form, #edit-prop, #edit-class {
+            #edit-cancel, .prop-form, .column-form, .edit-prop, .edit-class {
                 width: 75%;
                 float: left;
                 padding: 0.5em;
-                .form-control {
+
+                .form-group {
                     width: 25%;
                 }
                 .form-btns {
                     margin-bottom: 0px;
                 }
             }
-            #class-list-container {
+            .class-list-container {
                 width: 25%;
                 padding: 0.5em;
                 height: 100%;
@@ -287,7 +303,7 @@ $overlay-height: 450px;
                 border: 1px solid $gray-light;
                 overflow-y: auto;
 
-                #class-list {
+                .class-list {
                     li {
                         text-overflow: ellipsis;
                     }

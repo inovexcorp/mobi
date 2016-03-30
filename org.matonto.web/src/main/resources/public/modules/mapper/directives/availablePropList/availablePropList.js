@@ -16,10 +16,13 @@
                     props: '=',
                     openProp: '&'
                 },
-                controller: function() {
+                controller: function($scope) {
                     var dvm = this;
                     dvm.selectedProp = undefined;
 
+                    dvm.openProperty = function(propId) {
+                        $scope.openProp({propId: propId});
+                    }
                     dvm.getPropName = function(prop) {
                         return ontologyManagerService.getEntityName(prop);
                     }

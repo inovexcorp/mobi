@@ -19,6 +19,7 @@
             'ui.select',
             'textInput',
             'textArea',
+            'radioButton',
             'customButton',
             'objectSelect',
             'stringSelect',

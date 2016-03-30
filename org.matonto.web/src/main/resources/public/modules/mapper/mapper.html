@@ -47,7 +47,7 @@
         <h3 ng-if="!vm.areOntologies()">No available ontologies to map with</h3>
         <div id="main" ng-style="{paddingBottom: (vm.tableHeight + 'px')}">
             <file-form ng-if="vm.activeStep === 0 && vm.areOntologies()" 
-                ng-model="vm.delimitedFile" 
+                delimited-file="vm.delimitedFile" 
                 on-upload-click="vm.submitFileUpload()" 
                 on-continue-click="vm.displayMappingSelect()"
                 separator="vm.delimitedSeparator"
@@ -82,7 +82,7 @@
                         click-prop="vm.displayEditPropForm(classMappingId, propMappingId)"
                         click-delete="vm.displayDeleteConfirmation(classMappingId, propMappingId)"></class-list>
                     <prop-form ng-if="vm.newProp" 
-                        ng-model="vm.selectedPropId" 
+                        selected-prop="vm.selectedPropId" 
                         props="vm.availableProps"
                         is-datatype-prop="vm.displayColumnForm()"
                         is-object-prop="vm.clearSelectedColumn()"
@@ -91,7 +91,7 @@
                         set="vm.setObjectProp()"
                         set-next="vm.setNextObjectProp()"></prop-form>
                     <column-form ng-if="vm.isDatatypeProperty(vm.selectedPropId) && vm.newProp" 
-                        ng-model="vm.selectedColumn" 
+                        selected-column="vm.selectedColumn" 
                         columns="vm.availableColumns"
                         set="vm.setDatatypeProp(column)"
                         set-next="vm.setNextDatatypeProp(column)"
@@ -109,7 +109,7 @@
                         class-mapping-id="vm.editingClassMappingId"
                         is-last-class="vm.numMappedClasses === 1"
                         props="vm.availableProps"
-                        open-prop="vm.openAvailableProp"
+                        open-prop="vm.openAvailableProp(propId)"
                         click-delete="vm.displayDeleteConfirmation(classMappingId)"></edit-class-form>
                     <a id="edit-cancel" ng-if="vm.editingClassMappingId" ng-click="vm.resetEditingVars(); vm.clearSelectedColumn();">Cancel</a>
                 </div>
@@ -120,7 +120,6 @@
             headers="vm.filePreview.headers" 
             table-height="vm.tableHeight"
             highlight-idx="vm.isDatatypeProperty(vm.selectedPropId) ? vm.filePreview.headers.indexOf(vm.selectedColumn) : undefined"
-            toggle-click="vm.togglePreview(big)"
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
     </div>

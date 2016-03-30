@@ -25,13 +25,13 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.ontologyId = mappingManagerService.getSourceOntology(dvm.mapping);
+                    dvm.ontologyId = mappingManagerService.getSourceOntologyId(dvm.mapping);
 
                     dvm.getClassId = function() {
-                        return mappingManagerService.getClassByMappingId(dvm.mapping, dvm.classMappingId);
+                        return mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
                     }
                     dvm.getPropId = function() {
-                        return mappingManagerService.getPropByMappingId(dvm.mapping, dvm.selectedPropMapping);
+                        return mappingManagerService.getPropIdByMappingId(dvm.mapping, dvm.selectedPropMapping);
                     }
                     dvm.getTitle = function() {
                         var classId = dvm.getClassId();

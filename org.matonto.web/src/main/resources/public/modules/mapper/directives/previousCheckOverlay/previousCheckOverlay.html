@@ -1,4 +1,4 @@
-<div id="previous-check-overlay" class="overlay lg">
+<div class="previous-check-overlay overlay lg">
     <form name="validateForm" class="content">
         <h6>Validate Mapping {{dvm.mapping.name}}</h6>
         <div class="result" ng-if="validateForm.$invalid">
@@ -25,7 +25,7 @@
             <h3 class="text-success">No conflicts!</h3>
         </div>
 
-        <div class="overlay-button-container">
+        <div class="btn-container clearfix">
             <p ng-hide="validateForm.$error.matchingSeparators" class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
             <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
             <custom-button on-click="onClickContinue()"

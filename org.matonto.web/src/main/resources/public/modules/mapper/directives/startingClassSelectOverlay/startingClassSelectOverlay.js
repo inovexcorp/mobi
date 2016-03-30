@@ -22,13 +22,16 @@
                 controller: function() {
                     var dvm = this;
 
+                    dvm.getOntologyId = function(classObj) {
+                        return dvm.ontologyId;
+                    }
                     dvm.getClasses = function(ontologyId) {
                         return ontologyManagerService.getClasses(ontologyId);
                     }
                     dvm.getClass = function(ontologyId, classId) {
                         return ontologyManagerService.getClass(ontologyId, classId);
                     }
-                    dvm.createOptionName = function(classObj) {
+                    dvm.getName = function(classObj) {
                         return ontologyManagerService.getEntityName(classObj)
                     }
                 },

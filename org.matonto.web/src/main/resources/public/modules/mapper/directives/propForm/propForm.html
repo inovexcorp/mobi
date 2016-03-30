@@ -1,4 +1,4 @@
-<form id="prop-form">
+<form class="prop-form">
     <div class="form-group">
         <custom-label>{{dvm.getClassName(ontologyId, classId) + ' Properties'}}</custom-label>
         <prop-select props="dvm.props" selected-prop="dvm.selectedProp" on-change="dvm.update()"></prop-select>
@@ -7,8 +7,8 @@
         ontology-id="ontologyId" 
         class-id="{{classId}}" 
         selected-prop="{{dvm.selectedProp}}"></range-class-description>
-    <div class="form-btns form-group" ng-show="dvm.isObjectProperty()">
-        <button type="button" class="btn btn-default" ng-click="set()">Set</button>
-        <button type="button" class="btn btn-default" ng-click="setNext()" ng-disabled="dvm.props.length <= 1">Set &amp; Next</button>
+    <div class="form-btns form-group btn-container" ng-show="dvm.isObjectProperty()">
+        <custom-button type="'secondary'" on-click="set()" pull="'left'">Set</custom-button>
+        <custom-button type="'secondary'" on-click="setNext()" pull="'left'" is-disabled-when="dvm.props.length <= 1">Set &amp; Next</custom-button>
     </div>
 </form>

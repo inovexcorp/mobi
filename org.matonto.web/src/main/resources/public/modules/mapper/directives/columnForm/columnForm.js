@@ -17,11 +17,9 @@
                 },
                 bindToController: {
                     columns: '=',
-                    selectedColumn: '=ngModel'
+                    selectedColumn: '='
                 },
-                controller: function() {
-                    var dvm = this;
-                },
+                controller: angular.noop,
                 templateUrl: 'modules/mapper/directives/columnForm/columnForm.html'
             }
         }

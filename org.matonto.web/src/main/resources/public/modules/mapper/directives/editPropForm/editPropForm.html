@@ -1,14 +1,14 @@
-<form id="edit-prop">
+<form class="edit-prop">
     <h4>{{dvm.getTitle()}}</h4>
-    <div class="form-group">
-        <column-select ng-if="!dvm.isObjectProperty()" columns="columns" selected-column="dvm.selectedColumn"></column-select>
+    <div class="form-group" ng-if="!dvm.isObjectProperty()">
+        <column-select columns="columns" selected-column="dvm.selectedColumn"></column-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 
         ontology-id="dvm.ontologyId" 
         class-id="{{dvm.getClassId()}}" 
         selected-prop="{{dvm.getPropId()}}"></range-class-description>
-    <div class="form-btns form-group">
-        <button type="button" class="btn btn-default" ng-if="!dvm.isObjectProperty()" ng-click="set({column: dvm.selectedColumn})">Set</button>
-        <button type="button" class="btn btn-default" ng-click="clickDelete({classMappingId: dvm.classMappingId, propMappingId: dvm.selectedPropMapping})">Delete</button>
+    <div class="form-btns form-group btn-container">
+        <custom-button ng-if="!dvm.isObjectProperty()" type="'secondary'" on-click="set({column: dvm.selectedColumn})" pull="'left'">Set</custom-button>
+        <custom-button type="'secondary'" on-click="clickDelete({classMappingId: dvm.classMappingId, propMappingId: dvm.selectedPropMapping})" pull="'left'">Delete</custom-button>
     </div>
 </form>

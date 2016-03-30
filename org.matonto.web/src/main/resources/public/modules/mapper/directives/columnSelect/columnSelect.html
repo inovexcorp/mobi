@@ -1,3 +1,10 @@
-<select class="column-select form-control" ng-model="selectedColumn">
-    <option ng-repeat="column in columns" value="{{column}}">{{column}}</option>
-</select>
+<div class="column-select">
+    <ui-select ng-model="dvm.selectedColumn">
+        <ui-select-match placeholder="Select a column">
+            {{$select.selected}}
+        </ui-select-match>
+        <ui-select-choices repeat="column in columns | filter:$select.search">
+            {{column | highlight:$select.search}}
+        </ui-select-choices>
+    </ui-select>
+</div>

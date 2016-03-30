@@ -30,18 +30,6 @@
                     preview: '=',
                     createPreview: '&'
                 },
-                link: function(scope, elem, attrs, ctrl) {
-                    var updateHeight = function() {
-                        var textarea = elem[0].querySelector("#text-preview");
-                        ctrl.textareaHeight = elem[0].offsetHeight - textarea.offsetTop - 10;
-                    }
-
-                    updateHeight();
-                    angular.element($window).bind('resize', function() {
-                        updateHeight();
-                        scope.$digest();
-                    });
-                },
                 controller: function() {
                     var dvm = this;
                     dvm.visible = true;

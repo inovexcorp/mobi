@@ -1,5 +1,5 @@
-<div id="class-list-container">
-    <ul id="class-list">
+<div class="class-list-container">
+    <ul class="class-list">
         <li ng-repeat="classMapping in dvm.getClassMappings()">
             <a ng-click="clickClass({classMappingId: classMapping['@id']})">{{dvm.getClassTitle(classMapping)}}</a>
             <ul class="props">

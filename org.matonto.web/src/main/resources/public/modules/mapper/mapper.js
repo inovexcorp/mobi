@@ -74,18 +74,16 @@
                 onError(response);
                 vm.filePreview = undefined;
             }
+            var csvSuccess = function(data) {
+                vm.delimitedFileName = data;
+                vm.getPreview();
+            }
             if (vm.delimitedFileName) {
                 csvManagerService.update(vm.delimitedFileName, vm.delimitedFile)
-                    .then(function(data) {
-                        vm.delimitedFileName = data;
-                        vm.getSmallPreview();
-                    }, csvError);
+                    .then(csvSuccess, csvError);
             } else {
                 csvManagerService.upload(vm.delimitedFile)
-                    .then(function(data) {
-                        vm.delimitedFileName = data;
-                        vm.getSmallPreview();
-                    }, csvError);
+                    .then(csvSuccess, csvError);
             }
         }
 
@@ -127,10 +125,10 @@
             return ontologyManagerService.getEntityName(ontologyManagerService.getOntologyById(vm.getOntologyId()));
         }
         vm.getOntologyId = function() {
-            return mappingManagerService.getSourceOntology(vm.mapping);
+            return mappingManagerService.getSourceOntologyId(vm.mapping);
         }
         vm.getClassId = function(classMappingId) {
-            return mappingManagerService.getClassByMappingId(vm.mapping, classMappingId);
+            return mappingManagerService.getClassIdByMappingId(vm.mapping, classMappingId);
         }
 
         /* Private helper methods */
@@ -155,24 +153,8 @@
         }
 
         /* File Preview Table Methods */
-        vm.togglePreview = function(big) {
-            if (big) {
-                vm.getBigPreview();
-            } else {
-                vm.getSmallPreview();
-            }
-        }
-        vm.getBigPreview = function() {
+        vm.getPreview = function() {
             csvManagerService.previewFile(vm.delimitedFileName, 100, vm.delimitedSeparator, vm.delimitedContainsHeaders)
-                .then(function(data) {
-                    vm.filePreview = data;
-                }, function(error) {
-                    console.log(error);
-                    vm.filePreview = undefined;
-                });
-        }
-        vm.getSmallPreview = function() {
-            csvManagerService.previewFile(vm.delimitedFileName, 5, vm.delimitedSeparator, vm.delimitedContainsHeaders)
                 .then(function(data) {
                     vm.filePreview = data;
                 }, function(error) {
@@ -206,6 +188,7 @@
                 case 'new':
                     vm.mapping = mappingManagerService.createNewMapping(mappingName, vm.delimitedSeparator);
                     vm.activeStep = 2;
+                    vm.displayPreviousCheck = false;
                     break;
                 case 'previous':
                     mappingManagerService.getMapping(mappingName)
@@ -307,7 +290,7 @@
             vm.editingClassMappingId = classMappingId;
             vm.selectedPropMappingId = propMappingId;
             var propMapping = _.find(vm.mapping.jsonld, {'@id': propMappingId});
-            vm.selectedPropId = mappingManagerService.getPropByMapping(propMapping);
+            vm.selectedPropId = mappingManagerService.getPropIdByMapping(propMapping);
             if (mappingManagerService.isDataMapping(propMapping)) {
                 var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
                 var extraColumn = vm.filePreview.headers[index];
@@ -333,7 +316,7 @@
             vm.deleteEntity = {classMappingId};
             var classId = vm.getClassId(classMappingId);
             if (propMappingId) {
-                var propId = mappingManagerService.getPropByMappingId(vm.mapping, propMappingId);
+                var propId = mappingManagerService.getPropIdByMappingId(vm.mapping, propMappingId);
                 vm.deleteEntity.name = ontologyManagerService.getEntityName(
                     ontologyManagerService.getClassProperty(vm.getOntologyId(), classId, propId)
                 );

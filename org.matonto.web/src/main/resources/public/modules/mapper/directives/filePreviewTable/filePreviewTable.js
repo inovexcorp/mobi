@@ -17,7 +17,6 @@
                     rows: '=',
                     highlightIdx: '=',
                     isClickable: '=',
-                    toggleClick: '&',
                     onClick: '&'
                 },
                 bindToController: {
@@ -39,9 +38,10 @@
                     dvm.big = false;
                     dvm.small = true;
                     dvm.containerTop = '0px';
+                    dvm.rows = _.take($scope.rows, 5);
 
                     $scope.$watch('rows', function(newVal, oldVal) {
-                        if (!dvm.big && !angular.equals(newVal, oldVal)) {
+                        if (!angular.equals(newVal, oldVal)) {
                             setHeightDefaults();
                         }
                     });
@@ -49,11 +49,13 @@
                     dvm.toggleTable = function() {
                         dvm.big = !dvm.big;
                         if (dvm.big) {
+                            dvm.rows = $scope.rows;
                             var top = -$element[0].offsetTop;
                             var parentHeight = $element[0].parentNode.offsetHeight;
                             dvm.containerTop = `${top}px`;
                             dvm.containerHeight = `${parentHeight}px`;
                         } else {
+                            dvm.rows = _.take($scope.rows, 5);
                             dvm.containerTop = '0px';
                             dvm.containerHeight = dvm.initialHeight + 'px';
                             dvm.small = true;

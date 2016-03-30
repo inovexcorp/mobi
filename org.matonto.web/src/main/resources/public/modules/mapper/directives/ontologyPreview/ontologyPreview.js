@@ -41,9 +41,11 @@
                         });
                     }
                     dvm.getClassList = function() {
-                        var classNames = (classList.length === 0 || ontologyId !== dvm.ontology['@id']) ? dvm.createClassList() : classList;
+                        if (classList.length === 0 || ontologyId !== dvm.ontology['@id']) {
+                            dvm.createClassList();
+                        }
                         ontologyId = _.get(dvm.ontology, '@id', '');
-                        return classNames;
+                        return classList;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/ontologyPreview/ontologyPreview.html'

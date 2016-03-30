@@ -15,7 +15,7 @@
                     onContinueClick: '&'
                 },
                 bindToController: {
-                    delimitedFile: '=ngModel',
+                    delimitedFile: '=',
                     separator: '=',
                     containsHeaders: '='
                 },

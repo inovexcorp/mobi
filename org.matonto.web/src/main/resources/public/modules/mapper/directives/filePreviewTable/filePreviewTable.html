@@ -1,6 +1,6 @@
 <div id="fixed-height-container" ng-style="{'height': dvm.initialHeight + 'px'}">
     <div id="table-container" ng-style="{'height': dvm.containerHeight, 'top': dvm.containerTop}">
-        <button type="button" id="toggle-table" ng-click="dvm.toggleTable(); toggleClick({big: dvm.big})">
+        <button type="button" id="toggle-table" ng-click="dvm.toggleTable()">
             <i class="fa" ng-class="{'fa-expand': !dvm.big, 'fa-compress': dvm.big}"></i>
         </button>
         <div id="file-preview-container" ng-class="dvm.small ? 'no-scroll' : 'scroll'">
@@ -15,7 +15,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="row in rows track by $index">
+                    <tr ng-repeat="row in dvm.rows track by $index">
                         <td ng-repeat="item in row track by $index" 
                             ng-mouseover="dvm.hoverIdx = $index"
                             ng-mouseleave="dvm.hoverIdx = undefined"

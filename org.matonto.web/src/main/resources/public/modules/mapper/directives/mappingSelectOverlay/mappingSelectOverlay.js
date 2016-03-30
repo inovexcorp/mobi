@@ -20,7 +20,10 @@
                     var dvm = this;
                     dvm.previousMappings = mappingManagerService.previousMappingNames;
 
-                    dvm.check = function() {
+                    dvm.updateMappingName = function() {
+                        dvm.mappingName = (dvm.mappingType === 'new') ? '' : dvm.previousMappings[0];
+                    }
+                    dvm.testUniqueName = function() {
                         if ($scope.mappingForm) {
                             $scope.mappingForm.mappingName.$setValidity('uniqueName', 
                                 dvm.mappingType === 'previous' || 

@@ -23,7 +23,7 @@
                     dvm.getOntologyById = function(ontologyId) {
                         return ontologyManagerService.getOntologyById(ontologyId);
                     }
-                    dvm.createOptionName = function(ontology) {
+                    dvm.getName = function(ontology) {
                         return ontologyManagerService.getEntityName(ontology);
                     }
                 },

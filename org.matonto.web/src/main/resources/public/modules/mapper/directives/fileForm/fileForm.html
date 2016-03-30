@@ -1,4 +1,4 @@
-<form id="file-form">
+<form class="file-form">
     <div class="form-group">
         <h3>Choose Delimited File</h3>
         <file-input ng-model="dvm.delimitedFile" accept=".csv,tsv"></file-input>
@@ -22,11 +22,9 @@
             Colon
         </label></div>
     </div>
-    <button id="upload-btn" type="button" class="btn btn-primary" 
-        ng-disabled="!dvm.delimitedFile" 
-        ng-click="dvm.uploaded = true; onUploadClick()">{{dvm.uploaded ? 'Update' : 'Upload'}}</button>
-    <button id="continue-btn" type="button" class="btn btn-primary" 
-        ng-show="dvm.uploaded" 
-        ng-click="onContinueClick()">Continue</button>
-    <p class="help-block" ng-if="dvm.uploaded">Click update with desired changes or click continue.</p>
+    <div style="overflow: hidden;" class="form-group btn-container">
+        <custom-button id="upload-btn" on-click="dvm.uploaded = true; onUploadClick()" pull="'left'" is-disabled-when="!dvm.delimitedFile" aria-describedby="form-help-block">{{dvm.uploaded ? 'Update' : 'Upload'}}</custom-button>
+        <custom-button id="continue-btn" ng-show="dvm.uploaded" on-click="onContinueClick()" pull="'left'">Continue</custom-button>
+    </div>
+    <span id="form-help-block" class="help-block" ng-if="dvm.uploaded">Click update with desired changes or click continue.</span>    
 </form>

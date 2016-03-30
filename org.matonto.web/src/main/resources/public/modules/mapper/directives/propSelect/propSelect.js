@@ -14,13 +14,15 @@
                 replace: true,
                 scope: {
                     props: '=',
-                    selectedProp: '=',
                     onChange: '&'
+                },
+                bindToController: {
+                    selectedProp: '='
                 },
                 controller: function() {
                     var dvm = this;
 
-                    dvm.createName = function(propObj) {
+                    dvm.getName = function(propObj) {
                         return ontologyManagerService.getEntityName(propObj);
                     }
                 },

@@ -1,10 +1,10 @@
-<form id="edit-class">
+<form class="edit-class">
     <h4>{{dvm.getTitle()}}</h4>
     <div class="form-group">
         <h5>Available Properties</h5>
-        <available-prop-list props="props" open-prop="openProp()"></available-prop-list>
+        <available-prop-list props="props" open-prop="dvm.openProperty(propId)"></available-prop-list>
     </div>
-    <div class="form-btns  form-group">
-        <button type="button" class="btn btn-default" ng-click="clickDelete({classMappingId: dvm.classMappingId})" ng-disabled="isLastClass">Delete</button>
+    <div class="form-btns form-group btn-container">
+        <custom-button type="'secondary'" on-click="clickDelete({classMappingId: dvm.classMappingId})" pull="'left'" is-disabled-when="isLastClass">Delete</custom-button>
     </div>
 </form>
