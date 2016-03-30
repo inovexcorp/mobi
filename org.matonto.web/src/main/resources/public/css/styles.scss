@@ -9,6 +9,7 @@ body {
     position: absolute;
     right: 0;
     top: 0;
+    overflow-x: hidden;
 
     /* All <a> tags have the pointer cursor */
     a {

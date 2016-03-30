@@ -3,6 +3,9 @@
 
     angular
         .module('app', [
+            'angular-uuid',
+            'ngCookies',
+            'ngFileSaver',
             'catalog',
             'home',
             'login',
@@ -16,6 +19,7 @@
             'ui.select',
             'textInput',
             'textArea',
+            'radioButton',
             'customButton',
             'objectSelect',
             'stringSelect',

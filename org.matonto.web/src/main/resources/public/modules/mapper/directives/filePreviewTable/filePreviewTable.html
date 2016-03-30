@@ -1,0 +1,29 @@
+<div id="fixed-height-container" ng-style="{'height': dvm.initialHeight + 'px'}">
+    <div id="table-container" ng-style="{'height': dvm.containerHeight, 'top': dvm.containerTop}">
+        <button type="button" id="toggle-table" ng-click="dvm.toggleTable()">
+            <i class="fa" ng-class="{'fa-expand': !dvm.big, 'fa-compress': dvm.big}"></i>
+        </button>
+        <div id="file-preview-container" ng-class="dvm.small ? 'no-scroll' : 'scroll'">
+            <table id="file-preview" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th ng-repeat="item in headers track by $index" 
+                            ng-mouseover="dvm.hoverIdx = $index"
+                            ng-mouseleave="dvm.hoverIdx = undefined"
+                            ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable}" 
+                            ng-click="isClickable ? onClick({colIndex: $index}) : undefined">{{item}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="row in dvm.rows track by $index">
+                        <td ng-repeat="item in row track by $index" 
+                            ng-mouseover="dvm.hoverIdx = $index"
+                            ng-mouseleave="dvm.hoverIdx = undefined"
+                            ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable}"
+                            ng-click="isClickable ? onClick({colIndex: $index}) : undefined">{{item}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

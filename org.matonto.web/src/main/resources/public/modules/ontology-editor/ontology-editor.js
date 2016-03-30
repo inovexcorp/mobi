@@ -73,7 +73,7 @@
         }
 
         vm.isObjectProperty = function() {
-            return ontologyManagerService.isObjectProperty(vm.selected, vm.ontology);
+            return ontologyManagerService.isObjectProperty(vm.selected['@type'], vm.ontology.matonto.owl);
         }
 
         vm.entityChanged = function() {

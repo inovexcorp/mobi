@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj'])
+        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj', 'prefixes'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj', 'prefixes'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes) {
             var self = this,
                 prefix = '/matontorest/ontologies',
                 defaultOwl = 'http://www.w3.org/2002/07/owl#',
@@ -653,14 +653,8 @@
                 selected['@id'] = fresh;
             }
 
-            self.isObjectProperty = function(property, ontology) {
-                var result = false;
-
-                if(property.hasOwnProperty('@type') && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('rdfs') && property['@type'].indexOf(ontology.matonto.owl + 'ObjectProperty') !== -1) {
-                    result = true;
-                }
-
-                return result;
+            self.isObjectProperty = function(types, owl) {
+                return types.indexOf(owl + 'ObjectProperty') !== -1;
             }
 
             self.getOntology = function(oi) {
@@ -670,11 +664,35 @@
                 return undefined;
             }
 
+            self.getOntologyById = function(ontologyId) {
+                return _.find(self.ontologies, {'@id': ontologyId});
+            }
+
             self.getOntologyProperty = function(ontology, prop) {
                 if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty(prop)) {
                     return ontology.matonto[prop];
                 }
                 return undefined;
+            }
+
+            self.getClasses = function(ontologyId) {
+                return _.get(self.getOntologyById(ontologyId), 'matonto.classes', []);
+            }
+
+            self.getClass = function(ontologyId, classId) {
+                return _.find(self.getClasses(ontologyId), {'@id': classId});
+            }
+
+            self.getClassProperties = function(ontologyId, classId) {
+                return _.get(self.getClass(ontologyId, classId), 'matonto.properties', []);
+            }
+
+            self.getClassProperty = function(ontologyId, classId, propId) {
+                return _.find(self.getClassProperties(ontologyId, classId), {'@id': propId});
+            }
+
+            self.getEntityName = function(entity) {
+                return _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || $filter('beautify')($filter('splitIRI')(_.get(entity, '@id')).end);        
             }
         }
 })();
