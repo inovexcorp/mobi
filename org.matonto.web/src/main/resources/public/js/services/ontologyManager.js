@@ -474,6 +474,41 @@
                 return ontologyCopy;
             }
 
+            function isProperty(types) {
+                return _.indexOf(types, prefixes.owl + 'ObjectProperty' !== -1) || _.indexOf(types, prefixes.owl + 'DatatypeProperty' !== -1) || _.indexOf(types, prefixes.owl + 'DataTypeProperty' !== -1);
+            }
+
+            function updateProperty(modelId, modelGraph, oldEntity, classObj, ontology) {
+                if(oldEntity) {
+                    var index = _.indexOf(classObj.matonto.properties, oldEntity);
+                    modelGraph.matonto = oldEntity.matonto;
+
+                    if(!_.get(modelGraph, prefixes.rdfs + 'domain')) {
+                        ontology.matonto.noDomains.push(modelGraph);
+                    }
+                } else {
+                    _.forEach(ontology.matonto.classes, function(obj) {
+                        oldEntity = _.find(obj.matonto.properties, {'@id': modelId});
+
+                        if(oldEntity) {
+                            var index = _.indexOf(obj.matonto.properties, oldEntity);
+
+                            modelGraph.matonto = oldEntity.matonto;
+                            obj.matonto.properties[index] = modelGraph;
+
+                            return false;
+                        }
+                    });
+                }
+            }
+
+            function updateClass(modelId, modelGraph, oldEntity, ontology) {
+                var index = _.indexOf(ontology.matonto.classes, {'@id': modelId});
+
+                modelGraph.matonto = ontology.matonto.classes[index].matonto;
+                ontology.matonto.classes[index] = modelGraph;
+            }
+
             function deleteOntology(ontologyId, state) {
                 $rootScope.showSpinner = true;
 
@@ -509,14 +544,27 @@
                     .then(function(response) {
                         if(response.data.deleted) {
                             var ontology = ontologies[state.oi];
+                            var classObj = ontology.matonto.classes[state.ci];
 
                             console.log('Successfully deleted');
 
                             if(_.get(response, 'data.models', []).length) {
-                                ontology = updateChangedEntities(ontology, response.data.models);
+                                _.forEach(response.data.models, function(model) {
+                                    var modelGraph = _.get(model, '[0][\'@graph\'][0]', {});
+                                    var modelId = _.get(modelGraph, '@id', '');
+                                    var modelTypes = _.get(modelGraph, '@type', []);
+
+                                    if(_.indexOf(modelTypes, prefixes.owl + 'Class') !== -1) {
+                                        var oldEntity = _.find(ontology.matonto.classes, {'@id': modelId});
+                                        updateClass(modelId, modelGraph, oldEntity, ontology);
+                                    } else if(isProperty(modelTypes)) {
+                                        var oldEntity = _.find(classObj.matonto.properties, {'@id': modelId});
+                                        updateProperty(modelId, modelGraph, oldEntity, classObj, ontology);
+                                    }
+                                });
                             }
 
-                            ontology.matonto.classes.splice(state.ci, 1);
+                            ontologies[state.oi].matonto.classes.splice(state.ci, 1);
                             deferred.resolve(response);
                         } else {
                             console.log('Not deleted');
@@ -561,7 +609,19 @@
                             console.log('Successfully deleted');
 
                             if(_.get(response, 'data.models', []).length) {
-                                ontology = updateChangedEntities(ontology, response.data.models);
+                                _.forEach(response.data.models, function(model) {
+                                    var modelGraph = _.get(model, '[0][\'@graph\'][0]', {});
+                                    var modelId = _.get(modelGraph, '@id', '');
+                                    var modelTypes = _.get(modelGraph, '@type', []);
+
+                                    if(isProperty(modelTypes)) {
+                                        var oldEntity = classObj ? _.find(classObj.matonto.properties, {'@id': modelId}) : _.find(ontology.matonto.noDomains, {'@id': modelId});
+                                        updateProperty(modelId, modelGraph, oldEntity, classObj, ontology);
+                                    } else if(_.indexOf(modelTypes, prefixes.owl + 'Class') !== -1) {
+                                        var oldEntity = _.find(ontology.matonto.classes, {'@id': modelId});
+                                        updateClass(modelId, modelGraph, oldEntity, ontology);
+                                    }
+                                });
                             }
 
                             if(classObj) {
