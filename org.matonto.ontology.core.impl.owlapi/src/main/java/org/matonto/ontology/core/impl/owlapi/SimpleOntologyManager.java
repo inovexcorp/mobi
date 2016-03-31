@@ -329,9 +329,6 @@ public class SimpleOntologyManager implements OntologyManager {
     }
     
     public void createOntologyCatalog(@Nonnull Ontology ontology, String title, String description, OffsetDateTime issued, OffsetDateTime modified, Set<String> keywords, Set<Distribution> distributions) {
-        if(repository == null)
-            throw new IllegalStateException("Repository is null");
-     
         Resource ontologyId = ontology.getOntologyId().getOntologyIdentifier();
         org.matonto.catalog.api.Ontology ontologyCatalog = new org.matonto.catalog.impl.SimpleOntology.Builder(title)
                 .description(description)
@@ -343,6 +340,16 @@ public class SimpleOntologyManager implements OntologyManager {
                 .addDistribution(distributions)
                 .build();
 
-        catalogManager.createOntology(ontologyCatalog);    
+        createOntologyCatalog(ontologyCatalog);   
+    }
+    
+    public void createOntologyCatalog(org.matonto.catalog.api.Ontology ontologyCatalog) {
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+        
+        if(catalogManager == null)
+            throw new IllegalStateException("catalogManager is null");
+        
+        catalogManager.createOntology(ontologyCatalog);        
     }
 }
