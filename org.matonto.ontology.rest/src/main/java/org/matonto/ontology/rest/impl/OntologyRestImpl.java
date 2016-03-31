@@ -316,6 +316,41 @@ public class OntologyRestImpl implements OntologyRest {
         return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
     }
 
+    private Response addEntityToOntology(String ontologyIdStr, String entityJson) {
+        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+        }
+
+        if (entityJson == null || entityJson.length() == 0) {
+            throw ErrorUtils.sendError("entityJson is missing", Response.Status.BAD_REQUEST);
+        }
+
+        boolean added = false;
+        try {
+            Resource ontologyResource;
+            if (isBNodeString(ontologyIdStr.trim())) {
+                ontologyResource = factory.createBNode(ontologyIdStr.trim());
+            } else {
+                ontologyResource = factory.createIRI(ontologyIdStr.trim());
+            }
+
+            added = manager.addEntityToOntology(ontologyResource, entityJson);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("added", added);
+
+        return Response.status(200).entity(json.toString()).build();
+    }
+
+    @Override
+    public Response addClassToOntology(String ontologyIdStr, String classJson) {
+        return addEntityToOntology(ontologyIdStr, classJson);
+    }
+
     @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
         JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      

@@ -228,13 +228,15 @@ public class SimpleOntologyManager implements OntologyManager {
         RepositoryConnection conn = null;
 
         try {
+            conn = repository.getConnection();
             InputStream in = new ByteArrayInputStream(resourceJson.getBytes(StandardCharsets.UTF_8));
             Model changedModel = transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
 
-            conn = repository.getConnection();
-            RepositoryResult<Statement> changedStatements = conn.getStatements(originalChangedResource, null, null, ontologyResource);
+            if(originalChangedResource != null) {
+                RepositoryResult<Statement> changedStatements = conn.getStatements(originalChangedResource, null, null, ontologyResource);
+                conn.remove(changedStatements, ontologyResource);
+            }
 
-			conn.remove(changedStatements, ontologyResource);
 			conn.add(changedModel, ontologyResource);
 
             // TODO: handle ontology iri changes
@@ -261,6 +263,11 @@ public class SimpleOntologyManager implements OntologyManager {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean addEntityToOntology(Resource ontologyResource, String resourceJson) throws MatontoOntologyException {
+        return updateOntology(ontologyResource, null, resourceJson);
     }
 	
 	@Override

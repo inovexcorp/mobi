@@ -153,19 +153,18 @@ public interface OntologyRest {
     Response getClassesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
-     * Add class with requested class ID to ontology with requested ontology ID from the server.
+     * Add resource with to ontology with requested ontology ID from the server.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @param classIdStr the String representing the class Resource id. NOTE: Assumes id represents
-     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the new class model.
      * @return true if deleted, false otherwise.
+     */
     @POST
     @Path("{ontologyid}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     Response addClassToOntology(@PathParam("ontologyid") String ontologyIdStr,
-                                @PathParam("classid") String classIdStr,
-                                @QueryParam("classjson") String classJson;*/
+                                @QueryParam("resourcejson") String resourceJson);
 
     /**
      * Delete class with requested class ID from ontology with requested ontology ID from the server.
