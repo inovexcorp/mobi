@@ -5,7 +5,7 @@ var gulp = require('gulp'),
     concat = require('gulp-concat'),
     debug = require('gulp-debug'),
     del = require('del'),
-    es = require('event-stream'),
+    queue = require('streamqueue'),
     filelog = require('gulp-filelog'),
     flatten = require('gulp-flatten'),
     ignore = require('gulp-ignore'),
@@ -71,12 +71,15 @@ var injectFiles = function(files) {
         .pipe(gulp.dest(dest));
 };
 
-// Concatenate and minifies JS Files, right now, manually selecting the bower js files we want
+// Concatenate and minifies custom JS Files
 gulp.task('minify-scripts', function() {
-    return gulp.src(nodeJsFiles(nodeDir).concat(jsFiles(src)))
+    var nodeFiles = gulp.src(nodeJsFiles(nodeDir));
+    var customFiles = gulp.src(jsFiles(src))
         .pipe(babel({
             presets: ['es2015']
-        }))
+        }));
+
+    return queue({ objectMode: true }, nodeFiles, customFiles)
         .pipe(concat('main.js'))
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
@@ -88,7 +91,7 @@ gulp.task('minify-css', function() {
     var sassFiles = gulp.src(styleFiles(src, 'scss'))
             .pipe(sass().on('error', sass.logError)),
         cssFiles = gulp.src(nodeStyleFiles(nodeDir).concat(styleFiles(src, 'css')));
-    return es.concat(cssFiles, sassFiles)
+    return queue({ objectMode: true }, cssFiles, sassFiles)
         .pipe(concat('main.css'))
         .pipe(rename({suffix: '.min'}))
         .pipe(minifyCss())

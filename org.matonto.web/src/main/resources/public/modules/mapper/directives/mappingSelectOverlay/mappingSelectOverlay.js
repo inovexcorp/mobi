@@ -16,7 +16,7 @@
                     onClickBack: '&',
                     onClickContinue: '&'
                 },
-                controller: function($scope) {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.previousMappings = mappingManagerService.previousMappingNames;
 
@@ -30,7 +30,7 @@
                                 (dvm.mappingType === 'new' && dvm.previousMappings.indexOf(dvm.mappingName) < 0));
                         }
                     }
-                },
+                }],
                 templateUrl: 'modules/mapper/directives/mappingSelectOverlay/mappingSelectOverlay.html'
             }
         }
