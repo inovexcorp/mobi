@@ -128,8 +128,16 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response uploadOntologyJson(String ontologyJson) {
-        Ontology ontology = manager.createOntology(ontologyJson);
-        boolean persisted = manager.storeOntology(ontology);
+        boolean persisted = false;
+        Ontology ontology = null;
+
+        try {
+            ontology = manager.createOntology(ontologyJson);
+            persisted = manager.storeOntology(ontology);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
 
         return getUploadResponse(persisted, ontology);
     }
