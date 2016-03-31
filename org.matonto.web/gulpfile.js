@@ -71,7 +71,7 @@ var injectFiles = function(files) {
         .pipe(gulp.dest(dest));
 };
 
-// Concatenate and minifies custom JS Files
+// Concatenate and minifies JS Files
 gulp.task('minify-scripts', function() {
     var nodeFiles = gulp.src(nodeJsFiles(nodeDir));
     var customFiles = gulp.src(jsFiles(src))
