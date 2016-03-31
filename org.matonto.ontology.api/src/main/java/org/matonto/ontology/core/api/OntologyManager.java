@@ -62,7 +62,7 @@ public interface OntologyManager {
 	 * @param resourceJson The json-ld of the changed resource
 	 * @return True if successfully updated, false otherwise
 	 */
-	boolean updateOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
+	boolean saveChangesToOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
 
 	/**
 	 * Add the resource json to the Ontology object

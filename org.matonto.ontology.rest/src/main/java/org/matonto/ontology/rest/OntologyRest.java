@@ -100,7 +100,7 @@ public interface OntologyRest {
     @POST
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
-    Response updateOntology(@PathParam("ontologyid") String ontologyIdStr,
+    Response saveChangesToOntology(@PathParam("ontologyid") String ontologyIdStr,
                             @QueryParam("resourceid") String resourceIdStr,
                             @QueryParam("resourcejson") String resourceJson);
 
@@ -206,6 +206,20 @@ public interface OntologyRest {
     Response getObjectPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
+     * Adds the object property to the ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the new property model.
+     * @return true if deleted, false otherwise.
+     */
+    @POST
+    @Path("{ontologyid}/object-properties")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addObjectPropertyToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                         @QueryParam("resourcejson") String resourceJson);
+
+    /**
      * Delete object property with requested class ID from ontology with requested ontology ID from the server.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
@@ -231,6 +245,20 @@ public interface OntologyRest {
     @Path("{ontologyid}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     Response getDataPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Adds the data property to the ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the new property model.
+     * @return true if deleted, false otherwise.
+     */
+    @POST
+    @Path("{ontologyid}/data-properties")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addDataPropertyToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                       @QueryParam("resourcejson") String resourceJson);
 
     /**
      * Delete data property with requested class ID from ontology with requested ontology ID from the server.

@@ -217,8 +217,7 @@ public class SimpleOntologyManager implements OntologyManager {
         return true;
 	}
 
-	@Override
-    public boolean updateOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
+    private boolean updateOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
         if (repository == null)
             throw new IllegalStateException("Repository is null");
 
@@ -263,6 +262,11 @@ public class SimpleOntologyManager implements OntologyManager {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean saveChangesToOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
+        return updateOntology(ontologyResource, originalChangedResource, resourceJson);
     }
 
     @Override

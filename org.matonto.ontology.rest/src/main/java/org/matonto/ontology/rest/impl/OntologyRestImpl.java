@@ -176,7 +176,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    public Response updateOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
+    public Response saveChangesToOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
         if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
             throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
         }
@@ -205,7 +205,7 @@ public class OntologyRestImpl implements OntologyRest {
                 changedResource = factory.createIRI(resourceIdStr.trim());
             }
 
-            updated = manager.updateOntology(ontologyResource, changedResource, resourceJson);
+            updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while updating ontology.",
                     Response.Status.INTERNAL_SERVER_ERROR);
@@ -349,6 +349,16 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response addClassToOntology(String ontologyIdStr, String classJson) {
         return addEntityToOntology(ontologyIdStr, classJson);
+    }
+
+    @Override
+    public Response addObjectPropertyToOntology(String ontologyIdStr, String propertyJson) {
+        return addEntityToOntology(ontologyIdStr, propertyJson);
+    }
+
+    @Override
+    public Response addDataPropertyToOntology(String ontologyIdStr, String propertyJson) {
+        return addEntityToOntology(ontologyIdStr, propertyJson);
     }
 
     @Override
