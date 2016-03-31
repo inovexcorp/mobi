@@ -23,7 +23,7 @@
                     mapping: '=',
                     classMappingId: '='
                 },
-                controller: function($scope) {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
 
                     dvm.openProperty = function(propId) {
@@ -34,7 +34,7 @@
                         var classId = mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
                         return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontologyId, classId));
                     }
-                },
+                }],
                 templateUrl: 'modules/mapper/directives/editClassForm/editClassForm.html'
             }
         }
