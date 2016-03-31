@@ -16,4 +16,5 @@ node_modules/
 
 #Other
 *.swp
+*.log
 .DS_Store
