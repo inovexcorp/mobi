@@ -253,7 +253,7 @@
                 changedMapping();
             }
             if (classId) {
-                vm.mapping = mappingManagerService.addClass(vm.mapping, classId, '${UUID}');            
+                vm.mapping = mappingManagerService.addClass(vm.mapping, classId, '${UUID}');
             } else {
                 vm.isPreviousMapping = true;
                 vm.saveToServer = false;
@@ -310,7 +310,7 @@
         }
         vm.displayDeleteConfirmation = function(classMappingId, propMappingId) {
             if (!classMappingId) {
-                throw new Error('Not enough information to delete mapping entity');                
+                throw new Error('Not enough information to delete mapping entity');
             }
             vm.displayDeleteConfirm = true;
             vm.deleteEntity = {classMappingId};
@@ -376,7 +376,7 @@
                         var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
                         _.pull(vm.mappedColumns, vm.filePreview.headers[index]);
                     }
-                    vm.mapping = mappingManagerService.removeProp(vm.mapping, vm.deleteEntity.classMappingId, propMapping['@id']);                    
+                    vm.mapping = mappingManagerService.removeProp(vm.mapping, vm.deleteEntity.classMappingId, propMapping['@id']);
                 } else {
                     vm.mapping = mappingManagerService.removeClass(vm.mapping, vm.deleteEntity.classMappingId);
                 }
