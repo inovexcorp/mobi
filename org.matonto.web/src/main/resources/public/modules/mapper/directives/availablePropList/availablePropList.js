@@ -16,7 +16,7 @@
                     props: '=',
                     openProp: '&'
                 },
-                controller: function($scope) {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.selectedProp = undefined;
 
@@ -32,7 +32,7 @@
                     dvm.isSelected = function(prop) {
                         return angular.equals(dvm.selectedProp, prop);
                     }
-                },
+                }],
                 templateUrl: 'modules/mapper/directives/availablePropList/availablePropList.html'
             }
         }

@@ -16,10 +16,10 @@
                     pull: '='
                 },
                 templateUrl: 'directives/customButton/customButton.html',
-                controller: function($scope) {
+                controller: ['$scope', function($scope) {
                     $scope.type = angular.isDefined($scope.type) ? $scope.type : 'primary';
                     $scope.pull = angular.isDefined($scope.pull) ? $scope.pull : 'right';
-                }
+                }]
             }
         }
 })();

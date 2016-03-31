@@ -19,7 +19,7 @@
                     isDisabledWhen: '='
                 },
                 controllerAs: 'dvm',
-                controller: function($scope) {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
 
                     dvm.onChange = function() {
@@ -27,7 +27,7 @@
                             $scope.changeEvent();                            
                         });
                     }
-                },
+                }],
                 templateUrl: 'directives/radioButton/radioButton.html'
             }
         }
