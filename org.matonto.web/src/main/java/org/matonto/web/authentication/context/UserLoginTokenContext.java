@@ -7,10 +7,10 @@ import org.matonto.web.authentication.AuthHttpContext;
 import org.matonto.web.authentication.utils.TokenUtils;
 import org.matonto.web.authentication.utils.UserCredentials;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class UserLoginTokenContext extends AuthHttpContext {
 
