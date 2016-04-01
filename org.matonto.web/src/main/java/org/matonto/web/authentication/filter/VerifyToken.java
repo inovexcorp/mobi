@@ -4,11 +4,11 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
 import org.matonto.web.authentication.utils.TokenUtils;
 
+import java.io.IOException;
+import java.util.Optional;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Optional;
 
 public class VerifyToken implements Filter {
 
@@ -20,7 +20,8 @@ public class VerifyToken implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException, ServletException {
         log.debug("Verifying Token...");
 
         HttpServletRequest request = (HttpServletRequest) servletRequest;

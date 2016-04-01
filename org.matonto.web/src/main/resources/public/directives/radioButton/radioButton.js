@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('radioButton', ['customLabel'])
+        .module('radioButton', [])
         .directive('radioButton', radioButton);
 
         radioButton.$inject = ['$timeout'];
@@ -10,12 +10,12 @@
         function radioButton($timeout) {
             return {
                 restrict: 'E',
+                replace: true,
                 scope: {
                     bindModel: '=ngModel',
                     value: '=',
                     changeEvent: '&',
                     displayText: '=',
-                    mutedText: '=',
                     isDisabledWhen: '='
                 },
                 controllerAs: 'dvm',

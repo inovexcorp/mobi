@@ -5,11 +5,11 @@ import org.apache.log4j.Logger;
 import org.matonto.web.authentication.AuthHttpContext;
 import org.matonto.web.authentication.utils.TokenUtils;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class RestTokenContext extends AuthHttpContext {
 

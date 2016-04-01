@@ -7,14 +7,14 @@ import org.osgi.framework.wiring.BundleWire;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.http.HttpContext;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public abstract class AuthHttpContext implements HttpContext {
 
@@ -72,8 +72,9 @@ public abstract class AuthHttpContext implements HttpContext {
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
         boolean success = ((username.equals("admin") && password.equals("M@tontoRox!")));
 
-        if (success)
+        if (success) {
             req.setAttribute(REMOTE_USER, "admin");
+        }
 
         return success;
     }
@@ -82,7 +83,8 @@ public abstract class AuthHttpContext implements HttpContext {
     public URL getResource(String name) {
         final String normalizedName = normalizeResourcePath(rootPath + (name.startsWith("/") ? "" : "/") + name).trim();
 
-        log.debug(String.format("Searching bundle " + bundle + " for resource [%s], normalized to [%s]", name, normalizedName));
+        log.debug(String.format("Searching bundle " + bundle + " for resource [%s], normalized to [%s]",
+                name, normalizedName));
 
         URL url = resourceCache.get(normalizedName);
 
@@ -124,14 +126,14 @@ public abstract class AuthHttpContext implements HttpContext {
     }
 
     @Override
-    public String getMimeType(String s) {
-        if (s.endsWith(".jpg")) {
+    public String getMimeType(String str) {
+        if (str.endsWith(".jpg")) {
             return "image/jpeg";
-        } else if (s.endsWith(".png")) {
+        } else if (str.endsWith(".png")) {
             return "image/png";
-        }  else if (s.endsWith(".css")) {
+        }  else if (str.endsWith(".css")) {
             return "text/css";
-        } else if (s.endsWith(".js")) {
+        } else if (str.endsWith(".js")) {
             return "application/javascript";
         } else {
             return "text/html";
