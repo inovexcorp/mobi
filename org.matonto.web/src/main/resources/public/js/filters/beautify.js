@@ -9,7 +9,7 @@
         return function(value) {
             var result = '';
 
-            if(value) {
+            if(value && typeof value !== 'object') {
                 var reg = /[A-Z]/,
                     i = 1;
                 result += value[0].toUpperCase();

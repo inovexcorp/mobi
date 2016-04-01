@@ -40,6 +40,7 @@ var jsFiles = function(prefix) {
         return [
             prefix + '*/lodash.min.js',
             prefix + '**/angular.min.js',
+            prefix + '**/angular-mocks.js',
             prefix + '**/angular-ui-router.min.js',
             prefix + '**/angular-uuid.js',
             prefix + '**/angular-cookies.min.js',

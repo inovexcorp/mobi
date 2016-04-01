@@ -7,14 +7,14 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class TokenUtils {
 
@@ -30,8 +30,8 @@ public class TokenUtils {
 
     private static final String TOKEN_NAME = "matonto_web_token";
 
-    private static final long ONE_DAY_SEC = 24*60*60;
-    private static final long ONE_DAY_MS = ONE_DAY_SEC*1000;
+    private static final long ONE_DAY_SEC = 24 * 60 * 60;
+    private static final long ONE_DAY_MS = ONE_DAY_SEC * 1000;
     private static final long TOKEN_DURATION = ONE_DAY_MS;
     private static final String ISSUER = "http://matonto.org/";
     public static final String ANON_SCOPE = "self anon";

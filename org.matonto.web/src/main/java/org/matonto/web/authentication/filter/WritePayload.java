@@ -4,10 +4,10 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
 import org.matonto.web.authentication.utils.TokenUtils;
 
+import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 public class WritePayload implements Filter {
 
@@ -19,7 +19,8 @@ public class WritePayload implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException, ServletException {
         log.debug("Writing Payload to Response.");
 
         HttpServletRequest request = (HttpServletRequest) servletRequest;
