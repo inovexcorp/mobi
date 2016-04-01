@@ -152,6 +152,7 @@
                     </sourceIncludes>
                     <jsTestSrcDir>src/test/js</jsTestSrcDir>
                     <specIncludes>
+                        <include>Shared.js</include>
                         <include>*Spec.js</include>
                     </specIncludes>
                     <preloadSources>

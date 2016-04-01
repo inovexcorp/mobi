@@ -2,7 +2,7 @@ describe('Circle Button directive', function() {
     var $compile,
         scope;
 
-    beforeEach(function(done) {
+    beforeEach(function() {
         module('circleButton');
 
         // To test out a directive, you need to inject $compile and $rootScope
@@ -11,23 +11,11 @@ describe('Circle Button directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
-
-        // To use the external template you need to add the template to the
-        // $templateCache so angular doesn't try to go find it
-        inject(function($templateCache) {
-            var directiveTemplate = null;
-            var req = new XMLHttpRequest();
-            req.onload = function() {
-                directiveTemplate = this.responseText;
-                $templateCache.put('directives/circleButton/circleButton.html', directiveTemplate);
-                done();
-            }
-            // This path is dependent on the source path definied for the 
-            // jasmine-maven-plugin in the pom.xml
-            req.open('get', 'src/directives/circleButton/circleButton.html');
-            req.send();
-        });
     });
+
+    // Shared setup function for loading the directive's template into the
+    // $templateCache
+    injectDirectiveTemplate('directives/circleButton/circleButton.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

@@ -3,7 +3,7 @@ describe('Radio Button directive', function() {
         $timeout,
         scope;
 
-    beforeEach(function(done) {
+    beforeEach(function() {
         module('radioButton');
 
         // To test out a directive, you need to inject $compile and $rootScope
@@ -14,23 +14,12 @@ describe('Radio Button directive', function() {
             $timeout = _$timeout_;
             scope = _$rootScope_;
         });
-
-        // To use the external template you need to add the template to the
-        // $templateCache so angular doesn't try to go find it
-        inject(function($templateCache) {
-            var directiveTemplate = null;
-            var req = new XMLHttpRequest();
-            req.onload = function() {
-                directiveTemplate = this.responseText;
-                $templateCache.put('directives/radioButton/radioButton.html', directiveTemplate);
-                done();
-            }
-            // This path is dependent on the source path definied for the 
-            // jasmine-maven-plugin in the pom.xml
-            req.open('get', 'src/directives/radioButton/radioButton.html');
-            req.send();
-        });
     });
+
+    // Shared setup function for loading the directive's template into the
+    // $templateCache
+    injectDirectiveTemplate('directives/radioButton/radioButton.html');
+
 
     // To access the functions in a directive's controller to test them directly,
     // use element.controller('controllerName')
