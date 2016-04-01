@@ -4,6 +4,8 @@ describe('Response Obj service', function() {
     beforeEach(function() {
         module('responseObj');
 
+        // To test out a service, you need to inject it and save a copy of it.
+        // Then you call simply access the functions and variables provided
         inject(function(responseObj) {
             responseObjSvc = responseObj;
         });

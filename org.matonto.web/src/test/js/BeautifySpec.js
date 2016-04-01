@@ -4,6 +4,8 @@ describe('Beautify filter', function() {
     beforeEach(function() {
         module('beautify');
 
+        // To test out a filter, you need to inject $filter and save it to use
+        // like you would normally
         inject(function(_$filter_) {
             $filter = _$filter_;
         });

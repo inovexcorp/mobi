@@ -139,17 +139,16 @@
                             <value>${phantomjs.binary}</value>
                         </capability>
                     </webDriverCapabilities>
+                    <customRunnerTemplate>${project.basedir}/src/test/js/CustomRunnerTemplate.template</customRunnerTemplate>
                     <jsSrcDir>target/classes/build</jsSrcDir>
                     <sourceIncludes>
                         <include>js/app.module.js</include>
                         <include>js/filters/*.js</include>
                         <include>js/services/*.js</include>
                         <include>js/directives/**/*.js</include>
-                        <include>modules/catalog/**/*.js</include>
-                        <include>modules/home/**/*.js</include>
-                        <include>modules/login/**/*.js</include>
-                        <include>modules/nav/**/*.js</include>
-                        <include>modules/ontology-editor/**/*.js</include>
+                        <include>modules/**/*.js</include>
+                        <include>**/*.js</include>
+                        <include>**/*.html</include>
                     </sourceIncludes>
                     <jsTestSrcDir>src/test/js</jsTestSrcDir>
                     <specIncludes>
