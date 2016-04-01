@@ -25,7 +25,8 @@
             'stringSelect',
             'circleButton',
             'customButton',
-            'confirmationOverlay'
+            'confirmationOverlay',
+            'settings'
         ])
         .constant('_', window._);
 })();

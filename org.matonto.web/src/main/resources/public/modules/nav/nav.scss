@@ -29,10 +29,12 @@
 
             /* Styles the icon itself */
             a {
+                border-top: 4px solid transparent;
                 color: inherit;
                 cursor: pointer;
                 display: inline-block;
-                padding: 10px;
+                margin-right: 2px;
+                padding: 6px 10px 10px 10px;
                 text-decoration: none;
 
                 /* Changes the color of the icons as you hover over them. */
@@ -47,19 +49,12 @@
                     padding-left: 10px;
                     vertical-align: top;
                 }
+
+                /* Style to show which perspective you are currently viewing */
+                &.active {
+                    border-color: $brand-info;
+                }
             }
-        }
-    }
-
-    /* Adds bar for the different perspective options */
-    .perspectives li a {
-        border-top: 4px solid transparent;
-        margin-right: 2px;
-        padding-top: 6px;
-
-        /* Style to show which perspective you are currently viewing */
-        &.active {
-            border-color: $brand-info;
         }
     }
 }

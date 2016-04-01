@@ -319,8 +319,8 @@ ul {
 .view-container > div,
 .view-container > div > .row,
 aside,
-section,
-section > form,
+.row > section,
+.row > section > form,
 .tree-container {
     height: 100%;
 }

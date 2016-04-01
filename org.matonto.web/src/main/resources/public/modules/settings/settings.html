@@ -1,0 +1,11 @@
+<!-- settings.html -->
+<div class="settings-page clearfix" ng-controller="SettingsController as vm">
+    <h1 class="page-header">Settings</h1>
+    <section>
+        <h2>Ontology Editor</h2>
+        <custom-setting header="'Tree Item Display'" question="'What do you want displayed in the tree?'">
+            <radio-button ng-model="vm.settings.treeDisplay" display-text="'Full IRI'" value="'@id'" change-event="vm.saveSettings()"></radio-button>
+            <radio-button ng-model="vm.settings.treeDisplay" display-text="'RDFS Label'" value="'rdfs:label'" change-event="vm.saveSettings()"></radio-button>
+        </custom-setting>
+    </section>
+</div>
