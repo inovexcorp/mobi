@@ -3,7 +3,10 @@ package org.matonto.etl.service.csv;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.*;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
@@ -12,6 +15,7 @@ import org.openrdf.rio.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.regex.*;
 import java.util.stream.Collectors;
 
@@ -34,25 +38,66 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     @Override
-    public Model convert(File csv, File mappingFile, boolean containsHeaders) throws IOException, RDFParseException {
+    public Model convert(File delim, File mappingFile, boolean containsHeaders)
+            throws IOException, RDFParseException, InvalidFormatException {
         Model converted = parseMapping(mappingFile);
-        return convert(new FileReader(csv), converted, containsHeaders);
+        return convert(new FileInputStream(delim), converted, containsHeaders,
+                FilenameUtils.getExtension(delim.getName()));
     }
 
     @Override
-    public Model convert(File csv, Model mappingModel, boolean containsHeaders) throws IOException {
-        return convert(new FileReader(csv), mappingModel, containsHeaders);
+    public Model convert(File delim, Model mappingModel, boolean containsHeaders)
+            throws IOException, InvalidFormatException {
+        return convert(new FileInputStream(delim), mappingModel, containsHeaders,
+                FilenameUtils.getExtension(delim.getName()));
     }
 
     @Override
-    public Model convert(InputStream csv, File mappingFile, boolean containsHeaders) throws IOException {
+    public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension)
+            throws IOException, InvalidFormatException {
         Model converted = parseMapping(mappingFile);
-        return convert(new InputStreamReader(csv), converted, containsHeaders);
+        return convert(delim, converted, containsHeaders, extension);
     }
 
     @Override
-    public Model convert(InputStream csv, Model mappingModel, boolean containsHeaders) throws IOException {
-        return convert(new InputStreamReader(csv), mappingModel, containsHeaders);
+    public Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension)
+            throws IOException, InvalidFormatException {
+        if (extension.equals("xls") || extension.equals("xlsx")) {
+            return convertExcel(delim, mappingModel, containsHeaders);
+        } else {
+            return convert(new InputStreamReader(delim), mappingModel, containsHeaders);
+        }
+    }
+
+    private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders)
+            throws IOException, InvalidFormatException {
+        String[] nextRow;
+        Model convertedRDF = modelFactory.createModel();
+        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+
+        Workbook wb = WorkbookFactory.create(excel);
+        Sheet sheet = wb.getSheetAt(0);
+        DataFormatter df = new DataFormatter();
+
+        //Traverse each row and convert column into RDF
+        for (Row row : sheet) {
+            nextRow = new String[row.getPhysicalNumberOfCells()];
+            // If headers exist, skip them
+            int index = (containsHeaders) ? 0 : 1;
+            for (Cell cell : row) {
+                nextRow[index] = df.formatCellValue(cell);
+                index++;
+            }
+            for (ClassMapping cm : classMappings) {
+                convertedRDF.addAll(writeClassToModel(cm, nextRow));
+            }
+            //Reset classMappings
+            for (ClassMapping cm : classMappings) {
+                cm.setInstance(false);
+            }
+        }
+
+        return convertedRDF;
     }
 
     private Model convert(Reader csv, Model mappingModel, boolean containsHeaders) throws IOException {

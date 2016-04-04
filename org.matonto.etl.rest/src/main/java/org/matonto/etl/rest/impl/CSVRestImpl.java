@@ -7,6 +7,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import net.sf.json.JSONObject;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.rest.CSVRest;
 import org.matonto.rdf.api.ModelFactory;
@@ -96,14 +97,16 @@ public class CSVRestImpl implements CSVRest {
         try {
             if (mappingFileName != null) {
                 File mappingFile = new File("data/tmp/" + mappingFileName + ".jsonld");
-                model = sesameModel(csvConverter.convert(dataToConvert, mappingFile, containsHeaders));
+                model = sesameModel(csvConverter.convert(dataToConvert, mappingFile, containsHeaders, "csv"));
             } else {
                 InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
                 Model mapping = Rio.parse(in, "", RDFFormat.JSONLD);
-                model = sesameModel(csvConverter.convert(dataToConvert, matontoModel(mapping), containsHeaders));
+                model = sesameModel(csvConverter.convert(dataToConvert, matontoModel(mapping), containsHeaders, "csv"));
             }
         } catch (IOException e) {
             throw ErrorUtils.sendError(e, "Error converting CSV", Response.Status.BAD_REQUEST);
+        } catch (InvalidFormatException e) {
+            throw ErrorUtils.sendError(e, "Error converting Excel", Response.Status.BAD_REQUEST);
         }
 
         // Write data back to Response

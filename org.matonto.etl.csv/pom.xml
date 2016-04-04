@@ -18,6 +18,14 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
             <version>1.0.6</version>
@@ -25,7 +33,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.0.31</version>
+            <version>1.0.33-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
