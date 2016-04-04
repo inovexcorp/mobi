@@ -7,7 +7,10 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import net.sf.json.JSONObject;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.*;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.rest.CSVRest;
 import org.matonto.rdf.api.ModelFactory;
@@ -53,20 +56,23 @@ public class CSVRestImpl implements CSVRest {
     }
 
     @Override
-    public Response upload(InputStream fileInputStream) {
+    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail) {
         String fileName = generateUuid();
-        Path filePath = Paths.get("data/tmp/" + fileName + ".csv");
+        String extension = FilenameUtils.getExtension(fileDetail.getName());
+        Path filePath = Paths.get("data/tmp/" + fileName + "." + extension);
         uploadFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
     }
 
     @Override
-    public Response upload(InputStream fileInputStream, String fileName) {
-        Path filePath = Paths.get("data/tmp/" + fileName + ".csv");
-        if (!Files.exists(filePath)) {
-            throw ErrorUtils.sendError("Delimited file doesn't not exist", Response.Status.BAD_REQUEST);
+    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
+        File delimitedFile = getUploadedFile(fileName);
+        String newExtension = FilenameUtils.getExtension(fileDetail.getName());
+        if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
+            delimitedFile.delete();
+            delimitedFile = new File("data/tmp/" + fileName + "." + newExtension);
         }
-        uploadFile(fileInputStream, filePath);
+        uploadFile(fileInputStream, delimitedFile.toPath());
         return Response.status(200).entity(fileName).build();
     }
 
@@ -78,7 +84,9 @@ public class CSVRestImpl implements CSVRest {
                     Response.Status.BAD_REQUEST);
         }
 
-        File delimitedFile = new File("data/tmp/" + fileName + ".csv");
+        //File delimitedFile = new File("data/tmp/" + fileName + ".csv");
+        File delimitedFile = getUploadedFile(fileName);
+        String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
         // Get InputStream for data to convert
         InputStream dataToConvert;
@@ -88,7 +96,7 @@ public class CSVRestImpl implements CSVRest {
             try {
                 dataToConvert = new FileInputStream(delimitedFile);
             } catch (FileNotFoundException e) {
-                throw ErrorUtils.sendError(e, "Error locating CSV", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(e, "Error locating delimited file", Response.Status.BAD_REQUEST);
             }
         }
 
@@ -97,16 +105,15 @@ public class CSVRestImpl implements CSVRest {
         try {
             if (mappingFileName != null) {
                 File mappingFile = new File("data/tmp/" + mappingFileName + ".jsonld");
-                model = sesameModel(csvConverter.convert(dataToConvert, mappingFile, containsHeaders, "csv"));
+                model = sesameModel(csvConverter.convert(dataToConvert, mappingFile, containsHeaders, extension));
             } else {
                 InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
                 Model mapping = Rio.parse(in, "", RDFFormat.JSONLD);
-                model = sesameModel(csvConverter.convert(dataToConvert, matontoModel(mapping), containsHeaders, "csv"));
+                model = sesameModel(
+                        csvConverter.convert(dataToConvert, matontoModel(mapping), containsHeaders, extension));
             }
-        } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Error converting CSV", Response.Status.BAD_REQUEST);
-        } catch (InvalidFormatException e) {
-            throw ErrorUtils.sendError(e, "Error converting Excel", Response.Status.BAD_REQUEST);
+        } catch (IOException | InvalidFormatException e) {
+            throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
 
         // Write data back to Response
@@ -119,19 +126,45 @@ public class CSVRestImpl implements CSVRest {
 
     @Override
     public Response getRows(String fileName, int rowEnd, String separator) {
-        File file = new File("data/tmp/" + fileName + ".csv");
+        File file = getUploadedFile(fileName);
+        String extension = FilenameUtils.getExtension(file.getName());
         int numRows = (rowEnd <= 0) ? 10 : rowEnd;
 
         logger.info("Getting " + numRows + " rows from " + file.getName());
         String json;
         try {
-            char separatorChar = separator.charAt(0);
-            json = convertRows(file, numRows, separatorChar);
+            if (extension.equals("xls") || extension.equals("xslx")) {
+                json = convertExcelRows(file, numRows);
+            } else {
+                char separatorChar = separator.charAt(0);
+                json = convertCSVRows(file, numRows, separatorChar);
+            }
         } catch (Exception e) {
             throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
         }
 
         return Response.status(200).entity(json).build();
+    }
+
+    /**
+     * Finds the uploaded delimited file with the specified name.
+     *
+     * @param fileName the name of the uploaded delimited file
+     * @return the uploaded file if it was found
+     */
+    private File getUploadedFile(String fileName) {
+        File directory = new File("data/tmp");
+        File[] files = directory.listFiles((dir, name) -> {
+            return name.startsWith(fileName + ".");
+        });
+        if (files.length == 0) {
+            throw ErrorUtils.sendError("Delimited file doesn't not exist", Response.Status.BAD_REQUEST);
+        }
+        if (files.length > 1) {
+            throw ErrorUtils.sendError("Multiple files exist with same name", Response.Status.BAD_REQUEST);
+        }
+
+        return files[0];
     }
 
     /**
@@ -199,7 +232,7 @@ public class CSVRestImpl implements CSVRest {
     }
 
     /**
-     * Converts the requested number rows of a CSV file into JSON and returns
+     * Converts the specified number rows of a CSV file into JSON and returns
      * them as a String.
      *
      * @param input the CSV file to convert into JSON
@@ -208,7 +241,7 @@ public class CSVRestImpl implements CSVRest {
      * @return a string with the JSON of the CSV rows
      * @throws IOException csv file could not be read
      */
-    private String convertRows(File input, int numRows, char separator) throws IOException {
+    private String convertCSVRows(File input, int numRows, char separator) throws IOException {
         CSVReader reader = new CSVReader(new FileReader(input), separator);
         List<String[]> csvRows = reader.readAll();
         List<String[]> returnRows = new ArrayList<>();
@@ -220,6 +253,42 @@ public class CSVRestImpl implements CSVRest {
         JSONObject json = new JSONObject();
         json.put("columnNumber", returnRows.get(0).length);
         json.put("rows", gson.toJson(returnRows));
+
+        return json.toString();
+    }
+
+    /**
+     * Converts the specified number of rows of a Excel file into JSON and returns
+     * them as a String.
+     *
+     * @param input the Excel file to convert into JSON
+     * @param numRows the number of rows from the Excel file to convert
+     * @return a string with the JSON of the Excel rows
+     * @throws IOException excel file could not be read
+     * @throws InvalidFormatException file is not in a valid excel format
+     */
+    private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
+        Workbook wb = WorkbookFactory.create(input);
+        Sheet sheet = wb.getSheetAt(0);
+        DataFormatter df = new DataFormatter();
+        List<String[]> rowList = new ArrayList<>(sheet.getPhysicalNumberOfRows());
+        String[] columns;
+        for (Row row : sheet) {
+            if (row.getRowNum() > numRows) {
+                columns = new String[row.getPhysicalNumberOfCells()];
+                int index = 0;
+                for (Cell cell : row) {
+                    columns[index] = df.formatCellValue(cell);
+                    index++;
+                }
+                rowList.add(columns);
+            }
+        }
+
+        Gson gson = new GsonBuilder().create();
+        JSONObject json = new JSONObject();
+        json.put("columnNumber", rowList.size());
+        json.put("rows", gson.toJson(rowList));
 
         return json.toString();
     }

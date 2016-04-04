@@ -2,6 +2,7 @@ package org.matonto.etl.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
@@ -23,7 +24,8 @@ public interface CSVRest {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @ApiOperation("Upload CSV file sent as form data.")
-    Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream);
+    Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
+                    @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail);
 
     /**
      * Replaces an uploaded delimited document in the data/tmp/ directory with another
@@ -38,6 +40,7 @@ public interface CSVRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @ApiOperation("Replace an uploaded CSV file with another")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
+                    @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail,
                     @PathParam("documentName") String fileName);
 
     /**
