@@ -4,5 +4,5 @@ import org.matonto.rdf.api.Value;
 
 public interface AnonymousIndividual extends Value, AnnotationSubject, Individual {
 
-	String getId();
+    String getId();
 }

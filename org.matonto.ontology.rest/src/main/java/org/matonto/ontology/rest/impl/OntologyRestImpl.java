@@ -42,6 +42,10 @@ public class OntologyRestImpl implements OntologyRest {
     private ValueFactory factory;
     private final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
 
+    private boolean stringParamIsMissing(String param) {
+        return param == null || param.length() == 0;
+    }
+
     @Reference
     public void setManager(OntologyManager manager) {
         this.manager = manager;
@@ -76,7 +80,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntologies(String ontologyIdList) {
-        if (ontologyIdList == null || ontologyIdList.length() == 0) {
+        if (stringParamIsMissing(ontologyIdList)) {
             return getAllOntologies();
         }
 
@@ -177,15 +181,15 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response saveChangesToOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+        if (stringParamIsMissing(ontologyIdStr)) {
             throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
-        if (resourceIdStr == null || resourceIdStr.length() == 0) {
+        if (stringParamIsMissing(resourceIdStr)) {
             throw ErrorUtils.sendError("resourceIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
-        if (resourceJson == null || resourceJson.length() == 0) {
+        if (stringParamIsMissing(resourceJson)) {
             throw ErrorUtils.sendError("resourceJson is missing", Response.Status.BAD_REQUEST);
         }
 
@@ -219,7 +223,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response deleteOntology(String ontologyIdStr) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+        if (stringParamIsMissing(ontologyIdStr)) {
             throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
@@ -245,11 +249,11 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private Response deleteEntityFromOntology(String ontologyIdStr, String entityIdStr) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+        if (stringParamIsMissing(ontologyIdStr)) {
             throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
-        if (entityIdStr == null || entityIdStr.length() == 0) {
+        if (stringParamIsMissing(entityIdStr)) {
             throw ErrorUtils.sendError("entityIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
@@ -317,11 +321,11 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private Response addEntityToOntology(String ontologyIdStr, String entityJson) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+        if (stringParamIsMissing(ontologyIdStr)) {
             throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
-        if (entityJson == null || entityJson.length() == 0) {
+        if (stringParamIsMissing(entityJson)) {
             throw ErrorUtils.sendError("entityJson is missing", Response.Status.BAD_REQUEST);
         }
 
@@ -541,7 +545,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
     private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+        if (stringParamIsMissing(ontologyIdStr)) {
             throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
         }
 
@@ -562,7 +566,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
     
     private JSONArray doWithImportedOntologies(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
+        if (stringParamIsMissing(ontologyIdStr)) {
             throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
         }
 

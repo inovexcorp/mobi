@@ -7,12 +7,12 @@ public interface ObjectPropertyExpression extends PropertyExpression {
      * 
      * @return The inverse of this property.
      */
-	ObjectPropertyExpression getInverseProperty();
-	
+    ObjectPropertyExpression getInverseProperty();
+
     /**
      * Get the named object property used in this property expression.
      * 
      * @return P if PE = inv(P) otherwise PE.
      */
-	ObjectPropertyExpression getNamedProperty();
+    ObjectPropertyExpression getNamedProperty();
 }

@@ -217,12 +217,16 @@ public class SimpleOntologyManager implements OntologyManager {
         return true;
 	}
 
-    private boolean updateOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
+    private void checkRepositoryAndOntology(Resource ontologyResource) {
         if (repository == null)
             throw new IllegalStateException("Repository is null");
 
         if(!ontologyExists(ontologyResource))
             throw new MatontoOntologyException("Ontology ID does not exist.");
+    }
+
+    private boolean updateOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
+        checkRepositoryAndOntology(ontologyResource);
 
         RepositoryConnection conn = null;
 
@@ -239,20 +243,6 @@ public class SimpleOntologyManager implements OntologyManager {
 			conn.add(changedModel, ontologyResource);
 
             // TODO: handle ontology iri changes
-            /*if(!changedModel.contains(originalChangedResource, null, null, ontologyResource)) {
-            	RepositoryResult<Statement> dependentStatements = conn.getStatements(null, null, originalChangedResource, ontologyResource);
-                conn.remove(dependentStatements, ontologyResource);
-
-                Set<Statement> changedDependentStatements = new HashSet<>();
-                Value newObject = changedModel.objects().iterator().next();
-
-                while(dependentStatements.hasNext()) {
-                    Statement statement = dependentStatements.next();
-                    changedDependentStatements.add(factory.createStatement(statement.getSubject(), statement.getPredicate(), newObject, ontologyResource));
-                }
-
-                conn.add(changedDependentStatements, ontologyResource);
-			}*/
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         } catch (IOException|org.openrdf.rio.RDFParseException e) {
@@ -299,11 +289,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException {
-        if(repository == null)
-            throw new IllegalStateException("Repository is null");
-
-        if(!ontologyExists(ontologyResource))
-            throw new MatontoOntologyException("Ontology ID does not exist.");
+        checkRepositoryAndOntology(ontologyResource);
 
         RepositoryConnection conn = null;
         Map<String, Set> changedEntities = new HashMap<>();

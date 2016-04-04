@@ -158,7 +158,7 @@ public interface OntologyRest {
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param resourceJson the String representing the new class model.
-     * @return true if deleted, false otherwise.
+     * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyid}/classes")
@@ -211,7 +211,7 @@ public interface OntologyRest {
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param resourceJson the String representing the new property model.
-     * @return true if deleted, false otherwise.
+     * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyid}/object-properties")
@@ -252,7 +252,7 @@ public interface OntologyRest {
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param resourceJson the String representing the new property model.
-     * @return true if deleted, false otherwise.
+     * @return true if added, false otherwise.
      */
     @POST
     @Path("{ontologyid}/data-properties")
