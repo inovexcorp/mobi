@@ -46,6 +46,14 @@ public class OntologyRestImpl implements OntologyRest {
         return param == null || param.length() == 0;
     }
 
+    private Resource BNodeOrIRI(String iriString) {
+        if (isBNodeString(iriString.trim())) {
+            return factory.createBNode(iriString.trim());
+        } else {
+            return factory.createIRI(iriString.trim());
+        }
+    }
+
     @Reference
     public void setManager(OntologyManager manager) {
         this.manager = manager;
@@ -195,20 +203,8 @@ public class OntologyRestImpl implements OntologyRest {
 
         boolean updated;
         try {
-            Resource ontologyResource;
-            if (isBNodeString(ontologyIdStr.trim())) {
-                ontologyResource = factory.createBNode(ontologyIdStr.trim());
-            } else {
-                ontologyResource = factory.createIRI(ontologyIdStr.trim());
-            }
-
-            Resource changedResource;
-            if (isBNodeString(resourceIdStr.trim())) {
-                changedResource = factory.createBNode(resourceIdStr.trim());
-            } else {
-                changedResource = factory.createIRI(resourceIdStr.trim());
-            }
-
+            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
+            Resource changedResource = BNodeOrIRI(resourceIdStr);
             updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while updating ontology.",
@@ -229,13 +225,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         boolean deleted;
         try {
-            Resource resource;
-            if (isBNodeString(ontologyIdStr.trim())) {
-                resource = factory.createBNode(ontologyIdStr.trim());
-            } else {
-                resource = factory.createIRI(ontologyIdStr.trim());
-            }
-
+            Resource resource = BNodeOrIRI(ontologyIdStr);
             deleted = manager.deleteOntology(resource);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
@@ -259,20 +249,8 @@ public class OntologyRestImpl implements OntologyRest {
 
         Map<String, Set> changedEntities;
         try {
-            Resource ontologyResource;
-            if (isBNodeString(ontologyIdStr.trim())) {
-                ontologyResource = factory.createBNode(ontologyIdStr.trim());
-            } else {
-                ontologyResource = factory.createIRI(ontologyIdStr.trim());
-            }
-
-            Resource entityResource;
-            if (isBNodeString(entityIdStr.trim())) {
-                entityResource = factory.createBNode(entityIdStr.trim());
-            } else {
-                entityResource = factory.createIRI(entityIdStr.trim());
-            }
-
+            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
+            Resource entityResource = BNodeOrIRI(entityIdStr);
             changedEntities = manager.deleteEntityFromOntology(ontologyResource, entityResource);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
@@ -331,13 +309,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         boolean added = false;
         try {
-            Resource ontologyResource;
-            if (isBNodeString(ontologyIdStr.trim())) {
-                ontologyResource = factory.createBNode(ontologyIdStr.trim());
-            } else {
-                ontologyResource = factory.createIRI(ontologyIdStr.trim());
-            }
-
+            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
             added = manager.addEntityToOntology(ontologyResource, entityJson);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
@@ -610,14 +582,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
-        Resource resource;
         String id = ontologyIdStr.trim();
-        if (isBNodeString(id)) {
-            resource = factory.createBNode(id);
-        } else {
-            resource = factory.createIRI(id);
-        }
-
+        Resource resource = BNodeOrIRI(id);
         return manager.retrieveOntology(resource);
     }
     

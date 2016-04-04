@@ -12,31 +12,31 @@
                 prefix = '/matontorest/ontologies',
                 defaultAnnotations = [
                     {
-                        'namespace': 'http://www.w3.org/2000/01/rdf-schema#',
+                        'namespace': prefixes.rdfs,
                         'localName': 'seeAlso'
                     },
                     {
-                        'namespace': 'http://www.w3.org/2000/01/rdf-schema#',
+                        'namespace': prefixes.rdfs,
                         'localName': 'isDefinedBy'
                     },
                     {
-                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'namespace': prefixes.owl,
                         'localName': 'deprecated'
                     },
                     {
-                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'namespace': prefixes.owl,
                         'localName': 'versionInfo'
                     },
                     {
-                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'namespace': prefixes.owl,
                         'localName': 'priorVersion'
                     },
                     {
-                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'namespace': prefixes.owl,
                         'localName': 'backwardCompatibleWith'
                     },
                     {
-                        'namespace': 'http://www.w3.org/2002/07/owl#',
+                        'namespace': prefixes.owl,
                         'localName': 'incompatibleWith'
                     },
                     {
@@ -887,7 +887,7 @@
 
                         delete copy.matonto;
 
-                        if(ontology.matonto.hasOwnProperty('context') && ontology.matonto.context.length) {
+                        if(_.get(ontology.matonto, 'context', []).length) {
                             entityjson = {
                                 '@context': arrToObj(ontology.matonto.context),
                                 '@graph': [copy]
