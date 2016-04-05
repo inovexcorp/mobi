@@ -1,10 +1,9 @@
 package org.matonto.ontology.core.api.datarange;
 
-import java.util.Set;
 import org.matonto.rdf.api.Literal;
 
+import java.util.Set;
 
 public interface DataOneOf extends DataRange {
-
-	Set<Literal> getValues();
+    Set<Literal> getValues();
 }

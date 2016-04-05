@@ -6,5 +6,5 @@ import java.util.Set;
 
 public interface DisjointObjectPropertiesAxiom extends ObjectPropertyAxiom {
 
-	Set<ObjectPropertyExpression> getObjectPropertys();
+    Set<ObjectPropertyExpression> getObjectPropertys();
 }
