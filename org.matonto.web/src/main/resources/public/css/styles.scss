@@ -197,9 +197,13 @@ ul {
         color: inherit;
         cursor: pointer;
         display: inline-block;
+        overflow-x: hidden;
+        padding: 3px 19px 3px 4px;
+        position: relative;
         text-decoration: none;
-        padding: 3px 4px;
+        vertical-align: top;
         width: 100%;
+        word-break: break-all;
 
         /* Increases the padding for links without icons */
         &.text-only {
@@ -210,8 +214,11 @@ ul {
         &.unsaved .unsaved-icon {
             color: $brand-danger;
             line-height: 19px;
-            padding-left: 0;
-            padding-right: 5px;
+            margin: 0;
+            padding: 0 5px;
+            position: absolute;
+            right: 4px;
+            top: 3px;
         }
 
         /* Hover changes color and background color */
