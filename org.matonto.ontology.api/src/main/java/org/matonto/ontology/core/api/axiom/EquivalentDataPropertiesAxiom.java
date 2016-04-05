@@ -7,5 +7,5 @@ import java.util.Set;
 
 public interface EquivalentDataPropertiesAxiom extends DataPropertyAxiom {
 
-	Set<DataPropertyExpression> getDataProperties();
+    Set<DataPropertyExpression> getDataProperties();
 }

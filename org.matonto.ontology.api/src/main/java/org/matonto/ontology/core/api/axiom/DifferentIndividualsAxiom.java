@@ -8,7 +8,7 @@ import java.util.Set;
 
 public interface DifferentIndividualsAxiom extends AssertionAxiom {
 
-	boolean containsAnonymousIndividuals();
-	
-	Set<Individual> getIndividuals();
+    boolean containsAnonymousIndividuals();
+
+    Set<Individual> getIndividuals();
 }
