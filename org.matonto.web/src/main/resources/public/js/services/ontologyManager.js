@@ -430,8 +430,8 @@
                 }
             }
 
-            function getRestfulPropertyType(types, owl) {
-                if(self.isObjectProperty(types, owl)) {
+            function getRestfulPropertyType(types) {
+                if(self.isObjectProperty(types)) {
                     return 'object-properties';
                 } else {
                     return 'data-properties';
@@ -511,7 +511,7 @@
 
             function createProperty(ontology, classObj, property) {
                 var deferred = $q.defer();
-                var type = getRestfulPropertyType(_.get(property, '@type', []), ontology.matonto.owl);
+                var type = getRestfulPropertyType(_.get(property, '@type', []));
 
                 property = restructureLabelAndComment(property);
 
@@ -667,7 +667,7 @@
                     property = classObj.matonto.properties[state.pi];
                 }
 
-                var type = getRestfulPropertyType(_.get(property, '@type', []), ontology.matonto.owl);
+                var type = getRestfulPropertyType(_.get(property, '@type', []));
 
                 $http.delete(prefix + '/' + encodeURIComponent(ontologyId) + '/' + type + '/' + encodeURIComponent(propertyId))
                     .then(function(response) {
@@ -710,6 +710,30 @@
 
             self.getPropertyTypes = function() {
                 return propertyTypes;
+            }
+
+            self.getObjectCopyByIri = function(iri, ontologyIndex) {
+                var result = {};
+
+                if(ontologyIndex !== undefined) {
+                    var ontology = ontologies[ontologyIndex];
+                    // Checks if iri is a class or a domain-less property
+                    var obj = _.find(ontology.matonto.classes, {'@id': iri}, undefined) || _.find(ontology.matonto.noDomains, {'@id': iri}, undefined);
+                    if(obj) {
+                        result = angular.copy(obj);
+                    } else {
+                        // If not, we must check the properties of each class
+                        _.forEach(ontology.matonto.classes, function(classObj) {
+                            var property = _.find(classObj.matonto.properties, {'@id': iri}, undefined);
+                            if(property) {
+                                result = angular.copy(property);
+                                return false;
+                            }
+                        });
+                    }
+                }
+
+                return result;
             }
 
             self.getObject = function(state) {
@@ -962,8 +986,8 @@
                 selected['@id'] = fresh;
             }
 
-            self.isObjectProperty = function(types, owl) {
-                return (_.indexOf(types, owl + 'ObjectProperty') !== -1) ? true : false;
+            self.isObjectProperty = function(types) {
+                return (_.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1) ? true : false;
             }
 
             self.getOntology = function(oi) {

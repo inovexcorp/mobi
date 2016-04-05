@@ -5,13 +5,13 @@
         .module('settingsManager', [])
         .service('settingsManagerService', settingsManagerService);
 
-        settingsManagerService.$inject = ['$window', '$cookies'];
+        settingsManagerService.$inject = ['$window', '$cookies', 'prefixes'];
 
-        function settingsManagerService($window, $cookies) {
+        function settingsManagerService($window, $cookies, prefixes) {
             var self = this;
             var cookieName = 'matonto-settings';
             var defaultSettings = {
-                treeDisplay: 'rdfs:label',
+                treeDisplay: prefixes.rdfs + 'label',
                 tooltipDisplay: '@id'
             }
 
@@ -33,6 +33,10 @@
 
             self.getTreeDisplay = function() {
                 return angular.copy(self.settings.treeDisplay);
+            }
+
+            self.getTooltipDisplay = function() {
+                return angular.copy(self.settings.tooltipDisplay);
             }
 
             initialize();

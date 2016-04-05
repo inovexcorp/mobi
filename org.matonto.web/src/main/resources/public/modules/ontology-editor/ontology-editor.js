@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
+        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'settingsManager'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -16,6 +16,12 @@
         vm.selected = ontologyManagerService.getObject(vm.state);
         vm.rdfs = prefixes.rdfs;
         vm.owl = prefixes.owl;
+
+        function initialize() {
+            if(vm.state) {
+                setVariables(vm.state.oi);
+            }
+        }
 
         /* State Management */
         vm.setTreeTab = function(tab) {
@@ -88,7 +94,7 @@
         }
 
         vm.isObjectProperty = function() {
-            return ontologyManagerService.isObjectProperty(vm.selected['@type'], vm.ontology.matonto.owl);
+            return ontologyManagerService.isObjectProperty(vm.selected['@type'], prefixes.owl);
         }
 
         vm.entityChanged = function() {
@@ -172,5 +178,7 @@
         vm.getAnnotationLocalNameLowercase = function(item) {
             return annotationManagerService.getLocalNameLowercase(item);
         }
+
+        initialize();
     }
 })();
