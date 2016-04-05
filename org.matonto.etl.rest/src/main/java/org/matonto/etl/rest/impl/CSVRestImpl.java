@@ -58,7 +58,7 @@ public class CSVRestImpl implements CSVRest {
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail) {
         String fileName = generateUuid();
-        String extension = FilenameUtils.getExtension(fileDetail.getName());
+        String extension = FilenameUtils.getExtension(fileDetail.getFileName());
         Path filePath = Paths.get("data/tmp/" + fileName + "." + extension);
         uploadFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
@@ -67,7 +67,7 @@ public class CSVRestImpl implements CSVRest {
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
         File delimitedFile = getUploadedFile(fileName);
-        String newExtension = FilenameUtils.getExtension(fileDetail.getName());
+        String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
         if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
             delimitedFile.delete();
             delimitedFile = new File("data/tmp/" + fileName + "." + newExtension);
@@ -78,20 +78,22 @@ public class CSVRestImpl implements CSVRest {
 
     @Override
     public Response etlFile(String fileName, String mappingRdf, String mappingFileName,
-                            String format, boolean isPreview, boolean containsHeaders) {
+                            String format, boolean isPreview, boolean containsHeaders, String separator) {
         if ((mappingRdf == null && mappingFileName == null) || (mappingRdf != null && mappingFileName != null)) {
             throw ErrorUtils.sendError("Must provider either a JSON-LD string or a mapping file name",
                     Response.Status.BAD_REQUEST);
         }
 
-        //File delimitedFile = new File("data/tmp/" + fileName + ".csv");
         File delimitedFile = getUploadedFile(fileName);
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
+        char separatorChar = separator.charAt(0);
 
         // Get InputStream for data to convert
         InputStream dataToConvert;
         if (isPreview) {
-            dataToConvert = createPreviewStream(delimitedFile, containsHeaders);
+            dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
+                    ? createExcelPreviewStream(delimitedFile, containsHeaders)
+                    : createCSVPreviewStream(delimitedFile, containsHeaders);
         } else {
             try {
                 dataToConvert = new FileInputStream(delimitedFile);
@@ -105,12 +107,13 @@ public class CSVRestImpl implements CSVRest {
         try {
             if (mappingFileName != null) {
                 File mappingFile = new File("data/tmp/" + mappingFileName + ".jsonld");
-                model = sesameModel(csvConverter.convert(dataToConvert, mappingFile, containsHeaders, extension));
+                model = sesameModel(csvConverter.convert(dataToConvert, mappingFile, containsHeaders, extension,
+                        separatorChar));
             } else {
                 InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
                 Model mapping = Rio.parse(in, "", RDFFormat.JSONLD);
-                model = sesameModel(
-                        csvConverter.convert(dataToConvert, matontoModel(mapping), containsHeaders, extension));
+                model = sesameModel(csvConverter.convert(dataToConvert, matontoModel(mapping), containsHeaders,
+                        extension, separatorChar));
             }
         } catch (IOException | InvalidFormatException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
@@ -133,7 +136,7 @@ public class CSVRestImpl implements CSVRest {
         logger.info("Getting " + numRows + " rows from " + file.getName());
         String json;
         try {
-            if (extension.equals("xls") || extension.equals("xslx")) {
+            if (extension.equals("xls") || extension.equals("xlsx")) {
                 json = convertExcelRows(file, numRows);
             } else {
                 char separatorChar = separator.charAt(0);
@@ -192,13 +195,13 @@ public class CSVRestImpl implements CSVRest {
     }
 
     /**
-     * Generates an InputStream with the first 10 lines of an uploaded delimited file.
+     * Generates an InputStream with the first 10 lines of an uploaded CSV file.
      *
-     * @param delimitedFile the uploaded delimited file
-     * @param containsHeaders whether or not the uploaded delimited file has a header row
-     * @return an InputStream object with the first 10 rows of the uploaded delimited file
+     * @param delimitedFile the uploaded CSV file
+     * @param containsHeaders whether or not the uploaded CSV file has a header row
+     * @return an InputStream object with the first 10 rows of the uploaded CSV file
      */
-    private InputStream createPreviewStream(File delimitedFile, boolean containsHeaders) {
+    private InputStream createCSVPreviewStream(File delimitedFile, boolean containsHeaders) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (BufferedReader br = Files.newBufferedReader(delimitedFile.toPath())) {
             int numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
@@ -207,6 +210,31 @@ public class CSVRestImpl implements CSVRest {
                 byteArrayOutputStream.write("\n".getBytes());
             }
         } catch (IOException e) {
+            throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
+        }
+
+        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+    }
+
+    /**
+     * Generates an InputStream with the first 10 lines of an uploaded delimited file.
+     * 
+     * @param delimitedFile the uploaded Excel file
+     * @param containsHeaders whether or not the uploaded Excel file has a header row
+     * @return an InputStream object with the first 10 rows of the uploaded Excel file
+     */
+    private InputStream createExcelPreviewStream(File delimitedFile, boolean containsHeaders) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try {
+            Workbook wb = WorkbookFactory.create(delimitedFile);
+            // Only support single sheet files for now
+            Sheet sheet = wb.getSheetAt(0);
+            int numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
+            for (int i = sheet.getPhysicalNumberOfRows() - 1; i >= numRows; i--) {
+                sheet.removeRow(sheet.getRow(i));
+            }
+            wb.write(byteArrayOutputStream);
+        } catch (IOException | InvalidFormatException e) {
             throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
         }
 
@@ -269,12 +297,13 @@ public class CSVRestImpl implements CSVRest {
      */
     private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
         Workbook wb = WorkbookFactory.create(input);
+        // Only support single sheet files for now
         Sheet sheet = wb.getSheetAt(0);
         DataFormatter df = new DataFormatter();
         List<String[]> rowList = new ArrayList<>(sheet.getPhysicalNumberOfRows());
         String[] columns;
         for (Row row : sheet) {
-            if (row.getRowNum() > numRows) {
+            if (row.getRowNum() <= numRows) {
                 columns = new String[row.getPhysicalNumberOfCells()];
                 int index = 0;
                 for (Cell cell : row) {

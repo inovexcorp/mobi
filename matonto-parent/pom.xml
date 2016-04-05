@@ -127,15 +127,11 @@
                 <version>1.5.6</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.poi</groupId>
-                <artifactId>poi</artifactId>
-                <version>3.14</version>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.poi</artifactId>
+                <version>3.14_1</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.poi</groupId>
-                <artifactId>poi-ooxml</artifactId>
-                <version>3.14</version>
-            </dependency>
+
 
             <!-- Test Dependencies -->
             <dependency>

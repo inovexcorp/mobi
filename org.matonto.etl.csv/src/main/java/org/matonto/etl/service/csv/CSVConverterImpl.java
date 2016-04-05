@@ -38,35 +38,33 @@ public class CSVConverterImpl implements CSVConverter {
     }
 
     @Override
-    public Model convert(File delim, File mappingFile, boolean containsHeaders)
+    public Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
             throws IOException, RDFParseException, InvalidFormatException {
         Model converted = parseMapping(mappingFile);
         return convert(new FileInputStream(delim), converted, containsHeaders,
-                FilenameUtils.getExtension(delim.getName()));
+                FilenameUtils.getExtension(delim.getName()), separator);
     }
 
     @Override
-    public Model convert(File delim, Model mappingModel, boolean containsHeaders)
+    public Model convert(File delim, Model mappingModel, boolean containsHeaders, char separator)
             throws IOException, InvalidFormatException {
         return convert(new FileInputStream(delim), mappingModel, containsHeaders,
-                FilenameUtils.getExtension(delim.getName()));
+                FilenameUtils.getExtension(delim.getName()), separator);
     }
 
     @Override
-    public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension)
+    public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
             throws IOException, InvalidFormatException {
         Model converted = parseMapping(mappingFile);
-        return convert(delim, converted, containsHeaders, extension);
+        return convert(delim, converted, containsHeaders, extension, separator);
     }
 
     @Override
-    public Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension)
-            throws IOException, InvalidFormatException {
-        if (extension.equals("xls") || extension.equals("xlsx")) {
-            return convertExcel(delim, mappingModel, containsHeaders);
-        } else {
-            return convert(new InputStreamReader(delim), mappingModel, containsHeaders);
-        }
+    public Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension,
+                         char separator) throws IOException, InvalidFormatException {
+        return (extension.equals("xls") || extension.equals("xlsx"))
+                ? convertExcel(delim, mappingModel, containsHeaders)
+                : convertCSV(new InputStreamReader(delim), mappingModel, containsHeaders, separator);
     }
 
     private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders)
@@ -81,9 +79,12 @@ public class CSVConverterImpl implements CSVConverter {
 
         //Traverse each row and convert column into RDF
         for (Row row : sheet) {
-            nextRow = new String[row.getPhysicalNumberOfCells()];
             // If headers exist, skip them
-            int index = (containsHeaders) ? 0 : 1;
+            if (containsHeaders && row.getRowNum() == 0) {
+                continue;
+            }
+            nextRow = new String[row.getPhysicalNumberOfCells()];
+            int index = 0;
             for (Cell cell : row) {
                 nextRow[index] = df.formatCellValue(cell);
                 index++;
@@ -100,8 +101,8 @@ public class CSVConverterImpl implements CSVConverter {
         return convertedRDF;
     }
 
-    private Model convert(Reader csv, Model mappingModel, boolean containsHeaders) throws IOException {
-        char separator = getSeparator(mappingModel);
+    private Model convertCSV(Reader csv, Model mappingModel, boolean containsHeaders, char separator)
+            throws IOException {
         CSVReader reader = new CSVReader(csv, separator);
         String[] nextLine;
         Model convertedRDF = modelFactory.createModel();
@@ -133,32 +134,6 @@ public class CSVConverterImpl implements CSVConverter {
     public String generateUuid() {
         return UUID.randomUUID().toString();
     }
-
-    /**
-     * Pulls the documents delimiting character from the mapping. If no separator is found, a comma is used.
-     *
-     * @param mappingModel The ontology mapping in an RDF Model. See MatOnto Wiki for details.
-     * @return The character that is used to separate values in the document to be loaded.
-     */
-    public char getSeparator(Model mappingModel) {
-        char separator;
-        Model documentModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()),
-                valueFactory.createIRI(Delimited.DOCUMENT.stringValue()));
-        if (documentModel.isEmpty()) {
-            return ',';
-        }
-        IRI documentIRI = Models.subjectIRI(documentModel).get();
-        Model separatorModel = mappingModel.filter(documentIRI,
-                valueFactory.createIRI(Delimited.SEPARATOR.stringValue()), null);
-        if (separatorModel.isEmpty()) {
-            return ',';
-        } else {
-            separator = Models.objectString(separatorModel).get().charAt(0);
-        }
-
-        return separator;
-    }
-
 
     /**
      * Writes RDF statements based on a class mapping and a line of data from CSV.

@@ -117,13 +117,14 @@
              * @param {boolean} containsHeaders - Whether the delimited file contains a header row
              * @return {promise} The response data with the mapped data in JSON-LD format
              */
-            self.mapByFile = function(fileName, mappingFileName, containsHeaders) {
+            self.mapByFile = function(fileName, mappingFileName, containsHeaders, separator) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Contains-Headers': containsHeaders
+                            'Contains-Headers': containsHeaders,
+                            'Separator': separator
                         },
                         headers: {
                             'Content-Type': undefined
@@ -151,13 +152,14 @@
              * @param {boolean} containsHeaders - Whether the delimited file contains a header row
              * @return {promise} The response data with the mapped data in JSON-LD format
              */
-            self.mapByString = function(fileName, jsonld, containsHeaders) {
+            self.mapByString = function(fileName, jsonld, containsHeaders, separator) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Contains-Headers': containsHeaders
+                            'Contains-Headers': containsHeaders,
+                            'Separator': separator
                         },
                         headers: {
                             'Content-Type': undefined
@@ -187,7 +189,7 @@
              *                          Turtle, and RDF/XML.
              * @return {promise} The response data with the mapped data preview in the specified format
              */
-            self.previewMap = function(fileName, jsonld, containsHeaders, format) {
+            self.previewMap = function(fileName, jsonld, containsHeaders, format, separator) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -195,7 +197,8 @@
                         params: {
                             'Preview': true,
                             'Format': format,
-                            'Contains-Headers': containsHeaders
+                            'Contains-Headers': containsHeaders,
+                            'Separator': separator
                         },
                         headers: {
                             'Content-Type': undefined,

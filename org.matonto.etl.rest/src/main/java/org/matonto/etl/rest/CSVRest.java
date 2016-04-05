@@ -19,6 +19,7 @@ public interface CSVRest {
      * Uploads a delimited document to the data/tmp/ directory.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
+     * @param fileDetail information about the file being uploaded, including the name
      * @return a response with the name of the file created on the server
     */
     @POST
@@ -32,6 +33,7 @@ public interface CSVRest {
      * delimited file.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
+     * @param fileDetail information about the file being uploaded, including the name
      * @param fileName the name of the uploaded file on the server to replace
      * @return a response with the name of the file replaced on the server
      */
@@ -72,7 +74,10 @@ public interface CSVRest {
      * @param fileName the name of the delimited document in the data/tmp/ directory
      * @param jsonld a mapping in JSON-LD
      * @param mappingFileName the name of an uploaded mapping file
+     * @param format the RDF serialization to use if getting a preview
+     * @param isPreview whether or not a preview of the mapped data should be returned
      * @param containsHeaders whether the delimited file has headers
+     * @param separator the character the columns are separated by if it is a CSV
      * @return a response with a JSON object containing the mapping file name and a
      *      JSON-LD string containing the converted data
     */
@@ -86,5 +91,6 @@ public interface CSVRest {
             @FormDataParam("fileName") String mappingFileName,
             @DefaultValue("jsonld") @QueryParam("Format") String format,
             @DefaultValue("false") @QueryParam("Preview") boolean isPreview,
-            @DefaultValue("true") @QueryParam("Contains-Headers") boolean containsHeaders);
+            @DefaultValue("true") @QueryParam("Contains-Headers") boolean containsHeaders,
+            @DefaultValue(",") @QueryParam("Separator") String separator);
 }
