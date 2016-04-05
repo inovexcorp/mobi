@@ -15,3 +15,74 @@ function injectDirectiveTemplate(basePath) {
         });
     });
 }
+
+function mockOntologyManager() {
+    beforeEach(function() {
+        angular.module('ontologyManager', []);
+
+        module(function($provide) {
+            $provide.service('ontologyManagerService', function() {
+                this.getEntityName = jasmine.createSpy('getEntityName').and.callFake(function(entity) {
+                    if (entity && entity.hasOwnProperty('@id')) {
+                        return entity['@id'];
+                    } else {
+                        return '';
+                    }
+                });
+                this.getClassProperty = jasmine.createSpy('getClassProperty').and.callFake(function(oId, cId, pId) {
+                    return {};
+                });
+                this.getClassProperties = jasmine.createSpy('getClassProperties').and.callFake(function(oId, cId) {
+                    return [];
+                });
+                this.getClass = jasmine.createSpy('getClass').and.callFake(function(oId, cId) {
+                    return {};
+                });
+            });
+        });
+    });
+}
+
+function mockMappingManager() {
+    beforeEach(function() {
+        angular.module('mappingManager', []);
+
+        module(function($provide) {
+            $provide.service('mappingManagerService', function() {
+                this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.callFake(function(entity) {
+                    return entity && entity.hasOwnProperty('@type') && entity['@type'] === 'ObjectMapping' ? true : false;
+                });
+                this.isDataMapping = jasmine.createSpy('isDataMapping').and.callFake(function(entity) {
+                    return entity && entity.hasOwnProperty('@type') && entity['@type'] === 'DataMapping' ? true : false;
+                });
+                this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.callFake(function(mapping, classId) {
+                    return [];
+                });
+                this.getSourceOntologyId = jasmine.createSpy('getSourceOntologyId').and.callFake(function(mapping) {
+                    return '';
+                });
+                this.findClassWithObjectMapping = jasmine.createSpy('findClassWithObjectMapping').and.callFake(function(jsonld, mappingId) {
+                    return {};
+                });
+                this.getClassIdByMapping = jasmine.createSpy('getClassIdByMapping').and.callFake(function(entity) {
+                    return '';
+                });
+                this.getPropIdByMapping = jasmine.createSpy('getClassIdByMapping').and.callFake(function(entity) {
+                    return '';
+                });
+            });
+        });
+    });
+}
+
+function mockPrefixes() {
+    beforeEach(function() {
+        angular.module('prefixes', []);
+
+        module(function($provide) {
+            $provide.service('prefixes', function() {
+                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = '';
+            });
+        });
+    });
+}
