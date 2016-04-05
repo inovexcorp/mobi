@@ -40,11 +40,11 @@
                         'localName': 'incompatibleWith'
                     },
                     {
-                        'namespace': 'http://purl.org/dc/elements/1.1/',
+                        'namespace': prefixes.dc,
                         'localName': 'description'
                     },
                     {
-                        'namespace': 'http://purl.org/dc/elements/1.1/',
+                        'namespace': prefixes.dc,
                         'localName': 'title'
                     }
                 ],

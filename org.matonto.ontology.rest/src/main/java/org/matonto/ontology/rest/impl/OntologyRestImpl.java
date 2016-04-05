@@ -196,8 +196,8 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response saveChangesToOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-        throwErrorIfMissingParam(ontologyIdStr, "resourceIdStr is missing");
-        throwErrorIfMissingParam(ontologyIdStr, "resourceJson is missing");
+        throwErrorIfMissingParam(resourceIdStr, "resourceIdStr is missing");
+        throwErrorIfMissingParam(resourceJson, "resourceJson is missing");
 
         boolean updated;
         try {
@@ -236,7 +236,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private Response deleteEntityFromOntology(String ontologyIdStr, String entityIdStr) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-        throwErrorIfMissingParam(ontologyIdStr, "entityIdStr is missing");
+        throwErrorIfMissingParam(entityIdStr, "entityIdStr is missing");
 
         Map<String, Set> changedEntities;
         try {
@@ -291,7 +291,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private Response addEntityToOntology(String ontologyIdStr, String entityJson) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
-        throwErrorIfMissingParam(ontologyIdStr, "entityJson is missing");
+        throwErrorIfMissingParam(entityJson, "entityJson is missing");
 
         boolean added = false;
         try {
