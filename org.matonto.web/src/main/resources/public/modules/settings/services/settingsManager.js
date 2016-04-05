@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('settingsManager', ['customSetting'])
+        .module('settingsManager', [])
         .service('settingsManagerService', settingsManagerService);
 
         settingsManagerService.$inject = ['$window', '$cookies'];
@@ -11,7 +11,8 @@
             var self = this;
             var cookieName = 'matonto-settings';
             var defaultSettings = {
-                treeDisplay: 'rdfs:label'
+                treeDisplay: 'rdfs:label',
+                tooltipDisplay: '@id'
             }
 
             function initialize() {
