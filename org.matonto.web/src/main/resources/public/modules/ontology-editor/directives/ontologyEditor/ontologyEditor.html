@@ -11,7 +11,7 @@
                     on-click="vm.setEditorTab('prefix')">Prefix</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'preview'"
-                    on-click="vm.setEditorTab('preview')">Preview</tab-button>
+                    on-click="vm.setEditorTab('preview');">Preview</tab-button>
     </div>
 
     <!-- basic tab -->
@@ -89,6 +89,18 @@
 
     <!-- preview tab -->
     <div ng-if="vm.state.editorTab === 'preview'" class="tab clearfix">
-
+        <div class="form-inline">
+            <div class="form-group">
+                <custom-label>Serialization</custom-label>
+                <select class="form-control" ng-model="vm.serialization">
+                    <option value="">Select a type</option>
+                    <option value="turtle">Turtle</option>
+                    <option value="owl/xml">OWL/XML</option>
+                    <option value="rdf/xml">RDF/XML</option>
+                </select>
+            </div>
+            <custom-button is-disabled-when="!vm.serialization" type="'secondary'" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
+        </div>
+        <textarea class="preview-display" readonly>{{vm.preview}}</textarea>
     </div>
 </form>

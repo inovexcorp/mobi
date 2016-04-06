@@ -31,9 +31,24 @@
         form {
             height: 100%;
 
-            /* Don't let them change the height of the textareas */
+            /* Don't let them change the width of the textareas */
             textarea {
                 resize: vertical;
+
+                &.preview-display {
+                    border: 0;
+                    border-top: 1px solid;
+                    bottom: 0;
+                    left: 0;
+                    margin: 0;
+                    outline: 0;
+                    padding: 15px;
+                    position: absolute;
+                    resize: none;
+                    right: 0;
+                    top: 60px;
+                    width: 100%;
+                }
             }
 
             /* Styles for the sub classes configured */
