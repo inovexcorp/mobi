@@ -4,7 +4,7 @@
             {{$select.selected}}
         </ui-select-match>
         <ui-select-choices repeat="column in columns | filter:$select.search">
-            {{column | highlight:$select.search}}
+            <div ng-bind-html="column | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
 </div>

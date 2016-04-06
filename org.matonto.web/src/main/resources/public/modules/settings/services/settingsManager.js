@@ -12,7 +12,7 @@
             var settings = {};
             var cookieName = 'matonto-settings';
             var defaultSettings = {
-                treeDisplay: prefixes.rdfs + 'label',
+                treeDisplay: 'pretty',
                 tooltipDisplay: '@id'
             }
 
