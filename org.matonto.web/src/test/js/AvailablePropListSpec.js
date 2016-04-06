@@ -78,7 +78,7 @@ describe('Available Prop List directive', function() {
             var element = $compile(angular.element('<available-prop-list props="props" open-prop="openProp(propId)"></available-prop-list>'))(scope);
             scope.$digest();
 
-            expect(element.hasClass('availale-props'));
+            expect(element.hasClass('available-props')).toBe(true);
         });
         it('if given no props', function() {
             scope.props = [];
