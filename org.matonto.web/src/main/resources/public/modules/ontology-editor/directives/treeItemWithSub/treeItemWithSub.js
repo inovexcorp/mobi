@@ -5,9 +5,9 @@
         .module('treeItemWithSub', ['settingsManager'])
         .directive('treeItemWithSub', treeItemWithSub);
 
-        treeItemWithSub.$inject = ['$filter', 'settingsManagerService', 'ontologyManagerService', 'prefixes'];
+        treeItemWithSub.$inject = ['settingsManagerService', 'ontologyManagerService'];
 
-        function treeItemWithSub($filter, settingsManagerService, ontologyManagerService, prefixes) {
+        function treeItemWithSub(settingsManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -20,7 +20,7 @@
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItemWithSub/treeItemWithSub.html',
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function($scope) {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
 
@@ -31,7 +31,7 @@
                         }
                         return result;
                     }
-                }]
+                }
             }
         }
 })();

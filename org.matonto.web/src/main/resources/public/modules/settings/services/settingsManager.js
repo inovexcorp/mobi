@@ -20,11 +20,7 @@
             }
 
             function getSavedSettings() {
-                return $cookies.getObject(cookieName) ? $cookies.getObject(cookieName) : {};
-            }
-
-            self.getSettings = function() {
-                return self.settings;
+                return $cookies.getObject(cookieName) || {};
             }
 
             self.saveSettings = function(settings) {

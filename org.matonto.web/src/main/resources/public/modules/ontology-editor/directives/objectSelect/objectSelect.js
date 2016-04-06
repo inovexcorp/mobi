@@ -39,13 +39,13 @@
 
                     dvm.getTooltipDisplay = function(item) {
                         var itemIri = item['@id'] ? item['@id'] : dvm.getItemIri(item);
-                        var ontologyIndex = _.get(stateManagerService.getState(), 'oi', undefined);
+                        var ontologyIndex = _.get(stateManagerService.getState(), 'oi');
                         var selectedObject = ontologyManagerService.getObjectCopyByIri(itemIri, ontologyIndex);
                         var result = '';
 
-                        if(_.get(selectedObject, tooltipDisplay, undefined) && tooltipDisplay !== '@id') {
+                        if(_.get(selectedObject, tooltipDisplay) && tooltipDisplay !== '@id') {
                             result = selectedObject[tooltipDisplay][0]['@value'];
-                        } else if(_.get(selectedObject, '@id', undefined)) {
+                        } else if(_.get(selectedObject, '@id')) {
                             result = selectedObject['@id'];
                         } else {
                             result = itemIri;

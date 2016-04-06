@@ -9,7 +9,7 @@
 
     function SettingsController(settingsManagerService, prefixes) {
         var vm = this;
-        vm.settings = settingsManagerService.getSettings();
+        vm.settings = settingsManagerService.settings;
         vm.rdfs = prefixes.rdfs;
 
         vm.saveSettings = function() {
