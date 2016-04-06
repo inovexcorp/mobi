@@ -79,6 +79,8 @@
                     editor = 'property-editor';
                 }
                 self.setState(editor, oi, ci, pi);
+
+                return oi;
             }
 
             self.clearState = function(oi) {

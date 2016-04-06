@@ -1,5 +1,6 @@
 package org.matonto.etl.api.csv;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.matonto.rdf.api.Model;
 import org.openrdf.rio.RDFParseException;
 
@@ -10,52 +11,66 @@ import java.io.InputStream;
 public interface CSVConverter {
 
     /**
-     * Converts a CSV to RDF using a mapping file. Optionally skip a header row. Column
+     * Converts a delimited file to RDF using a mapping file. Optionally skip a header row. Column
      * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
-     * @param csv The CSV file to be loaded
+     * @param delim The delimited file to be loaded
      * @param mappingFile The mapping file in RDF Format. See the MatOnto Wiki for details
-     * @param containsHeaders Whether or not the CSV file contains a header row
-     * @return A Model of RDF data converted from CSV
+     * @param containsHeaders Whether or not the delimited file contains a header row
+     * @param separator the column separator to use if a CSV
+     * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
+     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
      */
-    Model convert(File csv, File mappingFile, boolean containsHeaders) throws IOException, RDFParseException;
+    Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
+            throws IOException, RDFParseException, InvalidFormatException;
 
     /**
-     * Converts a CSV to RDF using a mapping Model. Optionally skip a header row. Column
+     * Converts a delimited file to RDF using a mapping Model. Optionally skip a header row. Column
      * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
-     * @param csv The CSV file to be loaded
-     * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
-     * @param containsHeaders Whether or not the CSV file contains a header row
-     * @return A Model of RDF data converted from CSV
+     * @param delim The delimited file to be loaded
+     * @param mappingModel An RDF Model of the mapping to delimited data. See MatOnto Wiki for details.
+     * @param containsHeaders Whether or not the delimited file contains a header row
+     * @param separator the column separator to use if a CSV
+     * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
+     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
      */
-    Model convert(File csv, Model mappingModel, boolean containsHeaders) throws IOException;
+    Model convert(File delim, Model mappingModel, boolean containsHeaders, char separator)
+            throws IOException, InvalidFormatException;
 
     /**
-     * Converts a CSV to RDF using a mapping file. Optionally skip a header row. Column
+     * Converts a delimited file to RDF using a mapping file. Optionally skip a header row. Column
      * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
-     * @param csv The CSV InputStream to be loaded
+     * @param delim The delimited InputStream to be loaded
      * @param mappingFile The mapping file in RDF Format. See the MatOnto Wiki for details
-     * @param containsHeaders Whether or not the CSV file contains a header row
-     * @return A Model of RDF data converted from CSV
+     * @param containsHeaders Whether or not the delimited file contains a header row
+     * @param extension The extension of the delimited file
+     * @param separator the column separator to use if a CSV
+     * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
+     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
      */
-    Model convert(InputStream csv, File mappingFile, boolean containsHeaders) throws IOException;
+    Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
+            throws IOException, InvalidFormatException;
 
     /**
-     * Converts a CSV to RDF using a mapping Model. Optionally skip a header row. Column
+     * Converts a delimited file to RDF using a mapping Model. Optionally skip a header row. Column
      * indexes for data mappings are zero-based. Returns the RDF data as a Model.
      *
-     * @param csv The CSV InputStream to be loaded
-     * @param mappingModel An RDF Model of the mapping to CSV. See MatOnto Wiki for details.
-     * @param containsHeaders Whether or not the CSV file contains a header row
-     * @return A Model of RDF data converted from CSV
+     * @param delim The delimited InputStream to be loaded
+     * @param mappingModel An RDF Model of the mapping to delimited data. See MatOnto Wiki for details.
+     * @param containsHeaders Whether or not the delimited file contains a header row
+     * @param extension The extension of the delimited file
+     * @param separator the column separator to use if a CSV
+     * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
+     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
      */
-    Model convert(InputStream csv, Model mappingModel, boolean containsHeaders) throws IOException;
+    Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension, char separator)
+            throws IOException, InvalidFormatException;
 }

@@ -6,7 +6,7 @@ import org.matonto.rdf.api.IRI;
 
 public interface AnnotationPropertyDomainAxiom extends AnnotationAxiom {
 
-	IRI getDomain();
-	
-	AnnotationProperty getProperty();
+    IRI getDomain();
+
+    AnnotationProperty getProperty();
 }

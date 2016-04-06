@@ -9,7 +9,7 @@
         var self = this;
 
         self.update = function(obj, old, fresh, owl) {
-            var temp, prop, i, arr, excluded, isOntology,
+            var temp, prop, i, arr, excluded,
                 exclude = [
                     '$$hashKey',
                     'context',
@@ -19,7 +19,6 @@
             // iterates over all of the properties of the object
             for(prop in obj) {
                 excluded = exclude.indexOf(prop);
-                isOntology = obj['@type'] && obj['@type'].indexOf(owl + 'Ontology') !== -1;
 
                 // checks to see if the property contains the old string
                 if(prop.indexOf(old) !== -1 && excluded === -1) {
@@ -33,7 +32,7 @@
                 }
 
                 // do nothing for these situations
-                if(excluded !== -1 || !obj[prop] || (prop === '@id' && isOntology)) {
+                if(excluded !== -1 || !obj[prop] || prop === '@id') {
                     // do nothing
                 }
                 // iterates through the array and recursively calls this function

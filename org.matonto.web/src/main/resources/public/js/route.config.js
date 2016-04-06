@@ -96,6 +96,17 @@
                 data: {
                     title: 'Mapper'
                 }
+            })
+            .state('root.settings', {
+                url: '/settings',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/settings/settings.html'
+                    }
+                },
+                data: {
+                    title: 'Settings'
+                }
             });
 
         authenticate.$inject = ['loginManagerService'];

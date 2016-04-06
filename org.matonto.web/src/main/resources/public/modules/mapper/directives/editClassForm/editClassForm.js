@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('editClassForm', ['prefixes', 'mappingManager', 'ontologyManager'])
+        .module('editClassForm', ['mappingManager', 'ontologyManager'])
         .directive('editClassForm', editClassForm);
 
-        editClassForm.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService'];
+        editClassForm.$inject = ['mappingManagerService', 'ontologyManagerService'];
 
-        function editClassForm(prefixes, mappingManagerService, ontologyManagerService) {
+        function editClassForm(mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',

@@ -118,14 +118,13 @@
             }
 
             // Edit mapping methods 
-            self.createNewMapping = function(mappingName, separator) {
+            self.createNewMapping = function(mappingName) {
                 var jsonld = [];
                 jsonld = addSingleEntity(jsonld, prefixes.delim + 'Document');
                 var documentEntity = {
                     '@id': prefixes.dataDelim + 'Document',
                     '@type': [prefixes.delim + 'Document']
                 };
-                documentEntity[prefixes.delim + 'separator'] = [{'@value': separator}];
                 jsonld.push(documentEntity);
                 return {
                     jsonld,
@@ -297,12 +296,6 @@
                 return _.get(
                     getEntityById(mapping.jsonld, prefixes.dataDelim + 'Document'),
                     "['" + prefixes.delim + "sourceOntology'][0]['@id']"
-                );
-            }
-            self.getSeparator = function(mapping) {
-                return _.get(
-                    getEntityById(mapping.jsonld, prefixes.dataDelim + 'Document'),
-                    "['" + prefixes.delim + "separator'][0]['@value']"
                 );
             }
             self.getMappedClassIds = function(mapping) {

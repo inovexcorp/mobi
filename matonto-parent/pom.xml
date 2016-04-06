@@ -6,7 +6,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.0.33-SNAPSHOT</version>
+    <version>1.0.34-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -126,6 +126,12 @@
                 <artifactId>swagger-annotations</artifactId>
                 <version>1.5.6</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.servicemix.bundles</groupId>
+                <artifactId>org.apache.servicemix.bundles.poi</artifactId>
+                <version>3.14_1</version>
+            </dependency>
+
 
             <!-- Test Dependencies -->
             <dependency>

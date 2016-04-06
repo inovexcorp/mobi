@@ -4,7 +4,7 @@ import org.matonto.ontology.core.api.types.DataRangeType;
 
 public interface DataRange {
 
-	boolean isDatatype();
-	
-	DataRangeType getDataRangeType();
+    boolean isDatatype();
+
+    DataRangeType getDataRangeType();
 }

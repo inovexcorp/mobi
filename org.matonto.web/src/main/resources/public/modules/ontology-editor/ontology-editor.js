@@ -5,15 +5,23 @@
         .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj'];
+    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
 
-    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj) {
+    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
         vm.propertyTypes = ontologyManagerService.getPropertyTypes();
         vm.state = stateManagerService.getState();
         vm.selected = ontologyManagerService.getObject(vm.state);
+        vm.rdfs = prefixes.rdfs;
+        vm.owl = prefixes.owl;
+
+        function initialize() {
+            if(vm.state) {
+                setVariables(vm.state.oi);
+            }
+        }
 
         /* State Management */
         vm.setTreeTab = function(tab) {
@@ -28,6 +36,24 @@
         }
 
         /* Ontology Management */
+        function setVariables(oi) {
+            vm.selected = ontologyManagerService.getObject(vm.state);
+            vm.ontology = ontologyManagerService.getOntology(oi);
+        }
+
+        function submitEdit() {
+            ontologyManagerService.edit(vm.ontology.matonto.originalId);
+        }
+
+         function submitCreate() {
+            ontologyManagerService.create(vm.selected, vm.state)
+                .then(function() {
+                    var oi = stateManagerService.setStateToNew(vm.state, vm.ontologies);
+                    vm.state = stateManagerService.getState();
+                    setVariables(oi);
+                });
+        }
+
         vm.uploadOntology = function(isValid, file, namespace, localName) {
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(isValid, file)
@@ -39,9 +65,10 @@
                 });
         }
 
-        vm.deleteOntology = function() {
-            ontologyManagerService.delete(vm.selected.matonto.ontologyId, vm.state)
+        vm.deleteEntity = function() {
+            ontologyManagerService.delete(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state)
                 .then(function(response) {
+                    vm.showDeleteConfirmation = false;
                     stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('default', undefined, undefined, undefined);
                 });
@@ -50,21 +77,15 @@
         vm.selectItem = function(editor, oi, ci, pi) {
             stateManagerService.setState(editor, oi, ci, pi);
             vm.state = stateManagerService.getState();
-            vm.selected = ontologyManagerService.getObject(vm.state);
-            vm.ontology = ontologyManagerService.getOntology(oi);
-            vm.rdfs = ontologyManagerService.getOntologyProperty(vm.ontology, 'rdfs');
-            vm.owl = ontologyManagerService.getOntologyProperty(vm.ontology, 'owl');
+            setVariables(oi);
         }
 
-        vm.submitEdit = function() {
-            ontologyManagerService.edit(vm.selected, vm.state);
-        }
-
-        vm.submitCreate = function() {
-            ontologyManagerService.create(vm.selected, vm.state);
-            stateManagerService.setStateToNew(vm.state, vm.ontologies);
-            stateManagerService.setEditorTab('basic');
-            vm.state = stateManagerService.getState();
+        vm.save = function() {
+            if(vm.state.oi === -1 || vm.state.ci === -1 || vm.state.pi === -1) {
+                submitCreate();
+            } else {
+                submitEdit();
+            }
         }
 
         vm.editIRI = function() {
@@ -73,27 +94,32 @@
         }
 
         vm.isObjectProperty = function() {
-            return ontologyManagerService.isObjectProperty(vm.selected['@type'], vm.ontology.matonto.owl);
+            return ontologyManagerService.isObjectProperty(vm.selected['@type']);
         }
 
         vm.entityChanged = function() {
             vm.selected.matonto.unsaved = true;
+            ontologyManagerService.addToChangedList(vm.ontology['@id'], vm.selected.matonto.originalId, vm.state);
         }
 
         /* Prefix (Context) Management */
         vm.editPrefix = function(edit, old, index) {
             prefixManagerService.editPrefix(edit, old, index, vm.selected);
+            vm.entityChanged();
         }
 
         vm.editValue = function(edit, key, value, index) {
             prefixManagerService.editValue(edit, key, value, index, vm.selected);
+            vm.entityChanged();
         }
 
         vm.addPrefix = function(key, value) {
             prefixManagerService.add(key, value, vm.selected)
                 .then(function(response) {
+                    setVariables(vm.state.oi);
                     vm.key = '';
                     vm.value = '';
+                    vm.entityChanged();
                 }, function(response) {
                     vm.showDuplicateMessage = true;
                 });
@@ -101,6 +127,7 @@
 
         vm.removePrefix = function(key) {
             prefixManagerService.remove(key, vm.selected);
+            vm.entityChanged();
         }
 
         vm.getItemIri = function(item) {
@@ -118,6 +145,7 @@
         vm.addAnnotation = function() {
             annotationManagerService.add(vm.selected, vm.ontologies[vm.state.oi].matonto.annotations);
             resetAnnotationOverlay();
+            vm.entityChanged();
         }
 
         vm.editClicked = function(key, index) {
@@ -131,10 +159,12 @@
         vm.editAnnotation = function() {
             annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationIndex);
             resetAnnotationOverlay();
+            vm.entityChanged();
         }
 
         vm.removeAnnotation = function(key, index) {
             annotationManagerService.remove(vm.selected, key, index);
+            vm.entityChanged();
         }
 
         vm.getPattern = function() {
@@ -148,5 +178,7 @@
         vm.getAnnotationLocalNameLowercase = function(item) {
             return annotationManagerService.getLocalNameLowercase(item);
         }
+
+        initialize();
     }
 })();
