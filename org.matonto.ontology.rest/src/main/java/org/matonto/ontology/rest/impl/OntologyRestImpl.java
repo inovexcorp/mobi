@@ -612,8 +612,6 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             String normalizedFormat = java.net.URLDecoder.decode(rdfFormat, "UTF-8").toLowerCase();
 
-            LOG.info("normalizedFormat -> " + normalizedFormat);
-
             switch (normalizedFormat) {
                 case "rdf/xml":
                     return ontology.asRdfXml().toString();
