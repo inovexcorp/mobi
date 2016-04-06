@@ -38,6 +38,9 @@ function mockOntologyManager() {
                 this.getClass = jasmine.createSpy('getClass').and.callFake(function(oId, cId) {
                     return {};
                 });
+                this.isObjectProperty = jasmine.createSpy('isObjectProperty').and.callFake(function(arr) {
+                    return arr && arr.indexOf('ObjectProperty') >= 0 ? true : false;
+                });
             });
         });
     });
@@ -67,7 +70,13 @@ function mockMappingManager() {
                 this.getClassIdByMapping = jasmine.createSpy('getClassIdByMapping').and.callFake(function(entity) {
                     return '';
                 });
-                this.getPropIdByMapping = jasmine.createSpy('getClassIdByMapping').and.callFake(function(entity) {
+                this.getPropIdByMapping = jasmine.createSpy('getPropIdByMapping').and.callFake(function(entity) {
+                    return '';
+                });
+                this.getClassIdByMappingId = jasmine.createSpy('getClassIdByMappingId').and.callFake(function(entity) {
+                    return '';
+                });
+                this.getPropIdByMappingId = jasmine.createSpy('getPropIdByMappingId').and.callFake(function(entity) {
                     return '';
                 });
             });

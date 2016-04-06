@@ -55,7 +55,7 @@ describe('Column Form directive', function() {
             expect(scope.setNext).toHaveBeenCalled();
         });
     });
-    describe('replaces the elemtn with the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             var element = $compile(angular.element('<column-form set="set(column)" set-next="setNext(column)" last-prop="lastProp" columns="columns" selected-column="selectedColumn"></column-form>'))(scope);
             scope.$digest();
@@ -71,11 +71,15 @@ describe('Column Form directive', function() {
         it('depending on whether a column is selected', function() {
             var element = $compile(angular.element('<column-form set="set(column)" set-next="setNext(column)" last-prop="lastProp" columns="columns" selected-column="selectedColumn"></column-form>'))(scope);
             scope.$digest();
-            expect(element.find('custom-button').length).toBe(0);
+            var buttons = element.find('custom-button');
+            expect(buttons.length).toBe(0);
             
             element.controller('columnForm').selectedColumn = 'test';
             scope.$digest();
-            expect(element.find('custom-button').length).toBe(2);
+            buttons = element.find('custom-button');
+            expect(buttons.length).toBe(2);
+            expect(['Set', 'Set &amp; Next'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Set', 'Set & Next'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
     });
 });

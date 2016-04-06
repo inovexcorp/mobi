@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('editPropForm', ['prefixes', 'ontologyManager', 'mappingManager'])
+        .module('editPropForm', ['ontologyManager', 'mappingManager'])
         .directive('editPropForm', editPropForm);
 
-        editPropForm.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
+        editPropForm.$inject = ['ontologyManagerService', 'mappingManagerService'];
 
-        function editPropForm(prefixes, ontologyManagerService, mappingManagerService) {
+        function editPropForm(ontologyManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -43,7 +43,7 @@
                     dvm.isObjectProperty = function() {
                         var classId = dvm.getClassId();
                         var propId = dvm.getPropId();
-                        return ontologyManagerService.isObjectProperty(_.get(getClassProp(classId, propId), '@type', []), prefixes.owl);
+                        return ontologyManagerService.isObjectProperty(_.get(getClassProp(classId, propId), '@type', []));
                     }
                     function getClassProp(classId, propId) {
                         return ontologyManagerService.getClassProperty(dvm.ontologyId, classId, propId);
