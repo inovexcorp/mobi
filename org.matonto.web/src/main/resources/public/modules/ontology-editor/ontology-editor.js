@@ -40,6 +40,7 @@
             vm.selected = ontologyManagerService.getObject(vm.state);
             vm.ontology = ontologyManagerService.getOntology(oi);
             vm.preview = 'Please select a serialization and hit refresh.';
+            vm.serialization = '';
         }
 
         function submitEdit() {
