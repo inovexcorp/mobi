@@ -987,7 +987,7 @@
             }
 
             self.isObjectProperty = function(types) {
-                return (_.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1) ? true : false;
+                return _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1;
             }
 
             self.getOntology = function(oi) {
