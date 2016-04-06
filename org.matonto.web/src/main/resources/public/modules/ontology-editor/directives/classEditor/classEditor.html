@@ -33,6 +33,7 @@
     <div ng-if="vm.state.editorTab === 'axioms'" class="tab clearfix">
         <!-- rdfs:subClassOf -->
         <object-select ng-model="vm.selected[vm.rdfs + 'subClassOf']"
+                       selected-id="vm.selected['@id']"
                        display-text="'Sub Class Of'"
                        muted-text="vm.rdfs + 'subClassOf'"
                        change-event="vm.entityChanged()"
@@ -40,6 +41,7 @@
 
         <!-- owl:disjointWith -->
         <object-select ng-model="vm.selected[vm.rdfs + 'disjointWith']"
+                       selected-id="vm.selected['@id']"
                        display-text="'Disjoint With'"
                        muted-text="vm.rdfs + 'disjointWith'"
                        change-event="vm.entityChanged()"

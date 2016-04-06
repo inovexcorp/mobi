@@ -1,7 +1,7 @@
 <!-- nav.html -->
 <div class="nav clearfix" ng-controller="NavController as vm">
     <!-- list of perspectives -->
-    <ul class="perspectives icon-container pull-left">
+    <ul class="icon-container pull-left">
         <!-- home icon -->
         <li ng-repeat="per in vm.perspectives">
             <a ng-class="{'active': per.isActive}"
@@ -11,12 +11,12 @@
     </ul>
     <!-- static menu items -->
     <ul class="icon-container pull-right">
-        <!-- help icon --
-        <li><a><i class="fa fa-question fa-fw"></i><span class="name">Help</span></a></li>
-        <!-- settings icon --
-        <li><a><i class="fa fa-cog fa-fw"></i><span class="name">Settings</span></a></li>
-        <!-- hamburger menu --
-        <li><a><i class="fa fa-bars fa-fw"></i><span class="name">Menu</span></a></li-->
+        <!-- settings -->
+        <li>
+            <a ng-class="{'active': $state.is('root.settings')}"
+               ui-sref-active="active"
+               ui-sref="root.settings"><i class="fa fa-cog fa-2x fa-fw"></i><span class="name">Settings</span></a>
+        </li>
         <!-- logout -->
         <li>
             <a class="sign-out-wrapper" ng-click="vm.logout();">

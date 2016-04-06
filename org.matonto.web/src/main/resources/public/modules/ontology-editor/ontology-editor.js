@@ -17,6 +17,12 @@
         vm.rdfs = prefixes.rdfs;
         vm.owl = prefixes.owl;
 
+        function initialize() {
+            if(vm.state) {
+                setVariables(vm.state.oi);
+            }
+        }
+
         /* State Management */
         vm.setTreeTab = function(tab) {
             stateManagerService.setTreeTab(tab);
@@ -88,7 +94,7 @@
         }
 
         vm.isObjectProperty = function() {
-            return ontologyManagerService.isObjectProperty(vm.selected['@type'], vm.ontology.matonto.owl);
+            return ontologyManagerService.isObjectProperty(vm.selected['@type']);
         }
 
         vm.entityChanged = function() {
@@ -172,5 +178,7 @@
         vm.getAnnotationLocalNameLowercase = function(item) {
             return annotationManagerService.getLocalNameLowercase(item);
         }
+
+        initialize();
     }
 })();
