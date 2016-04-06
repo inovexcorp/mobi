@@ -6,7 +6,6 @@ import com.google.gson.GsonBuilder;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
@@ -80,7 +79,7 @@ public class CSVRestImpl implements CSVRest {
     public Response etlFile(String fileName, String mappingRdf, String mappingFileName,
                             String format, boolean isPreview, boolean containsHeaders, String separator) {
         if ((mappingRdf == null && mappingFileName == null) || (mappingRdf != null && mappingFileName != null)) {
-            throw ErrorUtils.sendError("Must provider either a JSON-LD string or a mapping file name",
+            throw ErrorUtils.sendError("Must provide either a JSON-LD string or a mapping file name",
                     Response.Status.BAD_REQUEST);
         }
 
@@ -161,7 +160,7 @@ public class CSVRestImpl implements CSVRest {
             return name.startsWith(fileName + ".");
         });
         if (files.length == 0) {
-            throw ErrorUtils.sendError("Delimited file doesn't not exist", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Delimited file does not exist", Response.Status.BAD_REQUEST);
         }
         if (files.length > 1) {
             throw ErrorUtils.sendError("Multiple files exist with same name", Response.Status.BAD_REQUEST);
@@ -278,11 +277,7 @@ public class CSVRestImpl implements CSVRest {
         }
 
         Gson gson = new GsonBuilder().create();
-        JSONObject json = new JSONObject();
-        json.put("columnNumber", returnRows.get(0).length);
-        json.put("rows", gson.toJson(returnRows));
-
-        return json.toString();
+        return gson.toJson(returnRows);
     }
 
     /**
@@ -315,11 +310,7 @@ public class CSVRestImpl implements CSVRest {
         }
 
         Gson gson = new GsonBuilder().create();
-        JSONObject json = new JSONObject();
-        json.put("columnNumber", rowList.size());
-        json.put("rows", gson.toJson(rowList));
-
-        return json.toString();
+        return gson.toJson(rowList);
     }
 
     /**

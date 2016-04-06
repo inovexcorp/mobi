@@ -63,14 +63,14 @@
                     .then(function(response) {
                         var filePreview = {};
                         if (containsHeaders) {
-                            filePreview.headers = response.data.rows[0];
-                            filePreview.rows = _.drop(response.data.rows, 1);
+                            filePreview.headers = response.data[0];
+                            filePreview.rows = _.drop(response.data, 1);
                         } else {
                             filePreview.headers = [];
-                            _.times(response.data.columnNumber, function(index) {
+                            _.times(response.data[0].length, function(index) {
                                 filePreview.headers.push('Column ' + (index + 1));
                             });
-                            filePreview.rows = response.data.rows;
+                            filePreview.rows = response.data;
                         }
                         deferred.resolve(filePreview);
                     }, function(response) {

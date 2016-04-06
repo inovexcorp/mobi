@@ -24,7 +24,7 @@ public interface CSVRest {
     */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation("Upload CSV file sent as form data.")
+    @ApiOperation("Upload delimited file sent as form data.")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
                     @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail);
 
@@ -40,7 +40,7 @@ public interface CSVRest {
     @PUT
     @Path("{documentName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation("Replace an uploaded CSV file with another")
+    @ApiOperation("Replace an uploaded delimited file with another")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
                     @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail,
                     @PathParam("documentName") String fileName);
@@ -54,14 +54,14 @@ public interface CSVRest {
      * @param rowEnd the number of rows to retrieve from the delimited document. NOTE:
      *               the default number of rows is 10
      * @param separator the character the columns are separated by
-     * @return a response with a JSON array and the number of columns in the file. Each
-     *         element in the array is a row in the document. The row is an array of
-     *         strings which are the cells in the row in the document
+     * @return a response with a JSON array. Each element in the array is a row in the
+     *         document. The row is an array of strings which are the cells in the row
+     *         in the document.
      */
     @GET
     @Path("{documentName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Gather rows from an uploaded document.")
+    @ApiOperation("Gather rows from an uploaded delimited document.")
     Response getRows(@PathParam("documentName") String fileName,
                      @DefaultValue("10") @QueryParam("Row-Count") int rowEnd,
                      @DefaultValue(",") @QueryParam("Separator") String separator);
@@ -85,7 +85,7 @@ public interface CSVRest {
     @Path("{documentName}/map")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
-    @ApiOperation("ETL the document using an uploaded mapping file or mapping JSON-LD")
+    @ApiOperation("ETL an uploaded delimited document using an uploaded mapping file or mapping JSON-LD")
     Response etlFile(@PathParam("documentName") String fileName, 
             @FormDataParam("jsonld") String jsonld,
             @FormDataParam("fileName") String mappingFileName,

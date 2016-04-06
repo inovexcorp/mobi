@@ -89,13 +89,7 @@ public class CSVConverterImpl implements CSVConverter {
                 nextRow[index] = df.formatCellValue(cell);
                 index++;
             }
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm, nextRow));
-            }
-            //Reset classMappings
-            for (ClassMapping cm : classMappings) {
-                cm.setInstance(false);
-            }
+            writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
         }
 
         return convertedRDF;
@@ -115,15 +109,29 @@ public class CSVConverterImpl implements CSVConverter {
 
         //Traverse each row and convert column into RDF
         while ((nextLine = reader.readNext()) != null) {
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm,nextLine));
-            }
-            //Reset classMappings
-            for (ClassMapping cm : classMappings) {
-                cm.setInstance(false);
-            }
+            writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
         }
         return convertedRDF;
+    }
+
+    /**
+     * Converts a line of data into RDF using class mappings and adds it to the given Model.
+     * Resets the class mappings after iterating through class mappings so there are no
+     * duplicate class instances for the line.
+     *
+     * @param convertedRDF the model to hold the converted data
+     * @param line the data to convert
+     * @param classMappings the classMappings to use when converting the data
+     */
+    private void writeClassMappingsToModel(Model convertedRDF, String[] line, List<ClassMapping> classMappings) {
+        // Write each classMapping to the model
+        for (ClassMapping cm : classMappings) {
+            convertedRDF.addAll(writeClassToModel(cm, line));
+        }
+        //Reset classMappings
+        for (ClassMapping cm : classMappings) {
+            cm.setInstance(false);
+        }
     }
 
     /**
