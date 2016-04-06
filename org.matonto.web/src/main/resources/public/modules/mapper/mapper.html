@@ -40,6 +40,14 @@
         cancel-click="vm.displayCancelConfirm = false"
         confirm-text="'Yes'"
         cancel-text="'No'">Are you sure you want to cancel mapping?</confirmation-overlay>
+    <confirmation-overlay ng-if="vm.displayPageChangeConfirm"
+        header-text="'Leaving Mapping Tool'"
+        confirm-click="vm.displayPageChangeConfirm = false; vm.confirmPageChange()"
+        cancel-click="vm.displayPageChangeConfirm = false"
+        confirm-text="'Yes'"
+        cancel-text="'No'">
+        <p>Are you sure you want to leave the mapping tool?</p><p>All your current progress will be lost.</p>
+    </confirmation-overlay>
 
     <!-- Content besides step through sidebar -->
     <div id="mapper-content" class="container-fluid">

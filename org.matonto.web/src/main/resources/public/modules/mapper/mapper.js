@@ -9,10 +9,11 @@
             'rdfPreview', 'previousCheckOverlay'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$rootScope', '$scope', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($rootScope, $scope, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
+        var confirmChange = false;
         var previousOntologyId;
         var originalMappingName;
         var defaultMapping = {
@@ -23,9 +24,7 @@
             console.error(response);
         }
 
-        vm.areOntologies = function() {
-            return ontologyManagerService.getList().length > 0;
-        }
+        vm.nextState = '';
         vm.steps = ['Choose File', 'Choose Mapping', 'Choose Ontology', 'Choose Starting Class', 'Build Mapping', 'Upload as RDF'];
         vm.deleteEntity = undefined;
 
@@ -48,6 +47,17 @@
         vm.selectedPropMappingId;
         vm.selectedColumn;
         vm.newProp;
+
+        var changePageHandler = $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
+            if (_.includes(fromState.name, 'mapper') && !_.includes(toState.name, 'mapper') 
+                && !angular.equals(vm.mapping, defaultMapping) && !confirmChange) {
+                vm.displayPageChangeConfirm = true;
+                vm.nextState = toState.name;
+                event.preventDefault();
+            }
+        });
+
+        $scope.$on('$destroy', changePageHandler);
 
         vm.initialize = function() {
             vm.mappedColumns = [];
@@ -107,6 +117,13 @@
         }
 
         /* Public helper methods */
+        vm.confirmPageChange = function() {
+            confirmChange = true;
+            $state.go(vm.nextState);
+        }
+        vm.areOntologies = function() {
+            return ontologyManagerService.getList().length > 0;
+        }
         vm.isDatatypeProperty = function(propId) {
             var propObj = ontologyManagerService.getClassProperty(vm.getOntologyId(), vm.getClassId(vm.editingClassMappingId), propId);
             return propObj ? !ontologyManagerService.isObjectProperty(_.get(propObj, '@type', []), prefixes.owl) : false;
