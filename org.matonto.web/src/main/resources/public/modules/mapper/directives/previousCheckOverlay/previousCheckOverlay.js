@@ -18,13 +18,11 @@
                 },
                 bindToController: {
                     mapping: '=',
-                    filePreview: '=',
-                    separator: '='
+                    filePreview: '='
                 },
                 link: function(scope, elem, attrs, ctrl) {
                     if (scope.validateForm) {
                         scope.validateForm.$setValidity('validColumnMappings', ctrl.invalidColumns.length === 0);
-                        scope.validateForm.$setValidity('matchingSeparators', ctrl.mappingSeparator === ctrl.separator);
                     }
                 },
                 controller: function() {
@@ -33,7 +31,6 @@
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
                         return obj.index > dvm.filePreview.headers.length - 1;
                     }), 'index');
-                    dvm.mappingSeparator = mappingManagerService.getSeparator(dvm.mapping);
 
                     dvm.getDataMappingName = function(dataMappingId) {
                         var propId = mappingManagerService.getPropIdByMappingId(dvm.mapping, dataMappingId);
@@ -47,18 +44,6 @@
                             ontologyManagerService.getClass(mappingManagerService.getSourceOntologyId(dvm.mapping), classId)
                         );
                         return className + ": " + propName;
-                    }
-                    dvm.getSeparatorName = function(separator) {
-                        switch (separator) {
-                            case '\t':
-                                return 'tab';
-                            case ':':
-                                return 'colon';
-                            case ',':
-                                return 'comma';
-                            default:
-                                return separator;
-                        }
                     }
                 },
                 templateUrl: 'modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html'

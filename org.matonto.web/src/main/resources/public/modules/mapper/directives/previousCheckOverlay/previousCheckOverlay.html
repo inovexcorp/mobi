@@ -2,16 +2,6 @@
     <form name="validateForm" class="content">
         <h6>Validate Mapping {{dvm.mapping.name}}</h6>
         <div class="result" ng-if="validateForm.$invalid">
-            <div ng-if="validateForm.$error.matchingSeparators">
-                <h3 class="text-danger">Conflicting Separators</h3>
-                <p class="help-block">You cannot continue if the separators do not match</p>
-                <dl>
-                    <dt>Separator from Mapping {{dvm.mapping.name}}</dt>
-                    <dd><code>{{dvm.getSeparatorName(dvm.mappingSeparator)}}</code></dd>
-                    <dt>Chosen separator</dt>
-                    <dd><code>{{dvm.getSeparatorName(dvm.separator)}}</code></dd>
-                </dl>
-            </div>
             <div ng-if="validateForm.$error.validColumnMappings">
                 <h3 class="text-danger">Missing Columns</h3>
                 <ul>
@@ -26,10 +16,9 @@
         </div>
 
         <div class="btn-container clearfix">
-            <p ng-hide="validateForm.$error.matchingSeparators" class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
+            <p class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
             <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
-            <custom-button on-click="onClickContinue()"
-                is-disabled-when="validateForm.$error.matchingSeparators">{{(validateForm.$invalid) ? 'Fix' : 'Continue'}}</custom-button>
+            <custom-button on-click="onClickContinue()">{{(validateForm.$invalid) ? 'Fix' : 'Continue'}}</custom-button>
         </div>
     </form>
 </div>

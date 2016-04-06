@@ -43,6 +43,7 @@
                     $scope.$watch('rows', function(newVal, oldVal) {
                         if (!angular.equals(newVal, oldVal)) {
                             setHeightDefaults();
+                            dvm.rows = _.take(newVal, 5);
                         }
                     });
 

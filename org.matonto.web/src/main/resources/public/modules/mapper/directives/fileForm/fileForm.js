@@ -24,6 +24,11 @@
                     if (dvm.delimitedFile) {
                         dvm.uploaded = true;
                     }
+
+                    dvm.isExcel = function() {
+                        var fileName = _.get(dvm.delimitedFile, 'name');
+                        return _.includes(fileName, 'xls');
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/fileForm/fileForm.html'
             }

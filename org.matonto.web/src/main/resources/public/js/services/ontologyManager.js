@@ -977,7 +977,7 @@
             }
 
             self.getOntologyById = function(ontologyId) {
-                return _.find(self.ontologies, {'@id': ontologyId});
+                return _.find(ontologies, {'@id': ontologyId});
             }
 
             self.getOntologyProperty = function(ontology, prop) {

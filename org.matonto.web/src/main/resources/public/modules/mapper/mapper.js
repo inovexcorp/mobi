@@ -186,7 +186,7 @@
         vm.displayOntologySelect = function(mappingType, mappingName) {
             switch (mappingType) {
                 case 'new':
-                    vm.mapping = mappingManagerService.createNewMapping(mappingName, vm.delimitedSeparator);
+                    vm.mapping = mappingManagerService.createNewMapping(mappingName);
                     vm.activeStep = 2;
                     vm.displayPreviousCheck = false;
                     break;
@@ -221,13 +221,13 @@
             if (vm.saveToServer) {
                 mappingManagerService.upload(vm.mapping.jsonld, vm.mapping.name)
                     .then(function(uuid) {
-                        return csvManagerService.mapByFile(vm.delimitedFileName, uuid, vm.delimitedContainsHeaders);
+                        return csvManagerService.mapByFile(vm.delimitedFileName, uuid, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                     })
                     .then(function(mappedData) {
                         deferred.resolve(mappedData);
                     }, reject);
             } else {
-                csvManagerService.mapByString(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders)
+                csvManagerService.mapByString(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, vm.delimitedSeparator)
                     .then(function(mappedData) {
                         deferred.resolve(mappedData);
                     }, reject);
@@ -326,7 +326,7 @@
             }
         }
         vm.generateRdfPreview = function(format) {
-            csvManagerService.previewMap(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, format)
+            csvManagerService.previewMap(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, format, vm.delimitedSeparator)
                 .then(function(preview) {
                     vm.rdfPreview = preview;
                 }, onError);
