@@ -31,13 +31,17 @@
         form {
             height: 100%;
 
-            /* Don't let them change the width of the textareas */
             textarea {
-                resize: vertical;
+                /* Don't let them change the width of the textareas */
+                &:not(.preview-display) {
+                    resize: vertical;
+                }
 
+                /* Ontology preview styles */
                 &.preview-display {
+                    background: $gray-lighter;
                     border: 0;
-                    border-top: 1px solid;
+                    border-top: 1px solid $gray-lighter;
                     bottom: 0;
                     left: 0;
                     margin: 0;

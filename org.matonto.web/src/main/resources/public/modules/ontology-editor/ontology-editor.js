@@ -39,7 +39,7 @@
         function setVariables(oi) {
             vm.selected = ontologyManagerService.getObject(vm.state);
             vm.ontology = ontologyManagerService.getOntology(oi);
-            vm.preview = 'Please select a serialization.';
+            vm.preview = 'Please select a serialization and hit refresh.';
         }
 
         function submitEdit() {
@@ -104,18 +104,9 @@
         }
 
         vm.getPreview = function() {
-            ontologyManagerService.getPreview()
-
             ontologyManagerService.getPreview(vm.ontology['@id'], vm.serialization)
                 .then(function(response) {
-                    var ontology = _.get(response.data, 'ontology');
-                    if(ontology) {
-                        vm.preview = ontology;
-                    } else {
-                        vm.preview = 'An error has occurred, please try again later';
-                    }
-                }, function(response) {
-                    vm.preview = 'An error has occurred, please try again later';
+                    vm.preview = response;
                 });
         }
 

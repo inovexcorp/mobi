@@ -99,7 +99,7 @@
                     <option value="rdf/xml">RDF/XML</option>
                 </select>
             </div>
-            <custom-button is-disabled-when="!vm.serialization" type="'secondary'" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
+            <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
         </div>
         <textarea class="preview-display" readonly>{{vm.preview}}</textarea>
     </div>

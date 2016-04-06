@@ -1044,13 +1044,13 @@
                 return _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || $filter('beautify')($filter('splitIRI')(_.get(entity, '@id')).end);
             }
 
-            self.getPreview = function() {
+            self.getPreview = function(ontologyId, rdfFormat) {
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
                 var errorMessage = 'An error has occurred, please try again later';
 
-                ontologyManagerService.getPreview(vm.ontology['@id'], vm.serialization)
+                self.get(ontologyId, rdfFormat)
                     .then(function(response) {
                         var ontology = _.get(response.data, 'ontology');
                         if(ontology) {
