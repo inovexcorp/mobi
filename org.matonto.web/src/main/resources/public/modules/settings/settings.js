@@ -9,11 +9,11 @@
 
     function SettingsController(settingsManagerService, prefixes) {
         var vm = this;
-        vm.settings = settingsManagerService.settings;
+        vm.settings = settingsManagerService.getSettings();
         vm.rdfs = prefixes.rdfs;
 
         vm.saveSettings = function() {
-            settingsManagerService.saveSettings(vm.settings);
+            settingsManagerService.setSettings(vm.settings);
         }
     }
 })();

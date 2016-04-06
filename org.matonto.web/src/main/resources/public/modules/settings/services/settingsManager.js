@@ -9,6 +9,7 @@
 
         function settingsManagerService($window, $cookies, prefixes) {
             var self = this;
+            var settings = {};
             var cookieName = 'matonto-settings';
             var defaultSettings = {
                 treeDisplay: prefixes.rdfs + 'label',
@@ -16,23 +17,28 @@
             }
 
             function initialize() {
-                self.settings = angular.extend({}, defaultSettings, getSavedSettings());
+                settings = angular.extend({}, defaultSettings, getSavedSettings());
             }
 
             function getSavedSettings() {
                 return $cookies.getObject(cookieName) || {};
             }
 
-            self.saveSettings = function(settings) {
-                $cookies.putObject(cookieName, settings, {expires: new $window.Date(3000, 1, 1)});
+            self.getSettings = function() {
+                return angular.copy(settings);
+            }
+
+            self.setSettings = function(newSettings) {
+                $cookies.putObject(cookieName, newSettings, {expires: new $window.Date(3000, 1, 1)});
+                settings = newSettings;
             }
 
             self.getTreeDisplay = function() {
-                return angular.copy(self.settings.treeDisplay);
+                return angular.copy(settings.treeDisplay);
             }
 
             self.getTooltipDisplay = function() {
-                return angular.copy(self.settings.tooltipDisplay);
+                return angular.copy(settings.tooltipDisplay);
             }
 
             initialize();
