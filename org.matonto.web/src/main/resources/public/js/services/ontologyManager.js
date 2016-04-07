@@ -840,7 +840,7 @@
             self.get = function(ontologyId, rdfFormat) {
                 var config = {
                         params: {
-                            rdfformat: encodeURIComponent(rdfFormat)
+                            rdfformat: rdfFormat
                         }
                     };
 
@@ -1058,11 +1058,11 @@
                             deferred.resolve(ontology);
                         } else {
                             console.warn('getPreview did not return anything in the response.data.ontology');
-                            deferred.resolve(errorMessage);
+                            deferred.reject(errorMessage);
                         }
                     }, function(response) {
                         console.error('Error in getPreview()');
-                        deferred.resolve(errorMessage);
+                        deferred.reject(errorMessage);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;

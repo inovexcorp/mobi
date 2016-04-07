@@ -108,6 +108,8 @@
             ontologyManagerService.getPreview(vm.ontology['@id'], vm.serialization)
                 .then(function(response) {
                     vm.preview = response;
+                }, function(response) {
+                    vm.preview = response;
                 });
         }
 

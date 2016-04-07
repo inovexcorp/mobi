@@ -609,22 +609,17 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
-        try {
-            String normalizedFormat = java.net.URLDecoder.decode(rdfFormat, "UTF-8").toLowerCase();
+        String normalizedFormat = rdfFormat.toLowerCase();
 
-            switch (normalizedFormat) {
-                case "rdf/xml":
-                    return ontology.asRdfXml().toString();
-                case "owl/xml":
-                    return ontology.asOwlXml().toString();
-                case "turtle":
-                    return ontology.asTurtle().toString();
-                default:
-                    return ontology.asJsonLD().toString();
-            }
-        } catch (UnsupportedEncodingException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while retrieving ontology as rdf.",
-                    Response.Status.INTERNAL_SERVER_ERROR);
+        switch (normalizedFormat) {
+            case "rdf/xml":
+                return ontology.asRdfXml().toString();
+            case "owl/xml":
+                return ontology.asOwlXml().toString();
+            case "turtle":
+                return ontology.asTurtle().toString();
+            default:
+                return ontology.asJsonLD().toString();
         }
     }
 
