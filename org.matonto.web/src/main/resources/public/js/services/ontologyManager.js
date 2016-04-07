@@ -823,33 +823,31 @@
                 }
             }
 
-            self.upload = function(isValid, file) {
-                if(isValid && file) {
-                    var fd = new FormData(),
-                        config = {
-                            transformRequest: angular.identity,
-                            headers: {
-                                'Content-Type': undefined
-                            }
-                        };
+            self.upload = function(file) {
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
 
-                    fd.append('file', file);
+                fd.append('file', file);
 
-                    return $http.post(prefix, fd, config);
-                }
+                return $http.post(prefix, fd, config);
             }
 
-            self.get = function(ontologyId) {
+            self.get = function(ontologyId, rdfFormat) {
                 var config = {
                         params: {
-                            rdfFormat: 'jsonld'
+                            rdfformat: rdfFormat
                         }
                     };
 
                 return $http.get(prefix + '/' + encodeURIComponent(ontologyId), config);
             }
 
-            self.uploadThenGet = function(isValid, file) {
+            self.uploadThenGet = function(file) {
                 $rootScope.showSpinner = true;
 
                 var ontologyId, onUploadSuccess, onGetSuccess, onError,
@@ -869,7 +867,7 @@
                 }
 
                 onUploadSuccess = function() {
-                    self.get(ontologyId)
+                    self.get(ontologyId, 'jsonld')
                         .then(function(response) {
                             if(response.hasOwnProperty('data') && !response.data.hasOwnProperty('error')) {
                                 onGetSuccess(response);
@@ -881,7 +879,7 @@
                         });
                 }
 
-                self.upload(isValid, file)
+                self.upload(file)
                     .then(function(response) {
                         if(response.hasOwnProperty('data') && response.data.hasOwnProperty('persisted') && response.data.persisted) {
                             ontologyId = response.data.ontologyId;
@@ -1044,6 +1042,33 @@
 
             self.getEntityName = function(entity) {
                 return _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || $filter('beautify')($filter('splitIRI')(_.get(entity, '@id')).end);
+            }
+
+            self.getPreview = function(ontologyId, rdfFormat) {
+                $rootScope.showSpinner = true;
+
+                var deferred = $q.defer();
+                var errorMessage = 'An error has occurred, please try again later';
+
+                self.get(ontologyId, rdfFormat)
+                    .then(function(response) {
+                        var ontology = _.get(response.data, 'ontology');
+                        if(ontology) {
+                            console.log('Preview has been successfully retrieved');
+                            deferred.resolve(ontology);
+                        } else {
+                            console.warn('getPreview did not return anything in the response.data.ontology');
+                            deferred.reject(errorMessage);
+                        }
+                    }, function(response) {
+                        console.error('Error in getPreview()');
+                        deferred.reject(errorMessage);
+                    })
+                    .then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+
+                return deferred.promise;
             }
         }
 })();

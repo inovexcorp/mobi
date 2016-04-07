@@ -39,6 +39,8 @@
         function setVariables(oi) {
             vm.selected = ontologyManagerService.getObject(vm.state);
             vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.preview = 'Please select a serialization and hit refresh.';
+            vm.serialization = '';
         }
 
         function submitEdit() {
@@ -56,7 +58,7 @@
 
         vm.uploadOntology = function(isValid, file, namespace, localName) {
             vm.uploadError = false;
-            ontologyManagerService.uploadThenGet(isValid, file)
+            ontologyManagerService.uploadThenGet(file)
                 .then(function(response) {
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
                     vm.showUploadOverlay = false;
@@ -100,6 +102,15 @@
         vm.entityChanged = function() {
             vm.selected.matonto.unsaved = true;
             ontologyManagerService.addToChangedList(vm.ontology['@id'], vm.selected.matonto.originalId, vm.state);
+        }
+
+        vm.getPreview = function() {
+            ontologyManagerService.getPreview(vm.ontology['@id'], vm.serialization)
+                .then(function(response) {
+                    vm.preview = response;
+                }, function(response) {
+                    vm.preview = response;
+                });
         }
 
         /* Prefix (Context) Management */
