@@ -52,6 +52,7 @@ function mockMappingManager() {
 
         module(function($provide) {
             $provide.service('mappingManagerService', function() {
+                this.previousMappingNames = [];
                 this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.callFake(function(entity) {
                     return entity && entity.hasOwnProperty('@type') && entity['@type'] === 'ObjectMapping' ? true : false;
                 });

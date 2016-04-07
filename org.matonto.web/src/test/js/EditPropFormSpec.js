@@ -142,8 +142,8 @@ describe('Edit Prop Form directive', function() {
             expect(this.element.find('column-select').length).toBe(1);
             expect(this.element.find('range-class-description').length).toBe(0);
             expect(buttons.length).toBe(2);
-            expect(angular.element(buttons[0]).text()).toBe('Set');
-            expect(angular.element(buttons[1]).text()).toBe('Delete');
+            expect(['Set', 'Delete'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Set', 'Delete'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
 
             spyOn(this.element.controller('editPropForm'), 'isObjectProperty').and.returnValue(true);
             scope.$digest();

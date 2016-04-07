@@ -183,7 +183,6 @@ describe('Class List directive', function() {
 
             spyOn(this.element.controller('classList'), 'mappedAllProps').and.returnValue(false);
             scope.$digest();
-            propList = angular.element(this.element.querySelectorAll('ul.class-list ul.props')[0]);
             expect(propList.html()).toContain('Add Property');
         });
         it('if prop mapping is invalid', function() {

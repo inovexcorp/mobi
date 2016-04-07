@@ -28,11 +28,11 @@
                         return ontologyManagerService.getEntityName(dvm.ontology);
                     }
                     dvm.createDescription = function() {
-                        return _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']");
+                        return _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']", '');
                     }
                     dvm.createClassList = function() {
-                        var classes = _.get(dvm.ontology, 'matonto.classes');
-                        dvm.numClasses = classes ? classes.length : 0;
+                        var classes = _.get(dvm.ontology, 'matonto.classes', []);
+                        dvm.numClasses = classes.length;
                         if (!dvm.full) {
                             classes = _.take(classes, dvm.numClassPreview);
                         }

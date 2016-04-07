@@ -7,6 +7,7 @@ describe('Column Select directive', function() {
 
         module(function($provide) {
             $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
+            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
 
         inject(function(_$compile_, _$rootScope_) {

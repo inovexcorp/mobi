@@ -82,7 +82,6 @@ describe('Class Preview directive', function() {
 
             scope.classObj = {matonto: {properties: [{}]}};
             scope.$digest();
-            propList = angular.element(element.querySelectorAll('ul')[0]);
             expect(propList.html()).not.toContain('None');
             expect(propList.children().length).toBe(scope.classObj.matonto.properties.length);
         });
