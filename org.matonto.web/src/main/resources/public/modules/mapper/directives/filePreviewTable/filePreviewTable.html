@@ -10,8 +10,8 @@
                         <th ng-repeat="item in headers track by $index" 
                             ng-mouseover="dvm.hoverIdx = $index"
                             ng-mouseleave="dvm.hoverIdx = undefined"
-                            ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable}" 
-                            ng-click="isClickable ? onClick({colIndex: $index}) : undefined">{{item}}</th>
+                            ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable && mappedColumns.indexOf(item) < 0, 'disabled': isClickable && mappedColumns.indexOf(item) >= 0}" 
+                            ng-click="(isClickable && mappedColumns.indexOf(item) < 0) ? onClick({colIndex: $index}) : undefined">{{item}}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -19,8 +19,8 @@
                         <td ng-repeat="item in row track by $index" 
                             ng-mouseover="dvm.hoverIdx = $index"
                             ng-mouseleave="dvm.hoverIdx = undefined"
-                            ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable}"
-                            ng-click="isClickable ? onClick({colIndex: $index}) : undefined">{{item}}</td>
+                            ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable && mappedColumns.indexOf(headers[$index]) < 0, 'disabled': isClickable && mappedColumns.indexOf(headers[$index]) >= 0}"
+                            ng-click="(isClickable && mappedColumns.indexOf(headers[$index]) < 0) ? onClick({colIndex: $index}) : undefined">{{item}}</td>
                     </tr>
                 </tbody>
             </table>

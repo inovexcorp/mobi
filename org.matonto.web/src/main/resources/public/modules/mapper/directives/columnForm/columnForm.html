@@ -4,7 +4,7 @@
         <column-select columns="dvm.columns" selected-column="dvm.selectedColumn"></column-select>
     </div>
     <div class="form-btns form-group btn-container" ng-if="dvm.selectedColumn">
-        <custom-button type="'secondary'" on-click="set({column: dvm.selectedColumn})" pull="'left'">Set</custom-button>
+        <custom-button type="'secondary'" on-click="set({column: dvm.selectedColumn})" pull="'left'" is-disabled-when="dvm.columns.length === 0">Set</custom-button>
         <custom-button type="'secondary'" on-click="setNext({column: dvm.selectedColumn})" pull="'left'" is-disabled-when="lastProp">Set &amp; Next</custom-button>
     </div>
 </form>
