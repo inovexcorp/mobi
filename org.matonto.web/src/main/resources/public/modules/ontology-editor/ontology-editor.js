@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
+        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -110,6 +110,14 @@
                     vm.preview = response;
                 }, function(response) {
                     vm.preview = response;
+                });
+        }
+
+        vm.downloadOntology = function() {
+            ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization)
+                .then(function() {
+                    vm.downloadSerialization = '';
+                    vm.showDownloadOntology = false;
                 });
         }
 

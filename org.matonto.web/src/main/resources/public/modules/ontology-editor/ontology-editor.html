@@ -35,6 +35,13 @@
                 </button>
             </li>
             <li>
+                <button ng-click="vm.showDownloadOverlay = true;" title="Download Ontology"
+                        ng-disabled="_.isEmpty(vm.ontology) || vm.state.oi === -1"
+                        ng-class="{ 'active': vm.showDeleteConfirmation === true }">
+                    <i class="fa fa-download fa-fw"></i>
+                </button>
+            </li>
+            <li>
                 <button ng-click="vm.showDeleteConfirmation = true;" title="Delete Entity"
                         ng-disabled="!vm.selected.hasOwnProperty('matonto') || vm.state.oi === -1 || vm.state.ci === -1 || vm.state.pi === -1"
                         ng-class="{ 'active': vm.showDeleteConfirmation === true }">
@@ -97,6 +104,8 @@
                 <ontology-upload-overlay ng-if="vm.showUploadOverlay"></ontology-upload-overlay>
 
                 <annotation-overlay ng-if="vm.showAnnotationOverlay"></annotation-overlay>
+
+                <ontology-download-overlay ng-if="vm.showDownloadOverlay"></ontology-download-overlay>
 
                 <confirmation-overlay ng-if="vm.showDeleteConfirmation"
                                       header-text="'Delete Ontology'"

@@ -1,0 +1,21 @@
+<div class="overlay sm">
+    <form name="vm.downloadForm" class="content clearfix" novalidate autocomplete="off">
+        <!-- section header -->
+        <h6>Download Ontology</h6>
+        <!-- serialization -->
+        <div class="form-group">
+            <custom-label>Serialization</custom-label>
+            <select class="form-control" ng-model="vm.downloadSerialization">
+                <option value="">Select a format</option>
+                <option ng-value="'turtle'">Turtle</option>
+                <option ng-value="'owl/xml'">OWL/XML</option>
+                <option ng-value="'rdf/xml'">RDF/XML</option>
+            </select>
+        </div>
+        <!-- buttons -->
+        <div class="btn-container clearfix">
+            <custom-button is-disabled-when="!vm.downloadSerialization" on-click="vm.downloadOntology();">Download</custom-button>
+            <custom-button on-click="vm.showDownloadOverlay = false; vm.downloadSerialization = '';" type="'secondary'">Cancel</custom-button>
+        </div>
+    </form>
+</div>
