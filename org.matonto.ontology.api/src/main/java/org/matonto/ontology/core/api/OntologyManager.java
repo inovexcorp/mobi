@@ -67,7 +67,8 @@ public interface OntologyManager {
 
 	SesameTransformer getTransformer();
 	
-	void createOntologyCatalog(@Nonnull Ontology ontology, String title, String description, OffsetDateTime issued, OffsetDateTime modified, Set<String> keywords, Set<Distribution> distributions);
+	void createOntologyCatalog(@Nonnull Ontology ontology, String title, String description, OffsetDateTime issued,
+							   OffsetDateTime modified, Set<String> keywords, Set<Distribution> distributions);
 
 	void createOntologyCatalog(org.matonto.catalog.api.Ontology ontologyCatalog);
 

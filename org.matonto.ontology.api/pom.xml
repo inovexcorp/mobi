@@ -16,29 +16,28 @@
 
     <properties>
         <jackson.version>2.6.3</jackson.version>
-        <matonto.version>1.0.33-SNAPSHOT</matonto.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.29</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.29</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.29</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.33-SNAPSHOT</version>
         </dependency>
         
         <dependency>
