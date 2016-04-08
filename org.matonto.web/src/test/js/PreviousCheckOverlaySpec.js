@@ -79,14 +79,14 @@ describe('Previous Check Overlay directive', function() {
             expect(typeof result).toBe('string');
         });
         it('should set the validity of the form based on the invalid columns', function() {
-            var isolatedScope = this.element.isolateScope();
+            // var isolatedScope = this.element.isolateScope();
             var controller = this.element.controller('previousCheckOverlay');
             controller.setValidity();
-            expect(isolatedScope.validateForm.$valid).toBe(true);
+            expect(controller.validateForm.$valid).toBe(true);
             
             controller.invalidColumns = [{index: 0, propId: ''}];
             controller.setValidity();
-            expect(isolatedScope.validateForm.$valid).toBe(false);
+            expect(controller.validateForm.$valid).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -108,23 +108,24 @@ describe('Previous Check Overlay directive', function() {
             expect(['Back', 'Continue'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
         it('depending on the validity of the form', function() {
-            var isolatedScope = this.element.isolateScope();
+            var controller = this.element.controller('previousCheckOverlay');
+            // var isolatedScope = this.element.isolateScope();
             expect(this.element.querySelectorAll('.valid').length).toBe(1);
             expect(this.element.querySelectorAll('.invalid-columns').length).toBe(0);
             expect(angular.element(this.element.find('custom-button')[1]).text()).toBe('Continue');
 
-            isolatedScope.validateForm.$setValidity('validColumnMappings', false);
+            controller.validateForm.$setValidity('validColumnMappings', false);
             scope.$digest();
             expect(this.element.querySelectorAll('.valid').length).toBe(0);
             expect(this.element.querySelectorAll('.invalid-columns').length).toBe(1);
             expect(angular.element(this.element.find('custom-button')[1]).text()).toBe('Fix');
         });
         it('with the correct number of list items for invalid mappings', function() {
-            var isolatedScope = this.element.isolateScope();
+            // var isolatedScope = this.element.isolateScope();
             var controller = this.element.controller('previousCheckOverlay');
             expect(this.element.querySelectorAll('.invalid-columns li').length).toBe(0);
             controller.invalidColumns = [{index: 0, propId: ''}];
-            isolatedScope.validateForm.$setValidity('validColumnMappings', false);
+            controller.validateForm.$setValidity('validColumnMappings', false);
             scope.$digest();
 
             expect(this.element.querySelectorAll('.invalid-columns li').length).toBe(controller.invalidColumns.length);

@@ -1,6 +1,6 @@
-<div class="rdf-preview slide" ng-class="dvm.visible ? 'out' : 'in'">
+<div class="rdf-preview slide" ng-class="{'out': dvm.visible, 'in': !dvm.visible}">
     <a class="toggle-btn" ng-click="dvm.visible = !dvm.visible">
-        <i class="fa" ng-class="dvm.visible ? 'fa-chevron-right' : 'fa-chevron-left'"></i> Preview
+        <i class="fa" ng-class="{'fa-chevron-right': dvm.visible, 'fa-chevron-left': !dvm.visible}"></i> Preview
     </a>
     <form class="form-inline">
         <div class="controls form-group">

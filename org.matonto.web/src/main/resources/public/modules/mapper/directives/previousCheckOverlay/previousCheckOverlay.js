@@ -23,7 +23,7 @@
                 link: function(scope, elem, attrs, ctrl) {
                     ctrl.setValidity();
                 },
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
                     var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
@@ -44,8 +44,8 @@
                         return className + ": " + propName;
                     }
                     dvm.setValidity = function() {
-                        if ($scope.validateForm) {
-                            $scope.validateForm.$setValidity('validColumnMappings', dvm.invalidColumns.length === 0);
+                        if (dvm.validateForm) {
+                            dvm.validateForm.$setValidity('validColumnMappings', dvm.invalidColumns.length === 0);
                         }
                     }
                 },

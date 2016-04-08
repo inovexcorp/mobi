@@ -1,7 +1,7 @@
 <div class="previous-check-overlay overlay lg">
-    <form name="validateForm" class="content">
+    <form name="dvm.validateForm" class="content">
         <h6>Validate Mapping {{dvm.mapping.name}}</h6>
-        <div class="result invalid-columns" ng-if="validateForm.$error.validColumnMappings">
+        <div class="result invalid-columns" ng-if="dvm.validateForm.$error.validColumnMappings">
             <h3 class="text-danger">Missing Columns</h3>
             <ul>
                 <li ng-repeat="columnObj in dvm.invalidColumns">
@@ -9,14 +9,14 @@
                 </li>
             </ul>
         </div>
-        <div class="result valid" ng-if="validateForm.$valid">
+        <div class="result valid" ng-if="dvm.validateForm.$valid">
             <h3 class="text-success">No conflicts!</h3>
         </div>
 
         <div class="btn-container clearfix">
             <p class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
             <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
-            <custom-button on-click="onClickContinue()">{{(validateForm.$invalid) ? 'Fix' : 'Continue'}}</custom-button>
+            <custom-button on-click="onClickContinue()">{{(dvm.validateForm.$invalid) ? 'Fix' : 'Continue'}}</custom-button>
         </div>
     </form>
 </div>
