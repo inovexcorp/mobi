@@ -108,6 +108,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
         TupleQueryResult result = query.evaluate();
 
+        // TODO: Handle more than one result (warn?)
         if (result.hasNext()) {
             BindingSet bindingSet = result.next();
 
@@ -115,7 +116,7 @@ public class SimpleCatalogManager implements CatalogManager {
             String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
             Resource type = Bindings.requiredResource(bindingSet, "type");
 
-            SimplePublishedResource.Builder builder = new SimplePublishedResource.Builder(resource, type, title);
+            SimplePublishedResourceBuilder builder = new SimplePublishedResourceBuilder(resource, type, title);
             builder.issued(Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue());
             builder.modified(Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue());
 
