@@ -105,7 +105,7 @@
                 angular.merge(ontology, obj);
             }
 
-            function chooseIcon(property, prefixes) {
+            function chooseIcon(property) {
                 var icon = '',
                     range = property[prefixes.rdfs + 'range'];
                 // assigns the icon based on the range
@@ -737,7 +737,7 @@
             }
 
             self.getObject = function(state) {
-                var current, editEntity, createEntity, setDefaults,
+                var current, newEntity, existingEntity, setDefaults,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -770,7 +770,7 @@
                         }
                     };
 
-                editEntity = function() {
+                existingEntity = function() {
                     if(pi !== undefined && ci !== undefined) {
                         result = ontologies[oi].matonto.classes[ci].matonto.properties[pi];
                     } else if(pi !== undefined && ci === undefined) {
@@ -788,7 +788,7 @@
                     return result;
                 }
 
-                createEntity = function() {
+                newEntity = function() {
                     var ontology = (oi !== -1) ? ontologies[oi] : null,
                         unique = tab + oi + ci + pi;
                     if(newItems[unique]) {
@@ -796,6 +796,7 @@
                     } else {
                         if(pi === -1) {
                             result = setDefaults(ontology, angular.copy(newProperty));
+                            result[prefixes.rdfs + 'domain'] = [{'@id': angular.copy(ontologies[oi].matonto.classes[ci]['@id'])}];
                         } else if(ci === -1) {
                             result = setDefaults(ontology, angular.copy(newClass));
                         } else {
@@ -806,9 +807,9 @@
                 }
 
                 if(pi === -1 || ci === -1 || oi === -1) {
-                    createEntity();
+                    newEntity();
                 } else {
-                    editEntity();
+                    existingEntity();
                 }
                 return result;
             }
@@ -967,6 +968,7 @@
                         return createClass(ontology, obj);
                     } else {
                         obj = setId(obj, 'property', ontology.matonto.rdfs);
+                        obj.matonto.icon = chooseIcon(obj);
                         return createProperty(ontology, ontology.matonto.classes[ci], obj);
                     }
                 }

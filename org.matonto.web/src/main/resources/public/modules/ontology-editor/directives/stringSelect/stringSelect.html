@@ -4,7 +4,7 @@
         <ui-select-match placeholder="{{'Select ' + displayText}}">
             <span title="{{$item}}">{{($item | splitIRI).end}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="dvm.getItemNamespace" repeat="item in selectList | removeIriFromArray:dvm.bindModel">
+        <ui-select-choices group-by="dvm.getItemNamespace" repeat="item in selectList | removeIriFromArray:dvm.bindModel | filter:$select.search">
             <div ng-bind-html="(item | splitIRI).end | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
