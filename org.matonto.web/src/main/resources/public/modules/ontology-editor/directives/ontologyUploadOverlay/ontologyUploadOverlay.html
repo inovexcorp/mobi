@@ -2,7 +2,7 @@
     <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Upload Ontology</h6>
-        <p class="text-danger" ng-show="vm.uploadError">
+        <p class="text-danger" ng-if="vm.uploadError">
             <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.uploadError}}
         </p>
         <!-- file to upload -->

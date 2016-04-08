@@ -2,6 +2,9 @@
     <form name="vm.downloadForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Download Ontology</h6>
+        <p class="text-danger" ng-if="vm.downloadError">
+            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.downloadError}}
+        </p>
         <!-- serialization -->
         <div class="form-group">
             <custom-label>Serialization</custom-label>
@@ -15,7 +18,7 @@
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="!vm.downloadSerialization" on-click="vm.downloadOntology();">Download</custom-button>
-            <custom-button on-click="vm.showDownloadOverlay = false; vm.downloadSerialization = '';" type="'secondary'">Cancel</custom-button>
+            <custom-button on-click="vm.showDownloadOverlay = false; vm.downloadError = false; vm.downloadSerialization = '';" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

@@ -115,9 +115,12 @@
 
         vm.downloadOntology = function() {
             ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization)
-                .then(function() {
+                .then(function(response) {
+                    vm.showDownloadOverlay = false;
                     vm.downloadSerialization = '';
-                    vm.showDownloadOntology = false;
+                    vm.downloadError = false;
+                }, function(response) {
+                    vm.downloadError = _.get(response, 'statusText', 'Error downloading ontology. Please try again later.');
                 });
         }
 

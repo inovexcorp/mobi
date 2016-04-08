@@ -36,7 +36,7 @@
             </li>
             <li>
                 <button ng-click="vm.showDownloadOverlay = true;" title="Download Ontology"
-                        ng-disabled="_.isEmpty(vm.ontology) || vm.state.oi === -1"
+                        ng-disabled="!vm.ontology.hasOwnProperty('matonto') || vm.state.oi === -1"
                         ng-class="{ 'active': vm.showDeleteConfirmation === true }">
                     <i class="fa fa-download fa-fw"></i>
                 </button>

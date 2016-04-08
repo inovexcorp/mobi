@@ -850,15 +850,16 @@
 
                 $http.get(prefix + '/' + encodeURIComponent(ontologyId), config)
                     .then(function(response) {
-                        if(_.get(response, 'data.status', 0) === 200) {
+                        if(_.get(response, 'status') === 200) {
                             console.log('Successfully downloaded ontology');
                             var suffix = (rdfFormat === 'turtle') ? 'ttl' : 'xml';
-                            var ontology = new Blob([angular.toJson(_.get(response, 'data', {}))], {type: 'application/json'});
+                            var ontology = new Blob([_.get(response, 'data', '')], {type: 'text/plain;charset=utf-8'});
                             FileSaver.saveAs(ontology, ontologyId + '.' + suffix);
+                            deferred.resolve(response);
                         } else {
                             console.warn('Something went wrong with the ontology download');
+                            deferred.reject(response);
                         }
-                        console.log(response);
                     }, function(response) {
                         console.error('error in ontologyManager.download()');
                         deferred.reject(response);
