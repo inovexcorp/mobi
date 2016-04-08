@@ -1,5 +1,5 @@
 <div class="sidebar-wrapper">
     <ul class="step-through">
-        <li ng-repeat="step in steps" ng-class="{'complete': $index < activeIndex, 'active': $index === activeIndex, 'upcoming': $index > activeIndex}"><span>{{step}}</span><span><i ng-if="!$last" class="fa fa-long-arrow-down fa-lg"></i></span></li>
+        <li ng-repeat="step in steps" ng-class="{'complete': $index < activeIndex, 'active': $index === activeIndex, 'upcoming': $index > activeIndex}"><span>{{step}}</span><span ng-if="!$last"><i class="fa fa-long-arrow-down fa-lg"></i></span></li>
     </ul>
 </div>

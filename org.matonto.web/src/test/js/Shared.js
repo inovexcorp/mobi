@@ -1,3 +1,18 @@
+function createQueryString(obj) {
+    var queryString = '';
+    var keys = Object.keys(obj);
+    keys.forEach(function(key) {
+        if (keys.indexOf(key) === 0) {
+            queryString = queryString.concat('?');
+        }
+        queryString = queryString.concat(key + '=' + obj[key]);
+        if (keys.indexOf(key) !== keys.length - 1) {
+            queryString = queryString.concat('&');
+        }
+    });
+    return queryString;
+}
+
 function injectDirectiveTemplate(basePath) {
     beforeEach(function(done) {
         inject(function($templateCache) {
@@ -29,6 +44,9 @@ function mockOntologyManager() {
                         return '';
                     }
                 });
+                this.getList = jasmine.createSpy('getList').and.callFake(function() {
+                    return [];
+                });
                 this.getClassProperty = jasmine.createSpy('getClassProperty').and.callFake(function(oId, cId, pId) {
                     return {};
                 });
@@ -40,6 +58,12 @@ function mockOntologyManager() {
                 });
                 this.isObjectProperty = jasmine.createSpy('isObjectProperty').and.callFake(function(arr) {
                     return arr && arr.indexOf('ObjectProperty') >= 0 ? true : false;
+                });
+                this.getOntologyById = jasmine.createSpy('getOntologyById').and.callFake(function(oi) {
+                    return {};
+                });
+                this.getClasses = jasmine.createSpy('getClasses').and.callFake(function(oId, cId) {
+                    return [];
                 });
             });
         });
@@ -68,6 +92,9 @@ function mockMappingManager() {
                 this.findClassWithObjectMapping = jasmine.createSpy('findClassWithObjectMapping').and.callFake(function(jsonld, mappingId) {
                     return {};
                 });
+                this.findClassWithDataMapping = jasmine.createSpy('findClassWithObjectMapping').and.callFake(function(jsonld, mappingId) {
+                    return {};
+                });
                 this.getClassIdByMapping = jasmine.createSpy('getClassIdByMapping').and.callFake(function(entity) {
                     return '';
                 });
@@ -79,6 +106,9 @@ function mockMappingManager() {
                 });
                 this.getPropIdByMappingId = jasmine.createSpy('getPropIdByMappingId').and.callFake(function(entity) {
                     return '';
+                });
+                this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.callFake(function(mapping) {
+                    return [];
                 });
             });
         });

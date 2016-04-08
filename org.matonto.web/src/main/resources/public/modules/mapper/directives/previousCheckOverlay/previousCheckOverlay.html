@@ -1,17 +1,15 @@
 <div class="previous-check-overlay overlay lg">
     <form name="validateForm" class="content">
         <h6>Validate Mapping {{dvm.mapping.name}}</h6>
-        <div class="result" ng-if="validateForm.$invalid">
-            <div ng-if="validateForm.$error.validColumnMappings">
-                <h3 class="text-danger">Missing Columns</h3>
-                <ul>
-                    <li ng-repeat="columnObj in dvm.invalidColumns">
-                        Column {{columnObj.index + 1}} - {{dvm.getDataMappingName(columnObj.propId)}}
-                    </li>
-                </ul>
-            </div>
+        <div class="result invalid-columns" ng-if="validateForm.$error.validColumnMappings">
+            <h3 class="text-danger">Missing Columns</h3>
+            <ul>
+                <li ng-repeat="columnObj in dvm.invalidColumns">
+                    Column {{columnObj.index + 1}} - {{dvm.getDataMappingName(columnObj.propId)}}
+                </li>
+            </ul>
         </div>
-        <div class="result" ng-if="validateForm.$valid">
+        <div class="result valid" ng-if="validateForm.$valid">
             <h3 class="text-success">No conflicts!</h3>
         </div>
 

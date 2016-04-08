@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('previousCheckOverlay', ['mappingManager'])
+        .module('previousCheckOverlay', ['ontologyManager', 'mappingManager'])
         .directive('previousCheckOverlay', previousCheckOverlay);
 
-        previousCheckOverlay.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
+        previousCheckOverlay.$inject = ['ontologyManagerService', 'mappingManagerService'];
 
-        function previousCheckOverlay(prefixes, ontologyManagerService, mappingManagerService) {
+        function previousCheckOverlay(ontologyManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -21,11 +21,9 @@
                     filePreview: '='
                 },
                 link: function(scope, elem, attrs, ctrl) {
-                    if (scope.validateForm) {
-                        scope.validateForm.$setValidity('validColumnMappings', ctrl.invalidColumns.length === 0);
-                    }
+                    ctrl.setValidity();
                 },
-                controller: function() {
+                controller: function($scope) {
                     var dvm = this;
                     var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
@@ -44,6 +42,11 @@
                             ontologyManagerService.getClass(mappingManagerService.getSourceOntologyId(dvm.mapping), classId)
                         );
                         return className + ": " + propName;
+                    }
+                    dvm.setValidity = function() {
+                        if ($scope.validateForm) {
+                            $scope.validateForm.$setValidity('validColumnMappings', dvm.invalidColumns.length === 0);
+                        }
                     }
                 },
                 templateUrl: 'modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html'
