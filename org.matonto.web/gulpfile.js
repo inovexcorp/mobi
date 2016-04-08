@@ -1,10 +1,11 @@
 // Include gulp requirements
 var gulp = require('gulp'),
+    babel = require('gulp-babel'),
     cache = require('gulp-cache'),
     concat = require('gulp-concat'),
     debug = require('gulp-debug'),
     del = require('del'),
-    es = require('event-stream'),
+    queue = require('streamqueue'),
     filelog = require('gulp-filelog'),
     flatten = require('gulp-flatten'),
     ignore = require('gulp-ignore'),
@@ -39,7 +40,11 @@ var jsFiles = function(prefix) {
         return [
             prefix + '*/lodash.min.js',
             prefix + '**/angular.min.js',
+            prefix + '**/angular-mocks.js',
             prefix + '**/angular-ui-router.min.js',
+            prefix + '**/angular-uuid.js',
+            prefix + '**/angular-cookies.min.js',
+            prefix + '**/angular-file-saver.bundle.min.js',
             prefix + '**/select.min.js'
         ]
     },
@@ -67,9 +72,15 @@ var injectFiles = function(files) {
         .pipe(gulp.dest(dest));
 };
 
-// Concatenate and minifies JS Files, right now, manually selecting the bower js files we want
+// Concatenate and minifies JS Files
 gulp.task('minify-scripts', function() {
-    return gulp.src(nodeJsFiles(nodeDir).concat(jsFiles(src)))
+    var nodeFiles = gulp.src(nodeJsFiles(nodeDir));
+    var customFiles = gulp.src(jsFiles(src))
+        .pipe(babel({
+            presets: ['es2015']
+        }));
+
+    return queue({ objectMode: true }, nodeFiles, customFiles)
         .pipe(concat('main.js'))
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
@@ -81,7 +92,7 @@ gulp.task('minify-css', function() {
     var sassFiles = gulp.src(styleFiles(src, 'scss'))
             .pipe(sass().on('error', sass.logError)),
         cssFiles = gulp.src(nodeStyleFiles(nodeDir).concat(styleFiles(src, 'css')));
-    return es.concat(cssFiles, sassFiles)
+    return queue({ objectMode: true }, cssFiles, sassFiles)
         .pipe(concat('main.css'))
         .pipe(rename({suffix: '.min'}))
         .pipe(minifyCss())
@@ -126,10 +137,21 @@ gulp.task('move-node-css', function() {
         .pipe(gulp.dest(dest + 'css'));
 });
 
-// Moves all custom files to build folder
-gulp.task('move-custom', function() {
+// Moves all custom js files to build folder
+gulp.task('move-custom-js', function() {
+    return gulp.src(src + '**/*.js')
+        .pipe(babel({
+            presets: ['es2015']
+        }))
+        .pipe(ignore.exclude('**/*.scss'))
+        .pipe(gulp.dest(dest));
+});
+
+// Moves all custom non-js files to build folder
+gulp.task('move-custom-not-js', function() {
     return gulp.src(src + '**/*')
         .pipe(ignore.exclude('**/*.scss'))
+        .pipe(ignore.exclude('**/*.js'))
         .pipe(gulp.dest(dest));
 });
 
@@ -141,7 +163,7 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['move-custom', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+gulp.task('inject-unminified', ['move-custom-js', 'move-custom-not-js', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
     var allJsFiles = nodeJsFiles(dest).concat(jsFiles(dest)),
         allStyleFiles = nodeStyleFiles(dest).concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);
@@ -155,7 +177,7 @@ gulp.task('icons', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['minify-scripts', 'minify-css', 'images', 'html', 'inject-minified', 'icons']);
+gulp.task('prod', ['minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons']);
 
 // Default Task (un-minified)
-gulp.task('default', ['move-custom', 'change-to-css', 'inject-unminified', 'icons']);
+gulp.task('default', ['move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons']);

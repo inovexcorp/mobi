@@ -1,11 +1,8 @@
 package org.matonto.etl.service.csv
 
 import org.matonto.rdf.api.Model
-import org.matonto.rdf.api.ModelFactory
-import org.matonto.rdf.core.impl.sesame.LinkedHashModel
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
-import org.matonto.rdf.api.ValueFactory
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.RDFParseException
 import org.openrdf.rio.Rio
@@ -27,13 +24,13 @@ class ConverterSpec extends Specification {
         c.setModelFactory(mf);
     }
 
-    def "Convert File with Multiple Object per Row and Object and Data Properties"() {
+    def "Convert CSV File with Multiple Object per Row and Object and Data Properties"() {
         setup:
         File csv = new ClassPathResource("testFile.csv").getFile();
-        File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile, true);
+        Model convertedModel = c.convert(csv, mappingFile, true, (char) ',');
 
         expect:
         m.equals(convertedModel);
@@ -42,22 +39,10 @@ class ConverterSpec extends Specification {
     def "Test non-comma separator"(){
         setup:
         File csv = new ClassPathResource("semicolonFile.csv").getFile();
-        File mappingFile = new ClassPathResource("semicolonMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile, true)
-
-        expect:
-        m.equals(convertedModel);
-    }
-
-    def "Test default separator is comma"(){
-        setup:
-        File csv = new ClassPathResource("testFile.csv").getFile();
-        File mappingFile = new ClassPathResource("defaultSeparatorMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile, true);
+        Model convertedModel = c.convert(csv, mappingFile, true, (char) ';')
 
         expect:
         m.equals(convertedModel);
@@ -66,10 +51,10 @@ class ConverterSpec extends Specification {
     def "Tab Separated"(){
         setup:
         File csv = new ClassPathResource("tabFile.csv").getFile();
-        File mappingFile = new ClassPathResource("tabMapping.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile, true)
+        Model convertedModel = c.convert(csv, mappingFile, true, (char) '\t')
 
         expect:
         m.equals(convertedModel);
@@ -79,9 +64,45 @@ class ConverterSpec extends Specification {
         setup:
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("mappingNoLocalName.ttl").getFile();
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile, true)
+        Model convertedModel = c.convert(csv, mappingFile, true, (char) ',')
+
+        expect:
+        m.equals(convertedModel);
+    }
+
+    def "Without headers"() {
+        setup:
+        File csv = new ClassPathResource("testFileNoHeaders.csv").getFile();
+        File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model convertedModel = c.convert(csv, mappingFile, false, (char) ',');
+
+        expect:
+        m.equals(convertedModel);
+    }
+
+    def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties"() {
+        setup:
+        File xls = new ClassPathResource("testFile.xls").getFile();
+        File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model convertedModel = c.convert(xls, mappingFile, true, (char) ',');
+
+        expect:
+        m.equals(convertedModel);
+    }
+
+    def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties"() {
+        setup:
+        File xls = new ClassPathResource("testFile.xlsx").getFile();
+        File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model convertedModel = c.convert(xls, mappingFile, true, (char) ',');
 
         expect:
         m.equals(convertedModel);
@@ -90,7 +111,7 @@ class ConverterSpec extends Specification {
     def "Test Generation of Local Name"(){
         setup:
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
-        c.generateUUID() >> "12345"
+        c.generateUuid() >> "12345"
 
         expect:
         result.equals(c.generateLocalName(localName, nextLine))
@@ -98,11 +119,11 @@ class ConverterSpec extends Specification {
         where:
         result              | localName
         "12345"             | "\${UUID}"
-        "12345/abcd"        | "\${UUID}/\${1}"
-        "abcd"              | "\${1}"
-        "abcd/12345"        | "\${1}/\${UUID}"
-        "abcd/12345/ijkl"   | "\${1}/\${UUID}/\${3}"
-        "abcd/abcd"         | "\${1}/\${1}"
+        "12345/abcd"        | "\${UUID}/\${0}"
+        "abcd"              | "\${0}"
+        "abcd/12345"        | "\${0}/\${UUID}"
+        "abcd/12345/ijkl"   | "\${0}/\${UUID}/\${2}"
+        "abcd/abcd"         | "\${0}/\${0}"
         "12345"             | ""
     }
 
@@ -112,7 +133,7 @@ class ConverterSpec extends Specification {
         File mappingFile = new ClassPathResource("testInvalidMapping.ttl").getFile();
 
         when:
-        c.convert(csv, mappingFile, true);
+        c.convert(csv, mappingFile, true, (char) ',');
 
         then:
         thrown RDFParseException;
@@ -121,12 +142,12 @@ class ConverterSpec extends Specification {
     def "Convert File with Missing Properties Ignored"() {
         setup:
         File csv = new ClassPathResource("testPropertiesMissing.csv").getFile();
-        File mappingFile = new ClassPathResource("newMapping.ttl").getFile();
+        File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
         out = new ClassPathResource("testPropertiesMissingOut.ttl").getFile();
         r = new FileReader(out);
-        c.generateUUID() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
+        c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
-        Model convertedModel = c.convert(csv, mappingFile, true);
+        Model convertedModel = c.convert(csv, mappingFile, true, (char) ',');
 
         expect:
         m.equals(convertedModel);

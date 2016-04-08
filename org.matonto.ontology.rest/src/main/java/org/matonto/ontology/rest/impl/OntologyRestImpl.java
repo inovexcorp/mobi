@@ -2,6 +2,7 @@ package org.matonto.ontology.rest.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.Sets;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -13,14 +14,20 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.api.*;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.WriterConfig;
+import org.openrdf.rio.helpers.JSONLDMode;
+import org.openrdf.rio.helpers.JSONLDSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,6 +41,24 @@ public class OntologyRestImpl implements OntologyRest {
     private OntologyManager manager;
     private ValueFactory factory;
     private final Logger LOG = LoggerFactory.getLogger(OntologyRestImpl.class);
+
+    private boolean stringParamIsMissing(String param) {
+        return param == null || param.length() == 0;
+    }
+
+    private void throwErrorIfMissingParam(String param, String errorMessage) {
+        if(stringParamIsMissing(param)) {
+            throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private Resource BNodeOrIRI(String iriString) {
+        if (isBNodeString(iriString.trim())) {
+            return factory.createBNode(iriString.trim());
+        } else {
+            return factory.createIRI(iriString.trim());
+        }
+    }
 
     @Reference
     public void setManager(OntologyManager manager) {
@@ -69,7 +94,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntologies(String ontologyIdList) {
-        if (ontologyIdList == null || ontologyIdList.length() == 0) {
+        if (stringParamIsMissing(ontologyIdList)) {
             return getAllOntologies();
         }
 
@@ -80,6 +105,25 @@ public class OntologyRestImpl implements OntologyRest {
         }
 
         return Response.status(200).entity(getOntologies(ontologyIds).toString()).build();
+    }
+
+    private Response getUploadResponse(boolean persisted, Ontology ontology) {
+        JSONObject json = new JSONObject();
+
+        if (persisted) {
+            OntologyId oid = ontology.getOntologyId();
+            json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
+            Set<IRI> missingImports = ontology.getUnloadableImportIRIs();
+            if(!missingImports.isEmpty()) {
+                JSONArray array = new JSONArray();
+                missingImports.forEach(iri -> array.add(iri.stringValue()));
+                json.put("unloadableImportedOntologies", array.toString());
+            }
+        }
+
+        json.put("persisted", persisted);
+
+        return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
@@ -97,22 +141,23 @@ public class OntologyRestImpl implements OntologyRest {
             IOUtils.closeQuietly(fileInputStream);
         }
 
-        JSONObject json = new JSONObject();
+        return getUploadResponse(persisted, ontology);
+    }
 
-        if (persisted) {
-            OntologyId oid = ontology.getOntologyId();
-            json.put("ontologyId", oid.getOntologyIdentifier().stringValue());
-            Set<IRI> missingImports = ontology.getUnloadableImportIRIs();
-            if(!missingImports.isEmpty()) {
-                JSONArray array = new JSONArray();
-                missingImports.forEach(iri -> array.add(iri.stringValue()));
-                json.put("unloadableImportedOntologies", array.toString());
-            }
+    @Override
+    public Response uploadOntologyJson(String ontologyJson) {
+        boolean persisted = false;
+        Ontology ontology = null;
+
+        try {
+            ontology = manager.createOntology(ontologyJson);
+            persisted = manager.storeOntology(ontology);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        json.put("persisted", persisted);
-
-        return Response.status(200).entity(json.toString()).build();
+        return getUploadResponse(persisted, ontology);
     }
 
     @Override
@@ -149,20 +194,34 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    public Response deleteOntology(String ontologyIdStr) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
-            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
+    public Response saveChangesToOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
+        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
+        throwErrorIfMissingParam(resourceIdStr, "resourceIdStr is missing");
+        throwErrorIfMissingParam(resourceJson, "resourceJson is missing");
+
+        boolean updated;
+        try {
+            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
+            Resource changedResource = BNodeOrIRI(resourceIdStr);
+            updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while updating ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
         }
+
+        JSONObject json = new JSONObject();
+        json.put("updated", updated);
+
+        return Response.status(200).entity(json.toString()).build();
+    }
+
+    @Override
+    public Response deleteOntology(String ontologyIdStr) {
+        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
 
         boolean deleted;
         try {
-            Resource resource;
-            if (isBNodeString(ontologyIdStr.trim())) {
-                resource = factory.createBNode(ontologyIdStr.trim());
-            } else {
-                resource = factory.createIRI(ontologyIdStr.trim());
-            }
-
+            Resource resource = BNodeOrIRI(ontologyIdStr);
             deleted = manager.deleteOntology(resource);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
@@ -173,6 +232,95 @@ public class OntologyRestImpl implements OntologyRest {
         json.put("deleted", deleted);
 
         return Response.status(200).entity(json.toString()).build();
+    }
+
+    private Response deleteEntityFromOntology(String ontologyIdStr, String entityIdStr) {
+        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
+        throwErrorIfMissingParam(entityIdStr, "entityIdStr is missing");
+
+        Map<String, Set> changedEntities;
+        try {
+            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
+            Resource entityResource = BNodeOrIRI(entityIdStr);
+            changedEntities = manager.deleteEntityFromOntology(ontologyResource, entityResource);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        JSONArray iris = new JSONArray();
+        iris.addAll(changedEntities.get("iris"));
+
+        JSONArray models = new JSONArray();
+        for(Object model : changedEntities.get("models")) {
+            OutputStream outputStream = new ByteArrayOutputStream();
+            WriterConfig config = new WriterConfig();
+            config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
+
+            try {
+                Rio.write((org.openrdf.model.Model)model, outputStream, RDFFormat.JSONLD, config);
+            } catch (RDFHandlerException e) {
+                throw new MatontoOntologyException("Error while parsing changed entity.");
+            }
+
+            models.add(outputStream.toString());
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("deleted", true);
+        json.put("iris", iris);
+        json.put("models", models);
+
+        return Response.status(200).entity(json.toString()).build();
+    }
+
+    @Override
+    public Response deleteClassFromOntology(String ontologyIdStr, String classIdStr) {
+        return deleteEntityFromOntology(ontologyIdStr, classIdStr);
+    }
+
+    @Override
+    public Response deleteObjectPropertyFromOntology(String ontologyIdStr, String propertyIdStr) {
+        return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
+    }
+
+    @Override
+    public Response deleteDataPropertyFromOntology(String ontologyIdStr, String propertyIdStr) {
+        return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
+    }
+
+    private Response addEntityToOntology(String ontologyIdStr, String entityJson) {
+        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
+        throwErrorIfMissingParam(entityJson, "entityJson is missing");
+
+        boolean added = false;
+        try {
+            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
+            added = manager.addEntityToOntology(ontologyResource, entityJson);
+        } catch (MatontoOntologyException ex) {
+            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("added", added);
+
+        return Response.status(200).entity(json.toString()).build();
+    }
+
+    @Override
+    public Response addClassToOntology(String ontologyIdStr, String classJson) {
+        return addEntityToOntology(ontologyIdStr, classJson);
+    }
+
+    @Override
+    public Response addObjectPropertyToOntology(String ontologyIdStr, String propertyJson) {
+        return addEntityToOntology(ontologyIdStr, propertyJson);
+    }
+
+    @Override
+    public Response addDataPropertyToOntology(String ontologyIdStr, String propertyJson) {
+        return addEntityToOntology(ontologyIdStr, propertyJson);
     }
 
     @Override
@@ -355,9 +503,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
     private JSONObject doWithOntology(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
-            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
-        }
+        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
 
         Optional<Ontology> optOntology;
 
@@ -376,9 +522,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
     
     private JSONArray doWithImportedOntologies(String ontologyIdStr, Function<Ontology, JSONObject> iriFunction) {
-        if (ontologyIdStr == null || ontologyIdStr.length() == 0) {
-            throw ErrorUtils.sendError("ontologyIdStr is missing", Response.Status.BAD_REQUEST);
-        }
+        throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
 
         Set<Ontology> importedOntologies;
 
@@ -420,14 +564,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
-        Resource resource;
         String id = ontologyIdStr.trim();
-        if (isBNodeString(id)) {
-            resource = factory.createBNode(id);
-        } else {
-            resource = factory.createIRI(id);
-        }
-
+        Resource resource = BNodeOrIRI(id);
         return manager.retrieveOntology(resource);
     }
     

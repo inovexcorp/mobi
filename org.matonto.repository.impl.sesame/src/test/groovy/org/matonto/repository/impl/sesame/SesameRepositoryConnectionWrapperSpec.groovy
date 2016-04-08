@@ -159,6 +159,142 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         results.size() == 2
     }
 
+    def "remove(s, p, o) does not throw an exception"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.add(s, p, o)
+
+        when:
+        conn.remove(s, p, o)
+
+        then:
+        notThrown(Exception)
+    }
+
+    def "remove(s, p, o) decrements the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        conn.add(s, p, o)
+        conn.remove(s, p, o)
+
+        expect:
+        conn.size() == 0
+    }
+
+    def "remove(s, p, o, c) decrements the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def c = vf.createIRI("http://test.com/c")
+        conn.add(s, p, o, c)
+        conn.remove(s, p, o, c)
+
+        expect:
+        conn.size() == 0
+    }
+
+    def "remove(s, p, o[, c]) decreases the size of the repository with and without context"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def c = vf.createIRI("http://test.com/c")
+        conn.add(s, p, o)
+        conn.add(s, p, o, c)
+        conn.remove(s, p, o)
+        conn.remove(s, p, o, c)
+
+        expect:
+        conn.size() == 0
+    }
+
+    def "remove(stmt) decrements the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def c = vf.createIRI("http://test.com/c")
+        conn.add(vf.createStatement(s, p, o))
+        conn.add(vf.createStatement(s, p, o, c))
+        conn.remove(vf.createStatement(s, p, o))
+        conn.remove(vf.createStatement(s, p, o, c))
+
+        expect:
+        conn.size() == 0
+    }
+
+    def "remove(stmt, c) decrements the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def o2 = vf.createIRI("http://test.com/o2")
+        def c = vf.createIRI("http://test.com/c")
+        def c2 = vf.createIRI("http://test.com/c2")
+        conn.add(vf.createStatement(s, p, o), c2)
+        conn.add(vf.createStatement(s, p, o, c), c2)
+        conn.add(vf.createStatement(s, p, o2, c), c2)
+        conn.remove(vf.createStatement(s, p, o), c2)
+        conn.remove(vf.createStatement(s, p, o, c), c2)
+        conn.remove(vf.createStatement(s, p, o2, c), c2)
+
+        def factory = LinkedHashModelFactory.getInstance()
+        def results = RepositoryResults.asModel(conn.getStatements(null, null, null, c2), factory)
+
+        expect:
+        conn.size() == 0
+        results.size() == 0
+    }
+
+    def "remove(model) decrements the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def c = vf.createIRI("http://test.com/c")
+
+        def factory = LinkedHashModelFactory.getInstance()
+        def model = factory.createModel()
+        model.add(s, p, o)
+        model.add(s, p, o, c)
+
+        conn.add(model)
+        conn.remove(model)
+
+        expect:
+        conn.size() == 0
+    }
+
+    def "remove(model, c) decrements the size of the repository"() {
+        setup:
+        def s = vf.createIRI("http://test.com/s")
+        def p = vf.createIRI("http://test.com/p")
+        def o = vf.createIRI("http://test.com/o")
+        def o2 = vf.createIRI("http://test.com/o2")
+        def c = vf.createIRI("http://test.com/c")
+        def c2 = vf.createIRI("http://test.com/c2")
+
+        def factory = LinkedHashModelFactory.getInstance()
+        def model = factory.createModel()
+        model.add(s, p, o)
+        model.add(s, p, o, c)
+        model.add(s, p, o2)
+
+        conn.add(model, c2)
+        conn.remove(model, c2)
+
+        def results = RepositoryResults.asModel(conn.getStatements(null, null, null, c2), factory)
+
+        expect:
+        conn.size() == 0
+        results.size() == 0
+    }
+
     def "size() on empty repository returns 0"() {
         expect:
         conn.size() == 0

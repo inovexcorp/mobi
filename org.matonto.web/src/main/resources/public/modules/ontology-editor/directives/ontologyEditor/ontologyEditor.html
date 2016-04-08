@@ -2,16 +2,16 @@
     <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')"
-                    display-text="vm.state.oi !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'"></tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.state.oi !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')"
-                    display-text="'Annotations'"></tab-button>
+                    on-click="vm.setEditorTab('annotations')">Annotations</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'prefix'"
-                    on-click="vm.setEditorTab('prefix')"
-                    display-text="'Prefix'"></tab-button>
+                    on-click="vm.setEditorTab('prefix')">Prefix</tab-button>
+
+        <tab-button is-active="vm.state.editorTab === 'preview'"
+                    on-click="vm.setEditorTab('preview');">Preview</tab-button>
     </div>
 
     <!-- basic tab -->
@@ -85,5 +85,22 @@
         <div class="has-warning clearfix" ng-if="vm.showDuplicateMessage">
             <strong ng-if="vm.showDuplicateMessage" class="help-block">Both prefix and value must be unique.</strong>
         </div>
+    </div>
+
+    <!-- preview tab -->
+    <div ng-if="vm.state.editorTab === 'preview'" class="tab clearfix">
+        <div class="form-inline">
+            <div class="form-group">
+                <custom-label>Serialization</custom-label>
+                <select class="form-control" ng-model="vm.serialization">
+                    <option value="">Select a format</option>
+                    <option ng-value="'turtle'">Turtle</option>
+                    <option ng-value="'owl/xml'">OWL/XML</option>
+                    <option ng-value="'rdf/xml'">RDF/XML</option>
+                </select>
+            </div>
+            <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
+        </div>
+        <textarea class="preview-display" readonly>{{vm.preview}}</textarea>
     </div>
 </form>

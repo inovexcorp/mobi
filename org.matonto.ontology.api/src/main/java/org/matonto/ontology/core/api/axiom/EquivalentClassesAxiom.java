@@ -6,5 +6,5 @@ import java.util.Set;
 
 public interface EquivalentClassesAxiom extends ClassAxiom {
 
-	Set<ClassExpression> getClassExpressions();
+    Set<ClassExpression> getClassExpressions();
 }

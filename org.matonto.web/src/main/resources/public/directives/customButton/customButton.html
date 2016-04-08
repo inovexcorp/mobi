@@ -1,1 +1,4 @@
-<button type="button" class="btn pull-right" ng-class="{'btn-primary': type !== 'secondary', 'btn-default': type === 'secondary'}" ng-disabled="isDisabledWhen" ng-click="onClick()">{{displayText}}</button>
+<button type="button" class="btn"
+        ng-class="{'btn-primary': type === 'primary', 'btn-default': type === 'secondary', 'pull-right': pull === 'right', 'pull-left': pull === 'left'}"
+        ng-disabled="isDisabledWhen"
+        ng-click="onClick()" ng-transclude></button>

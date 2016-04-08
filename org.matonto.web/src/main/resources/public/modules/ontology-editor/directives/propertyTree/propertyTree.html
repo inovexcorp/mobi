@@ -1,6 +1,6 @@
 <div class="tree scroll-without-buttons">
     <!-- property view -->
-    <strong>Object Properties</strong>
+    <strong>{{headerText}}</strong>
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
         <tree-item-with-sub current-entity="ontology"
                             current-ontology="ontology"

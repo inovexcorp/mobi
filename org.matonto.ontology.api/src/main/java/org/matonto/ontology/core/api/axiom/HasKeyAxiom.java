@@ -10,11 +10,11 @@ import java.util.Set;
 
 public interface HasKeyAxiom extends Axiom {
 
-	ClassExpression getClassExpression();
-	
-	Set<PropertyExpression> getPropertyExpressions();
-	
-	Set<ObjectPropertyExpression> getObjectPropertyExpressions();
-	
-	Set<DataPropertyExpression> getDataPropertyExpressions();
+    ClassExpression getClassExpression();
+
+    Set<PropertyExpression> getPropertyExpressions();
+
+    Set<ObjectPropertyExpression> getObjectPropertyExpressions();
+
+    Set<DataPropertyExpression> getDataPropertyExpressions();
 }

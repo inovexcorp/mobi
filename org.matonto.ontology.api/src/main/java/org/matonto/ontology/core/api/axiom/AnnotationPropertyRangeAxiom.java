@@ -5,7 +5,7 @@ import org.matonto.rdf.api.IRI;
 
 public interface AnnotationPropertyRangeAxiom extends AnnotationAxiom {
 
-	IRI getRange();
-	
-	AnnotationProperty getProperty();
+    IRI getRange();
+
+    AnnotationProperty getProperty();
 }

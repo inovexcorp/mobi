@@ -7,7 +7,7 @@ import java.util.Set;
 
 public interface DisjointUnionAxiom extends ClassAxiom {
 
-	OClass getOWLClass();
-	
-	Set<ClassExpression> getClassExpressions();
+    OClass getOWLClass();
+
+    Set<ClassExpression> getClassExpressions();
 }

@@ -9,7 +9,7 @@
 
         function fileInput($parse) {
             function link(scope, element, attrs) {
-                var modelGet = $parse(attrs.fileInput),
+                var modelGet = $parse(attrs.ngModel),
                     modelSet = modelGet.assign,
                     onChange = $parse(attrs.onChange),
                     updateModel = function() {
@@ -22,7 +22,7 @@
             }
 
             return {
-                restrict: 'EA',
+                restrict: 'E',
                 template: '<input type="file" />',
                 replace: true,
                 link: link

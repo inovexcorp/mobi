@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.33-SNAPSHOT</version>
+        <version>1.0.34-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -17,34 +17,33 @@
     <properties>
         <jackson.version>2.6.3</jackson.version>
         <powermock.version>1.6.4</powermock.version>
-        <matonto.version>1.0.33-SNAPSHOT</matonto.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.impl</artifactId>
-            <version>${matonto.version}</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>        
         
         

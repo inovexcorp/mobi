@@ -3,6 +3,9 @@
 
     angular
         .module('app', [
+            'angular-uuid',
+            'ngCookies',
+            'ngFileSaver',
             'catalog',
             'home',
             'login',
@@ -16,12 +19,14 @@
             'ui.select',
             'textInput',
             'textArea',
+            'radioButton',
             'customButton',
             'objectSelect',
             'stringSelect',
             'circleButton',
             'customButton',
-            'confirmationOverlay'
+            'confirmationOverlay',
+            'settings'
         ])
         .constant('_', window._);
 })();

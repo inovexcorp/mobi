@@ -1,0 +1,24 @@
+<div class="previous-check-overlay overlay lg">
+    <form name="validateForm" class="content">
+        <h6>Validate Mapping {{dvm.mapping.name}}</h6>
+        <div class="result" ng-if="validateForm.$invalid">
+            <div ng-if="validateForm.$error.validColumnMappings">
+                <h3 class="text-danger">Missing Columns</h3>
+                <ul>
+                    <li ng-repeat="columnObj in dvm.invalidColumns">
+                        Column {{columnObj.index + 1}} - {{dvm.getDataMappingName(columnObj.propId)}}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="result" ng-if="validateForm.$valid">
+            <h3 class="text-success">No conflicts!</h3>
+        </div>
+
+        <div class="btn-container clearfix">
+            <p class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue()">{{(validateForm.$invalid) ? 'Fix' : 'Continue'}}</custom-button>
+        </div>
+    </form>
+</div>
