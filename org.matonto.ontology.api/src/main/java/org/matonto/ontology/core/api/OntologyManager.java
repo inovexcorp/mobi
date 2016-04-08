@@ -3,9 +3,14 @@ package org.matonto.ontology.core.api;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
 import javax.annotation.Nonnull;
+
+import org.matonto.catalog.api.Distribution;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
@@ -61,4 +66,9 @@ public interface OntologyManager {
 	OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 
 	SesameTransformer getTransformer();
+	
+	void createOntologyCatalog(@Nonnull Ontology ontology, String title, String description, OffsetDateTime issued, OffsetDateTime modified, Set<String> keywords, Set<Distribution> distributions);
+
+	void createOntologyCatalog(org.matonto.catalog.api.Ontology ontologyCatalog);
+
 }

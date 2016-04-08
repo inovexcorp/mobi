@@ -17,24 +17,36 @@
     <properties>
         <jackson.version>2.6.3</jackson.version>
         <powermock.version>1.6.4</powermock.version>
+        <matonto.version>1.0.33-SNAPSHOT</matonto.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.0.29</version>
+            <version>${matonto.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.0.29</version>
+            <version>${matonto.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.0.29</version>
+            <version>${matonto.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.api</artifactId>
+            <version>${matonto.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.impl</artifactId>
+            <version>${matonto.version}</version>
+        </dependency>        
+        
         
         <dependency>
             <groupId>biz.aQute.bnd</groupId>

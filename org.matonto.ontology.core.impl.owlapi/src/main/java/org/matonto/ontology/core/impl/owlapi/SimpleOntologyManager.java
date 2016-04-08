@@ -4,11 +4,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+
 import javax.annotation.Nonnull;
 
+import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.Distribution;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -48,6 +53,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
+    private CatalogManager catalogManager;
 	
 	public SimpleOntologyManager() {}
 	
@@ -112,6 +118,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     protected void setModelFactory(final ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
+    }
+    
+    @Reference
+    protected void setCatalogManager(final CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
     }
 	
 	@Override
@@ -315,5 +326,30 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
 	public SesameTransformer getTransformer() {
         return transformer;
+    }
+    
+    public void createOntologyCatalog(@Nonnull Ontology ontology, String title, String description, OffsetDateTime issued, OffsetDateTime modified, Set<String> keywords, Set<Distribution> distributions) {
+        Resource ontologyId = ontology.getOntologyId().getOntologyIdentifier();
+        org.matonto.catalog.api.Ontology ontologyCatalog = new org.matonto.catalog.impl.SimpleOntology.Builder(title)
+                .description(description)
+                .issued(issued)
+                .modified(modified)
+                .identifier(ontologyId.stringValue())
+                .addKeyword(keywords)
+                .resource(ontologyId)
+                .addDistribution(distributions)
+                .build();
+
+        createOntologyCatalog(ontologyCatalog);   
+    }
+    
+    public void createOntologyCatalog(org.matonto.catalog.api.Ontology ontologyCatalog) {
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+        
+        if(catalogManager == null)
+            throw new IllegalStateException("catalogManager is null");
+        
+        catalogManager.createOntology(ontologyCatalog);        
     }
 }
