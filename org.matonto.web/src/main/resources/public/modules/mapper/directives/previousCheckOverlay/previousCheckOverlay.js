@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('previousCheckOverlay', ['mappingManager'])
+        .module('previousCheckOverlay', ['ontologyManager', 'mappingManager'])
         .directive('previousCheckOverlay', previousCheckOverlay);
 
-        previousCheckOverlay.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
+        previousCheckOverlay.$inject = ['ontologyManagerService', 'mappingManagerService'];
 
-        function previousCheckOverlay(prefixes, ontologyManagerService, mappingManagerService) {
+        function previousCheckOverlay(ontologyManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -21,9 +21,7 @@
                     filePreview: '='
                 },
                 link: function(scope, elem, attrs, ctrl) {
-                    if (scope.validateForm) {
-                        scope.validateForm.$setValidity('validColumnMappings', ctrl.invalidColumns.length === 0);
-                    }
+                    ctrl.setValidity();
                 },
                 controller: function() {
                     var dvm = this;
@@ -44,6 +42,11 @@
                             ontologyManagerService.getClass(mappingManagerService.getSourceOntologyId(dvm.mapping), classId)
                         );
                         return className + ": " + propName;
+                    }
+                    dvm.setValidity = function() {
+                        if (dvm.validateForm) {
+                            dvm.validateForm.$setValidity('validColumnMappings', dvm.invalidColumns.length === 0);
+                        }
                     }
                 },
                 templateUrl: 'modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html'

@@ -15,7 +15,6 @@
                 scope: {
                     props: '=',
                     isLastClass: '=',
-                    setBase: '&',
                     clickDelete: '&',
                     openProp: '&'
                 },

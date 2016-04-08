@@ -23,7 +23,7 @@
     </div>
     <div class="form-group btn-container float-container">
         <custom-button id="upload-btn" on-click="dvm.uploaded = true; onUploadClick()" pull="'left'" is-disabled-when="!dvm.delimitedFile" aria-describedby="form-help-block">{{dvm.uploaded ? 'Update' : 'Upload'}}</custom-button>
-        <custom-button id="continue-btn" ng-show="dvm.uploaded" on-click="onContinueClick()" pull="'left'">Continue</custom-button>
+        <custom-button id="continue-btn" ng-if="dvm.uploaded" on-click="onContinueClick()" pull="'left'">Continue</custom-button>
     </div>
     <span id="form-help-block" class="help-block" ng-if="dvm.uploaded">Click update with desired changes or click continue.</span>    
 </form>
