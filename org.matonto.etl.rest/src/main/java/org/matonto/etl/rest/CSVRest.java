@@ -68,12 +68,12 @@ public interface CSVRest {
 
     /**
      * Maps the data in an uploaded delimited document into RDF in JSON-LD format
-     * using either an uploaded JSON-LD mapping file or a JSON-LD mapping string.
+     * using either an uploaded mapping in the data store or a JSON-LD mapping string.
      * The file must be present in the data/tmp/ directory.
      *
      * @param fileName the name of the delimited document in the data/tmp/ directory
      * @param jsonld a mapping in JSON-LD
-     * @param mappingFileName the name of an uploaded mapping file
+     * @param mappingLocalName the local name of an uploaded mapping
      * @param format the RDF serialization to use if getting a preview
      * @param isPreview whether or not a preview of the mapped data should be returned
      * @param containsHeaders whether the delimited file has headers
@@ -88,7 +88,7 @@ public interface CSVRest {
     @ApiOperation("ETL an uploaded delimited document using an uploaded mapping file or mapping JSON-LD")
     Response etlFile(@PathParam("documentName") String fileName, 
             @FormDataParam("jsonld") String jsonld,
-            @FormDataParam("fileName") String mappingFileName,
+            @FormDataParam("mappingName") String mappingLocalName,
             @DefaultValue("jsonld") @QueryParam("Format") String format,
             @DefaultValue("false") @QueryParam("Preview") boolean isPreview,
             @DefaultValue("true") @QueryParam("Contains-Headers") boolean containsHeaders,

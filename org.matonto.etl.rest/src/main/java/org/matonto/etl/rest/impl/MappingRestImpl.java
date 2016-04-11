@@ -6,10 +6,13 @@ import com.google.gson.GsonBuilder;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.etl.rest.MappingRest;
+import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
@@ -19,13 +22,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class MappingRestImpl implements MappingRest {
@@ -40,85 +42,109 @@ public class MappingRestImpl implements MappingRest {
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail,
-                           String jsonld, String id) {
+                           String jsonld, String mappingId) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
                     Response.Status.BAD_REQUEST);
         }
 
-        String fileName = generateUuid();
-        Path filePath = Paths.get("data/tmp/" + fileName + ".jsonld");
-
-        InputStream inputStream;
-        if (fileInputStream != null) {
-            inputStream = fileInputStream;
-        } else {
-            inputStream = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
-        }
-
+        boolean success;
+        Resource mappingIRI = mappingId != null ? manager.createMappingIRI(mappingId) : manager.createMappingIRI();
+        Model mappingModel;
         try {
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            inputStream.close();
-        } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Error writing mapping file", Response.Status.BAD_REQUEST);
+            if (fileInputStream != null) {
+                RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName())
+                        .orElseThrow(IllegalArgumentException::new);
+                mappingModel = manager.createMapping(fileInputStream, format);
+            } else {
+                mappingModel = manager.createMapping(jsonld);
+            }
+            manager.storeMapping(mappingModel, mappingIRI);
+            success = true;
         } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing mapping file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Error uploading mapping", Response.Status.BAD_REQUEST);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        logger.info("Mapping File Uploaded: " + filePath);
+        logger.info("Mapping Uploaded: " + mappingIRI);
+        Map<Resource, String> registry = manager.getMappingRegistry();
+        registry.forEach((key, value) -> logger.info("Mapping key: " + key + ", Repository: " + value));
 
-        return Response.status(200).entity(fileName).build();
+        return Response.status(200).entity(success).build();
     }
 
     @Override
-    public Response getFileNames() {
-        File directory = new File("data/tmp/");
-        File[] mappingFiles = directory.listFiles((dir, fileName) -> {
-            return fileName.endsWith(".jsonld");
-        });
-        String[] fileNames = new String[mappingFiles.length];
-        for (int i = 0; i < mappingFiles.length; i++) {
-            fileNames[i] = mappingFiles[i].getName().replace(".jsonld", "");
-        }
+    public Response getMappingNames() {
+        Map<Resource, String> registry = manager.getMappingRegistry();
+        Set<String> mappings = registry.keySet().stream()
+                .map(Value::stringValue)
+                .collect(Collectors.toSet());
         Gson gson = new GsonBuilder().create();
-
-        return Response.status(200).entity(gson.toJson(fileNames)).build();
+        return Response.status(200).entity(gson.toJson(mappings)).build();
     }
 
     @Override
-    public Response getMapping(String fileName) {
-        File file = new File("data/tmp/" + fileName + ".jsonld");
-        logger.info("Getting mapping from " + file.getName());
-
-        JSONArray json;
+    public Response getMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Getting mapping " + mappingIRI);
+        JSONObject json;
         try {
-            String fileContent = new String(Files.readAllBytes(file.toPath()));
-            json = JSONArray.fromObject(fileContent);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error reading mapping file", Response.Status.BAD_REQUEST);
+            json = getMappingAsJson(mappingIRI);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
         return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
-    public Response downloadMapping(String fileName) {
-        File file = new File("data/tmp/" + fileName + ".jsonld");
-        logger.info("Downloading mapping from " + file.getName());
-
-        if (file.exists()) {
-            return Response.ok(file).header("Content-Disposition", "attachment; filename=" + file.getName()).build();
-        } else {
-            throw ErrorUtils.sendError("Error reading mapping file", Response.Status.BAD_REQUEST);
+    public Response downloadMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Downloading mapping " + mappingIRI);
+        JSONObject json;
+        try {
+            json = getMappingAsJson(mappingIRI);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
+
+        StreamingOutput stream = os -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+            writer.write(json.toString());
+            writer.flush();
+            writer.close();
+        };
+
+        return Response.ok(stream).build();
     }
 
-    /**
-     * Creates a UUID string.
-     *
-     * @return a string with a UUID
-     */
-    public String generateUuid() {
-        return UUID.randomUUID().toString();
+    @Override
+    public Response deleteMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Deleting mapping " + mappingIRI);
+        boolean success = false;
+        try {
+            manager.deleteMapping(mappingIRI);
+            success = true;
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(200).entity(success).build();
+    }
+
+    private JSONObject getMappingAsJson(Resource mappingIRI) throws MatOntoException {
+        JSONObject json;
+        Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
+        if (mappingModel.isPresent()) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Rio.write(mappingModel.get(), out, RDFFormat.JSONLD);
+            JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
+            json = arr.getJSONObject(0);
+        } else {
+            throw ErrorUtils.sendError("Error retrieving mapping", Response.Status.BAD_REQUEST);
+        }
+        return json;
     }
 }

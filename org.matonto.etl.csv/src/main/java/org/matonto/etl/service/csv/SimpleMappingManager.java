@@ -39,6 +39,8 @@ public class SimpleMappingManager implements MappingManager {
     private static Map<Resource, String> mappingRegistry = new HashMap<>();
     private ValueFactory factory;
 
+    public SimpleMappingManager() {}
+
     @Activate
     public void activate(final Map<String, Object> properties) {
         logger.info("Activating " + COMPONENT_NAME);
@@ -56,16 +58,6 @@ public class SimpleMappingManager implements MappingManager {
         setPropertyValues(properties);
     }
 
-    private void setPropertyValues(Map<String, Object> properties) {
-        if (properties.containsKey("repositoryId") && !properties.get("repositoryId").equals("")) {
-            getRepository((String)properties.get("repositoryId"));
-            logger.info("repositoryId - " + properties.get("repositoryId"));
-        } else {
-            logger.error("Unable to activate Mapping Manager: Unable to set repositoryId");
-            throw new IllegalStateException("Unable to set repositoryId");
-        }
-    }
-
     @Reference
     protected void setValueFactory(final ValueFactory vf) {
         factory = vf;
@@ -76,30 +68,39 @@ public class SimpleMappingManager implements MappingManager {
         this.repositoryManager = repositoryManager;
     }
 
-    protected void getRepository(String repositoryId) {
-        if (repositoryManager == null) {
-            throw new IllegalStateException("Repository Manager is null");
-        }
-
-        Optional<Repository> optRepo = repositoryManager.getRepository(repositoryId);
-        if (optRepo.isPresent()) {
-            setRepo(optRepo.get());
-        } else {
-            throw new IllegalStateException("Repository does not exist");
-        }
-    }
-
-    protected void setRepo(Repository repo) {
-        repository = repo;
-    }
-
     @Override
     public Map<Resource, String> getMappingRegistry() {
         return mappingRegistry;
     }
 
-    protected boolean mappingExists(@Nonnull Resource resource) {
-        return mappingRegistry.containsKey(resource);
+    @Override
+    public Resource createMappingIRI() {
+        String localName = generateUuid();
+        return factory.createIRI(Delimited.MAPPING.stringValue() + "/" + localName.trim());
+    }
+
+    @Override
+    public Resource createMappingIRI(String localName) {
+        return factory.createIRI(Delimited.MAPPING.stringValue() + "/" + localName.trim());
+    }
+
+    @Override
+    public Model createMapping(File mapping) throws IOException {
+        RDFFormat mapFormat;
+        mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(IllegalArgumentException::new);
+        FileReader reader = new FileReader(mapping);
+        return Rio.parse(reader, "", mapFormat);
+    }
+
+    @Override
+    public Model createMapping(String jsonld) throws IOException {
+        InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
+        return Rio.parse(in, "", RDFFormat.JSONLD);
+    }
+
+    @Override
+    public Model createMapping(InputStream in, RDFFormat format) throws IOException {
+        return Rio.parse(in, "", format);
     }
 
     @Override
@@ -144,42 +145,59 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public Model createMapping(File mapping) throws IOException {
-        RDFFormat mapFormat;
-        mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(IllegalArgumentException::new);
-        FileReader reader = new FileReader(mapping);
-        return Rio.parse(reader, "", mapFormat);
+    public boolean deleteMapping(@Nonnull Resource mappingIRI) {
+        testRepositoryConnection();
+        if (mappingExists(mappingIRI)) {
+            throw new MatOntoException("Mapping with mapping ID does not exists");
+        }
+
+        RepositoryConnection conn = null;
+        try {
+            conn = repository.getConnection();
+            conn.clear(mappingIRI);
+            mappingRegistry.remove(mappingIRI, repository.getConfig().id());
+        } catch (RepositoryException e) {
+            throw new MatOntoException("Error in repository connection", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+        return true;
     }
 
-    @Override
-    public Model createMapping(String jsonld) throws IOException {
-        InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
-        return Rio.parse(in, "", RDFFormat.JSONLD);
+    protected void getRepository(String repositoryId) {
+        if (repositoryManager == null) {
+            throw new IllegalStateException("Repository Manager is null");
+        }
+
+        Optional<Repository> optRepo = repositoryManager.getRepository(repositoryId);
+        if (optRepo.isPresent()) {
+            setRepo(optRepo.get());
+        } else {
+            throw new IllegalStateException("Repository does not exist");
+        }
     }
 
-    @Override
-    public Model createMapping(InputStream in, RDFFormat format) throws IOException {
-        return Rio.parse(in, null, format);
+    protected void setRepo(Repository repo) {
+        repository = repo;
     }
 
-    @Override
-    public Resource createMappingIRI() {
-        String localName = generateUuid();
-        return factory.createIRI(Delimited.MAPPING + "/" + localName.trim());
+    protected boolean mappingExists(@Nonnull Resource resource) {
+        return mappingRegistry.containsKey(resource);
     }
 
-    @Override
-    public Resource createMappingIRI(String localName) {
-        return factory.createIRI(Delimited.MAPPING + "/" + localName.trim());
-    }
-
-    /**
-     * Creates a UUID string.
-     *
-     * @return a string with a UUID
-     */
-    public String generateUuid() {
+    private String generateUuid() {
         return UUID.randomUUID().toString();
+    }
+
+    private void setPropertyValues(Map<String, Object> properties) {
+        if (properties.containsKey("repositoryId") && !properties.get("repositoryId").equals("")) {
+            getRepository((String)properties.get("repositoryId"));
+            logger.info("repositoryId - " + properties.get("repositoryId"));
+        } else {
+            logger.error("Unable to activate Mapping Manager: Unable to set repositoryId");
+            throw new IllegalStateException("Unable to set repositoryId");
+        }
     }
 
     private void closeConnection(RepositoryConnection conn) {
@@ -197,4 +215,5 @@ public class SimpleMappingManager implements MappingManager {
             throw new IllegalStateException("Repository is null");
         }
     }
+
 }

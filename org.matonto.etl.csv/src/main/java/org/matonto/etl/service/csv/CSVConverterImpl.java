@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.Values;
@@ -15,9 +16,7 @@ import org.openrdf.rio.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.regex.*;
-import java.util.stream.Collectors;
 
 @Component(provide = CSVConverter.class)
 public class CSVConverterImpl implements CSVConverter {
@@ -26,6 +25,7 @@ public class CSVConverterImpl implements CSVConverter {
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
+    private MappingManager mappingManager;
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -37,10 +37,15 @@ public class CSVConverterImpl implements CSVConverter {
         this.modelFactory = modelFactory;
     }
 
+    @Reference
+    public void setMappingManager(MappingManager manager) {
+        this.mappingManager = manager;
+    }
+
     @Override
     public Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
             throws IOException, RDFParseException, InvalidFormatException {
-        Model converted = parseMapping(mappingFile);
+        Model converted = Values.matontoModel(mappingManager.createMapping(mappingFile));
         return convert(new FileInputStream(delim), converted, containsHeaders,
                 FilenameUtils.getExtension(delim.getName()), separator);
     }
@@ -55,7 +60,7 @@ public class CSVConverterImpl implements CSVConverter {
     @Override
     public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
             throws IOException, InvalidFormatException {
-        Model converted = parseMapping(mappingFile);
+        Model converted = Values.matontoModel(mappingManager.createMapping(mappingFile));
         return convert(delim, converted, containsHeaders, extension, separator);
     }
 
@@ -334,39 +339,5 @@ public class CSVConverterImpl implements CSVConverter {
             classMappings.add(classMapping);
         }
         return classMappings;
-    }
-
-    /**
-     * Parses a Mapping file into a Model.
-     *
-     * @param mapping the mapping file to be parsed to a model
-     * @return An RDF Model containing the data from the mapping file
-     * @throws RDFParseException Thrown if there is a problem with RDF data in the file
-     * @throws IOException       Thrown if there is a problem reading the file.
-     */
-    private Model parseMapping(File mapping) throws RDFParseException, IOException {
-
-        String extension = mapping.getName().split("\\.")[mapping.getName().split("\\.").length - 1];
-        LOGGER.info("FileName = " + mapping.getName() + "\t Extension:" + extension);
-        RDFFormat mapFormat;
-        mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(IllegalArgumentException::new);
-        FileReader reader = new FileReader(mapping);
-        Model model;
-        model = matontoModel(Rio.parse(reader, "", mapFormat));
-
-        return model;
-    }
-
-    /**
-     * Convert Sesame model to MatOnto model.
-     * @param model A Sesame Model
-     * @return A Matonto Model
-     */
-    protected Model matontoModel(org.openrdf.model.Model model) {
-        Set<Statement> stmts = model.stream()
-                .map(Values::matontoStatement)
-                .collect(Collectors.toSet());
-
-        return modelFactory.createModel(stmts);
     }
 }
