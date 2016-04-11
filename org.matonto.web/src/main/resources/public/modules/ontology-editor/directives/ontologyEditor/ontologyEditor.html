@@ -90,15 +90,7 @@
     <!-- preview tab -->
     <div ng-if="vm.state.editorTab === 'preview'" class="tab clearfix">
         <div class="form-inline">
-            <div class="form-group">
-                <custom-label>Serialization</custom-label>
-                <select class="form-control" ng-model="vm.serialization">
-                    <option value="">Select a format</option>
-                    <option ng-value="'turtle'">Turtle</option>
-                    <option ng-value="'owl/xml'">OWL/XML</option>
-                    <option ng-value="'rdf/xml'">RDF/XML</option>
-                </select>
-            </div>
+            <serialization-select ng-model="vm.serialization"></serialization-select>
             <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
         </div>
         <textarea class="preview-display" readonly>{{vm.preview}}</textarea>
