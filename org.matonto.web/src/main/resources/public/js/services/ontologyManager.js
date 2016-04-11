@@ -405,10 +405,10 @@
                 var comment = _.get(obj, prefixes.rdfs + 'comment', null);
                 var label = _.get(obj, prefixes.rdfs + 'label', null);
 
-                if(comment) {
+                if(comment && !Array.isArray(comment)) {
                     copy[prefixes.rdfs + 'comment'] = [comment[0]];
                 }
-                if(label) {
+                if(label && !Array.isArray(label)) {
                     copy[prefixes.rdfs + 'label'] = [label[0]];
                 }
 
@@ -939,6 +939,8 @@
                         ontology = ontologies[changedEntry.state.oi];
 
                         delete copy.matonto;
+
+                        copy = restructureLabelAndComment(copy);
 
                         if(_.get(ontology.matonto, 'context', []).length) {
                             entityjson = {
