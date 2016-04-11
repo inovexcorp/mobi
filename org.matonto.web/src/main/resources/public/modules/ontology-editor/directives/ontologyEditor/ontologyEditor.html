@@ -88,7 +88,7 @@
     </div>
 
     <!-- preview tab -->
-    <div ng-if="vm.state.editorTab === 'preview'" class="tab clearfix">
+    <div ng-show="vm.state.editorTab === 'preview'" class="tab clearfix">
         <div class="form-inline">
             <serialization-select ng-model="vm.serialization"></serialization-select>
             <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
