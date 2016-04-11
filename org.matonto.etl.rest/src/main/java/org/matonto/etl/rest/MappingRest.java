@@ -2,6 +2,7 @@ package org.matonto.etl.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
@@ -26,7 +27,9 @@ public interface MappingRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @ApiOperation("Upload mapping file sent as form data.")
     Response upload(@FormDataParam("file") InputStream fileInputStream,
-                    @FormDataParam("jsonld") String jsonld);
+                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                    @FormDataParam("jsonld") String jsonld,
+                    @QueryParam("Id") String mappingId);
 
     /**
      * Produces a JSON array of all the mapping file names in the data/tmp directory.

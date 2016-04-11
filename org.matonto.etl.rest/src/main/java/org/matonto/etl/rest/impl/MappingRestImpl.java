@@ -4,10 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import aQute.bnd.annotation.component.Component;
-import net.sf.json.JSON;
+import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.etl.rest.MappingRest;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rest.util.ErrorUtils;
+import org.openrdf.model.Model;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,17 +23,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class MappingRestImpl implements MappingRest {
 
+    private MappingManager manager;
     private final Logger logger = LoggerFactory.getLogger(MappingRestImpl.class);
 
+    @Reference
+    public void setManager(MappingManager manager) {
+        this.manager = manager;
+    }
+
     @Override
-    public Response upload(InputStream fileInputStream, String jsonld) {
+    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail,
+                           String jsonld, String id) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
                     Response.Status.BAD_REQUEST);
