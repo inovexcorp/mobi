@@ -74,7 +74,7 @@ public interface OntologyManager {
 
     Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException;
 
-    Map<Resource, String> getOntologyRegistry() throws MatontoOntologyException;
+    Set<Resource> getOntologyRegistry() throws MatontoOntologyException;
 
     OntologyId createOntologyId();
 
