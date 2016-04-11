@@ -11,7 +11,7 @@
                 scope: {
                     bindModel: '=ngModel'
                 },
-                templateUrl: 'directives/serializationSelect/serializationSelect.html'
+                templateUrl: 'modules/ontology-editor/directives/serializationSelect/serializationSelect.html'
             }
         }
 })();

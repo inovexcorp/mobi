@@ -26,8 +26,7 @@
             'circleButton',
             'customButton',
             'confirmationOverlay',
-            'settings',
-            'serializationSelect'
+            'settings'
         ])
         .constant('_', window._);
 })();
