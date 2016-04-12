@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -67,13 +66,13 @@ public class MappingRestImpl implements MappingRest {
 
         logger.info("Mapping Uploaded: " + mappingIRI);
 
-        return Response.status(200).entity(mappingIRI).build();
+        return Response.status(200).entity(mappingIRI.stringValue()).build();
     }
 
     @Override
     public Response getMappingNames() {
-        Map<Resource, String> registry = manager.getMappingRegistry();
-        Set<String> mappings = registry.keySet().stream()
+        Set<Resource> registry = manager.getMappingRegistry();
+        Set<String> mappings = registry.stream()
                 .map(Value::stringValue)
                 .collect(Collectors.toSet());
         Gson gson = new GsonBuilder().create();

@@ -8,8 +8,8 @@ import org.openrdf.rio.RDFFormat;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nonnull;
 
 public interface MappingManager {
@@ -20,7 +20,7 @@ public interface MappingManager {
      * @return the mapping registry as a map between mapping IRIs and the name
      *         of the repository they are in
      */
-    Map<Resource, String> getMappingRegistry();
+    Set<Resource> getMappingRegistry();
 
     /**
      * Generates a mapping IRI Resource with a UUID for a local name.
