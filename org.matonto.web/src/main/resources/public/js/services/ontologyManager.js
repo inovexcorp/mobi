@@ -5,9 +5,9 @@
         .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj', 'prefixes'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj', 'prefixes', 'uuid'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'FileSaver', 'Blob', 'updateRefsService', 'responseObj', 'prefixes', 'uuid'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes, uuid) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, FileSaver, Blob, updateRefsService, responseObj, prefixes, uuid) {
             var self = this,
                 prefix = '/matontorest/ontologies',
                 defaultAnnotations = [
@@ -405,10 +405,10 @@
                 var comment = _.get(obj, prefixes.rdfs + 'comment', null);
                 var label = _.get(obj, prefixes.rdfs + 'label', null);
 
-                if(comment) {
+                if(comment && !Array.isArray(comment)) {
                     copy[prefixes.rdfs + 'comment'] = [comment[0]];
                 }
-                if(label) {
+                if(label && !Array.isArray(label)) {
                     copy[prefixes.rdfs + 'label'] = [label[0]];
                 }
 
@@ -837,6 +837,37 @@
                 return $http.post(prefix, fd, config);
             }
 
+            self.download = function(ontologyId, rdfFormat) {
+                var deferred = $q.defer();
+                var config = {
+                        headers: {
+                            Accept: 'application/octet-stream'
+                        },
+                        params: {
+                            rdfformat: rdfFormat
+                        }
+                    };
+
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId), config)
+                    .then(function(response) {
+                        if(_.get(response, 'status') === 200) {
+                            console.log('Successfully downloaded ontology');
+                            var suffix = (rdfFormat === 'turtle') ? 'ttl' : 'xml';
+                            var ontology = new Blob([_.get(response, 'data', '')], {type: 'text/plain;charset=utf-8'});
+                            FileSaver.saveAs(ontology, ontologyId + '.' + suffix);
+                            deferred.resolve(response);
+                        } else {
+                            console.warn('Something went wrong with the ontology download');
+                            deferred.reject(response);
+                        }
+                    }, function(response) {
+                        console.error('error in ontologyManager.download()');
+                        deferred.reject(response);
+                    });
+
+                return deferred.promise;
+            }
+
             self.get = function(ontologyId, rdfFormat) {
                 var config = {
                         params: {
@@ -908,6 +939,8 @@
                         ontology = ontologies[changedEntry.state.oi];
 
                         delete copy.matonto;
+
+                        copy = restructureLabelAndComment(copy);
 
                         if(_.get(ontology.matonto, 'context', []).length) {
                             entityjson = {

@@ -15,6 +15,7 @@
                 scope: {
                     headers: '=',
                     rows: '=',
+                    mappedColumns: '=',
                     highlightIdx: '=',
                     isClickable: '=',
                     onClick: '&'

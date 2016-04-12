@@ -50,6 +50,9 @@ $rdf-controls-height: 34px + $rdf-padding/2;
                 .clickable {
                     cursor: pointer;
                 }
+                .disabled {
+                    cursor: not-allowed;
+                }
                 #toggle-table {
                     position: absolute;
                     top: 0;
