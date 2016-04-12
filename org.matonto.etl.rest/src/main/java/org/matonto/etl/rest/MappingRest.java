@@ -23,7 +23,7 @@ public interface MappingRest {
      * @param fileDetail information about the file being uploaded, including the name
      * @param jsonld a mapping serialized as JSON-LD
      * @param mappingId the localName for the new mapping file
-     * @return a response with a boolean indicating the success of the upload
+     * @return a response with the IRI for the mapping
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)

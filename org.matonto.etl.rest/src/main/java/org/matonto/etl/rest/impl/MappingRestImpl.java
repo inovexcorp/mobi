@@ -48,7 +48,6 @@ public class MappingRestImpl implements MappingRest {
                     Response.Status.BAD_REQUEST);
         }
 
-        boolean success;
         Resource mappingIRI = mappingId != null ? manager.createMappingIRI(mappingId) : manager.createMappingIRI();
         Model mappingModel;
         try {
@@ -60,18 +59,15 @@ public class MappingRestImpl implements MappingRest {
                 mappingModel = manager.createMapping(jsonld);
             }
             manager.storeMapping(mappingModel, mappingIRI);
-            success = true;
         } catch (IOException e) {
-            throw ErrorUtils.sendError("Error uploading mapping", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Error parsing mapping", Response.Status.BAD_REQUEST);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
         logger.info("Mapping Uploaded: " + mappingIRI);
-        Map<Resource, String> registry = manager.getMappingRegistry();
-        registry.forEach((key, value) -> logger.info("Mapping key: " + key + ", Repository: " + value));
 
-        return Response.status(200).entity(success).build();
+        return Response.status(200).entity(mappingIRI).build();
     }
 
     @Override

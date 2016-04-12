@@ -113,7 +113,8 @@ public class CSVRestImpl implements CSVRest {
                 if (mappingOptional.isPresent()) {
                     mappingModel = mappingOptional.get();
                 } else {
-                    throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist", Response.Status.BAD_REQUEST);
+                    throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
+                            Response.Status.BAD_REQUEST);
                 }
             } else {
                 InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
