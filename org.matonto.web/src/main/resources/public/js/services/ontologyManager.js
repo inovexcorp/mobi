@@ -205,7 +205,7 @@
             }
 
             function restructure(flattened, ontologyId, context, prefixes) {
-                var j, obj, type, domain, annotations,
+                var j, obj, type, domain,
                     ontology = {
                         matonto: {
                             noDomains: [],
@@ -215,9 +215,12 @@
                             currentAnnotationSelect: null
                         }
                     },
+                    jsAnnotations = [],
+                    jsDatatypes = [],
                     classes = [],
                     properties = [],
                     others = [],
+                    restrictions = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
                     i = 0,
                     deferred = $q.defer();
@@ -248,9 +251,46 @@
                             };
                             properties.push(obj);
                             break;
+                        case prefixes.owl + 'Restriction':
+                            restrictions.push(obj);
+                            break;
+                        case prefixes.owl + 'AnnotationProperty':
+                            jsAnnotations.push(obj);
+                            break;
+                        case prefixes.rdfs + 'Datatype':
+                            jsDatatypes.push(obj);
+                            break;
                         default:
                             others.push(obj);
                             break;
+                    }
+                    i++;
+                }
+
+                i = 0;
+                while(i < restrictions.length) {
+                    var readableText = '';
+                    var restriction = restrictions[i];
+                    var id = _.get(restriction, '@id');
+                    var props = Object.keys(restriction);
+                    _.pull(props, prefixes.owl + 'onProperty', '@id', '@type');
+                    var detailedProp = (props.length === 1) ? props[0] : undefined;
+                    var onPropertyObj = _.get(restriction, prefixes.owl + 'onProperty');
+                    if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1 && detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
+                        var detailedObj = restriction[detailedProp][0];
+                        var onPropertyId = _.get(onPropertyObj[0], '@id', '');
+                        readableText += $filter('splitIRI')(onPropertyId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
+                        if(_.get(detailedObj, '@id')) {
+                            readableText += $filter('splitIRI')(detailedObj['@id']).end;
+                        } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
+                            readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
+                        }
+                        if(id === '_:b2' || id === '_:b3' || id === '_:b4' || id === '_:b5') {
+                            console.log(restriction);
+                            console.log(readableText);
+                        }
+                    } else {
+                        // console.log(restriction);
                     }
                     i++;
                 }
