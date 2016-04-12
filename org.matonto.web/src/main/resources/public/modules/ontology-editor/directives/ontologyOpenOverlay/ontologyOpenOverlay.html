@@ -1,0 +1,34 @@
+<div class="overlay">
+    <form name="vm.openForm" class="content clearfix" novalidate autocomplete="off">
+        <!-- section header -->
+        <h6>Open Ontology</h6>
+        <p class="text-danger" ng-if="vm.openError">
+            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.openError}}
+        </p>
+        <!-- list of ontologies -->
+        <div class="form-group">
+            <custom-label muted-text="mutedText">Ontology</custom-label>
+            <ui-select class="ontology-select" ng-model="vm.ontologyIdToOpen">
+                <ui-select-match placeholder="Select Ontology">
+                    <div title="{{$select.selected}}">
+                        <div>{{($select.selected | splitIRI).end | beautify}}</div>
+                        <small class="text-muted">{{$select.selected}}</small>
+                    </div>
+                </ui-select-match>
+                <ui-select-choices repeat="id in vm.ontologyIds | orderBy:(id | splitIRI).end:true | filter:$select.search">
+                    <div title="{{id}}">
+                        <div ng-bind-html="(id | splitIRI).end | beautify | trusted"></div>
+                        <small class="text-muted" ng-bind-html="id | highlight:$select.search | trusted"></small>
+                    </div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <!-- buttons -->
+        <div class="btn-container clearfix">
+            <custom-button is-disabled-when="!vm.ontologyIdToOpen"
+                           on-click="vm.openOntology()">Open</custom-button>
+
+            <custom-button on-click="vm.showOpenOverlay = false; vm.openError = false;" type="'secondary'">Cancel</custom-button>
+        </div>
+    </form>
+</div>

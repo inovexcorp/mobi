@@ -381,6 +381,14 @@ ul {
     }
 }
 
+.ui-select-bootstrap .ui-select-choices-row.active > a .text-muted {
+    color: #fff;
+}
+
+.ontology-select.ui-select-bootstrap > .ui-select-match > .btn {
+    height: auto;
+}
+
 .btn.btn-circle {
     border-radius: 28px;
     box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);

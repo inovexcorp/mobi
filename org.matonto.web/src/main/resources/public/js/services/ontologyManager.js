@@ -54,7 +54,8 @@
                 propertyTypes = [
                     prefixes.owl + 'DatatypeProperty',
                     prefixes.owl + 'ObjectProperty'
-                ];
+                ],
+                ontologyIds = [];
 
 
             initialize();
@@ -62,27 +63,16 @@
             function initialize() {
                 $rootScope.showSpinner = true;
 
-                var promises = [];
-
-                $http.get(prefix)
+                $http.get(prefix + '/ontologyids')
                     .then(function(response) {
-                        var i = 0;
-
-                        while(i < response.data.length) {
-                            promises.push(addOntology(response.data[i].ontology, response.data[i].ontologyId));
-                            i++;
+                        console.log('Successfully retrieved ontology ids');
+                        for(var i = 0; i < response.data.length; i++) {
+                            ontologyIds.push(response.data[i]);
                         }
-                        $q.all(promises)
-                            .then(function(response) {
-                                console.log('Successfully loaded ontologies');
-                            }, function(response) {
-                                console.warn('Not able to load ontologies');
-                            })
-                            .then(function() {
-                                $rootScope.showSpinner = false;
-                            });
                     }, function(response) {
                         console.error('Error in initialize() function');
+                    })
+                    .then(function() {
                         $rootScope.showSpinner = false;
                     });
             }
@@ -697,6 +687,18 @@
                 return deferred.promise;
             }
 
+            function removeOntologyId(ontologyId) {
+                ontologyIds.splice(_.indexOf(ontologyIds, ontologyId), 1);
+            }
+
+            function addOntologyId(ontologyId) {
+                ontologyIds.push(ontologyId);
+            }
+
+            self.getOntologyIds = function() {
+                return ontologyIds;
+            }
+
             self.getItemNamespace = function(item) {
                 if(item.hasOwnProperty('namespace')) {
                     return item.namespace;
@@ -1098,6 +1100,43 @@
                         deferred.reject(errorMessage);
                     })
                     .then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+
+                return deferred.promise;
+            }
+
+            self.closeOntology = function(oi, ontologyId) {
+                ontologies.splice(oi, 1);
+                addOntologyId(ontologyId);
+            }
+
+            self.openOntology = function(ontologyId) {
+                $rootScope.showSpinner = true;
+
+                var deferred = $q.defer();
+
+                self.get(ontologyId, 'jsonld')
+                    .then(function(response) {
+                        var ontology = _.get(response.data, 'ontology');
+                        if(ontology) {
+                            console.log('Successfully opened ontology');
+                            addOntology(ontology, ontologyId)
+                                .then(function(response) {
+                                    removeOntologyId(ontologyId);
+                                    deferred.resolve({});
+                                })
+                                .then(function() {
+                                    $rootScope.showSpinner = false;
+                                });
+                        } else {
+                            console.warn('Ontology was not found or opened for some reason');
+                            deferred.reject(response.statusText);
+                        $rootScope.showSpinner = false;
+                        }
+                    }, function(response) {
+                        console.error('We were unable to retrieve the ontology to open it.')
+                        deferred.reject(response.statusText);
                         $rootScope.showSpinner = false;
                     });
 
