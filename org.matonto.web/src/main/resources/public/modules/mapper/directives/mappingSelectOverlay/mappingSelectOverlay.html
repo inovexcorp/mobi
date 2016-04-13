@@ -3,19 +3,23 @@
         <h6>Choose Mapping</h6>
         <div class="new-mapping form-group">
             <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'new'" display-text="'New'" change-event="dvm.updateMappingName()"></radio-button>
-            <label ng-if="dvm.mappingType === 'new'" ng-class="mappingForm.mappingName.$touched ? (mappingForm.mappingName.$valid ? 'has-success' : 'has-error') : ''">
+            <label ng-if="dvm.mappingType === 'new'" ng-class="{'has-success': mappingForm.mappingName.$touched && mappingForm.mappingName.$valid, 'has-error': mappingForm.mappingName.$touched && mappingForm.mappingName.$invalid}">
                 Name
                 <input type="text" name="mappingName" class="form-control"
                     ng-blur="dvm.testUniqueName()"
                     ng-model="dvm.mappingName" 
                     ng-required="dvm.mappingType === 'new'"
-                    ng-maxlength="50"/>
+                    ng-maxlength="50"
+                    ng-pattern="/^[a-zA-Z0-9._\-]+$/"/>
             </label>
             <div class="text-danger" ng-if="dvm.mappingType === 'new' && mappingForm.mappingName.$error.uniqueName">
                 Mapping name must be unique
             </div>
             <div class="text-danger" ng-if="dvm.mappingType === 'new' && mappingForm.mappingName.$error.maxlength">
                 Mapping name must be 50 characters or less
+            </div>
+            <div class="text-danger" ng-if="dvm.mappingType === 'new' && mappingForm.mappingName.$error.pattern">
+                Mapping name is invalid
             </div>
         </div>
         <div class="previous-mapping form-group">
