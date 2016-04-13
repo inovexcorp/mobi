@@ -237,8 +237,8 @@
 
             if (vm.saveToServer) {
                 mappingManagerService.upload(vm.mapping.jsonld, vm.mapping.name)
-                    .then(function(uuid) {
-                        return csvManagerService.mapByFile(vm.delimitedFileName, uuid, vm.delimitedContainsHeaders, vm.delimitedSeparator);
+                    .then(function(response) {
+                        return csvManagerService.mapByUploaded(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                     })
                     .then(function(mappedData) {
                         deferred.resolve(mappedData);
