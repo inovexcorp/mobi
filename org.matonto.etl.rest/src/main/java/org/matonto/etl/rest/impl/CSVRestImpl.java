@@ -1,11 +1,9 @@
 package org.matonto.etl.rest.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
+import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
@@ -275,13 +273,12 @@ public class CSVRestImpl implements CSVRest {
     private String convertCSVRows(File input, int numRows, char separator) throws IOException {
         CSVReader reader = new CSVReader(new FileReader(input), separator);
         List<String[]> csvRows = reader.readAll();
-        List<String[]> returnRows = new ArrayList<>();
+        JSONArray returnRows = new JSONArray();
         for (int i = 0; i <= numRows && i < csvRows.size(); i ++) {
             returnRows.add(i, csvRows.get(i));
         }
 
-        Gson gson = new GsonBuilder().create();
-        return gson.toJson(returnRows);
+        return returnRows.toString();
     }
 
     /**
@@ -299,7 +296,7 @@ public class CSVRestImpl implements CSVRest {
         // Only support single sheet files for now
         Sheet sheet = wb.getSheetAt(0);
         DataFormatter df = new DataFormatter();
-        List<String[]> rowList = new ArrayList<>(sheet.getPhysicalNumberOfRows());
+        JSONArray rowList = new JSONArray();
         String[] columns;
         for (Row row : sheet) {
             if (row.getRowNum() <= numRows) {
@@ -313,8 +310,7 @@ public class CSVRestImpl implements CSVRest {
             }
         }
 
-        Gson gson = new GsonBuilder().create();
-        return gson.toJson(rowList);
+        return rowList.toString();
     }
 
     /**

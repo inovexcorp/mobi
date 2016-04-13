@@ -1,8 +1,5 @@
 package org.matonto.etl.rest.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -23,11 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -74,24 +68,19 @@ public class MappingRestImpl implements MappingRest {
 
     @Override
     public Response getMappingNames(List<String> idList) {
-        String list;
+        JSONArray mappings = new JSONArray();
         if (idList.isEmpty()) {
-            Set<Resource> registry = manager.getMappingRegistry();
-            Set<String> mappings = registry.stream()
-                    .map(Value::stringValue)
-                    .collect(Collectors.toSet());
-            Gson gson = new GsonBuilder().create();
-            list = gson.toJson(mappings);
+            manager.getMappingRegistry().stream()
+                .map(Value::stringValue)
+                .forEach(mappings::add);
         } else {
-            List<JSONObject> mappingList = idList.stream()
-                    .map(id -> manager.createMappingIRI(id))
-                    .map(this::getMappingAsJson)
-                    .collect(Collectors.toList());
-            JSONArray mappings = JSONArray.fromObject(mappingList);
-            list = mappings.toString();
+            idList.stream()
+                .map(id -> manager.createMappingIRI(id))
+                .map(this::getMappingAsJson)
+                .forEach(mappings::add);
         }
 
-        return Response.status(200).entity(list).build();
+        return Response.status(200).entity(mappings.toString()).build();
     }
 
     @Override
