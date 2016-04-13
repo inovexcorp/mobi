@@ -36,7 +36,8 @@ import aQute.bnd.annotation.component.*;
 public class SimpleOntologyManager implements OntologyManager {
 	
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
-    private Resource ontologyRegistryResource;
+    private Resource registryContext;
+    private Resource registryOntology;
     private IRI registryPredicate;
     private RepositoryManager repositoryManager;
 	private static Repository repository;
@@ -119,7 +120,7 @@ public class SimpleOntologyManager implements OntologyManager {
         Set<Resource> registry = new HashSet<>();
         try {
             conn = repository.getConnection();
-            conn.getStatements(ontologyRegistryResource, registryPredicate, null, ontologyRegistryResource)
+            conn.getStatements(registryOntology, registryPredicate, null, registryContext)
                     .forEach(stmt -> registry.add(factory.createIRI(stmt.getObject().stringValue())));
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
@@ -169,7 +170,7 @@ public class SimpleOntologyManager implements OntologyManager {
         boolean exists = false;
         try {
             conn = repository.getConnection();
-            RepositoryResult<Statement> statements = conn.getStatements(ontologyRegistryResource, registryPredicate, resource, ontologyRegistryResource);
+            RepositoryResult<Statement> statements = conn.getStatements(registryOntology, registryPredicate, resource, registryContext);
             if(statements.hasNext()) {
                 exists = true;
             }
@@ -240,7 +241,7 @@ public class SimpleOntologyManager implements OntologyManager {
             Model model = ontology.asModel(modelFactory);
             conn = repository.getConnection();
             conn.add(model, resource);
-            conn.add(ontologyRegistryResource, registryPredicate, resource, ontologyRegistryResource);
+            conn.add(registryOntology, registryPredicate, resource, registryContext);
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         } finally {
@@ -310,7 +311,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		try {
 			conn = repository.getConnection();
             conn.clear(resource);
-            conn.remove(ontologyRegistryResource, registryPredicate, resource, ontologyRegistryResource);
+            conn.remove(registryOntology, registryPredicate, resource, registryContext);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -362,14 +363,15 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
 	/**
-	 * The ontology registry facilitates the list of the association of ontologies 
-	 * stored in different repositories. When the registry is initialized (loaded) when
-	 * an instance of SimpleOntologyManager is created.
+     * Initializes the resources used to store the ontology registry statements in
+     * the repository. These values are initialized whenever the SimpleOntologyManager
+     * is created.
 	 * 
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	private void initOntologyRegistryResources() throws MatontoOntologyException {
-        ontologyRegistryResource = factory.createIRI("https://matonto.org/registries/ontology");
+        registryContext = factory.createIRI("https://matonto.org/registries");
+        registryOntology = factory.createIRI("https://matonto.org/registries#Ontology");
         registryPredicate = factory.createIRI("https://matonto.org/registries#hasItem");
 	}
 

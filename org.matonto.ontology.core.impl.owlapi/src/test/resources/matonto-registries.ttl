@@ -1,0 +1,56 @@
+﻿@prefix : <https://matonto.org/registries#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://matonto.org/registries> .
+
+<https://matonto.org/registries> rdf:type owl:Ontology ;
+                                 
+                                 rdfs:label "MatOnto Registries"^^xsd:string ;
+                                 
+                                 rdfs:comment "The ontology which defines the registries that exist within the MatOnto application."^^xsd:string .
+
+
+#################################################################
+#
+#    Object Properties
+#
+#################################################################
+
+
+###  https://matonto.org/registries#hasItem
+
+:hasItem rdf:type owl:ObjectProperty ;
+         
+         rdfs:domain :Ontology ;
+         
+         rdfs:comment "Identifies an item contained within the registry."^^xsd:string ;
+         
+         rdfs:label "Has Item"^^xsd:string .
+
+
+
+
+
+#################################################################
+#
+#    Classes
+#
+#################################################################
+
+
+###  https://matonto.org/registries#Ontology
+
+:Ontology rdf:type owl:Class ;
+          
+          rdfs:comment "A resource which points to an ontology."^^xsd:string ;
+          
+          rdfs:label "Ontology"^^xsd:string .
+
+
+
+
+
+
