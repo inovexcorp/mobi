@@ -163,7 +163,7 @@
             ontologyManagerService.openOntology(vm.ontologyIdToOpen)
                 .then(function(response) {
                     vm.showOpenOverlay = false;
-                    vm.openError = false;
+                    vm.openError = '';
                     vm.ontologyIdToOpen = undefined;
                 }, function(errorMessage) {
                     vm.openError = errorMessage;
