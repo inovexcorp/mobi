@@ -194,133 +194,6 @@
                 return arr;
             }
 
-            function restructure(flattened, ontologyId, context, prefixes) {
-                var j, obj, type, domain, annotations,
-                    ontology = {
-                        matonto: {
-                            noDomains: [],
-                            owl: prefixes.owl,
-                            rdfs: prefixes.rdfs,
-                            annotations: [],
-                            currentAnnotationSelect: null
-                        }
-                    },
-                    classes = [],
-                    properties = [],
-                    others = [],
-                    list = flattened['@graph'] ? flattened['@graph'] : flattened,
-                    i = 0,
-                    deferred = $q.defer();
-
-                while(i < list.length) {
-                    obj = list[i];
-                    type = obj['@type'] ? obj['@type'][0] : undefined;
-
-                    switch(type) {
-                        case prefixes.owl + 'Ontology':
-                            initOntology(ontology, obj);
-                            break;
-                        case prefixes.owl + 'Class':
-                            obj.matonto = {
-                                properties: [],
-                                originalId: obj['@id'],
-                                currentAnnotationSelect: null
-                            };
-                            classes.push(obj);
-                            break;
-                        case prefixes.owl + 'DatatypeProperty':
-                        case prefixes.owl + 'ObjectProperty':
-                        case prefixes.rdfs + 'Property':
-                            obj.matonto = {
-                                icon: chooseIcon(obj, prefixes),
-                                originalId: obj['@id'],
-                                currentAnnotationSelect: null
-                            };
-                            properties.push(obj);
-                            break;
-                        default:
-                            others.push(obj);
-                            break;
-                    }
-                    i++;
-                }
-
-                i = 0;
-                while(i < properties.length) {
-                    domain = properties[i][prefixes.rdfs + 'domain'];
-
-                    if(domain) {
-                        if(Object.prototype.toString.call(domain) === '[object Array]') {
-                            j = domain.length;
-                            while(j--) {
-                                addToClass(domain[j]['@id'], properties[i], classes);
-                            }
-                        } else {
-                            addToClass(domain['@id'], properties[i], classes);
-                        }
-                    } else {
-                        ontology.matonto.noDomains.push(properties[i]);
-                    }
-                    i++;
-                }
-
-                ontology.matonto.classes = classes;
-                ontology.matonto.context = objToArr(context);
-                ontology.matonto.others = others;
-
-                $q.all([
-                        $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
-                        $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris')
-                    ]).then(function(response) {
-                        var ontologyIris = response[0],
-                            importedOntologyIris = response[1],
-                            annotations = ontologyIris.data.annotationProperties,
-                            classes = ontologyIris.data.classes,
-                            dataProperties = ontologyIris.data.dataProperties,
-                            objectProperties = ontologyIris.data.objectProperties,
-                            datatypes = ontologyIris.data.datatypes;
-
-                        if(importedOntologyIris.status === 200) {
-                            var data = importedOntologyIris.data,
-                                importedClasses = [],
-                                importedDataProperties = [],
-                                importedObjectProperties = [],
-                                i = 0;
-
-                            while(i < data.length) {
-                                importedClasses = importedClasses.concat(addOntologyIriToElements(data[i].classes, data[i].id));
-                                importedDataProperties = importedDataProperties.concat(addOntologyIriToElements(data[i].dataProperties, data[i].id));
-                                importedObjectProperties = importedObjectProperties.concat(addOntologyIriToElements(data[i].objectProperties, data[i].id));
-                                i++;
-                            }
-
-                            classes = $filter('orderBy')(classes.concat(importedClasses), 'localName');
-                            dataProperties = $filter('orderBy')(dataProperties.concat(importedDataProperties), 'localName');
-                            objectProperties = $filter('orderBy')(objectProperties.concat(importedObjectProperties), 'localName');
-                        } else {
-                            classes = $filter('orderBy')(classes, 'localName');
-                            dataProperties = $filter('orderBy')(dataProperties, 'localName');
-                            objectProperties = $filter('orderBy')(objectProperties, 'localName');
-                        }
-
-                        ontology.matonto.annotations = addDefaultAnnotations(annotations);
-                        ontology.matonto.subClasses = classes;
-                        ontology.matonto.subDataProperties = dataProperties;
-                        ontology.matonto.subObjectProperties = objectProperties;
-
-                        // For now, these just point to classes. They will eventually have some way to link back to class expressions
-                        ontology.matonto.propertyDomain = classes;
-                        ontology.matonto.dataPropertyRange = $filter('orderBy')(classes.concat(datatypes), 'localName');
-                        ontology.matonto.objectPropertyRange = classes;
-
-                        deferred.resolve(ontology);
-                    }, function(response) {
-                        deferred.reject(response);
-                    });
-
-                return deferred.promise;
-            }
-
             function addOntology(ontology, ontologyId) {
                 var getPrefixes,
                     context = ontology['@context'] || {},
@@ -354,7 +227,7 @@
 
                 }
 
-                restructure(ontology, ontologyId, context, getPrefixes(context))
+                self.restructure(ontology, ontologyId, context, getPrefixes(context))
                     .then(function(response) {
                         ontologies.push(response);
                         deferred.resolve(response);
@@ -693,6 +566,133 @@
 
             function addOntologyId(ontologyId) {
                 ontologyIds.push(ontologyId);
+            }
+
+            self.restructure = function(flattened, ontologyId, context, prefixes) {
+                var j, obj, type, domain, annotations,
+                    ontology = {
+                        matonto: {
+                            noDomains: [],
+                            owl: prefixes.owl,
+                            rdfs: prefixes.rdfs,
+                            annotations: [],
+                            currentAnnotationSelect: null
+                        }
+                    },
+                    classes = [],
+                    properties = [],
+                    others = [],
+                    list = flattened['@graph'] ? flattened['@graph'] : flattened,
+                    i = 0,
+                    deferred = $q.defer();
+
+                while(i < list.length) {
+                    obj = list[i];
+                    type = obj['@type'] ? obj['@type'][0] : undefined;
+
+                    switch(type) {
+                        case prefixes.owl + 'Ontology':
+                            initOntology(ontology, obj);
+                            break;
+                        case prefixes.owl + 'Class':
+                            obj.matonto = {
+                                properties: [],
+                                originalId: obj['@id'],
+                                currentAnnotationSelect: null
+                            };
+                            classes.push(obj);
+                            break;
+                        case prefixes.owl + 'DatatypeProperty':
+                        case prefixes.owl + 'ObjectProperty':
+                        case prefixes.rdfs + 'Property':
+                            obj.matonto = {
+                                icon: chooseIcon(obj, prefixes),
+                                originalId: obj['@id'],
+                                currentAnnotationSelect: null
+                            };
+                            properties.push(obj);
+                            break;
+                        default:
+                            others.push(obj);
+                            break;
+                    }
+                    i++;
+                }
+
+                i = 0;
+                while(i < properties.length) {
+                    domain = properties[i][prefixes.rdfs + 'domain'];
+
+                    if(domain) {
+                        if(Object.prototype.toString.call(domain) === '[object Array]') {
+                            j = domain.length;
+                            while(j--) {
+                                addToClass(domain[j]['@id'], properties[i], classes);
+                            }
+                        } else {
+                            addToClass(domain['@id'], properties[i], classes);
+                        }
+                    } else {
+                        ontology.matonto.noDomains.push(properties[i]);
+                    }
+                    i++;
+                }
+
+                ontology.matonto.classes = classes;
+                ontology.matonto.context = objToArr(context);
+                ontology.matonto.others = others;
+
+                $q.all([
+                        $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
+                        $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-iris')
+                    ]).then(function(response) {
+                        var ontologyIris = response[0],
+                            importedOntologyIris = response[1],
+                            annotations = ontologyIris.data.annotationProperties,
+                            classes = ontologyIris.data.classes,
+                            dataProperties = ontologyIris.data.dataProperties,
+                            objectProperties = ontologyIris.data.objectProperties,
+                            datatypes = ontologyIris.data.datatypes;
+
+                        if(importedOntologyIris.status === 200) {
+                            var data = importedOntologyIris.data,
+                                importedClasses = [],
+                                importedDataProperties = [],
+                                importedObjectProperties = [],
+                                i = 0;
+
+                            while(i < data.length) {
+                                importedClasses = importedClasses.concat(addOntologyIriToElements(data[i].classes, data[i].id));
+                                importedDataProperties = importedDataProperties.concat(addOntologyIriToElements(data[i].dataProperties, data[i].id));
+                                importedObjectProperties = importedObjectProperties.concat(addOntologyIriToElements(data[i].objectProperties, data[i].id));
+                                i++;
+                            }
+
+                            classes = $filter('orderBy')(classes.concat(importedClasses), 'localName');
+                            dataProperties = $filter('orderBy')(dataProperties.concat(importedDataProperties), 'localName');
+                            objectProperties = $filter('orderBy')(objectProperties.concat(importedObjectProperties), 'localName');
+                        } else {
+                            classes = $filter('orderBy')(classes, 'localName');
+                            dataProperties = $filter('orderBy')(dataProperties, 'localName');
+                            objectProperties = $filter('orderBy')(objectProperties, 'localName');
+                        }
+
+                        ontology.matonto.annotations = addDefaultAnnotations(annotations);
+                        ontology.matonto.subClasses = classes;
+                        ontology.matonto.subDataProperties = dataProperties;
+                        ontology.matonto.subObjectProperties = objectProperties;
+
+                        // For now, these just point to classes. They will eventually have some way to link back to class expressions
+                        ontology.matonto.propertyDomain = classes;
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(classes.concat(datatypes), 'localName');
+                        ontology.matonto.objectPropertyRange = classes;
+
+                        deferred.resolve(ontology);
+                    }, function(response) {
+                        deferred.reject(response);
+                    });
+
+                return deferred.promise;
             }
 
             self.getOntologyIds = function() {
