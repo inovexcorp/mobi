@@ -6,6 +6,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
+import java.util.List;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,14 +35,17 @@ public interface MappingRest {
                     @QueryParam("Id") String mappingId);
 
     /**
-     * Produces a JSON array of all the mapping IRIs in the data store.
+     * If passed an id list, produces a JSON array of all the mapping
+     * with matching IRIs in the data store. Otherwise just produces a
+     * JSON array of all mapping IRIs.
      *
+     * @param idList a list of local names for mappings
      * @return a response with a JSON array of all the mapping IRIs
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Retrieve list of all mapping IRIs")
-    Response getMappingNames();
+    Response getMappingNames(@QueryParam("Ids") List<String> idList);
 
     /**
      * Collects the JSON-LD from an uploaded mapping and returns it as JSON.

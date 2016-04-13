@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -71,13 +73,25 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
-    public Response getMappingNames() {
-        Set<Resource> registry = manager.getMappingRegistry();
-        Set<String> mappings = registry.stream()
-                .map(Value::stringValue)
-                .collect(Collectors.toSet());
-        Gson gson = new GsonBuilder().create();
-        return Response.status(200).entity(gson.toJson(mappings)).build();
+    public Response getMappingNames(List<String> idList) {
+        String list;
+        if (idList.isEmpty()) {
+            Set<Resource> registry = manager.getMappingRegistry();
+            Set<String> mappings = registry.stream()
+                    .map(Value::stringValue)
+                    .collect(Collectors.toSet());
+            Gson gson = new GsonBuilder().create();
+            list = gson.toJson(mappings);
+        } else {
+            List<JSONObject> mappingList = idList.stream()
+                    .map(id -> manager.createMappingIRI(id))
+                    .map(this::getMappingAsJson)
+                    .collect(Collectors.toList());
+            JSONArray mappings = JSONArray.fromObject(mappingList);
+            list = mappings.toString();
+        }
+
+        return Response.status(200).entity(list).build();
     }
 
     @Override
