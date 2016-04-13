@@ -24,6 +24,11 @@
         file-preview="vm.filePreview"
         on-click-back="vm.displayMappingSelect()"
         on-click-continue="vm.displayEditMapping()"></previous-check-overlay>
+    <iri-template-overlay ng-if="vm.displayIriTemplate"
+        columns="vm.filePreview.headers"
+        class-mapping="vm.classMapping"
+        set="vm.displayIriTemplate = false; vm.setIriTemplate(prefixEnd, localName)"
+        cancel="vm.displayIriTemplate = false"></iri-template-overlay>
     <confirmation-overlay ng-if="vm.displayDeleteConfirm"
         header-text="'Delete ' + vm.deleteEntity.name"
         confirm-click="vm.displayDeleteConfirm = false; vm.deleteMappingEntity()"
@@ -116,6 +121,7 @@
                         class-mapping-id="vm.editingClassMappingId"
                         is-last-class="vm.numMappedClasses === 1"
                         props="vm.availableProps"
+                        edit-iri="vm.displayIriTemplateOverlay()"
                         open-prop="vm.openAvailableProp(propId)"
                         click-delete="vm.displayDeleteConfirmation(classMappingId)"></edit-class-form>
                     <a id="edit-cancel" ng-if="vm.editingClassMappingId" ng-click="vm.resetEditingVars(); vm.clearSelectedColumn();">Cancel</a>

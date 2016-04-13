@@ -10,6 +10,9 @@ $rdf-controls-height: 34px + $rdf-padding/2;
     overflow: hidden;
 }
 .mapper {
+    .header-link {
+        font-size: 14px;
+    }
     #mapper-content {
         margin-left: $sidebar-width;
         height: 100%;
@@ -107,9 +110,6 @@ $rdf-controls-height: 34px + $rdf-padding/2;
     }
     .ontology-preview {
         overflow-y: auto;
-        .toggle-class-list {
-            font-size: 14px;
-        }
     }
     .ontology-preview-overlay {
         .content {
@@ -299,6 +299,14 @@ $rdf-controls-height: 34px + $rdf-padding/2;
                 }
                 .form-btns {
                     margin-bottom: 0px;
+                }
+                .iri-template {
+                    small {
+                        display: block;
+                        &.iri-template-header {
+                            font-weight: bold;
+                        }
+                    }
                 }
             }
             .class-list-container {

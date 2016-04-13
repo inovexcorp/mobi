@@ -1,5 +1,9 @@
 <form class="edit-class">
     <h4>{{dvm.getTitle()}}</h4>
+    <div class="iri-template">
+        <small class="iri-template-header muted-text">IRI Template <a ng-click="editIri()">Edit</a></small>
+        <small class="muted-text">{{dvm.getIriTemplate()}}</small>
+    </div>
     <div class="form-group">
         <h5>Available Properties</h5>
         <available-prop-list props="props" open-prop="dvm.openProperty(propId)"></available-prop-list>
