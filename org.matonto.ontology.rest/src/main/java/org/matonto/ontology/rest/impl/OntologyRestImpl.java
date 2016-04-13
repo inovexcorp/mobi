@@ -72,12 +72,12 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getAllOntologyIds() {
-        JSONObject json = new JSONObject();
+        JSONArray json = new JSONArray();
 
         Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
 
         ontoIdRegistry.keySet().forEach(oid ->
-                json.put(oid.stringValue(), ontoIdRegistry.get(oid))
+                json.add(oid.stringValue())
         );
 
         return Response.status(200).entity(json.toString()).build();
