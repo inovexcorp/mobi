@@ -65,7 +65,7 @@
             self.getMapping = function(mappingName) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(mappingName), {})
+                $http.get(prefix + '/' + encodeURIComponent(mappingName))
                     .then(function(response) {
                         $rootScope.showSpinner = false;
                         deferred.resolve(_.get(response.data, '@graph', []));

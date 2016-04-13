@@ -2,7 +2,8 @@ package org.matonto.etl.api.csv;
 
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
-import org.openrdf.model.Model;
+import org.matonto.rdf.api.Model;
+//import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public interface MappingManager {
     Resource createMappingIRI();
 
     /**
-     * Generates a mapping IRI Resource with the passed local name,
+     * Generates a mapping IRI Resource with the passed local name.
      *
      * @param localName the local name to use for the mapping IRI Resource
      * @return an IRI Resource for a mapping with the passed local name
@@ -38,40 +39,40 @@ public interface MappingManager {
     Resource createMappingIRI(String localName);
 
     /**
-     * Creates a Sesame Model with the mapping in the given file.
+     * Creates a MatOnto Model with the mapping in the given file.
      *
      * @param mapping a file containing RDF with a mapping
-     * @return a Sesame Model with the mapping RDF
+     * @return a MatOnto Model with the mapping RDF
      * @throws IOException thrown if an error occurs when parsing
      */
     Model createMapping(File mapping) throws IOException;
 
     /**
-     * Creates a Sesame Model with the mapping in the given JSON-LD string.
+     * Creates a MatOnto Model with the mapping in the given JSON-LD string.
      *
      * @param jsonld a string containing JSON-LD of a mapping
-     * @return a Sesame Model with the mapping RDF
+     * @return a MatOnto Model with the mapping RDF
      * @throws IOException thrown if an error occurs when parsing
      */
     Model createMapping(String jsonld) throws IOException;
 
     /**
-     * Creates a Sesame Model with the mapping in the given InputStream in
+     * Creates a MatOnto Model with the mapping in the given InputStream in
      * the given RDF format.
      *
      * @param in an input stream containing mapping RDF
      * @param format the RDF format the mapping is in
-     * @return a Sesame Model with the mapping RDF
+     * @return a MatOnto Model with the mapping RDF
      * @throws IOException thrown if an error occurs when parsing
      */
     Model createMapping(InputStream in, RDFFormat format) throws IOException;
 
     /**
-     * Collects a mapping Model specified by the passed mapping IRI Resource
+     * Collects a mapping MatOnto Model specified by the passed mapping IRI Resource
      * from the repository if it exists.
      *
      * @param mappingIRI the IRI Resource for a mapping
-     * @return an Optional with the mapping Model if it was found
+     * @return an Optional with the mapping MatOnto Model if it was found
      * @throws MatOntoException thrown if a connection to the repository
      *                          could not be made
      */
@@ -80,13 +81,13 @@ public interface MappingManager {
     /**
      * Persist a mapping in the repository.
      *
-     * @param mappingModel a Sesame Model with a mapping
+     * @param mappingModel a MatOnto Model with a mapping
      * @param mappingIRI the IRI for the mapping
      * @return true if the mapping was persisted, false otherwise
      * @throws MatOntoException thrown if a connection to the repository
      *                          could not be made
      */
-    boolean storeMapping(@Nonnull Model mappingModel, @Nonnull Resource mappingIRI) throws MatOntoException;
+    boolean storeMapping(Model mappingModel, @Nonnull Resource mappingIRI) throws MatOntoException;
 
     /**
      * Delete a mapping from the repository.

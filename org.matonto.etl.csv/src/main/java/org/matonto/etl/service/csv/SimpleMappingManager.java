@@ -3,18 +3,13 @@ package org.matonto.etl.service.csv;
 import aQute.bnd.annotation.component.*;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.exception.MatOntoException;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
-import org.openrdf.model.Model;
-import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
@@ -37,6 +32,7 @@ public class SimpleMappingManager implements MappingManager {
     private RepositoryManager repositoryManager;
     private static Repository repository;
     private ValueFactory factory;
+    private ModelFactory modelFactory;
 
     public SimpleMappingManager() {}
 
@@ -60,6 +56,11 @@ public class SimpleMappingManager implements MappingManager {
     @Reference
     protected void setValueFactory(final ValueFactory vf) {
         factory = vf;
+    }
+
+    @Reference
+    protected void setModelFactory(final ModelFactory mf) {
+        modelFactory = mf;
     }
 
     @Reference
@@ -101,22 +102,22 @@ public class SimpleMappingManager implements MappingManager {
         RDFFormat mapFormat;
         mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(IllegalArgumentException::new);
         FileReader reader = new FileReader(mapping);
-        return Rio.parse(reader, "", mapFormat);
+        return Values.matontoModel(Rio.parse(reader, "", mapFormat));
     }
 
     @Override
     public Model createMapping(String jsonld) throws IOException {
         InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
-        return Rio.parse(in, "", RDFFormat.JSONLD);
+        return Values.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
     }
 
     @Override
     public Model createMapping(InputStream in, RDFFormat format) throws IOException {
-        return Rio.parse(in, "", format);
+        return Values.matontoModel(Rio.parse(in, "", format));
     }
 
     @Override
-    public boolean storeMapping(@Nonnull Model mappingModel, @Nonnull Resource mappingIRI) throws MatOntoException {
+    public boolean storeMapping(Model mappingModel, @Nonnull Resource mappingIRI) throws MatOntoException {
         testRepositoryConnection();
         if (mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID already exists");
@@ -125,7 +126,7 @@ public class SimpleMappingManager implements MappingManager {
         RepositoryConnection conn = null;
         try {
             conn = repository.getConnection();
-            conn.add(Values.matontoModel(mappingModel), mappingIRI);
+            conn.add(mappingModel, mappingIRI);
             conn.add(mappingRegistryResource, registryPredicate, mappingIRI, mappingRegistryResource);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
@@ -143,11 +144,11 @@ public class SimpleMappingManager implements MappingManager {
             return Optional.empty();
         }
         RepositoryConnection conn = null;
-        Model mappingModel = new LinkedHashModel();
+        Model mappingModel = modelFactory.createModel();
         try {
             conn = repository.getConnection();
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null, mappingIRI);
-            statements.forEach(statement -> mappingModel.add(Values.sesameStatement(statement)));
+            statements.forEach(mappingModel::add);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         } finally {

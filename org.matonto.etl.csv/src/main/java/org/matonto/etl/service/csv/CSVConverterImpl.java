@@ -45,7 +45,7 @@ public class CSVConverterImpl implements CSVConverter {
     @Override
     public Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
             throws IOException, RDFParseException, InvalidFormatException {
-        Model converted = Values.matontoModel(mappingManager.createMapping(mappingFile));
+        Model converted = mappingManager.createMapping(mappingFile);
         return convert(new FileInputStream(delim), converted, containsHeaders,
                 FilenameUtils.getExtension(delim.getName()), separator);
     }
@@ -60,7 +60,7 @@ public class CSVConverterImpl implements CSVConverter {
     @Override
     public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
             throws IOException, InvalidFormatException {
-        Model converted = Values.matontoModel(mappingManager.createMapping(mappingFile));
+        Model converted = mappingManager.createMapping(mappingFile);
         return convert(delim, converted, containsHeaders, extension, separator);
     }
 

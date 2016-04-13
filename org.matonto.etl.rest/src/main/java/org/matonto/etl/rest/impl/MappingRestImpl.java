@@ -11,10 +11,11 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
-import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
@@ -134,7 +135,7 @@ public class MappingRestImpl implements MappingRest {
         Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(mappingModel.get(), out, RDFFormat.JSONLD);
+            Rio.write(Values.sesameModel(mappingModel.get()), out, RDFFormat.JSONLD);
             JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
             json = arr.getJSONObject(0);
         } else {

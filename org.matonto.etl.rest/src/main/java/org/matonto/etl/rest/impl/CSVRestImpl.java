@@ -13,13 +13,10 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.etl.rest.CSVRest;
-import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.Model;
-import org.openrdf.model.Statement;
-import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
@@ -34,7 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
@@ -109,9 +105,9 @@ public class CSVRestImpl implements CSVRest {
             Model mappingModel;
             if (mappingLocalName != null) {
                 Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
-                Optional<Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
+                Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
                 if (mappingOptional.isPresent()) {
-                    mappingModel = mappingOptional.get();
+                    mappingModel = Values.sesameModel(mappingOptional.get());
                 } else {
                     throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
                             Response.Status.BAD_REQUEST);
