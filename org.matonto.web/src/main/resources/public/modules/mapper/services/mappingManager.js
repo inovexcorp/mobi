@@ -137,7 +137,7 @@
                 documentEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
                 return newMapping;
             }
-            self.addClass = function(mapping, classId, localNamePattern) {
+            self.addClass = function(mapping, classId) {
                 var newMapping = angular.copy(mapping);
                 // Check if class exists in ontology
                 if (ontologyManagerService.getClass(self.getSourceOntologyId(newMapping), classId)) {
@@ -153,11 +153,23 @@
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
                     classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
-                    classEntity[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
+                    classEntity[prefixes.delim + 'localName'] = [{'@value': '${UUID}'}];
                     newMapping.jsonld.push(classEntity);
                 }
 
                 return newMapping;
+            }
+            self.editIriTemplate = function(mapping, classMappingId, prefixEnd, localNamePattern) {
+                var newMapping = angular.copy(mapping);
+                // Check if class exists in ontology
+                if (entityExists(newMapping.jsonld, classMappingId)) {
+                    var classMapping = getEntityById(newMapping.jsonld, classMappingId);
+                    var ontologyDataName = $filter('beautify')(($filter('splitIRI')(self.getSourceOntologyId(newMapping))).end).toLowerCase();
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
+                    classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
+                }
+
+                return newMapping
             }
             self.addDataProp = function(mapping, classMappingId, propId, columnIndex) {
                 var newMapping = angular.copy(mapping);
@@ -191,7 +203,7 @@
                 }
                 return newMapping;
             }
-            self.addObjectProp = function(mapping, classMappingId, propId, localNamePattern) {
+            self.addObjectProp = function(mapping, classMappingId, propId) {
                 var newMapping = angular.copy(mapping);
                 var propObj = ontologyManagerService.getClassProperty(
                     self.getSourceOntologyId(newMapping), self.getClassIdByMappingId(newMapping, classMappingId), propId);
@@ -211,7 +223,7 @@
                     var rangeClassMappings = getClassMappingsByClass(newMapping.jsonld, rangeClass);
 
                     // Create class mapping for range of object property
-                    newMapping = self.addClass(newMapping, rangeClass, localNamePattern);
+                    newMapping = self.addClass(newMapping, rangeClass);
                     var newClassMapping = _.differenceBy(getClassMappingsByClass(newMapping.jsonld, rangeClass), rangeClassMappings, '@id')[0];
                     // Create object mapping
                     dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];

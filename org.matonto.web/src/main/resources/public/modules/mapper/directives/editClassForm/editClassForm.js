@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('editClassForm', ['mappingManager', 'ontologyManager'])
+        .module('editClassForm', ['prefixes', 'mappingManager', 'ontologyManager'])
         .directive('editClassForm', editClassForm);
 
-        editClassForm.$inject = ['mappingManagerService', 'ontologyManagerService'];
+        editClassForm.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService'];
 
-        function editClassForm(mappingManagerService, ontologyManagerService) {
+        function editClassForm(prefixes, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -16,7 +16,8 @@
                     props: '=',
                     isLastClass: '=',
                     clickDelete: '&',
-                    openProp: '&'
+                    openProp: '&',
+                    editIri: '&'
                 },
                 bindToController: {
                     mapping: '=',
@@ -25,6 +26,12 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
 
+                    dvm.getIriTemplate = function() {
+                        var classMapping = _.find(dvm.mapping.jsonld, {'@id': dvm.classMappingId});
+                        var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
+                        var localName = _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']", '');
+                        return prefix + localName;
+                    }
                     dvm.openProperty = function(propId) {
                         $scope.openProp({propId: propId});
                     }
