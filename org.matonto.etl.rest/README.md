@@ -30,7 +30,7 @@ localhost:8443/matontorest/mappings/
 The swagger spec for the ETL REST Service can be found at
 
 ```
-localhost:8181/api-docs/etl-context
+localhost:8443/matontorest/swagger-ui/index.html
 ```
 
 Point the swagger UI at that URL to view the swagger spec.
