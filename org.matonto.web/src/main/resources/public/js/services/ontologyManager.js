@@ -603,6 +603,7 @@
                             classes.push(obj);
                             break;
                         case prefixes.owl + 'DatatypeProperty':
+                        case prefixes.owl + 'DataTypeProperty':
                         case prefixes.owl + 'ObjectProperty':
                         case prefixes.rdfs + 'Property':
                             obj.matonto = {
