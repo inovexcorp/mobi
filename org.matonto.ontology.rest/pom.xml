@@ -27,12 +27,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.0.33-SNAPSHOT</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.0.33-SNAPSHOT</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>    
         
 		<dependency>

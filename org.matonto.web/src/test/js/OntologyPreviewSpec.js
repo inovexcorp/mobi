@@ -94,17 +94,17 @@ describe('Ontology Preview directive', function() {
         it('depending on the length of the class list', function() {
             scope.ontology = {'@id': '', matonto: {classes: [{}]}};
             scope.$digest();
-            expect(this.element.querySelectorAll('a.toggle-class-list').length).toBe(0);
+            expect(this.element.querySelectorAll('a.header-link').length).toBe(0);
 
             scope.ontology = {'@id': 'test', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
             scope.$digest();
-            expect(this.element.querySelectorAll('a.toggle-class-list').length).toBe(1);
+            expect(this.element.querySelectorAll('a.header-link').length).toBe(1);
         });
         it('depending on how many classes are showing', function() {
             var controller = this.element.controller('ontologyPreview');
             scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
             scope.$digest();
-            var link = angular.element(this.element.querySelectorAll('a.toggle-class-list')[0]);
+            var link = angular.element(this.element.querySelectorAll('a.header-link')[0]);
             expect(link.text()).toBe('See More');
             controller.full = true;
             scope.$digest();
@@ -124,7 +124,7 @@ describe('Ontology Preview directive', function() {
         var controller = element.controller('ontologyPreview');
         spyOn(controller, 'getClassList').and.callThrough();
         
-        angular.element(element.querySelectorAll('a.toggle-class-list')[0]).triggerHandler('click');
+        angular.element(element.querySelectorAll('a.header-link')[0]).triggerHandler('click');
         expect(controller.full).toBe(true);
         expect(controller.getClassList).toHaveBeenCalled();
     });

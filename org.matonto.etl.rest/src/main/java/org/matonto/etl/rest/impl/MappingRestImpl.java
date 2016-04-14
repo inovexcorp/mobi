@@ -1,111 +1,149 @@
 package org.matonto.etl.rest.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import aQute.bnd.annotation.component.Component;
-import net.sf.json.JSON;
+import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.etl.rest.MappingRest;
+import org.matonto.exception.MatOntoException;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class MappingRestImpl implements MappingRest {
 
+    private MappingManager manager;
     private final Logger logger = LoggerFactory.getLogger(MappingRestImpl.class);
 
+    @Reference
+    public void setManager(MappingManager manager) {
+        this.manager = manager;
+    }
+
     @Override
-    public Response upload(InputStream fileInputStream, String jsonld) {
+    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail,
+                           String jsonld, String mappingId) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
                     Response.Status.BAD_REQUEST);
         }
 
-        String fileName = generateUuid();
-        Path filePath = Paths.get("data/tmp/" + fileName + ".jsonld");
+        Resource mappingIRI = mappingId != null ? manager.createMappingIRI(mappingId) : manager.createMappingIRI();
+        Model mappingModel;
+        try {
+            if (fileInputStream != null) {
+                RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName())
+                        .orElseThrow(IllegalArgumentException::new);
+                mappingModel = manager.createMapping(fileInputStream, format);
+            } else {
+                mappingModel = manager.createMapping(jsonld);
+            }
+            manager.storeMapping(mappingModel, mappingIRI);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing mapping", Response.Status.BAD_REQUEST);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
 
-        InputStream inputStream;
-        if (fileInputStream != null) {
-            inputStream = fileInputStream;
+        logger.info("Mapping Uploaded: " + mappingIRI);
+
+        return Response.status(200).entity(mappingIRI.stringValue()).build();
+    }
+
+    @Override
+    public Response getMappingNames(List<String> idList) {
+        JSONArray mappings = new JSONArray();
+        if (idList.isEmpty()) {
+            manager.getMappingRegistry().stream()
+                .map(Value::stringValue)
+                .forEach(mappings::add);
         } else {
-            inputStream = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
+            idList.stream()
+                .map(id -> manager.createMappingIRI(id))
+                .map(this::getMappingAsJson)
+                .forEach(mappings::add);
         }
 
-        try {
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            inputStream.close();
-        } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Error writing mapping file", Response.Status.BAD_REQUEST);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing mapping file", Response.Status.BAD_REQUEST);
-        }
-
-        logger.info("Mapping File Uploaded: " + filePath);
-
-        return Response.status(200).entity(fileName).build();
+        return Response.status(200).entity(mappings.toString()).build();
     }
 
     @Override
-    public Response getFileNames() {
-        File directory = new File("data/tmp/");
-        File[] mappingFiles = directory.listFiles((dir, fileName) -> {
-            return fileName.endsWith(".jsonld");
-        });
-        String[] fileNames = new String[mappingFiles.length];
-        for (int i = 0; i < mappingFiles.length; i++) {
-            fileNames[i] = mappingFiles[i].getName().replace(".jsonld", "");
-        }
-        Gson gson = new GsonBuilder().create();
-
-        return Response.status(200).entity(gson.toJson(fileNames)).build();
-    }
-
-    @Override
-    public Response getMapping(String fileName) {
-        File file = new File("data/tmp/" + fileName + ".jsonld");
-        logger.info("Getting mapping from " + file.getName());
-
-        JSONArray json;
+    public Response getMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Getting mapping " + mappingIRI);
+        JSONObject json;
         try {
-            String fileContent = new String(Files.readAllBytes(file.toPath()));
-            json = JSONArray.fromObject(fileContent);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error reading mapping file", Response.Status.BAD_REQUEST);
+            json = getMappingAsJson(mappingIRI);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
         return Response.status(200).entity(json.toString()).build();
     }
 
     @Override
-    public Response downloadMapping(String fileName) {
-        File file = new File("data/tmp/" + fileName + ".jsonld");
-        logger.info("Downloading mapping from " + file.getName());
-
-        if (file.exists()) {
-            return Response.ok(file).header("Content-Disposition", "attachment; filename=" + file.getName()).build();
-        } else {
-            throw ErrorUtils.sendError("Error reading mapping file", Response.Status.BAD_REQUEST);
+    public Response downloadMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Downloading mapping " + mappingIRI);
+        JSONObject json;
+        try {
+            json = getMappingAsJson(mappingIRI);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
+
+        StreamingOutput stream = os -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+            writer.write(json.toString());
+            writer.flush();
+            writer.close();
+        };
+
+        return Response.ok(stream).build();
     }
 
-    /**
-     * Creates a UUID string.
-     *
-     * @return a string with a UUID
-     */
-    public String generateUuid() {
-        return UUID.randomUUID().toString();
+    @Override
+    public Response deleteMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Deleting mapping " + mappingIRI);
+        boolean success = false;
+        try {
+            manager.deleteMapping(mappingIRI);
+            success = true;
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(200).entity(success).build();
+    }
+
+    private JSONObject getMappingAsJson(Resource mappingIRI) throws MatOntoException {
+        JSONObject json;
+        Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
+        if (mappingModel.isPresent()) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Rio.write(Values.sesameModel(mappingModel.get()), out, RDFFormat.JSONLD);
+            JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
+            json = arr.getJSONObject(0);
+        } else {
+            throw ErrorUtils.sendError("Error retrieving mapping", Response.Status.BAD_REQUEST);
+        }
+        return json;
     }
 }

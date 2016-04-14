@@ -6,7 +6,7 @@
             'fileForm', 'filePreviewTable', 'mappingSelectOverlay', 'ontologySelectOverlay', 'ontologyPreview', 
             'startingClassSelectOverlay', 'classPreview', 'classList', 'propForm', 'propSelect', 'columnForm', 'columnSelect',
             'rangeClassDescription', 'editPropForm', 'editClassForm', 'availablePropList', 'finishOverlay', 'ontologyPreviewOverlay',
-            'rdfPreview', 'previousCheckOverlay'])
+            'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay'])
         .controller('MapperController', MapperController);
 
     MapperController.$inject = ['$rootScope', '$scope', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
@@ -237,8 +237,8 @@
 
             if (vm.saveToServer) {
                 mappingManagerService.upload(vm.mapping.jsonld, vm.mapping.name)
-                    .then(function(uuid) {
-                        return csvManagerService.mapByFile(vm.delimitedFileName, uuid, vm.delimitedContainsHeaders, vm.delimitedSeparator);
+                    .then(function(response) {
+                        return csvManagerService.mapByUploaded(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                     })
                     .then(function(mappedData) {
                         deferred.resolve(mappedData);
@@ -269,8 +269,12 @@
                 vm.changeOntology = false;
                 changedMapping();
             }
+            vm.activeStep = 4;
+            vm.resetEditingVars();
+            vm.clearSelectedColumn();
             if (classId) {
-                vm.mapping = mappingManagerService.addClass(vm.mapping, classId, '${UUID}');
+                vm.mapping = mappingManagerService.addClass(vm.mapping, classId);
+                vm.displayEditClassForm(_.get(_.find(vm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']}), '@id'));
             } else {
                 vm.isPreviousMapping = true;
                 vm.saveToServer = false;
@@ -287,9 +291,6 @@
                 }
                 vm.displayPreviousCheck = false;
             }
-            vm.activeStep = 4;
-            vm.resetEditingVars();
-            vm.clearSelectedColumn();
         }
         vm.displayPropForm = function(classMappingId) {
             vm.resetEditingVars();
@@ -314,6 +315,10 @@
                 vm.displayColumnForm(extraColumn);
                 vm.selectedColumn = extraColumn;
             }
+        }
+        vm.displayIriTemplateOverlay = function() {
+            vm.displayIriTemplate = true;
+            vm.classMapping = _.find(vm.mapping.jsonld, {'@id': vm.editingClassMappingId});
         }
         vm.displayEditClassForm = function(classMappingId) {
             vm.resetEditingVars();
@@ -350,6 +355,9 @@
         }
 
         /** Set and Delete methods **/
+        vm.setIriTemplate = function(prefixEnd, localName) {
+            vm.mapping = mappingManagerService.editIriTemplate(vm.mapping, vm.editingClassMappingId, prefixEnd, localName);
+        }
         vm.setDatatypeProp = function(column) {
             var columnIdx = vm.filePreview.headers.indexOf(column);
             if (!vm.newProp) {
@@ -376,7 +384,7 @@
             vm.displayPropForm(editingClassMappingId);
         }
         vm.setObjectProp = function() {
-            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.editingClassMappingId, vm.selectedPropId, '${UUID}');
+            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.editingClassMappingId, vm.selectedPropId);
             changedMapping();
             vm.resetEditingVars();
         }
