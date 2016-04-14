@@ -10,6 +10,7 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
 import org.matonto.repository.api.Repository;
@@ -36,10 +37,12 @@ import aQute.bnd.annotation.component.*;
 public class SimpleOntologyManager implements OntologyManager {
 	
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
+    private Resource registryContext;
+    private Resource registrySubject;
+    private IRI registryPredicate;
     private RepositoryManager repositoryManager;
 	private static Repository repository;
     private static ValueFactory factory;
-	private static Map<Resource, String> ontologyRegistry = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
@@ -67,7 +70,7 @@ public class SimpleOntologyManager implements OntologyManager {
         if (properties.containsKey("repositoryId") && !properties.get("repositoryId").equals("")) {
             getRepository((String)properties.get("repositoryId"));
             LOG.info("repositoryId - " + properties.get("repositoryId"));
-            initOntologyRegistry();
+            initOntologyRegistryResources();
         } else {
             LOG.error("Unable to activate Ontology Manager: Unable to set repositoryId");
             throw new IllegalStateException("Unable to set repositoryId");
@@ -110,8 +113,23 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 	
 	@Override
-	public Map<Resource, String> getOntologyRegistry() {
-		return ontologyRegistry;
+	public Set<Resource> getOntologyRegistry() {
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        RepositoryConnection conn = null;
+        Set<Resource> registry = new HashSet<>();
+        try {
+            conn = repository.getConnection();
+            conn.getStatements(registrySubject, registryPredicate, null, registryContext)
+                    .forEach(stmt -> Statements.objectResource(stmt).ifPresent(registry::add));
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+		return registry;
 	}
 
 	@Override
@@ -140,14 +158,31 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 	
 	/**
-	 * Checks if given context id exists in the repository, and returns true if it does.
+	 * Checks if given context id exists in the local ontology registry.
 	 * 
-	 * @return True if given context id exists in the repository, or else false.
+	 * @return True if given context id exists in the local ontology registry, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	public boolean ontologyExists(@Nonnull Resource resource) {
-        return ontologyRegistry.containsKey(resource);
-	}
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        RepositoryConnection conn = null;
+        boolean exists = false;
+        try {
+            conn = repository.getConnection();
+            RepositoryResult<Statement> statements = conn.getStatements(registrySubject, registryPredicate, resource, registryContext);
+            if(statements.hasNext()) {
+                exists = true;
+            }
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+        return exists;
+    }
 	
 	/**
 	 * Retrieves Ontology object by ontology id from the repository, and returns an Optional with Ontology 
@@ -207,7 +242,7 @@ public class SimpleOntologyManager implements OntologyManager {
             Model model = ontology.asModel(modelFactory);
             conn = repository.getConnection();
             conn.add(model, resource);
-            ontologyRegistry.put(resource, repository.getConfig().id());
+            conn.add(registrySubject, registryPredicate, resource, registryContext);
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         } finally {
@@ -277,7 +312,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		try {
 			conn = repository.getConnection();
             conn.clear(resource);
-			ontologyRegistry.remove(resource, repository.getConfig().id());
+            conn.remove(registrySubject, registryPredicate, resource, registryContext);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -329,42 +364,16 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
 	/**
-	 * The ontology registry facilitates the list of the association of ontologies 
-	 * stored in different repositories. When the registry is initialized (loaded) when
-	 * an instance of SimpleOntologyManager is created.  
+     * Initializes the resources used to store the ontology registry statements in
+     * the repository. These values are initialized whenever the SimpleOntologyManager
+     * is created.
 	 * 
 	 * @throws IllegalStateException - if the repository is null
 	 */
-	private void initOntologyRegistry() throws MatontoOntologyException {
-		LOG.info("Initiating the ontology registry");
-		
-		if(repository == null)
-			throw new IllegalStateException("Repository is null");
-		
-		RepositoryConnection conn = null;
-		RepositoryResult<Resource> contextIds = null;
-		
-		try {
-			conn = repository.getConnection();
-			contextIds = conn.getContextIDs();
-			
-			while (contextIds.hasNext()) {
-				Resource contextId = contextIds.next();
-				ontologyRegistry.put(contextId, repository.getConfig().id());
-			}
-
-		} catch (RepositoryException e) {
-			throw new MatontoOntologyException("Error in repository connection", e);
-		} finally {
-			try {
-				if(contextIds != null) 
-	            	contextIds.close();
-			} catch (RepositoryException e) {
-                LOG.warn("Could not close ResultSet." + e.toString());
-			}
-            closeConnection(conn);
-		}
-		
+	private void initOntologyRegistryResources() throws MatontoOntologyException {
+        registryContext = factory.createIRI("https://matonto.org/registry/ontologies");
+        registrySubject = factory.createIRI("https://matonto.org/registry/ontologies");
+        registryPredicate = factory.createIRI("https://matonto.org/Ontology/registry#hasItem");
 	}
 
 	@Override
