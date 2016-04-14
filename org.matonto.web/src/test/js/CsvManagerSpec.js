@@ -80,7 +80,7 @@ describe('CSV Manager service', function() {
         });
     });
     describe('should return mapped data from an uploaded delimited file', function() {
-        it('using an uploaded mapping file', function(done) {
+        it('using an uploaded mapping', function(done) {
             var fileName = 'test';
             var mappingFileName = '';
             var separator = ',';
@@ -95,7 +95,7 @@ describe('CSV Manager service', function() {
                 }, function(headers) {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, []);
-            csvManagerSvc.mapByFile(fileName, mappingFileName, containsHeaders, separator).then(function(value) {
+            csvManagerSvc.mapByUploaded(fileName, mappingFileName, containsHeaders, separator).then(function(value) {
                 expect(Array.isArray(value)).toBe(true);
                 done();
             });

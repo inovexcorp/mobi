@@ -3,6 +3,7 @@ package org.matonto.etl.service.csv
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
+import org.matonto.rdf.core.utils.Values;
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.RDFParseException
 import org.openrdf.rio.Rio
@@ -13,6 +14,7 @@ class ConverterSpec extends Specification {
 
     def mf = LinkedHashModelFactory.getInstance();
     def vf = SimpleValueFactory.getInstance();
+    def mm = new SimpleMappingManager();
 
     def c = Spy(CSVConverterImpl)
 
@@ -22,6 +24,7 @@ class ConverterSpec extends Specification {
     def setup() {
         c.setValueFactory(vf)
         c.setModelFactory(mf);
+        c.setMappingManager(mm);
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties"() {
@@ -29,7 +32,7 @@ class ConverterSpec extends Specification {
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true, (char) ',');
 
         expect:
@@ -41,7 +44,7 @@ class ConverterSpec extends Specification {
         File csv = new ClassPathResource("semicolonFile.csv").getFile();
         File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true, (char) ';')
 
         expect:
@@ -53,7 +56,7 @@ class ConverterSpec extends Specification {
         File csv = new ClassPathResource("tabFile.csv").getFile();
         File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true, (char) '\t')
 
         expect:
@@ -65,7 +68,7 @@ class ConverterSpec extends Specification {
         File csv = new ClassPathResource("testFile.csv").getFile();
         File mappingFile = new ClassPathResource("mappingNoLocalName.ttl").getFile();
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true, (char) ',')
 
         expect:
@@ -77,7 +80,7 @@ class ConverterSpec extends Specification {
         File csv = new ClassPathResource("testFileNoHeaders.csv").getFile();
         File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, false, (char) ',');
 
         expect:
@@ -89,7 +92,7 @@ class ConverterSpec extends Specification {
         File xls = new ClassPathResource("testFile.xls").getFile();
         File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(xls, mappingFile, true, (char) ',');
 
         expect:
@@ -101,7 +104,7 @@ class ConverterSpec extends Specification {
         File xls = new ClassPathResource("testFile.xlsx").getFile();
         File mappingFile = new ClassPathResource("newestMapping.ttl").getFile();
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(xls, mappingFile, true, (char) ',');
 
         expect:
@@ -146,7 +149,7 @@ class ConverterSpec extends Specification {
         out = new ClassPathResource("testPropertiesMissingOut.ttl").getFile();
         r = new FileReader(out);
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
-        Model m = c.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
+        Model m = Values.matontoModel(Rio.parse(r, "", RDFFormat.TURTLE))
         Model convertedModel = c.convert(csv, mappingFile, true, (char) ',');
 
         expect:
