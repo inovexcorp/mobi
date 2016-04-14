@@ -36,7 +36,7 @@
                     dvm.getTitle = function() {
                         var classId = dvm.getClassId();
                         var propId = dvm.getPropId();
-                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology['@id'], classId));
+                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
                         var propName = ontologyManagerService.getEntityName(getClassProp(classId, propId));
                         return className + ': ' + propName;
                     }

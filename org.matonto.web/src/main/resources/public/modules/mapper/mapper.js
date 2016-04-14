@@ -215,12 +215,20 @@
                                 name: mappingName
                             };
                             vm.displayPreviousCheck = true;
+                            var ontologyId = mappingManagerService.getSourceOntologyId(vm.mapping);
+                            var ontology = _.find(ontologyManagerService.getList(), {'@id': ontologyId});
+                            if (ontology) {
+                                vm.ontology = ontology;
+                            } else {
+                                ontologyManagerService.getThenRestructure(ontologyId).then(function(response) {
+                                    vm.ontology = response;
+                                });
+                            }
                         }, onError);
                     break;
                 default:
                     previousOntology = previousOntology ? previousOntology : vm.ontology;
                     vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, '');
-                    vm.ontology = undefined;
                     vm.activeStep = 2;
                     vm.displayPreviousCheck = false;
             }
@@ -228,6 +236,7 @@
         vm.displayStartingClassSelect = function(ontology) {
             vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, ontology['@id']);
             previousOntology = vm.changeOntology ? previousOntology : undefined;
+            vm.ontology = ontology;
             vm.activeStep = 3;
         }
         vm.displayFinish = function() {
