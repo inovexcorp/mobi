@@ -92,7 +92,8 @@
                     delimiter = obj['@id'].charAt(len - 1);
 
                 obj.matonto = {
-                    originalId: obj['@id']
+                    originalId: obj['@id'],
+                    blankNodes: []
                 }
 
                 if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
@@ -205,6 +206,7 @@
             }
 
             function restructure(flattened, ontologyId, context, prefixes) {
+                var startTime = new Date().getTime()/1000;
                 var j, obj, type, domain,
                     ontology = {
                         matonto: {
@@ -267,6 +269,8 @@
                     i++;
                 }
 
+                console.log('Ontology - ' + ontology['@id']);
+
                 i = 0;
                 while(i < restrictions.length) {
                     var readableText = '';
@@ -285,15 +289,16 @@
                         } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
                             readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
                         }
-                        if(id === '_:b2' || id === '_:b3' || id === '_:b4' || id === '_:b5') {
-                            console.log(restriction);
-                            console.log(readableText);
-                        }
+                        ontology.matonto.blankNodes.push({id: id, text: readableText});
+                        updateRefsService.update(classes, id, readableText);
+                        updateRefsService.update(properties, id, readableText);
                     } else {
-                        // console.log(restriction);
+                        console.log(restriction);
                     }
                     i++;
                 }
+
+                console.log(ontology.matonto.blankNodes);
 
                 i = 0;
                 while(i < properties.length) {
@@ -317,6 +322,8 @@
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
                 ontology.matonto.others = others;
+
+                console.log('restructuring time: ' + (new Date().getTime()/1000 - startTime) + ' seconds');
 
                 $q.all([
                         $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),

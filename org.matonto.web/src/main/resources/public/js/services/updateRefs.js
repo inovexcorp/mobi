@@ -8,7 +8,7 @@
     function updateRefsService() {
         var self = this;
 
-        self.update = function(obj, old, fresh, owl) {
+        self.update = function(obj, old, fresh) {
             var temp, prop, i, arr, excluded,
                 exclude = [
                     '$$hashKey',
@@ -32,7 +32,7 @@
                 }
 
                 // do nothing for these situations
-                if(excluded !== -1 || !obj[prop] || prop === '@id') {
+                if(excluded !== -1 || !obj[prop]) {
                     // do nothing
                 }
                 // iterates through the array and recursively calls this function
@@ -45,13 +45,13 @@
                         }
                         // else, something else
                         else {
-                            self.update(obj[prop][i], old, fresh, owl);
+                            self.update(obj[prop][i], old, fresh);
                         }
                     }
                 }
                 // recursively call this function
                 else if(typeof obj[prop] === 'object') {
-                    self.update(obj[prop], old, fresh, owl);
+                    self.update(obj[prop], old, fresh);
                 }
                 // remove the old prefix and replace it with the new
                 else if(obj[prop].indexOf(old) !== -1) {
