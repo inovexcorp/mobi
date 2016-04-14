@@ -194,10 +194,9 @@
                 return arr;
             }
 
-            function addOntology(ontology, ontologyId) {
+            function restructureOntology(ontology, ontologyId) {
                 var getPrefixes,
-                    context = ontology['@context'] || {},
-                    deferred = $q.defer();
+                    context = ontology['@context'] || {};
                 ontology = ontology['@graph'] || ontology;
 
                 getPrefixes = function(context) {
@@ -227,7 +226,13 @@
 
                 }
 
-                self.restructure(ontology, ontologyId, context, getPrefixes(context))
+                return self.restructure(ontology, ontologyId, context, getPrefixes(context));
+            }
+
+            function addOntology(ontology, ontologyId) {
+                var deferred = $q.defer();
+
+                restructureOntology(ontology, ontologyId)
                     .then(function(response) {
                         ontologies.push(response);
                         deferred.resolve(response);
@@ -881,6 +886,32 @@
                 return $http.get(prefix + '/' + encodeURIComponent(ontologyId), config);
             }
 
+            self.getThenRestructure = function(ontologyId) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                var onError = function(response) {
+                    deferred.reject(response);
+                    $rootScope.showSpinner = false;
+                }
+
+                var onGetSuccess = function(response) {
+                    restructureOntology(response.data.ontology, ontologyId).then(function(response) {
+                        deferred.resolve(response);
+                        $rootScope.showSpinner = false;
+                    });
+                }
+
+                self.get(ontologyId, 'jsonld').then(function(response) {
+                    if(response.hasOwnProperty('data') && !response.data.hasOwnProperty('error')) {
+                        onGetSuccess(response);
+                    } else {
+                        onError();
+                    }
+                }, onError);
+
+                return deferred.promise;
+            }
+
             self.uploadThenGet = function(file) {
                 $rootScope.showSpinner = true;
 
@@ -1034,10 +1065,6 @@
                 return self.getObject(state);
             }
 
-            self.getOntologyById = function(ontologyId) {
-                return _.find(ontologies, {'@id': ontologyId});
-            }
-
             self.getOntologyProperty = function(ontology, prop) {
                 if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty(prop)) {
                     return ontology.matonto[prop];
@@ -1060,20 +1087,20 @@
                 changedEntries = _.reject(changedEntries, { ontologyId: ontologyId });
             }
 
-            self.getClasses = function(ontologyId) {
-                return _.get(self.getOntologyById(ontologyId), 'matonto.classes', []);
+            self.getClasses = function(ontology) {
+                return _.get(ontology, 'matonto.classes', []);
             }
 
-            self.getClass = function(ontologyId, classId) {
-                return _.find(self.getClasses(ontologyId), {'@id': classId});
+            self.getClass = function(ontology, classId) {
+                return _.find(self.getClasses(ontology), {'@id': classId});
             }
 
-            self.getClassProperties = function(ontologyId, classId) {
-                return _.get(self.getClass(ontologyId, classId), 'matonto.properties', []);
+            self.getClassProperties = function(ontology, classId) {
+                return _.get(self.getClass(ontology, classId), 'matonto.properties', []);
             }
 
-            self.getClassProperty = function(ontologyId, classId, propId) {
-                return _.find(self.getClassProperties(ontologyId, classId), {'@id': propId});
+            self.getClassProperty = function(ontology, classId, propId) {
+                return _.find(self.getClassProperties(ontology, classId), {'@id': propId});
             }
 
             self.getEntityName = function(entity) {

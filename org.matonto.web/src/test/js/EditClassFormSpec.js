@@ -31,9 +31,10 @@ describe('Edit Class Form directive', function() {
             scope.openProp = jasmine.createSpy('openProp');
             scope.editIri = jasmine.createSpy('editIri');
             scope.mapping = {jsonld: []};
+            scope.ontology = {};
             scope.classMappingId = '';
 
-            this.element = $compile(angular.element('<edit-class-form props="props" is-last-class="isLastClass" click-delete="clickDelete(classMappingId)" open-prop="openProp(propId)" edit-iri="editIri()" mapping="mapping" class-mapping-id="classMappingId"></edit-class-form>'))(scope);
+            this.element = $compile(angular.element('<edit-class-form props="props" ontology="ontology" is-last-class="isLastClass" click-delete="clickDelete(classMappingId)" open-prop="openProp(propId)" edit-iri="editIri()" mapping="mapping" class-mapping-id="classMappingId"></edit-class-form>'))(scope);
             scope.$digest();
         });
 
@@ -73,6 +74,12 @@ describe('Edit Class Form directive', function() {
             scope.$digest();
             expect(scope.mapping).toEqual({jsonld: [{}]});
         });
+        it('ontology should be two way bound', function() {
+            var controller = this.element.controller('editClassForm');
+            controller.ontology = {'@id': ''};
+            scope.$digest();
+            expect(scope.ontology).toEqual({'@id': ''});
+        });
         it('classMappingId should be two way bound', function() {
             var controller = this.element.controller('editClassForm');
             controller.classMappingId = 'test';
@@ -88,9 +95,10 @@ describe('Edit Class Form directive', function() {
             scope.openProp = jasmine.createSpy('openProp');
             scope.editIri = jasmine.createSpy('editIri');
             scope.mapping = {jsonld: [{'@id': ''}]};
+            scope.ontology = {'@id': ''};
             scope.classMappingId = '';
 
-            this.element = $compile(angular.element('<edit-class-form props="props" is-last-class="isLastClass" click-delete="clickDelete(classMappingId)" open-prop="openProp(propId)" edit-iri="editIri()" mapping="mapping" class-mapping-id="classMappingId"></edit-class-form>'))(scope);
+            this.element = $compile(angular.element('<edit-class-form props="props" ontology="ontology" is-last-class="isLastClass" click-delete="clickDelete(classMappingId)" open-prop="openProp(propId)" edit-iri="editIri()" mapping="mapping" class-mapping-id="classMappingId"></edit-class-form>'))(scope);
             scope.$digest();
         });
         it('should create the IRI template for the class mapping', function() {
@@ -108,7 +116,6 @@ describe('Edit Class Form directive', function() {
             var controller = this.element.controller('editClassForm');
             var result = controller.getTitle();
 
-            expect(mappingManagerSvc.getSourceOntologyId).toHaveBeenCalled();
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalled();
             expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
@@ -118,7 +125,9 @@ describe('Edit Class Form directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             scope.mapping = {jsonld: []}
-            this.element = $compile(angular.element('<edit-class-form props="props" is-last-class="isLastClass" click-delete="clickDelete(classMappingId)" open-prop="openProp(propId)" mapping="mapping" class-mapping-id="classMappingId"></edit-class-form>'))(scope);
+            scope.ontology = {'@id': ''};
+
+            this.element = $compile(angular.element('<edit-class-form props="props" is-last-class="isLastClass" click-delete="clickDelete(classMappingId)" open-prop="openProp(propId)" edit-iri="editIri()" mapping="mapping" class-mapping-id="classMappingId"></edit-class-form>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -137,6 +146,7 @@ describe('Edit Class Form directive', function() {
     it('should call editIri when the edit link is clicked', function() {
         scope.editIri = jasmine.createSpy('editIri');
         scope.mapping = {jsonld: [{'@id': ''}]};
+        scope.ontology = {'@id': ''};
         scope.classMappingId = '';
 
         var element = $compile(angular.element('<edit-class-form props="props" is-last-class="isLastClass" click-delete="clickDelete(classMappingId)" open-prop="openProp(propId)" edit-iri="editIri()" mapping="mapping" class-mapping-id="classMappingId"></edit-class-form>'))(scope);

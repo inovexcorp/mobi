@@ -17,19 +17,19 @@
                     onClickContinue: '&'
                 },
                 bindToController: {
-                    ontologyId: '@'
+                    ontology: '='
                 },
                 controller: function() {
                     var dvm = this;
 
                     dvm.getOntologyId = function(classObj) {
-                        return dvm.ontologyId;
+                        return dvm.ontology['@id'];
                     }
-                    dvm.getClasses = function(ontologyId) {
-                        return ontologyManagerService.getClasses(ontologyId);
+                    dvm.getClasses = function() {
+                        return ontologyManagerService.getClasses(dvm.ontology);
                     }
-                    dvm.getClass = function(ontologyId, classId) {
-                        return ontologyManagerService.getClass(ontologyId, classId);
+                    dvm.getClass = function(classId) {
+                        return ontologyManagerService.getClass(dvm.ontology, classId);
                     }
                     dvm.getName = function(classObj) {
                         return ontologyManagerService.getEntityName(classObj)

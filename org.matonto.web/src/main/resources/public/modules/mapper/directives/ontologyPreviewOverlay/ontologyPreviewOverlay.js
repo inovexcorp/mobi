@@ -16,11 +16,10 @@
                     close: '&'
                 },
                 bindToController: {
-                    ontologyId: '@'
+                    ontology: '='
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.ontology = ontologyManagerService.getOntologyById(dvm.ontologyId);
                     dvm.name = ontologyManagerService.getEntityName(dvm.ontology);
                 },
                 templateUrl: 'modules/mapper/directives/ontologyPreviewOverlay/ontologyPreviewOverlay.html'

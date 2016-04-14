@@ -13,12 +13,12 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    ontologyId: '@',
                     classId: '@',
                     set: '&',
                     setNext: '&'
                 },
                 bindToController: {
+                    ontology: '=',
                     props: '=',
                     selectedProp: '=',
                     isDatatypeProp: '&',
@@ -43,8 +43,8 @@
                             _.get(_.find(dvm.props, {'@id': dvm.selectedProp}), '@type', [])
                         );
                     }
-                    dvm.getClassName = function(ontologyId, classId) {
-                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontologyId, classId));
+                    dvm.getClassName = function(classId) {
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/propForm/propForm.html'

@@ -8,9 +8,11 @@
         on-click-back="vm.closeMappingSelect()" 
         on-click-continue="vm.displayOntologySelect(mappingType, mappingName)"></mapping-select-overlay>
     <ontology-select-overlay ng-if="vm.activeStep === 2"
+        ontology="vm.ontology"
         on-click-back="vm.changeOntology ? vm.closeOntologyChange() : vm.displayMappingSelect()" 
-        on-click-continue="vm.displayStartingClassSelect(ontologyId)"></ontology-select-overlay>
-    <starting-class-select-overlay ng-if="vm.activeStep === 3" ontology-id="{{vm.getOntologyId()}}"
+        on-click-continue="vm.displayStartingClassSelect(ontology)"></ontology-select-overlay>
+    <starting-class-select-overlay ng-if="vm.activeStep === 3" 
+        ontology="vm.ontology"
         on-click-back="vm.displayOntologySelect()" 
         on-click-continue="vm.displayEditMapping(classId)"></starting-class-select-overlay>
     <finish-overlay ng-if="vm.activeStep === 5"
@@ -18,9 +20,10 @@
         finish="vm.initialize()"></finish-overlay>
     <ontology-preview-overlay ng-if="vm.displayOntologyPreview" 
         close="vm.toggleOntologyPreview()"
-        ontology-id="{{vm.getOntologyId()}}"></ontology-preview-overlay>
+        ontology="vm.ontology"></ontology-preview-overlay>
     <previous-check-overlay ng-if="vm.displayPreviousCheck"
         mapping="vm.mapping"
+        ontology="vm.ontology"
         file-preview="vm.filePreview"
         on-click-back="vm.displayMappingSelect()"
         on-click-continue="vm.displayEditMapping()"></previous-check-overlay>
@@ -87,6 +90,7 @@
                 <div id="edit-mapping">
                     <rdf-preview create-preview="vm.generateRdfPreview(format)" preview="vm.rdfPreview"></rdf-preview>
                     <class-list mapping="vm.mapping" 
+                        ontology="vm.ontology"
                         columns="vm.filePreview.headers"
                         invalid-prop-ids="vm.invalidPropMappings"
                         click-add-prop="vm.displayPropForm(classMappingId)"
@@ -98,7 +102,7 @@
                         props="vm.availableProps"
                         is-datatype-prop="vm.displayColumnForm()"
                         is-object-prop="vm.clearSelectedColumn()"
-                        ontology-id="{{vm.getOntologyId()}}"
+                        ontology="vm.ontology"
                         class-id="{{vm.getClassId(vm.editingClassMappingId)}}"
                         set="vm.setObjectProp()"
                         set-next="vm.setNextObjectProp()"></prop-form>
@@ -111,6 +115,7 @@
                     <edit-prop-form ng-if="vm.selectedPropMappingId && !vm.newProp"
                         columns="vm.availableColumns"
                         mapping="vm.mapping"
+                        ontology="vm.ontology"
                         set="vm.setDatatypeProp(column)"
                         click-delete="vm.displayDeleteConfirmation(classMappingId, propMappingId)"
                         class-mapping-id="vm.editingClassMappingId"
@@ -118,6 +123,7 @@
                         selected-column="vm.selectedColumn"></edit-prop-form>
                     <edit-class-form ng-if="vm.editingClassMappingId && !vm.selectedPropMappingId && !vm.newProp"
                         mapping="vm.mapping"
+                        ontology="vm.ontology"
                         class-mapping-id="vm.editingClassMappingId"
                         is-last-class="vm.numMappedClasses === 1"
                         props="vm.availableProps"

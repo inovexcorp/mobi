@@ -20,6 +20,7 @@
                 },
                 bindToController: {
                     mapping: '=',
+                    ontology: '=',
                     columns: '=',
                     invalidPropIds: '='
                 },
@@ -54,7 +55,7 @@
                     }
                     dvm.mappedAllProps = function(classMapping) {
                         var mappedProps = mappingManagerService.getPropMappingsByClass(dvm.mapping, classMapping['@id']);
-                        var classProps = ontologyManagerService.getClassProperties(mappingManagerService.getSourceOntologyId(dvm.mapping), getClassId(classMapping));
+                        var classProps = ontologyManagerService.getClassProperties(dvm.ontology, getClassId(classMapping));
 
                         return mappedProps.length === classProps.length;
                     }
@@ -74,16 +75,13 @@
                         );
                     }
                     function getClassName(classMapping) {
-                        var classObj = ontologyManagerService.getClass(
-                            mappingManagerService.getSourceOntologyId(dvm.mapping), getClassId(classMapping));
+                        var classObj = ontologyManagerService.getClass(dvm.ontology, getClassId(classMapping));
                         return ontologyManagerService.getEntityName(classObj);
                     }
                     function getPropName(propMapping, classMapping) {
                         var propId = getPropId(propMapping);
                         var classId = getClassId(classMapping);
-                        return ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntologyId(dvm.mapping), classId, propId)
-                        );
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(dvm.ontology, classId, propId));
                     }
                     function getClassId(classMapping) {
                         return mappingManagerService.getClassIdByMapping(classMapping);
