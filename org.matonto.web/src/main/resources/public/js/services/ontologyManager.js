@@ -83,7 +83,9 @@
 
                 obj.matonto = {
                     originalId: obj['@id'],
-                    blankNodes: []
+                    blankNodes: [],
+                    classExpressions: [],
+                    propertyExpressions: []
                 }
 
                 if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
@@ -635,17 +637,24 @@
 
                 i = 0;
                 while(i < restrictions.length) {
-                    var readableText = '';
                     var restriction = restrictions[i];
                     var id = _.get(restriction, '@id');
-                    var props = Object.keys(restriction);
+
+                    if(_.get(restriction, prefixes.owl + 'onProperty')) {
+                        ontology.matonto.propertyExpressions.push(restriction);
+                    }
+                    if(_.get(restriction, prefixes.owl + 'onClass')) {
+                        ontology.matonto.classExpressions.push(restriction);
+                    }
+
+                    /*var props = Object.keys(restriction);
                     _.pull(props, prefixes.owl + 'onProperty', '@id', '@type');
                     var detailedProp = (props.length === 1) ? props[0] : undefined;
                     var onPropertyObj = _.get(restriction, prefixes.owl + 'onProperty');
                     if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1 && detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
                         var detailedObj = restriction[detailedProp][0];
                         var onPropertyId = _.get(onPropertyObj[0], '@id', '');
-                        readableText += $filter('splitIRI')(onPropertyId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
+                        var readableText = $filter('splitIRI')(onPropertyId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
                         if(_.get(detailedObj, '@id')) {
                             readableText += $filter('splitIRI')(detailedObj['@id']).end;
                         } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
@@ -654,10 +663,10 @@
                         ontology.matonto.blankNodes.push({id: id, text: readableText});
                     } else {
                         console.log(restriction);
-                    }
+                    }*/
                     i++;
                 }
-                console.log('blank nodes:', ontology.matonto.blankNodes);
+                console.log(ontology.matonto.propertyExpressions, ontology.matonto.classExpressions);
 
                 i = 0;
                 while(i < properties.length) {
