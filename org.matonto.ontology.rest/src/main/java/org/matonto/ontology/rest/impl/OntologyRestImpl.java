@@ -74,9 +74,9 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getAllOntologyIds() {
         JSONArray json = new JSONArray();
 
-        Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
+        Set<Resource> ontoIdRegistry = manager.getOntologyRegistry();
 
-        ontoIdRegistry.keySet().forEach(oid ->
+        ontoIdRegistry.forEach(oid ->
                 json.add(oid.stringValue())
         );
 
@@ -84,7 +84,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private Response getAllOntologies() {
-        List<String> ontologyIds = manager.getOntologyRegistry().keySet()
+        List<String> ontologyIds = manager.getOntologyRegistry()
                 .stream()
                 .map(Resource::stringValue)
                 .collect(Collectors.toList());
