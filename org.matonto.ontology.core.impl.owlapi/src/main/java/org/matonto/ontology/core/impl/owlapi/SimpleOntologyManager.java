@@ -10,6 +10,7 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
 import org.matonto.repository.api.Repository;
@@ -37,7 +38,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
     private Resource registryContext;
-    private Resource registryOntology;
+    private Resource registrySubject;
     private IRI registryPredicate;
     private RepositoryManager repositoryManager;
 	private static Repository repository;
@@ -120,8 +121,8 @@ public class SimpleOntologyManager implements OntologyManager {
         Set<Resource> registry = new HashSet<>();
         try {
             conn = repository.getConnection();
-            conn.getStatements(registryOntology, registryPredicate, null, registryContext)
-                    .forEach(stmt -> registry.add(factory.createIRI(stmt.getObject().stringValue())));
+            conn.getStatements(registrySubject, registryPredicate, null, registryContext)
+                    .forEach(stmt -> Statements.objectResource(stmt).ifPresent(registry::add));
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         } finally {
@@ -157,9 +158,9 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 	
 	/**
-	 * Checks if given context id exists in the repository, and returns true if it does.
+	 * Checks if given context id exists in the local ontology registry.
 	 * 
-	 * @return True if given context id exists in the repository, or else false.
+	 * @return True if given context id exists in the local ontology registry, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	public boolean ontologyExists(@Nonnull Resource resource) {
@@ -170,7 +171,7 @@ public class SimpleOntologyManager implements OntologyManager {
         boolean exists = false;
         try {
             conn = repository.getConnection();
-            RepositoryResult<Statement> statements = conn.getStatements(registryOntology, registryPredicate, resource, registryContext);
+            RepositoryResult<Statement> statements = conn.getStatements(registrySubject, registryPredicate, resource, registryContext);
             if(statements.hasNext()) {
                 exists = true;
             }
@@ -241,7 +242,7 @@ public class SimpleOntologyManager implements OntologyManager {
             Model model = ontology.asModel(modelFactory);
             conn = repository.getConnection();
             conn.add(model, resource);
-            conn.add(registryOntology, registryPredicate, resource, registryContext);
+            conn.add(registrySubject, registryPredicate, resource, registryContext);
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         } finally {
@@ -311,7 +312,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		try {
 			conn = repository.getConnection();
             conn.clear(resource);
-            conn.remove(registryOntology, registryPredicate, resource, registryContext);
+            conn.remove(registrySubject, registryPredicate, resource, registryContext);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -370,9 +371,9 @@ public class SimpleOntologyManager implements OntologyManager {
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	private void initOntologyRegistryResources() throws MatontoOntologyException {
-        registryContext = factory.createIRI("https://matonto.org/registries");
-        registryOntology = factory.createIRI("https://matonto.org/registries#Ontology");
-        registryPredicate = factory.createIRI("https://matonto.org/registries#hasItem");
+        registryContext = factory.createIRI("https://matonto.org/Ontology/registry");
+        registrySubject = factory.createIRI("https://matonto.org/registry/ontologies");
+        registryPredicate = factory.createIRI("https://matonto.org/Ontology/registry#hasItem");
 	}
 
 	@Override
