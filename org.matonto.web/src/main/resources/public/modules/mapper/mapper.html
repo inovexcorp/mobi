@@ -32,6 +32,10 @@
         class-mapping="vm.classMapping"
         set="vm.displayIriTemplate = false; vm.setIriTemplate(prefixEnd, localName)"
         cancel="vm.displayIriTemplate = false"></iri-template-overlay>
+    <mapping-name-overlay ng-if="vm.displayMappingName"
+        mapping-name="{{vm.mapping.name}}"
+        set="vm.displayMappingName = false; vm.setMappingName(name)"
+        close="vm.displayMappingName = false"></mapping-name-overlay>
     <confirmation-overlay ng-if="vm.displayDeleteConfirm"
         header-text="'Delete ' + vm.deleteEntity.name"
         confirm-click="vm.displayDeleteConfirm = false; vm.deleteMappingEntity()"
@@ -85,7 +89,9 @@
                             <a ng-click="vm.displayCancelConfirm = true">Cancel</a>
                         </div>
                     </form>
-                    <div id="mapping-title"><h1>{{vm.mapping.name}}</h1></div>
+                    <div id="mapping-title">
+                        <h1>{{vm.mapping.name}} <button type="button" class="btn btn-link" ng-click="vm.displayMappingName = true"><i class="fa fa-pencil"></i></button></h1>
+                    </div>
                 </div>
                 <div id="edit-mapping">
                     <rdf-preview create-preview="vm.generateRdfPreview(format)" preview="vm.rdfPreview"></rdf-preview>
