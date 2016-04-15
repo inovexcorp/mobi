@@ -133,6 +133,14 @@ public class MappingRestImpl implements MappingRest {
         return Response.status(200).entity(success).build();
     }
 
+    /**
+     * Attempts to retrieve a mapping from the mapping registry and convert it into
+     * JSON-LD and then into a JSONObject.
+     *
+     * @param mappingIRI the IRI of a mapping in the mapping registry
+     * @return a JSONObject with the JSON-LD of a mapping
+     * @throws MatOntoException thrown if there is an error retrieving the mapping
+     */
     private JSONObject getMappingAsJson(Resource mappingIRI) throws MatOntoException {
         JSONObject json;
         Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
