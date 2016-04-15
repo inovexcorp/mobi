@@ -19,13 +19,13 @@
                 },
                 bindToController: {
                     mapping: '=',
+                    ontology: '=',
                     classMappingId: '=',
                     selectedPropMapping: '=',
                     selectedColumn: '='
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.ontologyId = mappingManagerService.getSourceOntologyId(dvm.mapping);
 
                     dvm.getClassId = function() {
                         return mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
@@ -36,7 +36,7 @@
                     dvm.getTitle = function() {
                         var classId = dvm.getClassId();
                         var propId = dvm.getPropId();
-                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontologyId, classId));
+                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
                         var propName = ontologyManagerService.getEntityName(getClassProp(classId, propId));
                         return className + ': ' + propName;
                     }
@@ -46,7 +46,7 @@
                         return ontologyManagerService.isObjectProperty(_.get(getClassProp(classId, propId), '@type', []));
                     }
                     function getClassProp(classId, propId) {
-                        return ontologyManagerService.getClassProperty(dvm.ontologyId, classId, propId);
+                        return ontologyManagerService.getClassProperty(dvm.ontology['@id'], classId, propId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editPropForm/editPropForm.html'

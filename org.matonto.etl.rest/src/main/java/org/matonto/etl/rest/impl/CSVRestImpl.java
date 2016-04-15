@@ -205,10 +205,13 @@ public class CSVRestImpl implements CSVRest {
     private InputStream createCSVPreviewStream(File delimitedFile, boolean containsHeaders) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (BufferedReader br = Files.newBufferedReader(delimitedFile.toPath())) {
+            int index = 0;
             int numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
-            for (int i = 0; i < numRows; i++) {
-                byteArrayOutputStream.write(br.readLine().getBytes());
+            String line;
+            while ((line = br.readLine()) != null && index < numRows) {
+                byteArrayOutputStream.write(line.getBytes());
                 byteArrayOutputStream.write("\n".getBytes());
+                index++;
             }
         } catch (IOException e) {
             throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);

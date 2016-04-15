@@ -28,11 +28,12 @@ describe('Edit Prop Form directive', function() {
             scope.set = jasmine.createSpy('set');
             scope.clickDelete = jasmine.createSpy('clickDelete');
             scope.mapping = {};
+            scope.ontology = {};
             scope.classMappingId = '';
             scope.selectedPropMapping = '';
             scope.selectedColumn = '';
 
-            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
+            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontology="ontology" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
             scope.$digest();
         });
 
@@ -60,6 +61,12 @@ describe('Edit Prop Form directive', function() {
             scope.$digest();
             expect(scope.mapping).toEqual({jsonld: []});
         });
+        it('ontology should be two way bound', function() {
+            var controller = this.element.controller('editPropForm');
+            controller.ontology = {'@id': ''};
+            scope.$digest();
+            expect(scope.ontology).toEqual({'@id': ''});
+        });
         it('classMappingId should be two way bound', function() {
             var controller = this.element.controller('editPropForm');
             controller.classMappingId = 'test';
@@ -85,11 +92,12 @@ describe('Edit Prop Form directive', function() {
             scope.set = jasmine.createSpy('set');
             scope.clickDelete = jasmine.createSpy('clickDelete');
             scope.mapping = {};
+            scope.ontology = {'@id': ''};
             scope.classMappingId = '';
             scope.selectedPropMapping = '';
             scope.selectedColumn = '';
 
-            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
+            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontology="ontology" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
             scope.$digest();
         });
         it('should get the class id', function() {
@@ -127,11 +135,12 @@ describe('Edit Prop Form directive', function() {
             scope.set = jasmine.createSpy('set');
             scope.clickDelete = jasmine.createSpy('clickDelete');
             scope.mapping = {};
+            scope.ontology = {'@id': ''};
             scope.classMappingId = '';
             scope.selectedPropMapping = '';
             scope.selectedColumn = '';
 
-            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
+            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontology="ontology" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

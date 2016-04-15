@@ -21,6 +21,7 @@
                 },
                 bindToController: {
                     mapping: '=',
+                    ontology: '=',
                     classMappingId: '='
                 },
                 controller: ['$scope', function($scope) {
@@ -36,9 +37,8 @@
                         $scope.openProp({propId: propId});
                     }
                     dvm.getTitle = function() {
-                        var ontologyId = mappingManagerService.getSourceOntologyId(dvm.mapping);
                         var classId = mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
-                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontologyId, classId));
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
                     }
                 }],
                 templateUrl: 'modules/mapper/directives/editClassForm/editClassForm.html'

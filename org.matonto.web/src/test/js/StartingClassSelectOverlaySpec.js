@@ -28,9 +28,9 @@ describe('Starting Class Select Overlay directive', function() {
         beforeEach(function() {
             scope.onClickBack = jasmine.createSpy('onClickBack');
             scope.onClickContinue = jasmine.createSpy('onClickContinue');
-            scope.ontologyId = '';
+            scope.ontology = {'@id': ''};
 
-            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontology-id="ontologyId"></starting-class-select-overlay>'))(scope);
+            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontology="ontology"></starting-class-select-overlay>'))(scope);
             scope.$digest();
         });
 
@@ -46,34 +46,34 @@ describe('Starting Class Select Overlay directive', function() {
 
             expect(scope.onClickContinue).toHaveBeenCalled();
         });
-        it('ontologyId should be one way bound', function() {
+        it('ontology should be two way bound', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
-            controller.ontologyId = 'test';
+            controller.ontology = {'@id': 'test'};
             scope.$digest();
-            expect(scope.ontologyId).not.toEqual('test');
+            expect(scope.ontology).toEqual({'@id': 'test'});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.ontologyId = '';
-            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontology-id="{{ontologyId}}"></starting-class-select-overlay>'))(scope);
+            scope.ontology = {'@id': ''};
+            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontology="ontology"></starting-class-select-overlay>'))(scope);
             scope.$digest();
         });
         it('should get the ontology id', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
             var result = controller.getOntologyId({});
-            expect(result).toBe(scope.ontologyId);
+            expect(result).toBe(scope.ontology['@id']);
         });
         it('should get the classes in the ontology identified by the passed id', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
-            var result = controller.getClasses('');
-            expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith('');
+            var result = controller.getClasses();
+            expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith(controller.ontology);
             expect(Array.isArray(result)).toBe(true);
         });
         it('should get the class identified by the passed ontology and class ids', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
-            var result = controller.getClass('', '');
-            expect(ontologyManagerSvc.getClass).toHaveBeenCalledWith('', '');
+            var result = controller.getClass('');
+            expect(ontologyManagerSvc.getClass).toHaveBeenCalledWith(controller.ontology, '');
             expect(typeof result).toBe('object');
         });
         it('should get the name of the passed class', function() {
@@ -85,8 +85,8 @@ describe('Starting Class Select Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.ontologyId = '';
-            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontology-id="{{ontologyId}}"></starting-class-select-overlay>'))(scope);
+            scope.ontology = {'@id': ''};
+            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontology="ontology"></starting-class-select-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

@@ -517,7 +517,7 @@ public class OntologyRestImpl implements OntologyRest {
         if (optOntology.isPresent()) {
             return iriFunction.apply(optOntology.get());
         } else {
-            throw ErrorUtils.sendError("ontology does not exist", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("ontology " + ontologyIdStr + " does not exist", Response.Status.BAD_REQUEST);
         }
     }
     
