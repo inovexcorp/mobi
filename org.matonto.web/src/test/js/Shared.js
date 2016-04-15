@@ -44,6 +44,9 @@ function mockOntologyManager() {
                         return '';
                     }
                 });
+                this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(function(iri) {
+                    return iri;
+                });
                 this.getList = jasmine.createSpy('getList').and.callFake(function() {
                     return [];
                 });

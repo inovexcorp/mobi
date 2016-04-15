@@ -48,7 +48,7 @@
                         if (ontology) {
                             return ontologyManagerService.getEntityName(ontology);                            
                         } else {
-                            return $filter('beautify')($filter('splitIRI')(ontologyId).end);
+                            return ontologyManagerService.getBeautifulIRI(ontologyId);
                         }
                     }
                 },

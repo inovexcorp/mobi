@@ -124,7 +124,7 @@
                 if (ontologyManagerService.getClass(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = $filter('beautify')(($filter('splitIRI')(ontology['@id'])).end).toLowerCase();
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontology, '@id', '')).toLowerCase();
                     var classEntity = {
                         '@id': prefixes.dataDelim + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -142,7 +142,7 @@
                 // Check if class exists in ontology
                 if (entityExists(newMapping.jsonld, classMappingId)) {
                     var classMapping = getEntityById(newMapping.jsonld, classMappingId);
-                    var ontologyDataName = $filter('beautify')(($filter('splitIRI')(self.getSourceOntologyId(newMapping))).end).toLowerCase();
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(newMapping)).toLowerCase();
                     classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }

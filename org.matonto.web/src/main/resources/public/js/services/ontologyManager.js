@@ -78,18 +78,10 @@
             }
 
             function initOntology(ontology, obj) {
-                var len = obj['@id'].length,
-                    delimiter = obj['@id'].charAt(len - 1);
-
+                var delimiter = _.last(obj['@id']);
                 obj.matonto = {
-                    originalId: obj['@id']
-                }
-
-                if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
-                    obj.matonto.delimiter = delimiter;
-                    obj['@id'] = obj['@id'].substring(0, len - 1);
-                } else {
-                    obj.matonto.delimiter = '#';
+                    originalId: obj['@id'],
+                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#'
                 }
 
                 angular.merge(ontology, obj);
@@ -200,30 +192,12 @@
                 ontology = ontology['@graph'] || ontology;
 
                 getPrefixes = function(context) {
-                    var prop,
-                        result = {
-                            owl: prefixes.owl,
-                            rdfs: prefixes.rdfs,
-                            xsd: prefixes.xsd
-                        };
-
-                    for(prop in context) {
-                        if(context.hasOwnProperty(prop)) {
-                            switch(context[prop]) {
-                                case defaultOwl:
-                                    result.owl = prop + ':';
-                                    break;
-                                case defaultRdfs:
-                                    result.rdfs = prop + ':';
-                                    break;
-                                case defaultXsd:
-                                    result.xsd = prop + ':';
-                                    break;
-                            }
-                        }
-                    }
-                    return result;
-
+                    var inverted = _.invert(context);
+                    return {
+                        owl: inverted[prefixes.owl] ? inverted[prefixes.owl] + ':' : prefixes.owl,
+                        rdfs: inverted[prefixes.rdfs] ? inverted[prefixes.rdfs] + ':' : prefixes.rdfs,
+                        xsd: inverted[prefixes.xsd] ? inverted[prefixes.xsd] + ':' : prefixes.xsd
+                    };
                 }
 
                 return self.restructure(ontology, ontologyId, context, getPrefixes(context));
@@ -902,7 +876,7 @@
                 }
 
                 self.get(ontologyId, 'jsonld').then(function(response) {
-                    if(response.hasOwnProperty('data') && !response.data.hasOwnProperty('error')) {
+                    if(_.has(response, 'data') && !_.has(response, 'error')) {
                         onGetSuccess(response);
                     } else {
                         onError();
@@ -934,7 +908,7 @@
                 onUploadSuccess = function() {
                     self.get(ontologyId, 'jsonld')
                         .then(function(response) {
-                            if(response.hasOwnProperty('data') && !response.data.hasOwnProperty('error')) {
+                            if(_.has(response, 'data') && !_.has(response, 'error')) {
                                 onGetSuccess(response);
                             } else {
                                 onError(response);
@@ -946,7 +920,7 @@
 
                 self.upload(file)
                     .then(function(response) {
-                        if(response.hasOwnProperty('data') && response.data.hasOwnProperty('persisted') && response.data.persisted) {
+                        if(_.get(response, 'data.persisted')) {
                             ontologyId = response.data.ontologyId;
                             onUploadSuccess();
                         } else {
@@ -1103,8 +1077,17 @@
                 return _.find(self.getClassProperties(ontology, classId), {'@id': propId});
             }
 
+            self.getBeautifulIRI = function(iri) {
+                var splitEnd = $filter('splitIRI')(iri).end;
+                return splitEnd ? $filter('beautify')(splitEnd) : iri;
+            }
+
             self.getEntityName = function(entity) {
-                return _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || $filter('beautify')($filter('splitIRI')(_.get(entity, '@id')).end);
+                var result = _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']");
+                if (!result) {
+                    result = self.getBeautifulIRI(_.get(entity, '@id', ''));
+                }
+                return result;
             }
 
             self.getPreview = function(ontologyId, rdfFormat) {
