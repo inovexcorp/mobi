@@ -3,6 +3,12 @@
     <aside class="left-nav nav">
         <ul>
             <li>
+                <a ng-click="vm.showOpenOverlay = true;" title="Open Ontology"
+                   ng-class="{ 'active': vm.showOpenOverlay === true }">
+                    <i class="fa fa-get-pocket fa-fw"></i>
+                </a>
+            </li>
+            <li>
                 <a ng-click="vm.save()" title="Save All Changes">
                     <i class="fa fa-floppy-o fa-fw"></i>
                 </a>
@@ -32,6 +38,20 @@
                         ng-disabled="vm.state.ci === undefined || vm.state.ci === -1 || vm.state.pi !== undefined"
                         ng-class="{ 'active': vm.state.pi === -1 }">
                     <i class="fa fa-plus fa-fw"></i>
+                </button>
+            </li>
+            <li>
+                <button ng-click="vm.showDownloadOverlay = true;" title="Download Ontology"
+                        ng-disabled="!vm.ontology.hasOwnProperty('matonto') || vm.state.oi === -1"
+                        ng-class="{ 'active': vm.showDeleteConfirmation === true }">
+                    <i class="fa fa-download fa-fw"></i>
+                </button>
+            </li>
+            <li>
+                <button ng-click="vm.showCloseOverlay = true;" title="Close Ontology"
+                        ng-disabled="vm.state.oi === undefined || vm.state.oi === -1 || vm.state.ci !== undefined"
+                        ng-class="{ 'active': vm.showCloseOverlay }">
+                    <i class="fa fa-archive fa-fw"></i>
                 </button>
             </li>
             <li>
@@ -98,12 +118,23 @@
 
                 <annotation-overlay ng-if="vm.showAnnotationOverlay"></annotation-overlay>
 
+                <ontology-download-overlay ng-if="vm.showDownloadOverlay"></ontology-download-overlay>
+
                 <confirmation-overlay ng-if="vm.showDeleteConfirmation"
                                       header-text="'Delete Ontology'"
                                       confirm-click="vm.deleteEntity()"
                                       cancel-click="vm.showDeleteConfirmation = false;"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong> from your workspace?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong>?</confirmation-overlay>
+
+                <confirmation-overlay ng-if="vm.showCloseOverlay"
+                                      header-text="'Close Overlay'"
+                                      confirm-click="vm.closeOntology()"
+                                      cancel-click="vm.showCloseOverlay = false;"
+                                      confirm-text="'Yes'"
+                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.selected['@id']}}</strong> from your workspace?</confirmation-overlay>
+
+                <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
             </div>
         </section>
     </div>

@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj'])
+        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay', 'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub', 'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect', 'ontologyOpenOverlay'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -11,6 +11,7 @@
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
+        vm.ontologyIds = ontologyManagerService.getOntologyIds();
         vm.propertyTypes = ontologyManagerService.getPropertyTypes();
         vm.state = stateManagerService.getState();
         vm.selected = ontologyManagerService.getObject(vm.state);
@@ -44,7 +45,9 @@
         }
 
         function submitEdit() {
-            ontologyManagerService.edit(vm.ontology.matonto.originalId);
+            if(_.get(vm.ontology, 'matonto.originalId')) {
+                ontologyManagerService.edit(vm.ontology.matonto.originalId);
+            }
         }
 
          function submitCreate() {
@@ -113,6 +116,17 @@
                 });
         }
 
+        vm.downloadOntology = function() {
+            ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization)
+                .then(function(response) {
+                    vm.showDownloadOverlay = false;
+                    vm.downloadSerialization = '';
+                    vm.downloadError = false;
+                }, function(response) {
+                    vm.downloadError = _.get(response, 'statusText', 'Error downloading ontology. Please try again later.');
+                });
+        }
+
         /* Prefix (Context) Management */
         vm.editPrefix = function(edit, old, index) {
             prefixManagerService.editPrefix(edit, old, index, vm.selected);
@@ -143,6 +157,25 @@
 
         vm.getItemIri = function(item) {
             return responseObj.getItemIri(item);
+        }
+
+        vm.openOntology = function() {
+            ontologyManagerService.openOntology(vm.ontologyIdToOpen)
+                .then(function(response) {
+                    vm.showOpenOverlay = false;
+                    vm.openError = '';
+                    vm.ontologyIdToOpen = undefined;
+                }, function(errorMessage) {
+                    vm.openError = errorMessage;
+                });
+        }
+
+        vm.closeOntology = function() {
+            ontologyManagerService.closeOntology(vm.state.oi, vm.selected['@id']);
+            stateManagerService.clearState(vm.state.oi);
+            vm.selected = {};
+            vm.ontology = {};
+            vm.showCloseOverlay = false;
         }
 
         /* Annotation Management */

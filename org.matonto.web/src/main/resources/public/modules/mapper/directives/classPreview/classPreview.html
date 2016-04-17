@@ -1,9 +1,8 @@
 <div class="class-preview">
     <h3>{{dvm.createTitle()}}</h3>
-    <p>{{dvm.createDescription()}}</p>
-    <h4 ng-show="dvm.classObj">Properties</h4>
+    <h4 ng-if="dvm.classObj">Properties</h4>
     <ul>
-        <li ng-show="dvm.classObj && !dvm.createPropList().length">None</li>
+        <li ng-if="dvm.classObj && !dvm.createPropList().length">None</li>
         <li ng-repeat="prop in dvm.createPropList()">{{prop}}</li>
     </ul>
 </div>

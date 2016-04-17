@@ -10,7 +10,7 @@
                         <i class="fa fa-times"></i>
                     </button>
                 </li>
-                <li ng-show="!dvm.mappedAllProps(classMapping)"><a ng-click="clickAddProp({classMappingId: classMapping['@id']})"><i class="fa fa-plus"></i> Add Property</a></li>
+                <li ng-if="!dvm.mappedAllProps(classMapping)"><a ng-click="clickAddProp({classMappingId: classMapping['@id']})"><i class="fa fa-plus"></i> Add Property</a></li>
             </ul>
         </li>
     </ul>

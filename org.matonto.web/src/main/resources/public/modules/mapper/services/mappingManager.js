@@ -5,9 +5,9 @@
         .module('mappingManager', ['ontologyManager', 'prefixes'])
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$rootScope', '$filter', '$http', '$q', '$cookies', 'ontologyManagerService', 'prefixes', 'uuid'];
+        mappingManagerService.$inject = ['$window', '$rootScope', '$filter', '$http', '$q', 'ontologyManagerService', 'prefixes', 'uuid'];
 
-        function mappingManagerService($window, $rootScope, $filter, $http, $q, $cookies, ontologyManagerService, prefixes, uuid) {
+        function mappingManagerService($window, $rootScope, $filter, $http, $q, ontologyManagerService, prefixes, uuid) {
             var self = this,
                 prefix = '/matontorest/mappings';
             self.previousMappingNames = [];
@@ -17,19 +17,8 @@
             function initialize() {
                 $http.get(prefix, {})
                     .then(function(response) {
-                        var userMappingNames = getCookieMappings();
-                        // Delete any mapping cookies whose files are no longer saved
-                        _.forEach(_.keys(userMappingNames), function(uuid) {
-                            if (response.data.indexOf(uuid) < 0) {
-                                deleteMappingCookie(uuid);
-                            }
-                        });
-                        // Collect the uuids of uploaded mapping files that are saved in cookies
-                        var uuids = _.filter(response.data, function(uuid) {
-                            return userMappingNames.hasOwnProperty(uuid);
-                        });
-                        self.previousMappingNames = _.map(uuids, function(uuid) {
-                            return userMappingNames[uuid];
+                        self.previousMappingNames = response.data.map(function(name) {
+                            return name.replace(prefixes.mappings, '');
                         });
                     });
             }
@@ -48,6 +37,9 @@
                         transformRequest: angular.identity,
                         headers: {
                             'Content-Type': undefined
+                        },
+                        params: {
+                            'Id': mappingName
                         }
                     };
                 fd.append('jsonld', angular.toJson(mapping));
@@ -56,7 +48,6 @@
                 $http.post(prefix, fd, config)
                     .then(function(response) {
                         $rootScope.showSpinner = false;
-                        setMappingCookie(response.data, mappingName);
                         self.previousMappingNames.push(mappingName);
                         deferred.resolve(response.data);
                     }, function(response) {
@@ -74,19 +65,14 @@
             self.getMapping = function(mappingName) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
-                if (getMappingUUID(mappingName)) {
-                    $http.get(prefix + '/' + encodeURIComponent(getMappingUUID(mappingName)), {})
-                        .then(function(response) {
-                            $rootScope.showSpinner = false;
-                            deferred.resolve(response.data);
-                        }, function(response) {
-                            $rootScope.showSpinner = false;
-                            deferred.reject(response);
-                        });
-                } else {
-                    $rootScope.showSpinner = false;
-                    deferred.reject("Mapping", mappingName, "doesn't exist");
-                }
+                $http.get(prefix + '/' + encodeURIComponent(mappingName))
+                    .then(function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.resolve(_.get(response.data, '@graph', []));
+                    }, function(response) {
+                        $rootScope.showSpinner = false;
+                        deferred.reject(response);
+                    });
                 return deferred.promise;
             }
             /**
@@ -97,30 +83,25 @@
              *                   JSON-LD in the uploaded file
              */
             self.downloadMapping = function(mappingName) {
-                var deferred = $q.defer();
-                if (getMappingUUID(mappingName)) {
-                    var config = {
+                var deferred = $q.defer(),
+                    config = {
                         headers: {
                             'Accept': 'application/octet-stream'
                         }
                     };
-                    
-                    $http.get(prefix + '/' + encodeURIComponent(getMappingUUID(mappingName)), config)
-                        .then(function(response) {
-                            deferred.resolve(response.data);
-                        }, function(response) {
-                            deferred.reject(response);
-                        });
-                } else {
-                    deferred.reject("Mapping", mappingName, "doesn't exist");
-                }
+                
+                $http.get(prefix + '/' + encodeURIComponent(mappingName), config)
+                    .then(function(response) {
+                        deferred.resolve(_.get(response.data, '@graph', []));
+                    }, function(response) {
+                        deferred.reject(response);
+                    });
                 return deferred.promise;
             }
 
             // Edit mapping methods 
             self.createNewMapping = function(mappingName) {
                 var jsonld = [];
-                jsonld = addSingleEntity(jsonld, prefixes.delim + 'Document');
                 var documentEntity = {
                     '@id': prefixes.dataDelim + 'Document',
                     '@type': [prefixes.delim + 'Document']
@@ -137,36 +118,43 @@
                 documentEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
                 return newMapping;
             }
-            self.addClass = function(mapping, classId, localNamePattern) {
+            self.addClass = function(mapping, ontology, classId) {
                 var newMapping = angular.copy(mapping);
                 // Check if class exists in ontology
-                if (ontologyManagerService.getClass(self.getSourceOntologyId(newMapping), classId)) {
-                    // Add entities for ontology class ids
-                    newMapping.jsonld = addSingleEntity(newMapping.jsonld, prefixes.delim + 'ClassMapping');
-                    newMapping.jsonld = addSingleEntity(newMapping.jsonld, classId);
+                if (ontologyManagerService.getClass(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = $filter('beautify')(($filter('splitIRI')(self.getSourceOntologyId(newMapping))).end).toLowerCase();
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontology, '@id', '')).toLowerCase();
                     var classEntity = {
                         '@id': prefixes.dataDelim + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
                     classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
-                    classEntity[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
+                    classEntity[prefixes.delim + 'localName'] = [{'@value': '${UUID}'}];
                     newMapping.jsonld.push(classEntity);
                 }
 
                 return newMapping;
             }
-            self.addDataProp = function(mapping, classMappingId, propId, columnIndex) {
+            self.editIriTemplate = function(mapping, classMappingId, prefixEnd, localNamePattern) {
+                var newMapping = angular.copy(mapping);
+                // Check if class exists in ontology
+                if (entityExists(newMapping.jsonld, classMappingId)) {
+                    var classMapping = getEntityById(newMapping.jsonld, classMappingId);
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(newMapping)).toLowerCase();
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
+                    classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
+                }
+
+                return newMapping
+            }
+            self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
                 var newMapping = angular.copy(mapping);
                 // If class mapping doesn't exist or the property does not exist for that class,
                 // return the mapping
-                if (entityExists(newMapping.jsonld, classMappingId) && ontologyManagerService.getClassProperty(
-                    self.getSourceOntologyId(newMapping), self.getClassIdByMappingId(newMapping, classMappingId), propId)) {
-                    // Add entity for property id
-                    newMapping.jsonld = addSingleEntity(newMapping.jsonld, propId);
+                if (entityExists(newMapping.jsonld, classMappingId) && ontologyManagerService.getClassProperty(ontology, 
+                    self.getClassIdByMappingId(newMapping, classMappingId), propId)) {
                     var dataEntity = self.getDataMappingFromClass(mapping.jsonld, classMappingId, propId);
                     // If the data property and mapping already exist, update the column index
                     if (dataEntity) {
@@ -191,14 +179,12 @@
                 }
                 return newMapping;
             }
-            self.addObjectProp = function(mapping, classMappingId, propId, localNamePattern) {
+            self.addObjectProp = function(mapping, ontology, classMappingId, propId) {
                 var newMapping = angular.copy(mapping);
-                var propObj = ontologyManagerService.getClassProperty(
-                    self.getSourceOntologyId(newMapping), self.getClassIdByMappingId(newMapping, classMappingId), propId);
+                var propObj = ontologyManagerService.getClassProperty(ontology, 
+                    self.getClassIdByMappingId(newMapping, classMappingId), propId);
                 // Check if object property exists for class in ontology and if class mapping exists
                 if (entityExists(newMapping.jsonld, classMappingId) && propObj) {
-                    // Add entity for property id
-                    newMapping.jsonld = addSingleEntity(newMapping.jsonld, propId);
                     // Add new object mapping id to object properties of class mapping
                     var dataEntity = {
                         '@id': prefixes.dataDelim + uuid.v4()
@@ -211,7 +197,7 @@
                     var rangeClassMappings = getClassMappingsByClass(newMapping.jsonld, rangeClass);
 
                     // Create class mapping for range of object property
-                    newMapping = self.addClass(newMapping, rangeClass, localNamePattern);
+                    newMapping = self.addClass(newMapping, ontology, rangeClass);
                     var newClassMapping = _.differenceBy(getClassMappingsByClass(newMapping.jsonld, rangeClass), rangeClassMappings, '@id')[0];
                     // Create object mapping
                     dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
@@ -224,16 +210,12 @@
             self.removeProp = function(mapping, classMappingId, propMappingId) {
                 var newMapping = angular.copy(mapping);
                 if (entityExists(mapping.jsonld, propMappingId)) {
-                    // Collect the property mapping, the property id entity, and the class mapping
+                    // Collect the property mapping and the class mapping
                     var propMapping = getEntityById(newMapping.jsonld, propMappingId);
-                    var propEntity = getEntityById(newMapping.jsonld, self.getPropIdByMapping(propMapping));
                     var propType = self.isObjectMapping(propMapping) ? 'objectProperty' : 'dataProperty';
                     var classMapping = getEntityById(newMapping.jsonld, classMappingId);
-                    // Remove the property mapping and the property id entity if it isn't used elsewhere
+                    // Remove the property mapping
                     _.pull(newMapping.jsonld, propMapping);
-                    if (getMappingsForProp(newMapping.jsonld, propEntity['@id']).length === 0) {
-                        _.pull(newMapping.jsonld, propEntity);
-                    }
                     // Remove the property mapping id from the class mapping's properties
                     _.remove(classMapping[prefixes.delim + propType], {'@id': propMappingId});
                     cleanPropertyArray(classMapping, propType);
@@ -246,10 +228,6 @@
                     // Collect class mapping and any object mappings that use the class mapping
                     var classMapping = getEntityById(newMapping.jsonld, classMappingId);
                     var classId = self.getClassIdByMapping(classMapping);
-                    // Remove the class id entity
-                    if (_.filter(newMapping.jsonld, ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]).length <= 1) {
-                        _.pull(newMapping.jsonld, getEntityById(newMapping.jsonld, classId));
-                    }
                     var objectMappings = _.filter(
                         getAllObjectMappings(newMapping.jsonld),
                         ["['" + prefixes.delim + "classMapping'][0]['@id']", classMapping['@id']]
@@ -263,11 +241,6 @@
                         cleanPropertyArray(classWithObjectMapping, 'objectProperty');
                         // Remove object mapping
                         _.pull(newMapping.jsonld, objectMapping);
-                        // Remove the property id entity for the object mapping if no other object mappings use it
-                        var propEntity = getEntityById(newMapping.jsonld, self.getPropIdByMapping(objectMapping));
-                        if (getMappingsForProp(newMapping.jsonld, propEntity['@id']).length === 0) {
-                            _.pull(newMapping.jsonld, propEntity);
-                        }
                     });
                     // Remove all properties of the class mapping and the class mapping itself
                     _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), function(prop) {
@@ -297,9 +270,6 @@
                     getEntityById(mapping.jsonld, prefixes.dataDelim + 'Document'),
                     "['" + prefixes.delim + "sourceOntology'][0]['@id']"
                 );
-            }
-            self.getMappedClassIds = function(mapping) {
-                return _.map(getAllClassMappings(mapping.jsonld), "['" + prefixes.delim + "mapsTo'][0]['@id']");
             }
             self.getDataMappingFromClass = function(jsonld, classMappingId, propId) {
                 var dataProperties = _.map(getDataProperties(getEntityById(jsonld, classMappingId)), '@id');
@@ -341,30 +311,6 @@
             } 
 
             // Private helper methods
-            function getCookieMappings() {
-                return $cookies.getObject('mappings') ? $cookies.getObject('mappings') : {};
-            }
-            function deleteMappingCookie(uuid) {
-                var mappings = getCookieMappings();
-                delete mappings[uuid];
-                $cookies.putObject('mappings', mappings);
-            }
-            function getMappingUUID(mappingName) {
-                var mappings = getCookieMappings();
-                return _.findKey(mappings, _.partial(_.isEqual, mappingName));
-            }
-            function setMappingCookie(uuid, name) {
-                var mappings = getCookieMappings();
-                mappings[uuid] = name;
-                $cookies.putObject('mappings', mappings, {expires: new $window.Date(3000, 1, 1)});
-            }
-            function addSingleEntity(jsonld, id) {
-                var newJsonld = angular.copy(jsonld);
-                if (!entityExists(newJsonld, id)) {
-                    newJsonld.push({'@id': id});
-                }
-                return newJsonld;
-            }
             function cleanPropertyArray(classMapping, propType) {
                 if (_.get(classMapping, prefixes.delim + propType) && _.get(classMapping, prefixes.delim + propType).length === 0) {
                     delete classMapping[prefixes.delim + propType];

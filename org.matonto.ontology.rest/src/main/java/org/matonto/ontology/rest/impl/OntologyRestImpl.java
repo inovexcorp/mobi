@@ -72,19 +72,19 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getAllOntologyIds() {
-        JSONObject json = new JSONObject();
+        JSONArray json = new JSONArray();
 
-        Map<Resource, String> ontoIdRegistry = manager.getOntologyRegistry();
+        Set<Resource> ontoIdRegistry = manager.getOntologyRegistry();
 
-        ontoIdRegistry.keySet().forEach(oid ->
-                json.put(oid.stringValue(), ontoIdRegistry.get(oid))
+        ontoIdRegistry.forEach(oid ->
+                json.add(oid.stringValue())
         );
 
         return Response.status(200).entity(json.toString()).build();
     }
 
     private Response getAllOntologies() {
-        List<String> ontologyIds = manager.getOntologyRegistry().keySet()
+        List<String> ontologyIds = manager.getOntologyRegistry()
                 .stream()
                 .map(Resource::stringValue)
                 .collect(Collectors.toList());
@@ -517,7 +517,7 @@ public class OntologyRestImpl implements OntologyRest {
         if (optOntology.isPresent()) {
             return iriFunction.apply(optOntology.get());
         } else {
-            throw ErrorUtils.sendError("ontology does not exist", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("ontology " + ontologyIdStr + " does not exist", Response.Status.BAD_REQUEST);
         }
     }
     
