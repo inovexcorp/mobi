@@ -42,6 +42,7 @@
         <module>org.matonto.rest.util</module>
         <module>org.matonto.catalog.api</module>
         <module>org.matonto.catalog.impl</module>
+        <module>org.matonto.catalog.rest</module>
     </modules>
 
     <properties>
