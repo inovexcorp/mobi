@@ -18,6 +18,7 @@
                 },
                 bindToController: {
                     mapping: '=',
+                    ontology: '=',
                     filePreview: '='
                 },
                 link: function(scope, elem, attrs, ctrl) {
@@ -35,12 +36,8 @@
                         var classId = mappingManagerService.getClassIdByMapping(
                             mappingManagerService.findClassWithDataMapping(dvm.mapping.jsonld, dataMappingId)
                         );
-                        var propName = ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntologyId(dvm.mapping), classId, propId)
-                        );
-                        var className = ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClass(mappingManagerService.getSourceOntologyId(dvm.mapping), classId)
-                        );
+                        var propName = ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(dvm.ontology, classId, propId));
+                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
                         return className + ": " + propName;
                     }
                     dvm.setValidity = function() {

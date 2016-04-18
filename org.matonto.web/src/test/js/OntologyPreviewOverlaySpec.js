@@ -17,9 +17,9 @@ describe('Ontology Preview Overlay directive', function() {
     describe('in isolated scope', function() {
         beforeEach(function() {
             scope.close = jasmine.createSpy('close');
-            scope.ontologyId = '';
+            scope.ontology = {'@id': ''};
 
-            this.element = $compile(angular.element('<ontology-preview-overlay close="close()" ontology-id="{{ontologyId}}"></ontology-preview-overlay>'))(scope);
+            this.element = $compile(angular.element('<ontology-preview-overlay close="close()" ontology="ontology"></ontology-preview-overlay>'))(scope);
             scope.$digest();
         });
 
@@ -29,16 +29,17 @@ describe('Ontology Preview Overlay directive', function() {
 
             expect(scope.close).toHaveBeenCalled();
         });
-        it('ontologyId should be one way bound', function() {
+        it('ontology should be two way bound', function() {
             var controller = this.element.controller('ontologyPreviewOverlay');
-            controller.ontologyId = 'test';
+            controller.ontology = {'@id': 'test'};
             scope.$digest();
-            expect(scope.ontologyId).not.toBe('test');
+            expect(scope.ontology).toEqual({'@id': 'test'});
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<ontology-preview-overlay close="close()" ontology-id="ontologyId"></ontology-preview-overlay>'))(scope);
+            scope.ontology = {'@id': ''};
+            this.element = $compile(angular.element('<ontology-preview-overlay close="close()" ontology="ontology"></ontology-preview-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

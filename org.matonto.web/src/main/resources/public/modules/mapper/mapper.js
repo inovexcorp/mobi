@@ -14,7 +14,7 @@
     function MapperController($rootScope, $scope, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var confirmChange = false;
-        var previousOntologyId;
+        var previousOntology;
         var originalMappingName;
         var defaultMapping = {
             name: '',
@@ -29,6 +29,7 @@
         vm.deleteEntity = undefined;
 
         // These get initialized in vm.intitialize()
+        vm.ontology;
         vm.mappedColumns;
         vm.activeStep;
         vm.delimitedFile;
@@ -60,6 +61,7 @@
         $scope.$on('$destroy', changePageHandler);
 
         vm.initialize = function() {
+            vm.ontology = undefined;
             vm.mappedColumns = [];
             vm.activeStep = 0;
             vm.delimitedFile = undefined;
@@ -122,10 +124,10 @@
             $state.go(vm.nextState);
         }
         vm.areOntologies = function() {
-            return ontologyManagerService.getList().length > 0;
+            return ontologyManagerService.getList().length + ontologyManagerService.getOntologyIds().length > 0;
         }
         vm.isDatatypeProperty = function(propId) {
-            var propObj = ontologyManagerService.getClassProperty(vm.getOntologyId(), vm.getClassId(vm.editingClassMappingId), propId);
+            var propObj = ontologyManagerService.getClassProperty(vm.ontology, vm.getClassId(vm.editingClassMappingId), propId);
             return propObj ? !ontologyManagerService.isObjectProperty(_.get(propObj, '@type', []), prefixes.owl) : false;
         }
         vm.resetEditingVars = function() {
@@ -139,10 +141,7 @@
             vm.selectedColumn = '';
         }
         vm.getOntologyName = function() {
-            return ontologyManagerService.getEntityName(ontologyManagerService.getOntologyById(vm.getOntologyId()));
-        }
-        vm.getOntologyId = function() {
-            return mappingManagerService.getSourceOntologyId(vm.mapping);
+            return ontologyManagerService.getEntityName(vm.ontology);
         }
         vm.getClassId = function(classMappingId) {
             return mappingManagerService.getClassIdByMappingId(vm.mapping, classMappingId);
@@ -155,7 +154,7 @@
         function getAvailableProps(classMappingId) {
             var mappedProps = _.map(mappingManagerService.getPropMappingsByClass(vm.mapping, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
             var classId = vm.getClassId(classMappingId);
-            return _.filter(ontologyManagerService.getClassProperties(vm.getOntologyId(), classId), function(prop) {
+            return _.filter(ontologyManagerService.getClassProperties(vm.ontology, classId), function(prop) {
                 return mappedProps.indexOf(prop['@id']) < 0;
             });
         }
@@ -196,8 +195,9 @@
         }
         vm.closeOntologyChange = function() {
             vm.activeStep = 4;
-            vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, previousOntologyId);
-            previousOntologyId = '';
+            vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, previousOntology['@id']);
+            vm.ontology = previousOntology;
+            previousOntology = undefined;
             vm.changeOntology = false;
         }
         vm.displayOntologySelect = function(mappingType, mappingName) {
@@ -215,18 +215,28 @@
                                 name: mappingName
                             };
                             vm.displayPreviousCheck = true;
+                            var ontologyId = mappingManagerService.getSourceOntologyId(vm.mapping);
+                            var ontology = _.find(ontologyManagerService.getList(), {'@id': ontologyId});
+                            if (ontology) {
+                                vm.ontology = ontology;
+                            } else {
+                                ontologyManagerService.getThenRestructure(ontologyId).then(function(response) {
+                                    vm.ontology = response;
+                                });
+                            }
                         }, onError);
                     break;
                 default:
-                    previousOntologyId = previousOntologyId ? previousOntologyId : vm.getOntologyId();
+                    previousOntology = previousOntology ? previousOntology : vm.ontology;
                     vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, '');
                     vm.activeStep = 2;
                     vm.displayPreviousCheck = false;
             }
         }
-        vm.displayStartingClassSelect = function(ontologyId) {
-            vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, ontologyId);
-            previousOntologyId = vm.changeOntology ? previousOntologyId : '';
+        vm.displayStartingClassSelect = function(ontology) {
+            vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, ontology['@id']);
+            previousOntology = vm.changeOntology ? previousOntology : undefined;
+            vm.ontology = ontology;
             vm.activeStep = 3;
         }
         vm.displayFinish = function() {
@@ -263,9 +273,8 @@
         /** Display methods **/
         vm.displayEditMapping = function(classId) {
             if (vm.changeOntology) {
-                var ontologyId = vm.getOntologyId();
                 vm.mapping = mappingManagerService.createNewMapping(vm.mapping.name, vm.delimitedSeparator);
-                vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, ontologyId);
+                vm.mapping = mappingManagerService.setSourceOntology(vm.mapping, vm.ontology['@id']);
                 vm.changeOntology = false;
                 changedMapping();
             }
@@ -273,7 +282,7 @@
             vm.resetEditingVars();
             vm.clearSelectedColumn();
             if (classId) {
-                vm.mapping = mappingManagerService.addClass(vm.mapping, classId);
+                vm.mapping = mappingManagerService.addClass(vm.mapping, vm.ontology, classId);
                 vm.displayEditClassForm(_.get(_.find(vm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']}), '@id'));
             } else {
                 vm.isPreviousMapping = true;
@@ -324,7 +333,7 @@
             vm.resetEditingVars();
             vm.editingClassMappingId = classMappingId;
             vm.availableProps = getAvailableProps(vm.editingClassMappingId);
-            vm.numMappedClasses = mappingManagerService.getMappedClassIds(vm.mapping.jsonld).length;
+            vm.numMappedClasses = _.filter(vm.mapping.jsonld, {'@type': prefixes.delim + 'ClassMapping'}).length;
         }
         vm.openAvailableProp = function(propId) {
             vm.displayPropForm(vm.editingClassMappingId);
@@ -340,11 +349,11 @@
             if (propMappingId) {
                 var propId = mappingManagerService.getPropIdByMappingId(vm.mapping, propMappingId);
                 vm.deleteEntity.name = ontologyManagerService.getEntityName(
-                    ontologyManagerService.getClassProperty(vm.getOntologyId(), classId, propId)
+                    ontologyManagerService.getClassProperty(vm.ontology, classId, propId)
                 );
                 vm.deleteEntity.propMappingId = propMappingId;
             } else {
-                vm.deleteEntity.name = ontologyManagerService.getEntityName(ontologyManagerService.getClass(vm.getOntologyId(), classId));
+                vm.deleteEntity.name = ontologyManagerService.getEntityName(ontologyManagerService.getClass(vm.ontology, classId));
             }
         }
         vm.generateRdfPreview = function(format) {
@@ -366,7 +375,7 @@
                 var originalColumn = vm.filePreview.headers[index];
                 _.pull(vm.mappedColumns, originalColumn);
             }
-            vm.mapping = mappingManagerService.addDataProp(vm.mapping, vm.editingClassMappingId, vm.selectedPropId, columnIdx);
+            vm.mapping = mappingManagerService.addDataProp(vm.mapping, vm.ontology, vm.editingClassMappingId, vm.selectedPropId, columnIdx);
             vm.mappedColumns.push(column);
             var propMappingId = _.get(
                 mappingManagerService.getDataMappingFromClass(vm.mapping.jsonld, vm.editingClassMappingId, vm.selectedPropId),
@@ -384,7 +393,7 @@
             vm.displayPropForm(editingClassMappingId);
         }
         vm.setObjectProp = function() {
-            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.editingClassMappingId, vm.selectedPropId);
+            vm.mapping = mappingManagerService.addObjectProp(vm.mapping, vm.ontology, vm.editingClassMappingId, vm.selectedPropId);
             changedMapping();
             vm.resetEditingVars();
         }

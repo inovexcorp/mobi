@@ -27,9 +27,10 @@ describe('Previous Check Overlay directive', function() {
             scope.onClickBack = jasmine.createSpy('onClickBack');
             scope.onClickContinue = jasmine.createSpy('onClickContinue');
             scope.mapping = {};
+            scope.ontology = {};
             scope.filePreview = {};
 
-            this.element = $compile(angular.element('<previous-check-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue()" mapping="mapping" file-preview="filePreview"></previous-check-overlay>'))(scope);
+            this.element = $compile(angular.element('<previous-check-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue()" mapping="mapping" ontology="ontology" file-preview="filePreview"></previous-check-overlay>'))(scope);
             scope.$digest();
         });
 
@@ -51,6 +52,12 @@ describe('Previous Check Overlay directive', function() {
             scope.$digest();
             expect(scope.mapping).toEqual({jsonld: []});
         });
+        it('ontology should be two way bound', function() {
+            var controller = this.element.controller('previousCheckOverlay');
+            controller.ontology = {'@id': ''};
+            scope.$digest();
+            expect(scope.ontology).toEqual({'@id': ''});
+        });
         it('filePreview should be two way bound', function() {
             var controller = this.element.controller('previousCheckOverlay');
             controller.filePreview = {headers: []};
@@ -61,9 +68,10 @@ describe('Previous Check Overlay directive', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             scope.mapping = {};
+            scope.ontology = {};
             scope.filePreview = {};
 
-            this.element = $compile(angular.element('<previous-check-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue()" mapping="mapping" file-preview="filePreview"></previous-check-overlay>'))(scope);
+            this.element = $compile(angular.element('<previous-check-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue()" mapping="mapping" ontology="ontology" file-preview="filePreview"></previous-check-overlay>'))(scope);
             scope.$digest();
         });
         it('should get the name of a data mapping', function() {
@@ -79,7 +87,6 @@ describe('Previous Check Overlay directive', function() {
             expect(typeof result).toBe('string');
         });
         it('should set the validity of the form based on the invalid columns', function() {
-            // var isolatedScope = this.element.isolateScope();
             var controller = this.element.controller('previousCheckOverlay');
             controller.setValidity();
             expect(controller.validateForm.$valid).toBe(true);
@@ -92,9 +99,10 @@ describe('Previous Check Overlay directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             scope.mapping = {};
+            scope.ontology = {};
             scope.filePreview = {};
 
-            this.element = $compile(angular.element('<previous-check-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue()" mapping="mapping" file-preview="filePreview"></previous-check-overlay>'))(scope);
+            this.element = $compile(angular.element('<previous-check-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue()" mapping="mapping" ontology="ontology" file-preview="filePreview"></previous-check-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -109,7 +117,6 @@ describe('Previous Check Overlay directive', function() {
         });
         it('depending on the validity of the form', function() {
             var controller = this.element.controller('previousCheckOverlay');
-            // var isolatedScope = this.element.isolateScope();
             expect(this.element.querySelectorAll('.valid').length).toBe(1);
             expect(this.element.querySelectorAll('.invalid-columns').length).toBe(0);
             expect(angular.element(this.element.find('custom-button')[1]).text()).toBe('Continue');
@@ -121,7 +128,6 @@ describe('Previous Check Overlay directive', function() {
             expect(angular.element(this.element.find('custom-button')[1]).text()).toBe('Fix');
         });
         it('with the correct number of list items for invalid mappings', function() {
-            // var isolatedScope = this.element.isolateScope();
             var controller = this.element.controller('previousCheckOverlay');
             expect(this.element.querySelectorAll('.invalid-columns li').length).toBe(0);
             controller.invalidColumns = [{index: 0, propId: ''}];

@@ -78,21 +78,13 @@
             }
 
             function initOntology(ontology, obj) {
-                var len = obj['@id'].length,
-                    delimiter = obj['@id'].charAt(len - 1);
-
+                var delimiter = _.last(obj['@id']);
                 obj.matonto = {
                     originalId: obj['@id'],
                     blankNodes: [],
                     classExpressions: [],
-                    propertyExpressions: []
-                }
-
-                if(delimiter === '#' || delimiter === ':' || delimiter === '/') {
-                    obj.matonto.delimiter = delimiter;
-                    obj['@id'] = obj['@id'].substring(0, len - 1);
-                } else {
-                    obj.matonto.delimiter = '#';
+                    propertyExpressions: [],
+                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#'
                 }
 
                 angular.merge(ontology, obj);
@@ -197,40 +189,27 @@
                 return arr;
             }
 
-            function addOntology(ontology, ontologyId) {
+            function restructureOntology(ontology, ontologyId) {
                 var getPrefixes,
-                    context = ontology['@context'] || {},
-                    deferred = $q.defer();
+                    context = ontology['@context'] || {};
                 ontology = ontology['@graph'] || ontology;
 
                 getPrefixes = function(context) {
-                    var prop,
-                        result = {
-                            owl: prefixes.owl,
-                            rdfs: prefixes.rdfs,
-                            xsd: prefixes.xsd
-                        };
-
-                    for(prop in context) {
-                        if(context.hasOwnProperty(prop)) {
-                            switch(context[prop]) {
-                                case defaultOwl:
-                                    result.owl = prop + ':';
-                                    break;
-                                case defaultRdfs:
-                                    result.rdfs = prop + ':';
-                                    break;
-                                case defaultXsd:
-                                    result.xsd = prop + ':';
-                                    break;
-                            }
-                        }
-                    }
-                    return result;
-
+                    var inverted = _.invert(context);
+                    return {
+                        owl: inverted[prefixes.owl] ? inverted[prefixes.owl] + ':' : prefixes.owl,
+                        rdfs: inverted[prefixes.rdfs] ? inverted[prefixes.rdfs] + ':' : prefixes.rdfs,
+                        xsd: inverted[prefixes.xsd] ? inverted[prefixes.xsd] + ':' : prefixes.xsd
+                    };
                 }
 
-                self.restructure(ontology, ontologyId, context, getPrefixes(context))
+                return self.restructure(ontology, ontologyId, context, getPrefixes(context));
+            }
+
+            function addOntology(ontology, ontologyId) {
+                var deferred = $q.defer();
+
+                restructureOntology(ontology, ontologyId)
                     .then(function(response) {
                         ontologies.push(response);
                         deferred.resolve(response);
@@ -941,6 +920,32 @@
                 return $http.get(prefix + '/' + encodeURIComponent(ontologyId), config);
             }
 
+            self.getThenRestructure = function(ontologyId) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                var onError = function(response) {
+                    deferred.reject(response);
+                    $rootScope.showSpinner = false;
+                }
+
+                var onGetSuccess = function(response) {
+                    restructureOntology(response.data.ontology, ontologyId).then(function(response) {
+                        deferred.resolve(response);
+                        $rootScope.showSpinner = false;
+                    });
+                }
+
+                self.get(ontologyId, 'jsonld').then(function(response) {
+                    if(_.has(response, 'data') && !_.has(response, 'error')) {
+                        onGetSuccess(response);
+                    } else {
+                        onError();
+                    }
+                }, onError);
+
+                return deferred.promise;
+            }
+
             self.uploadThenGet = function(file) {
                 $rootScope.showSpinner = true;
 
@@ -963,7 +968,7 @@
                 onUploadSuccess = function() {
                     self.get(ontologyId, 'jsonld')
                         .then(function(response) {
-                            if(response.hasOwnProperty('data') && !response.data.hasOwnProperty('error')) {
+                            if(_.has(response, 'data') && !_.has(response, 'error')) {
                                 onGetSuccess(response);
                             } else {
                                 onError(response);
@@ -975,7 +980,7 @@
 
                 self.upload(file)
                     .then(function(response) {
-                        if(response.hasOwnProperty('data') && response.data.hasOwnProperty('persisted') && response.data.persisted) {
+                        if(_.get(response, 'data.persisted')) {
                             ontologyId = response.data.ontologyId;
                             onUploadSuccess();
                         } else {
@@ -1094,10 +1099,6 @@
                 return self.getObject(state);
             }
 
-            self.getOntologyById = function(ontologyId) {
-                return _.find(ontologies, {'@id': ontologyId});
-            }
-
             self.getOntologyProperty = function(ontology, prop) {
                 if(ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty(prop)) {
                     return ontology.matonto[prop];
@@ -1120,24 +1121,33 @@
                 changedEntries = _.reject(changedEntries, { ontologyId: ontologyId });
             }
 
-            self.getClasses = function(ontologyId) {
-                return _.get(self.getOntologyById(ontologyId), 'matonto.classes', []);
+            self.getClasses = function(ontology) {
+                return _.get(ontology, 'matonto.classes', []);
             }
 
-            self.getClass = function(ontologyId, classId) {
-                return _.find(self.getClasses(ontologyId), {'@id': classId});
+            self.getClass = function(ontology, classId) {
+                return _.find(self.getClasses(ontology), {'@id': classId});
             }
 
-            self.getClassProperties = function(ontologyId, classId) {
-                return _.get(self.getClass(ontologyId, classId), 'matonto.properties', []);
+            self.getClassProperties = function(ontology, classId) {
+                return _.get(self.getClass(ontology, classId), 'matonto.properties', []);
             }
 
-            self.getClassProperty = function(ontologyId, classId, propId) {
-                return _.find(self.getClassProperties(ontologyId, classId), {'@id': propId});
+            self.getClassProperty = function(ontology, classId, propId) {
+                return _.find(self.getClassProperties(ontology, classId), {'@id': propId});
+            }
+
+            self.getBeautifulIRI = function(iri) {
+                var splitEnd = $filter('splitIRI')(iri).end;
+                return splitEnd ? $filter('beautify')(splitEnd) : iri;
             }
 
             self.getEntityName = function(entity) {
-                return _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || $filter('beautify')($filter('splitIRI')(_.get(entity, '@id')).end);
+                var result = _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']");
+                if (!result) {
+                    result = self.getBeautifulIRI(_.get(entity, '@id', ''));
+                }
+                return result;
             }
 
             self.getPreview = function(ontologyId, rdfFormat) {

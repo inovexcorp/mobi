@@ -36,7 +36,7 @@ function mockOntologyManager() {
         angular.module('ontologyManager', []);
 
         module(function($provide) {
-            $provide.service('ontologyManagerService', function() {
+            $provide.service('ontologyManagerService', function($q) {
                 this.getEntityName = jasmine.createSpy('getEntityName').and.callFake(function(entity) {
                     if (entity && entity.hasOwnProperty('@id')) {
                         return entity['@id'];
@@ -44,26 +44,39 @@ function mockOntologyManager() {
                         return '';
                     }
                 });
+                this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(function(iri) {
+                    return iri;
+                });
                 this.getList = jasmine.createSpy('getList').and.callFake(function() {
                     return [];
                 });
-                this.getClassProperty = jasmine.createSpy('getClassProperty').and.callFake(function(oId, cId, pId) {
+                this.getClassProperty = jasmine.createSpy('getClassProperty').and.callFake(function(ontology, cId, pId) {
                     return {};
                 });
-                this.getClassProperties = jasmine.createSpy('getClassProperties').and.callFake(function(oId, cId) {
+                this.getClassProperties = jasmine.createSpy('getClassProperties').and.callFake(function(ontology, cId) {
                     return [];
                 });
-                this.getClass = jasmine.createSpy('getClass').and.callFake(function(oId, cId) {
+                this.getClass = jasmine.createSpy('getClass').and.callFake(function(ontology, cId) {
                     return {};
                 });
                 this.isObjectProperty = jasmine.createSpy('isObjectProperty').and.callFake(function(arr) {
                     return arr && arr.indexOf('ObjectProperty') >= 0 ? true : false;
                 });
-                this.getOntologyById = jasmine.createSpy('getOntologyById').and.callFake(function(oi) {
-                    return {};
-                });
-                this.getClasses = jasmine.createSpy('getClasses').and.callFake(function(oId, cId) {
+                this.getClasses = jasmine.createSpy('getClasses').and.callFake(function(ontology) {
+                    if (ontology && ontology.hasOwnProperty('matonto') && ontology.matonto.hasOwnProperty('classes')) {
+                        return ontology.matonto.classes;
+                    }
                     return [];
+                });
+                this.getOntologyIds = jasmine.createSpy('getOntologyIds').and.callFake(function() {
+                    return [];
+                });
+                this.getThenRestructure = jasmine.createSpy('getThenRestructure').and.callFake(function(ontologyId) {
+                    if (ontologyId) {
+                        return $q.when({'@id': ontologyId});                        
+                    } else {
+                        return $q.reject('Something went wrong');
+                    }
                 });
             });
         });
@@ -121,7 +134,7 @@ function mockPrefixes() {
 
         module(function($provide) {
             $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = '';
+                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = '';
             });
         });
     });

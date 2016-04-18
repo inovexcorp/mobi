@@ -1,10 +1,10 @@
 <form class="prop-form">
     <div class="form-group">
-        <custom-label>{{dvm.getClassName(ontologyId, classId) + ' Properties'}}</custom-label>
+        <custom-label>{{dvm.getClassName(classId) + ' Properties'}}</custom-label>
         <prop-select props="dvm.props" selected-prop="dvm.selectedProp" on-change="dvm.update()"></prop-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 
-        ontology-id="ontologyId" 
+        ontology="dvm.ontology" 
         class-id="{{classId}}" 
         selected-prop="{{dvm.selectedProp}}"></range-class-description>
     <div class="form-btns form-group btn-container" ng-if="dvm.isObjectProperty()">

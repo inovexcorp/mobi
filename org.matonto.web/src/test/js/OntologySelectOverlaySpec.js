@@ -8,6 +8,16 @@ describe('Ontology Select Overlay directive', function() {
         module('ontologySelectOverlay');
 
         module(function($provide) {
+            $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
+                return '';
+            }));
+            $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
+                return {
+                    begin: '',
+                    then: '',
+                    end: ''
+                }
+            }));
             $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
@@ -26,13 +36,20 @@ describe('Ontology Select Overlay directive', function() {
 
     describe('in isolated scope', function() {
         beforeEach(function() {
+            scope.ontology = undefined;
             scope.onClickBack = jasmine.createSpy('onClickBack');
             scope.onClickContinue = jasmine.createSpy('onClickContinue');
 
-            this.element = $compile(angular.element('<ontology-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(ontologyId)"></ontology-select-overlay>'))(scope);
+            this.element = $compile(angular.element('<ontology-select-overlay ontology="ontology" on-click-back="onClickBack()" on-click-continue="onClickContinue(ontologyId)"></ontology-select-overlay>'))(scope);
             scope.$digest();
         });
 
+        it('ontology should be two way bound', function() {
+            var controller = this.element.controller('ontologySelectOverlay');
+            controller.ontology = {};
+            scope.$digest();
+            expect(scope.ontology).toEqual({});
+        });
         it('onClickBack should be called in the parent scope', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.onClickBack();
@@ -48,27 +65,40 @@ describe('Ontology Select Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<ontology-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(ontologyId)"></ontology-select-overlay>'))(scope);
+            this.element = $compile(angular.element('<ontology-select-overlay ontology="ontology" on-click-back="onClickBack()" on-click-continue="onClickContinue(ontologyId)"></ontology-select-overlay>'))(scope);
             scope.$digest();
         });
-        it('should retrieve an ontology by an id', function() {
+        it('should get an ontology by id', function() {
             var controller = this.element.controller('ontologySelectOverlay');
-            var result = controller.getOntologyById('');
+            controller.getOntology('test');
+            scope.$digest();
+            expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith('test');
+            expect(typeof controller.selectedOntology).toBe('object');
+            expect(controller.selectedOntology['@id']).toBe('test');
 
-            expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith('');
-            expect(typeof result).toBe('object');
+            ontologyManagerSvc.getThenRestructure.calls.reset();
+            controller.getOntology('test');
+            scope.$digest();
+            expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
+            expect(typeof controller.selectedOntology).toBe('object');
+            expect(controller.selectedOntology['@id']).toBe('test');
         });
         it('should get the name of the passed ontology', function() {
             var controller = this.element.controller('ontologySelectOverlay');
-            var result = controller.getName({});
+            var result = controller.getName('test');
+            expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
+            expect(typeof result).toBe('string');
 
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({});
+            controller.getOntology('test');
+            scope.$digest();
+            result = controller.getName('test');
+            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<ontology-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(ontologyId)"></ontology-select-overlay>'))(scope);
+            this.element = $compile(angular.element('<ontology-select-overlay ontology="ontology" on-click-back="onClickBack()" on-click-continue="onClickContinue(ontologyId)"></ontology-select-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
