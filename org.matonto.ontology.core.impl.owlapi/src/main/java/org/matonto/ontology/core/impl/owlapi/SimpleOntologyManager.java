@@ -2,14 +2,9 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.time.OffsetDateTime;
 import java.util.*;
 import javax.annotation.Nonnull;
 
-import org.matonto.catalog.api.CatalogFactory;
-import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Distribution;
-import org.matonto.catalog.api.OntologyBuilder;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -51,9 +46,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
-    private CatalogManager catalogManager;
-    private CatalogFactory catalogFactory;
-	
+
 	public SimpleOntologyManager() {}
 	
     @Activate
@@ -119,16 +112,6 @@ public class SimpleOntologyManager implements OntologyManager {
         this.modelFactory = modelFactory;
     }
     
-    @Reference
-    protected void setCatalogManager(final CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    protected void setCatalogFactory(final CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
-	
 	@Override
 	public Set<Resource> getOntologyRegistry() {
         if(repository == null)
@@ -425,30 +408,5 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
 	public SesameTransformer getTransformer() {
         return transformer;
-    }
-    
-    public void createOntologyCatalog(@Nonnull Ontology ontology, String title, String description,
-                                      OffsetDateTime issued, OffsetDateTime modified, Set<String> keywords,
-                                      Set<Distribution> distributions) {
-        Resource ontologyId = ontology.getOntologyId().getOntologyIdentifier();
-
-        OntologyBuilder builder = catalogFactory.createOntologyBuilder(ontologyId, title)
-                .description(description)
-                .issued(issued)
-                .modified(modified)
-                .identifier(ontologyId.stringValue());
-
-        keywords.forEach(builder::addKeyword);
-        distributions.forEach(builder::addDistribution);
-
-        createOntologyCatalog(builder.build());
-    }
-    
-    public void createOntologyCatalog(org.matonto.catalog.api.Ontology ontologyCatalog) {
-        if (catalogManager == null) {
-            throw new IllegalStateException("catalogManager is null");
-        }
-        
-        catalogManager.createOntology(ontologyCatalog);        
     }
 }
