@@ -571,6 +571,17 @@
                 ontologyIds.push(ontologyId);
             }
 
+            function getBlankNodeObject(obj, detailedProp, detailedObj) {
+                var onId = _.get(obj[0], '@id', '');
+                var readableText = $filter('splitIRI')(onId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
+                if(_.get(detailedObj, '@id')) {
+                    readableText += $filter('splitIRI')(detailedObj['@id']).end;
+                } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
+                    readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
+                }
+                return {id: onId, text: readableText};
+            }
+
             self.restructure = function(flattened, ontologyId, context, prefixes) {
                 var j, obj, type, domain, annotations,
                     ontology = {
@@ -639,34 +650,35 @@
                 while(i < restrictions.length) {
                     var restriction = restrictions[i];
                     var id = _.get(restriction, '@id');
+                    ontology.matonto.blankNodes.push(restriction);
 
-                    if(_.get(restriction, prefixes.owl + 'onProperty')) {
-                        ontology.matonto.propertyExpressions.push(restriction);
-                    }
-                    if(_.get(restriction, prefixes.owl + 'onClass')) {
-                        ontology.matonto.classExpressions.push(restriction);
-                    }
-
-                    /*var props = Object.keys(restriction);
-                    _.pull(props, prefixes.owl + 'onProperty', '@id', '@type');
+                    var props = Object.keys(restriction);
+                    _.pull(props, prefixes.owl + 'onProperty', prefixes.owl + 'onClass', '@id', '@type');
                     var detailedProp = (props.length === 1) ? props[0] : undefined;
                     var onPropertyObj = _.get(restriction, prefixes.owl + 'onProperty');
-                    if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1 && detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
+                    var onClassObj = _.get(restriction, prefixes.owl + 'onClass');
+
+                    if(detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
                         var detailedObj = restriction[detailedProp][0];
-                        var onPropertyId = _.get(onPropertyObj[0], '@id', '');
-                        var readableText = $filter('splitIRI')(onPropertyId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
-                        if(_.get(detailedObj, '@id')) {
-                            readableText += $filter('splitIRI')(detailedObj['@id']).end;
-                        } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
-                            readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
+                        var blankNodeObj = {};
+                        if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1) {
+                            var blankNodeObj = getBlankNodeObject(onPropertyObj, detailedProp, detailedObj);
+                            ontology.matonto.propertyExpressions.push(blankNodeObj);
                         }
-                        ontology.matonto.blankNodes.push({id: id, text: readableText});
+                        if(onClassObj && Array.isArray(onClassObj) && onClassObj.length === 1) {
+                            var blankNodeObj = getBlankNodeObject(onPropertyObj, detailedProp, detailedObj);
+                            ontology.matonto.classExpressions.push(blankNodeObj);
+                        }
+                        if(_.get(blankNodeObj, 'id')) {
+                            updateRefsService.update(classes, id, blankNodeObj.text);
+                        }
                     } else {
                         console.log(restriction);
-                    }*/
+                    }
                     i++;
                 }
-                console.log(ontology.matonto.propertyExpressions, ontology.matonto.classExpressions);
+                console.log('propertyExpressions', ontology.matonto.propertyExpressions);
+                console.log('classExpressions', ontology.matonto.classExpressions);
 
                 i = 0;
                 while(i < properties.length) {
