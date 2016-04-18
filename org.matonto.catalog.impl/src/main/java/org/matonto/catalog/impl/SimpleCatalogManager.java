@@ -7,6 +7,7 @@ import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Ontology;
 import org.matonto.catalog.api.PublishedResource;
@@ -29,13 +30,16 @@ import java.util.Set;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = CatalogConfig.class
+        designateFactory = CatalogConfig.class,
+        name = "org.matonto.catalog.api.CatalogManager"
 )
 public class SimpleCatalogManager implements CatalogManager {
 
     private Repository repo;
     private ValueFactory vf;
     private NamedGraphFactory ngf;
+
+    private final Logger log = Logger.getLogger(SimpleCatalogManager.class);
 
     @Reference(service = DelegatingRepository.class, target = "(id=system)")
     protected void setRepo(Repository repo) {
@@ -79,6 +83,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
         // Create Catalog if it doesn't exist
         if (!resourceExists(catalogIri)) {
+            log.debug("Initializing MatOnto Catalog.");
             OffsetDateTime now = OffsetDateTime.now();
 
             NamedGraph namedGraph = ngf.createNamedGraph(catalogIri);
@@ -112,6 +117,13 @@ public class SimpleCatalogManager implements CatalogManager {
         if (result.hasNext()) {
             BindingSet bindingSet = result.next();
 
+            if (!bindingSet.getBindingNames().contains("resource")) {
+                // Aggregations return an empty result when no results found
+                result.close();
+                conn.close();
+                return Optional.empty();
+            }
+
             // Get Required Params
             String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
             Resource type = Bindings.requiredResource(bindingSet, "type");
@@ -126,7 +138,7 @@ public class SimpleCatalogManager implements CatalogManager {
             bindingSet.getBinding("identifier").ifPresent(binding ->
                     builder.identifier(binding.getValue().stringValue()));
 
-            bindingSet.getBinding("keyword").ifPresent(binding -> {
+            bindingSet.getBinding("keywords").ifPresent(binding -> {
                 String[] keywords = StringUtils.split(binding.getValue().stringValue(), ",");
 
                 for (String keyword : keywords) {

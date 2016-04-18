@@ -1,14 +1,26 @@
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX dc: <http://purl.org/dc/terms/>
 PREFIX matontocat: <http://matonto.org/ontologies/catalog#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 
-SELECT * WHERE {
+SELECT
+    ?resource
+    ?type
+    ?title
+    ?issued
+    ?modified
+    ?description
+    ?identifier
+    (GROUP_CONCAT(DISTINCT ?keyword ; separator = ",") AS ?keywords)
+WHERE {
 	?resource a ?type ;
 		dc:title ?title ;
 		dc:issued ?issued ;
 		dc:modified ?modified .
+
+	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology))
 	
-	OPTIONAL { dc:description ?description } .
-	OPTIONAL { dc:identifier ?identifier } . 	OPTIONAL { dcat:keyword ?keyword } .
-} GROUP BY ?resource
+	OPTIONAL { ?resource dc:description ?description } .
+	OPTIONAL { ?resource dc:identifier ?identifier } .
+    OPTIONAL { ?resource dcat:keyword ?keyword } .
+} GROUP BY ?resource ?type ?title ?issued ?modified ?description ?identifier
 		

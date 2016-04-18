@@ -1,0 +1,8 @@
+@prefix matontocat: <http://matonto.org/ontologies/catalog#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://matonto.org/test/PublishedResource/1> a matontocat:PublishedResource ;
+    dc:title "Test Resource 1" ;
+    dc:issued "2001-10-26T21:32:52"^^xsd:dateTime ;
+    dc:modified "2001-10-26T21:32:52"^^xsd:dateTime .

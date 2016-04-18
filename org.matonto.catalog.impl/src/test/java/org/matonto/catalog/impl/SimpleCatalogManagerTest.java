@@ -76,7 +76,7 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testMissingResource() throws Exception {
+    public void testGetMissingResource() throws Exception {
         // given
         // when
         Optional<PublishedResource> optional = manager.getResource(mock(IRI.class));
@@ -86,7 +86,7 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testExistingResourceWithNoOptionals() throws Exception {
+    public void testGetExistingResourceWithNoOptionals() throws Exception {
         // given
         IRI existingResource = mock(IRI.class);
         GregorianCalendar issued = new GregorianCalendar(2016, 1, 1);
@@ -94,6 +94,7 @@ public class SimpleCatalogManagerTest {
 
         ValueFactory valueFactory = SimpleValueFactory.getInstance();
         MapBindingSet sesameBindingSet = new MapBindingSet();
+        sesameBindingSet.addBinding("resource", valueFactory.createIRI("http://matonto.org/testCatalog"));
         sesameBindingSet.addBinding("title", valueFactory.createLiteral("Test Resource"));
         sesameBindingSet.addBinding("type", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
         sesameBindingSet.addBinding("issued", valueFactory.createLiteral(issued.getTime()));
@@ -118,7 +119,7 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
-    public void testExistingResourceWithOptionals() throws Exception {
+    public void testGetExistingResourceWithOptionals() throws Exception {
         // given
         IRI existingResource = mock(IRI.class);
         GregorianCalendar issued = new GregorianCalendar(2016, 1, 1);
@@ -126,13 +127,14 @@ public class SimpleCatalogManagerTest {
 
         ValueFactory valueFactory = SimpleValueFactory.getInstance();
         MapBindingSet sesameBindingSet = new MapBindingSet();
+        sesameBindingSet.addBinding("resource", valueFactory.createIRI("http://matonto.org/testCatalog"));
         sesameBindingSet.addBinding("title", valueFactory.createLiteral("Test Resource"));
         sesameBindingSet.addBinding("type", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
         sesameBindingSet.addBinding("issued", valueFactory.createLiteral(issued.getTime()));
         sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
         sesameBindingSet.addBinding("description", valueFactory.createLiteral("Test Description"));
         sesameBindingSet.addBinding("identifier", valueFactory.createLiteral("Test Identifier"));
-        sesameBindingSet.addBinding("keyword", valueFactory.createLiteral("Test,Keywords"));
+        sesameBindingSet.addBinding("keywords", valueFactory.createLiteral("Test,Keywords"));
         BindingSet bindingSet = new SesameBindingSet(sesameBindingSet);
 
         // when
