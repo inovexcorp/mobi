@@ -3,13 +3,17 @@ package org.matonto.catalog.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.rest.CatalogRest;
+import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
+import org.matonto.catalog.rest.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.core.Response;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -57,6 +61,46 @@ public class CatalogRestImpl implements CatalogRest {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public Response createPublishedResource(PublishedResourceMarshaller resource, @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") String resourceType) {
+        return null;
+    }
+
+    @Override
+    public Response deletePublishedResource(String resourceId) {
+        return null;
+    }
+
+    @Override
+    public PaginatedResults<PublishedResourceMarshaller> listPublishedResources(@DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") String resourceType, String searchTerms, @DefaultValue("100") int limit, @DefaultValue("0") int start) {
+        return null;
+    }
+
+    @Override
+    public PaginatedResults<DistributionMarshaller> getDistributions(String resourceId, @DefaultValue("100") int limit, @DefaultValue("0") int start) {
+        return null;
+    }
+
+    @Override
+    public Response createDistribution(Distribution distribution, String resourceId) {
+        return null;
+    }
+
+    @Override
+    public Response deleteDistributions(String resourceId) {
+        return null;
+    }
+
+    @Override
+    public Response deleteDistribution(String resourceId, String distributionId) {
+        return null;
+    }
+
+    @Override
+    public Response getPublishedResource() {
+        return null;
     }
 
     private boolean isBNodeString(String string) {
