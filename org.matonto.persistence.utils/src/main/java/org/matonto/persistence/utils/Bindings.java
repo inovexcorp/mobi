@@ -27,6 +27,6 @@ public class Bindings {
             }
         }
 
-        throw new IllegalStateException("Required Binding was not present.");
+        throw new IllegalStateException(String.format("Required Binding \"%s\" was not present.", binding));
     }
 }
