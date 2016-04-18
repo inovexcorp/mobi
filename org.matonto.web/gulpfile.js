@@ -1,6 +1,7 @@
 // Include gulp requirements
 var gulp = require('gulp'),
     babel = require('gulp-babel'),
+    docs = require('gulp-ngdocs'),
     cache = require('gulp-cache'),
     concat = require('gulp-concat'),
     debug = require('gulp-debug'),
@@ -71,6 +72,13 @@ var injectFiles = function(files) {
         ))
         .pipe(gulp.dest(dest));
 };
+
+// Creates documentation files
+gulp.task('ngdocs', [], function() {
+    return gulp.src(jsFiles(src))
+        .pipe(docs.process())
+        .pipe(gulp.dest('./docs'));
+});
 
 // Concatenate and minifies JS Files
 gulp.task('minify-scripts', function() {
@@ -180,4 +188,4 @@ gulp.task('icons', function() {
 gulp.task('prod', ['minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons']);
 
 // Default Task (un-minified)
-gulp.task('default', ['move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons']);
+gulp.task('default', ['ngdocs', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons']);
