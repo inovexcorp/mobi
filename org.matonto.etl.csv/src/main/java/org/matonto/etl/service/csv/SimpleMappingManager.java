@@ -3,6 +3,7 @@ package org.matonto.etl.service.csv;
 import aQute.bnd.annotation.component.*;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.exception.MatOntoException;
+import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
@@ -26,7 +27,8 @@ import javax.annotation.Nonnull;
         configurationPolicy = ConfigurationPolicy.require)
 public class SimpleMappingManager implements MappingManager {
     protected static final String COMPONENT_NAME = "org.matonto.etl.api.MappingManager";
-    private Resource mappingRegistryResource;
+    private Resource registryContext;
+    private Resource registrySubject;
     private IRI registryPredicate;
     private static final Logger logger = LoggerFactory.getLogger(SimpleMappingManager.class);
     private RepositoryManager repositoryManager;
@@ -70,13 +72,13 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public Set<Resource> getMappingRegistry() {
-        testRepositoryConnection();
+        testRepository();
         RepositoryConnection conn = null;
         Set<Resource> registry = new HashSet<>();
         try {
             conn = repository.getConnection();
-            conn.getStatements(mappingRegistryResource, registryPredicate, null, mappingRegistryResource)
-                    .forEach(statement -> registry.add(factory.createIRI(statement.getObject().stringValue())));
+            conn.getStatements(registrySubject, registryPredicate, null, registryContext)
+                    .forEach(statement -> Statements.objectResource(statement).ifPresent(registry::add));
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         } finally {
@@ -118,7 +120,7 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public boolean storeMapping(Model mappingModel, @Nonnull Resource mappingIRI) throws MatOntoException {
-        testRepositoryConnection();
+        testRepository();
         if (mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID already exists");
         }
@@ -127,7 +129,7 @@ public class SimpleMappingManager implements MappingManager {
         try {
             conn = repository.getConnection();
             conn.add(mappingModel, mappingIRI);
-            conn.add(mappingRegistryResource, registryPredicate, mappingIRI, mappingRegistryResource);
+            conn.add(registrySubject, registryPredicate, mappingIRI, registryContext);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         } finally {
@@ -139,7 +141,7 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public Optional<Model> retrieveMapping(@Nonnull Resource mappingIRI) {
-        testRepositoryConnection();
+        testRepository();
         if (!mappingExists(mappingIRI)) {
             return Optional.empty();
         }
@@ -159,7 +161,7 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public boolean deleteMapping(@Nonnull Resource mappingIRI) {
-        testRepositoryConnection();
+        testRepository();
         if (!mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID does not exist");
         }
@@ -168,7 +170,7 @@ public class SimpleMappingManager implements MappingManager {
         try {
             conn = repository.getConnection();
             conn.clear(mappingIRI);
-            conn.remove(mappingRegistryResource, registryPredicate, mappingIRI, mappingRegistryResource);
+            conn.remove(registrySubject, registryPredicate, mappingIRI, registryContext);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         } finally {
@@ -178,6 +180,11 @@ public class SimpleMappingManager implements MappingManager {
         return true;
     }
 
+    /**
+     * Retrieves and sets the requested repository if it exists.
+     *
+     * @param repositoryId the id of the requested repository
+     */
     protected void getRepository(String repositoryId) {
         if (repositoryManager == null) {
             throw new IllegalStateException("Repository Manager is null");
@@ -191,19 +198,30 @@ public class SimpleMappingManager implements MappingManager {
         }
     }
 
+    /**
+     * Sets the repository for mappings to the passed repository.
+     *
+     * @param repo the repository to hold mappings
+     */
     protected void setRepo(Repository repo) {
         repository = repo;
     }
 
+    /**
+     * Tests whether the passes mapping Resource IRI exists in the mapping registry.
+     *
+     * @param resource the mapping IRI to test for in the registry
+     * @return true if the registry contains the passed mapping IRI, false otherwise.
+     */
     protected boolean mappingExists(@Nonnull Resource resource) {
-        testRepositoryConnection();
+        testRepository();
 
         RepositoryConnection conn = null;
         boolean exists = false;
         try {
             conn = repository.getConnection();
-            RepositoryResult<Statement> statements = conn.getStatements(mappingRegistryResource, registryPredicate,
-                    resource, mappingRegistryResource);
+            RepositoryResult<Statement> statements = conn.getStatements(registrySubject, registryPredicate,
+                    resource, registryContext);
             if (statements.hasNext()) {
                 exists = true;
             }
@@ -216,10 +234,21 @@ public class SimpleMappingManager implements MappingManager {
         return exists;
     }
 
+    /**
+     * Generates a UUID.
+     * 
+     * @return a UUID string
+     */
     private String generateUuid() {
         return UUID.randomUUID().toString();
     }
 
+    /**
+     * Sets all relevant properties passed into the component. Currently only supports the
+     * repository ID.
+     * 
+     * @param properties the properties to set for the MappingManager
+     */
     private void setPropertyValues(Map<String, Object> properties) {
         if (properties.containsKey("repositoryId") && !properties.get("repositoryId").equals("")) {
             getRepository((String)properties.get("repositoryId"));
@@ -231,6 +260,11 @@ public class SimpleMappingManager implements MappingManager {
         }
     }
 
+    /**
+     * Closes the passed connection to the repository.
+     * 
+     * @param conn a connection to the repository for mappings
+     */
     private void closeConnection(RepositoryConnection conn) {
         try {
             if (conn != null) {
@@ -241,14 +275,22 @@ public class SimpleMappingManager implements MappingManager {
         }
     }
 
-    private void testRepositoryConnection() {
+    /**
+     * Tests whether the repository has been set.
+     */
+    private void testRepository() {
         if (repository == null) {
             throw new IllegalStateException("Repository is null");
         }
     }
 
-    private void initMappingRegistryResources() throws MatOntoException {
-        mappingRegistryResource = factory.createIRI("https://matonto.orgregistries/mappings");
+    /**
+     * Initializes resources used to store the mapping registry statements in
+     * the repository.
+     */
+    private void initMappingRegistryResources() {
+        registryContext = factory.createIRI("https://matonto.org/registries/mappings");
+        registrySubject = factory.createIRI("https://matonto.org/registries/mappings");
         registryPredicate = factory.createIRI("https://matonto.org/registries#hasItem");
     }
 }
