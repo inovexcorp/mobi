@@ -82,8 +82,8 @@
                 obj.matonto = {
                     originalId: obj['@id'],
                     blankNodes: [],
-                    classExpressions: [],
-                    propertyExpressions: [],
+                    classExpressions: {},
+                    propertyExpressions: {},
                     delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#'
                 }
 
@@ -550,7 +550,7 @@
                 ontologyIds.push(ontologyId);
             }
 
-            function getBlankNodeObject(obj, detailedProp, detailedObj) {
+            function getBlankNodeObject(obj, detailedProp, detailedObj, blankNodeId) {
                 var onId = _.get(obj[0], '@id', '');
                 var readableText = $filter('splitIRI')(onId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
                 if(_.get(detailedObj, '@id')) {
@@ -558,7 +558,9 @@
                 } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
                     readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
                 }
-                return {id: onId, text: readableText};
+                var result = new Object;
+                result[blankNodeId] = readableText;
+                return result;
             }
 
             self.restructure = function(flattened, ontologyId, context, prefixes) {
@@ -639,17 +641,11 @@
 
                     if(detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
                         var detailedObj = restriction[detailedProp][0];
-                        var blankNodeObj = {};
                         if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1) {
-                            var blankNodeObj = getBlankNodeObject(onPropertyObj, detailedProp, detailedObj);
-                            ontology.matonto.propertyExpressions.push(blankNodeObj);
+                            _.assign(ontology.matonto.propertyExpressions, getBlankNodeObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
                         if(onClassObj && Array.isArray(onClassObj) && onClassObj.length === 1) {
-                            var blankNodeObj = getBlankNodeObject(onPropertyObj, detailedProp, detailedObj);
-                            ontology.matonto.classExpressions.push(blankNodeObj);
-                        }
-                        if(_.get(blankNodeObj, 'id')) {
-                            updateRefsService.update(classes, id, blankNodeObj.text);
+                            _.assign(ontology.matonto.classExpressions, getBlankNodeObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
                     } else {
                         console.log(restriction);
