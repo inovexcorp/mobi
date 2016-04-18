@@ -22,4 +22,7 @@ public class SesameUpdate extends SesameOperation implements Update {
         }
     }
 
+    public String toString() {
+        return sesUpdate.toString();
+    }
 }

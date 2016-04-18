@@ -25,4 +25,8 @@ public class SesameTupleQuery extends SesameOperation implements TupleQuery {
             throw new QueryEvaluationException(e);
         }
     }
+
+    public String toString() {
+        return sesameTupleQuery.toString();
+    }
 }

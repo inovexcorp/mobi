@@ -20,4 +20,8 @@ public class SesameBooleanQuery extends SesameOperation implements BooleanQuery 
             throw new QueryEvaluationException(e);
         }
     }
+
+    public String toString() {
+        return sesBooleanQuery.toString();
+    }
 }
