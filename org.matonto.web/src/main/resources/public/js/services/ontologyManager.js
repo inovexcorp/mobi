@@ -625,7 +625,6 @@
                     }
                     i++;
                 }
-                console.log('others:', others);
 
                 i = 0;
                 while(i < restrictions.length) {
@@ -652,7 +651,6 @@
                     ontology.matonto.blankNodes.push(restriction);
                     i++;
                 }
-                console.log(ontology.matonto.propertyExpressions);
 
                 i = 0;
                 while(i < properties.length) {
