@@ -580,6 +580,7 @@
                     restrictions = [],
                     jsAnnotations = [],
                     jsDatatypes = [],
+                    blankNodes = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
                     i = 0,
                     deferred = $q.defer();
@@ -588,7 +589,11 @@
                     obj = list[i];
                     types = _.get(obj, '@type', []);
 
-                    if(_.indexOf(types, prefixes.owl + 'Ontology') !== -1) {
+                    if(_.indexOf(types, prefixes.owl + 'Restriction') !== -1) {
+                        restrictions.push(obj);
+                    } else if(_.get(obj, '@id').includes('_:b')) {
+                        blankNodes.push(obj);
+                    } else if(_.indexOf(types, prefixes.owl + 'Ontology') !== -1) {
                         initOntology(ontology, obj);
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
@@ -604,8 +609,6 @@
                             currentAnnotationSelect: null
                         };
                         properties.push(obj);
-                    } else if(_.indexOf(types, prefixes.owl + 'Restriction') !== -1) {
-                        restrictions.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'AnnotationProperty') !== -1) {
                         jsAnnotations.push(obj);
                     } else if(_.indexOf(types, prefixes.rdfs + 'Datatype') !== -1) {
