@@ -564,7 +564,7 @@
             }
 
             self.restructure = function(flattened, ontologyId, context, prefixes) {
-                var j, obj, type, domain, annotations,
+                var j, obj, types, domain, annotations,
                     ontology = {
                         matonto: {
                             noDomains: [],
@@ -586,42 +586,32 @@
 
                 while(i < list.length) {
                     obj = list[i];
-                    type = obj['@type'] ? obj['@type'][0] : undefined;
+                    types = _.get(obj, '@type', []);
 
-                    switch(type) {
-                        case prefixes.owl + 'Ontology':
-                            initOntology(ontology, obj);
-                            break;
-                        case prefixes.owl + 'Class':
-                            obj.matonto = {
-                                properties: [],
-                                originalId: obj['@id'],
-                                currentAnnotationSelect: null
-                            };
-                            classes.push(obj);
-                            break;
-                        case prefixes.owl + 'DatatypeProperty':
-                        case prefixes.owl + 'ObjectProperty':
-                        case prefixes.rdfs + 'Property':
-                            obj.matonto = {
-                                icon: chooseIcon(obj, prefixes),
-                                originalId: obj['@id'],
-                                currentAnnotationSelect: null
-                            };
-                            properties.push(obj);
-                            break;
-                        case prefixes.owl + 'Restriction':
-                            restrictions.push(obj);
-                            break;
-                        case prefixes.owl + 'AnnotationProperty':
-                            jsAnnotations.push(obj);
-                            break;
-                        case prefixes.rdfs + 'Datatype':
-                            jsDatatypes.push(obj);
-                            break;
-                        default:
-                            others.push(obj);
-                            break;
+                    if(_.indexOf(types, prefixes.owl + 'Ontology') !== -1) {
+                        initOntology(ontology, obj);
+                    } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
+                        obj.matonto = {
+                            properties: [],
+                            originalId: obj['@id'],
+                            currentAnnotationSelect: null
+                        };
+                        classes.push(obj);
+                    } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
+                        obj.matonto = {
+                            icon: chooseIcon(obj, prefixes),
+                            originalId: obj['@id'],
+                            currentAnnotationSelect: null
+                        };
+                        properties.push(obj);
+                    } else if(_.indexOf(types, prefixes.owl + 'Restriction') !== -1) {
+                        restrictions.push(obj);
+                    } else if(_.indexOf(types, prefixes.owl + 'AnnotationProperty') !== -1) {
+                        jsAnnotations.push(obj);
+                    } else if(_.indexOf(types, prefixes.rdfs + 'Datatype') !== -1) {
+                        jsDatatypes.push(obj);
+                    } else {
+                        others.push(obj);
                     }
                     i++;
                 }
