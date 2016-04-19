@@ -57,6 +57,7 @@ public class CatalogRestImpl implements CatalogRest {
             result.setDescription(publishedResource.getDescription());
             result.setIssued(getCalendar(publishedResource.getIssued()));
             result.setModified(getCalendar(publishedResource.getModified()));
+            result.setIdentifier(resource.stringValue());
             return result;
         } else {
             return null;
@@ -64,7 +65,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response createPublishedResource(PublishedResourceMarshaller resource, @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") String resourceType) {
+    public Response createPublishedResource(PublishedResourceMarshaller resource,
+                                            @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") String resourceType) {
         return null;
     }
 

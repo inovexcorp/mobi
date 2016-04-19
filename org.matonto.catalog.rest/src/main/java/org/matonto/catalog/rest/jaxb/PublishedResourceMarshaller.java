@@ -12,6 +12,7 @@ public class PublishedResourceMarshaller {
     private String description;
     private XMLGregorianCalendar issued;
     private XMLGregorianCalendar modified;
+    private String identifier;
 
     @XmlElement
     public String getTitle() {
@@ -49,5 +50,14 @@ public class PublishedResourceMarshaller {
 
     public void setModified(XMLGregorianCalendar modified) {
         this.modified = modified;
+    }
+
+    @XmlElement
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 }
