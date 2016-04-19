@@ -6,7 +6,7 @@
             'fileForm', 'filePreviewTable', 'mappingSelectOverlay', 'ontologySelectOverlay', 'ontologyPreview', 
             'startingClassSelectOverlay', 'classPreview', 'classList', 'propForm', 'propSelect', 'columnForm', 'columnSelect',
             'rangeClassDescription', 'editPropForm', 'editClassForm', 'availablePropList', 'finishOverlay', 'ontologyPreviewOverlay',
-            'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay'])
+            'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay','mappingNameOverlay', 'mappingNameInput'])
         .controller('MapperController', MapperController);
 
     MapperController.$inject = ['$rootScope', '$scope', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
@@ -338,6 +338,9 @@
         vm.openAvailableProp = function(propId) {
             vm.displayPropForm(vm.editingClassMappingId);
             vm.selectedPropId = propId;
+            if (vm.isDatatypeProperty(propId)) {
+                vm.displayColumnForm();
+            }
         }
         vm.displayDeleteConfirmation = function(classMappingId, propMappingId) {
             if (!classMappingId) {
@@ -366,6 +369,9 @@
         /** Set and Delete methods **/
         vm.setIriTemplate = function(prefixEnd, localName) {
             vm.mapping = mappingManagerService.editIriTemplate(vm.mapping, vm.editingClassMappingId, prefixEnd, localName);
+        }
+        vm.setMappingName = function(name) {
+            vm.mapping.name = name;
         }
         vm.setDatatypeProp = function(column) {
             var columnIdx = vm.filePreview.headers.indexOf(column);
