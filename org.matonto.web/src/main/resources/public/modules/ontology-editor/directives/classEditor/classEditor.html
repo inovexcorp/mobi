@@ -40,10 +40,10 @@
                        select-list="vm.ontology.matonto.subClasses"></object-select>
 
         <!-- owl:disjointWith -->
-        <object-select ng-model="vm.selected[vm.rdfs + 'disjointWith']"
+        <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
                        selected-id="vm.selected['@id']"
                        display-text="'Disjoint With'"
-                       muted-text="vm.rdfs + 'disjointWith'"
+                       muted-text="vm.owl + 'disjointWith'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"></object-select>
     </div>
