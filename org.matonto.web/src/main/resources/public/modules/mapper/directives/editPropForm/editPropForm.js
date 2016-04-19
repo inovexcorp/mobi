@@ -19,7 +19,7 @@
                 },
                 bindToController: {
                     mapping: '=',
-                    ontology: '=',
+                    ontologies: '=',
                     classMappingId: '=',
                     selectedPropMapping: '=',
                     selectedColumn: '='
@@ -35,18 +35,17 @@
                     }
                     dvm.getTitle = function() {
                         var classId = dvm.getClassId();
-                        var propId = dvm.getPropId();
-                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
-                        var propName = ontologyManagerService.getEntityName(getClassProp(classId, propId));
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontology, classId));
+                        var propName = ontologyManagerService.getEntityName(getClassProp(classId, dvm.getPropId()));
                         return className + ': ' + propName;
                     }
                     dvm.isObjectProperty = function() {
-                        var classId = dvm.getClassId();
-                        var propId = dvm.getPropId();
-                        return ontologyManagerService.isObjectProperty(_.get(getClassProp(classId, propId), '@type', []));
+                        return ontologyManagerService.isObjectProperty(_.get(getClassProp(dvm.getClassId(), dvm.getPropId()), '@type', []));
                     }
                     function getClassProp(classId, propId) {
-                        return ontologyManagerService.getClassProperty(dvm.ontology['@id'], classId, propId);
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        return ontologyManagerService.getClassProperty(ontology, classId, propId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editPropForm/editPropForm.html'

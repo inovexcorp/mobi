@@ -8,11 +8,11 @@
         on-click-back="vm.closeMappingSelect()" 
         on-click-continue="vm.displayOntologySelect(mappingType, mappingName)"></mapping-select-overlay>
     <ontology-select-overlay ng-if="vm.activeStep === 2"
-        ontology="vm.ontology"
+        ontology="vm.sourceOntology"
         on-click-back="vm.changeOntology ? vm.closeOntologyChange() : vm.displayMappingSelect()" 
         on-click-continue="vm.displayStartingClassSelect(ontology)"></ontology-select-overlay>
     <starting-class-select-overlay ng-if="vm.activeStep === 3" 
-        ontology="vm.ontology"
+        ontologies="vm.ontologies"
         on-click-back="vm.displayOntologySelect()" 
         on-click-continue="vm.displayEditMapping(classId)"></starting-class-select-overlay>
     <finish-overlay ng-if="vm.activeStep === 5"
@@ -20,10 +20,10 @@
         finish="vm.initialize()"></finish-overlay>
     <ontology-preview-overlay ng-if="vm.displayOntologyPreview" 
         close="vm.toggleOntologyPreview()"
-        ontology="vm.ontology"></ontology-preview-overlay>
+        ontology="vm.sourceOntology"></ontology-preview-overlay>
     <previous-check-overlay ng-if="vm.displayPreviousCheck"
         mapping="vm.mapping"
-        ontology="vm.ontology"
+        ontology="vm.sourceOntology"
         file-preview="vm.filePreview"
         on-click-back="vm.displayMappingSelect()"
         on-click-continue="vm.displayEditMapping()"></previous-check-overlay>
@@ -90,7 +90,7 @@
                 <div id="edit-mapping">
                     <rdf-preview create-preview="vm.generateRdfPreview(format)" preview="vm.rdfPreview"></rdf-preview>
                     <class-list mapping="vm.mapping" 
-                        ontology="vm.ontology"
+                        ontologies="vm.ontologies"
                         columns="vm.filePreview.headers"
                         invalid-prop-ids="vm.invalidPropMappings"
                         click-add-prop="vm.displayPropForm(classMappingId)"
@@ -102,7 +102,7 @@
                         props="vm.availableProps"
                         is-datatype-prop="vm.displayColumnForm()"
                         is-object-prop="vm.clearSelectedColumn()"
-                        ontology="vm.ontology"
+                        ontologies="vm.ontologies"
                         class-id="{{vm.getClassId(vm.editingClassMappingId)}}"
                         set="vm.setObjectProp()"
                         set-next="vm.setNextObjectProp()"></prop-form>
@@ -115,7 +115,7 @@
                     <edit-prop-form ng-if="vm.selectedPropMappingId && !vm.newProp"
                         columns="vm.availableColumns"
                         mapping="vm.mapping"
-                        ontology="vm.ontology"
+                        ontologies="vm.ontologies"
                         set="vm.setDatatypeProp(column)"
                         click-delete="vm.displayDeleteConfirmation(classMappingId, propMappingId)"
                         class-mapping-id="vm.editingClassMappingId"
@@ -123,7 +123,7 @@
                         selected-column="vm.selectedColumn"></edit-prop-form>
                     <edit-class-form ng-if="vm.editingClassMappingId && !vm.selectedPropMappingId && !vm.newProp"
                         mapping="vm.mapping"
-                        ontology="vm.ontology"
+                        ontologies="vm.ontologies"
                         class-mapping-id="vm.editingClassMappingId"
                         is-last-class="vm.numMappedClasses === 1"
                         props="vm.availableProps"
@@ -142,5 +142,7 @@
             highlight-idx="vm.isDatatypeProperty(vm.selectedPropId) ? vm.filePreview.headers.indexOf(vm.selectedColumn) : undefined"
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
+    <button ng-click="vm.displayMapping = !vm.displayMapping" style="position: absolute; top: 0; left: 0; z-index: 1000;"><i class="fa fa-question"></i></button>
+    <pre ng-if="vm.displayMapping" style="position: absolute; top: 0; left: 25px; right: 0; height: 100%; z-index: 1000">{{vm.mapping | json}}</pre>
     </div>
 </div>

@@ -186,27 +186,32 @@
                 return arr;
             }
 
-            function restructureOntology(ontology, ontologyId) {
-                var getPrefixes,
-                    context = ontology['@context'] || {};
+            function getPrefixes(context) {
+                var inverted = _.invert(context);
+                return {
+                    owl: inverted[prefixes.owl] ? inverted[prefixes.owl] + ':' : prefixes.owl,
+                    rdfs: inverted[prefixes.rdfs] ? inverted[prefixes.rdfs] + ':' : prefixes.rdfs,
+                    xsd: inverted[prefixes.xsd] ? inverted[prefixes.xsd] + ':' : prefixes.xsd
+                };
+            }
+
+            function fullRestructureOntology(ontology, ontologyId) {
+                var context = ontology['@context'] || {};
                 ontology = ontology['@graph'] || ontology;
 
-                getPrefixes = function(context) {
-                    var inverted = _.invert(context);
-                    return {
-                        owl: inverted[prefixes.owl] ? inverted[prefixes.owl] + ':' : prefixes.owl,
-                        rdfs: inverted[prefixes.rdfs] ? inverted[prefixes.rdfs] + ':' : prefixes.rdfs,
-                        xsd: inverted[prefixes.xsd] ? inverted[prefixes.xsd] + ':' : prefixes.xsd
-                    };
-                }
+                return fullRestructure(ontology, ontologyId, context, getPrefixes(context));
+            }
 
-                return self.restructure(ontology, ontologyId, context, getPrefixes(context));
+            function restructureOntology(ontology) {
+                var context = ontology['@context'] || {};
+                ontology = ontology['@graph'] || ontology;
+                return restructure(ontology, context, getPrefixes(context));
             }
 
             function addOntology(ontology, ontologyId) {
                 var deferred = $q.defer();
 
-                restructureOntology(ontology, ontologyId)
+                fullRestructureOntology(ontology, ontologyId)
                     .then(function(response) {
                         ontologies.push(response);
                         deferred.resolve(response);
@@ -547,7 +552,7 @@
                 ontologyIds.push(ontologyId);
             }
 
-            self.restructure = function(flattened, ontologyId, context, prefixes) {
+            function restructure(flattened, context, prefixes) {
                 var j, obj, type, domain, annotations,
                     ontology = {
                         matonto: {
@@ -562,10 +567,9 @@
                     properties = [],
                     others = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
-                    i = 0,
-                    deferred = $q.defer();
+                    i = 0;
 
-                while(i < list.length) {
+                while (i < list.length) {
                     obj = list[i];
                     type = obj['@type'] ? obj['@type'][0] : undefined;
 
@@ -621,6 +625,13 @@
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
                 ontology.matonto.others = others;
+
+                return ontology;
+            }
+
+            function fullRestructure(flattened, ontologyId, context, prefixes) {
+                var deferred = $q.defer(),
+                    ontology = restructure(flattened, context, prefixes);
 
                 $q.all([
                         $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
@@ -869,7 +880,7 @@
                 }
 
                 var onGetSuccess = function(response) {
-                    restructureOntology(response.data.ontology, ontologyId).then(function(response) {
+                    fullRestructureOntology(response.data.ontology, ontologyId).then(function(response) {
                         deferred.resolve(response);
                         $rootScope.showSpinner = false;
                     });
@@ -986,6 +997,38 @@
                 }
             }
 
+            self.getImportedOntologies = function(ontologyId) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                var config = {
+                        params: {
+                            rdfformat: 'jsonld'
+                        }
+                    };
+                var onError = function(response) {
+                    deferred.reject(response);
+                    $rootScope.showSpinner = false;
+                }
+                var onGetSuccess = function(response) {
+                    var restructured = _.map(response, function(ontology) {
+                        var restructuredOntology = _.find(ontologies, {'@id': ontology.id});
+                        return restructuredOntology ? restructuredOntology : restructureOntology(ontology.ontology);
+                    });
+                    deferred.resolve(restructured);
+                    $rootScope.showSpinner = false;
+                }
+
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', config).then(function(response) {
+                    if(_.has(response, 'data') && !_.has(response, 'error')) {
+                        onGetSuccess(response.data);
+                    } else {
+                        onError(response);
+                    }
+                }, onError);
+
+                return deferred.promise;
+            }
+
             self.create = function(obj, state) {
                 $rootScope.showSpinner = true;
 
@@ -1075,6 +1118,14 @@
 
             self.getClassProperty = function(ontology, classId, propId) {
                 return _.find(self.getClassProperties(ontology, classId), {'@id': propId});
+            }
+
+            self.findOntologyWithClass = function(ontologyList, classId) {
+                return _.find(ontologyList, function(ontology) {
+                    return _.findIndex(self.getClasses(ontology), function(classObj) {
+                        return classObj['@id'] === classId;
+                    }) >= 0;
+                });
             }
 
             self.getBeautifulIRI = function(iri) {

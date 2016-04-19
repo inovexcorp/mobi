@@ -7,7 +7,8 @@
                     <span title="{{$select.selected}}">{{dvm.getName($select.selected)}}</span>
                 </ui-select-match>
                 <ui-select-choices repeat="id in dvm.ontologyIds | filter:$select.search">
-                    <div title="{{id}}" ng-bind-html="dvm.getName(id) | highlight:$select.search | trusted"></div>
+                    <span title="{{id}}" ng-bind-html="dvm.getName(id) | highlight:$select.search | trusted"></span>
+                    <i ng-if="!dvm.isOpen(id)" class="fa fa-archive fa-fw"></i>
                 </ui-select-choices>
             </ui-select>
         </div>
