@@ -631,7 +631,6 @@
                 while(i < restrictions.length) {
                     var restriction = restrictions[i];
                     var id = _.get(restriction, '@id');
-                    ontology.matonto.blankNodes.push(restriction);
 
                     var props = Object.keys(restriction);
                     _.pull(props, prefixes.owl + 'onProperty', prefixes.owl + 'onClass', '@id', '@type');
@@ -650,10 +649,10 @@
                     } else {
                         console.log(restriction);
                     }
+                    ontology.matonto.blankNodes.push(restriction);
                     i++;
                 }
-                console.log('propertyExpressions', ontology.matonto.propertyExpressions);
-                console.log('classExpressions', ontology.matonto.classExpressions);
+                console.log(ontology.matonto.propertyExpressions);
 
                 i = 0;
                 while(i < properties.length) {
@@ -1012,7 +1011,7 @@
                                 '@graph': [copy]
                             }
                         } else {
-                            entityjson = copy;
+                            entityjson = [copy];
                         }
 
                         config = {

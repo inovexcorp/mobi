@@ -53,6 +53,17 @@
 
                         return result;
                     }
+
+                    dvm.isBlankNode = function(id) {
+                        return id && id.includes('_:b');
+                    }
+
+                    dvm.getBlankNodeValue = function(id) {
+                        var propertyIRI = _.get(vm.ontology.matonto.propertyExpressions, id);
+                        var classIRI = _.get(vm.ontology.matonto.classExpressions, id);
+
+                        return propertyIRI || classIRI;
+                    }
                 }]
             }
         }
