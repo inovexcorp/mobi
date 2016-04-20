@@ -33,7 +33,7 @@
                         });
                     });
                 },
-                controller: function($scope, $element) {
+                controller: ['$scope', '$element', function($scope, $element) {
                     var dvm = this;
                     var buttonHeight = $element[0].querySelector("#toggle-table").offsetHeight;
                     dvm.big = false;
@@ -71,7 +71,7 @@
                     }
 
                     setHeightDefaults();
-                },
+                }],
                 templateUrl: 'modules/mapper/directives/filePreviewTable/filePreviewTable.html'
             }
         }
