@@ -261,7 +261,8 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new MatontoOntologyException("Ontology ID does not exist.");
     }
 
-    private boolean updateOntology(Resource ontologyResource, Resource originalResource, String resourceJson, boolean updateObjects)
+    private boolean updateOntology(Resource ontologyResource, Resource originalResource, String resourceJson,
+                                   boolean updateObjects)
             throws MatontoOntologyException {
         checkRepositoryAndOntology(ontologyResource);
         boolean updated = false;
