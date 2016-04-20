@@ -101,8 +101,9 @@ public interface OntologyRest {
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
     Response saveChangesToOntology(@PathParam("ontologyid") String ontologyIdStr,
-                            @QueryParam("resourceid") String resourceIdStr,
-                            @QueryParam("resourcejson") String resourceJson);
+                                   @QueryParam("resourceid") String resourceIdStr,
+                                   @QueryParam("resourcejson") String resourceJson,
+                                   @DefaultValue("false") @QueryParam("updateobjects") boolean updateObjects);
 
     /**
      * Delete ontology with requested ontology ID from the server.

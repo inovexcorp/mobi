@@ -261,8 +261,10 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new MatontoOntologyException("Ontology ID does not exist.");
     }
 
-    private boolean updateOntology(Resource ontologyResource, Resource originalResource, String resourceJson) throws MatontoOntologyException {
+    private boolean updateOntology(Resource ontologyResource, Resource originalResource, String resourceJson, boolean updateObjects)
+            throws MatontoOntologyException {
         checkRepositoryAndOntology(ontologyResource);
+        boolean updated = false;
 
         try {
             final RepositoryConnection conn = repository.getConnection();
@@ -273,50 +275,61 @@ public class SimpleOntologyManager implements OntologyManager {
 
                 // Remove all original statements if the object is not a blank node. Replace subject with new subject
                 // if the IRI is changed and it is a blank node
-                conn.begin();
-                if (originalResource != null && changedModel.size() > 0) {
-                    conn.getStatements(originalResource, null, null, ontologyResource).forEach(stmt -> {
+                if(ontologyResource != null) {
+                    conn.begin();
+                    if (changedModel.size() > 0) {
                         Resource newSubject = Models.subject(changedModel).get();
+                        conn.getStatements(originalResource, null, null, ontologyResource).forEach(stmt -> {
 
+                            if (!(stmt.getObject() instanceof BNode)) {
+                                conn.remove(stmt);
+                            } else if (!newSubject.equals(originalResource)) {
+                                conn.remove(stmt);
+                                conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject()),
+                                        ontologyResource);
+                            }
+                        });
+
+                        if(updateObjects) {
+                            conn.getStatements(null, null, originalResource, ontologyResource).forEach(stmt -> {
+                                conn.remove(stmt);
+                                conn.add(stmt.getSubject(), stmt.getPredicate(), newSubject, ontologyResource);
+                            });
+                        }
+                    }
+
+                    // Add all new statements if the object is not a blank node
+                    changedModel.forEach( stmt -> {
                         if (!(stmt.getObject() instanceof BNode)) {
-                            conn.remove(stmt);
-                        } else if (!newSubject.equals(originalResource)) {
-                            conn.remove(stmt);
-                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject()),
-                                    ontologyResource);
+                            conn.add(stmt, ontologyResource);
                         }
                     });
+                    conn.commit();
+                    updated = true;
                 }
 
-                // Add all new statements if the object is not a blank node
-                changedModel.forEach( stmt -> {
-                    if (!(stmt.getObject() instanceof BNode)) {
-                        conn.add(stmt, ontologyResource);
-                    }
-                });
-                conn.commit();
             } catch (IOException | org.openrdf.rio.RDFParseException e) {
                 throw new MatontoOntologyException("Error in parsing resourceJson", e);
             } finally {
                 closeConnection(conn);
             }
 
-            // TODO: handle ontology iri changes
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         }
 
-        return true;
+        return updated;
     }
 
     @Override
-    public boolean saveChangesToOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
-        return updateOntology(ontologyResource, originalChangedResource, resourceJson);
+    public boolean saveChangesToOntology(Resource ontologyResource, Resource originalChangedResource,
+                                         String resourceJson, boolean updateRefs) throws MatontoOntologyException {
+        return updateOntology(ontologyResource, originalChangedResource, resourceJson, updateRefs);
     }
 
     @Override
     public boolean addEntityToOntology(Resource ontologyResource, String resourceJson) throws MatontoOntologyException {
-        return updateOntology(ontologyResource, null, resourceJson);
+        return updateOntology(ontologyResource, null, resourceJson, false);
     }
 	
 	@Override

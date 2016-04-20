@@ -59,9 +59,12 @@ public interface OntologyManager {
      * @param ontologyResource Ontology Resource
      * @param changedResource The IRI of the changed resource
      * @param resourceJson The json-ld of the changed resource
+     * @param updateRefs True if we need to update statements where the object is the resourceJson subject, false
+     *                   otherwise
      * @return True if successfully updated, false otherwise
      */
-    boolean saveChangesToOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
+    boolean saveChangesToOntology(Resource ontologyResource, Resource changedResource, String resourceJson,
+                                  boolean updateObjects);
 
     /**
      * Add the resource json to the Ontology object
@@ -72,7 +75,8 @@ public interface OntologyManager {
      */
     boolean addEntityToOntology(Resource ontologyResource, String resourceJson);
 
-    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException;
+    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource)
+            throws MatontoOntologyException;
 
     /**
      * Gets the ontology registry which is persisted in the repository

@@ -1007,7 +1007,8 @@
                         config = {
                             params: {
                                 resourceid: changedEntry.entityId,
-                                resourcejson: entityjson
+                                resourcejson: entityjson,
+                                updateobjects: _.get(obj, 'matonto.updateObjects', false)
                             }
                         }
 
@@ -1065,9 +1066,10 @@
                 if(selected.matonto.hasOwnProperty('namespace')) {
                     delete selected.matonto.namespace;
                 } else if(update) {
-                    updateRefsService.update(ontology, selected['@id'], fresh, ontology.matonto.owl);
+                    updateRefsService.update(ontology, selected['@id'], fresh);
                 }
                 selected['@id'] = fresh;
+                selected.matonto.updateObjects = update;
             }
 
             self.isObjectProperty = function(types) {
