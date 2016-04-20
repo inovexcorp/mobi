@@ -1,0 +1,11 @@
+<div class="mapping-name-overlay overlay">
+    <form class="content" name="dvm.mappingNameForm">
+        <h6>Edit Mapping Name</h6>
+        <mapping-name-input name="mappingName" required="true"></mapping-name-input>
+        
+        <div class="btn-container clearfix">
+            <custom-button on-click="close()" type="'secondary'" pull="'left'">Cancel</custom-button>
+            <custom-button on-click="set({name: mappingName})" is-disabled-when="dvm.mappingNameForm.$invalid">Set</custom-button>
+        </div>
+    </form>
+</div>
