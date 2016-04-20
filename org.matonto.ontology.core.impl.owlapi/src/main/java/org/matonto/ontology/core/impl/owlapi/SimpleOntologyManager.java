@@ -273,35 +273,50 @@ public class SimpleOntologyManager implements OntologyManager {
                 InputStream in = new ByteArrayInputStream(resourceJson.getBytes(StandardCharsets.UTF_8));
                 Model changedModel = transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
 
-                // Remove all original statements if the object is not a blank node. Replace subject with new subject
-                // if the IRI is changed and it is a blank node
-                if(ontologyResource != null) {
+                if(ontologyResource != null && changedModel.size() > 0) {
                     conn.begin();
-                    if (changedModel.size() > 0) {
-                        Resource newSubject = Models.subject(changedModel).get();
-                        conn.getStatements(originalResource, null, null, ontologyResource).forEach(stmt -> {
+                    Resource newSubject = Models.subject(changedModel).get();
+                    Resource newContext = (originalResource.equals(ontologyResource) &&
+                            !ontologyResource.equals(newSubject)) ?
+                            (new SimpleOntology(resourceJson, this)).getOntologyId().getOntologyIdentifier() :
+                            ontologyResource;
 
-                            if (!(stmt.getObject() instanceof BNode)) {
-                                conn.remove(stmt);
-                            } else if (!newSubject.equals(originalResource)) {
-                                conn.remove(stmt);
-                                conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject()),
-                                        ontologyResource);
+                    // Ontology IRI has changed, so update the context of all statements
+                    if(newContext.equals(newSubject)) {
+                        conn.getStatements(null, null, null, ontologyResource).forEach(stmt -> {
+                            conn.remove(stmt);
+                            if(!stmt.getSubject().equals(newSubject)) {
+                                conn.add(stmt, newContext);
                             }
                         });
+                        conn.remove(registrySubject, registryPredicate, ontologyResource, registryContext);
+                        conn.add(registrySubject, registryPredicate, newContext, registryContext);
+                    }
 
-                        if(updateObjects) {
-                            conn.getStatements(null, null, originalResource, ontologyResource).forEach(stmt -> {
-                                conn.remove(stmt);
-                                conn.add(stmt.getSubject(), stmt.getPredicate(), newSubject, ontologyResource);
-                            });
+                    // Remove all original statements if the object is not a blank node. Replace subject with new
+                    // subject if the IRI is changed and it is a blank node
+                    conn.getStatements(originalResource, null, null, newContext).forEach(stmt -> {
+                        if (!(stmt.getObject() instanceof BNode)) {
+                            conn.remove(stmt);
+                        } else if (!newSubject.equals(originalResource)) {
+                            conn.remove(stmt);
+                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject()),
+                                    newContext);
                         }
+                    });
+
+                    // Updates statements that reference the changed entity if needed
+                    if(updateObjects) {
+                        conn.getStatements(null, null, originalResource, newContext).forEach(stmt -> {
+                            conn.remove(stmt);
+                            conn.add(stmt.getSubject(), stmt.getPredicate(), newSubject, newContext);
+                        });
                     }
 
                     // Add all new statements if the object is not a blank node
-                    changedModel.forEach( stmt -> {
+                    changedModel.forEach(stmt -> {
                         if (!(stmt.getObject() instanceof BNode)) {
-                            conn.add(stmt, ontologyResource);
+                            conn.add(stmt, newContext);
                         }
                     });
                     conn.commit();
