@@ -61,8 +61,10 @@
                     dvm.getBlankNodeValue = function(id) {
                         var propertyIRI = _.get(vm.ontology.matonto.propertyExpressions, id);
                         var classIRI = _.get(vm.ontology.matonto.classExpressions, id);
+                        var unionOfIRI = _.get(vm.ontology.matonto.unionOfs, id);
+                        var intersectionOfIRI = _.get(vm.ontology.matonto.intersectionOfs, id);
 
-                        return propertyIRI || classIRI;
+                        return propertyIRI || classIRI || unionOfIRI || intersectionOfIRI;
                     }
                 }]
             }

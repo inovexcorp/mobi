@@ -83,6 +83,8 @@
                     blankNodes: [],
                     classExpressions: {},
                     propertyExpressions: {},
+                    unionOfs: {},
+                    intersectionOfs: {},
                     delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#'
                 }
 
@@ -549,7 +551,13 @@
                 ontologyIds.push(ontologyId);
             }
 
-            function getBlankNodeObject(obj, detailedProp, detailedObj, blankNodeId) {
+            function createResult(prop, value) {
+                var result = new Object;
+                result[prop] = value;
+                return result;
+            }
+
+            function getRestrictionObject(obj, detailedProp, detailedObj, blankNodeId) {
                 var onId = _.get(obj[0], '@id', '');
                 var readableText = $filter('splitIRI')(onId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
                 if(_.get(detailedObj, '@id')) {
@@ -557,9 +565,19 @@
                 } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
                     readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
                 }
-                var result = new Object;
-                result[blankNodeId] = readableText;
-                return result;
+                return createResult(blankNodeId, readableText);
+            }
+
+            function getBlankNodeObject(list, joiningWord, blankNodeId) {
+                var stoppingIndex = list.length - 1;
+                var readableText = '';
+                _.forEach(list, function(item, index) {
+                    readableText += $filter('splitIRI')(_.get(item, '@id')).end;
+                    if(index !== stoppingIndex) {
+                        readableText += ' ' + joiningWord + ' ';
+                    }
+                });
+                return createResult(blankNodeId, readableText);
             }
 
             self.restructure = function(flattened, ontologyId, context, prefixes) {
@@ -618,6 +636,19 @@
                     i++;
                 }
 
+                _.forEach(blankNodes, function(blankNode) {
+                    var id = _.get(blankNode, '@id');
+                    if(_.get(blankNode, prefixes.owl + 'unionOf')) {
+                        var unionOf = _.get(blankNode, prefixes.owl + 'unionOf');
+                        _.assign(ontology.matonto.unionOfs, getBlankNodeObject(_.get(unionOf, "[0]['@list']", []), 'or', id));
+                    } else if(_.get(blankNode, prefixes.owl + 'intersectionOf')) {
+                        var intersectionOf = _.get(blankNode, prefixes.owl + 'intersectionOf');
+                        _.assign(ontology.matonto.intersectionOfs, getBlankNodeObject(_.get(intersectionOf, "[0]['@list']", []), 'or', id));
+                    } else {
+                        console.warn('Unhandled blank node (non-restriction)\n', blankNode);
+                    }
+                });
+
                 i = 0;
                 while(i < restrictions.length) {
                     var restriction = restrictions[i];
@@ -632,13 +663,13 @@
                     if(detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
                         var detailedObj = restriction[detailedProp][0];
                         if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1) {
-                            _.assign(ontology.matonto.propertyExpressions, getBlankNodeObject(onPropertyObj, detailedProp, detailedObj, id));
+                            _.assign(ontology.matonto.propertyExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
                         if(onClassObj && Array.isArray(onClassObj) && onClassObj.length === 1) {
-                            _.assign(ontology.matonto.classExpressions, getBlankNodeObject(onPropertyObj, detailedProp, detailedObj, id));
+                            _.assign(ontology.matonto.classExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
                     } else {
-                        console.log(restriction);
+                        console.warn('Unhandled blank node (restriction)\n', restriction);
                     }
                     ontology.matonto.blankNodes.push(restriction);
                     i++;
@@ -649,13 +680,21 @@
                     domain = properties[i][prefixes.rdfs + 'domain'];
 
                     if(domain) {
-                        if(Object.prototype.toString.call(domain) === '[object Array]') {
+                        if(Array.isArray(domain)) {
                             j = domain.length;
+                            var item;
                             while(j--) {
-                                addToClass(domain[j]['@id'], properties[i], classes);
+                                item = domain[j]['@id'];
+                                if(item.includes('_:b')) {
+                                    ontology.matonto.noDomains.push(properties[i]);
+                                } else {
+                                    addToClass(domain[j]['@id'], properties[i], classes);
+                                }
                             }
-                        } else {
+                        } else if(!domain['@id'].includes('_:b')) {
                             addToClass(domain['@id'], properties[i], classes);
+                        } else {
+                            ontology.matonto.noDomains.push(properties[i]);
                         }
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);
