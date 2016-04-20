@@ -57,7 +57,6 @@
                 ],
                 ontologyIds = [];
 
-
             initialize();
 
             function initialize() {
@@ -618,9 +617,6 @@
                     }
                     i++;
                 }
-
-                console.log('others:', others);
-                console.log('blankNodes:', blankNodes);
 
                 i = 0;
                 while(i < restrictions.length) {
