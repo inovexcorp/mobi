@@ -568,16 +568,24 @@
                 return createResult(blankNodeId, readableText);
             }
 
-            function getBlankNodeObject(list, joiningWord, blankNodeId) {
-                var stoppingIndex = list.length - 1;
-                var readableText = '';
-                _.forEach(list, function(item, index) {
-                    readableText += $filter('splitIRI')(_.get(item, '@id')).end;
-                    if(index !== stoppingIndex) {
-                        readableText += ' ' + joiningWord + ' ';
-                    }
-                });
-                return createResult(blankNodeId, readableText);
+            function getBlankNodeObject(obj, joiningWord, blankNode) {
+                var id = _.get(blankNode, '@id');
+                var list = _.get(obj, "[0]['@list']", []);
+                if(list.length) {
+                    var stoppingIndex = list.length - 1;
+                    var readableText = '';
+                    _.forEach(list, function(item, index) {
+                        readableText += $filter('splitIRI')(_.get(item, '@id')).end;
+                        if(index !== stoppingIndex) {
+                            readableText += ' ' + joiningWord + ' ';
+                        }
+                    });
+                    console.log(blankNode);
+                    return createResult(id, readableText);
+                } else {
+                    console.warn(blankNode);
+                    return {};
+                }
             }
 
             self.restructure = function(flattened, ontologyId, context, prefixes) {
@@ -637,15 +645,14 @@
                 }
 
                 _.forEach(blankNodes, function(blankNode) {
-                    var id = _.get(blankNode, '@id');
                     if(_.get(blankNode, prefixes.owl + 'unionOf')) {
                         var unionOf = _.get(blankNode, prefixes.owl + 'unionOf');
-                        _.assign(ontology.matonto.unionOfs, getBlankNodeObject(_.get(unionOf, "[0]['@list']", []), 'or', id));
+                        _.assign(ontology.matonto.unionOfs, getBlankNodeObject(unionOf, 'or', blankNode));
                     } else if(_.get(blankNode, prefixes.owl + 'intersectionOf')) {
                         var intersectionOf = _.get(blankNode, prefixes.owl + 'intersectionOf');
-                        _.assign(ontology.matonto.intersectionOfs, getBlankNodeObject(_.get(intersectionOf, "[0]['@list']", []), 'or', id));
+                        _.assign(ontology.matonto.intersectionOfs, getBlankNodeObject(intersectionOf, 'or', blankNode));
                     } else {
-                        console.warn('Unhandled blank node (non-restriction)\n', blankNode);
+                        console.warn(blankNode);
                     }
                 });
 
@@ -668,8 +675,9 @@
                         if(onClassObj && Array.isArray(onClassObj) && onClassObj.length === 1) {
                             _.assign(ontology.matonto.classExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
+                        console.log(restriction);
                     } else {
-                        console.warn('Unhandled blank node (restriction)\n', restriction);
+                        console.warn(restriction);
                     }
                     ontology.matonto.blankNodes.push(restriction);
                     i++;
