@@ -23,12 +23,6 @@
             <input class="form-control" id="iriEnd" name="iriEnd" ng-pattern="/^[a-zA-Z0-9-_]+$/" required ng-model="vm.iriEnd" ng-trim="false" ng-change="vm.entityChanged()" />
             <!--p class="error-msg" ng-if="vm.iriForm.iriEnd.$invalid">This localname is invalid.</p-->
         </div>
-        <!-- Update references -->
-        <div class="checkbox">
-            <label>
-                <input type="checkbox" id="iriUpdate" ng-model="vm.iriUpdate" /> Update all entities that referenced this IRI.
-            </label>
-        </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="vm.iriForm.$invalid" on-click="vm.editIRI()">Edit</custom-button>

@@ -217,8 +217,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    public Response saveChangesToOntology(String ontologyIdStr, String resourceIdStr, String resourceJson,
-                                          boolean updateObjects) {
+    public Response saveChangesToOntology(String ontologyIdStr, String resourceIdStr, String resourceJson) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
         throwErrorIfMissingParam(resourceIdStr, "resourceIdStr is missing");
         throwErrorIfMissingParam(resourceJson, "resourceJson is missing");
@@ -227,7 +226,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
             Resource changedResource = BNodeOrIRI(resourceIdStr);
-            updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson, updateObjects);
+            updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, "Exception occurred while updating ontology.",
                     Response.Status.INTERNAL_SERVER_ERROR);

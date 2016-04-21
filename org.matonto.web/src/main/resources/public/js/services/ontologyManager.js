@@ -1065,8 +1065,7 @@
                         config = {
                             params: {
                                 resourceid: changedEntry.entityId,
-                                resourcejson: entityjson,
-                                updateobjects: _.get(obj, 'matonto.updateObjects', false)
+                                resourcejson: entityjson
                             }
                         }
 
@@ -1153,16 +1152,14 @@
             }
 
             self.editIRI = function(begin, then, end, update, selected, ontology) {
-                var update = document.getElementById('iriUpdate').checked,
-                    fresh = begin + then + end;
+                var fresh = begin + then + end;
 
                 if(selected.matonto.hasOwnProperty('namespace')) {
                     delete selected.matonto.namespace;
-                } else if(update) {
+                } else {
                     updateRefsService.update(ontology, selected['@id'], fresh);
                 }
                 selected['@id'] = fresh;
-                selected.matonto.updateObjects = update;
             }
 
             self.isObjectProperty = function(types) {

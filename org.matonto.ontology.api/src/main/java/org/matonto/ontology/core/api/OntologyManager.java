@@ -63,8 +63,7 @@ public interface OntologyManager {
      *                   otherwise
      * @return True if successfully updated, false otherwise
      */
-    boolean saveChangesToOntology(Resource ontologyResource, Resource changedResource, String resourceJson,
-                                  boolean updateObjects);
+    boolean saveChangesToOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
 
     /**
      * Add the resource json to the Ontology object
