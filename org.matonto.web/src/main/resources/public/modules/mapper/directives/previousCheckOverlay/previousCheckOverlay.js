@@ -28,7 +28,7 @@
                     var dvm = this;
                     var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
-                        return obj.index > dvm.filePreview.headers.length - 1;
+                        return parseInt(obj.index, 10) > dvm.filePreview.headers.length - 1;
                     }), 'index');
 
                     dvm.getDataMappingName = function(dataMappingId) {

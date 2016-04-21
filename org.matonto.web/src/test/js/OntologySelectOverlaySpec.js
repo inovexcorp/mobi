@@ -44,7 +44,7 @@ describe('Ontology Select Overlay directive', function() {
             scope.$digest();
         });
 
-        it('ontology should be two way bound', function() {
+        it('ontology should be one way bound', function() {
             var controller = this.element.controller('ontologySelectOverlay');
             controller.ontology = {};
             scope.$digest();
