@@ -142,6 +142,13 @@ $rdf-controls-height: 34px + $rdf-padding/2;
             height: ($overlay-height - 75);
             padding: 0.5em;
             margin-bottom: 0;
+
+            .ui-select-choices-row {
+                position: relative;
+                i {
+                    float: right;
+                }
+            }
         }
     }
     .previous-check-overlay {
@@ -306,12 +313,12 @@ $rdf-controls-height: 34px + $rdf-padding/2;
             position: relative;
 
             #edit-cancel, .prop-form, .column-form, .edit-prop, .edit-class {
-                width: 75%;
+                width: 40%;
                 float: left;
                 padding: 0.5em;
 
                 .form-group {
-                    width: 25%;
+                    width: 50%;
                 }
                 .form-btns {
                     margin-bottom: 0px;

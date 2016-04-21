@@ -20,7 +20,7 @@
                 },
                 bindToController: {
                     mapping: '=',
-                    ontology: '=',
+                    ontologies: '=',
                     columns: '=',
                     invalidPropIds: '='
                 },
@@ -55,7 +55,9 @@
                     }
                     dvm.mappedAllProps = function(classMapping) {
                         var mappedProps = mappingManagerService.getPropMappingsByClass(dvm.mapping, classMapping['@id']);
-                        var classProps = ontologyManagerService.getClassProperties(dvm.ontology, getClassId(classMapping));
+                        var classId = getClassId(classMapping);
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        var classProps = ontologyManagerService.getClassProperties(ontology, classId);
 
                         return mappedProps.length === classProps.length;
                     }
@@ -75,13 +77,15 @@
                         );
                     }
                     function getClassName(classMapping) {
-                        var classObj = ontologyManagerService.getClass(dvm.ontology, getClassId(classMapping));
-                        return ontologyManagerService.getEntityName(classObj);
+                        var classId = getClassId(classMapping);
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontology, classId));
                     }
                     function getPropName(propMapping, classMapping) {
-                        var propId = getPropId(propMapping);
                         var classId = getClassId(classMapping);
-                        return ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(dvm.ontology, classId, propId));
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        var propId = getPropId(propMapping);
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(ontology, classId, propId));
                     }
                     function getClassId(classMapping) {
                         return mappingManagerService.getClassIdByMapping(classMapping);

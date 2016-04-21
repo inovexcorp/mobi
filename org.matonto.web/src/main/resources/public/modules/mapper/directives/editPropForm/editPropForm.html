@@ -4,7 +4,7 @@
         <column-select columns="columns" selected-column="dvm.selectedColumn"></column-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 
-        ontology-id="dvm.ontology['@id']" 
+        ontologies="dvm.ontologies" 
         class-id="{{dvm.getClassId()}}" 
         selected-prop="{{dvm.getPropId()}}"></range-class-description>
     <div class="form-btns form-group btn-container">
