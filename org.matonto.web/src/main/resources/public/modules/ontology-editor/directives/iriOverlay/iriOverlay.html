@@ -29,10 +29,6 @@
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
             </p>
         </div>
-        <!-- Update references -->
-        <div class="checkbox">
-            <label><input type="checkbox" id="iriUpdate" ng-model="vm.iriUpdate" />Update all entities that reference this IRI.</label>
-        </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="vm.iriForm.$invalid" on-click="vm.entityChanged(); vm.editIRI();">Edit</custom-button>

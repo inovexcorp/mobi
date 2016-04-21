@@ -2,62 +2,62 @@
     'use strict';
 
     angular
-        .module('updateRefs', [])
+        .module('updateRefs', ['responseObj'])
         .service('updateRefsService', updateRefsService);
 
-    function updateRefsService() {
+    updateRefsService.$inject = ['$filter', 'responseObj'];
+
+    function updateRefsService($filter, responseObj) {
         var self = this;
+        var exclude = [
+                '$$hashKey',
+                'context',
+                'unsaved'
+            ];
 
-        self.update = function(obj, old, fresh, owl) {
-            var temp, prop, i, arr, excluded,
-                exclude = [
-                    '$$hashKey',
-                    'context',
-                    'unsaved'
-                ];
-
+        self.update = function(obj, old, fresh) {
+            var freshSplit = $filter('splitIRI')(fresh);
             // iterates over all of the properties of the object
-            for(prop in obj) {
-                excluded = exclude.indexOf(prop);
+            _.forOwn(obj, function(value, key) {
+                var excluded = _.indexOf(exclude, key);
 
-                // checks to see if the property contains the old string
-                if(prop.indexOf(old) !== -1 && excluded === -1) {
-                    // copies current value
-                    temp = angular.copy(obj[prop]);
-                    // deletes property
-                    delete obj[prop];
-                    // adds new property name
-                    prop = prop.replace(old, fresh);
-                    obj[prop] = temp;
+                // replaces the key if it is the old value
+                if(key === old && excluded === -1) {
+                    delete obj[key];
+                    obj[fresh] = value;
                 }
 
                 // do nothing for these situations
-                if(excluded !== -1 || !obj[prop] || prop === '@id') {
+                if(excluded !== -1 || !obj[key]) {
                     // do nothing
                 }
-                // iterates through the array and recursively calls this function
-                else if(Object.prototype.toString.call(obj[prop]) === '[object Array]') {
-                    i = obj[prop].length;
-                    while(i--) {
-                        // means that it is the annotationList
-                        if(typeof obj[prop][i] === 'string') {
-                            obj[prop][i] = obj[prop][i].replace(old, fresh);
+                // checks all items in the array
+                else if(Object.prototype.toString.call(value) === '[object Array]') {
+                    _.forEach(value, function(item, index) {
+                        // checks to see if it contains the old value
+                        if(item === old) {
+                            obj[key][index] = fresh;
                         }
-                        // else, something else
-                        else {
-                            self.update(obj[prop][i], old, fresh, owl);
+                        // not a string, so update it
+                        else if(responseObj.validateItem(item) && responseObj.getItemIri(item) === old) {
+                            obj[key][index].localName = freshSplit.end;
+                            obj[key][index].namespace = freshSplit.begin + freshSplit.then;
                         }
-                    }
+                        // not a string, so update it
+                        else if(typeof item !== 'string') {
+                            self.update(obj[key][index], old, fresh);
+                        }
+                    });
                 }
-                // recursively call this function
-                else if(typeof obj[prop] === 'object') {
-                    self.update(obj[prop], old, fresh, owl);
+                // objects need to be updated
+                else if(typeof value === 'object') {
+                    self.update(obj[key], old, fresh);
                 }
-                // remove the old prefix and replace it with the new
-                else if(obj[prop].indexOf(old) !== -1) {
-                    obj[prop] = obj[prop].replace(old, fresh);
+                // change string value if it matches
+                else if(value === old) {
+                    obj[key] = fresh;
                 }
-            }
+            });
         }
     }
 })();

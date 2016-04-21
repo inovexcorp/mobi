@@ -10,6 +10,7 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.Models;
 import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
@@ -260,37 +261,84 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new MatontoOntologyException("Ontology ID does not exist.");
     }
 
-    private boolean updateOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
+    private boolean updateOntology(Resource ontologyResource, Resource originalResource, String resourceJson)
+            throws MatontoOntologyException {
         checkRepositoryAndOntology(ontologyResource);
-
-        RepositoryConnection conn = null;
+        boolean updated = false;
 
         try {
-            conn = repository.getConnection();
-            InputStream in = new ByteArrayInputStream(resourceJson.getBytes(StandardCharsets.UTF_8));
-            Model changedModel = transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
+            final RepositoryConnection conn = repository.getConnection();
 
-            if(originalChangedResource != null) {
-                RepositoryResult<Statement> changedStatements = conn.getStatements(originalChangedResource, null, null, ontologyResource);
-                conn.remove(changedStatements, ontologyResource);
+            try {
+                InputStream in = new ByteArrayInputStream(resourceJson.getBytes(StandardCharsets.UTF_8));
+                Model changedModel = transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
+
+                if(ontologyResource != null && changedModel.size() > 0) {
+                    conn.begin();
+                    Resource newSubject = Models.subject(changedModel).get();
+                    Resource newContext = (originalResource.equals(ontologyResource) &&
+                            !ontologyResource.equals(newSubject)) ?
+                            (new SimpleOntology(resourceJson, this)).getOntologyId().getOntologyIdentifier() :
+                            ontologyResource;
+
+                    // Ontology IRI has changed, so update the context of all statements
+                    if(newContext.equals(newSubject)) {
+                        conn.getStatements(null, null, null, ontologyResource).forEach(stmt -> {
+                            conn.remove(stmt);
+                            if(!stmt.getSubject().equals(newSubject)) {
+                                conn.add(stmt, newContext);
+                            }
+                        });
+                        conn.remove(registrySubject, registryPredicate, ontologyResource, registryContext);
+                        conn.add(factory.createStatement(registrySubject, registryPredicate, newContext,
+                                registryContext));
+                    }
+
+                    // Remove all original statements if the object is not a blank node. Replace subject with new
+                    // subject if the IRI is changed and it is a blank node
+                    conn.getStatements(originalResource, null, null, newContext).forEach(stmt -> {
+                        if (!(stmt.getObject() instanceof BNode)) {
+                            conn.remove(stmt);
+                        } else if (!newSubject.equals(originalResource)) {
+                            conn.remove(stmt);
+                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject(),
+                                    newContext));
+                        }
+                    });
+
+                    // Updates statements that reference the changed entity if needed
+                    conn.getStatements(null, null, originalResource, newContext).forEach(stmt -> {
+                        conn.remove(stmt);
+                        conn.add(factory.createStatement(stmt.getSubject(), stmt.getPredicate(), newSubject,
+                                newContext));
+                    });
+
+                    // Add all new statements if the object is not a blank node
+                    changedModel.forEach(stmt -> {
+                        if (!(stmt.getObject() instanceof BNode)) {
+                            conn.add(stmt, newContext);
+                        }
+                    });
+                    conn.commit();
+                    updated = true;
+                }
+
+            } catch (IOException | org.openrdf.rio.RDFParseException e) {
+                throw new MatontoOntologyException("Error in parsing resourceJson", e);
+            } finally {
+                closeConnection(conn);
             }
 
-			conn.add(changedModel, ontologyResource);
-
-            // TODO: handle ontology iri changes
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
-        } catch (IOException|org.openrdf.rio.RDFParseException e) {
-            throw new MatontoOntologyException("Error in parsing resourceJson", e);
-        } finally {
-            closeConnection(conn);
         }
 
-        return true;
+        return updated;
     }
 
     @Override
-    public boolean saveChangesToOntology(Resource ontologyResource, Resource originalChangedResource, String resourceJson) throws MatontoOntologyException {
+    public boolean saveChangesToOntology(Resource ontologyResource, Resource originalChangedResource,
+                                         String resourceJson) throws MatontoOntologyException {
         return updateOntology(ontologyResource, originalChangedResource, resourceJson);
     }
 
