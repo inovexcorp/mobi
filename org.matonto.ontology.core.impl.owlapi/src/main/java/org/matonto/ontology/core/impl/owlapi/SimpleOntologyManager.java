@@ -291,7 +291,8 @@ public class SimpleOntologyManager implements OntologyManager {
                             }
                         });
                         conn.remove(registrySubject, registryPredicate, ontologyResource, registryContext);
-                        conn.add(registrySubject, registryPredicate, newContext, registryContext);
+                        conn.add(factory.createStatement(registrySubject, registryPredicate, newContext,
+                                registryContext));
                     }
 
                     // Remove all original statements if the object is not a blank node. Replace subject with new
@@ -301,8 +302,8 @@ public class SimpleOntologyManager implements OntologyManager {
                             conn.remove(stmt);
                         } else if (!newSubject.equals(originalResource)) {
                             conn.remove(stmt);
-                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject()),
-                                    newContext);
+                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject(),
+                                    newContext));
                         }
                     });
 
@@ -310,7 +311,8 @@ public class SimpleOntologyManager implements OntologyManager {
                     if(updateObjects) {
                         conn.getStatements(null, null, originalResource, newContext).forEach(stmt -> {
                             conn.remove(stmt);
-                            conn.add(stmt.getSubject(), stmt.getPredicate(), newSubject, newContext);
+                            conn.add(factory.createStatement(stmt.getSubject(), stmt.getPredicate(), newSubject,
+                                    newContext));
                         });
                     }
 
