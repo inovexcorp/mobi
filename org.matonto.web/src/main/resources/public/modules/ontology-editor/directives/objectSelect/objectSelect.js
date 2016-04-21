@@ -55,7 +55,7 @@
                     }
 
                     dvm.isBlankNode = function(id) {
-                        return id && id.includes('_:b');
+                        return typeof id === 'string' && id.includes('_:b');
                     }
 
                     dvm.getBlankNodeValue = function(id) {

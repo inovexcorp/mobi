@@ -557,7 +557,7 @@
             }
 
             function createResult(prop, value) {
-                var result = new Object;
+                var result = {};
                 result[prop] = value;
                 return result;
             }
@@ -565,9 +565,9 @@
             function getRestrictionObject(obj, detailedProp, detailedObj, blankNodeId) {
                 var onId = _.get(obj[0], '@id', '');
                 var readableText = $filter('splitIRI')(onId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
-                if(_.get(detailedObj, '@id')) {
+                if(_.has(detailedObj, '@id')) {
                     readableText += $filter('splitIRI')(detailedObj['@id']).end;
-                } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
+                } else if(_.has(detailedObj, '@value') && _.has(detailedObj, '@type')) {
                     readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
                 }
                 return createResult(blankNodeId, readableText);
@@ -585,10 +585,10 @@
                             readableText += ' ' + joiningWord + ' ';
                         }
                     });
-                    console.log(blankNode);
+                    console.log('Properly handled\n', blankNode);
                     return createResult(id, readableText);
                 } else {
-                    console.warn(blankNode);
+                    console.warn('Improperly handled\n', blankNode);
                     return {};
                 }
             }
@@ -649,14 +649,14 @@
                 }
 
                 _.forEach(blankNodes, function(blankNode) {
-                    if(_.get(blankNode, prefixes.owl + 'unionOf')) {
+                    if(_.has(blankNode, prefixes.owl + 'unionOf')) {
                         var unionOf = _.get(blankNode, prefixes.owl + 'unionOf');
                         _.assign(ontology.matonto.unionOfs, getBlankNodeObject(unionOf, 'or', blankNode));
-                    } else if(_.get(blankNode, prefixes.owl + 'intersectionOf')) {
+                    } else if(_.has(blankNode, prefixes.owl + 'intersectionOf')) {
                         var intersectionOf = _.get(blankNode, prefixes.owl + 'intersectionOf');
                         _.assign(ontology.matonto.intersectionOfs, getBlankNodeObject(intersectionOf, 'or', blankNode));
                     } else {
-                        console.warn(blankNode);
+                        console.warn('Improperly handled\n', blankNode);
                     }
                 });
 
@@ -671,17 +671,17 @@
                     var onPropertyObj = _.get(restriction, prefixes.owl + 'onProperty');
                     var onClassObj = _.get(restriction, prefixes.owl + 'onClass');
 
-                    if(detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
+                    if(detailedProp && _.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
                         var detailedObj = restriction[detailedProp][0];
-                        if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1) {
+                        if(onPropertyObj && _.isArray(onPropertyObj) && onPropertyObj.length === 1) {
                             _.assign(ontology.matonto.propertyExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
-                        if(onClassObj && Array.isArray(onClassObj) && onClassObj.length === 1) {
+                        if(onClassObj && _.isArray(onClassObj) && onClassObj.length === 1) {
                             _.assign(ontology.matonto.classExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
-                        console.log(restriction);
+                        console.log('Properly handled\n', restriction);
                     } else {
-                        console.warn(restriction);
+                        console.warn('Improperly handled\n', restriction);
                     }
                     ontology.matonto.blankNodes.push(restriction);
                     i++;
@@ -1059,7 +1059,7 @@
                                 '@graph': [copy]
                             }
                         } else {
-                            entityjson = [copy];
+                            entityjson = copy;
                         }
 
                         config = {
