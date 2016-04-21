@@ -61,7 +61,7 @@
                     dvm.getBlankNodeValue = function(id) {
                         var result;
 
-                        if(id.includes('_:b')) {
+                        if(typeof id === 'string' && id.includes('_:b')) {
                             var propertyIRI = _.get(vm.ontology.matonto.propertyExpressions, id);
                             var classIRI = _.get(vm.ontology.matonto.classExpressions, id);
                             var unionOfIRI = _.get(vm.ontology.matonto.unionOfs, id);
