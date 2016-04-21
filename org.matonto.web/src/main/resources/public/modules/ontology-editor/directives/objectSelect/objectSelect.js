@@ -59,12 +59,18 @@
                     }
 
                     dvm.getBlankNodeValue = function(id) {
-                        var propertyIRI = _.get(vm.ontology.matonto.propertyExpressions, id);
-                        var classIRI = _.get(vm.ontology.matonto.classExpressions, id);
-                        var unionOfIRI = _.get(vm.ontology.matonto.unionOfs, id);
-                        var intersectionOfIRI = _.get(vm.ontology.matonto.intersectionOfs, id);
+                        var result;
 
-                        return propertyIRI || classIRI || unionOfIRI || intersectionOfIRI;
+                        if(id.includes('_:b')) {
+                            var propertyIRI = _.get(vm.ontology.matonto.propertyExpressions, id);
+                            var classIRI = _.get(vm.ontology.matonto.classExpressions, id);
+                            var unionOfIRI = _.get(vm.ontology.matonto.unionOfs, id);
+                            var intersectionOfIRI = _.get(vm.ontology.matonto.intersectionOfs, id);
+
+                            result = propertyIRI || classIRI || unionOfIRI || intersectionOfIRI;
+                        }
+
+                        return result;
                     }
                 }]
             }
