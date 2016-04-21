@@ -256,10 +256,10 @@
                 var comment = _.get(obj, prefixes.rdfs + 'comment', null);
                 var label = _.get(obj, prefixes.rdfs + 'label', null);
 
-                if(comment && !Array.isArray(comment)) {
+                if(comment && !_.isArray(comment)) {
                     copy[prefixes.rdfs + 'comment'] = [comment[0]];
                 }
-                if(label && !Array.isArray(label)) {
+                if(label && !_.isArray(label)) {
                     copy[prefixes.rdfs + 'label'] = [label[0]];
                 }
 
@@ -692,7 +692,7 @@
                     domain = properties[i][prefixes.rdfs + 'domain'];
 
                     if(domain) {
-                        if(Array.isArray(domain)) {
+                        if(_.isArray(domain)) {
                             j = domain.length;
                             var item;
                             while(j--) {
