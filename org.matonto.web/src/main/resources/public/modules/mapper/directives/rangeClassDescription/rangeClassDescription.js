@@ -14,7 +14,7 @@
                 replace: true,
                 scope: {},
                 bindToController: {
-                    ontologyId: '=',
+                    ontologies: '=',
                     classId: '@',
                     selectedProp: '@'
                 },
@@ -28,8 +28,10 @@
                         return _.get(getRangeClass(), "['" + prefixes.rdfs + "comment'][0]['@value']", '');
                     }
                     function getRangeClass() {
-                        var propObj = ontologyManagerService.getClassProperty(dvm.ontologyId, dvm.classId, dvm.selectedProp);
-                        return ontologyManagerService.getClass(dvm.ontologyId, _.get(propObj, "['"+ prefixes.rdfs + "range'][0]['@id']"));
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, dvm.classId);
+                        var propObj = ontologyManagerService.getClassProperty(ontology, dvm.classId, dvm.selectedProp);
+                        var rangeClassId = _.get(propObj, "['"+ prefixes.rdfs + "range'][0]['@id']");
+                        return ontologyManagerService.getClass(ontologyManagerService.findOntologyWithClass(dvm.ontologies, rangeClassId), rangeClassId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/rangeClassDescription/rangeClassDescription.html'

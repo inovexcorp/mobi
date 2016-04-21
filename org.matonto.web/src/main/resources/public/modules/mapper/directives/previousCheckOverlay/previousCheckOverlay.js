@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('previousCheckOverlay', ['mappingManager'])
+        .module('previousCheckOverlay', ['ontologyManager', 'mappingManager'])
         .directive('previousCheckOverlay', previousCheckOverlay);
 
-        previousCheckOverlay.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
+        previousCheckOverlay.$inject = ['ontologyManagerService', 'mappingManagerService'];
 
-        function previousCheckOverlay(prefixes, ontologyManagerService, mappingManagerService) {
+        function previousCheckOverlay(ontologyManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -18,18 +18,17 @@
                 },
                 bindToController: {
                     mapping: '=',
+                    ontology: '=',
                     filePreview: '='
                 },
                 link: function(scope, elem, attrs, ctrl) {
-                    if (scope.validateForm) {
-                        scope.validateForm.$setValidity('validColumnMappings', ctrl.invalidColumns.length === 0);
-                    }
+                    ctrl.setValidity();
                 },
                 controller: function() {
                     var dvm = this;
                     var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
-                        return obj.index > dvm.filePreview.headers.length - 1;
+                        return parseInt(obj.index, 10) > dvm.filePreview.headers.length - 1;
                     }), 'index');
 
                     dvm.getDataMappingName = function(dataMappingId) {
@@ -37,13 +36,14 @@
                         var classId = mappingManagerService.getClassIdByMapping(
                             mappingManagerService.findClassWithDataMapping(dvm.mapping.jsonld, dataMappingId)
                         );
-                        var propName = ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClassProperty(mappingManagerService.getSourceOntologyId(dvm.mapping), classId, propId)
-                        );
-                        var className = ontologyManagerService.getEntityName(
-                            ontologyManagerService.getClass(mappingManagerService.getSourceOntologyId(dvm.mapping), classId)
-                        );
+                        var propName = ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(dvm.ontology, classId, propId));
+                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
                         return className + ": " + propName;
+                    }
+                    dvm.setValidity = function() {
+                        if (dvm.validateForm) {
+                            dvm.validateForm.$setValidity('validColumnMappings', dvm.invalidColumns.length === 0);
+                        }
                     }
                 },
                 templateUrl: 'modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html'

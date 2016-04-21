@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('editPropForm', ['prefixes', 'ontologyManager', 'mappingManager'])
+        .module('editPropForm', ['ontologyManager', 'mappingManager'])
         .directive('editPropForm', editPropForm);
 
-        editPropForm.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
+        editPropForm.$inject = ['ontologyManagerService', 'mappingManagerService'];
 
-        function editPropForm(prefixes, ontologyManagerService, mappingManagerService) {
+        function editPropForm(ontologyManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -19,13 +19,13 @@
                 },
                 bindToController: {
                     mapping: '=',
+                    ontologies: '=',
                     classMappingId: '=',
                     selectedPropMapping: '=',
                     selectedColumn: '='
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.ontologyId = mappingManagerService.getSourceOntologyId(dvm.mapping);
 
                     dvm.getClassId = function() {
                         return mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
@@ -35,18 +35,17 @@
                     }
                     dvm.getTitle = function() {
                         var classId = dvm.getClassId();
-                        var propId = dvm.getPropId();
-                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontologyId, classId));
-                        var propName = ontologyManagerService.getEntityName(getClassProp(classId, propId));
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontology, classId));
+                        var propName = ontologyManagerService.getEntityName(getClassProp(classId, dvm.getPropId()));
                         return className + ': ' + propName;
                     }
                     dvm.isObjectProperty = function() {
-                        var classId = dvm.getClassId();
-                        var propId = dvm.getPropId();
-                        return ontologyManagerService.isObjectProperty(_.get(getClassProp(classId, propId), '@type', []), prefixes.owl);
+                        return ontologyManagerService.isObjectProperty(_.get(getClassProp(dvm.getClassId(), dvm.getPropId()), '@type', []));
                     }
                     function getClassProp(classId, propId) {
-                        return ontologyManagerService.getClassProperty(dvm.ontologyId, classId, propId);
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        return ontologyManagerService.getClassProperty(ontology, classId, propId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editPropForm/editPropForm.html'

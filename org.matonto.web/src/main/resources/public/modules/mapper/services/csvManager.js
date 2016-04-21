@@ -113,11 +113,11 @@
              * HTTP POST to csv/{fileName}/map which maps the data in an uploaded delimited file 
              * into RDF using an uploaded mapping file.
              * @param {string} fileName - The name of the uploaded file to map
-             * @param {string} mappingFileName - The name of the uploaded mapping file
+             * @param {string} mappingName - The name of the uploaded mapping
              * @param {boolean} containsHeaders - Whether the delimited file contains a header row
              * @return {promise} The response data with the mapped data in JSON-LD format
              */
-            self.mapByFile = function(fileName, mappingFileName, containsHeaders, separator) {
+            self.mapByUploaded = function(fileName, mappingName, containsHeaders, separator) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -130,7 +130,7 @@
                             'Content-Type': undefined
                         }
                     };
-                fd.append('fileName', mappingFileName);
+                fd.append('mappingName', mappingName);
 
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)

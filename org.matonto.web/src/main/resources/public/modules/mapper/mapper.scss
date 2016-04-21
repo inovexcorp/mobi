@@ -10,6 +10,9 @@ $rdf-controls-height: 34px + $rdf-padding/2;
     overflow: hidden;
 }
 .mapper {
+    .header-link {
+        font-size: 14px;
+    }
     #mapper-content {
         margin-left: $sidebar-width;
         height: 100%;
@@ -49,6 +52,9 @@ $rdf-controls-height: 34px + $rdf-padding/2;
                 }
                 .clickable {
                     cursor: pointer;
+                }
+                .disabled {
+                    cursor: not-allowed;
                 }
                 #toggle-table {
                     position: absolute;
@@ -104,9 +110,6 @@ $rdf-controls-height: 34px + $rdf-padding/2;
     }
     .ontology-preview {
         overflow-y: auto;
-        .toggle-class-list {
-            font-size: 14px;
-        }
     }
     .ontology-preview-overlay {
         .content {
@@ -139,6 +142,13 @@ $rdf-controls-height: 34px + $rdf-padding/2;
             height: ($overlay-height - 75);
             padding: 0.5em;
             margin-bottom: 0;
+
+            .ui-select-choices-row {
+                position: relative;
+                i {
+                    float: right;
+                }
+            }
         }
     }
     .previous-check-overlay {
@@ -164,6 +174,16 @@ $rdf-controls-height: 34px + $rdf-padding/2;
             margin-bottom: 0;
         }
     }
+    .mapping-name-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .form-group {
+            height: ($overlay-height - 75);
+            padding: 0.5em;
+            margin-bottom: 0;
+        }
+    }
     .finish-overlay {
         div.form-group {
             width: 100%;
@@ -184,6 +204,12 @@ $rdf-controls-height: 34px + $rdf-padding/2;
             #mapping-title {
                 height: 100%;
                 text-align: center;
+
+                button {
+                    padding: 0;
+                    font-size: 0.5em;
+                    vertical-align: middle;
+                }
             }
             #ontology-section {
                 display: inline-block;
@@ -287,15 +313,23 @@ $rdf-controls-height: 34px + $rdf-padding/2;
             position: relative;
 
             #edit-cancel, .prop-form, .column-form, .edit-prop, .edit-class {
-                width: 75%;
+                width: 40%;
                 float: left;
                 padding: 0.5em;
 
                 .form-group {
-                    width: 25%;
+                    width: 50%;
                 }
                 .form-btns {
                     margin-bottom: 0px;
+                }
+                .iri-template {
+                    small {
+                        display: block;
+                        &.iri-template-header {
+                            font-weight: bold;
+                        }
+                    }
                 }
             }
             .class-list-container {
