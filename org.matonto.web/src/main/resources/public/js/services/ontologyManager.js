@@ -1151,7 +1151,7 @@
                 }
             }
 
-            self.editIRI = function(begin, then, end, update, selected, ontology) {
+            self.editIRI = function(begin, then, end, selected, ontology) {
                 var fresh = begin + then + end;
 
                 if(selected.matonto.hasOwnProperty('namespace')) {
