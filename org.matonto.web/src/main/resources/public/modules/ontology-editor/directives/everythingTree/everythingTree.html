@@ -50,23 +50,6 @@
                 </li>
             </ul>
 
-            <!-- start others (these will also be handled differently)
-            <ul ng-if="ontology.matonto.others.length" ng-init="opened = false;">
-                <li>
-                    <a ng-click="opened = !opened; $event.stopPropagation();">
-                        <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': opened, 'fa-folder-o': !opened}"></i>Others
-                    </a>
-                </li>
-                <li class="container" ng-show="opened">
-                    <ul ng-repeat="other in ontology.matonto.others">
-                        <a>
-                            <i class="fa fa-fw fa-question"></i>{{other[ontology.matonto.rdfs + 'label'][0]['@value'] || ((other['@id'] | splitIRI).end | beautify)}}
-                        </a>
-                    </ul>
-                </li>
-            </ul> -->
-
         </li>
     </ul>
     <!-- end ontologies -->
