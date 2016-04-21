@@ -282,8 +282,8 @@ public class SimpleOntologyManager implements OntologyManager {
                             conn.remove(stmt);
                         } else if (!newSubject.equals(originalResource)) {
                             conn.remove(stmt);
-                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject()),
-                                    ontologyResource);
+                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject(),
+                                    ontologyResource));
                         }
                     });
                 }
