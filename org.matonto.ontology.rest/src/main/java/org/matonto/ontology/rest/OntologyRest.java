@@ -4,11 +4,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.io.InputStream;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
-
 
 @Path("/ontologies")
 @Api( value = "/ontologies" )
@@ -38,7 +37,7 @@ public interface OntologyRest {
     Response getOntologies(@QueryParam("ontologyids") String ontologyIdList);
 
     /**
-     * Ingests/uploads an ontology file to a data store
+     * Ingests/uploads an ontology file to a data store.
      *
      * @param fileInputStream The ontology file to upload
      * @return true if persisted, false otherwise
@@ -49,7 +48,7 @@ public interface OntologyRest {
     Response uploadFile(@FormDataParam("file") InputStream fileInputStream);
 
     /**
-     * Ingests an ontology json-ld string to a data store
+     * Ingests an ontology json-ld string to a data store.
      *
      * @param ontologyJson The ontology json-ld to upload
      * @return true if persisted, false otherwise
@@ -299,6 +298,22 @@ public interface OntologyRest {
     @Path("{ontologyid}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     Response getIRIsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns an array of the imports closure in the requested format from the ontology
+     * with the requested ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return array of imported ontologies from the ontology with the requested ID in the requested format
+     */
+    @GET
+    @Path("{ontologyid}/imported-ontologies")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Retrieves the JSON-LD of all directly imported ontologies")
+    Response getImportsClosure(@PathParam("ontologyid") String ontologyIdStr,
+                                     @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
 
     /**
      * Returns annotation properties in the direct imported ontologies of the ontology with requested ontology ID.

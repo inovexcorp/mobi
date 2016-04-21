@@ -78,6 +78,9 @@ function mockOntologyManager() {
                         return $q.reject('Something went wrong');
                     }
                 });
+                this.findOntologyWithClass = jasmine.createSpy('findOntologyWithClass').and.callFake(function(ontologyList, classId) {
+                    return {};
+                });
             });
         });
     });

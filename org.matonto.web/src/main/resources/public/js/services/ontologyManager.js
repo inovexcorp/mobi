@@ -83,6 +83,8 @@
                     blankNodes: [],
                     classExpressions: {},
                     propertyExpressions: {},
+                    unionOfs: {},
+                    intersectionOfs: {},
                     delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#'
                 }
 
@@ -188,27 +190,32 @@
                 return arr;
             }
 
-            function restructureOntology(ontology, ontologyId) {
-                var getPrefixes,
-                    context = ontology['@context'] || {};
+            function getPrefixes(context) {
+                var inverted = _.invert(context);
+                return {
+                    owl: inverted[prefixes.owl] ? inverted[prefixes.owl] + ':' : prefixes.owl,
+                    rdfs: inverted[prefixes.rdfs] ? inverted[prefixes.rdfs] + ':' : prefixes.rdfs,
+                    xsd: inverted[prefixes.xsd] ? inverted[prefixes.xsd] + ':' : prefixes.xsd
+                };
+            }
+
+            function fullRestructureOntology(ontology, ontologyId) {
+                var context = ontology['@context'] || {};
                 ontology = ontology['@graph'] || ontology;
 
-                getPrefixes = function(context) {
-                    var inverted = _.invert(context);
-                    return {
-                        owl: inverted[prefixes.owl] ? inverted[prefixes.owl] + ':' : prefixes.owl,
-                        rdfs: inverted[prefixes.rdfs] ? inverted[prefixes.rdfs] + ':' : prefixes.rdfs,
-                        xsd: inverted[prefixes.xsd] ? inverted[prefixes.xsd] + ':' : prefixes.xsd
-                    };
-                }
+                return fullRestructure(ontology, ontologyId, context, getPrefixes(context));
+            }
 
-                return self.restructure(ontology, ontologyId, context, getPrefixes(context));
+            function restructureOntology(ontology) {
+                var context = ontology['@context'] || {};
+                ontology = ontology['@graph'] || ontology;
+                return restructure(ontology, context, getPrefixes(context));
             }
 
             function addOntology(ontology, ontologyId) {
                 var deferred = $q.defer();
 
-                restructureOntology(ontology, ontologyId)
+                fullRestructureOntology(ontology, ontologyId)
                     .then(function(response) {
                         ontologies.push(response);
                         deferred.resolve(response);
@@ -549,7 +556,13 @@
                 ontologyIds.push(ontologyId);
             }
 
-            function getBlankNodeObject(obj, detailedProp, detailedObj, blankNodeId) {
+            function createResult(prop, value) {
+                var result = new Object;
+                result[prop] = value;
+                return result;
+            }
+
+            function getRestrictionObject(obj, detailedProp, detailedObj, blankNodeId) {
                 var onId = _.get(obj[0], '@id', '');
                 var readableText = $filter('splitIRI')(onId).end + ' ' + $filter('splitIRI')(detailedProp).end + ' ';
                 if(_.get(detailedObj, '@id')) {
@@ -557,12 +570,30 @@
                 } else if(_.get(detailedObj, '@value') && _.get(detailedObj, '@type')) {
                     readableText += detailedObj['@value'] + ' ' + $filter('splitIRI')(detailedObj['@type']).end;
                 }
-                var result = new Object;
-                result[blankNodeId] = readableText;
-                return result;
+                return createResult(blankNodeId, readableText);
             }
 
-            self.restructure = function(flattened, ontologyId, context, prefixes) {
+            function getBlankNodeObject(obj, joiningWord, blankNode) {
+                var id = _.get(blankNode, '@id');
+                var list = _.get(obj, "[0]['@list']", []);
+                if(list.length) {
+                    var stoppingIndex = list.length - 1;
+                    var readableText = '';
+                    _.forEach(list, function(item, index) {
+                        readableText += $filter('splitIRI')(_.get(item, '@id')).end;
+                        if(index !== stoppingIndex) {
+                            readableText += ' ' + joiningWord + ' ';
+                        }
+                    });
+                    console.log(blankNode);
+                    return createResult(id, readableText);
+                } else {
+                    console.warn(blankNode);
+                    return {};
+                }
+            }
+
+            function restructure(flattened, context, prefixes) {
                 var j, obj, types, domain, annotations,
                     ontology = {
                         matonto: {
@@ -581,10 +612,9 @@
                     jsDatatypes = [],
                     blankNodes = [],
                     list = flattened['@graph'] ? flattened['@graph'] : flattened,
-                    i = 0,
-                    deferred = $q.defer();
+                    i = 0;
 
-                while(i < list.length) {
+                while (i < list.length) {
                     obj = list[i];
                     types = _.get(obj, '@type', []);
 
@@ -618,6 +648,18 @@
                     i++;
                 }
 
+                _.forEach(blankNodes, function(blankNode) {
+                    if(_.get(blankNode, prefixes.owl + 'unionOf')) {
+                        var unionOf = _.get(blankNode, prefixes.owl + 'unionOf');
+                        _.assign(ontology.matonto.unionOfs, getBlankNodeObject(unionOf, 'or', blankNode));
+                    } else if(_.get(blankNode, prefixes.owl + 'intersectionOf')) {
+                        var intersectionOf = _.get(blankNode, prefixes.owl + 'intersectionOf');
+                        _.assign(ontology.matonto.intersectionOfs, getBlankNodeObject(intersectionOf, 'or', blankNode));
+                    } else {
+                        console.warn(blankNode);
+                    }
+                });
+
                 i = 0;
                 while(i < restrictions.length) {
                     var restriction = restrictions[i];
@@ -632,13 +674,14 @@
                     if(detailedProp && Array.isArray(restriction[detailedProp]) && restriction[detailedProp].length === 1) {
                         var detailedObj = restriction[detailedProp][0];
                         if(onPropertyObj && Array.isArray(onPropertyObj) && onPropertyObj.length === 1) {
-                            _.assign(ontology.matonto.propertyExpressions, getBlankNodeObject(onPropertyObj, detailedProp, detailedObj, id));
+                            _.assign(ontology.matonto.propertyExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
                         if(onClassObj && Array.isArray(onClassObj) && onClassObj.length === 1) {
-                            _.assign(ontology.matonto.classExpressions, getBlankNodeObject(onPropertyObj, detailedProp, detailedObj, id));
+                            _.assign(ontology.matonto.classExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
-                    } else {
                         console.log(restriction);
+                    } else {
+                        console.warn(restriction);
                     }
                     ontology.matonto.blankNodes.push(restriction);
                     i++;
@@ -649,13 +692,21 @@
                     domain = properties[i][prefixes.rdfs + 'domain'];
 
                     if(domain) {
-                        if(Object.prototype.toString.call(domain) === '[object Array]') {
+                        if(Array.isArray(domain)) {
                             j = domain.length;
+                            var item;
                             while(j--) {
-                                addToClass(domain[j]['@id'], properties[i], classes);
+                                item = domain[j]['@id'];
+                                if(item.includes('_:b')) {
+                                    ontology.matonto.noDomains.push(properties[i]);
+                                } else {
+                                    addToClass(domain[j]['@id'], properties[i], classes);
+                                }
                             }
-                        } else {
+                        } else if(!domain['@id'].includes('_:b')) {
                             addToClass(domain['@id'], properties[i], classes);
+                        } else {
+                            ontology.matonto.noDomains.push(properties[i]);
                         }
                     } else {
                         ontology.matonto.noDomains.push(properties[i]);
@@ -666,6 +717,13 @@
                 ontology.matonto.classes = classes;
                 ontology.matonto.context = objToArr(context);
                 ontology.matonto.others = others;
+
+                return ontology;
+            }
+
+            function fullRestructure(flattened, ontologyId, context, prefixes) {
+                var deferred = $q.defer(),
+                    ontology = restructure(flattened, context, prefixes);
 
                 $q.all([
                         $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
@@ -914,7 +972,7 @@
                 }
 
                 var onGetSuccess = function(response) {
-                    restructureOntology(response.data.ontology, ontologyId).then(function(response) {
+                    fullRestructureOntology(response.data.ontology, ontologyId).then(function(response) {
                         deferred.resolve(response);
                         $rootScope.showSpinner = false;
                     });
@@ -1032,6 +1090,41 @@
                 }
             }
 
+            self.getImportedOntologies = function(ontologyId) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                var config = {
+                        params: {
+                            rdfformat: 'jsonld'
+                        }
+                    };
+                var onError = function(response) {
+                    deferred.reject(response);
+                    $rootScope.showSpinner = false;
+                }
+                var onGetSuccess = function(response) {
+                    var restructured = _.map(response, function(ontology) {
+                        var restructuredOntology = _.find(ontologies, {'@id': ontology.id});
+                        return restructuredOntology ? restructuredOntology : restructureOntology(ontology.ontology);
+                    });
+                    deferred.resolve(restructured);
+                    $rootScope.showSpinner = false;
+                }
+
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', config).then(function(response) {
+                    if(_.get(response, 'status') === 200 && _.has(response, 'data')) {
+                        onGetSuccess(response.data);
+                    } else if (_.get(response, 'status') === 204) {
+                        console.log('No imported ontologies found');
+                        deferred.resolve([]);
+                    } else {
+                        onError(response);
+                    }
+                }, onError);
+
+                return deferred.promise;
+            }
+
             self.create = function(obj, state) {
                 $rootScope.showSpinner = true;
 
@@ -1122,6 +1215,14 @@
 
             self.getClassProperty = function(ontology, classId, propId) {
                 return _.find(self.getClassProperties(ontology, classId), {'@id': propId});
+            }
+
+            self.findOntologyWithClass = function(ontologyList, classId) {
+                return _.find(ontologyList, function(ontology) {
+                    return _.findIndex(self.getClasses(ontology), function(classObj) {
+                        return classObj['@id'] === classId;
+                    }) >= 0;
+                });
             }
 
             self.getBeautifulIRI = function(iri) {

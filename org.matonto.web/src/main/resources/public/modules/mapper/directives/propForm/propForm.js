@@ -18,7 +18,7 @@
                     setNext: '&'
                 },
                 bindToController: {
-                    ontology: '=',
+                    ontologies: '=',
                     props: '=',
                     selectedProp: '=',
                     isDatatypeProp: '&',
@@ -44,7 +44,8 @@
                         );
                     }
                     dvm.getClassName = function(classId) {
-                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontology, classId));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/propForm/propForm.html'
