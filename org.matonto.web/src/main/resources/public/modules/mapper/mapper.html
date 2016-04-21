@@ -148,7 +148,5 @@
             highlight-idx="vm.isDatatypeProperty(vm.selectedPropId) ? vm.filePreview.headers.indexOf(vm.selectedColumn) : undefined"
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
-    <button ng-click="vm.displayMapping = !vm.displayMapping" style="position: absolute; top: 0; left: 0; z-index: 1000;"><i class="fa fa-question"></i></button>
-    <pre ng-if="vm.displayMapping" style="position: absolute; top: 0; left: 25px; right: 0; height: 100%; z-index: 1000">{{vm.mapping | json}}</pre>
     </div>
 </div>

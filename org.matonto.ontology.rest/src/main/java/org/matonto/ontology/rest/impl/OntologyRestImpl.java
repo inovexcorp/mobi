@@ -123,7 +123,7 @@ public class OntologyRestImpl implements OntologyRest {
                 json.put("ontology", optOntology.get().asJsonLD().toString());
                 jsonArray.add(json);
             } else {
-                logger.debug("Ontology " + id + "does not exist");
+                logger.debug("Ontology " + id + " does not exist");
             }
         }
 
@@ -410,7 +410,7 @@ public class OntologyRestImpl implements OntologyRest {
             .filter(ontology -> !ontology.getOntologyId().getOntologyIRI().get().stringValue().equals(ontologyIdStr))
             .map(ontology1 -> this.getOntologyAsJsonObject(ontology1, rdfFormat))
             .forEach(arr::add);
-        return Response.status(200).entity(arr.toString()).build();
+        return arr.size() == 0 ? Response.status(204).build() : Response.status(200).entity(arr.toString()).build();
     }
 
     private Set<Ontology> getImportsClosure(@Nonnull String ontologyIdStr) throws MatontoOntologyException {

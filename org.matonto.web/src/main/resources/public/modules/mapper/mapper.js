@@ -132,7 +132,7 @@
         vm.isDatatypeProperty = function(propId) {
             var classId = vm.getClassId(vm.editingClassMappingId);
             var propObj = ontologyManagerService.getClassProperty(ontologyManagerService.findOntologyWithClass(vm.ontologies, classId), classId, propId);
-            return propObj ? !ontologyManagerService.isObjectProperty(_.get(propObj, '@type', []), prefixes.owl) : false;
+            return propObj ? !ontologyManagerService.isObjectProperty(_.get(propObj, '@type', [])) : false;
         }
         vm.resetEditingVars = function() {
             vm.editingClassMappingId = '';
@@ -252,7 +252,7 @@
             if (ontology['@id'] !== previousSourceOntologyId) {
                 ontologyManagerService.getImportedOntologies(ontology['@id']).then(function(response) {
                     vm.ontologies = _.concat(ontology, response);
-                });
+                }, onError);
             }
 
             vm.activeStep = 3;

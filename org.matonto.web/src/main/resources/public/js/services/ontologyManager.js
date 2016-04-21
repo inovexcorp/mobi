@@ -1019,8 +1019,11 @@
                 }
 
                 $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/imported-ontologies', config).then(function(response) {
-                    if(_.has(response, 'data') && !_.has(response, 'error')) {
+                    if(_.get(response, 'status') === 200 && _.has(response, 'data')) {
                         onGetSuccess(response.data);
+                    } else if (_.get(response, 'status') === 204) {
+                        console.log('No imported ontologies found');
+                        deferred.resolve([]);
                     } else {
                         onError(response);
                     }
