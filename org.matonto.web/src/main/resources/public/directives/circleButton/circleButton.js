@@ -13,7 +13,6 @@
         .module('circleButton', [])
         /**
          * @ngdoc directive
-         * @module circleButton
          * @name circleButton.directive:circleButton
          * @scope
          * @restrict E
