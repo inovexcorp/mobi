@@ -297,22 +297,24 @@ public class SimpleOntologyManager implements OntologyManager {
 
                     // Remove all original statements if the object is not a blank node. Replace subject with new
                     // subject if the IRI is changed and it is a blank node
-                    conn.getStatements(originalResource, null, null, newContext).forEach(stmt -> {
-                        if (!(stmt.getObject() instanceof BNode)) {
-                            conn.remove(stmt);
-                        } else if (!newSubject.equals(originalResource)) {
-                            conn.remove(stmt);
-                            conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject(),
-                                    newContext));
-                        }
-                    });
+                    if(originalResource != null) {
+                        conn.getStatements(originalResource, null, null, newContext).forEach(stmt -> {
+                            if (!(stmt.getObject() instanceof BNode)) {
+                                conn.remove(stmt);
+                            } else if (!newSubject.equals(originalResource)) {
+                                conn.remove(stmt);
+                                conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject(),
+                                        newContext));
+                            }
+                        });
 
-                    // Updates statements that reference the changed entity if needed
-                    conn.getStatements(null, null, originalResource, newContext).forEach(stmt -> {
-                        conn.remove(stmt);
-                        conn.add(factory.createStatement(stmt.getSubject(), stmt.getPredicate(), newSubject,
-                                newContext));
-                    });
+                        // Updates statements that reference the changed entity if needed
+                        conn.getStatements(null, null, originalResource, newContext).forEach(stmt -> {
+                            conn.remove(stmt);
+                            conn.add(factory.createStatement(stmt.getSubject(), stmt.getPredicate(), newSubject,
+                                    newContext));
+                        });
+                    }
 
                     // Add all new statements if the object is not a blank node
                     changedModel.forEach(stmt -> {
