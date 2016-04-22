@@ -10,10 +10,11 @@
             </li>
             <li class="separator"></li>
             <li>
-                <a ng-click="vm.showOpenOverlay = true;" title="Open Ontology"
-                   ng-class="{ 'active': vm.showOpenOverlay === true }">
+                <button ng-click="vm.showOpenOverlay = true;" title="Open Ontology"
+                        ng-class="{ 'active': vm.showOpenOverlay === true }"
+                        ng-disabled="!vm.ontologyIds.length">
                     <i class="fa fa-get-pocket fa-fw"></i>
-                </a>
+                </button>
             </li>
             <li>
                 <a ng-click="vm.showUploadOverlay = true;" title="Upload Ontology"
