@@ -342,6 +342,8 @@
                         if(response.data.added) {
                             console.log('Successfully added class');
                             ontology.matonto.classes.push(classObj);
+                            var classIRI = $filter('splitIRI')(classObj['@id']);
+                            ontology.matonto.subClasses.push({namespace: classIRI.begin + classIRI.then, localName: classIRI.end});
                             deferred.resolve(response);
                         } else {
                             console.warn('Class not added');
@@ -360,8 +362,12 @@
 
             function createProperty(ontology, classObj, property) {
                 var deferred = $q.defer();
-                var type = getRestfulPropertyType(_.get(property, '@type', []));
+                var types = _.get(property, '@type', []);
+                var pathVariable = getRestfulPropertyType(types);
 
+                if(!types.length) {
+                    property['@type'].push(prefixes.owl + 'DatatypeProperty')
+                }
                 property = restructureLabelAndComment(property);
 
                 var config = {
@@ -370,11 +376,18 @@
                         }
                     }
 
-                $http.post(prefix + '/' + encodeURIComponent(ontology['@id']) + '/' + type, null, config)
+                $http.post(prefix + '/' + encodeURIComponent(ontology['@id']) + '/' + pathVariable, null, config)
                     .then(function(response) {
                         if(response.data.added) {
                             console.log('Successfully added property');
                             classObj.matonto.properties.push(property);
+                            var propertyIRI = $filter('splitIRI')(property['@id']);
+                            var subObject = {namespace: propertyIRI.begin + propertyIRI.then, localName: propertyIRI.end};
+                            if(self.isObjectProperty(property['@type'])) {
+                                ontology.matonto.subObjectProperties.push(subObject);
+                            } else {
+                                ontology.matonto.subDataProperties.push(subObject);
+                            }
                             deferred.resolve(response);
                         } else {
                             console.warn('Property not added');
@@ -849,6 +862,7 @@
                     },
                     newProperty = {
                         '@id': '',
+                        '@type': [],
                         matonto: {
                             currentAnnotationSelect: null
                         }
