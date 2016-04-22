@@ -4,15 +4,28 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.util.Set;
 
 @XmlRootElement
 public class PublishedResourceMarshaller {
 
+    private String id;
     private String title;
     private String description;
     private XMLGregorianCalendar issued;
     private XMLGregorianCalendar modified;
     private String identifier;
+    private Set<String> keywords;
+    private Set<String> distributions;
+
+    @XmlElement
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     @XmlElement
     public String getTitle() {
@@ -59,5 +72,23 @@ public class PublishedResourceMarshaller {
 
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    @XmlElement
+    public Set<String> getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(Set<String> keywords) {
+        this.keywords = keywords;
+    }
+
+    @XmlElement
+    public Set<String> getDistributions() {
+        return distributions;
+    }
+
+    public void setDistributions(Set<String> distributions) {
+        this.distributions = distributions;
     }
 }

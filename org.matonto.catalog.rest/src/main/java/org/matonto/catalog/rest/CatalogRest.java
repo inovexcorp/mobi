@@ -17,6 +17,26 @@ import java.util.List;
 public interface CatalogRest {
 
     /**
+     * Retrieves a list of all the PublishedResources in the catalog. An optional type parameter filters the returned
+     * resources. Parameters can be passed to control paging.
+     *
+     * @param resourceType The String representing the rdf:type of the resources to retrieve.
+     * @param searchTerms The String representing the search terms for filtering resources.
+     * @param limit The number of resources to return in one page.
+     * @param start The offset for the page.
+     * @return The paginated List of PublishedResources that match the search criteria.
+     */
+    @GET
+    @Path("/resources")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation("Retrieves the published catalog resources.")
+    PaginatedResults<PublishedResourceMarshaller> listPublishedResources(
+            @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType,
+            @QueryParam("searchTerms") String searchTerms,
+            @DefaultValue("100") @QueryParam("limit") int limit,
+            @DefaultValue("0") @QueryParam("start") int start);
+
+    /**
      * Returns a PublishedResourceMarshaller with requested Resource ID.
      *
      * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
@@ -55,26 +75,6 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Removes a published resource from the catalog.")
     Response deletePublishedResource(@PathParam("resourceId") String resourceId);
-
-    /**
-     * Retrieves a list of all the PublishedResources in the catalog. An optional type parameter filters the returned
-     * resources. Parameters can be passed to control paging.
-     *
-     * @param resourceType The String representing the rdf:type of the resources to retrieve.
-     * @param searchTerms The String representing the search terms for filtering resources.
-     * @param limit The number of resources to return in one page.
-     * @param start The offset for the page.
-     * @return The paginated List of PublishedResources that match the search criteria.
-     */
-    @GET
-    @Path("/resources")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Retrieves the published catalog resources.")
-    PaginatedResults<PublishedResourceMarshaller> listPublishedResources(
-            @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType,
-            @QueryParam("searchTerms") String searchTerms,
-            @DefaultValue("100") @QueryParam("limit") int limit,
-            @DefaultValue("0") @QueryParam("start") int start);
 
 //    @GET
 //    @Path("/resources/{resourceId}/versions/{versionId}")
@@ -151,6 +151,22 @@ public interface CatalogRest {
     Response deleteDistributions(@PathParam("resourceId") String resourceId);
 
     /**
+     * Retrieves a Distribution from the specified resource.
+     *
+     * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
+     *                   an IRI unless String begins with "_:".
+     * @param distributionId the String representing the Distribution ID. NOTE: Assumes ID represents
+     *                       an IRI unless String begins with "_:".
+     * @return the Distribution from the specified resource.
+     */
+    @GET
+    @Path("/resources/{resourceId}/distributions/{distributionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation("Retrieves the published resource distribution by its ID.")
+    DistributionMarshaller getDistribution(@PathParam("resourceId") String resourceId,
+                                           @PathParam("distributionId") String distributionId);
+
+    /**
      * Removes a Distribution from the specified resource.
      *
      * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
@@ -193,5 +209,5 @@ public interface CatalogRest {
     @Path("/resource-types")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Retrieves all the available resource types.")
-    Response getPublishedResource();
+    Response getResourceTypes();
 }

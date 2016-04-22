@@ -2,7 +2,9 @@ package org.matonto.catalog.rest.jaxb;
 
 import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
+@XmlRootElement
 public class PaginatedResults<T> {
 
     private Links links;

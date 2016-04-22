@@ -9,24 +9,27 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.api.Ontology;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.Models;
+import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.base.RepositoryResult;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -37,6 +40,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private Repository repo;
     private ValueFactory vf;
+    private ModelFactory mf;
     private NamedGraphFactory ngf;
 
     private final Logger log = Logger.getLogger(SimpleCatalogManager.class);
@@ -52,17 +56,29 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Reference
+    protected void setModelFactory(ModelFactory modelFactory) {
+        mf = modelFactory;
+    }
+
+    @Reference
     protected void setNamedGraphFactory(NamedGraphFactory namedGraphFactory) {
         ngf = namedGraphFactory;
     }
 
     private static final String GET_RESOURCE_QUERY;
+    private static final String FIND_RESOURCES_QUERY;
     private static final String RESOURCE_BINDING = "resource";
+    private static final String LIMIT_BINDING = "limit";
+    private static final String OFFSET_BINDING = "offset";
 
     static {
         try {
             GET_RESOURCE_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/get-resource.rq"),
+                    "UTF-8"
+            );
+            FIND_RESOURCES_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/find-resources.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -71,7 +87,6 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     private static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-    private static final String PR_TYPE = "http://matonto.org/ontologies/catalog#PublishedResource";
     private static final String CATALOG_TYPE = "http://www.w3.org/ns/dcat#Catalog";
     private static final String DC = "http://purl.org/dc/terms/";
     private static final String DCAT = "http://www.w3.org/ns/dcat#";
@@ -100,8 +115,36 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends PublishedResource> Set<T> findResource(String searchTerm) {
-        return null;
+    public Set<PublishedResource> findResource(String searchTerm, int limit, int offset) {
+        RepositoryConnection conn = repo.getConnection();
+
+        TupleQuery query = conn.prepareTupleQuery(GET_RESOURCE_QUERY);
+        query.setBinding(LIMIT_BINDING, vf.createLiteral(limit));
+        query.setBinding(OFFSET_BINDING, vf.createLiteral(offset));
+
+        TupleQueryResult result = query.evaluate();
+
+        Set<PublishedResource> resources = new HashSet<>();
+        while (result.hasNext()) {
+            BindingSet bindingSet = result.next();
+
+            if (!bindingSet.getBindingNames().contains(RESOURCE_BINDING)) {
+                // Aggregations return an empty result when no results found
+                result.close();
+                conn.close();
+                return Collections.emptySet();
+            }
+
+            Resource resource = vf.createIRI(Bindings.requiredResource(bindingSet, RESOURCE_BINDING).stringValue());
+
+            PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
+
+            resources.add(publishedResource);
+        }
+
+        result.close();
+        conn.close();
+        return resources;
     }
 
     @Override
@@ -124,31 +167,11 @@ public class SimpleCatalogManager implements CatalogManager {
                 return Optional.empty();
             }
 
-            // Get Required Params
-            String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
-            Resource type = Bindings.requiredResource(bindingSet, "type");
-
-            SimplePublishedResourceBuilder builder = new SimplePublishedResourceBuilder(resource, type, title);
-            builder.issued(Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue());
-            builder.modified(Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue());
-
-            bindingSet.getBinding("description").ifPresent(binding ->
-                    builder.description(binding.getValue().stringValue()));
-
-            bindingSet.getBinding("identifier").ifPresent(binding ->
-                    builder.identifier(binding.getValue().stringValue()));
-
-            bindingSet.getBinding("keywords").ifPresent(binding -> {
-                String[] keywords = StringUtils.split(binding.getValue().stringValue(), ",");
-
-                for (String keyword : keywords) {
-                    builder.addKeyword(keyword);
-                }
-            });
+            PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
 
             result.close();
             conn.close();
-            return Optional.of(builder.build());
+            return Optional.of(publishedResource);
         } else {
             result.close();
             conn.close();
@@ -189,5 +212,65 @@ public class SimpleCatalogManager implements CatalogManager {
         boolean catalogExists = conn.getStatements(null, null, null, resource).hasNext();
         conn.close();
         return catalogExists;
+    }
+
+    private Optional<Literal> getOptionalLiteral(Model model, String propertyName) {
+        return Models.objectLiteral(model.filter(null, vf.createIRI(propertyName), null));
+    }
+
+    private Literal getLiteral(Model model, String propertyName) {
+        return Models.objectLiteral(model.filter(null, vf.createIRI(propertyName), null))
+                .orElseThrow(() -> missingRequiredProperty(propertyName));
+    }
+
+    private RuntimeException missingRequiredProperty(String propertyName) {
+        return new IllegalStateException(String.format("Required property \"%s\" was not present.", propertyName));
+    }
+
+    private PublishedResource processResourceBindingSet(BindingSet bindingSet, Resource resource, RepositoryConnection conn) {
+        // Get Required Params
+        String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
+        Resource type = Bindings.requiredResource(bindingSet, "type");
+
+        SimplePublishedResourceBuilder builder = new SimplePublishedResourceBuilder(resource, type, title);
+        builder.issued(Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue());
+        builder.modified(Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue());
+
+        bindingSet.getBinding("description").ifPresent(binding ->
+                builder.description(binding.getValue().stringValue()));
+
+        bindingSet.getBinding("identifier").ifPresent(binding ->
+                builder.identifier(binding.getValue().stringValue()));
+
+        bindingSet.getBinding("keywords").ifPresent(binding -> {
+            String[] keywords = StringUtils.split(binding.getValue().stringValue(), ",");
+
+            for (String keyword : keywords) {
+                builder.addKeyword(keyword);
+            }
+        });
+
+        bindingSet.getBinding("distributions").ifPresent(binding -> {
+            String[] distributions = StringUtils.split(binding.getValue().stringValue(), ",");
+
+            for (String distribution : distributions) {
+                Resource distIRI = vf.createIRI(distribution);
+
+                Model distModel = RepositoryResults.asModel(conn.getStatements(distIRI, null, null), mf);
+                String distTitle = getLiteral(distModel, DC + "title").stringValue();
+
+                SimpleDistribution.Builder distBuilder = new SimpleDistribution.Builder(distIRI, distTitle);
+
+                distBuilder.issued(getLiteral(distModel, DC + "issued").dateTimeValue());
+                distBuilder.modified(getLiteral(distModel, DC + "modified").dateTimeValue());
+
+                getOptionalLiteral(distModel, DC + "description").ifPresent(literal ->
+                        distBuilder.description(literal.stringValue()));
+
+                builder.addDistribution(distBuilder.build());
+            }
+        });
+
+        return builder.build();
     }
 }

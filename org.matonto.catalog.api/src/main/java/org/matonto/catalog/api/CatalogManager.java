@@ -7,7 +7,9 @@ import java.util.Set;
 
 public interface CatalogManager {
 
-    <T extends PublishedResource> Set<T> findResource(String searchTerm);
+//    <T extends PublishedResource> Set<T> findResource(String searchTerm);
+
+    Set<PublishedResource> findResource(String searchTerm, int limit, int offset);
 
     Optional<PublishedResource> getResource(Resource resource);
 
