@@ -40,11 +40,11 @@ var jsFiles = function(prefix) {
     nodeJsFiles = function(prefix) {
         return [
             prefix + '*/lodash.min.js',
-            prefix + '**/angular.min.js',
-            prefix + '**/angular-mocks.js',
+            prefix + '*/angular.min.js',
+            prefix + '*/angular-mocks.js',
             prefix + '**/angular-ui-router.min.js',
-            prefix + '**/angular-uuid.js',
-            prefix + '**/angular-cookies.min.js',
+            prefix + '*/angular-uuid.js',
+            prefix + '*/angular-cookies.min.js',
             prefix + '**/angular-file-saver.bundle.min.js',
             prefix + '**/select.min.js'
         ]
