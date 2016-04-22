@@ -316,7 +316,7 @@
                             deferred.reject(response);
                         }
                     }, function(response) {
-                        console.error('Error in createOntology() - Response error');
+                        console.error('Error in createOntology() function');
                         deferred.reject(response);
                     })
                     .then(function() {

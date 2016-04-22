@@ -21,7 +21,7 @@
                     vm.iriUpdate = true;
 
                     dvm.getNamespacePattern = function() {
-                        return REGEX.NAMESPACE;
+                        return REGEX.IRI;
                     }
                 }]
             }
