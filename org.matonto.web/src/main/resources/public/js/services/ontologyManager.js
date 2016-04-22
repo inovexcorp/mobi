@@ -85,7 +85,8 @@
                     propertyExpressions: {},
                     unionOfs: {},
                     intersectionOfs: {},
-                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#'
+                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#',
+                    isValid: true
                 }
 
                 angular.merge(ontology, obj);
@@ -290,21 +291,16 @@
             }
 
             function createOntology(ontology) {
-                var ontologyjson,
-                    deferred = $q.defer();
-
+                var deferred = $q.defer();
                 ontology.matonto.originalId = ontology['@id'];
                 ontology = restructureLabelAndComment(ontology);
-                ontologies.push(ontology);
 
                 var copy = angular.copy(ontology);
                 delete copy.matonto;
 
-                ontologyjson = createEntityJson(ontology.matonto, copy);
-
                 var config = {
                         params: {
-                            ontologyjson: ontologyjson
+                            ontologyjson: createEntityJson(ontology.matonto, copy)
                         }
                     };
 
@@ -312,13 +308,14 @@
                     .then(function(response) {
                         if(response.data.persisted) {
                             console.log('Successfully created ontology');
+                            ontologies.push(ontology);
                             deferred.resolve(response);
                         } else {
                             console.warn('Ontology not created');
                             deferred.reject(response);
                         }
                     }, function(response) {
-                        console.error('Error in createOntology() function');
+                        console.error('Error in createOntology() - Response error');
                         deferred.reject(response);
                     })
                     .then(function() {
@@ -837,7 +834,8 @@
                             delimiter: '#',
                             classes: [],
                             annotations: defaultAnnotations,
-                            currentAnnotationSelect: null
+                            currentAnnotationSelect: null,
+                            isValid: false
                         }
                     },
                     newClass = {

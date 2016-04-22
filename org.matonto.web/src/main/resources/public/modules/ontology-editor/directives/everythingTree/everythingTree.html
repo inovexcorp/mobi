@@ -3,7 +3,8 @@
     <strong>Everything</strong>
     <!-- start ontologies -->
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
-        <tree-item-with-sub current-entity="ontology"
+        <tree-item-with-sub ng-class="{'invalid': !ontology.matonto.isValid}"
+                            current-entity="ontology"
                             current-ontology="ontology"
                             is-active="vm.state.oi === $index && (vm.state.ci === undefined || vm.state.ci === -1) && vm.state.pi === undefined"
                             is-opened="opened"

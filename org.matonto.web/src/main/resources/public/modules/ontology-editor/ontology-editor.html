@@ -3,14 +3,16 @@
     <aside class="left-nav nav">
         <ul>
             <li>
+                <button ng-click="vm.save()" title="Save All Changes"
+                        ng-disabled="!vm.ontology.matonto.isValid">
+                    <i class="fa fa-floppy-o fa-fw"></i>
+                </button>
+            </li>
+            <li class="separator"></li>
+            <li>
                 <a ng-click="vm.showOpenOverlay = true;" title="Open Ontology"
                    ng-class="{ 'active': vm.showOpenOverlay === true }">
                     <i class="fa fa-get-pocket fa-fw"></i>
-                </a>
-            </li>
-            <li>
-                <a ng-click="vm.save()" title="Save All Changes">
-                    <i class="fa fa-floppy-o fa-fw"></i>
                 </a>
             </li>
             <li>

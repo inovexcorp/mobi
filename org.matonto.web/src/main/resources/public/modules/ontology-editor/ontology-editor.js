@@ -6,12 +6,12 @@
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
-        'serializationSelect', 'ontologyOpenOverlay', 'ngMessages'])
+        'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'createError'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
+    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes', 'REGEX'];
 
-    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
+    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes, REGEX) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -26,6 +26,10 @@
             if(vm.state) {
                 setVariables(vm.state.oi);
             }
+        }
+
+        vm.getIriPattern = function() {
+            return REGEX.IRI;
         }
 
         /* State Management */
@@ -49,18 +53,25 @@
         }
 
         function submitEdit() {
-            if(_.get(vm.ontology, 'matonto.originalId')) {
+            if(_.has(vm.ontology, 'matonto.originalId')) {
                 ontologyManagerService.edit(vm.ontology.matonto.originalId);
             }
         }
 
-         function submitCreate() {
+        function submitCreate() {
+            delete vm.selected.matonto.createError;
             ontologyManagerService.create(vm.selected, vm.state)
                 .then(function() {
                     var oi = stateManagerService.setStateToNew(vm.state, vm.ontologies);
                     vm.state = stateManagerService.getState();
                     setVariables(oi);
+                }, function(response) {
+                    vm.selected.matonto.createError = response.statusText;
                 });
+        }
+
+        vm.setValidity = function(isValid) {
+            vm.ontology.matonto.isValid = isValid;
         }
 
         vm.uploadOntology = function(isValid, file, namespace, localName) {
@@ -108,7 +119,7 @@
 
         vm.entityChanged = function() {
             vm.selected.matonto.unsaved = true;
-            ontologyManagerService.addToChangedList(vm.ontology['@id'], vm.selected.matonto.originalId, vm.state);
+            ontologyManagerService.addToChangedList(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state);
         }
 
         vm.getPreview = function() {

@@ -16,10 +16,17 @@
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
+        <create-error></create-error>
+
         <!-- ontology iri -->
-        <text-input ng-model="vm.selected['@id']"
-                    display-text="'Ontology IRI'"
-                    change-event="vm.entityChanged()"></text-input>
+        <div ng-class="{'has-error': vm.ontologyForm.ontologyIri.$invalid}" class="form-group">
+            <label class="control-label" for="ontologyIri">Ontology IRI</label>
+            <input class="form-control" id="ontologyIri" name="ontologyIri" ng-model="vm.selected['@id']" ng-pattern="vm.getIriPattern()" ng-change="vm.setValidity(vm.ontologyForm.$valid); vm.entityChanged();" ng-model-options="{updateOn: 'blur'}" required />
+            <p ng-messages="vm.ontologyForm.ontologyIri.$error" class="error-msg">
+                <ng-message when="required">This field cannot be empty. Ontology will not be saved.</ng-message>
+                <ng-message when="pattern">The value provided is not a valid IRI. Ontology will not be saved.</ng-message>
+            </p>
+        </div>
 
         <!-- rdfs:label -->
         <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
