@@ -308,6 +308,7 @@
                     .then(function(response) {
                         if(response.data.persisted) {
                             console.log('Successfully created ontology');
+                            ontology.matonto.isValid = true;
                             ontologies.push(ontology);
                             deferred.resolve(response);
                         } else {
