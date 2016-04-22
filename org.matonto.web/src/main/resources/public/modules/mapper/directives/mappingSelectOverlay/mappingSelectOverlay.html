@@ -3,30 +3,13 @@
         <h6>Choose Mapping</h6>
         <div class="new-mapping form-group">
             <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'new'" display-text="'New'" change-event="dvm.updateMappingName()"></radio-button>
-            <label ng-if="dvm.mappingType === 'new'" ng-class="{'has-success': mappingForm.mappingName.$touched && mappingForm.mappingName.$valid, 'has-error': mappingForm.mappingName.$touched && mappingForm.mappingName.$invalid}">
-                Name
-                <input type="text" name="mappingName" class="form-control"
-                    ng-blur="dvm.testUniqueName()"
-                    ng-model="dvm.mappingName" 
-                    ng-required="dvm.mappingType === 'new'"
-                    ng-maxlength="50"
-                    ng-pattern="/^[a-zA-Z0-9._\-]+$/"/>
-            </label>
-            <div class="text-danger" ng-if="dvm.mappingType === 'new' && mappingForm.mappingName.$error.uniqueName">
-                Mapping name must be unique
-            </div>
-            <div class="text-danger" ng-if="dvm.mappingType === 'new' && mappingForm.mappingName.$error.maxlength">
-                Mapping name must be 50 characters or less
-            </div>
-            <div class="text-danger" ng-if="dvm.mappingType === 'new' && mappingForm.mappingName.$error.pattern">
-                Mapping name is invalid
-            </div>
+            <mapping-name-input ng-if="dvm.mappingType === 'new'" name="dvm.newMappingName" required="dvm.mappingType === 'new'"></mapping-name-input>
         </div>
         <div class="previous-mapping form-group">
             <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'previous'" display-text="'Previous'" change-event="dvm.updateMappingName()" is-disabled-when="dvm.previousMappings.length === 0"></radio-button>
             <select class="form-control" size="10" 
                 ng-if="dvm.mappingType === 'previous'" 
-                ng-model="dvm.mappingName" 
+                ng-model="dvm.previousMappingName" 
                 ng-required="dvm.mappingType === 'previous'">
                 <option ng-repeat="mapping in dvm.previousMappings">{{mapping}}</option>
             </select>
@@ -34,7 +17,7 @@
         
         <div class="btn-container clearfix">
             <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
-            <custom-button on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingName})" is-disabled-when="!dvm.mappingType || (dvm.mappingType === 'new' && mappingForm.mappingName.$invalid) || (dvm.mappingType === 'previous' && !dvm.mappingName)">Continue</custom-button>
+            <custom-button on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingType === 'new' ? dvm.newMappingName : dvm.previousMappingName})" is-disabled-when="!dvm.mappingType || mappingForm.$invalid">Continue</custom-button>
         </div>
     </form>
 </div>

@@ -4,7 +4,7 @@
         <prop-select props="dvm.props" selected-prop="dvm.selectedProp" on-change="dvm.update()"></prop-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 
-        ontology="dvm.ontology" 
+        ontologies="dvm.ontologies" 
         class-id="{{classId}}" 
         selected-prop="{{dvm.selectedProp}}"></range-class-description>
     <div class="form-btns form-group btn-container" ng-if="dvm.isObjectProperty()">

@@ -179,31 +179,39 @@
                 }
                 return newMapping;
             }
-            self.addObjectProp = function(mapping, ontology, classMappingId, propId) {
+            self.addObjectProp = function(mapping, ontologies, classMappingId, propId) {
                 var newMapping = angular.copy(mapping);
-                var propObj = ontologyManagerService.getClassProperty(ontology, 
-                    self.getClassIdByMappingId(newMapping, classMappingId), propId);
-                // Check if object property exists for class in ontology and if class mapping exists
-                if (entityExists(newMapping.jsonld, classMappingId) && propObj) {
-                    // Add new object mapping id to object properties of class mapping
-                    var dataEntity = {
-                        '@id': prefixes.dataDelim + uuid.v4()
-                    };
-                    var classMapping = getEntityById(newMapping.jsonld, classMappingId);
-                    classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
-                    classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(dataEntity));
-                    // Find the range of the object property (currently only supports a single class)
-                    var rangeClass = propObj[prefixes.rdfs + 'range'][0]['@id'];
-                    var rangeClassMappings = getClassMappingsByClass(newMapping.jsonld, rangeClass);
+                // Check if class mapping exists
+                if (entityExists(newMapping.jsonld, classMappingId)) {
+                    var classId = self.getClassIdByMappingId(newMapping, classMappingId);
+                    var ontology = ontologyManagerService.findOntologyWithClass(ontologies, classId);
+                    // Check if ontology exists with class
+                    if (ontology) {
+                        var propObj = ontologyManagerService.getClassProperty(ontology, classId, propId);
+                        // Check if object property exists for class in ontology
+                        if (propObj) {
+                            // Add new object mapping id to object properties of class mapping
+                            var dataEntity = {
+                                '@id': prefixes.dataDelim + uuid.v4()
+                            };
+                            var classMapping = getEntityById(newMapping.jsonld, classMappingId);
+                            classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
+                            classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(dataEntity));
+                            // Find the range of the object property (currently only supports a single class)
+                            var rangeClass = propObj[prefixes.rdfs + 'range'][0]['@id'];
+                            var rangeOntology = ontologyManagerService.findOntologyWithClass(ontologies, rangeClass);
+                            var rangeClassMappings = getClassMappingsByClass(newMapping.jsonld, rangeClass);
 
-                    // Create class mapping for range of object property
-                    newMapping = self.addClass(newMapping, ontology, rangeClass);
-                    var newClassMapping = _.differenceBy(getClassMappingsByClass(newMapping.jsonld, rangeClass), rangeClassMappings, '@id')[0];
-                    // Create object mapping
-                    dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
-                    dataEntity[prefixes.delim + 'classMapping'] = [{'@id': newClassMapping['@id']}];
-                    dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                    newMapping.jsonld.push(dataEntity);
+                            // Create class mapping for range of object property
+                            newMapping = self.addClass(newMapping, rangeOntology, rangeClass);
+                            var newClassMapping = _.differenceBy(getClassMappingsByClass(newMapping.jsonld, rangeClass), rangeClassMappings, '@id')[0];
+                            // Create object mapping
+                            dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
+                            dataEntity[prefixes.delim + 'classMapping'] = [{'@id': newClassMapping['@id']}];
+                            dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                            newMapping.jsonld.push(dataEntity);
+                        }
+                    }
                 }
                 return newMapping;
             }

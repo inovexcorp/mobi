@@ -21,14 +21,8 @@
                     dvm.previousMappings = mappingManagerService.previousMappingNames;
 
                     dvm.updateMappingName = function() {
-                        dvm.mappingName = (dvm.mappingType === 'new') ? '' : dvm.previousMappings[0];
-                    }
-                    dvm.testUniqueName = function() {
-                        if ($scope.mappingForm) {
-                            $scope.mappingForm.mappingName.$setValidity('uniqueName', 
-                                dvm.mappingType === 'previous' || 
-                                (dvm.mappingType === 'new' && dvm.previousMappings.indexOf(dvm.mappingName) < 0));
-                        }
+                        dvm.previousMappingName = (dvm.mappingType === 'new') ? '' : dvm.previousMappings[0];
+                        dvm.newMappingName = '';
                     }
                 }],
                 templateUrl: 'modules/mapper/directives/mappingSelectOverlay/mappingSelectOverlay.html'

@@ -22,19 +22,19 @@ describe('Range Class Description directive', function() {
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.ontology = {};
+            scope.ontologies = [{}];
             scope.classId = '';
             scope.selectedProp = '';
 
-            this.element = $compile(angular.element('<range-class-description ontology="ontology" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
+            this.element = $compile(angular.element('<range-class-description ontologies="ontologies" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
             scope.$digest();
         });
 
-        it('ontology should be two way bound', function() {
+        it('ontologies should be two way bound', function() {
             var controller = this.element.controller('rangeClassDescription');
-            controller.ontology = {'@id': ''};
+            controller.ontologies = [{'@id': ''}];
             scope.$digest();
-            expect(scope.ontology).toEqual({'@id': ''});
+            expect(scope.ontologies).toEqual([{'@id': ''}]);
         });
         it('classId should be one way bound', function() {
             var controller = this.element.controller('rangeClassDescription');
@@ -51,11 +51,11 @@ describe('Range Class Description directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.ontology = {};
+            scope.ontologies = [{}];
             scope.classId = '';
             scope.selectedProp = '';
 
-            this.element = $compile(angular.element('<range-class-description ontology="ontology" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
+            this.element = $compile(angular.element('<range-class-description ontologies="ontologies" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
             scope.$digest();
         });
         it('should get the name of the range class', function() {
@@ -72,11 +72,11 @@ describe('Range Class Description directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            scope.ontology = {};
+            scope.ontologies = [{}];
             scope.classId = '';
             scope.selectedProp = '';
 
-            var element = $compile(angular.element('<range-class-description ontology="ontology" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
+            var element = $compile(angular.element('<range-class-description ontologies="ontologies" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
             scope.$digest();
             expect(element.hasClass('class-description')).toBe(true);
         });

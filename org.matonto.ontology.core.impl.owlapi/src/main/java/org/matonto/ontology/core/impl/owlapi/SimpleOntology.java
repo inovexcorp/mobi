@@ -354,9 +354,7 @@ public class SimpleOntology implements Ontology {
     public Model asModel(ModelFactory factory) throws MatontoOntologyException {
         Model matontoModel = factory.createModel();
 
-        asSesameModel().forEach(stmt -> {
-            matontoModel.add(ontologyManager.getTransformer().matontoStatement(stmt));
-        });
+        asSesameModel().forEach(stmt -> matontoModel.add(ontologyManager.getTransformer().matontoStatement(stmt)));
 
         return matontoModel;
     }

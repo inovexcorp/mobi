@@ -21,7 +21,7 @@
                 },
                 bindToController: {
                     mapping: '=',
-                    ontology: '=',
+                    ontologies: '=',
                     classMappingId: '='
                 },
                 controller: ['$scope', function($scope) {
@@ -38,7 +38,8 @@
                     }
                     dvm.getTitle = function() {
                         var classId = mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
-                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
+                        var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
+                        return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontology, classId));
                     }
                 }],
                 templateUrl: 'modules/mapper/directives/editClassForm/editClassForm.html'

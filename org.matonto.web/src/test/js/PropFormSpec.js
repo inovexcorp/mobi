@@ -26,13 +26,13 @@ describe('Prop Form directive', function() {
             scope.classId = '';
             scope.set = jasmine.createSpy('set');
             scope.setNext = jasmine.createSpy('setNext');
-            scope.ontology = {};
+            scope.ontologies = [{}];
             scope.props = [];
             scope.selectedProp = '';
             scope.isDatatypeProp = jasmine.createSpy('isDatatypeProp');
             scope.isObjectProp = jasmine.createSpy('isObjectProp');
 
-            this.element = $compile(angular.element('<prop-form class-id="{{classId}}" set="set()" set-next="setNext()" ontology="ontology" props="props" selected-prop="selectedProp" is-datatype-prop="isDatatypeProp()" is-object-prop="isObjectProp()"></prop-form>'))(scope);
+            this.element = $compile(angular.element('<prop-form class-id="{{classId}}" set="set()" set-next="setNext()" ontologies="ontologies" props="props" selected-prop="selectedProp" is-datatype-prop="isDatatypeProp()" is-object-prop="isObjectProp()"></prop-form>'))(scope);
             scope.$digest();
             $timeout.flush();
         });
@@ -55,11 +55,11 @@ describe('Prop Form directive', function() {
 
             expect(scope.setNext).toHaveBeenCalled();
         });
-        it('ontology should be two way bound', function() {
+        it('ontologies should be two way bound', function() {
             var controller = this.element.controller('propForm');
-            controller.ontology = {'@id': ''};
+            controller.ontologies = [{'@id': ''}];
             scope.$digest();
-            expect(scope.ontology).toEqual({'@id': ''});
+            expect(scope.ontologies).toEqual([{'@id': ''}]);
         });
         it('props should be two way bound', function() {
             var controller = this.element.controller('propForm');
@@ -88,13 +88,13 @@ describe('Prop Form directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.ontology = {};
+            scope.ontologies = [{}];
             scope.props = [];
             scope.selectedProp = '';
             scope.isDatatypeProp = jasmine.createSpy('isDatatypeProp');
             scope.isObjectProp = jasmine.createSpy('isObjectProp');
 
-            this.element = $compile(angular.element('<prop-form class-id="{{classId}}" set="set()" set-next="setNext()" ontology="ontology" props="props" selected-prop="selectedProp" is-datatype-prop="isDatatypeProp()" is-object-prop="isObjectProp()"></prop-form>'))(scope);
+            this.element = $compile(angular.element('<prop-form class-id="{{classId}}" set="set()" set-next="setNext()" ontologies="ontologies" props="props" selected-prop="selectedProp" is-datatype-prop="isDatatypeProp()" is-object-prop="isObjectProp()"></prop-form>'))(scope);
             scope.$digest();
             $timeout.flush();
         });
@@ -133,7 +133,7 @@ describe('Prop Form directive', function() {
         it('should get the name of the passed class', function() {
             var controller = this.element.controller('propForm');
             var result = controller.getClassName('');
-            expect(ontologyManagerSvc.getClass).toHaveBeenCalledWith(controller.ontology, '');
+            expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
@@ -143,13 +143,13 @@ describe('Prop Form directive', function() {
             scope.classId = '';
             scope.set = jasmine.createSpy('set');
             scope.setNext = jasmine.createSpy('setNext');
-            scope.ontology = {};
+            scope.ontologies = [{}];
             scope.props = [];
             scope.selectedProp = '';
             scope.isDatatypeProp = jasmine.createSpy('isDatatypeProp');
             scope.isObjectProp = jasmine.createSpy('isObjectProp');
 
-            this.element = $compile(angular.element('<prop-form class-id="{{classId}}" set="set()" set-next="setNext()" ontology="ontology" props="props" selected-prop="selectedProp" is-datatype-prop="isDatatypeProp()" is-object-prop="isObjectProp()"></prop-form>'))(scope);
+            this.element = $compile(angular.element('<prop-form class-id="{{classId}}" set="set()" set-next="setNext()" ontologies="ontologies" props="props" selected-prop="selectedProp" is-datatype-prop="isDatatypeProp()" is-object-prop="isObjectProp()"></prop-form>'))(scope);
             scope.$digest();
             $timeout.flush();
         });
