@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -261,7 +262,7 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new MatontoOntologyException("Ontology ID does not exist.");
     }
 
-    private boolean updateOntology(Resource ontologyResource, Resource originalResource, String resourceJson)
+    private boolean updateOntology(Resource ontologyResource, @Nullable Resource originalResource, String resourceJson)
             throws MatontoOntologyException {
         checkRepositoryAndOntology(ontologyResource);
         boolean updated = false;
@@ -276,7 +277,7 @@ public class SimpleOntologyManager implements OntologyManager {
                 if(ontologyResource != null && changedModel.size() > 0) {
                     conn.begin();
                     Resource newSubject = Models.subject(changedModel).get();
-                    Resource newContext = (originalResource.equals(ontologyResource) &&
+                    Resource newContext = (originalResource != null && originalResource.equals(ontologyResource) &&
                             !ontologyResource.equals(newSubject)) ?
                             (new SimpleOntology(resourceJson, this)).getOntologyId().getOntologyIdentifier() :
                             ontologyResource;
