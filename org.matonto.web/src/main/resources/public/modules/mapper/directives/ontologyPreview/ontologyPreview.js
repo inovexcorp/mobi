@@ -27,6 +27,9 @@
                     dvm.createDescription = function() {
                         return _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']", '');
                     }
+                    dvm.getImports = function() {
+                        return _.map(_.get(dvm.ontology, "['" + prefixes.owl + "imports']", []), '@id');
+                    }
                     dvm.getClasses = function() {
                         return ontologyManagerService.getClasses(dvm.ontology);
                     }

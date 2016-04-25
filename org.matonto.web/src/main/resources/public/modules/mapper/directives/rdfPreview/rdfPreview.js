@@ -6,6 +6,9 @@
         .directive('rdfPreview', rdfPreview)
         .directive('formatRdf', formatRdf);
 
+        formatRdf.$inject = ['$filter'];
+        rdfPreview.$inject = ['$window'];
+
         function formatRdf($filter) {
             return {
                 restrict: 'A',

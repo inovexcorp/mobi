@@ -28,6 +28,9 @@
                     dvm.ontologyIds = _.uniq(_.concat(ontologyManagerService.getOntologyIds(), _.map(ontologyObjs, '@id')));
                     dvm.selectedOntology = undefined;
                     
+                    dvm.isOpen = function(ontologyId) {
+                        return _.findIndex(ontologyObjs, {'@id': ontologyId}) >= 0;
+                    }
                     dvm.getOntology = function(ontologyId) {
                         var deferred = $q.defer();
                         var ontology = _.find(ontologyObjs, {'@id': ontologyId});
