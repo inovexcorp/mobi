@@ -14,8 +14,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -54,7 +52,7 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError("Must provide a resource ID.", Response.Status.BAD_REQUEST);
         }
 
-        Optional<PublishedResource> publishedResourceOptional = checkForResource(resourceId);
+        Optional<PublishedResource> publishedResourceOptional = catalogManager.getResource(getIriOrBnode(resourceId));
 
         if (publishedResourceOptional.isPresent()) {
             return processResource(publishedResourceOptional.get());
@@ -65,12 +63,12 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response createPublishedResource(PublishedResourceMarshaller resource, String resourceType) {
-        return null;
+        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
     public Response deletePublishedResource(String resourceId) {
-        return null;
+        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
@@ -92,18 +90,35 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public PaginatedResults<DistributionMarshaller> getDistributions(String resourceId, int limit, int start) {
-        return null;
+    public Set<DistributionMarshaller> getDistributions(String resourceId) {
+        if (resourceId == null) {
+            throw ErrorUtils.sendError("Must provide a resource ID.", Response.Status.BAD_REQUEST);
+        }
+
+        Optional<PublishedResource> publishedResourceOptional = catalogManager.getResource(getIriOrBnode(resourceId));
+
+        if (publishedResourceOptional.isPresent()) {
+            PublishedResource publishedResource = publishedResourceOptional.get();
+
+            Set<DistributionMarshaller> distributions = new HashSet<>();
+            publishedResource.getDistributions().forEach(distribution -> {
+                distributions.add(processDistribution(distribution));
+            });
+
+            return distributions;
+        } else {
+            return null;
+        }
     }
 
     @Override
     public Response createDistribution(Distribution distribution, String resourceId) {
-        return null;
+        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
     public Response deleteDistributions(String resourceId) {
-        return null;
+        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
@@ -113,36 +128,16 @@ public class CatalogRestImpl implements CatalogRest {
                     Response.Status.BAD_REQUEST);
         }
 
-        Optional<PublishedResource> publishedResourceOptional = checkForResource(resourceId);
+        Optional<PublishedResource> publishedResourceOptional = catalogManager.getResource(getIriOrBnode(resourceId));
 
+        // If resource and distribution are present, return distribution
         if (publishedResourceOptional.isPresent()) {
             PublishedResource publishedResource = publishedResourceOptional.get();
 
             Optional<Distribution> distributionOptional = checkForDistribution(publishedResource, distributionId);
 
             if (distributionOptional.isPresent()) {
-                Distribution distribution = distributionOptional.get();
-
-                DistributionMarshaller marshaller = new DistributionMarshaller();
-                marshaller.setId(distribution.getResource().stringValue());
-                marshaller.setTitle(distribution.getTitle());
-                marshaller.setDescription(distribution.getDescription());
-                marshaller.setIssued(getCalendar(distribution.getIssued()));
-                marshaller.setModified(getCalendar(distribution.getModified()));
-                marshaller.setLicense(distribution.getLicense());
-                marshaller.setRights(distribution.getRights());
-
-                String accessURL = distribution.getAccessURL() == null ? null : distribution.getAccessURL().toString();
-                marshaller.setAccessURL(accessURL);
-
-                String downloadURL = distribution.getDownloadURL() == null ? null : distribution.getDownloadURL().toString();
-                marshaller.setDownloadURL(downloadURL);
-
-                marshaller.setMediaType(distribution.getMediaType());
-                marshaller.setFormat(distribution.getFormat());
-                marshaller.setBytesSize(distribution.getByteSize());
-
-                return marshaller;
+                return processDistribution(distributionOptional.get());
             }
         }
 
@@ -151,7 +146,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response deleteDistribution(String resourceId, String distributionId) {
-        return null;
+        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
@@ -161,10 +156,6 @@ public class CatalogRestImpl implements CatalogRest {
         RESOURCE_TYPES.forEach(json::add);
 
         return Response.ok(json.toString()).build();
-    }
-
-    private boolean isBNodeString(String string) {
-        return string.matches("^_:.*$");
     }
 
     private XMLGregorianCalendar getCalendar(OffsetDateTime offsetDateTime) {
@@ -177,16 +168,16 @@ public class CatalogRestImpl implements CatalogRest {
         }
     }
 
-    private Optional<PublishedResource> checkForResource(String resourceId) {
-        Resource resource =
-                isBNodeString(resourceId) ? valueFactory.createBNode(resourceId) : valueFactory.createIRI(resourceId);
-
-        return catalogManager.getResource(resource);
+    private Resource getIriOrBnode(String resource) {
+        if (resource.matches("^_:.*$")) {
+            return valueFactory.createBNode(resource);
+        } else {
+            return valueFactory.createIRI(resource);
+        }
     }
 
     private Optional<Distribution> checkForDistribution(PublishedResource resource, String distributionId) {
-        Resource distributionResource =
-                isBNodeString(distributionId) ? valueFactory.createBNode(distributionId) : valueFactory.createIRI(distributionId);
+        Resource distributionResource = getIriOrBnode(distributionId);
 
         for (Distribution distribution : resource.getDistributions()) {
             if (distribution.getResource().equals(distributionResource)) {
@@ -214,6 +205,29 @@ public class CatalogRestImpl implements CatalogRest {
         resource.getDistributions().forEach(distribution ->
                 distributions.add(distribution.getResource().stringValue()));
         marshaller.setDistributions(distributions);
+
+        return marshaller;
+    }
+
+    private DistributionMarshaller processDistribution(Distribution distribution) {
+        DistributionMarshaller marshaller = new DistributionMarshaller();
+        marshaller.setId(distribution.getResource().stringValue());
+        marshaller.setTitle(distribution.getTitle());
+        marshaller.setDescription(distribution.getDescription());
+        marshaller.setIssued(getCalendar(distribution.getIssued()));
+        marshaller.setModified(getCalendar(distribution.getModified()));
+        marshaller.setLicense(distribution.getLicense());
+        marshaller.setRights(distribution.getRights());
+
+        String accessURL = distribution.getAccessURL() == null ? null : distribution.getAccessURL().toString();
+        marshaller.setAccessURL(accessURL);
+
+        String downloadURL = distribution.getDownloadURL() == null ? null : distribution.getDownloadURL().toString();
+        marshaller.setDownloadURL(downloadURL);
+
+        marshaller.setMediaType(distribution.getMediaType());
+        marshaller.setFormat(distribution.getFormat());
+        marshaller.setBytesSize(distribution.getByteSize());
 
         return marshaller;
     }

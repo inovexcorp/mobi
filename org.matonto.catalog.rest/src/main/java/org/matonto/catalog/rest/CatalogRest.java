@@ -11,6 +11,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Set;
 
 @Path("/catalog")
 @Api( value = "/catalog" )
@@ -110,17 +111,13 @@ public interface CatalogRest {
      *
      * @param resourceId the String representing the Resource ID. NOTE: Assumes ID represents
      *                   an IRI unless String begins with "_:".
-     * @param limit The number of resources to return in one page.
-     * @param start The offset for the page.
      * @return The paginated List of Distributions for the requested Resource ID.
      */
     @GET
     @Path("/resources/{resourceId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Retrieves all the distributions for the supplied resourceId.")
-    PaginatedResults<DistributionMarshaller> getDistributions(@PathParam("resourceId") String resourceId,
-                                                              @DefaultValue("100") @QueryParam("limit") int limit,
-                                                              @DefaultValue("0") @QueryParam("start") int start);
+    Set<DistributionMarshaller> getDistributions(@PathParam("resourceId") String resourceId);
 
     /**
      * Publishes a new distribution for the specified resource.
