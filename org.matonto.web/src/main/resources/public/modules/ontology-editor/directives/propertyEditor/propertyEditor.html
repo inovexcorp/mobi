@@ -13,8 +13,20 @@
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
+        <create-error></create-error>
+
         <!-- static iri -->
-        <static-iri></static-iri>
+        <static-iri display-type="property"></static-iri>
+
+        <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
+        <string-select ng-model="vm.selected['@type']"
+                       display-text="'Type'"
+                       muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"
+                       change-event="vm.entityChanged()"
+                       select-list="vm.propertyTypes"
+                       only-strings="'true'">
+            <small class="text-muted">Defaults to DatatypeProperty if nothing is provided.</small>
+        </string-select>
 
         <!-- rdfs:label -->
         <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
@@ -27,14 +39,6 @@
                    display-text="'Comment'"
                    muted-text="vm.rdfs + 'comment'"
                    change-event="vm.entityChanged()"></text-area>
-
-        <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
-        <string-select ng-model="vm.selected['@type']"
-                       display-text="'Type'"
-                       muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"
-                       change-event="vm.entityChanged()"
-                       select-list="vm.propertyTypes"
-                       only-strings="'true'"></string-select>
     </div>
 
     <!-- axioms tab -->

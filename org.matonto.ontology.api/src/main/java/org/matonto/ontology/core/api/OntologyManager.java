@@ -72,7 +72,8 @@ public interface OntologyManager {
      */
     boolean addEntityToOntology(Resource ontologyResource, String resourceJson);
 
-    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException;
+    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource)
+            throws MatontoOntologyException;
 
     /**
      * Gets the ontology registry which is persisted in the repository

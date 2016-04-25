@@ -85,13 +85,14 @@
                     propertyExpressions: {},
                     unionOfs: {},
                     intersectionOfs: {},
-                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#'
+                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#',
+                    isValid: true
                 }
 
                 angular.merge(ontology, obj);
             }
 
-            function chooseIcon(property, prefixes) {
+            function chooseIcon(property) {
                 var icon = '',
                     range = property[prefixes.rdfs + 'range'];
                 // assigns the icon based on the range
@@ -290,21 +291,16 @@
             }
 
             function createOntology(ontology) {
-                var ontologyjson,
-                    deferred = $q.defer();
-
+                var deferred = $q.defer();
                 ontology.matonto.originalId = ontology['@id'];
                 ontology = restructureLabelAndComment(ontology);
-                ontologies.push(ontology);
 
                 var copy = angular.copy(ontology);
                 delete copy.matonto;
 
-                ontologyjson = createEntityJson(ontology.matonto, copy);
-
                 var config = {
                         params: {
-                            ontologyjson: ontologyjson
+                            ontologyjson: createEntityJson(ontology.matonto, copy)
                         }
                     };
 
@@ -312,6 +308,8 @@
                     .then(function(response) {
                         if(response.data.persisted) {
                             console.log('Successfully created ontology');
+                            ontology.matonto.isValid = true;
+                            ontologies.push(ontology);
                             deferred.resolve(response);
                         } else {
                             console.warn('Ontology not created');
@@ -344,6 +342,8 @@
                         if(response.data.added) {
                             console.log('Successfully added class');
                             ontology.matonto.classes.push(classObj);
+                            var classIRI = $filter('splitIRI')(classObj['@id']);
+                            ontology.matonto.subClasses.push({namespace: classIRI.begin + classIRI.then, localName: classIRI.end});
                             deferred.resolve(response);
                         } else {
                             console.warn('Class not added');
@@ -362,8 +362,12 @@
 
             function createProperty(ontology, classObj, property) {
                 var deferred = $q.defer();
-                var type = getRestfulPropertyType(_.get(property, '@type', []));
+                var types = _.get(property, '@type', []);
+                var pathVariable = getRestfulPropertyType(types);
 
+                if(!types.length) {
+                    property['@type'].push(prefixes.owl + 'DatatypeProperty')
+                }
                 property = restructureLabelAndComment(property);
 
                 var config = {
@@ -372,11 +376,18 @@
                         }
                     }
 
-                $http.post(prefix + '/' + encodeURIComponent(ontology['@id']) + '/' + type, null, config)
+                $http.post(prefix + '/' + encodeURIComponent(ontology['@id']) + '/' + pathVariable, null, config)
                     .then(function(response) {
                         if(response.data.added) {
                             console.log('Successfully added property');
                             classObj.matonto.properties.push(property);
+                            var propertyIRI = $filter('splitIRI')(property['@id']);
+                            var subObject = {namespace: propertyIRI.begin + propertyIRI.then, localName: propertyIRI.end};
+                            if(self.isObjectProperty(property['@type'])) {
+                                ontology.matonto.subObjectProperties.push(subObject);
+                            } else {
+                                ontology.matonto.subDataProperties.push(subObject);
+                            }
                             deferred.resolve(response);
                         } else {
                             console.warn('Property not added');
@@ -822,7 +833,7 @@
             }
 
             self.getObject = function(state) {
-                var current, editEntity, createEntity, setDefaults,
+                var current, newEntity, existingEntity, setDefaults,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
@@ -837,7 +848,8 @@
                             delimiter: '#',
                             classes: [],
                             annotations: defaultAnnotations,
-                            currentAnnotationSelect: null
+                            currentAnnotationSelect: null,
+                            isValid: false
                         }
                     },
                     newClass = {
@@ -850,12 +862,13 @@
                     },
                     newProperty = {
                         '@id': '',
+                        '@type': [],
                         matonto: {
                             currentAnnotationSelect: null
                         }
                     };
 
-                editEntity = function() {
+                existingEntity = function() {
                     if(pi !== undefined && ci !== undefined) {
                         result = ontologies[oi].matonto.classes[ci].matonto.properties[pi];
                     } else if(pi !== undefined && ci === undefined) {
@@ -873,7 +886,7 @@
                     return result;
                 }
 
-                createEntity = function() {
+                newEntity = function() {
                     var ontology = (oi !== -1) ? ontologies[oi] : null,
                         unique = tab + oi + ci + pi;
                     if(newItems[unique]) {
@@ -881,6 +894,9 @@
                     } else {
                         if(pi === -1) {
                             result = setDefaults(ontology, angular.copy(newProperty));
+                            if(_.has(ontologies, '[' + oi + '].matonto.classes[' + ci + "]['@id']")) {
+                                result[prefixes.rdfs + 'domain'] = [{'@id': angular.copy(ontologies[oi].matonto.classes[ci]['@id'])}];
+                            }
                         } else if(ci === -1) {
                             result = setDefaults(ontology, angular.copy(newClass));
                         } else {
@@ -891,9 +907,9 @@
                 }
 
                 if(pi === -1 || ci === -1 || oi === -1) {
-                    createEntity();
+                    newEntity();
                 } else {
-                    editEntity();
+                    existingEntity();
                 }
                 return result;
             }
@@ -1146,19 +1162,19 @@
                         return createClass(ontology, obj);
                     } else {
                         obj = setId(obj, 'property', ontology.matonto.rdfs);
+                        obj.matonto.icon = chooseIcon(obj);
                         return createProperty(ontology, ontology.matonto.classes[ci], obj);
                     }
                 }
             }
 
-            self.editIRI = function(begin, then, end, update, selected, ontology) {
-                var update = document.getElementById('iriUpdate').checked,
-                    fresh = begin + then + end;
+            self.editIRI = function(begin, then, end, selected, ontology) {
+                var fresh = begin + then + end;
 
                 if(selected.matonto.hasOwnProperty('namespace')) {
                     delete selected.matonto.namespace;
-                } else if(update) {
-                    updateRefsService.update(ontology, selected['@id'], fresh, ontology.matonto.owl);
+                } else {
+                    updateRefsService.update(ontology, selected['@id'], fresh);
                 }
                 selected['@id'] = fresh;
             }

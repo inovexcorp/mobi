@@ -9,13 +9,18 @@
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/iriOverlay/iriOverlay.html',
-                controller: ['$scope', '$filter', function($scope, $filter) {
-                    var vm = $scope.$parent.vm,
-                        iri = vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + vm.selected['@id']) : $filter('splitIRI')(vm.selected['@id']);
+                controllerAs: 'dvm',
+                controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
+                    var vm = $scope.$parent.vm;
+                    var iri = _.has(vm.selected, 'matonto.namespace') ? $filter('splitIRI')(vm.selected.matonto.namespace + vm.selected['@id']) : $filter('splitIRI')(vm.selected['@id']);
+                    var dvm = this;
+
+                    dvm.namespacePattern = REGEX.IRI;
+                    dvm.localNamePattern = REGEX.LOCALNAME;
 
                     vm.iriBegin = iri.begin;
                     vm.iriThen = iri.then;
-                    vm.iriEnd = iri.end || $filter('camelCase')(vm.selected[vm.rdfs + 'label'][0]['@value']);
+                    vm.iriEnd = iri.end || $filter('camelCase')(_.get(vm.selected, "['" + vm.rdfs + "label'][0]['@value']", ''));
                     vm.iriUpdate = true;
                 }]
             }

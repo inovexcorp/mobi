@@ -13,8 +13,10 @@
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
+        <create-error></create-error>
+
         <!-- static iri -->
-        <static-iri></static-iri>
+        <static-iri display-type="class"></static-iri>
 
         <!-- rdfs:label -->
         <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
