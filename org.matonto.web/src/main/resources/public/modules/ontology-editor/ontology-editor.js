@@ -186,7 +186,7 @@
         }
 
         vm.closeOntology = function() {
-            ontologyManagerService.closeOntology(vm.state.oi, vm.selected['@id']);
+            ontologyManagerService.closeOntology(vm.state.oi, vm.ontology['@id']);
             stateManagerService.clearState(vm.state.oi);
             vm.selected = {};
             vm.ontology = {};

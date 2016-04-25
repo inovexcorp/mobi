@@ -52,7 +52,7 @@
             </li>
             <li>
                 <button ng-click="vm.showCloseOverlay = true;" title="Close Ontology"
-                        ng-disabled="vm.state.oi === undefined || vm.state.oi === -1 || vm.state.ci !== undefined"
+                        ng-disabled="vm.state.oi === undefined || vm.state.oi === -1"
                         ng-class="{ 'active': vm.showCloseOverlay }">
                     <i class="fa fa-archive fa-fw"></i>
                 </button>
@@ -135,7 +135,7 @@
                                       confirm-click="vm.closeOntology()"
                                       cancel-click="vm.showCloseOverlay = false;"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.selected['@id']}}</strong> from your workspace?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
 
                 <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
             </div>
