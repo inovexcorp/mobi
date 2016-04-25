@@ -12,10 +12,7 @@
                 controllerAs: 'dvm',
                 controller: ['REGEX', function(REGEX) {
                     var dvm = this;
-
-                    dvm.getIriPattern = function() {
-                        return REGEX.IRI;
-                    }
+                    dvm.iriPattern = REGEX.IRI;
                 }]
             }
         }
