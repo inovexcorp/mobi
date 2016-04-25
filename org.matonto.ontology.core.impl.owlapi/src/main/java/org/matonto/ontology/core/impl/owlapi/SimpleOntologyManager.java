@@ -48,7 +48,7 @@ public class SimpleOntologyManager implements OntologyManager {
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
-	
+
 	public SimpleOntologyManager() {}
 	
     @Activate
@@ -113,7 +113,7 @@ public class SimpleOntologyManager implements OntologyManager {
     protected void setModelFactory(final ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
-	
+    
 	@Override
 	public Set<Resource> getOntologyRegistry() {
         if(repository == null)

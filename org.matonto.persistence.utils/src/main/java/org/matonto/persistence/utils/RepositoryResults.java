@@ -1,4 +1,4 @@
-package org.matonto.repository.impl.sesame.utils;
+package org.matonto.persistence.utils;
 
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;

@@ -1,5 +1,6 @@
 package org.matonto.repository.impl.sesame;
 
+import org.matonto.exception.MatOntoException;
 import org.matonto.query.api.*;
 import org.matonto.query.exception.MalformedQueryException;
 import org.matonto.rdf.api.IRI;
@@ -13,6 +14,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
 import org.matonto.repository.impl.sesame.query.*;
+import org.openrdf.OpenRDFException;
 import org.openrdf.query.QueryLanguage;
 
 import java.util.HashSet;
@@ -222,6 +224,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -234,6 +238,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -246,6 +252,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -258,6 +266,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -270,6 +280,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -282,6 +294,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -293,6 +307,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -304,6 +320,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -315,6 +333,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 
@@ -326,6 +346,8 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throw new RepositoryException(e);
         } catch (org.openrdf.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
+        } catch (OpenRDFException e) {
+            throw new MatOntoException(e);
         }
     }
 

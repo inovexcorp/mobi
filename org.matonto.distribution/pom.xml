@@ -149,6 +149,7 @@
                         <feature>obr</feature>
                         <feature>jax-rs-connector</feature>
                         <feature>jax-rs-provider-multipart</feature>
+                        <feature>jax-rs-provider-gson</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>
