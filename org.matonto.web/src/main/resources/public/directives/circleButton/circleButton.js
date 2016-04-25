@@ -24,9 +24,9 @@
          * button and the Font Awesome icon will always be a fixed width.
          *
          * @param {string} btnIcon the Font Awesome name of a specific icon
-         * @param {boolean} [btnSmall] whether or not the button should be small
-         * @param {boolean} [isEnabled] the condition for when the button should be enabled
-         * @param {function} [onClick] the function to be called when the circleButton is clicked
+         * @param {boolean} [btnSmall=false] whether or not the button should be small
+         * @param {boolean} [isEnabled=true] the condition for when the button should be enabled
+         * @param {function} onClick the function to be called when the circleButton is clicked
          *
          * @usage
          * <!-- With only an icon -->
