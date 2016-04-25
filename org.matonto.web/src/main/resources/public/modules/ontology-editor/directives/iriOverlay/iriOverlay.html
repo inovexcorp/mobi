@@ -23,7 +23,7 @@
         <!-- Ends with -->
         <div ng-class="{'has-error': vm.iriForm.iriEnd.$invalid}" class="form-group">
             <label class="control-label" for="iriEnd">Ends with</label>
-            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="vm.iriEnd" ng-pattern="/^[a-zA-Z0-9-_]+$/" required />
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="vm.iriEnd" ng-pattern="dvm.getLocalNamePattern()" required />
             <p ng-messages="vm.iriForm.iriEnd.$error" class="error-msg">
                 <ng-message when="required">Field cannot be empty.</ng-message>
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
