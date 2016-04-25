@@ -15,18 +15,13 @@
                     var iri = _.has(vm.selected, 'matonto.namespace') ? $filter('splitIRI')(vm.selected.matonto.namespace + vm.selected['@id']) : $filter('splitIRI')(vm.selected['@id']);
                     var dvm = this;
 
+                    dvm.namespacePattern = REGEX.IRI;
+                    dvm.localNamePattern = REGEX.LOCALNAME;
+
                     vm.iriBegin = iri.begin;
                     vm.iriThen = iri.then;
                     vm.iriEnd = iri.end || $filter('camelCase')(_.get(vm.selected, "['" + vm.rdfs + "label'][0]['@value']", ''));
                     vm.iriUpdate = true;
-
-                    dvm.getNamespacePattern = function() {
-                        return REGEX.IRI;
-                    }
-
-                    dvm.getLocalNamePattern = function() {
-                        return REGEX.LOCALNAME;
-                    }
                 }]
             }
         }

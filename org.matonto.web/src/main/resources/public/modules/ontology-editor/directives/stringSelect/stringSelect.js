@@ -24,7 +24,7 @@
                     bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', '$filter', function($scope, $filter) {
+                controller: ['$filter', function($filter) {
                     var dvm = this;
 
                     dvm.getItemNamespace = function(item) {
