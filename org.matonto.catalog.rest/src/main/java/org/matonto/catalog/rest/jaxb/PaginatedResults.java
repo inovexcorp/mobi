@@ -13,7 +13,7 @@ public class PaginatedResults<T> {
     private int size;
     private int start;
 
-    @XmlElement(name = "_links")
+    @XmlElement
     public Links getLinks() {
         return links;
     }

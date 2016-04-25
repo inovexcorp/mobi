@@ -10,4 +10,6 @@ public interface CatalogConfig {
     String description();
 
     String iri();
+
+    String repositoryId();
 }

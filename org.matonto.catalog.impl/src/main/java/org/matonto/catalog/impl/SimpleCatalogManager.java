@@ -1,9 +1,6 @@
 package org.matonto.catalog.impl;
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Reference;
+import aQute.bnd.annotation.component.*;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,9 +17,9 @@ import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
-import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -35,16 +32,17 @@ import java.util.*;
 )
 public class SimpleCatalogManager implements CatalogManager {
 
-    private Repository repo;
+    private RepositoryManager repositoryManager;
+    private String repositoryId;
     private ValueFactory vf;
     private ModelFactory mf;
     private NamedGraphFactory ngf;
 
     private final Logger log = Logger.getLogger(SimpleCatalogManager.class);
 
-    @Reference(service = DelegatingRepository.class, target = "(id=system)")
-    protected void setRepo(Repository repo) {
-        this.repo = repo;
+    @Reference
+    protected void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
     }
 
     @Reference
@@ -65,8 +63,6 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String GET_RESOURCE_QUERY;
     private static final String FIND_RESOURCES_QUERY;
     private static final String RESOURCE_BINDING = "resource";
-    private static final String LIMIT_BINDING = "limit";
-    private static final String OFFSET_BINDING = "offset";
 
     static {
         try {
@@ -92,8 +88,10 @@ public class SimpleCatalogManager implements CatalogManager {
     protected void start(Map<String, Object> props) {
         CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
         IRI catalogIri = vf.createIRI(config.iri());
+        repositoryId = config.repositoryId();
 
         // Create Catalog if it doesn't exist
+        RepositoryConnection conn = getRepositoryConnection();
         if (!resourceExists(catalogIri)) {
             log.debug("Initializing MatOnto Catalog.");
             OffsetDateTime now = OffsetDateTime.now();
@@ -105,15 +103,19 @@ public class SimpleCatalogManager implements CatalogManager {
             namedGraph.add(catalogIri, vf.createIRI(DC + "issued"), vf.createLiteral(now));
             namedGraph.add(catalogIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
 
-            RepositoryConnection conn = repo.getConnection();
             conn.add(namedGraph);
-            conn.close();
         }
+        conn.close();
+    }
+
+    @Modified
+    protected void modified(Map<String, Object> props) {
+        start(props);
     }
 
     @Override
     public Set<PublishedResource> findResource(String searchTerm, int limit, int offset) {
-        RepositoryConnection conn = repo.getConnection();
+        RepositoryConnection conn = getRepositoryConnection();
 
         String queryString = FIND_RESOURCES_QUERY + String.format("\nLIMIT %d\nOFFSET %d", limit, offset);
 
@@ -145,7 +147,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Optional<PublishedResource> getResource(Resource resource) {
-        RepositoryConnection conn = repo.getConnection();
+        RepositoryConnection conn = getRepositoryConnection();
 
         TupleQuery query = conn.prepareTupleQuery(GET_RESOURCE_QUERY);
         query.setBinding(RESOURCE_BINDING, resource);
@@ -198,13 +200,13 @@ public class SimpleCatalogManager implements CatalogManager {
             namedGraph.add(resource, vf.createIRI(DCAT + "distribution"), distribution.getResource());
         });
 
-        RepositoryConnection conn = repo.getConnection();
+        RepositoryConnection conn = getRepositoryConnection();
         conn.add(namedGraph);
         conn.close();
     }
 
     private boolean resourceExists(Resource resource) {
-        RepositoryConnection conn = repo.getConnection();
+        RepositoryConnection conn = getRepositoryConnection();
         boolean catalogExists = conn.getStatements(null, null, null, resource).hasNext();
         conn.close();
         return catalogExists;
@@ -268,5 +270,16 @@ public class SimpleCatalogManager implements CatalogManager {
         });
 
         return builder.build();
+    }
+
+    private RepositoryConnection getRepositoryConnection() {
+        Optional<Repository> repository = repositoryManager.getRepository(repositoryId);
+        if (repository.isPresent()) {
+            return repository.get().getConnection();
+        } else {
+            String errorMsg = String.format("Repository \"%s\" is unavailable.", repositoryId);
+            log.error(errorMsg);
+            throw new IllegalStateException(errorMsg);
+        }
     }
 }

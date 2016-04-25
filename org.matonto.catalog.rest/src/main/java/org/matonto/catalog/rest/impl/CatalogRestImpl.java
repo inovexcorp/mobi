@@ -12,17 +12,15 @@ import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
 import org.matonto.catalog.rest.jaxb.Links;
 import org.matonto.catalog.rest.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
+import org.matonto.persistence.utils.Values;
 import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -30,7 +28,7 @@ import java.util.*;
 public class CatalogRestImpl implements CatalogRest {
 
     private CatalogManager catalogManager;
-    private ValueFactory valueFactory;
+    private Values values;
 
     private static final Set<String> RESOURCE_TYPES;
 
@@ -49,8 +47,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Reference
-    protected void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
+    protected void setValues(Values values) {
+        this.values = values;
     }
 
     @Override
@@ -59,7 +57,8 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError("Must provide a resource ID.", Response.Status.BAD_REQUEST);
         }
 
-        Optional<PublishedResource> publishedResourceOptional = catalogManager.getResource(getIriOrBnode(resourceId));
+        Optional<PublishedResource> publishedResourceOptional =
+                catalogManager.getResource(values.getIriOrBnode(resourceId));
 
         if (publishedResourceOptional.isPresent()) {
             return processResource(publishedResourceOptional.get());
@@ -106,15 +105,15 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError("Must provide a resource ID.", Response.Status.BAD_REQUEST);
         }
 
-        Optional<PublishedResource> publishedResourceOptional = catalogManager.getResource(getIriOrBnode(resourceId));
+        Optional<PublishedResource> publishedResourceOptional =
+                catalogManager.getResource(values.getIriOrBnode(resourceId));
 
         if (publishedResourceOptional.isPresent()) {
             PublishedResource publishedResource = publishedResourceOptional.get();
 
             Set<DistributionMarshaller> distributions = new HashSet<>();
-            publishedResource.getDistributions().forEach(distribution -> {
-                distributions.add(processDistribution(distribution));
-            });
+            publishedResource.getDistributions().forEach(distribution ->
+                    distributions.add(processDistribution(distribution)));
 
             return distributions;
         } else {
@@ -139,7 +138,8 @@ public class CatalogRestImpl implements CatalogRest {
                     Response.Status.BAD_REQUEST);
         }
 
-        Optional<PublishedResource> publishedResourceOptional = catalogManager.getResource(getIriOrBnode(resourceId));
+        Optional<PublishedResource> publishedResourceOptional =
+                catalogManager.getResource(values.getIriOrBnode(resourceId));
 
         // If resource and distribution are present, return distribution
         if (publishedResourceOptional.isPresent()) {
@@ -179,16 +179,8 @@ public class CatalogRestImpl implements CatalogRest {
         }
     }
 
-    private Resource getIriOrBnode(String resource) {
-        if (resource.matches("^_:.*$")) {
-            return valueFactory.createBNode(resource);
-        } else {
-            return valueFactory.createIRI(resource);
-        }
-    }
-
     private Optional<Distribution> checkForDistribution(PublishedResource resource, String distributionId) {
-        Resource distributionResource = getIriOrBnode(distributionId);
+        Resource distributionResource = values.getIriOrBnode(distributionId);
 
         for (Distribution distribution : resource.getDistributions()) {
             if (distribution.getResource().equals(distributionResource)) {

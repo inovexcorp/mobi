@@ -6,7 +6,7 @@ import org.matonto.query.exception.QueryEvaluationException;
 
 public class SesameTupleQuery extends SesameOperation implements TupleQuery {
 
-    org.openrdf.query.TupleQuery sesameTupleQuery;
+    private org.openrdf.query.TupleQuery sesameTupleQuery;
 
     public SesameTupleQuery(org.openrdf.query.TupleQuery sesameTupleQuery) {
         super(sesameTupleQuery);

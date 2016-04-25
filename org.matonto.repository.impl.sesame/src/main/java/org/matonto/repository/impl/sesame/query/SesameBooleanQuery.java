@@ -5,23 +5,23 @@ import org.matonto.query.exception.QueryEvaluationException;
 
 public class SesameBooleanQuery extends SesameOperation implements BooleanQuery {
 
-    private org.openrdf.query.BooleanQuery sesBooleanQuery;
+    private org.openrdf.query.BooleanQuery sesameBooleanQuery;
 
-    public SesameBooleanQuery(org.openrdf.query.BooleanQuery sesBooleanQuery) {
-        super(sesBooleanQuery);
-        this.sesBooleanQuery = sesBooleanQuery;
+    public SesameBooleanQuery(org.openrdf.query.BooleanQuery sesameBooleanQuery) {
+        super(sesameBooleanQuery);
+        this.sesameBooleanQuery = sesameBooleanQuery;
     }
 
     @Override
     public boolean evaluate() throws QueryEvaluationException {
         try {
-            return sesBooleanQuery.evaluate();
+            return sesameBooleanQuery.evaluate();
         } catch (org.openrdf.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
 
     public String toString() {
-        return sesBooleanQuery.toString();
+        return sesameBooleanQuery.toString();
     }
 }
