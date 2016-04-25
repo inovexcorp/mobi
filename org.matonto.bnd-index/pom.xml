@@ -114,6 +114,11 @@
             <artifactId>web</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>sparql.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -23,6 +23,7 @@ matonto-deploy-bundles = {
         org.matonto.ontology.rest \
         org.matonto.swagger.ui \
         org.matonto.web \
+        org.matonto.sparql.rest \
         com.eclipsesource.jaxrs.swagger-all \
         com.eclipsesource.jaxrs.provider.swagger
 }
@@ -47,6 +48,7 @@ matonto-deploy-bundles-dev = {
         org.matonto.ontology.rest \
         org.matonto.swagger.ui \
         org.matonto.web \
+        org.matonto.sparql.rest \
         com.eclipsesource.jaxrs.swagger-all \
         com.eclipsesource.jaxrs.provider.swagger
     obr:url-remove mvn:org.matonto/bnd-index/${bnd.index.version}/xml
