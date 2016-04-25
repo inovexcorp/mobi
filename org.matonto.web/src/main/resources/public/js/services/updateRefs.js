@@ -27,35 +27,33 @@
                     obj[fresh] = value;
                 }
 
-                // do nothing for these situations
-                if(excluded !== -1 || !obj[key]) {
-                    // do nothing
-                }
-                // checks all items in the array
-                else if(Object.prototype.toString.call(value) === '[object Array]') {
-                    _.forEach(value, function(item, index) {
-                        // checks to see if it contains the old value
-                        if(item === old) {
-                            obj[key][index] = fresh;
-                        }
-                        // not a string, so update it
-                        else if(responseObj.validateItem(item) && responseObj.getItemIri(item) === old) {
-                            obj[key][index].localName = freshSplit.end;
-                            obj[key][index].namespace = freshSplit.begin + freshSplit.then;
-                        }
-                        // not a string, so update it
-                        else if(typeof item !== 'string') {
-                            self.update(obj[key][index], old, fresh);
-                        }
-                    });
-                }
-                // objects need to be updated
-                else if(typeof value === 'object') {
-                    self.update(obj[key], old, fresh);
-                }
-                // change string value if it matches
-                else if(value === old) {
-                    obj[key] = fresh;
+                if(!(excluded !== -1 || !obj[key])) {
+                    // checks all items in the array
+                    if(_.isArray(value)) {
+                        _.forEach(value, function(item, index) {
+                            // checks to see if it contains the old value
+                            if(item === old) {
+                                obj[key][index] = fresh;
+                            }
+                            // not a string, so update it
+                            else if(responseObj.validateItem(item) && responseObj.getItemIri(item) === old) {
+                                obj[key][index].localName = freshSplit.end;
+                                obj[key][index].namespace = freshSplit.begin + freshSplit.then;
+                            }
+                            // not a string, so update it
+                            else if(typeof item !== 'string') {
+                                self.update(obj[key][index], old, fresh);
+                            }
+                        });
+                    }
+                    // objects need to be updated
+                    else if(typeof value === 'object') {
+                        self.update(obj[key], old, fresh);
+                    }
+                    // change string value if it matches
+                    else if(value === old) {
+                        obj[key] = fresh;
+                    }
                 }
             });
         }

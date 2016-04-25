@@ -9,9 +9,9 @@
         'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'createError'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes', 'REGEX'];
+    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
 
-    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes, REGEX) {
+    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -26,10 +26,6 @@
             if(vm.state) {
                 setVariables(vm.state.oi);
             }
-        }
-
-        vm.getIriPattern = function() {
-            return REGEX.IRI;
         }
 
         /* State Management */

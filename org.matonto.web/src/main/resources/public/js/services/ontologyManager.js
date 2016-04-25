@@ -894,7 +894,9 @@
                     } else {
                         if(pi === -1) {
                             result = setDefaults(ontology, angular.copy(newProperty));
-                            result[prefixes.rdfs + 'domain'] = [{'@id': angular.copy(ontologies[oi].matonto.classes[ci]['@id'])}];
+                            if(_.has(ontologies, '[' + oi + '].matonto.classes[' + ci + "]['@id']")) {
+                                result[prefixes.rdfs + 'domain'] = [{'@id': angular.copy(ontologies[oi].matonto.classes[ci]['@id'])}];
+                            }
                         } else if(ci === -1) {
                             result = setDefaults(ontology, angular.copy(newClass));
                         } else {
