@@ -21,3 +21,9 @@
     dc:title "Test Distribution 2" ;
     dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
     dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+
+<http://matonto.org/test/PublishedResource/2> a matontocat:PublishedResource ;
+    dc:title "Test Resource 2" ;
+    dc:description "Test Description" ;
+    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .

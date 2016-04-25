@@ -10,6 +10,7 @@ import java.util.Set;
 public class PublishedResourceMarshaller {
 
     private String id;
+    private String type;
     private String title;
     private String description;
     private XMLGregorianCalendar issued;
@@ -25,6 +26,15 @@ public class PublishedResourceMarshaller {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    @XmlElement
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     @XmlElement

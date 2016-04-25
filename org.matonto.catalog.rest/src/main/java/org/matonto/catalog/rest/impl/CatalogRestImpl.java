@@ -191,6 +191,7 @@ public class CatalogRestImpl implements CatalogRest {
     private PublishedResourceMarshaller processResource(PublishedResource resource) {
         PublishedResourceMarshaller marshaller = new PublishedResourceMarshaller();
         marshaller.setId(resource.getResource().stringValue());
+        marshaller.setType(resource.getType().stringValue());
         marshaller.setTitle(resource.getTitle());
         marshaller.setDescription(resource.getDescription());
         marshaller.setIssued(getCalendar(resource.getIssued()));
