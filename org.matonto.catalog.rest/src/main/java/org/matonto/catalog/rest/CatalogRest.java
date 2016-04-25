@@ -8,8 +8,7 @@ import org.matonto.catalog.rest.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import java.util.List;
 import java.util.Set;
 
@@ -32,6 +31,7 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Retrieves the published catalog resources.")
     PaginatedResults<PublishedResourceMarshaller> listPublishedResources(
+            @Context UriInfo uriInfo,
             @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType,
             @QueryParam("searchTerms") String searchTerms,
             @DefaultValue("100") @QueryParam("limit") int limit,

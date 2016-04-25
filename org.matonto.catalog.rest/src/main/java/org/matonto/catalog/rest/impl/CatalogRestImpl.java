@@ -3,21 +3,26 @@ package org.matonto.catalog.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
+import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
+import org.matonto.catalog.rest.jaxb.Links;
 import org.matonto.catalog.rest.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -28,6 +33,8 @@ public class CatalogRestImpl implements CatalogRest {
     private ValueFactory valueFactory;
 
     private static final Set<String> RESOURCE_TYPES;
+
+    private final Logger log = Logger.getLogger(CatalogRestImpl.class);
 
     static {
         Set<String> types = new HashSet<>();
@@ -72,7 +79,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public PaginatedResults<PublishedResourceMarshaller> listPublishedResources(String resourceType,
+    public PaginatedResults<PublishedResourceMarshaller> listPublishedResources(UriInfo uriInfo, String resourceType,
                                                                                 String searchTerms, int limit,
                                                                                 int start) {
         List<PublishedResourceMarshaller> publishedResources = new ArrayList<>();
@@ -80,11 +87,15 @@ public class CatalogRestImpl implements CatalogRest {
         catalogManager.findResource(searchTerms, limit, start).forEach(resource ->
                 publishedResources.add(processResource(resource)));
 
+        int size = publishedResources.size();
+
         PaginatedResults<PublishedResourceMarshaller> marshaller = new PaginatedResults<>();
         marshaller.setResults(publishedResources);
         marshaller.setLimit(limit);
-        marshaller.setSize(publishedResources.size());
+        marshaller.setSize(size);
         marshaller.setStart(start);
+
+        marshaller.setLinks(buildLinks(uriInfo, size, limit, start));
 
         return marshaller;
     }
@@ -231,5 +242,26 @@ public class CatalogRestImpl implements CatalogRest {
         marshaller.setBytesSize(distribution.getByteSize());
 
         return marshaller;
+    }
+
+    private Links buildLinks(UriInfo uriInfo, int size, int limit, int start) {
+        String path = uriInfo.getPath();
+
+        Links links = new Links();
+        links.setBase(uriInfo.getBaseUri().toString());
+        links.setSelf(uriInfo.getAbsolutePath().toString());
+        links.setContext(path);
+
+        if (size == limit) {
+            String next = path + String.format("?limit=%d&offset=%d", limit, start + limit);
+            links.setNext(next);
+        }
+
+        if (start != 0) {
+            String prev = path + String.format("?limit=%d&offset=%d", limit, start - limit);
+            links.setPrev(prev);
+        }
+
+        return links;
     }
 }

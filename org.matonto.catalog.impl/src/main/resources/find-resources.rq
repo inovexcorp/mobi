@@ -26,5 +26,3 @@ WHERE {
     OPTIONAL { ?resource dcat:distribution ?distribution } .
 } GROUP BY ?resource ?type ?title ?issued ?modified ?description ?identifier
 ORDER BY DESC(?modified)
-LIMIT ?limit
-OFFSET ?offset

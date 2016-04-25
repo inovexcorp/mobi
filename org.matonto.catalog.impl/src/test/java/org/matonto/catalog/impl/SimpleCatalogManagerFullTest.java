@@ -1,6 +1,7 @@
 package org.matonto.catalog.impl;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Distribution;
@@ -27,7 +28,7 @@ import java.util.*;
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
 
 public class SimpleCatalogManagerFullTest {
@@ -110,5 +111,13 @@ public class SimpleCatalogManagerFullTest {
         assertThat(actualDistributions, containsInAnyOrder(expectedDist1, expectedDist2));
     }
 
+    @Test
+    public void testFindResourcesReturnsCorrectSize() throws Exception {
+        // given
+        // when
+        Set<PublishedResource> resources = manager.findResource("", 1, 0);
 
+        // then
+        Assert.assertThat(resources.size(), equalTo(1));
+    }
 }

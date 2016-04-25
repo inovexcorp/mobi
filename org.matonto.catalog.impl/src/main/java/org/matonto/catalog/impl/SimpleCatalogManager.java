@@ -9,7 +9,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.api.Ontology;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.config.CatalogConfig;
@@ -18,14 +17,12 @@ import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.Models;
 import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.query.TupleQueryResult;
-import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.base.RepositoryResult;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -118,10 +115,9 @@ public class SimpleCatalogManager implements CatalogManager {
     public Set<PublishedResource> findResource(String searchTerm, int limit, int offset) {
         RepositoryConnection conn = repo.getConnection();
 
-        TupleQuery query = conn.prepareTupleQuery(GET_RESOURCE_QUERY);
-        query.setBinding(LIMIT_BINDING, vf.createLiteral(limit));
-        query.setBinding(OFFSET_BINDING, vf.createLiteral(offset));
+        String queryString = FIND_RESOURCES_QUERY + String.format("\nLIMIT %d\nOFFSET %d", limit, offset);
 
+        TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult result = query.evaluate();
 
         Set<PublishedResource> resources = new HashSet<>();
