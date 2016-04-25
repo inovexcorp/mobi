@@ -109,7 +109,7 @@ describe('Class List directive', function() {
             var controller = this.element.controller('classList');
             var result = controller.getPropMappings({'@id': 'classMapping'});
 
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping, 'classMapping');
+            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping.jsonld, 'classMapping');
         });
         it('should get a property title', function() {
             var controller = this.element.controller('classList');
@@ -126,7 +126,7 @@ describe('Class List directive', function() {
         it('should test whether all properties have been mapped', function() {
             var controller = this.element.controller('classList');
             var result = controller.mappedAllProps({'@id': ''});
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping, '');
+            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping.jsonld, '');
             expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalled();
             expect(typeof result).toBe('boolean');
         });

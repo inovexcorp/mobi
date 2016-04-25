@@ -1,3 +1,21 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+.catalog {
+    .mapping-preview {
+        ul.prop-mappings {
+            margin-left: 1em;
+            list-style-type: square;
+
+            li {
+                margin-left: 1em;
+            }
+        }
+    }
+    .ontology-catalog-preview {
+        .classes, .props {
+            width: 50%;
+            float: left;
+        }
+    }
+}

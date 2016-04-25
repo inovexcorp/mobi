@@ -1,0 +1,19 @@
+<div class="mapping-preview">
+    <div ng-if="dvm.errorMessage">{{dvm.errorMessage}}</div>
+
+    <div ng-show="!dvm.errorMessage">
+        <h1>{{dvm.mappingName}}</h1>
+        <p>Source Ontology: <a title="{{dvm.getSourceOntologyId()}}" ng-click="clickOntology({ontologyId: dvm.getSourceOntologyId()})">{{dvm.getPrettyName(dvm.getSourceOntologyId())}}</a></p>
+        <div class="mappings">
+            <h2>Mappings</h2>
+            <ul class="class-mappings">
+                <li ng-repeat="classMapping in dvm.getClassMappings()">
+                    {{dvm.getClassName(classMapping)}}
+                    <ul class="prop-mappings">
+                        <li ng-repeat="propMapping in dvm.getPropMappings(classMapping)">{{dvm.getPropName(propMapping)}}</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

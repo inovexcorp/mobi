@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('catalog', [])
+        .module('catalog', ['mappingPreview', 'ontologyCatalogPreview'])
         .controller('CatalogController', CatalogController);
 
     function CatalogController() {

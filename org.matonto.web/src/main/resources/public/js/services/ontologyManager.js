@@ -1124,6 +1124,34 @@
                 return deferred.promise;
             }
 
+            self.getClassIris = function(ontologyId) {
+                var deferred = $q.defer();
+                var onError = function(response) {
+                    deferred.reject(response);
+                    $rootScope.showSpinner = false;
+                }
+                $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/classes').then(function(response) {
+                    deferred.resolve(_.get(response, 'data.classes', []));
+                }, onError);
+                return deferred.promise;
+            }
+
+            self.getPropertyIris = function(ontologyId) {
+                var deferred = $q.defer();
+                var onError = function(response) {
+                    deferred.reject(response);
+                    $rootScope.showSpinner = false;
+                }
+
+                $q.all([
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/object-properties'),
+                    $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/data-properties')
+                ]).then(function(responses) {
+                    deferred.resolve(_.concat(_.get(responses[0], 'data.objectProperties', []), _.get(responses[1], 'data.dataProperties', [])));
+                }, onError);
+                return deferred.promise;
+            }
+
             self.create = function(obj, state) {
                 $rootScope.showSpinner = true;
 

@@ -1,0 +1,20 @@
+<div class="ontology-catalog-preview">
+    <div ng-if="dvm.errorMessage">{{dvm.errorMessage}}</div>
+    
+    <div ng-show="!dvm.errorMessage">
+        <h1 title="{{dvm.ontologyId}}">{{dvm.getPrettyName(dvm.ontologyId)}}</h1>
+        <div class="classes">
+            <h2>Classes <a ng-if="dvm.classes.length > dvm.numPreview" class="header-link" ng-click="dvm.moreClasses = !dvm.moreClasses">See {{dvm.moreClasses ? 'Less' : 'More'}}</a></h2>
+            <ul>
+                <li ng-repeat="classObj in dvm.getClasses()" title="{{classObj.namespace + classObj.localName}}">{{dvm.getPrettyName(classObj.namespace + classObj.localName)}}</li>
+            </ul>
+        </div>
+
+        <div class="props">
+            <h2>Properties <a ng-if="dvm.props.length > dvm.numPreview" class="header-link" ng-click="dvm.moreProps = !dvm.moreProps">See {{dvm.moreProps ? 'Less' : 'More'}}</a></h2>
+            <ul>
+                <li ng-repeat="propObj in dvm.getProps()" title="{{propObj.namespace + propObj.localName}}">{{dvm.getPrettyName(propObj.namespace + propObj.localName)}}</li>
+            </ul>
+        </div>
+    </div>
+</div>
