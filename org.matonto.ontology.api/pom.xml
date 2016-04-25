@@ -34,11 +34,6 @@
             <artifactId>ontology.utils</artifactId>
             <version>1.0.29</version>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>catalog.api</artifactId>
-            <version>1.0.34-SNAPSHOT</version>
-        </dependency>
 
         <dependency>
             <groupId>commons-io</groupId>
