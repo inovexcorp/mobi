@@ -1,0 +1,29 @@
+@prefix matontocat: <http://matonto.org/ontologies/catalog#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+
+<http://matonto.org/test/PublishedResource/1> a matontocat:Ontology ;
+    dc:title "Test Resource 1" ;
+    dc:description "Test Description" ;
+    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+    dc:identifier "Test Identifier" ;
+    dcat:keyword "Test" , "Keywords" ;
+    dcat:distribution <http://matonto.org/test/Distribution/1> , <http://matonto.org/test/Distribution/2> .
+
+<http://matonto.org/test/Distribution/1> a dcat:Distribution ;
+    dc:title "Test Distribution 1" ;
+    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+
+<http://matonto.org/test/Distribution/2> a dcat:Distribution ;
+    dc:title "Test Distribution 2" ;
+    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+
+<http://matonto.org/test/PublishedResource/2> a matontocat:PublishedResource ;
+    dc:title "Test Resource 2" ;
+    dc:description "Test Description" ;
+    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
