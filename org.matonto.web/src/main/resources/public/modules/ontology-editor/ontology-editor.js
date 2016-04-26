@@ -79,7 +79,6 @@
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(file)
                 .then(function(response) {
-                    vm.uploadError = '';
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
                     vm.showUploadOverlay = false;
                 }, function(response) {
