@@ -24,7 +24,7 @@
                 link: function(scope, elem, attrs, ctrl) {
                     ctrl.setValidity();
                 },
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
@@ -43,9 +43,13 @@
                     dvm.setValidity = function() {
                         if (dvm.validateForm) {
                             dvm.validateForm.$setValidity('validColumnMappings', dvm.invalidColumns.length === 0);
+                            dvm.validateForm.$setValidity('existingOntology', dvm.ontology !== undefined);
                         }
                     }
-                },
+                    dvm.getSourceOntologyId = function() {
+                        return mappingManagerService.getSourceOntologyId(dvm.mapping);
+                    }
+                }],
                 templateUrl: 'modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html'
             }
         }
