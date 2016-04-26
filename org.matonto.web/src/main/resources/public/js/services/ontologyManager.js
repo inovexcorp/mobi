@@ -1104,18 +1104,48 @@
                             if(!_.find(response.data, { updated: false })) {
                                 self.clearChangedList(ontologyId);
                                 _.forEach(changedProperties, function(item) {
-                                    var domains = _.get(item.property, prefixes.owl + 'domain', []);
+                                    var domains = _.get(item.property, prefixes.rdfs + 'domain', []);
                                     var classId = _.get(ontology, 'matonto.classes[' + item.state.ci + "]['@id']");
-                                    var domainHasClass = _.indexOf(domains, classId) !== -1;
+                                    var domainHasClass = _.findIndex(domains, function(item) {
+                                        return item['@id'] === classId;
+                                    }) !== -1;
+                                    var inNoDomains = _.findIndex(ontology.matonto.noDomains, function(property) {
+                                        return property['@id'] === item.property['@id'];
+                                    }) !== -1;
 
-                                    if((domains.length === 0 && classId) || (!domainHasClass && domains.length > 0)) {
+                                    // property has no domains, but used to
+                                    if(domains.length === 0 && classId) {
                                         ontology.matonto.classes[item.state.ci].matonto.properties.splice(item.state.pi, 1);
+                                        if(!inNoDomains) {
+                                            ontology.matonto.noDomains.push(item.property);
+                                        }
                                     }
-                                    if(domains.length === 0) {
-                                        ontology.matonto.noDomains.push(item.property);
-                                    } else {
-                                        ontology.matonto.classes[item.state.ci].matonto.properties.push(item.property);
+                                    // property has domains, but not this class anymore
+                                    else if(domains.length > 0 && !domainHasClass) {
+                                        if(inNoDomains) {
+                                            ontology.matonto.noDomains.splice(item.state.pi, 1);
+                                        } else {
+                                            ontology.matonto.classes[item.state.ci].matonto.properties.splice(item.state.pi, 1);
+                                        }
                                     }
+                                    // checks all domains and makes sure the classes have them listed
+                                    _.forEach(domains, function(classItem) {
+                                        var classId = classItem['@id'];
+                                        if(!classId.includes('_:b')) {
+                                            var newClassIndex = _.findIndex(ontology.matonto.classes, function(classObj) {
+                                                return classObj['@id'] === classId;
+                                            });
+
+                                            if(newClassIndex !== -1) {
+                                                var hasProperty = _.findIndex(ontology.matonto.classes[newClassIndex].matonto.properties, function(property) {
+                                                    return property['@id'] === item.property['@id'];
+                                                }) !== -1;
+                                                if(!hasProperty) {
+                                                    ontology.matonto.classes[newClassIndex].matonto.properties.push(item.property);
+                                                }
+                                            }
+                                        }
+                                    });
                                 });
                                 console.log('Ontology successfully updated');
                                 deferred.resolve();
