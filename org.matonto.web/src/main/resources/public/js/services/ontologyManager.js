@@ -1146,6 +1146,16 @@
                                             }
                                         }
                                     });
+                                    // removes all property references from classes that are no longer domains
+                                    _.forEach(ontology.matonto.classes, function(classObj, index) {
+                                        var domainHasClass = _.findIndex(domains, function(item) {
+                                            return item['@id'] === classObj['@id'];
+                                        }) !== -1;
+                                        var propertyIndex = _.findIndex(classObj.matonto.properties, {'@id': item.property['@id']});
+                                        if(!domainHasClass && propertyIndex !== -1) {
+                                            ontology.matonto.classes[index].matonto.properties.splice(propertyIndex, 1);
+                                        }
+                                    });
                                 });
                                 console.log('Ontology successfully updated');
                                 deferred.resolve();
