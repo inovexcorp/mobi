@@ -50,7 +50,12 @@
 
         function submitEdit() {
             if(_.has(vm.ontology, 'matonto.originalId')) {
-                ontologyManagerService.edit(vm.ontology.matonto.originalId);
+                ontologyManagerService.edit(vm.ontology.matonto.originalId)
+                    .then(function(response) {
+                        // TODO: keep the current property selected if it is a property and has moved
+                        stateManagerService.clearState(vm.state.oi);
+                        vm.state = stateManagerService.getState();
+                    });
             }
         }
 

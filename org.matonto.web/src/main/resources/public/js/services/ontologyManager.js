@@ -1052,18 +1052,25 @@
                 return deferred.promise;
             }
 
-            self.edit = function(ontologyId) {
+            self.edit = function(ontologyId, currentState) {
+                var deferred = $q.defer();
+
                 if(changedEntries.length) {
                     $rootScope.showSpinner = true;
 
                     var config, entityjson, obj, copy, ontology,
+                        changedProperties = [],
                         promises = [];
 
                     _.forEach(_.filter(changedEntries, { ontologyId: ontologyId }), function(changedEntry) {
-                        obj = self.getObject(changedEntry.state);
+                        var state = angular.copy(changedEntry.state);
+                        obj = self.getObject(state);
                         obj.matonto.unsaved = false;
                         copy = angular.copy(obj);
-                        ontology = ontologies[changedEntry.state.oi];
+
+                        if(!ontology) {
+                            ontology = ontologies[state.oi];
+                        }
 
                         delete copy.matonto;
 
@@ -1085,6 +1092,10 @@
                             }
                         }
 
+                        if(isProperty(_.get(obj, '@type', []))) {
+                            changedProperties.push({ property: obj, state: state });
+                        }
+
                         promises.push($http.post(prefix + '/' + encodeURIComponent(changedEntry.ontologyId), null, config));
                     });
 
@@ -1092,17 +1103,38 @@
                         .then(function(response) {
                             if(!_.find(response.data, { updated: false })) {
                                 self.clearChangedList(ontologyId);
+                                _.forEach(changedProperties, function(item) {
+                                    var domains = _.get(item.property, prefixes.owl + 'domain', []);
+                                    var classId = _.get(ontology, 'matonto.classes[' + item.state.ci + "]['@id']");
+                                    var domainHasClass = _.indexOf(domains, classId) !== -1;
+
+                                    if((domains.length === 0 && classId) || (!domainHasClass && domains.length > 0)) {
+                                        ontology.matonto.classes[item.state.ci].matonto.properties.splice(item.state.pi, 1);
+                                    }
+                                    if(domains.length === 0) {
+                                        ontology.matonto.noDomains.push(item.property);
+                                    } else {
+                                        ontology.matonto.classes[item.state.ci].matonto.properties.push(item.property);
+                                    }
+                                });
                                 console.log('Ontology successfully updated');
+                                deferred.resolve();
                             } else {
                                 console.warn('Something wasn\'t updated properly in the ontology');
+                                deferred.reject();
                             }
                         }, function(response) {
                             console.error('Error during edit');
+                            deferred.reject();
                         })
                         .then(function() {
                             $rootScope.showSpinner = false;
                         });
+                } else {
+                    deferred.reject('Nothing has been changed.');
                 }
+
+                return deferred.promise;
             }
 
             self.getImportedOntologies = function(ontologyId) {
