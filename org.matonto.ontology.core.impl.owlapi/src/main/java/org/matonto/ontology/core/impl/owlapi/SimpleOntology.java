@@ -85,7 +85,7 @@ public class SimpleOntology implements Ontology {
             OWLOntologyID owlOntologyID = new OWLOntologyID(oIri, vIri);
             owlOntology = owlManager.createOntology(owlOntologyID);
 		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException(e.getMessage(), e);
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 	
@@ -97,7 +97,7 @@ public class SimpleOntology implements Ontology {
 			owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
             createOntologyId(null);
         } catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException(e.getMessage(), e);
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		} finally {
 			IOUtils.closeQuietly(inputStream);
 		}
@@ -115,7 +115,7 @@ public class SimpleOntology implements Ontology {
 			owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
             createOntologyId(null);
 		} catch (OWLOntologyCreationException e) {
-			throw new MatontoOntologyException(e.getMessage(), e);
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
 	}
 
@@ -131,7 +131,7 @@ public class SimpleOntology implements Ontology {
 			parser.parse(source, owlOntology, config);
             createOntologyId(null);
 		} catch (IOException|RDFParseException|OWLOntologyCreationException e) {
-			throw new MatontoOntologyException(e.getMessage(), e);
+			throw new MatontoOntologyException("Error in ontology creation", e);
 		}
     }
 	
@@ -148,7 +148,7 @@ public class SimpleOntology implements Ontology {
                 this.owlManager.applyChange(new AddImport(this.owlOntology, dec));
             }
         } catch (OWLOntologyCreationException e) {
-            throw new MatontoOntologyException(e.getMessage(), e);
+            throw new MatontoOntologyException("Error in ontology creation", e);
         }
 
         createOntologyId(resource);
