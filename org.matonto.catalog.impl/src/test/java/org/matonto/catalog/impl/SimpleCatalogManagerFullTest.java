@@ -14,7 +14,10 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashNamedGraphFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -30,8 +33,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
 
 public class SimpleCatalogManagerFullTest {
+
+    @Mock
+    RepositoryManager repositoryManager;
 
     private Repository repo;
     private SimpleCatalogManager manager;
@@ -45,6 +53,8 @@ public class SimpleCatalogManagerFullTest {
 
     @Before
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
@@ -53,10 +63,12 @@ public class SimpleCatalogManagerFullTest {
         dist2IRI = vf.createIRI("http://matonto.org/test/Distribution/2");
 
         manager = new SimpleCatalogManager();
-        manager.setRepo(repo);
+        manager.setRepositoryManager(repositoryManager);
         manager.setNamedGraphFactory(ngf);
         manager.setValueFactory(vf);
         manager.setModelFactory(mf);
+
+        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
