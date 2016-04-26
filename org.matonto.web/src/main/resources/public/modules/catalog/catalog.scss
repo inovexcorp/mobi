@@ -2,20 +2,100 @@
 @import "./src/main/resources/public/css/variables";
 
 .catalog {
-    .mapping-preview {
-        ul.prop-mappings {
-            margin-left: 1em;
-            list-style-type: square;
+    .filters, .results, .resource-preview {
+        float: left;
+        border: 1px solid $gray-lighter;
+        height: 100%;
+    }
+    .filters {
+        width: 10%;
 
-            li {
-                margin-left: 1em;
+        .filter-header {
+            display: block;
+            font-weight: bold;
+            background-color: $gray;
+            padding: 10px;
+            color: #fff;
+        }
+        ul li {
+            display: block;
+            border-bottom: 1px solid $gray-lighter;
+            position: relative;
+
+            a {
+                display: block;
+                padding: 10px;
+
+                &:hover {
+                    text-decoration: none;
+                }
+                .fa {
+                    display: none;
+                    position: absolute;
+                    top: 25%;
+                    right: 10px;
+                    vertical-align: middle;
+                }
+            }
+            &.applied a {
+                background-color: $gray-light;
+                color: #fff;
+
+                &:hover .fa {
+                    display: inline-block;
+                }
+            }
+            &.not-applied a {
+                color: #000;
+
+                &:hover {
+                    background-color: $gray-lighter;
+
+                    .fa {
+                        display: inline-block;
+                    }
+                }
+            }
+        }
+        .triangle-right {
+            @include right-arrow(20px, $gray-light);
+            position: absolute;
+            top: 0;
+            right: -20px;
+        }
+    }
+    .results {
+        width: 45%;
+        padding: 0.5em;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        .results-header {
+            span {
+                font-size: 1.5em;
+            }
+            form {
+                float: right;
+            }
+        }
+        .results-list {
+            .result {
+                border-bottom: 1px solid $gray-lighter;
+                padding: 0.5em;
+                position: relative;
             }
         }
     }
-    .ontology-catalog-preview {
-        .classes, .props {
-            width: 50%;
-            float: left;
+    .resource-preview {
+        width: 45%;
+        padding: 0.5em;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        .keywords {
+            li {
+                margin: 0 5px;
+            }
         }
     }
 }

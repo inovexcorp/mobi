@@ -1,0 +1,17 @@
+<div class="resource-preview">
+    <h3 ng-if="!resource" class="text-muted">Select a resource for a preview</h3>
+    <div ng-if="resource">
+        <h1>{{resource.title}} <resource-type resource="resource"></resource-type></h1>
+        <p><small>Date Created: {{dvm.getDate(resource.issued)}}</small></p>
+        <p><small>Last Modified: {{dvm.getDate(resource.modified)}}</small></p>
+        <p>{{resource.description}}</p>
+
+        <div class="keywords">
+            <h2>Keywords</h2>
+            <p ng-if="!resource.keywords.length">None</p>
+            <ul ng-if="resource.keywords.length">
+                <li ng-repeat="keyword in resource.keywords" class="label label-default">{{keyword}}</li>
+            </ul>
+        </div>
+    </div>
+</div>

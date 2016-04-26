@@ -1,4 +1,6 @@
 <!-- catalog.html -->
 <div class="catalog clearfix" ng-controller="CatalogController as vm">
-    <h1>Catalog Page</h1>
+    <filter-list click-filter="vm.applyFilter(type, option)"></filter-list>
+    <result-list results="vm.results" click-resource="vm.setSelectedResource(resource)"></result-list>
+    <resource-preview resource="vm.selectedResource"></resource-preview>
 </div>

@@ -1,0 +1,25 @@
+<div class="results">
+    <div class="results-header">
+        <span ng-if="results.size === 0">No results found</span>
+        <div ng-if="results.size > 0">
+            <span>Showing {{results.start}}-{{results.size < results.limit ? results.size : results.start + (results.limit - 1)}} of {{results.size}}</span>
+            <form class="form-inline">
+                <div class="form-group">
+                    <label class="control-label">Order By</label>
+                    <select class="order-select form-control" ng-model="dvm.orderBy">
+                        <option value="name">Name</option>
+                        <option value="date">Date</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="results-list">
+        <div ng-repeat="resource in results.results" class="result">
+        <h3><a ng-click="clickResource({resource: resource})">{{resource.title}}</a></h3>
+        <p>Date Created: {{dvm.getDate(resource.issued)}}</p>
+        <div><resource-type resource="resource"></resource-type></div>
+    </div>
+    </div>
+</div>

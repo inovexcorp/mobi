@@ -16,5 +16,6 @@
         self.dataDelim = self.data + 'delimited#';
         self.delim = 'http://matonto.org/ontologies/delimited/';
         self.mappings = 'http://matonto.org/mappings/';
+        self.catalog = 'http://matonto.org/ontologies/catalog#';
     }
 })();
