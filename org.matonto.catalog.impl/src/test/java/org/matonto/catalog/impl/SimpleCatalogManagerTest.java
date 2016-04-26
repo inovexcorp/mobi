@@ -16,6 +16,7 @@ import org.matonto.rdf.core.impl.sesame.factory.StatementValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.impl.sesame.SesameRepositoryResult;
 import org.matonto.repository.impl.sesame.query.SesameBindingSet;
@@ -41,6 +42,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SimpleCatalogManagerTest {
+
+    @Mock
+    RepositoryManager repositoryManager;
 
     @Mock
     Repository repo;
@@ -70,11 +74,12 @@ public class SimpleCatalogManagerTest {
         MockitoAnnotations.initMocks(this);
 
         manager = new SimpleCatalogManager();
-        manager.setRepo(repo);
+        manager.setRepositoryManager(repositoryManager);
         manager.setNamedGraphFactory(ngf);
         manager.setValueFactory(vf);
         manager.setModelFactory(mf);
 
+        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
         when(repo.getConnection()).thenReturn(conn);
         when(conn.prepareTupleQuery(anyString())).thenReturn(query);
         when(conn.getStatements(any(), any(), any(), any())).thenReturn(repositoryResult);
