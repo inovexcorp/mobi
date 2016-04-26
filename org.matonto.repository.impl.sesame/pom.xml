@@ -22,6 +22,11 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>1.0.34-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>1.0.6</version>
         </dependency>

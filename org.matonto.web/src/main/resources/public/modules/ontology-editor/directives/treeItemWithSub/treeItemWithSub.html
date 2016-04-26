@@ -5,6 +5,6 @@
            ng-class="{'fa-minus-square-o': isOpened, 'fa-plus-square-o': !isOpened}"
            ng-click="isOpened = !isOpened; $event.stopPropagation();"
         ></i>{{dvm.getTreeDisplay(currentEntity)}}
-        <i ng-show="currentEntity.matonto.unsaved" class="fa fa-exclamation unsaved-icon pull-right"></i>
+        <i ng-show="currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
     </a>
 </li>

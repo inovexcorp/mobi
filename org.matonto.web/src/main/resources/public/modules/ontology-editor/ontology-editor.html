@@ -3,15 +3,18 @@
     <aside class="left-nav nav">
         <ul>
             <li>
-                <a ng-click="vm.showOpenOverlay = true;" title="Open Ontology"
-                   ng-class="{ 'active': vm.showOpenOverlay === true }">
-                    <i class="fa fa-get-pocket fa-fw"></i>
-                </a>
-            </li>
-            <li>
-                <a ng-click="vm.save()" title="Save All Changes">
+                <button ng-click="vm.save()" title="Save All Changes"
+                        ng-disabled="!vm.ontology.matonto.isValid">
                     <i class="fa fa-floppy-o fa-fw"></i>
-                </a>
+                </button>
+            </li>
+            <li class="separator"></li>
+            <li>
+                <button ng-click="vm.showOpenOverlay = true;" title="Open Ontology"
+                        ng-class="{ 'active': vm.showOpenOverlay === true }"
+                        ng-disabled="!vm.ontologyIds.length">
+                    <i class="fa fa-get-pocket fa-fw"></i>
+                </button>
             </li>
             <li>
                 <a ng-click="vm.showUploadOverlay = true;" title="Upload Ontology"

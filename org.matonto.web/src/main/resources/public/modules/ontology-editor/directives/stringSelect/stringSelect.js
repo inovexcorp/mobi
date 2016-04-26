@@ -10,6 +10,7 @@
         function stringSelect(ontologyManagerService) {
             return {
                 restrict: 'E',
+                transclude: true,
                 scope: {
                     changeEvent: '&',
                     displayText: '=',
@@ -23,11 +24,11 @@
                     bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: ['$filter', function($filter) {
                     var dvm = this;
 
                     dvm.getItemNamespace = function(item) {
-                        return ontologyManagerService.getItemNamespace(item);
+                        return $filter('splitIRI')(item).begin;
                     }
                 }],
                 templateUrl: 'modules/ontology-editor/directives/stringSelect/stringSelect.html'
