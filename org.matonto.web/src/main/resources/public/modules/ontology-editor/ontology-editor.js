@@ -133,14 +133,22 @@
         }
 
         vm.downloadOntology = function() {
-            ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization)
+            ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization, vm.downloadFileName)
                 .then(function(response) {
                     vm.showDownloadOverlay = false;
                     vm.downloadSerialization = '';
+                    vm.downloadFileName = '';
                     vm.downloadError = false;
                 }, function(response) {
                     vm.downloadError = _.get(response, 'statusText', 'Error downloading ontology. Please try again later.');
                 });
+        }
+
+        vm.openDownloadOverlay = function() {
+            vm.downloadFileName = ontologyManagerService.getBeautifulIRI(angular.copy(vm.ontology['@id'])).replace(' ', '_');
+            vm.downloadError = false;
+            vm.downloadSerialization = '';
+            vm.showDownloadOverlay = true;
         }
 
         /* Prefix (Context) Management */

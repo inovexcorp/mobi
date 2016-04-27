@@ -938,7 +938,7 @@
                 return $http.post(prefix, fd, config);
             }
 
-            self.download = function(ontologyId, rdfFormat) {
+            self.download = function(ontologyId, rdfFormat, fileName) {
                 var deferred = $q.defer();
                 var config = {
                         headers: {
@@ -954,8 +954,8 @@
                         if(_.get(response, 'status') === 200) {
                             console.log('Successfully downloaded ontology');
                             var suffix = (rdfFormat === 'turtle') ? 'ttl' : 'xml';
-                            var ontology = new Blob([_.get(response, 'data', '')], {type: 'text/plain;charset=utf-8'});
-                            FileSaver.saveAs(ontology, ontologyId + '.' + suffix);
+                            var ontology = new Blob([_.get(response, 'data', '')], {type: 'text/plain'});
+                            FileSaver.saveAs(ontology, fileName + '.' + suffix);
                             deferred.resolve(response);
                         } else {
                             console.warn('Something went wrong with the ontology download');
