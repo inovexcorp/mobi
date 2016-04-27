@@ -71,12 +71,9 @@ describe('Mapping Name Input directive', function() {
         });
         it('with an error for invalid characters', function() {
             var isolatedScope = this.element.isolateScope();
-            var invalidChars = ['$', '@', '~', '`', '$', '%', '^', '&', '*', '(', ')', '#', '!', '=', '+', '[', ']', '{', '}', ';', ':', '>', '<', ',', '?', '|', '/', '\'', '\"'];
-            invalidChars.forEach(function(invalidChar) {
-                isolatedScope.name = invalidChar;
-                scope.$digest();
-                expect(isolatedScope.form.name.$error.pattern).toBe(true);
-            }, this);
+            isolatedScope.name = '$';
+            scope.$digest();
+            expect(isolatedScope.form.name.$error.pattern).toBe(true);
         });
         it('with an error if the input is a previous mapping name', function() {
             var isolatedScope = this.element.isolateScope();

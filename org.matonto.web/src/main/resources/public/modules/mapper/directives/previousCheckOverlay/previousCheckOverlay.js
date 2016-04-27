@@ -24,7 +24,7 @@
                 link: function(scope, elem, attrs, ctrl) {
                     ctrl.setValidity();
                 },
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
                     var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
@@ -49,7 +49,7 @@
                     dvm.getSourceOntologyId = function() {
                         return mappingManagerService.getSourceOntologyId(dvm.mapping);
                     }
-                }],
+                },
                 templateUrl: 'modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html'
             }
         }
