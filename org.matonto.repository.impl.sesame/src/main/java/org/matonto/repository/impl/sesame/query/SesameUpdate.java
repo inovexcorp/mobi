@@ -5,21 +5,24 @@ import org.openrdf.query.UpdateExecutionException;
 
 public class SesameUpdate extends SesameOperation implements Update {
 
-    private org.openrdf.query.Update sesUpdate;
+    private org.openrdf.query.Update sesameUpdate;
 
-    public SesameUpdate(org.openrdf.query.Update sesUpdate) {
-        super(sesUpdate);
-        this.sesUpdate = sesUpdate;
+    public SesameUpdate(org.openrdf.query.Update sesameUpdate) {
+        super(sesameUpdate);
+        this.sesameUpdate = sesameUpdate;
     }
 
 
     @Override
     public void execute() throws UpdateExecutionException {
         try {
-            sesUpdate.execute();
+            sesameUpdate.execute();
         } catch (org.openrdf.query.UpdateExecutionException e) {
             throw new UpdateExecutionException(e);
         }
     }
 
+    public String toString() {
+        return sesameUpdate.toString();
+    }
 }

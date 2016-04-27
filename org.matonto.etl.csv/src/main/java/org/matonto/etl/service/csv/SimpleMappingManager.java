@@ -21,8 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import javax.annotation.Nonnull;
 
-@Component (immediate = true,
-        provide = MappingManager.class,
+@Component(provide = MappingManager.class,
         name = SimpleMappingManager.COMPONENT_NAME,
         configurationPolicy = ConfigurationPolicy.require)
 public class SimpleMappingManager implements MappingManager {
@@ -194,7 +193,8 @@ public class SimpleMappingManager implements MappingManager {
         if (optRepo.isPresent()) {
             setRepo(optRepo.get());
         } else {
-            throw new IllegalStateException("Repository does not exist");
+            logger.info(String.format("Service registration delayed for %s. Waiting for Repository.", COMPONENT_NAME));
+            throw new IllegalStateException(String.format("Repository \"%s\" does not exist", repositoryId));
         }
     }
 
