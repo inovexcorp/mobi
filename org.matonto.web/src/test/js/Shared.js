@@ -31,6 +31,17 @@ function injectDirectiveTemplate(basePath) {
     });
 }
 
+function injectRegexConstant() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.constant('REGEX', {
+                'IRI': new RegExp('[a-zA-Z]'),
+                'LOCALNAME': new RegExp('[a-zA-Z]')
+            });
+        });
+    });
+}
+
 function mockOntologyManager() {
     beforeEach(function() {
         angular.module('ontologyManager', []);
