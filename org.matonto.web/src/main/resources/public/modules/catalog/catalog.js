@@ -12,16 +12,42 @@
         var onError = function(errorMessage) {
             vm.errorMessage = errorMessage;
         }
+        var limit = 10;
         vm.results = {};
+        vm.filters = {
+            Resources: []
+        };
         vm.errorMessage = '';
         vm.selectedResource = undefined;
+        vm.orderBy = 'issued';
+        vm.resourceType = undefined;
+        vm.currentPage = 0;
 
         activate();
 
         function activate() {
-            catalogManagerService.getResources(10, 0)
+            getResources();
+            catalogManagerService.getResourceTypes()
+                .then(function(types) {
+                    vm.filters.Resources = _.map(types, function(type) {
+                        return {
+                            value: type,
+                            formatter: getType,
+                            applied: false
+                        };
+                    });
+                });
+        }
+
+        vm.getNextPage = function(direction, link) {
+            catalogManagerService.getResultsPage(link)
                 .then(function(results) {
-                    vm.results = results;
+                    if (direction === 'next') {
+                        vm.currentPage += 1;
+                    } else {
+                        vm.currentPage -= 1;
+                    }
+                    vm.results = results
                 }, onError);
         }
 
@@ -29,13 +55,27 @@
             vm.selectedResource = resource;
         }
 
-        vm.applyFilter = function(type, option) {
-            if (type === 'Resources') {
-                catalogManagerService.getResources(10, 0, option)
-                    .then(function(results) {
-                        vm.results = results;
-                    }, onError)
-            }
+        vm.getUpdatedList = function() {
+            _.forEach(vm.filters, function(options, type) {
+                if (type === 'Resources') {
+                    var selectedType = options[0];
+                    if (vm.resourceType !== selectedType) {
+                        vm.currentPage = 0;
+                        vm.resourceType = selectedType;                        
+                    }
+                }
+            });
+            getResources();
+        }
+
+        function getType(type) {
+            return catalogManagerService.getType(type);
+        }
+        function getResources() {
+            catalogManagerService.getResources(limit, vm.currentPage, vm.resourceType, vm.orderBy)
+                .then(function(results) {
+                    vm.results = results;
+                }, onError);
         }
     }
 })();

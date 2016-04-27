@@ -18,15 +18,17 @@
                     });
             }
 
-            self.getResources = function(limit, start, type) {
+            self.getResources = function(limit, start, type, order) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer(),
                     config = {
-                        limit: limit,
-                        start: start
+                        params: {
+                            limit: limit,
+                            start: start
+                        }
                     };
                 if (type) {
-                    config.type = type;
+                    config.params.type = type;
                 }
                 $http.get(prefix + 'resources', config)
                     .then(function(response) {
@@ -41,6 +43,7 @@
 
             self.getResultsPage = function(url) {
                 $rootScope.showSpinner = true;
+                var deferred = $q.defer();
                 $http.get(url)
                     .then(function(response) {
                         deferred.resolve(response.data);
@@ -54,6 +57,7 @@
 
             self.getResource = function(resourceId) {
                 $rootScope.showSpinner = true;
+                var deferred = $q.defer();
                 $http.get(prefix + 'resources/' + encodeURIComponent(resourceId))
                     .then(function(response) {
                         if (response.status === 204) {
@@ -74,7 +78,26 @@
             }
 
             self.getDate = function(date) {
-                return new Date(date.year, date.month, date.day, date.hour, date.minute, date.second);
+                var dateObj = new Date(0);
+                if (_.has(date, 'year')) {
+                    dateObj.setFullYear(date.year);
+                }
+                if (_.has(date, 'month')) {
+                    dateObj.setMonth(date.month - 1);
+                }
+                if (_.has(date, 'day')) {
+                    dateObj.setDate(date.day);
+                }
+                if (_.has(date, 'hour')) {
+                    dateObj.setHours(date.hour);
+                }
+                if (_.has(date, 'minute')) {
+                    dateObj.setMinutes(date.minute);
+                }
+                if (_.has(date, 'second')) {
+                    dateObj.setSeconds(date.second);
+                }
+                return dateObj;
             }
         }
 })();

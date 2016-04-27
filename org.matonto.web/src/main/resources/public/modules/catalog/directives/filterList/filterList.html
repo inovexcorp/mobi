@@ -2,9 +2,9 @@
     <div class="filter" ng-repeat="(filter, options) in dvm.filters">
         <div class="filter-header"><i class="fa fa-filter"></i> {{filter}}</div>
         <ul class="filter-options">
-            <li ng-repeat="option in options" ng-class="{'applied': option.applied, 'not-applied': !option.applied}">
-                <a ng-click="option.applied = !option.applied; clickFilter({type: filter, option: option.value})">
-                    {{option.formatter(option.value)}} <i class="fa" ng-class="{'fa-plus-circle': !option.applied, 'fa-times-circle': option.applied}"></i>
+            <li ng-repeat="option in options" ng-class="{'applied': option.applied, 'not-applied': !option.applied, 'hidden': dvm.isHidden(filter, option)}">
+                <a ng-click="dvm.updateApplied(filter, option); clickFilter()">
+                    {{option.formatter(option.value)}} ({{dvm.getCount(filter, option)}}) <i class="fa" ng-class="{'fa-plus-circle': !option.applied, 'fa-times-circle': option.applied}"></i>
                 </a>
                 <div ng-if="option.applied" class="triangle-right"></div>
             </li>

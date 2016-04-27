@@ -1,6 +1,10 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+$filters-width: 10%;
+$results-width: 45%;
+$preview-width: $results-width;
+
 .catalog {
     .filters, .results, .resource-preview {
         float: left;
@@ -8,7 +12,7 @@
         height: 100%;
     }
     .filters {
-        width: 10%;
+        width: $filters-width;
 
         .filter-header {
             display: block;
@@ -65,8 +69,8 @@
         }
     }
     .results {
-        width: 45%;
-        padding: 0.5em;
+        width: $results-width;
+        padding: 0.5em 0.5em 0.5em 1em;
         overflow-y: auto;
         overflow-x: hidden;
 
@@ -79,22 +83,39 @@
             }
         }
         .results-list {
+            padding-bottom: 80px;
+
             .result {
                 border-bottom: 1px solid $gray-lighter;
                 padding: 0.5em;
                 position: relative;
             }
         }
+        .page-nav {
+            display: block;
+            text-align: center;
+            position: fixed;
+            left: $filters-width;
+            right: $preview-width;
+            bottom: 0;
+        }
     }
     .resource-preview {
-        width: 45%;
+        width: $preview-width;
         padding: 0.5em;
         overflow-y: auto;
         overflow-x: hidden;
 
+        h1 span {
+            font-size: 0.5em;
+            vertical-align: middle;
+        }
         .keywords {
             li {
                 margin: 0 5px;
+                float: left;
+                color: $gray-dark;
+                color: $gray-lighter;
             }
         }
     }

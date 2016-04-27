@@ -131,13 +131,30 @@ function mockMappingManager() {
     });
 }
 
+function mockCatalogManager() {
+    beforeEach(function() {
+        angular.module('catalogManager', []);
+
+        module(function($provide) {
+            $provide.service('catalogManagerService', function() {
+                this.getType = jasmine.createSpy('getType').and.callFake(function(type) {
+                    return '';
+                });
+                this.getDate = jasmine.createSpy('getDate').and.callFake(function(date) {
+                    return new Date();
+                });
+            });
+        });
+    });
+}
+
 function mockPrefixes() {
     beforeEach(function() {
         angular.module('prefixes', []);
 
         module(function($provide) {
             $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = '';
+                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = '';
             });
         });
     });

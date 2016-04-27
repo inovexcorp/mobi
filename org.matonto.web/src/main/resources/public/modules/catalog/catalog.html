@@ -1,6 +1,11 @@
 <!-- catalog.html -->
 <div class="catalog clearfix" ng-controller="CatalogController as vm">
-    <filter-list click-filter="vm.applyFilter(type, option)"></filter-list>
-    <result-list results="vm.results" click-resource="vm.setSelectedResource(resource)"></result-list>
+    <filter-list results="vm.results" filters="vm.filters" click-filter="vm.getUpdatedList()"></filter-list>
+    <result-list results="vm.results" 
+        order-by="vm.orderBy" 
+        current-page="vm.currentPage"
+        click-resource="vm.setSelectedResource(resource)" 
+        change-order="vm.getUpdatedList()"
+        click-link="vm.getNextPage(direction, link)"></result-list>
     <resource-preview resource="vm.selectedResource"></resource-preview>
 </div>

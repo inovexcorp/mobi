@@ -14,21 +14,20 @@
                 replace: true,
                 scope: {
                     results: '=',
+                    orderBy: '=',
+                    currentPage: '=',
                     clickResource: '&',
-                    changeOrder: '&'
+                    changeOrder: '&',
+                    clickLink: '&'
                 },
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
-                    dvm.orderBy = 'name';
 
-                    dvm.getType = function(resource) {
-                        return catalogManagerService.getType(resource);
-                    }
                     dvm.getDate = function(date) {
                         var jsDate = catalogManagerService.getDate(date);
                         return jsDate.toDateString();
                     }
-                }],
+                },
                 templateUrl: 'modules/catalog/directives/resultList/resultList.html'
             }
         }
