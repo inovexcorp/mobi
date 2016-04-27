@@ -1147,6 +1147,7 @@
                                         }
                                     });
                                 });
+                                ontology.matonto.originalId = angular.copy(ontology['@id']);
                                 console.log('Ontology successfully updated');
                                 deferred.resolve();
                             } else {
