@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay',
+        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay',
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
@@ -192,6 +192,13 @@
             vm.selected = {};
             vm.ontology = {};
             vm.showCloseOverlay = false;
+        }
+
+        vm.isThisType = function(property, propertyType) {
+            var lowerCasePropertyTypeIRI = (prefixes.owl + propertyType).toLowerCase();
+            return _.findIndex(_.get(property, '@type', []), function(type) {
+                return type.toLowerCase() === lowerCasePropertyTypeIRI;
+            }) !== -1;
         }
 
         /* Annotation Management */
