@@ -29,6 +29,7 @@
                 restrict: 'E',
                 require: '^form',
                 replace: true,
+                controllerAs: 'dvm',
                 scope: {
                     name: '=',
                     required: '='
@@ -36,6 +37,10 @@
                 link: function(scope, el, attrs, form) {
                     scope.form = form;
                 },
+                controller: ['REGEX', function(REGEX) {
+                    var dvm = this;
+                    dvm.localNamePattern = REGEX.LOCALNAME;
+                }],
                 templateUrl: 'modules/mapper/directives/mappingNameInput/mappingNameInput.html'
             }
         }

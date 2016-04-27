@@ -1,15 +1,11 @@
 <div class="mapping-name-input form-group" ng-class="{'has-error': form.name.$invalid, 'has-success': form.name.$valid}">
-    <label>
+    <label class="control-label">
         Name
-        <input type="text" class="form-control" name="name" ng-model="name" ng-pattern="/^[a-zA-Z0-9._\-]+$/" ng-required="required" ng-maxlength="50" unique-name>
+        <input type="text" class="form-control" name="name" ng-model="name" ng-pattern="dvm.localNamePattern" ng-required="required" ng-maxlength="50" unique-name>
     </label>
-    <div class="alert alert-danger" role="alert" ng-if="form.name.$error.uniqueName">
-        Mapping name must be unique
-    </div>
-    <div class="alert alert-danger" role="alert" ng-if="form.name.$error.maxlength">
-        Mapping name must be 50 characters or less
-    </div>
-    <div class="alert alert-danger" role="alert" ng-if="form.name.$error.pattern">
-        Mapping name is invalid
+    <div class="error-msg" ng-messages="form.name.$error">
+        <ng-message when="uniqueName">Mapping name must be unique</ng-message>
+        <ng-message when="maxlength">Mapping name must be be 50 characters or less</ng-message>
+        <ng-message when="pattern">Mapping name is invalid</ng-message>
     </div>
 </div>
