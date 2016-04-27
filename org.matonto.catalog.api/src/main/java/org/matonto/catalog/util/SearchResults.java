@@ -1,4 +1,4 @@
-package org.matonto.catalog.base;
+package org.matonto.catalog.util;
 
 import org.matonto.catalog.api.PaginatedSearchResults;
 

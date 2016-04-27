@@ -6,6 +6,7 @@ import net.sf.json.JSONArray;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Distribution;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
@@ -81,18 +82,20 @@ public class CatalogRestImpl implements CatalogRest {
     public PaginatedResults<PublishedResourceMarshaller> listPublishedResources(UriInfo uriInfo, String resourceType,
                                                                                 String searchTerms, int limit,
                                                                                 int start) {
+        PaginatedSearchResults<PublishedResource> searchResults =
+                catalogManager.findResource(searchTerms, limit, start);
+
         List<PublishedResourceMarshaller> publishedResources = new ArrayList<>();
+        searchResults.getPage().forEach(resource -> publishedResources.add(processResource(resource)));
 
-        catalogManager.findResource(searchTerms, limit, start).forEach(resource ->
-                publishedResources.add(processResource(resource)));
-
-        int size = publishedResources.size();
+        int size = searchResults.getPage().size();
 
         PaginatedResults<PublishedResourceMarshaller> marshaller = new PaginatedResults<>();
         marshaller.setResults(publishedResources);
         marshaller.setLimit(limit);
         marshaller.setSize(size);
         marshaller.setStart(start);
+        marshaller.setTotalSize(searchResults.getTotalSize());
 
         marshaller.setLinks(buildLinks(uriInfo, size, limit, start));
 
