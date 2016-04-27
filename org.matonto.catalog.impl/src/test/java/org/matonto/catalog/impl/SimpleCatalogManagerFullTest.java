@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Distribution;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.NamedGraphFactory;
@@ -127,9 +128,12 @@ public class SimpleCatalogManagerFullTest {
     public void testFindResourcesReturnsCorrectSize() throws Exception {
         // given
         // when
-        Set<PublishedResource> resources = manager.findResource("", 1, 0);
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
 
         // then
-        Assert.assertThat(resources.size(), equalTo(1));
+        Assert.assertThat(resources.getPage().size(), equalTo(1));
+        Assert.assertThat(resources.getTotalSize(), equalTo(2));
+        Assert.assertThat(resources.getPageSize(), equalTo(1));
+        Assert.assertThat(resources.getPageNumber(), equalTo(1));
     }
 }

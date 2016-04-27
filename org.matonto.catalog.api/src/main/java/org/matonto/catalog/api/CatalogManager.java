@@ -16,9 +16,9 @@ public interface CatalogManager {
      * @param searchTerm The String providing the search criteria.
      * @param limit The limit to the number of resources to find.
      * @param offset The start index of search results to return.
-     * @return The Set of PublishedResources matching the search criteria.
+     * @return The PaginatedSearchResults for a page matching the search criteria.
      */
-    Set<PublishedResource> findResource(String searchTerm, int limit, int offset);
+    PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset);
 
     /**
      * Retrieves the PublishedResource with the given Resource identifier.

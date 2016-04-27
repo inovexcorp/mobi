@@ -7,13 +7,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Ontology;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
+import org.matonto.catalog.base.SearchResults;
 import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.Models;
 import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
@@ -62,7 +65,9 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String GET_RESOURCE_QUERY;
     private static final String FIND_RESOURCES_QUERY;
+    private static final String COUNT_RESOURCES_QUERY;
     private static final String RESOURCE_BINDING = "resource";
+    private static final String RESOURCE_COUNT_BINDING = "resource_count";
 
     static {
         try {
@@ -72,6 +77,10 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             FIND_RESOURCES_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/find-resources.rq"),
+                    "UTF-8"
+            );
+            COUNT_RESOURCES_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/count-resources.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -114,9 +123,32 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<PublishedResource> findResource(String searchTerm, int limit, int offset) {
+    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset) {
         RepositoryConnection conn = getRepositoryConnection();
 
+        // Get Total Count
+        TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_QUERY);
+        TupleQueryResult countResults = countQuery.evaluate();
+
+        int totalCount;
+        if (countResults.hasNext()) {
+            BindingSet bindingSet = countResults.next();
+
+            if (!bindingSet.getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
+                // Aggregations return an empty result when no results found
+                countResults.close();
+                conn.close();
+                return SearchResults.emptyResults();
+            }
+
+            totalCount = Bindings.requiredLiteral(bindingSet, RESOURCE_COUNT_BINDING).intValue();
+        } else {
+            countResults.close();
+            conn.close();
+            return SearchResults.emptyResults();
+        }
+
+        // Get Results
         String queryString = FIND_RESOURCES_QUERY + String.format("\nLIMIT %d\nOFFSET %d", limit, offset);
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
@@ -130,7 +162,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 // Aggregations return an empty result when no results found
                 result.close();
                 conn.close();
-                return Collections.emptySet();
+                return SearchResults.emptyResults();
             }
 
             Resource resource = vf.createIRI(Bindings.requiredResource(bindingSet, RESOURCE_BINDING).stringValue());
@@ -142,7 +174,9 @@ public class SimpleCatalogManager implements CatalogManager {
 
         result.close();
         conn.close();
-        return resources;
+
+        int pageNumber = offset == 0 ? 1 : (offset / limit);
+        return new SimpleSearchResults<>(resources, totalCount, limit, pageNumber);
     }
 
     @Override
