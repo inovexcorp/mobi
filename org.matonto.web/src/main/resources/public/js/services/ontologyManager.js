@@ -1106,12 +1106,8 @@
                                 _.forEach(changedProperties, function(item) {
                                     var domains = _.get(item.property, prefixes.rdfs + 'domain', []);
                                     var classId = _.get(ontology, 'matonto.classes[' + item.state.ci + "]['@id']");
-                                    var domainHasClass = _.findIndex(domains, function(item) {
-                                        return item['@id'] === classId;
-                                    }) !== -1;
-                                    var inNoDomains = _.findIndex(ontology.matonto.noDomains, function(property) {
-                                        return property['@id'] === item.property['@id'];
-                                    }) !== -1;
+                                    var domainHasClass = _.findIndex(domains, {'@id': classId}) !== -1;
+                                    var inNoDomains = _.findIndex(ontology.matonto.noDomains, {'@id': item.property['@id']}) !== -1;
 
                                     // property has no domains, but used to
                                     if(domains.length === 0 && classId) {
@@ -1132,14 +1128,10 @@
                                     _.forEach(domains, function(classItem) {
                                         var classId = classItem['@id'];
                                         if(!classId.includes('_:b')) {
-                                            var newClassIndex = _.findIndex(ontology.matonto.classes, function(classObj) {
-                                                return classObj['@id'] === classId;
-                                            });
+                                            var newClassIndex = _.findIndex(ontology.matonto.classes, {'@id': classId});
 
                                             if(newClassIndex !== -1) {
-                                                var hasProperty = _.findIndex(ontology.matonto.classes[newClassIndex].matonto.properties, function(property) {
-                                                    return property['@id'] === item.property['@id'];
-                                                }) !== -1;
+                                                var hasProperty = _.findIndex(ontology.matonto.classes[newClassIndex].matonto.properties, {'@id':item.property['@id']}) !== -1;
                                                 if(!hasProperty) {
                                                     ontology.matonto.classes[newClassIndex].matonto.properties.push(item.property);
                                                 }
@@ -1148,9 +1140,7 @@
                                     });
                                     // removes all property references from classes that are no longer domains
                                     _.forEach(ontology.matonto.classes, function(classObj, index) {
-                                        var domainHasClass = _.findIndex(domains, function(item) {
-                                            return item['@id'] === classObj['@id'];
-                                        }) !== -1;
+                                        var domainHasClass = _.findIndex(domains, {'@id': classObj['@id']}) !== -1;
                                         var propertyIndex = _.findIndex(classObj.matonto.properties, {'@id': item.property['@id']});
                                         if(!domainHasClass && propertyIndex !== -1) {
                                             ontology.matonto.classes[index].matonto.properties.splice(propertyIndex, 1);
@@ -1160,7 +1150,7 @@
                                 console.log('Ontology successfully updated');
                                 deferred.resolve();
                             } else {
-                                console.warn('Something wasn\'t updated properly in the ontology');
+                                console.warn("Something wasn't updated properly in the ontology");
                                 deferred.reject();
                             }
                         }, function(response) {
@@ -1305,9 +1295,7 @@
 
             self.findOntologyWithClass = function(ontologyList, classId) {
                 return _.find(ontologyList, function(ontology) {
-                    return _.findIndex(self.getClasses(ontology), function(classObj) {
-                        return classObj['@id'] === classId;
-                    }) >= 0;
+                    return _.findIndex(self.getClasses(ontology), {'@id': classId}) >= 0;
                 });
             }
 
