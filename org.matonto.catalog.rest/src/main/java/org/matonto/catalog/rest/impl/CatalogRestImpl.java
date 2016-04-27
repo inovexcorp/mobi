@@ -245,12 +245,12 @@ public class CatalogRestImpl implements CatalogRest {
         links.setContext(path);
 
         if (size == limit) {
-            String next = path + String.format("?limit=%d&offset=%d", limit, start + limit);
+            String next = path + String.format("?limit=%d&start=%d", limit, start + limit);
             links.setNext(next);
         }
 
         if (start != 0) {
-            String prev = path + String.format("?limit=%d&offset=%d", limit, start - limit);
+            String prev = path + String.format("?limit=%d&start=%d", limit, start - limit);
             links.setPrev(prev);
         }
 
