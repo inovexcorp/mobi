@@ -8,11 +8,17 @@
         <!-- serialization -->
         <serialization-select ng-model="vm.downloadSerialization"></serialization-select>
         <!-- file name -->
-        <text-input ng-model="vm.downloadFileName" display-text="'File Name'"></text-input>
+        <div ng-class="{'has-error': vm.downloadForm.fileName.$invalid}" class="form-group">
+            <label class="control-label" for="fileName">File Name</label>
+            <input class="form-control" id="fileName" name="fileName" ng-model="vm.downloadFileName" ng-pattern="dvm.fileNamePattern" />
+            <p ng-messages="vm.downloadForm.fileName.$error" class="error-msg">
+                <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
+            </p>
+        </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!vm.downloadSerialization || !vm.downloadFileName" on-click="vm.downloadOntology();">Download</custom-button>
-            <custom-button on-click="vm.showDownloadOverlay = false; vm.downloadError = false; vm.downloadSerialization = ''; vm.downloadFileName = '';" type="'secondary'">Cancel</custom-button>
+            <custom-button is-disabled-when="!vm.downloadSerialization || !vm.downloadFileName || vm.downloadForm.$invalid" on-click="vm.downloadOntology()">Download</custom-button>
+            <custom-button on-click="vm.showDownloadOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>
