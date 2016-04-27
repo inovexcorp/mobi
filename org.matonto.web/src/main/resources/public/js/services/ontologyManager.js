@@ -1052,18 +1052,25 @@
                 return deferred.promise;
             }
 
-            self.edit = function(ontologyId) {
+            self.edit = function(ontologyId, currentState) {
+                var deferred = $q.defer();
+
                 if(changedEntries.length) {
                     $rootScope.showSpinner = true;
 
                     var config, entityjson, obj, copy, ontology,
+                        changedProperties = [],
                         promises = [];
 
                     _.forEach(_.filter(changedEntries, { ontologyId: ontologyId }), function(changedEntry) {
-                        obj = self.getObject(changedEntry.state);
+                        var state = angular.copy(changedEntry.state);
+                        obj = self.getObject(state);
                         obj.matonto.unsaved = false;
                         copy = angular.copy(obj);
-                        ontology = ontologies[changedEntry.state.oi];
+
+                        if(!ontology) {
+                            ontology = ontologies[state.oi];
+                        }
 
                         delete copy.matonto;
 
@@ -1085,6 +1092,10 @@
                             }
                         }
 
+                        if(isProperty(_.get(obj, '@type', []))) {
+                            changedProperties.push({ property: obj, state: state });
+                        }
+
                         promises.push($http.post(prefix + '/' + encodeURIComponent(changedEntry.ontologyId), null, config));
                     });
 
@@ -1092,17 +1103,68 @@
                         .then(function(response) {
                             if(!_.find(response.data, { updated: false })) {
                                 self.clearChangedList(ontologyId);
+                                _.forEach(changedProperties, function(item) {
+                                    var domains = _.get(item.property, prefixes.rdfs + 'domain', []);
+                                    var classId = _.get(ontology, 'matonto.classes[' + item.state.ci + "]['@id']");
+                                    var domainHasClass = _.findIndex(domains, {'@id': classId}) !== -1;
+                                    var inNoDomains = _.findIndex(ontology.matonto.noDomains, {'@id': item.property['@id']}) !== -1;
+
+                                    // property has no domains, but used to
+                                    if(domains.length === 0 && classId) {
+                                        ontology.matonto.classes[item.state.ci].matonto.properties.splice(item.state.pi, 1);
+                                        if(!inNoDomains) {
+                                            ontology.matonto.noDomains.push(item.property);
+                                        }
+                                    }
+                                    // property has domains, but not this class anymore
+                                    else if(domains.length > 0 && !domainHasClass) {
+                                        if(inNoDomains) {
+                                            ontology.matonto.noDomains.splice(item.state.pi, 1);
+                                        } else {
+                                            ontology.matonto.classes[item.state.ci].matonto.properties.splice(item.state.pi, 1);
+                                        }
+                                    }
+                                    // checks all domains and makes sure the classes have them listed
+                                    _.forEach(domains, function(classItem) {
+                                        var classId = classItem['@id'];
+                                        if(!classId.includes('_:b')) {
+                                            var newClassIndex = _.findIndex(ontology.matonto.classes, {'@id': classId});
+
+                                            if(newClassIndex !== -1) {
+                                                var hasProperty = _.findIndex(ontology.matonto.classes[newClassIndex].matonto.properties, {'@id':item.property['@id']}) !== -1;
+                                                if(!hasProperty) {
+                                                    ontology.matonto.classes[newClassIndex].matonto.properties.push(item.property);
+                                                }
+                                            }
+                                        }
+                                    });
+                                    // removes all property references from classes that are no longer domains
+                                    _.forEach(ontology.matonto.classes, function(classObj, index) {
+                                        var domainHasClass = _.findIndex(domains, {'@id': classObj['@id']}) !== -1;
+                                        var propertyIndex = _.findIndex(classObj.matonto.properties, {'@id': item.property['@id']});
+                                        if(!domainHasClass && propertyIndex !== -1) {
+                                            ontology.matonto.classes[index].matonto.properties.splice(propertyIndex, 1);
+                                        }
+                                    });
+                                });
                                 console.log('Ontology successfully updated');
+                                deferred.resolve();
                             } else {
-                                console.warn('Something wasn\'t updated properly in the ontology');
+                                console.warn("Something wasn't updated properly in the ontology");
+                                deferred.reject();
                             }
                         }, function(response) {
                             console.error('Error during edit');
+                            deferred.reject();
                         })
                         .then(function() {
                             $rootScope.showSpinner = false;
                         });
+                } else {
+                    deferred.reject('Nothing has been changed.');
                 }
+
+                return deferred.promise;
             }
 
             self.getImportedOntologies = function(ontologyId) {
@@ -1233,9 +1295,7 @@
 
             self.findOntologyWithClass = function(ontologyList, classId) {
                 return _.find(ontologyList, function(ontology) {
-                    return _.findIndex(self.getClasses(ontology), function(classObj) {
-                        return classObj['@id'] === classId;
-                    }) >= 0;
+                    return _.findIndex(self.getClasses(ontology), {'@id': classId}) >= 0;
                 });
             }
 

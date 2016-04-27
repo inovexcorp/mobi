@@ -50,7 +50,12 @@
 
         function submitEdit() {
             if(_.has(vm.ontology, 'matonto.originalId')) {
-                ontologyManagerService.edit(vm.ontology.matonto.originalId);
+                ontologyManagerService.edit(vm.ontology.matonto.originalId)
+                    .then(function(response) {
+                        // TODO: keep the current property selected if it is a property and has moved
+                        stateManagerService.clearState(vm.state.oi);
+                        vm.state = stateManagerService.getState();
+                    });
             }
         }
 
@@ -77,7 +82,7 @@
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
                     vm.showUploadOverlay = false;
                 }, function(response) {
-                    vm.uploadError = response.data.error;
+                    vm.uploadError = response.statusText;
                 });
         }
 
@@ -182,7 +187,7 @@
         }
 
         vm.closeOntology = function() {
-            ontologyManagerService.closeOntology(vm.state.oi, vm.selected['@id']);
+            ontologyManagerService.closeOntology(vm.state.oi, vm.ontology['@id']);
             stateManagerService.clearState(vm.state.oi);
             vm.selected = {};
             vm.ontology = {};
