@@ -175,7 +175,7 @@ public class SimpleCatalogManager implements CatalogManager {
         result.close();
         conn.close();
 
-        int pageNumber = offset == 0 ? 1 : (offset / limit);
+        int pageNumber = (offset / limit) + 1;
         return new SimpleSearchResults<>(resources, totalCount, limit, pageNumber);
     }
 

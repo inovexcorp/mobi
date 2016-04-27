@@ -125,7 +125,7 @@ public class SimpleCatalogManagerFullTest {
     }
 
     @Test
-    public void testFindResourcesReturnsCorrectSize() throws Exception {
+    public void testFindResourcesReturnsCorrectDataFirstPage() throws Exception {
         // given
         // when
         PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
@@ -134,6 +134,32 @@ public class SimpleCatalogManagerFullTest {
         Assert.assertThat(resources.getPage().size(), equalTo(1));
         Assert.assertThat(resources.getTotalSize(), equalTo(2));
         Assert.assertThat(resources.getPageSize(), equalTo(1));
+        Assert.assertThat(resources.getPageNumber(), equalTo(1));
+    }
+
+    @Test
+    public void testFindResourcesReturnsCorrectDataLastPage() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 1);
+
+        // then
+        Assert.assertThat(resources.getPage().size(), equalTo(1));
+        Assert.assertThat(resources.getTotalSize(), equalTo(2));
+        Assert.assertThat(resources.getPageSize(), equalTo(1));
+        Assert.assertThat(resources.getPageNumber(), equalTo(2));
+    }
+
+    @Test
+    public void testFindResourcesReturnsCorrectDataOnePage() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1000, 0);
+
+        // then
+        Assert.assertThat(resources.getPage().size(), equalTo(2));
+        Assert.assertThat(resources.getTotalSize(), equalTo(2));
+        Assert.assertThat(resources.getPageSize(), equalTo(1000));
         Assert.assertThat(resources.getPageNumber(), equalTo(1));
     }
 }
