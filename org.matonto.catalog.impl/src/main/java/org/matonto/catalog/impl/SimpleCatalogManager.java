@@ -40,6 +40,8 @@ public class SimpleCatalogManager implements CatalogManager {
     private ModelFactory mf;
     private NamedGraphFactory ngf;
 
+    private Map<Resource, String> sortingOptions = new HashMap<>();
+
     private final Logger log = Logger.getLogger(SimpleCatalogManager.class);
 
     @Reference
@@ -97,6 +99,7 @@ public class SimpleCatalogManager implements CatalogManager {
         CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
         IRI catalogIri = vf.createIRI(config.iri());
         repositoryId = config.repositoryId();
+        createSortingOptions();
 
         // Create Catalog if it doesn't exist
         RepositoryConnection conn = getRepositoryConnection();
@@ -123,6 +126,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset) {
+        return findResource(searchTerm, limit, offset, vf.createIRI(DC + "modified"), false);
+    }
+
+    @Override
+    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset,
+                                                                  Resource sortBy, boolean ascending) {
         RepositoryConnection conn = getRepositoryConnection();
 
         // Get Total Count
@@ -148,7 +157,15 @@ public class SimpleCatalogManager implements CatalogManager {
         }
 
         // Get Results
-        String queryString = FIND_RESOURCES_QUERY + String.format("\nLIMIT %d\nOFFSET %d", limit, offset);
+        String sortBinding = sortingOptions.get(sortBy) == null ? "modified" : sortingOptions.get(sortBy);
+        String queryString;
+        if (ascending) {
+            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
+                    limit, offset);
+        } else {
+            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d", sortBinding,
+                    limit, offset);
+        }
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult result = query.evaluate();
@@ -314,5 +331,11 @@ public class SimpleCatalogManager implements CatalogManager {
             log.error(errorMsg);
             throw new IllegalStateException(errorMsg);
         }
+    }
+
+    private void createSortingOptions() {
+        sortingOptions.put(vf.createIRI(DC + "modified"), "modified");
+        sortingOptions.put(vf.createIRI(DC + "issued"), "issued");
+        sortingOptions.put(vf.createIRI(DC + "title"), "title");
     }
 }

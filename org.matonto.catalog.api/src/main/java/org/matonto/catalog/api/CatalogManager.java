@@ -11,7 +11,7 @@ public interface CatalogManager {
 
     /**
      * Searches the Catalog for resources that match a given String. Allows paging with the limit and offset
-     * parameters.
+     * parameters. Sorts by modified date descending.
      *
      * @param searchTerm The String providing the search criteria.
      * @param limit The limit to the number of resources to find.
@@ -19,6 +19,21 @@ public interface CatalogManager {
      * @return The PaginatedSearchResults for a page matching the search criteria.
      */
     PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset);
+
+    /**
+     * Searches the Catalog for resources that match a given String. Allows paging with the limit and offset
+     * parameters. Allows sorting with the sortBy and ascending parameters. Sorts by modified data descending if
+     * an inappropriate resource is passed in.
+     *
+     * @param searchTerm The String providing the search criteria.
+     * @param limit The limit to the number of resources to find.
+     * @param offset The start index of search results to return.
+     * @param sortBy The resource to sort by.
+     * @param ascending Sort ascending if true, else descending.
+     * @return The PaginatedSearchResults for a page matching the search criteria.
+     */
+    PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset, Resource sortBy,
+                                                           boolean ascending);
 
     /**
      * Retrieves the PublishedResource with the given Resource identifier.

@@ -52,6 +52,8 @@ public class SimpleCatalogManagerFullTest {
     private Resource dist1IRI;
     private Resource dist2IRI;
 
+    private static final String DC = "http://purl.org/dc/terms/";
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -161,5 +163,35 @@ public class SimpleCatalogManagerFullTest {
         Assert.assertThat(resources.getTotalSize(), equalTo(2));
         Assert.assertThat(resources.getPageSize(), equalTo(1000));
         Assert.assertThat(resources.getPageNumber(), equalTo(1));
+    }
+
+    @Test
+    public void testFindResourcesDefaultOrdering() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
+
+        // then
+        Assert.assertThat(resources.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+    }
+
+    @Test
+    public void testFindResourcesOrdering() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources1 = manager.findResource("", 1, 0, vf.createIRI(DC + "modified"), true);
+        PaginatedSearchResults<PublishedResource> resources2 = manager.findResource("", 1, 0, vf.createIRI(DC + "modified"), false);
+        PaginatedSearchResults<PublishedResource> resources3 = manager.findResource("", 1, 0, vf.createIRI(DC + "issued"), true);
+        PaginatedSearchResults<PublishedResource> resources4 = manager.findResource("", 1, 0, vf.createIRI(DC + "issued"), false);
+        PaginatedSearchResults<PublishedResource> resources5 = manager.findResource("", 1, 0, vf.createIRI(DC + "title"), true);
+        PaginatedSearchResults<PublishedResource> resources6 = manager.findResource("", 1, 0, vf.createIRI(DC + "title"), false);
+
+        // then
+        Assert.assertThat(resources1.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources2.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+        Assert.assertThat(resources3.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+        Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
     }
 }
