@@ -10,6 +10,6 @@ public interface SparqlRest {
 
     @GET
     Response queryRdf(
-            @QueryParam("query") String query
+            @QueryParam("query") String queryString
     );
 }
