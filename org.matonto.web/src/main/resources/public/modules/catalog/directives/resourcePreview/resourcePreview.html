@@ -8,7 +8,7 @@
 
         <div class="keywords">
             <h2>Keywords</h2>
-            <p ng-if="!resource.keywords && !resource.keywords.length">None</p>
+            <p ng-if="!resource.keywords || resource.keywords && !resource.keywords.length">None</p>
             <ul ng-if="resource.keywords && resource.keywords.length">
                 <li ng-repeat="keyword in resource.keywords" class="label label-default">{{keyword}}</li>
             </ul>

@@ -76,6 +76,12 @@ describe('Resource Preview directive', function() {
             expect(angular.element(this.element.querySelectorAll('.keywords p')[0]).text().trim()).toBe('None');
             expect(this.element.querySelectorAll('.keywords ul').length).toBe(0);
 
+            scope.resource.keywords = [];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.keywords p').length).toBe(1);
+            expect(angular.element(this.element.querySelectorAll('.keywords p')[0]).text().trim()).toBe('None');
+            expect(this.element.querySelectorAll('.keywords ul').length).toBe(0);
+
             scope.resource.keywords = ['test'];
             scope.$digest();
             expect(this.element.querySelectorAll('.keywords p').length).toBe(0);

@@ -84,6 +84,48 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
     });
+    describe('should retrieve the distributions of a specified resource', function() {
+        it('if it exists', function(done) {
+            var resourceId = 'test';
+            $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(resourceId) + '/distributions').respond(200, []);
+            catalogManagerSvc.getResourceDistributions(resourceId).then(function(value) {
+                expect(value).toEqual([]);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('unless it does not exist', function(done) {
+            var resourceId = 'test';
+            $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(resourceId) + '/distributions').respond(204);
+            catalogManagerSvc.getResourceDistributions(resourceId).catch(function(value) {
+                expect(value).toBe('Resource does not exist');
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
+    describe('should retrieve the specified distribution of a specified resource', function() {
+        it('if it exists', function(done) {
+            var resourceId = 'test';
+            var distributionId = 'test';
+            $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(resourceId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200, {});
+            catalogManagerSvc.getResourceDistribution(resourceId, distributionId).then(function(value) {
+                expect(value).toEqual({});
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('unless it does not exist', function(done) {
+            var resourceId = 'test';
+            var distributionId = 'test';
+            $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(resourceId) + '/distributions/' + encodeURIComponent(distributionId)).respond(204);
+            catalogManagerSvc.getResourceDistribution(resourceId, distributionId).catch(function(value) {
+                expect(value).toBe('Resource and/or distribution does not exist');
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
     it('should get the type from an IRI', function() {
         var result = catalogManagerSvc.getType('test');
         expect(typeof result).toBe('string');

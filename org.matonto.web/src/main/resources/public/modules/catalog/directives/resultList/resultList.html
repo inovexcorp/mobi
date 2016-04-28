@@ -18,6 +18,7 @@
 
     <div class="results-list">
         <div ng-repeat="resource in results.results" class="result">
+            <button class="btn btn-default download-btn" ng-disabled="resource.distributions && !resource.distributions.length" ng-click="download({resource: resource})"><i class="fa fa-download"></i></button>
             <h3><a ng-click="clickResource({resource: resource})">{{resource.title}}</a></h3>
             <p>Date Created: {{dvm.getDate(resource.issued)}}</p>
             <p>Date Modified: {{dvm.getDate(resource.modified)}}</p>

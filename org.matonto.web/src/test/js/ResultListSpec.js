@@ -27,8 +27,9 @@ describe('Result List directive', function() {
             scope.clickResource = jasmine.createSpy('clickResource');
             scope.changeOrder = jasmine.createSpy('changeOrder');
             scope.clickLink = jasmine.createSpy('clickLink');
+            scope.download = jasmine.createSpy('download');
 
-            this.element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)"></result-list>'))(scope);
+            this.element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)" download="download(resource)"></result-list>'))(scope);
             scope.$digest();
         });
         it('results should be two way bound', function() {
@@ -64,17 +65,19 @@ describe('Result List directive', function() {
             isolatedScope.clickLink();
             expect(scope.clickLink).toHaveBeenCalled();
         });
+        it('download should be called in the parent scope', function() {
+            var isolatedScope = this.element.isolateScope();
+            isolatedScope.download();
+            expect(scope.download).toHaveBeenCalled();
+        });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             scope.results = {};
             scope.orderBy = '';
             scope.currentPage = 0;
-            scope.clickResource = jasmine.createSpy('clickResource');
-            scope.changeOrder = jasmine.createSpy('changeOrder');
-            scope.clickLink = jasmine.createSpy('clickLink');
 
-            this.element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)"></result-list>'))(scope);
+            this.element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)" download="download(resource)"></result-list>'))(scope);
             scope.$digest();
         });
         it('should get the date from a resource', function() {
@@ -87,11 +90,11 @@ describe('Result List directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.results = {size: 0, results: [{}]};
+            scope.results = {size: 0, results: [{}, {distributions: []}, {distributions: [{}]}]};
             scope.orderBy = '';
             scope.currentPage = 0;
 
-            this.element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)"></result-list>'))(scope);
+            this.element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)" download="download(resource)"></result-list>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -118,6 +121,16 @@ describe('Result List directive', function() {
                 expect(results[i].querySelectorAll('resource-type').length).toBe(1);
             }
         });
+        it('depending on whether a resource has distributions', function() {
+            var resultsList = angular.element(this.element.querySelectorAll('.results-list')[0]);
+            var results = resultsList.querySelectorAll('.result');
+            for (var i = 0; i < results.length; i++) {
+                var resource = scope.results.results[i];
+                if (_.has(resource, 'distributions') && resource.distributions.length) {
+                    expect(results[i].querySelectorAll('.download-btn').length).toBe(1);
+                }
+            }
+        });
         it('depending on whether there are links', function() {
             var pageNav = angular.element(this.element.querySelectorAll('.page-nav')[0]);
             expect(pageNav.querySelectorAll('ul.pagination').length).toBe(0);
@@ -137,7 +150,7 @@ describe('Result List directive', function() {
         scope.orderBy = '';
         scope.changeOrder = jasmine.createSpy('changeOrder');
 
-        var element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)"></result-list>'))(scope);
+        var element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)" download="download(resource)"></result-list>'))(scope);
         scope.$digest();
         
         var orderSelect = element.querySelectorAll('.order-select')[0];
@@ -148,19 +161,19 @@ describe('Result List directive', function() {
         scope.results = {size: 1, results: [{}]};
         scope.clickResource = jasmine.createSpy('clickResource');
 
-        var element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)"></result-list>'))(scope);
+        var element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)" download="download(resource)"></result-list>'))(scope);
         scope.$digest();
         
         var resourceTitle = element.querySelectorAll('.results-list .result a')[0];
         angular.element(resourceTitle).triggerHandler('click');
         expect(scope.clickResource).toHaveBeenCalled();
     });
-    it('should call lickLink when a change page link is clicked', function() {
+    it('should call clickLink when a change page link is clicked', function() {
         scope.results = {links: {prev: 'prev', next: 'next'}, size: 1, results: [{}]};
         scope.currentPage = 0;
         scope.clickLink = jasmine.createSpy('clickLink');
 
-        var element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)"></result-list>'))(scope);
+        var element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)" download="download(resource)"></result-list>'))(scope);
         scope.$digest();
         
         var prevLink = element.querySelectorAll('.page-nav .pagination li a')[0];
@@ -170,5 +183,16 @@ describe('Result List directive', function() {
         var nextLink = element.querySelectorAll('.page-nav .pagination li a')[2];
         angular.element(nextLink).triggerHandler('click');
         expect(scope.clickLink).toHaveBeenCalledWith('next', scope.results.links.next);
+    });
+    it('should call download when a resource download button is clicked', function() {
+        scope.results = {size: 1, results: [{distributions: [{}]}]};
+        scope.download = jasmine.createSpy('download');
+
+        var element = $compile(angular.element('<result-list results="results" order-by="orderBy" current-page="currentPage" click-resource="clickResource(resource)" change-order="changeOrder()" click-link="clickLink(direction, link)" download="download(resource)"></result-list>'))(scope);
+        scope.$digest();
+        
+        var downloadButton = element.querySelectorAll('.results-list .result .download-btn')[0];
+        angular.element(downloadButton).triggerHandler('click');
+        expect(scope.download).toHaveBeenCalled();
     });
 });

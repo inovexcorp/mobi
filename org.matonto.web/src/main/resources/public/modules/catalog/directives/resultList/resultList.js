@@ -18,7 +18,8 @@
                     currentPage: '=',
                     clickResource: '&',
                     changeOrder: '&',
-                    clickLink: '&'
+                    clickLink: '&',
+                    download: '&'
                 },
                 controller: function() {
                     var dvm = this;

@@ -4,6 +4,7 @@
 $filters-width: 10%;
 $results-width: 45%;
 $preview-width: $results-width;
+$result-header-top-margin: 20px;
 
 .catalog {
     .filters, .results, .resource-preview {
@@ -89,6 +90,14 @@ $preview-width: $results-width;
                 border-bottom: 1px solid $gray-lighter;
                 padding: 0.5em;
                 position: relative;
+
+                h3 {
+                    margin-top: $result-header-top-margin;
+                }
+                .download-btn {
+                    float: right;
+                    margin-top: $result-header-top-margin;
+                }
             }
         }
         .page-nav {

@@ -19,7 +19,7 @@
         };
         vm.errorMessage = '';
         vm.selectedResource = undefined;
-        vm.orderBy = 'issued';
+        vm.orderBy = 'modified';
         vm.resourceType = undefined;
         vm.currentPage = 0;
 
@@ -37,6 +37,16 @@
                         };
                     });
                 });
+        }
+
+        vm.downloadResource = function(resource) {
+            catalogManagerService.getResourceDistributions(resource.id)
+                .then(function(distributions) {
+                    var latest = _.last(_.sortBy(distributions, function(dist) {
+                        return catalogManagerService.getDate(dist.modified);
+                    }));
+                    console.log('Downloading ' + latest.title);
+                }, onError);
         }
 
         vm.getNextPage = function(direction, link) {
