@@ -8,5 +8,5 @@ WHERE {
 	?resource a ?type ;
 	    dcat:distribution ?distribution .
 
-	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology))
+	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology, matontocat:Mapping))
 }

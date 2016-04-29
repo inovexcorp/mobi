@@ -6,5 +6,5 @@ SELECT
     (COUNT(distinct ?resource) as ?resource_count)
 WHERE {
 	?resource a ?type .
-	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology))
+	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology, matontocat:Mapping))
 }

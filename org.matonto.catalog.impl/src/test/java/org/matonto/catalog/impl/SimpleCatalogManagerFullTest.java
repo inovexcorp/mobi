@@ -52,6 +52,8 @@ public class SimpleCatalogManagerFullTest {
     private Resource dist1IRI;
     private Resource dist2IRI;
 
+    private static final int TOTAL_SIZE = 3;
+
     private static final String DC = "http://purl.org/dc/terms/";
 
     @Before
@@ -134,7 +136,7 @@ public class SimpleCatalogManagerFullTest {
 
         // then
         Assert.assertThat(resources.getPage().size(), equalTo(1));
-        Assert.assertThat(resources.getTotalSize(), equalTo(2));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
         Assert.assertThat(resources.getPageSize(), equalTo(1));
         Assert.assertThat(resources.getPageNumber(), equalTo(1));
     }
@@ -147,7 +149,7 @@ public class SimpleCatalogManagerFullTest {
 
         // then
         Assert.assertThat(resources.getPage().size(), equalTo(1));
-        Assert.assertThat(resources.getTotalSize(), equalTo(2));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
         Assert.assertThat(resources.getPageSize(), equalTo(1));
         Assert.assertThat(resources.getPageNumber(), equalTo(2));
     }
@@ -159,8 +161,8 @@ public class SimpleCatalogManagerFullTest {
         PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1000, 0);
 
         // then
-        Assert.assertThat(resources.getPage().size(), equalTo(2));
-        Assert.assertThat(resources.getTotalSize(), equalTo(2));
+        Assert.assertThat(resources.getPage().size(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
         Assert.assertThat(resources.getPageSize(), equalTo(1000));
         Assert.assertThat(resources.getPageNumber(), equalTo(1));
     }

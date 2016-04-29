@@ -18,7 +18,7 @@ WHERE {
 		dc:issued ?issued ;
 		dc:modified ?modified .
 
-	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology))
+	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology, matontocat:Mapping))
 	
 	OPTIONAL { ?resource dc:description ?description } .
 	OPTIONAL { ?resource dc:identifier ?identifier } .
