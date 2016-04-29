@@ -1,5 +1,6 @@
 package org.matonto.repository.impl.sesame
 
+import org.matonto.persistence.utils.RepositoryResults
 import org.matonto.query.GraphQueryResult
 import org.matonto.query.TupleQueryResult
 import org.matonto.query.api.Binding
@@ -13,7 +14,6 @@ import org.matonto.rdf.api.Statement
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.repository.api.RepositoryConnection
-import org.matonto.repository.impl.sesame.utils.RepositoryResults
 import org.openrdf.repository.sail.SailRepository
 import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Specification

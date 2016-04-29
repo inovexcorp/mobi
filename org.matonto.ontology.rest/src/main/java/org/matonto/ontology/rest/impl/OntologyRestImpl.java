@@ -13,6 +13,7 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
+import org.matonto.persistence.utils.Values;
 import org.matonto.rdf.api.*;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
@@ -36,7 +37,7 @@ import javax.ws.rs.core.StreamingOutput;
 public class OntologyRestImpl implements OntologyRest {
 
     private OntologyManager manager;
-    private ValueFactory factory;
+    private Values values;
     private final Logger logger = LoggerFactory.getLogger(OntologyRestImpl.class);
 
     private boolean stringParamIsMissing(String param) {
@@ -49,22 +50,14 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
-    private Resource BNodeOrIRI(String iriString) {
-        if (isBNodeString(iriString.trim())) {
-            return factory.createBNode(iriString.trim());
-        } else {
-            return factory.createIRI(iriString.trim());
-        }
-    }
-
     @Reference
     public void setManager(OntologyManager manager) {
         this.manager = manager;
     }
 
     @Reference
-    public void setFactory(ValueFactory factory) {
-        this.factory = factory;
+    public void setValues(Values values) {
+        this.values = values;
     }
 
     @Override
@@ -113,7 +106,7 @@ public class OntologyRestImpl implements OntologyRest {
             try {
                 optOntology = getOntology(id);
             } catch (MatontoOntologyException ex) {
-                throw ErrorUtils.sendError(ex, "Exception occurred while retrieving ontology.",
+                throw ErrorUtils.sendError(ex, ex.getMessage(),
                         Response.Status.INTERNAL_SERVER_ERROR);
             }
 
@@ -158,7 +151,7 @@ public class OntologyRestImpl implements OntologyRest {
             ontology = manager.createOntology(fileInputStream);
             persisted = manager.storeOntology(ontology);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
@@ -176,7 +169,7 @@ public class OntologyRestImpl implements OntologyRest {
             ontology = manager.createOntology(ontologyJson);
             persisted = manager.storeOntology(ontology);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while processing ontology.",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
@@ -193,7 +186,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private Optional<Ontology> getOntology(@Nonnull String ontologyIdStr) throws MatontoOntologyException {
         String id = ontologyIdStr.trim();
-        Resource resource = BNodeOrIRI(id);
+        Resource resource = values.getIriOrBnode(id);
         return manager.retrieveOntology(resource);
     }
 
@@ -224,11 +217,11 @@ public class OntologyRestImpl implements OntologyRest {
 
         boolean updated;
         try {
-            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
-            Resource changedResource = BNodeOrIRI(resourceIdStr);
+            Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
+            Resource changedResource = values.getIriOrBnode(resourceIdStr);
             updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while updating ontology.",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
@@ -244,10 +237,10 @@ public class OntologyRestImpl implements OntologyRest {
 
         boolean deleted;
         try {
-            Resource resource = BNodeOrIRI(ontologyIdStr);
+            Resource resource = values.getIriOrBnode(ontologyIdStr);
             deleted = manager.deleteOntology(resource);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
@@ -263,11 +256,11 @@ public class OntologyRestImpl implements OntologyRest {
 
         Map<String, Set> changedEntities;
         try {
-            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
-            Resource entityResource = BNodeOrIRI(entityIdStr);
+            Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
+            Resource entityResource = values.getIriOrBnode(entityIdStr);
             changedEntities = manager.deleteEntityFromOntology(ontologyResource, entityResource);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
@@ -318,10 +311,10 @@ public class OntologyRestImpl implements OntologyRest {
 
         boolean added;
         try {
-            Resource ontologyResource = BNodeOrIRI(ontologyIdStr);
+            Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
             added = manager.addEntityToOntology(ontologyResource, entityJson);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Exception occurred while deleting ontology.",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
@@ -402,12 +395,12 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             importedOntologies = getImportsClosure(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Problem occurred while retrieving imported ontologies",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
         JSONArray arr = new JSONArray();
         importedOntologies.stream()
-            .filter(ontology -> !ontology.getOntologyId().getOntologyIRI().get().stringValue().equals(ontologyIdStr))
+            .filter(ontology -> !ontology.getOntologyId().getOntologyIdentifier().stringValue().equals(ontologyIdStr))
             .map(ontology1 -> this.getOntologyAsJsonObject(ontology1, rdfFormat))
             .forEach(arr::add);
         return arr.size() == 0 ? Response.status(204).build() : Response.status(200).entity(arr.toString()).build();
@@ -560,14 +553,14 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             optOntology = getOntology(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Problem occurred while retrieving ontology",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         if (optOntology.isPresent()) {
             return iriFunction.apply(optOntology.get());
         } else {
-            throw ErrorUtils.sendError("ontology " + ontologyIdStr + " does not exist", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Ontology " + ontologyIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }
     }
     
@@ -579,7 +572,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             importedOntologies = getImportedOntologies(ontologyIdStr);
         } catch (MatontoOntologyException ex) {
-            throw ErrorUtils.sendError(ex, "Problem occurred while retrieving imported ontologies",
+            throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
@@ -592,7 +585,7 @@ public class OntologyRestImpl implements OntologyRest {
             }
             return ontoArray;
         } else {
-            throw ErrorUtils.sendError("No imported ontologies found", Response.Status.NO_CONTENT);
+            throw ErrorUtils.sendError("No imported ontologies found.", Response.Status.NO_CONTENT);
         }
     }
 
@@ -622,10 +615,6 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
-    private boolean isBNodeString(String string) {
-        return string.matches("^_:.*$");
-    }
-
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
         String normalizedFormat = rdfFormat.toLowerCase();
 
@@ -653,7 +642,7 @@ public class OntologyRestImpl implements OntologyRest {
 
         JSONObject json = new JSONObject();
         json.put("documentFormat", rdfFormat);
-        json.put("id", ontology.getOntologyId().getOntologyIRI().get().stringValue());
+        json.put("id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
         json.put("ontology", content);
         return json;
     }

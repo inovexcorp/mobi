@@ -48,8 +48,9 @@ var jsFiles = function(prefix) {
             prefix + '*/angular-uuid.js',
             prefix + '*/angular-cookies.min.js',
             prefix + '**/angular-file-saver.bundle.min.js',
-            prefix + '**/select.min.js',
-            prefix + '**/ui-codemirror.js'
+            prefix + '**/ui-codemirror.js',
+            prefix + '*/angular-messages.min.js',
+            prefix + '**/select.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {

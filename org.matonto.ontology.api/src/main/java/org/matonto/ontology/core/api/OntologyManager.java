@@ -5,14 +5,13 @@ import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
+import javax.annotation.Nonnull;
 
 public interface OntologyManager {
 
@@ -72,7 +71,8 @@ public interface OntologyManager {
      */
     boolean addEntityToOntology(Resource ontologyResource, String resourceJson);
 
-    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException;
+    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource)
+            throws MatontoOntologyException;
 
     /**
      * Gets the ontology registry which is persisted in the repository

@@ -39,7 +39,7 @@ body {
 
         /* Error message spacing when below form inputs */
         .error-msg {
-            margin-top: 5px;
+            margin: 5px 0 0;
         }
     }
 
@@ -212,7 +212,7 @@ ul {
 
         /* The tree node changes are unsaved */
         &.unsaved .unsaved-icon {
-            color: $brand-danger;
+            color: $brand-success;
             line-height: 19px;
             margin: 0;
             padding: 0 5px;
@@ -268,10 +268,24 @@ ul {
         li {
             width: 100%;
 
+            &.invalid .fa-check:before {
+                content: "\f071";
+            }
+
             /* Class identifying that it contains a <ul> element */
             &.container {
                 margin: 0;
                 padding: 0;
+            }
+
+            &.invalid a {
+                .unsaved-icon {
+                    color: $brand-danger;
+                }
+
+                &.active .unsaved-icon {
+                    color: #fff;
+                }
             }
         }
     }
