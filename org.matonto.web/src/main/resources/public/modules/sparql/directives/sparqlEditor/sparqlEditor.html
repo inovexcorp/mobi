@@ -7,7 +7,7 @@
         <ui-select multiple ng-model="dvm.prefixes">
             <ui-select-match placeholder="Select prefix(es)">{{$item}}</ui-select-match>
             <ui-select-choices repeat="prefix in dvm.prefixList | filter:$select.search">
-                <div ng-bind-html="prefix | highlight:$select.search | trusted"></div>
+                <div ng-bind-html="dvm.escapeHTML(prefix) | highlight:$select.search | trusted"></div>
             </ui-select-choices>
         </ui-select>
     </div>

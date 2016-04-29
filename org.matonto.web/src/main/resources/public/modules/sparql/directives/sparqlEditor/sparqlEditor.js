@@ -14,11 +14,11 @@
                 controllerAs: 'dvm',
                 controller: ['sparqlService', 'prefixes', function(sparqlService, prefixes) {
                     this.prefixList = [
-                        'rdf: ' + prefixes.rdf,
-                        'rdfs: ' + prefixes.rdfs,
-                        'owl: ' + prefixes.owl,
-                        'dc: ' + prefixes.dc,
-                        'foaf: ' + prefixes.foaf
+                        'rdf: <' + prefixes.rdf + '>',
+                        'rdfs: <' + prefixes.rdfs + '>',
+                        'owl: <' + prefixes.owl + '>',
+                        'dc: <' + prefixes.dc + '>',
+                        'foaf: <' + prefixes.foaf + '>'
                     ];
                     this.prefixes = ['foaf: ' + prefixes.foaf];
                     this.editorOptions = {
@@ -30,6 +30,12 @@
                         matchBrackets: true
                     }
                     this.sparqlService = sparqlService;
+                    this.escapeHTML = function(text) {
+                        var node = document.createTextNode(text);
+                        var div = document.createElement('div');
+                        div.appendChild(node);
+                        return div.innerHTML;
+                    }
                 }]
             }
         }
