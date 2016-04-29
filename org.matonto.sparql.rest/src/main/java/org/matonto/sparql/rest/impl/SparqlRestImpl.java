@@ -11,7 +11,6 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.rest.util.ErrorUtils;
-import org.matonto.rest.util.MatOntoWebException;
 import org.matonto.sparql.rest.SparqlRest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
