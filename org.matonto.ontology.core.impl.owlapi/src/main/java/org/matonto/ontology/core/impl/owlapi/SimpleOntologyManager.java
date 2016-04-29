@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
 import aQute.bnd.annotation.component.*;
 
 
-@Component (immediate=true, 
-            provide = OntologyManager.class,
+@Component (provide = OntologyManager.class,
             name = SimpleOntologyManager.COMPONENT_NAME,
             configurationPolicy = ConfigurationPolicy.require)
 public class SimpleOntologyManager implements OntologyManager {

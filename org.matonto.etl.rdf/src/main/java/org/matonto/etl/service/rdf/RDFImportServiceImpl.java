@@ -23,7 +23,7 @@ import org.openrdf.rio.helpers.BasicParserSettings;
 import org.openrdf.rio.helpers.StatementCollector;
 import javax.annotation.Nonnull;
 
-@Component(provide = RDFImportService.class, immediate = true)
+@Component(provide = RDFImportService.class)
 public class RDFImportServiceImpl implements RDFImportService {
 
     private RepositoryManager repositoryManager;

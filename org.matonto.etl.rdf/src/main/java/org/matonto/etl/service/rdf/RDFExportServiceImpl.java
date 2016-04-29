@@ -26,7 +26,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 
 
-@Component(provide = RDFExportService.class, immediate=true)
+@Component(provide = RDFExportService.class)
 public class RDFExportServiceImpl implements RDFExportService {
 
     private static final Logger LOGGER = Logger.getLogger(RDFExportServiceImpl.class);
