@@ -14,6 +14,7 @@
             'ontology-editor',
             'webtop',
             'trusted',
+            'escapeHTML',
             'removeMatonto',
             'ui.router',
             'ui.select',

@@ -20,7 +20,7 @@
                         'dc: <' + prefixes.dc + '>',
                         'foaf: <' + prefixes.foaf + '>'
                     ];
-                    this.prefixes = ['foaf: ' + prefixes.foaf];
+                    this.prefixes = ['foaf: <' + prefixes.foaf + '>'];
                     this.editorOptions = {
                         mode: 'application/sparql-query',
                         indentUnit: 4,
@@ -30,12 +30,6 @@
                         matchBrackets: true
                     }
                     this.sparqlService = sparqlService;
-                    this.escapeHTML = function(text) {
-                        var node = document.createTextNode(text);
-                        var div = document.createElement('div');
-                        div.appendChild(node);
-                        return div.innerHTML;
-                    }
                 }]
             }
         }
