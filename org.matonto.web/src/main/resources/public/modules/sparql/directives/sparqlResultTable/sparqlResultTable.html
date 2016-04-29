@@ -1,0 +1,14 @@
+<div class="sparql-results">
+    <table class="table">
+        <thead>
+        <tr>
+            <th ng-repeat="var in dvm.sparqlService.response.head.vars">{{var}}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="binding in dvm.sparqlService.response.results.bindings">
+            <td ng-repeat="var in dvm.sparqlService.response.head.vars">{{binding[var].value}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

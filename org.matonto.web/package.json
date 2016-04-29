@@ -35,9 +35,11 @@
     "angular-cookies": "^1.5.0",
     "angular-file-saver": "^1.1.0",
     "angular-mocks": "1.4.8",
+    "angular-ui-codemirror": "^0.3.0",
     "angular-ui-router": "^0.2.18",
     "angular-uuid": "^0.0.2",
     "bootstrap": "^3.3.6",
+    "codemirror": "^5.14.2",
     "font-awesome": "^4.5.0",
     "lodash": "^4.6.0",
     "ui-select": "^0.13.3"

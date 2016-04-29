@@ -26,7 +26,10 @@
             'circleButton',
             'customButton',
             'confirmationOverlay',
-            'settings'
+            'settings',
+            'sparqlEditor',
+            'sparqlResultTable',
+            'ui.codemirror'
         ])
         .constant('_', window._);
 })();

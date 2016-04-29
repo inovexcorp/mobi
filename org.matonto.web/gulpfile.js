@@ -39,13 +39,17 @@ var jsFiles = function(prefix) {
     nodeJsFiles = function(prefix) {
         return [
             prefix + '*/lodash.min.js',
+            prefix + '**/codemirror.js',
+            prefix + '**/sparql.js',
+            prefix + '**/matchbrackets.js',
             prefix + '*/angular.min.js',
             prefix + '*/angular-mocks.js',
             prefix + '**/angular-ui-router.min.js',
             prefix + '*/angular-uuid.js',
             prefix + '*/angular-cookies.min.js',
             prefix + '**/angular-file-saver.bundle.min.js',
-            prefix + '**/select.min.js'
+            prefix + '**/select.min.js',
+            prefix + '**/ui-codemirror.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -58,7 +62,8 @@ var jsFiles = function(prefix) {
         return [
             prefix + '**/bootstrap.min.css',
             prefix + '**/font-awesome.min.css',
-            prefix + '**/select.min.css'
+            prefix + '**/select.min.css',
+            prefix + '**/codemirror.css'
         ]
     };
 

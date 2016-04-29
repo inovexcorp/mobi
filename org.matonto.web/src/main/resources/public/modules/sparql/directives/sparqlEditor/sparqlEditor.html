@@ -1,0 +1,15 @@
+<form name="dvm.form" class="sparql-editor">
+    <div class="btn-container clearfix top-action-container">
+        <custom-button on-click="dvm.sparqlService.queryRdf(dvm.queryString)" is-disabled-when="!dvm.queryString.length" pull="'left'">Execute</custom-button>
+    </div>
+    <div class="form-group">
+        <custom-label muted-text="mutedText">Prefixes:</custom-label>
+        <ui-select multiple ng-model="dvm.prefixes">
+            <ui-select-match placeholder="Select prefix(es)">{{$item}}</ui-select-match>
+            <ui-select-choices repeat="prefix in dvm.prefixList | filter:$select.search">
+                <div ng-bind-html="prefix | highlight:$select.search | trusted"></div>
+            </ui-select-choices>
+        </ui-select>
+    </div>
+    <ui-codemirror ng-model="dvm.queryString" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
+</form>
