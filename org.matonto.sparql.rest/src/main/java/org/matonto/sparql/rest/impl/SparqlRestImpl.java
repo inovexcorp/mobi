@@ -55,8 +55,13 @@ public class SparqlRestImpl implements SparqlRest {
         RepositoryConnection conn = repository.getConnection();
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
-        JSONObject json = JSONQueryResults.getResults(query.evaluate());
+        TupleQueryResult queryResults = query.evaluate();
 
-        return Response.ok().entity(json.toString()).build();
+        if (queryResults.hasNext()) {
+            JSONObject json = JSONQueryResults.getResults(queryResults);
+            return Response.ok().entity(json.toString()).build();
+        } else {
+            return Response.noContent().build();
+        }
     }
 }

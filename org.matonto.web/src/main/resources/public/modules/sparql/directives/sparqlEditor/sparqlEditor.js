@@ -13,16 +13,12 @@
                 scope: {},
                 controllerAs: 'dvm',
                 controller: ['sparqlService', 'prefixes', function(sparqlService, prefixes) {
-                    this.prefixList = [
-                        'rdf: <' + prefixes.rdf + '>',
-                        'rdfs: <' + prefixes.rdfs + '>',
-                        'owl: <' + prefixes.owl + '>',
-                        'dc: <' + prefixes.dc + '>',
-                        'foaf: <' + prefixes.foaf + '>'
-                    ];
-                    this.prefixes = sparqlService.prefixes || [];
-                    this.queryString = sparqlService.queryString || '';
-                    this.editorOptions = {
+                    var self = this;
+
+                    self.prefixList = [];
+                    self.sparqlService = sparqlService;
+
+                    self.editorOptions = {
                         mode: 'application/sparql-query',
                         indentUnit: 4,
                         tabMode: 'indent',
@@ -30,7 +26,10 @@
                         lineWrapping: true,
                         matchBrackets: true
                     }
-                    this.sparqlService = sparqlService;
+
+                    _.forOwn(prefixes, function(value, key) {
+                        self.prefixList.push(key + ': <' + value + '>');
+                    });
                 }]
             }
         }

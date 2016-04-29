@@ -7,7 +7,7 @@
         </thead>
         <tbody>
         <tr ng-repeat="binding in dvm.sparqlService.response.results.bindings">
-            <td ng-repeat="var in dvm.sparqlService.response.head.vars">{{binding[var]}}</td>
+            <td ng-repeat="var in dvm.sparqlService.response.head.vars">{{binding[var].value}}</td>
         </tr>
         </tbody>
     </table>

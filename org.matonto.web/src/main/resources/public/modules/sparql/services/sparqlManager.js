@@ -23,10 +23,11 @@
             }
 
             self.queryRdf = function(prefixList, queryString) {
-                self.prefixes = prefixList;
-                self.queryString = queryString;
+                self.response = {};
+                self.errorMessage = '';
+                self.infoMessage = '';
 
-                var prefixes = prefixList.length ? 'PREFIX ' + _.join(prefixList, '\nPREFIX ') + '\n\n' : '';
+                var prefixes = prefixList.length ? 'PREFIX ' + _.join(prefixList, ' PREFIX ') : '';
                 var config = {
                     params: {
                         query: prefixes + queryString
@@ -36,18 +37,12 @@
                 $http.get(prefix, config)
                     .then(function(response) {
                         if(_.get(response, 'status') === 200) {
-                            self.errorMessage = '';
-                            self.infoMessage = '';
                             self.response = response.data;
                         } else {
-                            self.errorMessage = '';
-                            self.infoMessage = getMessage(response, 'No results were returned.');
-                            self.response = {};
+                            self.infoMessage = getMessage(response, 'There was a problem getting the results.');
                         }
                     }, function(response) {
-                        self.errorMessage = getMessage(response, 'An internal server error has occurred. Please try again later.');
-                        self.infoMessage = '';
-                        self.response = {};
+                        self.errorMessage = getMessage(response, 'A server error has occurred. Please try again later.');
                     });
             }
         }
