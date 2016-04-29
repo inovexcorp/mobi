@@ -167,10 +167,12 @@ public class SimpleCatalogManager implements CatalogManager {
                     limit, offset);
         }
 
+        log.debug("QUERY: " + queryString);
+
         TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult result = query.evaluate();
 
-        Set<PublishedResource> resources = new HashSet<>();
+        List<PublishedResource> resources = new ArrayList<>();
         while (result.hasNext()) {
             BindingSet bindingSet = result.next();
 

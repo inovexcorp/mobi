@@ -2,16 +2,16 @@ package org.matonto.catalog.impl;
 
 import org.matonto.catalog.api.PaginatedSearchResults;
 
-import java.util.Set;
+import java.util.List;
 
 public class SimpleSearchResults<T> implements PaginatedSearchResults<T> {
 
-    private Set<T> page;
+    private List<T> page;
     private int totalSize;
     private int pageSize;
     private int pageNumber;
 
-    public SimpleSearchResults(Set<T> page, int totalSize, int pageSize, int pageNumber) {
+    public SimpleSearchResults(List<T> page, int totalSize, int pageSize, int pageNumber) {
         this.page = page;
         this.totalSize = totalSize;
         this.pageSize = pageSize;
@@ -19,7 +19,7 @@ public class SimpleSearchResults<T> implements PaginatedSearchResults<T> {
     }
 
     @Override
-    public Set<T> getPage() {
+    public List<T> getPage() {
         return page;
     }
 

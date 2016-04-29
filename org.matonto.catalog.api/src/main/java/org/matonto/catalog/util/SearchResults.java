@@ -4,6 +4,7 @@ import org.matonto.catalog.api.PaginatedSearchResults;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class SearchResults {
@@ -22,8 +23,8 @@ public class SearchResults {
         private static final long serialVersionUID = 2994432257552675130L;
 
         @Override
-        public Set<E> getPage() {
-            return Collections.emptySet();
+        public List<E> getPage() {
+            return Collections.emptyList();
         }
 
         @Override

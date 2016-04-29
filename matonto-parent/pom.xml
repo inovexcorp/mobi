@@ -105,6 +105,11 @@
                 <version>3.4</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.2</version>
+            </dependency>
+            <dependency>
                 <groupId>edu.washington.cs.types.checker</groupId>
                 <artifactId>checker-framework</artifactId>
                 <version>1.7.5</version>
