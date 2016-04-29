@@ -1,0 +1,10 @@
+<div class="column-select">
+    <ui-select ng-model="dvm.selectedColumn">
+        <ui-select-match placeholder="{{columns.length ? 'Select a column' : 'No Available Columns'}}">
+            {{$select.selected}}
+        </ui-select-match>
+        <ui-select-choices repeat="column in columns | filter:$select.search">
+            <div ng-bind-html="column | highlight:$select.search | trusted"></div>
+        </ui-select-choices>
+    </ui-select>
+</div>

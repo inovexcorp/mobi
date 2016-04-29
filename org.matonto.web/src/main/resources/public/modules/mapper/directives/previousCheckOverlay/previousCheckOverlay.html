@@ -1,0 +1,26 @@
+<div class="previous-check-overlay overlay lg">
+    <form name="dvm.validateForm" class="content">
+        <h6>Validate Mapping {{dvm.mapping.name}}</h6>
+        <div class="result missing-ontology" ng-if="dvm.validateForm.$error.existingOntology">
+            <h3 class="text-danger">Missing Ontology</h3>
+            <p>Ontology with id <strong>{{dvm.getSourceOntologyId()}}</strong> does not exist.</p>
+        </div>
+        <div class="result invalid-columns" ng-if="dvm.validateForm.$error.validColumnMappings">
+            <h3 class="text-danger">Missing Columns</h3>
+            <ul>
+                <li ng-repeat="columnObj in dvm.invalidColumns">
+                    Column {{parseInt(columnObj.index, 10) + 1}} - {{dvm.getDataMappingName(columnObj.propId)}}
+                </li>
+            </ul>
+        </div>
+        <div class="result valid" ng-if="dvm.validateForm.$valid">
+            <h3 class="text-success">No conflicts</h3>
+        </div>
+
+        <div class="btn-container clearfix">
+            <p ng-if="!dvm.validateForm.$error.existingOntology" class="help-block">Any changes to the mapping will create a new mapping with a timestamped name</p>
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue()" is-disabled-when="dvm.validateForm.$error.existingOntology">{{(dvm.validateForm.$invalid) ? 'Fix' : 'Continue'}}</custom-button>
+        </div>
+    </form>
+</div>

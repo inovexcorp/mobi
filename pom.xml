@@ -6,7 +6,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.0.33-SNAPSHOT</version>
+    <version>1.0.34-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -40,6 +40,9 @@
         <module>org.matonto.swagger.ui</module>
         <module>org.matonto.bnd-index</module>
         <module>org.matonto.rest.util</module>
+        <module>org.matonto.catalog.api</module>
+        <module>org.matonto.catalog.impl</module>
+        <module>org.matonto.catalog.rest</module>
     </modules>
 
     <properties>

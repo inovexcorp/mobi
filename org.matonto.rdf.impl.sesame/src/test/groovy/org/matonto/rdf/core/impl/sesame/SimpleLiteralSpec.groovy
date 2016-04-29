@@ -64,6 +64,7 @@ class SimpleLiteralSpec extends Specification {
     def dateLabels = [
             "2015-01-01T00:00:00": OffsetDateTime.parse("2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
             "2015-01-01T00:00:00Z": OffsetDateTime.parse("2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
+            "2015-01-01T00:00:00.000Z": OffsetDateTime.parse("2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
             "2015-01-01T00:00:00+01:00": OffsetDateTime.parse("2015-01-01T00:00:00+01:00", LiteralUtils.OFFSET_TIME_FORMATTER),
             "-2015-01-01T00:00:00": OffsetDateTime.parse("-2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
             "-2015-01-01T00:00:00Z": OffsetDateTime.parse("-2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER)

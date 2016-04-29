@@ -6,7 +6,7 @@ import org.matonto.rdf.api.IRI;
 
 public interface Entity {
 
-	IRI getIRI();
-	
-	EntityType getEntityType();
+    IRI getIRI();
+
+    EntityType getEntityType();
 }

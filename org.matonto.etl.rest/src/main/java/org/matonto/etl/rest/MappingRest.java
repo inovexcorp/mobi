@@ -2,9 +2,11 @@ package org.matonto.etl.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
+import java.util.List;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -15,50 +17,68 @@ import javax.ws.rs.core.Response;
 public interface MappingRest {
 
     /**
-     * Uploads a mapping file to the data/tmp/ directory sent as form data or
-     * a JSON-LD string.
+     * Uploads a mapping sent as form data or a JSON-LD string into a data store
+     * with the passed local name.
      *
      * @param fileInputStream an InputStream of a mapping file passed as form data
-     * @param jsonld a string with a mapping serialized as JSON-LD
-     * @return a response with the name of the file created on the server
+     * @param fileDetail information about the file being uploaded, including the name
+     * @param jsonld a mapping serialized as JSON-LD
+     * @param mappingId the localName for the new mapping file
+     * @return a response with the IRI for the mapping
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation("Upload mapping file sent as form data.")
+    @ApiOperation("Upload mapping sent as form data.")
     Response upload(@FormDataParam("file") InputStream fileInputStream,
-                    @FormDataParam("jsonld") String jsonld);
+                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                    @FormDataParam("jsonld") String jsonld,
+                    @QueryParam("Id") String mappingId);
 
     /**
-     * Produces a JSON array of all the mapping file names in the data/tmp directory.
+     * If passed an id list, produces a JSON array of all the mapping
+     * with matching IRIs in the data store. Otherwise just produces a
+     * JSON array of all mapping IRIs.
      *
-     * @return a response with a JSON array of all the mapping file names
+     * @param idList a list of local names for mappings
+     * @return a response with a JSON array of all the mapping IRIs
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Retrieve list of all mapping file names")
-    Response getFileNames();
+    @ApiOperation("Retrieve list of all mapping IRIs")
+    Response getMappingNames(@QueryParam("Ids") List<String> idList);
 
     /**
-     * Collects the JSON-LD from an uploaded mapping file and returns it as JSON.
+     * Collects the JSON-LD from an uploaded mapping and returns it as JSON.
      *
-     * @param fileName a string containing the name of an uploaded mapping file
-     * @return a response with the JSON-LD from the uploaded mapping file
+     * @param mappingName the local name of an uploaded mapping
+     * @return a response with the JSON-LD from the uploaded mapping
      */
     @GET
-    @Path("{fileName}")
+    @Path("{mappingName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Retrieve the JSON-LD in an uploaded mapping file")
-    Response getMapping(@PathParam("fileName") String fileName);
+    @ApiOperation("Retrieve JSON-LD of an uploaded mapping")
+    Response getMapping(@PathParam("mappingName") String mappingName);
 
     /**
-     * Downloads an uploaded mapping file.
+     * Downloads an uploaded mapping.
      *
-     * @param fileName a string containing the name of an uploaded mapping file
-     * @return a response with an octet-stream to download the mapping file
+     * @param mappingName the local name of an uploaded mapping
+     * @return a response with an octet-stream to download the mapping
      */
     @GET
-    @Path("{fileName}")
+    @Path("{mappingName}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @ApiOperation("Download an uploaded mapping file")
-    Response downloadMapping(@PathParam("fileName") String fileName);
+    @ApiOperation("Download an uploaded mapping")
+    Response downloadMapping(@PathParam("mappingName") String mappingName);
+
+    /**
+     * Deletes an uploaded maping from the data store.
+     *
+     * @param mappingName the local name of an uploaded mapping
+     * @return a response with a boolean indicating the success of the deletion
+     */
+    @DELETE
+    @Path("{mappingName}")
+    @ApiOperation("Delete an uploaded mapping")
+    Response deleteMapping(@PathParam("mappingName") String mappingName);
 }

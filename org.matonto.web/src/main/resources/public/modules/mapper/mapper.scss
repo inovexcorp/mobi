@@ -1,13 +1,368 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+$sidebar-width: 150px;
+$overlay-height: 450px;
+$rdf-padding: 10px;
+$rdf-controls-height: 34px + $rdf-padding/2;
+
+.float-container {
+    overflow: hidden;
+}
 .mapper {
-    /* styles for the right side */
-    .viewer {
-        /* makes the font smaller for the table */
-        table {
-            font-size: 12px;
+    .header-link {
+        font-size: 14px;
+    }
+    #mapper-content {
+        margin-left: $sidebar-width;
+        height: 100%;
+        position: relative;
+
+        #main {
+            height: 100%;
+        }
+        #fixed-height-container {
+            position: absolute;
+            bottom: 0;
+            left: 15px;
+            right: 15px;
+
+            #table-container {
+                position: relative;
+                padding-top: 25px;
+                background-color: #fff;
+                overflow-x: auto;
+                width: 100%;
+                -webkit-transition: all 0.4s ease-in-out;
+                        transition: all 0.4s ease-in-out;
+                
+                #file-preview-container {
+                    height: 100%;
+                    width: 100%;
+
+                    #file-preview {
+                        width: 100%;
+                    }
+                    &.scroll {
+                        overflow-y: auto;
+                    }
+                    &.no-scroll {
+                        overflow-y: hidden; 
+                    }
+                }
+                .clickable {
+                    cursor: pointer;
+                }
+                .disabled {
+                    cursor: not-allowed;
+                }
+                #toggle-table {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                }
+                th {
+                    background-color: $gray-lighter;
+                    text-overflow: ellipsis;
+
+                    &.highlight {
+                        background-color: $gray-light;
+                    }
+                }
+                td {
+                    text-overflow: ellipsis;
+
+                    &.highlight {
+                        background-color: $gray-lighter;
+                    }
+                }
+            }
+        }
+    }
+    .sidebar-wrapper {
+        background-color: $gray-lighter;
+        height: 100%;
+        display: inline-block;
+        padding: 1em;
+        width: $sidebar-width;
+        float: left;
+
+        .step-through {
+            text-align: center;
+
+            span {
+                width: 100%;
+                display: block;
+            }
+            .complete {
+                font-weight: normal;
+                color: $gray-base;
+            }
+            .active {
+                font-weight: bold;
+                color: $gray-base;
+            }
+            .upcoming {
+                font-weight: lighter;
+                color: $gray-light;
+            }
+        }
+    }
+    .ontology-preview {
+        overflow-y: auto;
+    }
+    .ontology-preview-overlay {
+        .content {
+            max-height: $overlay-height;
+        }
+    }
+    .mapping-select-overlay {
+        .mapping-radio {
+            width: 100%;
+        }
+        .content {
+            min-height: $overlay-height;
+
+            &>div.form-group {
+                width: 50%;
+                float: left;
+                height: ($overlay-height - 75);
+                padding: 0.5em;
+                margin-bottom: 0;
+            }
+        }
+    }
+    .ontology-select-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .ontology-select, .ontology-preview {
+            width: 50%;
+            float: left;
+            height: ($overlay-height - 75);
+            padding: 0.5em;
             margin-bottom: 0;
+
+            .ui-select-choices-row {
+                position: relative;
+                i {
+                    float: right;
+                }
+            }
+        }
+    }
+    .previous-check-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .result {
+            width: 100%;
+            float: left;
+            height: ($overlay-height - 75);
+            padding: 0.5em;
+        }
+    }
+    .starting-class-select-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .class-select, .class-preview {
+            width: 50%;
+            float: left;
+            height: ($overlay-height - 75);
+            padding: 0.5em;
+            margin-bottom: 0;
+        }
+    }
+    .mapping-name-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .form-group {
+            height: ($overlay-height - 75);
+            padding: 0.5em;
+            margin-bottom: 0;
+        }
+    }
+    .finish-overlay {
+        div.form-group {
+            width: 100%;
+            float: left;
+            padding: 0.5em;
+        }
+    }
+    .file-form {
+        margin-top: -1em;
+    }
+    #edit-mapping-container {
+        height: 100%;
+
+        #mapping-header {
+            width: 100%;
+            height: 10%;
+
+            #mapping-title {
+                height: 100%;
+                text-align: center;
+
+                button {
+                    padding: 0;
+                    font-size: 0.5em;
+                    vertical-align: middle;
+                }
+            }
+            #ontology-section {
+                display: inline-block;
+                float: left;
+            }
+            #submit-mapping {
+                display: inline-block;
+                float: right;
+                
+                label {
+                    margin-right: 0.5em;
+                }
+                .actions {
+                    float: right;
+                    text-align: center;
+                }
+            }
+        }
+        .rdf-preview {
+            width: 35%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            background-color: $gray;
+            color: #fff;
+
+            &.slide {
+                -webkit-transition: all 0.8s ease-in-out;
+                        transition: all 0.8s ease-in-out;
+            }
+            &.out {
+                right: -30px;
+            }
+            &.in {
+                right: -webkit-calc(-35% - 30px);
+                right:    -moz-calc(-35% - 30px);
+                right:         calc(-35% - 30px);
+            }
+            .toggle-btn {
+                background-color: $gray;
+                position: absolute;
+                padding: 0.2em;
+                width: 80px;
+                left: -80px;
+                top: 0;
+                text-align: center;
+                text-decoration: none;
+                color: #fff;
+                font-weight: bold;
+            }
+            form {
+                width: 100%;
+                height: 100%;
+                padding: $rdf-padding;
+
+                .controls {
+                    height: $rdf-controls-height;
+                }
+                textarea {
+                    width: 100%;
+                    resize: none;
+                    height: -webkit-calc(100% - #{$rdf-controls-height});
+                    height:    -moz-calc(100% - #{$rdf-controls-height});
+                    height:         calc(100% - #{$rdf-controls-height});
+                }
+            }
+        }
+        .available-props {
+            border-radius: 5px;
+            height: 20em;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 2px solid $gray-light;    
+
+            li {
+                display: block;
+                position: relative;
+                padding: 0.25em 0.5em;
+                cursor: pointer;
+                text-overflow: ellipsis;
+                width: 100%;
+
+                &.active {
+                    background-color: #337AB7;
+                    color: #fff;
+                }
+                .open-prop {
+                    background-color: transparent;
+                    border: none;
+                    position: absolute;
+                    right: 0;
+
+                    &:hover {
+                        color: $gray-lighter;
+                    }
+                }
+            }
+        }
+        #edit-mapping {
+            height: 90%;
+            position: relative;
+
+            #edit-cancel, .prop-form, .column-form, .edit-prop, .edit-class {
+                width: 40%;
+                float: left;
+                padding: 0.5em;
+
+                .form-group {
+                    width: 50%;
+                }
+                .form-btns {
+                    margin-bottom: 0px;
+                }
+                .iri-template {
+                    small {
+                        display: block;
+                        &.iri-template-header {
+                            font-weight: bold;
+                        }
+                    }
+                }
+            }
+            .class-list-container {
+                width: 25%;
+                padding: 0.5em;
+                height: 100%;
+                float: left;
+                border: 1px solid $gray-light;
+                overflow-y: auto;
+
+                .class-list {
+                    li {
+                        text-overflow: ellipsis;
+                    }
+                    .props li {
+                        margin-left: 1em;
+                        display: block;
+                        position: relative;
+                        text-overflow: ellipsis;
+
+                        .delete {
+                            background-color: transparent;
+                            border: none;
+                            position: absolute;
+                            right: 0;
+
+                            &:hover {
+                                color: $gray-lighter;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

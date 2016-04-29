@@ -1,8 +1,75 @@
 <!-- ontology-editor.html -->
 <div class="ontology-editor clearfix" ng-controller="OntologyEditorController as vm">
+    <aside class="left-nav nav">
+        <ul>
+            <li>
+                <button ng-click="vm.save()" title="Save All Changes"
+                        ng-disabled="!vm.ontology.matonto.isValid">
+                    <i class="fa fa-floppy-o fa-fw"></i>
+                </button>
+            </li>
+            <li class="separator"></li>
+            <li>
+                <button ng-click="vm.showOpenOverlay = true" title="Open Ontology"
+                        ng-class="{ 'active': vm.showOpenOverlay === true }"
+                        ng-disabled="!vm.ontologyIds.length">
+                    <i class="fa fa-get-pocket fa-fw"></i>
+                </button>
+            </li>
+            <li>
+                <a ng-click="vm.showUploadOverlay = true" title="Upload Ontology"
+                   ng-class="{ 'active': vm.showUploadOverlay === true }">
+                    <i class="fa fa-upload fa-fw"></i>
+                </a>
+            </li>
+            <li>
+                <a ng-click="vm.selectItem('ontology-editor', -1)" title="Create Ontology"
+                   ng-class="{ 'active': vm.state.oi === -1 }">
+                    <i class="fa fa-plus fa-fw"></i>
+                </a>
+            </li>
+            <li class="separator"></li>
+            <li>
+                <button ng-click="vm.selectItem('class-editor', vm.state.oi, -1)" title="Create Class"
+                        ng-disabled="vm.state.oi === undefined || vm.state.oi === -1 || vm.state.ci !== undefined"
+                        ng-class="{ 'active': vm.state.ci === -1 }">
+                    <i class="fa fa-plus fa-fw"></i>
+                </button>
+            </li>
+            <li>
+                <button ng-click="vm.selectItem('property-editor', vm.state.oi, vm.state.ci, -1)" title="Create Property"
+                        ng-disabled="vm.state.ci === undefined || vm.state.ci === -1 || vm.state.pi !== undefined"
+                        ng-class="{ 'active': vm.state.pi === -1 }">
+                    <i class="fa fa-plus fa-fw"></i>
+                </button>
+            </li>
+            <li>
+                <button ng-click="vm.openDownloadOverlay()" title="Download Ontology"
+                        ng-disabled="!vm.ontology.hasOwnProperty('matonto') || vm.state.oi === -1"
+                        ng-class="{ 'active': vm.showDeleteConfirmation === true }">
+                    <i class="fa fa-download fa-fw"></i>
+                </button>
+            </li>
+            <li>
+                <button ng-click="vm.showCloseOverlay = true" title="Close Ontology"
+                        ng-disabled="vm.state.oi === undefined || vm.state.oi === -1"
+                        ng-class="{ 'active': vm.showCloseOverlay }">
+                    <i class="fa fa-archive fa-fw"></i>
+                </button>
+            </li>
+            <li>
+                <button ng-click="vm.showDeleteConfirmation = true" title="Delete Entity"
+                        ng-disabled="!vm.selected.hasOwnProperty('matonto') || vm.state.oi === -1 || vm.state.ci === -1 || vm.state.pi === -1"
+                        ng-class="{ 'active': vm.showDeleteConfirmation === true }">
+                    <i class="fa fa-trash-o fa-fw"></i>
+                </button>
+            </li>
+        </ul>
+    </aside>
+
     <div class="row">
         <!-- navigation structure -->
-        <aside class="col-xs-4">
+        <section class="col-xs-4">
             <div class="tree-container boxed">
                 <!-- tab buttons -->
                 <div class="btn-group btn-group-justified" role="group">
@@ -24,12 +91,14 @@
                 <class-tree ng-if="vm.state.tab === 'class'"></class-tree>
 
                 <property-tree ng-if="vm.state.tab === 'object'"
+                               header-text="Object Properties"
                                property-type="objectproperty"></property-tree>
 
                 <property-tree ng-if="vm.state.tab === 'datatype'"
+                               header-text="Data Properties"
                                property-type="datatypeproperty"></property-tree>
             </div>
-        </aside>
+        </section>
 
         <!-- edit/create form section -->
         <section class="col-xs-8">
@@ -52,17 +121,24 @@
 
                 <annotation-overlay ng-if="vm.showAnnotationOverlay"></annotation-overlay>
 
+                <ontology-download-overlay ng-if="vm.showDownloadOverlay"></ontology-download-overlay>
+
                 <confirmation-overlay ng-if="vm.showDeleteConfirmation"
                                       header-text="'Delete Ontology'"
-                                      confirm-click="vm.showDeleteConfirmation = false; vm.deleteOntology()"
+                                      confirm-click="vm.deleteEntity()"
                                       cancel-click="vm.showDeleteConfirmation = false;"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong> from your workspace?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong>?</confirmation-overlay>
+
+                <confirmation-overlay ng-if="vm.showCloseOverlay"
+                                      header-text="'Close Overlay'"
+                                      confirm-click="vm.closeOntology()"
+                                      cancel-click="vm.showCloseOverlay = false;"
+                                      confirm-text="'Yes'"
+                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
+
+                <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
             </div>
         </section>
     </div>
-    <circle-button ng-if="vm.state.editor !== 'default'"
-                   on-click="vm.submitEdit()"
-                   btn-icon="'fa-floppy-o'"
-                   is-enabled="vm.selected.matonto.unsaved"></circle-button>
 </div>

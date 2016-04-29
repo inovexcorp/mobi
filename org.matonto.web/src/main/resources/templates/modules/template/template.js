@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('app')
+        .module('template', [])
         .controller('TemplateController', TemplateController);
 
     function TemplateController() {

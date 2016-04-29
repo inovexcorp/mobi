@@ -13,8 +13,10 @@
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
+        <create-error></create-error>
+
         <!-- static iri -->
-        <static-iri></static-iri>
+        <static-iri display-type="class"></static-iri>
 
         <!-- rdfs:label -->
         <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
@@ -33,15 +35,17 @@
     <div ng-if="vm.state.editorTab === 'axioms'" class="tab clearfix">
         <!-- rdfs:subClassOf -->
         <object-select ng-model="vm.selected[vm.rdfs + 'subClassOf']"
+                       selected-id="vm.selected['@id']"
                        display-text="'Sub Class Of'"
                        muted-text="vm.rdfs + 'subClassOf'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"></object-select>
 
         <!-- owl:disjointWith -->
-        <object-select ng-model="vm.selected[vm.rdfs + 'disjointWith']"
+        <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
+                       selected-id="vm.selected['@id']"
                        display-text="'Disjoint With'"
-                       muted-text="vm.rdfs + 'disjointWith'"
+                       muted-text="vm.owl + 'disjointWith'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"></object-select>
     </div>

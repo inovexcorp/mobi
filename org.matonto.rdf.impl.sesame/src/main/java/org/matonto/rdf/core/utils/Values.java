@@ -1,12 +1,18 @@
 package org.matonto.rdf.core.utils;
 
 import org.matonto.rdf.api.*;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.openrdf.model.impl.LinkedHashModel;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Values {
 
     private static final org.openrdf.model.ValueFactory SESAME_VF = org.openrdf.model.impl.SimpleValueFactory.getInstance();
     private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
+    private static final ModelFactory MATONTO_MF = LinkedHashModelFactory.getInstance();
 
     private Values() {}
 
@@ -116,5 +122,21 @@ public class Values {
 
             return sesameContexts;
         }
+    }
+
+    public static Model matontoModel(org.openrdf.model.Model model) {
+        Set<Statement> statements = model.stream()
+                .map(Values::matontoStatement)
+                .collect(Collectors.toSet());
+        return MATONTO_MF.createModel(statements);
+    }
+
+    public static org.openrdf.model.Model sesameModel(Model model) {
+        Set<org.openrdf.model.Statement> statements = model.stream()
+                .map(Values::sesameStatement)
+                .collect(Collectors.toSet());
+        org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
+        sesameModel.addAll(statements);
+        return sesameModel;
     }
 }

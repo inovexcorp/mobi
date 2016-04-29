@@ -9,12 +9,7 @@
         annotationManagerService.$inject = ['$filter', 'responseObj']
 
         function annotationManagerService($filter, responseObj) {
-            var self = this,
-                reg = /^([^:\/?#]+):\/\/([^\/?#]*)([^?#]*)\\?([^#]*)(?:[#\/:](.+))+/;
-
-            self.getPattern = function() {
-                return reg;
-            }
+            var self = this;
 
             self.remove = function(obj, key, index) {
                 obj[key].splice(index, 1);

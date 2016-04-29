@@ -1,12 +1,13 @@
 package org.matonto.ontology.utils.api;
 
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.*;
 import org.openrdf.model.URI;
 
 public interface SesameTransformer {
+
+    org.openrdf.model.Model sesameModel(Model model);
+
+    Model matontoModel(org.openrdf.model.Model model);
 
     org.openrdf.model.Statement sesameStatement(Statement statement);
 

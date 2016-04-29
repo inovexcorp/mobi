@@ -1,32 +1,30 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.Models;
+import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.exception.RepositoryException;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
@@ -41,14 +39,16 @@ import aQute.bnd.annotation.component.*;
 public class SimpleOntologyManager implements OntologyManager {
 	
     protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
+    private Resource registryContext;
+    private Resource registrySubject;
+    private IRI registryPredicate;
     private RepositoryManager repositoryManager;
 	private static Repository repository;
     private static ValueFactory factory;
-	private static Map<Resource, String> ontologyRegistry = new HashMap<>();
 	private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
-	
+
 	public SimpleOntologyManager() {}
 	
     @Activate
@@ -72,7 +72,7 @@ public class SimpleOntologyManager implements OntologyManager {
         if (properties.containsKey("repositoryId") && !properties.get("repositoryId").equals("")) {
             getRepository((String)properties.get("repositoryId"));
             LOG.info("repositoryId - " + properties.get("repositoryId"));
-            initOntologyRegistry();
+            initOntologyRegistryResources();
         } else {
             LOG.error("Unable to activate Ontology Manager: Unable to set repositoryId");
             throw new IllegalStateException("Unable to set repositoryId");
@@ -113,45 +113,78 @@ public class SimpleOntologyManager implements OntologyManager {
     protected void setModelFactory(final ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
-	
+    
 	@Override
-	public Map<Resource, String> getOntologyRegistry() {
-		return ontologyRegistry;
+	public Set<Resource> getOntologyRegistry() {
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        RepositoryConnection conn = null;
+        Set<Resource> registry = new HashSet<>();
+        try {
+            conn = repository.getConnection();
+            conn.getStatements(registrySubject, registryPredicate, null, registryContext)
+                    .forEach(stmt -> Statements.objectResource(stmt).ifPresent(registry::add));
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+		return registry;
 	}
 
 	@Override
-	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException
-	{
+	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException {
 		return new SimpleOntology(ontologyId, this);
 	}
-
 
 	@Override
 	public Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException {
 		return new SimpleOntology(file, this);
 	}
 
-
 	@Override
 	public Ontology createOntology(IRI iri) throws MatontoOntologyException {
 		return new SimpleOntology(iri, this);
 	}
 
-
 	@Override
 	public Ontology createOntology(InputStream inputStream) throws MatontoOntologyException {
 		return new SimpleOntology(inputStream, this);
 	}
+
+    @Override
+    public Ontology createOntology(String json) throws MatontoOntologyException {
+        return new SimpleOntology(json, this);
+    }
 	
 	/**
-	 * Checks if given context id exists in the repository, and returns true if it does.
+	 * Checks if given context id exists in the local ontology registry.
 	 * 
-	 * @return True if given context id exists in the repository, or else false.
+	 * @return True if given context id exists in the local ontology registry, or else false.
 	 * @throws IllegalStateException - if the repository is null
 	 */
 	public boolean ontologyExists(@Nonnull Resource resource) {
-        return ontologyRegistry.containsKey(resource);
-	}
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        RepositoryConnection conn = null;
+        boolean exists = false;
+        try {
+            conn = repository.getConnection();
+            RepositoryResult<Statement> statements = conn.getStatements(registrySubject, registryPredicate, resource, registryContext);
+            if(statements.hasNext()) {
+                exists = true;
+            }
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+        return exists;
+    }
 	
 	/**
 	 * Retrieves Ontology object by ontology id from the repository, and returns an Optional with Ontology 
@@ -198,28 +231,124 @@ public class SimpleOntologyManager implements OntologyManager {
 	
 	@Override
 	public boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException {
-		if(repository == null)
-			throw new IllegalStateException("Repository is null");
-   	 
-		Resource resource = ontology.getOntologyId().getOntologyIdentifier();
-		if(ontologyExists(resource))
-			throw new MatontoOntologyException("Ontology with the ontology ID already exists.");
-		
-		RepositoryConnection conn = null;
-		
-		try {
-			Model model = ontology.asModel(modelFactory);
+        if(repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        Resource resource = ontology.getOntologyId().getOntologyIdentifier();
+        if(ontologyExists(resource))
+            throw new MatontoOntologyException("Ontology with the ontology ID already exists.");
+
+        RepositoryConnection conn = null;
+
+        try {
+            Model model = ontology.asModel(modelFactory);
             conn = repository.getConnection();
             conn.add(model, resource);
-			ontologyRegistry.put(resource, repository.getConfig().id());
-		} catch (RepositoryException e) {
-			throw new MatontoOntologyException("Error in repository connection", e);
-		} finally {
+            conn.add(registrySubject, registryPredicate, resource, registryContext);
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } finally {
             closeConnection(conn);
-		}
-		
-		return true;
+        }
+
+        return true;
 	}
+
+    private void checkRepositoryAndOntology(Resource ontologyResource) {
+        if (repository == null)
+            throw new IllegalStateException("Repository is null");
+
+        if(!ontologyExists(ontologyResource))
+            throw new MatontoOntologyException("Ontology ID does not exist.");
+    }
+
+    private boolean updateOntology(Resource ontologyResource, @Nullable Resource originalResource, String resourceJson)
+            throws MatontoOntologyException {
+        checkRepositoryAndOntology(ontologyResource);
+        boolean updated = false;
+
+        try {
+            final RepositoryConnection conn = repository.getConnection();
+
+            try {
+                InputStream in = new ByteArrayInputStream(resourceJson.getBytes(StandardCharsets.UTF_8));
+                Model changedModel = transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
+
+                if(ontologyResource != null && changedModel.size() > 0) {
+                    conn.begin();
+                    Resource newSubject = Models.subject(changedModel).get();
+                    Resource newContext = (originalResource != null && originalResource.equals(ontologyResource) &&
+                            !ontologyResource.equals(newSubject)) ?
+                            (new SimpleOntology(resourceJson, this)).getOntologyId().getOntologyIdentifier() :
+                            ontologyResource;
+
+                    // Ontology IRI has changed, so update the context of all statements
+                    if(newContext.equals(newSubject)) {
+                        conn.getStatements(null, null, null, ontologyResource).forEach(stmt -> {
+                            conn.remove(stmt);
+                            if(!stmt.getSubject().equals(newSubject)) {
+                                conn.add(stmt, newContext);
+                            }
+                        });
+                        conn.remove(registrySubject, registryPredicate, ontologyResource, registryContext);
+                        conn.add(factory.createStatement(registrySubject, registryPredicate, newContext,
+                                registryContext));
+                    }
+
+                    // Remove all original statements if the object is not a blank node. Replace subject with new
+                    // subject if the IRI is changed and it is a blank node
+                    if(originalResource != null) {
+                        conn.getStatements(originalResource, null, null, newContext).forEach(stmt -> {
+                            if (!(stmt.getObject() instanceof BNode)) {
+                                conn.remove(stmt);
+                            } else if (!newSubject.equals(originalResource)) {
+                                conn.remove(stmt);
+                                conn.add(factory.createStatement(newSubject, stmt.getPredicate(), stmt.getObject(),
+                                        newContext));
+                            }
+                        });
+
+                        // Updates statements that reference the changed entity if needed
+                        conn.getStatements(null, null, originalResource, newContext).forEach(stmt -> {
+                            conn.remove(stmt);
+                            conn.add(factory.createStatement(stmt.getSubject(), stmt.getPredicate(), newSubject,
+                                    newContext));
+                        });
+                    }
+
+                    // Add all new statements if the object is not a blank node
+                    changedModel.forEach(stmt -> {
+                        if (!(stmt.getObject() instanceof BNode)) {
+                            conn.add(stmt, newContext);
+                        }
+                    });
+                    conn.commit();
+                    updated = true;
+                }
+
+            } catch (IOException | org.openrdf.rio.RDFParseException e) {
+                throw new MatontoOntologyException("Error in parsing resourceJson", e);
+            } finally {
+                closeConnection(conn);
+            }
+
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        }
+
+        return updated;
+    }
+
+    @Override
+    public boolean saveChangesToOntology(Resource ontologyResource, Resource originalChangedResource,
+                                         String resourceJson) throws MatontoOntologyException {
+        return updateOntology(ontologyResource, originalChangedResource, resourceJson);
+    }
+
+    @Override
+    public boolean addEntityToOntology(Resource ontologyResource, String resourceJson) throws MatontoOntologyException {
+        return updateOntology(ontologyResource, null, resourceJson);
+    }
 	
 	@Override
 	public boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException {
@@ -234,7 +363,7 @@ public class SimpleOntologyManager implements OntologyManager {
 		try {
 			conn = repository.getConnection();
             conn.clear(resource);
-			ontologyRegistry.remove(resource, repository.getConfig().id());
+            conn.remove(registrySubject, registryPredicate, resource, registryContext);
 		} catch (RepositoryException e) {
 			throw new MatontoOntologyException("Error in repository connection", e);
 		} finally {
@@ -244,43 +373,58 @@ public class SimpleOntologyManager implements OntologyManager {
 		return true;
 	}
 
+    @Override
+    public Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource) throws MatontoOntologyException {
+        checkRepositoryAndOntology(ontologyResource);
+
+        RepositoryConnection conn = null;
+        Map<String, Set> changedEntities = new HashMap<>();
+        try {
+            conn = repository.getConnection();
+            RepositoryResult<Statement> entitySubjectStatements = conn.getStatements(entityResource, null, null, ontologyResource);
+            RepositoryResult<Statement> entityObjectStatements = conn.getStatements(null, null, entityResource, ontologyResource);
+
+            Set<Statement> cachedObjectStatements = new HashSet<>();
+            Set<String> changedIriStrings = new HashSet<>();
+            Set<org.openrdf.model.Model> changedModels = new HashSet<>();
+
+            for(Statement stmt : entityObjectStatements) {
+                changedIriStrings.add(stmt.getSubject().stringValue());
+                cachedObjectStatements.add(stmt);
+            }
+            changedEntities.put("iris", changedIriStrings);
+
+            conn.remove(entitySubjectStatements, ontologyResource);
+            conn.remove(cachedObjectStatements, ontologyResource);
+
+            for(String iriString : changedIriStrings) {
+                RepositoryResult<Statement> changedEntity = conn.getStatements(factory.createIRI(iriString), null, null, ontologyResource);
+                Model model = modelFactory.createModel();
+
+                changedEntity.forEach(model::add);
+                changedModels.add(transformer.sesameModel(model));
+            }
+            changedEntities.put("models", changedModels);
+        } catch (RepositoryException e) {
+            throw new MatontoOntologyException("Error in repository connection", e);
+        } finally {
+            closeConnection(conn);
+        }
+
+        return changedEntities;
+    }
+
 	/**
-	 * The ontology registry facilitates the list of the association of ontologies 
-	 * stored in different repositories. When the registry is initialized (loaded) when
-	 * an instance of SimpleOntologyManager is created.  
+     * Initializes the resources used to store the ontology registry statements in
+     * the repository. These values are initialized whenever the SimpleOntologyManager
+     * is created.
 	 * 
 	 * @throws IllegalStateException - if the repository is null
 	 */
-	private void initOntologyRegistry() throws MatontoOntologyException {
-		LOG.info("Initiating the ontology registry");
-		
-		if(repository == null)
-			throw new IllegalStateException("Repository is null");
-		
-		RepositoryConnection conn = null;
-		RepositoryResult<Resource> contextIds = null;
-		
-		try {
-			conn = repository.getConnection();
-			contextIds = conn.getContextIDs();
-			
-			while (contextIds.hasNext()) {
-				Resource contextId = contextIds.next();
-				ontologyRegistry.put(contextId, repository.getConfig().id());
-			}
-
-		} catch (RepositoryException e) {
-			throw new MatontoOntologyException("Error in repository connection", e);
-		} finally {
-			try {
-				if(contextIds != null) 
-	            	contextIds.close();
-			} catch (RepositoryException e) {
-                LOG.warn("Could not close ResultSet." + e.toString());
-			}
-            closeConnection(conn);
-		}
-		
+	private void initOntologyRegistryResources() throws MatontoOntologyException {
+        registryContext = factory.createIRI("https://matonto.org/registry/ontologies");
+        registrySubject = factory.createIRI("https://matonto.org/registry/ontologies");
+        registryPredicate = factory.createIRI("https://matonto.org/Ontology/registry#hasItem");
 	}
 
 	@Override

@@ -1,38 +1,40 @@
 package org.matonto.ontology.core.api;
 
+import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Resource;
-import org.matonto.repository.api.Repository;
-
 
 public interface OntologyManager {
-	
-	Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
-	
-	Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException;
-	
-	Ontology createOntology(IRI iri) throws MatontoOntologyException;
-	
-	Ontology createOntology(InputStream inputStream) throws MatontoOntologyException;
-	
-	Optional<Ontology> retrieveOntology(@Nonnull Resource resource) throws MatontoOntologyException;
 
-	/**
-	 * Persists Ontology object in the repository, and returns true if successfully persisted
-	 *
-	 * @return True if successfully persisted
-	 * @throws IllegalStateException - if the repository is null
+    Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException;
+
+    Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException;
+
+    Ontology createOntology(IRI iri) throws MatontoOntologyException;
+
+    Ontology createOntology(InputStream inputStream) throws MatontoOntologyException;
+
+    Ontology createOntology(String json) throws MatontoOntologyException;
+
+    Optional<Ontology> retrieveOntology(@Nonnull Resource resource) throws MatontoOntologyException;
+
+    /**
+     * Persists Ontology object in the repository, and returns true if successfully persisted
+     *
+     * @return True if successfully persisted
+     * @throws IllegalStateException - if the repository is null
      * @throws MatontoOntologyException - if an exception occurs while persisting
-	 */
-	boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException;
+     */
+    boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException;
 
     /**
      * Deletes the ontology with the given OntologyId, and returns true if successfully removed. The identifier
@@ -48,17 +50,45 @@ public interface OntologyManager {
      * does not exist in the repository or if an owlapi exception or sesame exception is caught.
      * @throws IllegalStateException - if the repository is null
      */
-	boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
+    boolean deleteOntology(@Nonnull Resource resource) throws MatontoOntologyException;
 
-	Map<Resource, String> getOntologyRegistry() throws MatontoOntologyException;
-	
-	OntologyId createOntologyId();
-	
-	OntologyId createOntologyId(Resource resource);
-	
-	OntologyId createOntologyId(IRI ontologyIRI);
-	
-	OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
+    /**
+     * Updates Ontology object with the changed resource
+     *
+     * @param ontologyResource Ontology Resource
+     * @param changedResource The IRI of the changed resource
+     * @param resourceJson The json-ld of the changed resource
+     * @return True if successfully updated, false otherwise
+     */
+    boolean saveChangesToOntology(Resource ontologyResource, Resource changedResource, String resourceJson);
 
-	SesameTransformer getTransformer();
+    /**
+     * Add the resource json to the Ontology object
+     *
+     * @param ontologyResource Ontology Resource
+     * @param resourceJson The json-ld of the new resource
+     * @return True if successfully updated, false otherwise
+     */
+    boolean addEntityToOntology(Resource ontologyResource, String resourceJson);
+
+    Map<String, Set> deleteEntityFromOntology(@Nonnull Resource ontologyResource, @Nonnull Resource entityResource)
+            throws MatontoOntologyException;
+
+    /**
+     * Gets the ontology registry which is persisted in the repository
+     *
+     * @return Set of ontology resources
+     * @throws MatontoOntologyException - if the repository is null
+     */
+    Set<Resource> getOntologyRegistry() throws MatontoOntologyException;
+
+    OntologyId createOntologyId();
+
+    OntologyId createOntologyId(Resource resource);
+
+    OntologyId createOntologyId(IRI ontologyIRI);
+
+    OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
+
+    SesameTransformer getTransformer();
 }

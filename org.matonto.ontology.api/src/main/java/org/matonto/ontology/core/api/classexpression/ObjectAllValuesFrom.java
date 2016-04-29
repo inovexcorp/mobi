@@ -4,7 +4,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression
 
 public interface ObjectAllValuesFrom extends ClassExpression {
 
-	ObjectPropertyExpression getProperty();
-	
-	ClassExpression getClassExpression();
+    ObjectPropertyExpression getProperty();
+
+    ClassExpression getClassExpression();
 }

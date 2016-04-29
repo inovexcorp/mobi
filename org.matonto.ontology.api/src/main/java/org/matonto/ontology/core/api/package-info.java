@@ -1,4 +1,4 @@
-@Version("1.1.0.${build}")
+@Version("2.0.2.${build}")
 
 package org.matonto.ontology.core.api;
 

@@ -1,0 +1,14 @@
+<form class="prop-form">
+    <div class="form-group">
+        <custom-label>{{dvm.getClassName(classId) + ' Properties'}}</custom-label>
+        <prop-select props="dvm.props" selected-prop="dvm.selectedProp" on-change="dvm.update()"></prop-select>
+    </div>
+    <range-class-description ng-if="dvm.isObjectProperty()" 
+        ontologies="dvm.ontologies" 
+        class-id="{{classId}}" 
+        selected-prop="{{dvm.selectedProp}}"></range-class-description>
+    <div class="form-btns form-group btn-container" ng-if="dvm.isObjectProperty()">
+        <custom-button type="'secondary'" on-click="set()" pull="'left'">Set</custom-button>
+        <custom-button type="'secondary'" on-click="setNext()" pull="'left'" is-disabled-when="dvm.props.length <= 1">Set &amp; Next</custom-button>
+    </div>
+</form>

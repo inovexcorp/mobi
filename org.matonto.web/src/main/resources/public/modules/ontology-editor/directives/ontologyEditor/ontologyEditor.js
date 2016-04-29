@@ -8,7 +8,12 @@
         function ontologyEditor() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/ontologyEditor/ontologyEditor.html'
+                templateUrl: 'modules/ontology-editor/directives/ontologyEditor/ontologyEditor.html',
+                controllerAs: 'dvm',
+                controller: ['REGEX', function(REGEX) {
+                    var dvm = this;
+                    dvm.iriPattern = REGEX.IRI;
+                }]
             }
         }
 })();

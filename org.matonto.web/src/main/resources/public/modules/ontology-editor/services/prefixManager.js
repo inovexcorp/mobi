@@ -24,7 +24,7 @@
             self.editPrefix = function(edit, old, index, ontology) {
                 var input = document.getElementById('prefix-' + index);
                 if(edit) {
-                    // updateRefsService.update(ontology, old + ':', input.value + ':', ontology.matonto.owl);
+                    updateRefsService.update(ontology, old + ':', input.value + ':', ontology.matonto.owl);
                     updateContext(ontology.matonto.context, 'key', old, input.value);
                 } else {
                     input.focus();
@@ -34,8 +34,8 @@
             self.editValue = function(edit, key, old, index, ontology) {
                 var input = document.getElementById('value-' + index);
                 if(edit) {
-                    // updateRefsService.update(ontology, key + ':', old, ontology.matonto.owl);
-                    // updateRefsService.update(ontology, input.value, key + ':', ontology.matonto.owl);
+                    updateRefsService.update(ontology, key + ':', old, ontology.matonto.owl);
+                    updateRefsService.update(ontology, input.value, key + ':', ontology.matonto.owl);
                     updateContext(ontology.matonto.context, 'value', old, input.value);
                 } else {
                     input.focus();
@@ -45,22 +45,13 @@
             self.add = function(key, value, ontology) {
                 var deferred = $q.defer(),
                     context = ontology.matonto.context,
-                    duplicate = false,
-                    i = 0;
-
-                while(i < context.length) {
-                    if(context[i].key === key || context[i].value === value) {
-                        duplicate = true;
-                        break;
-                    }
-                    i++;
-                }
+                    duplicate = _.findIndex(context, { 'key': key }) !== -1 || _.findIndex(context, { 'value': value }) !== -1;
 
                 if(!duplicate) {
                     context.push({key: key, value: value});
-                    // updateRefsService.update(ontology, value, key + ':', ontology.matonto.owl);
+                    updateRefsService.update(ontology, value, key + ':', ontology.matonto.owl);
                     deferred.resolve();
-                } else if(duplicate) {
+                } else {
                     deferred.reject();
                 }
 

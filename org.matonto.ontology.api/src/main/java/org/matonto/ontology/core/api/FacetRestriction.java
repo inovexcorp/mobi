@@ -6,7 +6,7 @@ import org.matonto.rdf.api.Literal;
 
 public interface FacetRestriction {
 
-	Facet getFacet();
-		
-	Literal getFacetValue();
+    Facet getFacet();
+
+    Literal getFacetValue();
 }

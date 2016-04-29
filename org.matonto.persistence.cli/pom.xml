@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.33-SNAPSHOT</version>
+        <version>1.0.34-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.34-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
@@ -38,7 +38,7 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
+                        <Export-Package />
                         <Service-Component>*</Service-Component>
                         <Karaf-Commands>*</Karaf-Commands>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
