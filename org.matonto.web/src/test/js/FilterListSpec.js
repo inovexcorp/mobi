@@ -17,10 +17,9 @@ describe('Filter List directive', function() {
     describe('in isolated scope', function() {
         beforeEach(function() {
             scope.filters = {};
-            scope.results = {};
             scope.clickFilter = jasmine.createSpy('clickFilter');
 
-            this.element = $compile(angular.element('<filter-list filters="filters" results="results" click-filter="clickFilter()"></filter-list>'))(scope);
+            this.element = $compile(angular.element('<filter-list filters="filters" click-filter="clickFilter()"></filter-list>'))(scope);
             scope.$digest();
         });
 
@@ -36,27 +35,14 @@ describe('Filter List directive', function() {
             scope.$digest();
             expect(scope.filters).toEqual({Resources: []});
         });
-        it('results should be two way bound', function() {
-            var controller = this.element.controller('filterList');
-            controller.results = {results: []};
-            scope.$digest();
-            expect(scope.results).toEqual({results: []});
-        });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             scope.filters = {Resources: [{applied: true}, {applied: false}]};
-            scope.results = {results: [{'type': 'test'}]};
             scope.clickFilter = jasmine.createSpy('clickFilter');
 
-            this.element = $compile(angular.element('<filter-list filters="filters" results="results" click-filter="clickFilter()"></filter-list>'))(scope);
+            this.element = $compile(angular.element('<filter-list filters="filters" click-filter="clickFilter()"></filter-list>'))(scope);
             scope.$digest();
-        });
-        it('should the count of how many resources match the filter', function() {
-            var controller = this.element.controller('filterList');
-            var result = controller.getCount('Resources', {value: 'test'});
-
-            expect(typeof result).toBe('number');
         });
         it('should get lists of the applied filter values', function() {
             var controller = this.element.controller('filterList');
@@ -94,10 +80,9 @@ describe('Filter List directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             scope.filters = {Resources: [{applied: true}, {applied: false}]};
-            scope.results = {results: [{'type': 'test'}]};
             scope.clickFilter = jasmine.createSpy('clickFilter');
 
-            this.element = $compile(angular.element('<filter-list filters="filters" results="results" click-filter="clickFilter()"></filter-list>'))(scope);
+            this.element = $compile(angular.element('<filter-list filters="filters" click-filter="clickFilter()"></filter-list>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -156,10 +141,9 @@ describe('Filter List directive', function() {
     });
     it('should call clickFilter when a filter option is clicked', function() {
         scope.filters = {Resources: [{applied: true}]};
-        scope.results = {};
         scope.clickFilter = jasmine.createSpy('clickFilter');
 
-        var element = $compile(angular.element('<filter-list filters="filters" results="results" click-filter="clickFilter()"></filter-list>'))(scope);
+        var element = $compile(angular.element('<filter-list filters="filters" click-filter="clickFilter()"></filter-list>'))(scope);
         scope.$digest();
         
         var option = element.querySelectorAll('.filter .filter-options li a')[0];

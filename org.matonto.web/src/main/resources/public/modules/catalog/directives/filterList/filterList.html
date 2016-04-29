@@ -4,7 +4,7 @@
         <ul class="filter-options">
             <li ng-repeat="option in options" ng-class="{'applied': option.applied, 'not-applied': !option.applied, 'hidden': dvm.isHidden(filter, option)}">
                 <a ng-click="dvm.updateApplied(filter, option); clickFilter()">
-                    {{option.formatter(option.value)}} ({{dvm.getCount(filter, option)}}) <i class="fa" ng-class="{'fa-plus-circle': !option.applied, 'fa-times-circle': option.applied}"></i>
+                    {{option.formatter(option.value)}} <i class="fa" ng-class="{'fa-plus-circle': !option.applied, 'fa-times-circle': option.applied}"></i>
                 </a>
                 <div ng-if="option.applied" class="triangle-right"></div>
             </li>
