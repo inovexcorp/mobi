@@ -3,6 +3,7 @@ package org.matonto.persistence.utils;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.matonto.exception.MatOntoException;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
@@ -23,10 +24,15 @@ public class JSONQueryResults {
         } else if (value instanceof Literal) {
             Literal lit = (Literal)value;
 
-            // TODO: create a Literals class to determine if it is a language literal
+            if (lit.getLanguage().isPresent()) {
+                result.put("xml:lang", lit.getLanguage().get());
+            }
 
+            result.put("datatype", lit.getDatatype().stringValue());
             result.put("type", "literal");
             result.put("value", lit.getLabel());
+        } else {
+            throw new MatOntoException("Unknown Value object type: " + value.getClass());
         }
 
         return result;

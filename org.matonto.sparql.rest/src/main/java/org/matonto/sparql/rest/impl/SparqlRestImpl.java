@@ -3,6 +3,7 @@ package org.matonto.sparql.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONObject;
+import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
@@ -10,6 +11,7 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.MatOntoWebException;
 import org.matonto.sparql.rest.SparqlRest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +60,12 @@ public class SparqlRestImpl implements SparqlRest {
         TupleQueryResult queryResults = query.evaluate();
 
         if (queryResults.hasNext()) {
-            JSONObject json = JSONQueryResults.getResults(queryResults);
-            return Response.ok().entity(json.toString()).build();
+            try {
+                JSONObject json = JSONQueryResults.getResults(queryResults);
+                return Response.ok().entity(json.toString()).build();
+            } catch (MatOntoException ex) {
+                throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            }
         } else {
             return Response.noContent().build();
         }
