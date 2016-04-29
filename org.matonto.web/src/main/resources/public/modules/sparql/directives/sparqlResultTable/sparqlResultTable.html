@@ -1,5 +1,5 @@
 <div class="sparql-results">
-    <table class="table">
+    <table class="table table-hover">
         <thead>
         <tr>
             <th ng-repeat="var in dvm.sparqlService.response.head.vars">{{var}}</th>
@@ -7,8 +7,14 @@
         </thead>
         <tbody>
         <tr ng-repeat="binding in dvm.sparqlService.response.results.bindings">
-            <td ng-repeat="var in dvm.sparqlService.response.head.vars">{{binding[var].value}}</td>
+            <td ng-repeat="var in dvm.sparqlService.response.head.vars">{{binding[var]}}</td>
         </tr>
         </tbody>
     </table>
+    <p ng-if="dvm.sparqlService.errorMessage" class="text-danger">
+        <i class="fa fa-exclamation-triangle fa-fw"></i>{{dvm.sparqlService.errorMessage}}
+    </p>
+    <p ng-if="dvm.sparqlService.infoMessage" class="text-info">
+        <i class="fa fa-info fa-fw"></i>{{dvm.sparqlService.infoMessage}}
+    </p>
 </div>

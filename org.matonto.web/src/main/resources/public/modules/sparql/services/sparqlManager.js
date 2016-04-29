@@ -5,29 +5,49 @@
         .module('sparql', [])
         .service('sparqlService', sparqlService);
 
-        sparqlService.$inject = [];
+        sparqlService.$inject = ['$http'];
 
-        function sparqlService() {
+        function sparqlService($http) {
             var prefix = '/matontorest/query';
+            var self = this;
 
-            this.response = {};
+            self.prefixes = [];
+            self.queryString = '';
+            self.response = {};
 
-            this.queryRdf = function(queryString) {
+            self.errorMessage = '';
+            self.infoMessage = 'Please submit a query to see results here.';
+
+            function getMessage(response, defaultMessage) {
+                return _.get(response, 'statusText', defaultMessage);
+            }
+
+            self.queryRdf = function(prefixList, queryString) {
+                self.prefixes = prefixList;
+                self.queryString = queryString;
+
+                var prefixes = prefixList.length ? 'PREFIX ' + _.join(prefixList, '\nPREFIX ') + '\n\n' : '';
                 var config = {
                     params: {
-                        query: queryString
+                        query: prefixes + queryString
                     }
                 }
 
                 $http.get(prefix, config)
                     .then(function(response) {
-                        if(_.get(response, 'statusCode', 0) === 200) {
-                            this.response = response.data;
+                        if(_.get(response, 'status') === 200) {
+                            self.errorMessage = '';
+                            self.infoMessage = '';
+                            self.response = response.data;
                         } else {
-                            // TODO: no results
+                            self.errorMessage = '';
+                            self.infoMessage = getMessage(response, 'No results were returned.');
+                            self.response = {};
                         }
                     }, function(response) {
-                        // TODO: error
+                        self.errorMessage = getMessage(response, 'An internal server error has occurred. Please try again later.');
+                        self.infoMessage = '';
+                        self.response = {};
                     });
             }
         }

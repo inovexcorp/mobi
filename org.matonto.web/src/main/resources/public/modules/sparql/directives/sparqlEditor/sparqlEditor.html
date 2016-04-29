@@ -1,6 +1,6 @@
 <form name="dvm.form" class="sparql-editor">
     <div class="btn-container clearfix top-action-container">
-        <custom-button on-click="dvm.sparqlService.queryRdf(dvm.queryString)" is-disabled-when="!dvm.queryString.length" pull="'left'">Execute</custom-button>
+        <custom-button on-click="dvm.sparqlService.queryRdf(dvm.prefixes, dvm.queryString)" is-disabled-when="!dvm.queryString.length" pull="'left'">Execute</custom-button>
     </div>
     <div class="form-group">
         <custom-label muted-text="mutedText">Prefixes:</custom-label>

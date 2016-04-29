@@ -20,7 +20,8 @@
                         'dc: <' + prefixes.dc + '>',
                         'foaf: <' + prefixes.foaf + '>'
                     ];
-                    this.prefixes = ['foaf: <' + prefixes.foaf + '>'];
+                    this.prefixes = sparqlService.prefixes || [];
+                    this.queryString = sparqlService.queryString || '';
                     this.editorOptions = {
                         mode: 'application/sparql-query',
                         indentUnit: 4,

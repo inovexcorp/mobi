@@ -1,6 +1,9 @@
 package org.matonto.sparql.rest.impl;
 
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONObject;
+import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.repository.api.Repository;
@@ -15,6 +18,7 @@ import javax.ws.rs.core.Response;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@Component(immediate = true)
 public class SparqlRestImpl implements SparqlRest {
 
 //    private static final int QUERY_TIME_OUT_SECONDS = 120;
@@ -51,10 +55,8 @@ public class SparqlRestImpl implements SparqlRest {
         RepositoryConnection conn = repository.getConnection();
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
-        final TupleQueryResult queryResults = query.evaluate();
+        JSONObject json = JSONQueryResults.getResults(query.evaluate());
 
-        
-
-        return null;
+        return Response.ok().entity(json.toString()).build();
     }
 }
