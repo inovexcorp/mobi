@@ -9,7 +9,6 @@ import static org.powermock.api.easymock.PowerMock.replay;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -24,7 +23,6 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
-import org.matonto.repository.api.RepositoryManager;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -37,7 +35,6 @@ public class SimpleOntologyManagerTest {
 
     ValueFactory factory;
     SesameTransformer transformer;
-    RepositoryManager repoManager;
     Repository repository;
     ModelFactory modelFactory;
     OWLOntologyManager owlManager;
@@ -54,7 +51,6 @@ public class SimpleOntologyManagerTest {
     public void setUp() {
         factory = mock(ValueFactory.class);    
         transformer = mock(SesameTransformer.class);
-        repoManager = mock(RepositoryManager.class);
         repository = mock(Repository.class);
         modelFactory = mock(ModelFactory.class);
         ontology = mock(Ontology.class);   

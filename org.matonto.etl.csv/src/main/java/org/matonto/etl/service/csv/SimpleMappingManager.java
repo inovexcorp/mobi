@@ -8,8 +8,8 @@ import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
+import org.matonto.repository.config.RepositoryConsumerConfig;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -21,26 +21,26 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import javax.annotation.Nonnull;
 
-@Component(provide = MappingManager.class,
+@Component(
         name = SimpleMappingManager.COMPONENT_NAME,
+        designateFactory = RepositoryConsumerConfig.class,
         configurationPolicy = ConfigurationPolicy.require)
 public class SimpleMappingManager implements MappingManager {
-    protected static final String COMPONENT_NAME = "org.matonto.etl.api.MappingManager";
+    static final String COMPONENT_NAME = "org.matonto.etl.api.MappingManager";
     private Resource registryContext;
     private Resource registrySubject;
     private IRI registryPredicate;
     private static final Logger logger = LoggerFactory.getLogger(SimpleMappingManager.class);
-    private RepositoryManager repositoryManager;
-    private static Repository repository;
     private ValueFactory factory;
     private ModelFactory modelFactory;
+    private Repository repository;
 
     public SimpleMappingManager() {}
 
     @Activate
     public void activate(final Map<String, Object> properties) {
         logger.info("Activating " + COMPONENT_NAME);
-        setPropertyValues(properties);
+        initMappingRegistryResources();
     }
 
     @Deactivate
@@ -51,7 +51,7 @@ public class SimpleMappingManager implements MappingManager {
     @Modified
     public void modified(final Map<String, Object> properties) {
         logger.info("Modifying the " + COMPONENT_NAME);
-        setPropertyValues(properties);
+        initMappingRegistryResources();
     }
 
     @Reference
@@ -64,14 +64,13 @@ public class SimpleMappingManager implements MappingManager {
         modelFactory = mf;
     }
 
-    @Reference
-    public void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
+    @Reference(name = "repository")
+    protected void setRepository(Repository repository) {
+        this.repository = repository;
     }
 
     @Override
     public Set<Resource> getMappingRegistry() {
-        testRepository();
         RepositoryConnection conn = null;
         Set<Resource> registry = new HashSet<>();
         try {
@@ -119,7 +118,6 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public boolean storeMapping(Model mappingModel, @Nonnull Resource mappingIRI) throws MatOntoException {
-        testRepository();
         if (mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID already exists");
         }
@@ -140,7 +138,6 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public Optional<Model> retrieveMapping(@Nonnull Resource mappingIRI) {
-        testRepository();
         if (!mappingExists(mappingIRI)) {
             return Optional.empty();
         }
@@ -160,7 +157,6 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public boolean deleteMapping(@Nonnull Resource mappingIRI) {
-        testRepository();
         if (!mappingExists(mappingIRI)) {
             throw new MatOntoException("Mapping with mapping ID does not exist");
         }
@@ -180,42 +176,12 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     /**
-     * Retrieves and sets the requested repository if it exists.
-     *
-     * @param repositoryId the id of the requested repository
-     */
-    protected void getRepository(String repositoryId) {
-        if (repositoryManager == null) {
-            throw new IllegalStateException("Repository Manager is null");
-        }
-
-        Optional<Repository> optRepo = repositoryManager.getRepository(repositoryId);
-        if (optRepo.isPresent()) {
-            setRepo(optRepo.get());
-        } else {
-            logger.info(String.format("Service registration delayed for %s. Waiting for Repository.", COMPONENT_NAME));
-            throw new IllegalStateException(String.format("Repository \"%s\" does not exist", repositoryId));
-        }
-    }
-
-    /**
-     * Sets the repository for mappings to the passed repository.
-     *
-     * @param repo the repository to hold mappings
-     */
-    protected void setRepo(Repository repo) {
-        repository = repo;
-    }
-
-    /**
      * Tests whether the passes mapping Resource IRI exists in the mapping registry.
      *
      * @param resource the mapping IRI to test for in the registry
      * @return true if the registry contains the passed mapping IRI, false otherwise.
      */
     protected boolean mappingExists(@Nonnull Resource resource) {
-        testRepository();
-
         RepositoryConnection conn = null;
         boolean exists = false;
         try {
@@ -227,7 +193,6 @@ public class SimpleMappingManager implements MappingManager {
             }
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
-
         } finally {
             closeConnection(conn);
         }
@@ -244,23 +209,6 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     /**
-     * Sets all relevant properties passed into the component. Currently only supports the
-     * repository ID.
-     * 
-     * @param properties the properties to set for the MappingManager
-     */
-    private void setPropertyValues(Map<String, Object> properties) {
-        if (properties.containsKey("repositoryId") && !properties.get("repositoryId").equals("")) {
-            getRepository((String)properties.get("repositoryId"));
-            logger.info("repositoryId - " + properties.get("repositoryId"));
-            initMappingRegistryResources();
-        } else {
-            logger.error("Unable to activate Mapping Manager: Unable to set repositoryId");
-            throw new IllegalStateException("Unable to set repositoryId");
-        }
-    }
-
-    /**
      * Closes the passed connection to the repository.
      * 
      * @param conn a connection to the repository for mappings
@@ -272,15 +220,6 @@ public class SimpleMappingManager implements MappingManager {
             }
         } catch (RepositoryException e) {
             logger.warn("Could not close Repository." + e.toString());
-        }
-    }
-
-    /**
-     * Tests whether the repository has been set.
-     */
-    private void testRepository() {
-        if (repository == null) {
-            throw new IllegalStateException("Repository is null");
         }
     }
 
