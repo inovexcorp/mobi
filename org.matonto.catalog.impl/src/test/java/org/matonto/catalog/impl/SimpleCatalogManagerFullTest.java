@@ -68,12 +68,10 @@ public class SimpleCatalogManagerFullTest {
         dist2IRI = vf.createIRI("http://matonto.org/test/Distribution/2");
 
         manager = new SimpleCatalogManager();
-        manager.setRepositoryManager(repositoryManager);
+        manager.setRepository(repo);
         manager.setNamedGraphFactory(ngf);
         manager.setValueFactory(vf);
         manager.setModelFactory(mf);
-
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 

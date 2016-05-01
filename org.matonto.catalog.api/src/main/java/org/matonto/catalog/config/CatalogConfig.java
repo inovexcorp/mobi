@@ -11,5 +11,6 @@ public interface CatalogConfig {
 
     String iri();
 
+    @Meta.AD(id = "repository.target", required = false, deflt = "(id=system)")
     String repositoryId();
 }

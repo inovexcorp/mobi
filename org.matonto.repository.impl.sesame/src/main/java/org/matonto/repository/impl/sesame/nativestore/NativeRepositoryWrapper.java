@@ -17,7 +17,7 @@ import java.util.Set;
 
 @Component(
         immediate = true,
-        provide = DelegatingRepository.class,
+        provide = { Repository.class, DelegatingRepository.class },
         name = NativeRepositoryWrapper.NAME,
         configurationPolicy = ConfigurationPolicy.require,
         designateFactory = NativeRepositoryConfig.class,

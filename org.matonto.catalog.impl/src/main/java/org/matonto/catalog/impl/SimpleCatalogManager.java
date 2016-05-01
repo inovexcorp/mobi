@@ -21,7 +21,6 @@ import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.RepositoryManager;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -34,7 +33,7 @@ import java.util.*;
 )
 public class SimpleCatalogManager implements CatalogManager {
 
-    private RepositoryManager repositoryManager;
+    private Repository repository;
     private String repositoryId;
     private ValueFactory vf;
     private ModelFactory mf;
@@ -44,9 +43,13 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private final Logger log = Logger.getLogger(SimpleCatalogManager.class);
 
-    @Reference
-    protected void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
+    @Reference(name = "repository")
+    protected void setRepository(Repository repository) {
+        this.repository = repository;
+    }
+
+    protected void unsetRepository(Repository repository) {
+        this.repository = null;
     }
 
     @Reference
@@ -102,7 +105,6 @@ public class SimpleCatalogManager implements CatalogManager {
         createSortingOptions();
 
         // Create Catalog if it doesn't exist
-        RepositoryConnection conn = getRepositoryConnection();
         if (!resourceExists(catalogIri)) {
             log.debug("Initializing MatOnto Catalog.");
             OffsetDateTime now = OffsetDateTime.now();
@@ -114,9 +116,10 @@ public class SimpleCatalogManager implements CatalogManager {
             namedGraph.add(catalogIri, vf.createIRI(DC + "issued"), vf.createLiteral(now));
             namedGraph.add(catalogIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
 
+            RepositoryConnection conn = getRepositoryConnection();
             conn.add(namedGraph);
+            conn.close();
         }
-        conn.close();
     }
 
     @Modified
@@ -325,13 +328,10 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     private RepositoryConnection getRepositoryConnection() {
-        Optional<Repository> repository = repositoryManager.getRepository(repositoryId);
-        if (repository.isPresent()) {
-            return repository.get().getConnection();
+        if (repository != null) {
+            return repository.getConnection();
         } else {
-            String errorMsg = String.format("Repository \"%s\" is unavailable.", repositoryId);
-            log.error(errorMsg);
-            throw new IllegalStateException(errorMsg);
+            throw new IllegalStateException(String.format("Repository \"%s\" is unavailable.", repositoryId));
         }
     }
 
