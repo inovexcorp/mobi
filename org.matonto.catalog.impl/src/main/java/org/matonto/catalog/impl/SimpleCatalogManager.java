@@ -34,7 +34,6 @@ import java.util.*;
 public class SimpleCatalogManager implements CatalogManager {
 
     private Repository repository;
-    private String repositoryId;
     private ValueFactory vf;
     private ModelFactory mf;
     private NamedGraphFactory ngf;
@@ -46,10 +45,6 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
         this.repository = repository;
-    }
-
-    protected void unsetRepository(Repository repository) {
-        this.repository = null;
     }
 
     @Reference
@@ -101,7 +96,6 @@ public class SimpleCatalogManager implements CatalogManager {
     protected void start(Map<String, Object> props) {
         CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
         IRI catalogIri = vf.createIRI(config.iri());
-        repositoryId = config.repositoryId();
         createSortingOptions();
 
         // Create Catalog if it doesn't exist
@@ -116,7 +110,7 @@ public class SimpleCatalogManager implements CatalogManager {
             namedGraph.add(catalogIri, vf.createIRI(DC + "issued"), vf.createLiteral(now));
             namedGraph.add(catalogIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
 
-            RepositoryConnection conn = getRepositoryConnection();
+            RepositoryConnection conn = repository.getConnection();
             conn.add(namedGraph);
             conn.close();
         }
@@ -135,7 +129,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset,
                                                                   Resource sortBy, boolean ascending) {
-        RepositoryConnection conn = getRepositoryConnection();
+        RepositoryConnection conn = repository.getConnection();
 
         // Get Total Count
         TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_QUERY);
@@ -202,7 +196,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Optional<PublishedResource> getResource(Resource resource) {
-        RepositoryConnection conn = getRepositoryConnection();
+        RepositoryConnection conn = repository.getConnection();
 
         TupleQuery query = conn.prepareTupleQuery(GET_RESOURCE_QUERY);
         query.setBinding(RESOURCE_BINDING, resource);
@@ -251,17 +245,16 @@ public class SimpleCatalogManager implements CatalogManager {
         namedGraph.add(resource, vf.createIRI(DC + "issued"), vf.createLiteral(ontology.getIssued()));
         namedGraph.add(resource, vf.createIRI(DC + "modified"), vf.createLiteral(ontology.getModified()));
 
-        ontology.getDistributions().forEach(distribution -> {
-            namedGraph.add(resource, vf.createIRI(DCAT + "distribution"), distribution.getResource());
-        });
+        ontology.getDistributions().forEach(distribution ->
+                namedGraph.add(resource, vf.createIRI(DCAT + "distribution"), distribution.getResource()));
 
-        RepositoryConnection conn = getRepositoryConnection();
+        RepositoryConnection conn = repository.getConnection();
         conn.add(namedGraph);
         conn.close();
     }
 
     private boolean resourceExists(Resource resource) {
-        RepositoryConnection conn = getRepositoryConnection();
+        RepositoryConnection conn = repository.getConnection();
         boolean catalogExists = conn.getStatements(null, null, null, resource).hasNext();
         conn.close();
         return catalogExists;
@@ -325,14 +318,6 @@ public class SimpleCatalogManager implements CatalogManager {
         });
 
         return builder.build();
-    }
-
-    private RepositoryConnection getRepositoryConnection() {
-        if (repository != null) {
-            return repository.getConnection();
-        } else {
-            throw new IllegalStateException(String.format("Repository \"%s\" is unavailable.", repositoryId));
-        }
     }
 
     private void createSortingOptions() {
