@@ -15,7 +15,6 @@ import org.matonto.rdf.core.impl.sesame.SimpleIRI;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.impl.sesame.query.SesameBindingSet;
 import org.mockito.ArgumentCaptor;
@@ -38,9 +37,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SimpleCatalogManagerTest {
-
-    @Mock
-    RepositoryManager repositoryManager;
 
     @Mock
     Repository repo;
