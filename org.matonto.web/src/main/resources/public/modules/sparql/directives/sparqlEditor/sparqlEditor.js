@@ -12,10 +12,10 @@
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['sparqlService', 'prefixes', function(sparqlService, prefixes) {
+                controller: ['sparqlManagerService', 'prefixes', function(sparqlManagerService, prefixes) {
                     var self = this;
 
-                    self.sparqlService = sparqlService;
+                    self.sparqlManagerService = sparqlManagerService;
 
                     self.prefixList = _.map(prefixes, function(value, key) {
                         return key + ': <' + value + '>';

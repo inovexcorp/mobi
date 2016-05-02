@@ -3,11 +3,11 @@
 
     angular
         .module('sparqlManager', [])
-        .service('sparqlService', sparqlService);
+        .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlService.$inject = ['$rootScope', '$http'];
+        sparqlManagerService.$inject = ['$rootScope', '$http'];
 
-        function sparqlService($rootScope, $http) {
+        function sparqlManagerService($rootScope, $http) {
             var prefix = '/matontorest/query';
             var self = this;
 
@@ -19,7 +19,7 @@
             self.infoMessage = 'Please submit a query to see results here.';
 
             function getMessage(response, defaultMessage) {
-                return _.get(response, 'statusText', defaultMessage);
+                return _.get(response, 'statusText') || defaultMessage;
             }
 
             self.queryRdf = function() {

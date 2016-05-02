@@ -13,7 +13,7 @@
                 div.appendChild(node);
                 return div.innerHTML;
             } else {
-                return;
+                return '';
             }
         }
     }

@@ -34,5 +34,19 @@ describe('SPARQL Editor directive', function() {
             var actionContainers = element.querySelectorAll('.top-action-container');
             expect(actionContainers.length).toBe(1);
         });
+        it('based on form-group', function() {
+            var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
+            scope.$digest();
+
+            var formGroups = element.querySelectorAll('.form-group');
+            expect(formGroups.length).toBe(1);
+        });
+        it('based on ui-codemirror', function() {
+            var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
+            scope.$digest();
+
+            var codeMirrors = element.querySelectorAll('ui-codemirror');
+            expect(codeMirrors.length).toBe(1);
+        });
     });
 });

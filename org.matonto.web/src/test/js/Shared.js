@@ -159,7 +159,7 @@ function mockSparqlManager() {
         angular.module('sparqlManager', []);
 
         module(function($provide) {
-            $provide.service('sparqlService', function() {
+            $provide.service('sparqlManagerService', function() {
                 this.data = {
                     head: {
                         vars: ['var1', 'var2']

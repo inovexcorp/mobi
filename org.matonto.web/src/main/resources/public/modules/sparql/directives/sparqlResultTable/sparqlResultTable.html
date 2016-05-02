@@ -2,19 +2,19 @@
     <table class="table table-hover">
         <thead>
             <tr>
-                <th ng-repeat="var in dvm.sparqlService.data.head.vars">{{var}}</th>
+                <th ng-repeat="item in dvm.sparqlManagerService.data.head.vars">{{item}}</th>
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="binding in dvm.sparqlService.data.results.bindings">
-                <td ng-repeat="var in dvm.sparqlService.data.head.vars">{{binding[var].value}}</td>
+            <tr ng-repeat="binding in dvm.sparqlManagerService.data.results.bindings">
+                <td ng-repeat="item in dvm.sparqlManagerService.data.head.vars">{{binding[item].value}}</td>
             </tr>
         </tbody>
     </table>
-    <p ng-if="dvm.sparqlService.errorMessage" class="text-danger message">
-        <i class="fa fa-exclamation-triangle fa-fw"></i>{{dvm.sparqlService.errorMessage}}
+    <p ng-if="dvm.sparqlManagerService.errorMessage" class="text-danger message">
+        <i class="fa fa-exclamation-triangle fa-fw"></i>{{dvm.sparqlManagerService.errorMessage}}
     </p>
-    <p ng-if="dvm.sparqlService.infoMessage" class="text-info message">
-        <i class="fa fa-info fa-fw"></i>{{dvm.sparqlService.infoMessage}}
+    <p ng-if="dvm.sparqlManagerService.infoMessage" class="text-info message">
+        <i class="fa fa-info fa-fw"></i>{{dvm.sparqlManagerService.infoMessage}}
     </p>
 </div>

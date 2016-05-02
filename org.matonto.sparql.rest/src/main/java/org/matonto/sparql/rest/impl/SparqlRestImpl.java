@@ -36,7 +36,7 @@ public class SparqlRestImpl implements SparqlRest {
     @Override
     public Response queryRdf(String queryString) {
         if (queryString == null) {
-            throw ErrorUtils.sendError("Parameter \"queryString\" must be set.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
 
         // TODO: Handle timeout

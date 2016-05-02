@@ -28,9 +28,8 @@
             'customButton',
             'confirmationOverlay',
             'settings',
-            'sparqlEditor',
-            'sparqlResultTable',
-            'ui.codemirror'
+            'ui.codemirror',
+            'sparql'
         ])
         .constant('_', window._)
         .constant('REGEX', {

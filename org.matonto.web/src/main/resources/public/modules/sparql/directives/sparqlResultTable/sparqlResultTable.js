@@ -14,8 +14,8 @@
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['sparqlService', function(sparqlService) {
-                    this.sparqlService = sparqlService;
+                controller: ['sparqlManagerService', function(sparqlManagerService) {
+                    this.sparqlManagerService = sparqlManagerService;
                 }],
                 link: function(scope, element) {
                     var resize = function() {
