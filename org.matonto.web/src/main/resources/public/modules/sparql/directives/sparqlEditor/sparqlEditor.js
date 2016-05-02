@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('sparqlEditor', ['sparql', 'prefixes'])
+        .module('sparqlEditor', ['sparqlManager', 'prefixes'])
         .directive('sparqlEditor', sparqlEditor);
 
         function sparqlEditor() {
@@ -15,8 +15,11 @@
                 controller: ['sparqlService', 'prefixes', function(sparqlService, prefixes) {
                     var self = this;
 
-                    self.prefixList = [];
                     self.sparqlService = sparqlService;
+
+                    self.prefixList = _.map(prefixes, function(value, key) {
+                        return key + ': <' + value + '>';
+                    });
 
                     self.editorOptions = {
                         mode: 'application/sparql-query',
@@ -26,10 +29,6 @@
                         lineWrapping: true,
                         matchBrackets: true
                     }
-
-                    _.forOwn(prefixes, function(value, key) {
-                        self.prefixList.push(key + ': <' + value + '>');
-                    });
                 }]
             }
         }

@@ -153,3 +153,33 @@ function mockPrefixes() {
         });
     });
 }
+
+function mockSparqlManager() {
+    beforeEach(function() {
+        angular.module('sparqlManager', []);
+
+        module(function($provide) {
+            $provide.service('sparqlService', function() {
+                this.response = {
+                    head: {
+                        vars: ['var1', 'var2']
+                    },
+                    results: {
+                        bindings: [
+                            {
+                                var1: {type: 'a-type1', value: 'a-value1'},
+                                var2: {type: 'a-type2', value: 'a-value2'}
+                            },
+                            {
+                                var1: {type: 'b-type1', value: 'b-value1'},
+                                var2: {type: 'b-type2', value: 'b-value2'}
+                            }
+                        ]
+                    }
+                }
+                this.prefixes = [];
+                this.queryString = this.errorMessage = this.infoMessage = '';
+            });
+        });
+    });
+}

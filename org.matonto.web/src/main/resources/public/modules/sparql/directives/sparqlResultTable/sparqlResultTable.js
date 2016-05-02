@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('sparqlResultTable', ['sparql'])
+        .module('sparqlResultTable', ['sparqlManager'])
         .directive('sparqlResultTable', sparqlResultTable);
 
         sparqlResultTable.$inject = ['$window', '$timeout'];

@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('sparql', [])
+        .module('sparqlManager', [])
         .service('sparqlService', sparqlService);
 
-        sparqlService.$inject = ['$http'];
+        sparqlService.$inject = ['$rootScope', '$http'];
 
-        function sparqlService($http) {
+        function sparqlService($rootScope, $http) {
             var prefix = '/matontorest/query';
             var self = this;
 
@@ -22,19 +22,21 @@
                 return _.get(response, 'statusText', defaultMessage);
             }
 
-            self.queryRdf = function(prefixList, queryString) {
+            self.queryRdf = function() {
+                $rootScope.showSpinner = true;
+
                 self.response = {};
                 self.errorMessage = '';
                 self.infoMessage = '';
 
-                var prefixes = prefixList.length ? 'PREFIX ' + _.join(prefixList, ' PREFIX ') : '';
+                var prefixes = self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, ' PREFIX ') : '';
                 var config = {
                     params: {
-                        query: prefixes + queryString
+                        query: prefixes + self.queryString
                     }
                 }
 
-                $http.get(prefix, config)
+                return $http.get(prefix, config)
                     .then(function(response) {
                         if(_.get(response, 'status') === 200) {
                             self.response = response.data;
@@ -43,6 +45,9 @@
                         }
                     }, function(response) {
                         self.errorMessage = getMessage(response, 'A server error has occurred. Please try again later.');
+                    })
+                    .then(function() {
+                        $rootScope.showSpinner = false;
                     });
             }
         }
