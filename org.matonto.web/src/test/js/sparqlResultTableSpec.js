@@ -36,7 +36,7 @@ describe('SPARQL Result Table directive', function() {
             var table = element.querySelectorAll('.table');
             expect(table.length).toBe(1);
         });
-        it('ths should match sparqlService.response.head.vars.length', function() {
+        it('<th>s should match sparqlService.data.head.vars.length', function() {
             scope.sparqlService = sparqlSvc;
             var element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
             scope.$digest();
@@ -45,9 +45,9 @@ describe('SPARQL Result Table directive', function() {
             expect(element.html()).not.toContain('None');
             expect(theadList.length).toBe(1);
             var thead = theadList[0];
-            expect(thead.querySelectorAll('th').length).toBe(scope.sparqlService.response.head.vars.length);
+            expect(thead.querySelectorAll('th').length).toBe(scope.sparqlService.data.head.vars.length);
         });
-        it('trs should match sparqlService.response.results.bindings.length', function() {
+        it('<tr>s should match sparqlService.data.results.bindings.length', function() {
             scope.sparqlService = sparqlSvc;
             var element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
             scope.$digest();
@@ -56,7 +56,7 @@ describe('SPARQL Result Table directive', function() {
             expect(element.html()).not.toContain('None');
             expect(tbodyList.length).toBe(1);
             var tbody = tbodyList[0];
-            expect(tbody.querySelectorAll('tr').length).toBe(scope.sparqlService.response.results.bindings.length);
+            expect(tbody.querySelectorAll('tr').length).toBe(scope.sparqlService.data.results.bindings.length);
         });
         it('shows error message if populated', function() {
             scope.sparqlService = sparqlSvc;

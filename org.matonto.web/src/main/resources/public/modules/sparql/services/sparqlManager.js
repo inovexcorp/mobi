@@ -13,7 +13,7 @@
 
             self.prefixes = [];
             self.queryString = '';
-            self.response = {};
+            self.data = {};
 
             self.errorMessage = '';
             self.infoMessage = 'Please submit a query to see results here.';
@@ -25,7 +25,7 @@
             self.queryRdf = function() {
                 $rootScope.showSpinner = true;
 
-                self.response = {};
+                self.data = {};
                 self.errorMessage = '';
                 self.infoMessage = '';
 
@@ -39,7 +39,7 @@
                 return $http.get(prefix, config)
                     .then(function(response) {
                         if(_.get(response, 'status') === 200) {
-                            self.response = response.data;
+                            self.data = response.data;
                         } else {
                             self.infoMessage = getMessage(response, 'There was a problem getting the results.');
                         }

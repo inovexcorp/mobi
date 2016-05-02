@@ -160,7 +160,7 @@ function mockSparqlManager() {
 
         module(function($provide) {
             $provide.service('sparqlService', function() {
-                this.response = {
+                this.data = {
                     head: {
                         vars: ['var1', 'var2']
                     },
