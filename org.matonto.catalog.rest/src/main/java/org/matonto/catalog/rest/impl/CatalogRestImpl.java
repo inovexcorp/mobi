@@ -104,7 +104,6 @@ public class CatalogRestImpl implements CatalogRest {
     public PaginatedResults<PublishedResourceMarshaller> listPublishedResources(UriInfo uriInfo, String resourceType,
                                                                                 String searchTerms, String sortBy,
                                                                                 boolean asc, int limit, int start) {
-        log.debug("ASC: " + asc);
         IRI sortResource = valueFactory.createIRI(sortBy);
         PaginatedSearchResults<PublishedResource> searchResults =
                 catalogManager.findResource(searchTerms, limit, start, sortResource, asc);
