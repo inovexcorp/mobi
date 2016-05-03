@@ -53,7 +53,7 @@ public class SparqlRestImpl implements SparqlRest {
 //        }, QUERY_TIME_OUT_SECONDS * 1000);
 
         Repository repository = repositoryManager.getRepository("system")
-                .orElseThrow(() -> new MatOntoException("Repository is not available."));
+                .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
         RepositoryConnection conn = repository.getConnection();
 
         TupleQuery query = conn.prepareTupleQuery(queryString);

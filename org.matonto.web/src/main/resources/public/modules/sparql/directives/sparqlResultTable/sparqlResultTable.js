@@ -31,6 +31,10 @@
                     $timeout(function() {
                         resize();
                     });
+
+                    element.on('$destroy', function() {
+                        angular.element($window).off('resize');
+                    });
                 }
             }
         }
