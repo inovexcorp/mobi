@@ -80,6 +80,12 @@ public class MappingRestImpl implements MappingRest {
                 .forEach(mappings::add);
         }
 
+        for (int i = 0; i < mappings.size(); i++) {
+            if (mappings.get(i).equals("null")) {
+                logger.info("Mapping " + idList.get(i) + " does not exist");
+                mappings.remove(i);
+            }
+        }
         return Response.status(200).entity(mappings.toString()).build();
     }
 
@@ -94,7 +100,7 @@ public class MappingRestImpl implements MappingRest {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        return Response.status(200).entity(json.toString()).build();
+        return json == null ? null : Response.status(200).entity(json.toString()).build();
     }
 
     @Override
@@ -108,29 +114,31 @@ public class MappingRestImpl implements MappingRest {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        StreamingOutput stream = os -> {
-            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-            writer.write(json.toString());
-            writer.flush();
-            writer.close();
-        };
+        if (json == null) {
+            return null;
+        } else {
+            StreamingOutput stream = os -> {
+                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+                writer.write(json.toString());
+                writer.flush();
+                writer.close();
+            };
 
-        return Response.ok(stream).build();
+            return Response.ok(stream).build();
+        }
     }
 
     @Override
     public Response deleteMapping(String localName) {
         Resource mappingIRI = manager.createMappingIRI(localName);
         logger.info("Deleting mapping " + mappingIRI);
-        boolean success = false;
         try {
             manager.deleteMapping(mappingIRI);
-            success = true;
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        return Response.status(200).entity(success).build();
+        return Response.status(200).entity(true).build();
     }
 
     /**
@@ -150,7 +158,7 @@ public class MappingRestImpl implements MappingRest {
             JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
             json = arr.getJSONObject(0);
         } else {
-            throw ErrorUtils.sendError("Error retrieving mapping", Response.Status.BAD_REQUEST);
+            return null;
         }
         return json;
     }

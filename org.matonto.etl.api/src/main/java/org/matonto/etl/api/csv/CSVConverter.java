@@ -1,6 +1,6 @@
 package org.matonto.etl.api.csv;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 import org.openrdf.rio.RDFParseException;
 
@@ -21,10 +21,10 @@ public interface CSVConverter {
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
-            throws IOException, RDFParseException, InvalidFormatException;
+            throws IOException, RDFParseException, MatOntoException;
 
     /**
      * Converts a delimited file to RDF using a mapping Model. Optionally skip a header row. Column
@@ -36,10 +36,10 @@ public interface CSVConverter {
      * @param separator the column separator to use if a CSV
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(File delim, Model mappingModel, boolean containsHeaders, char separator)
-            throws IOException, InvalidFormatException;
+            throws IOException, MatOntoException;
 
     /**
      * Converts a delimited file to RDF using a mapping file. Optionally skip a header row. Column
@@ -53,10 +53,10 @@ public interface CSVConverter {
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
-            throws IOException, InvalidFormatException;
+            throws IOException, MatOntoException;
 
     /**
      * Converts a delimited file to RDF using a mapping Model. Optionally skip a header row. Column
@@ -69,8 +69,8 @@ public interface CSVConverter {
      * @param separator the column separator to use if a CSV
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension, char separator)
-            throws IOException, InvalidFormatException;
+            throws IOException, MatOntoException;
 }

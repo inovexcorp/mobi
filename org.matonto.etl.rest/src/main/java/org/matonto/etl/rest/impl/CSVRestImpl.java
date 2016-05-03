@@ -11,6 +11,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.etl.rest.CSVRest;
+import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
@@ -116,7 +117,7 @@ public class CSVRestImpl implements CSVRest {
             }
             model = Values.sesameModel(csvConverter.convert(dataToConvert,
                     Values.matontoModel(mappingModel), containsHeaders, extension, separatorChar));
-        } catch (IOException | InvalidFormatException e) {
+        } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
 
@@ -179,7 +180,7 @@ public class CSVRestImpl implements CSVRest {
      */
     private RDFFormat getRDFFormat(String format) {
         RDFFormat rdfformat;
-        switch (format) {
+        switch (format.toLowerCase()) {
             case "turtle":
                 rdfformat = RDFFormat.TURTLE;
                 break;
