@@ -36,7 +36,8 @@
                     config = {
                         transformRequest: angular.identity,
                         headers: {
-                            'Content-Type': undefined
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
                         },
                         params: {
                             'Id': mappingName
