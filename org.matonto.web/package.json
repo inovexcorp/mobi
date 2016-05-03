@@ -17,6 +17,7 @@
     "gulp-ignore": "^2.0.1",
     "gulp-imagemin": "^2.3.0",
     "gulp-inject": "^3.0.0",
+    "gulp-ng-annotate": "^2.0.0",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^2.0.4",
     "gulp-uglify": "^1.4.1",

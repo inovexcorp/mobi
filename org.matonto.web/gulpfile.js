@@ -14,7 +14,8 @@ var gulp = require('gulp'),
     minifyCss = require('gulp-cssmin'),
     rename = require('gulp-rename'),
     sass = require('gulp-sass'),
-    uglify = require('gulp-uglify');
+    uglify = require('gulp-uglify'),
+    ngAnnotate = require('gulp-ng-annotate');
 
 // Project specific path variables
 var src = './src/main/resources/public/',
@@ -88,6 +89,7 @@ gulp.task('minify-scripts', function() {
 
     return queue({ objectMode: true }, nodeFiles, customFiles)
         .pipe(concat('main.js'))
+        .pipe(ngAnnotate())
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
         .pipe(gulp.dest(dest + 'js'));

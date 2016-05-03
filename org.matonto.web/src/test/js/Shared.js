@@ -162,19 +162,10 @@ function mockSparqlManager() {
             $provide.service('sparqlManagerService', function() {
                 this.data = {
                     head: {
-                        vars: ['var1', 'var2']
+                        vars: []
                     },
                     results: {
-                        bindings: [
-                            {
-                                var1: {type: 'a-type1', value: 'a-value1'},
-                                var2: {type: 'a-type2', value: 'a-value2'}
-                            },
-                            {
-                                var1: {type: 'b-type1', value: 'b-value1'},
-                                var2: {type: 'b-type2', value: 'b-value2'}
-                            }
-                        ]
+                        bindings: []
                     }
                 }
                 this.prefixes = [];
