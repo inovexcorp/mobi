@@ -159,7 +159,7 @@ function mockSparqlManager() {
         angular.module('sparqlManager', []);
 
         module(function($provide) {
-            $provide.service('sparqlManagerService', function() {
+            $provide.service('sparqlManagerService', function($q) {
                 this.data = {
                     head: {
                         vars: []
@@ -170,6 +170,9 @@ function mockSparqlManager() {
                 }
                 this.prefixes = [];
                 this.queryString = this.errorMessage = this.infoMessage = '';
+                this.queryRdf = jasmine.createSpy('queryRdf').and.callFake(function() {
+                    return $q.resolve({});
+                });
             });
         });
     });
