@@ -12,11 +12,11 @@ import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
-import org.openrdf.rio.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component(provide = CSVConverter.class)
 public class CSVConverterImpl implements CSVConverter {
@@ -44,7 +44,7 @@ public class CSVConverterImpl implements CSVConverter {
 
     @Override
     public Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
-            throws IOException, RDFParseException, MatOntoException {
+            throws IOException, MatOntoException {
         Model converted = mappingManager.createMapping(mappingFile);
         return convert(new FileInputStream(delim), converted, containsHeaders,
                 FilenameUtils.getExtension(delim.getName()), separator);

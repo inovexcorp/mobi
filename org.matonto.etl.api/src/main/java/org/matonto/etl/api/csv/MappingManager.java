@@ -1,9 +1,8 @@
 package org.matonto.etl.api.csv;
 
 import org.matonto.exception.MatOntoException;
-import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Model;
-//import org.openrdf.model.Model;
+import org.matonto.rdf.api.Resource;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.File;

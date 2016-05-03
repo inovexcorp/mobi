@@ -58,7 +58,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
 
         try {
             when(converter.convert(any(InputStream.class), any(Model.class), anyBoolean(), anyString(), anyChar())).thenReturn(new LinkedHashModel());
-        } catch (IOException | MatOntoException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         when(manager.createMappingIRI(anyString())).thenReturn(String::new);
@@ -135,6 +135,13 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     }
 
     @Test
+    public void updateNonexistentDelimitedTest() throws IOException {
+        FormDataMultiPart fd = getFileFormData("test_updated.csv");
+        Response response = target().path("csv/error").request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(204, response.getStatus());
+    }
+
+    @Test
     public void getRowsFromCsvWithDefaultsTest() {
         List<String> expectedLines = getCsvResourceLines("test.csv");
         Response response = target().path("csv/test_csv").request().get();
@@ -142,12 +149,18 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     }
 
     @Test
-    public void getRowsFromCsvWithParams() throws IOException {
+    public void getRowsFromCsvWithParamsTest() throws IOException {
         List<String> expectedLines = getCsvResourceLines("test_tabs.csv");
 
         int rowNum = 5;
         Response response = target().path("csv/test_tabs_csv").queryParam("Row-Count", rowNum).queryParam("Separator", "\t").request().get();
         testResultsRows(response, expectedLines, rowNum);
+    }
+
+    @Test
+    public void nonexistentRowsTest() {
+        Response response = target().path("csv/error").request().get();
+        Assert.assertEquals(204, response.getStatus());
     }
 
     @Test
@@ -162,7 +175,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     }
 
     @Test
-    public void getRowsFromExcelWithParams() {
+    public void getRowsFromExcelWithParamsTest() {
         int rowNum = 5;
 
         List<String> expectedLines = getExcelResourceLines("test.xls");
@@ -211,7 +224,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     }
 
     @Test
-    public void mapExcelWithDefaults() {
+    public void mapExcelWithDefaultsTest() {
         String body = testMap("test_oldexcel", "jsonld", "[]", null);
         isJsonld(body);
 
@@ -220,7 +233,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     }
 
     @Test
-    public void mapExcelWithParams() {
+    public void mapExcelWithParamsTest() {
         Map<String, Object> params = new HashMap<>();
         params.put("Format", "turtle");
         params.put("Preview", true);
@@ -230,6 +243,14 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
 
         body = testMap("test_oldexcel", "mappingName", "test", params);
         isNotJsonld(body);
+    }
+
+    @Test
+    public void mapNonexistentDelimitedTest() {
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", "[]");
+        Response response = target().path("csv/error/map").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(204, response.getStatus());
     }
 
     private void isJsonld(String str) {

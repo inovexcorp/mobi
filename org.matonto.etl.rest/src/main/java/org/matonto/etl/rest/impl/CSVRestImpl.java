@@ -29,7 +29,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
@@ -63,6 +65,9 @@ public class CSVRestImpl implements CSVRest {
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
         File delimitedFile = getUploadedFile(fileName);
+        if (delimitedFile == null) {
+            return null;
+        }
         String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
         if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
             delimitedFile.delete();
@@ -81,6 +86,9 @@ public class CSVRestImpl implements CSVRest {
         }
 
         File delimitedFile = getUploadedFile(fileName);
+        if (delimitedFile == null) {
+            return null;
+        }
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
         char separatorChar = separator.charAt(0);
 
@@ -132,6 +140,9 @@ public class CSVRestImpl implements CSVRest {
     @Override
     public Response getRows(String fileName, int rowEnd, String separator) {
         File file = getUploadedFile(fileName);
+        if (file == null) {
+            return null;
+        }
         String extension = FilenameUtils.getExtension(file.getName());
         int numRows = (rowEnd <= 0) ? 10 : rowEnd;
 
@@ -163,7 +174,7 @@ public class CSVRestImpl implements CSVRest {
             return name.startsWith(fileName + ".");
         });
         if (files.length == 0) {
-            throw ErrorUtils.sendError("Delimited file does not exist", Response.Status.BAD_REQUEST);
+            return null;
         }
         if (files.length > 1) {
             throw ErrorUtils.sendError("Multiple files exist with same name", Response.Status.BAD_REQUEST);
