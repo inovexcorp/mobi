@@ -2,7 +2,27 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name updateRefs
+         * @requires responseObj
+         * 
+         * @description 
+         * The `updateRefs` module only provides the `updateRefs` service which changes every 
+         * instance of a certain key in an object from 
+         * {@link ontologyManager.service:ontologyManager ontologyManager} to a new string.
+         */
         .module('updateRefs', ['responseObj'])
+        /**
+         * @ngdoc service
+         * @name updateRefs.service:updateRefsService
+         * @requires $filter
+         * @requires responseObj.responseObj
+         *
+         * @description 
+         * `updateRefsService` is a service that provides functionality to uypdate references 
+         * in an object from {@link ontologyManager.service:ontologyManager ontologyManager}.
+         */
         .service('updateRefsService', updateRefsService);
 
     updateRefsService.$inject = ['$filter', 'responseObj'];
@@ -15,6 +35,21 @@
                 'unsaved'
             ];
 
+        /**
+         * @ngdoc method
+         * @name update
+         * @methodOf updateRefs.updateRefsService
+         *
+         * @description 
+         * Changes every instance of a specific key in an object from 
+         * {@link ontologyManager.service:ontologyManager ontologyManager} to a new string.
+         * It directly affects the passed in object instead of creating a new copy.
+         * 
+         * @param {Object} obj An object from {@link ontologyManager.service:ontologyManager ontologyManager}.
+         * Presumedly it is an ontology object.
+         * @param {string} old The original key string that will be updated
+         * @param {string} fresh The new string to change the old key into
+         */
         self.update = function(obj, old, fresh) {
             var freshSplit = $filter('splitIRI')(fresh);
             // iterates over all of the properties of the object
