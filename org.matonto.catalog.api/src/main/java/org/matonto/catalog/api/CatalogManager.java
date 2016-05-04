@@ -7,8 +7,6 @@ import java.util.Set;
 
 public interface CatalogManager {
 
-//    <T extends PublishedResource> Set<T> findResource(String searchTerm);
-
     /**
      * Searches the Catalog for resources that match a given String. Allows paging with the limit and offset
      * parameters. Sorts by modified date descending.
@@ -22,7 +20,7 @@ public interface CatalogManager {
 
     /**
      * Searches the Catalog for resources that match a given String. Allows paging with the limit and offset
-     * parameters. Allows sorting with the sortBy and ascending parameters. Sorts by modified data descending if
+     * parameters. Allows sorting with the sortBy and ascending parameters. Sorts by modified date descending if
      * an inappropriate resource is passed in.
      *
      * @param searchTerm The String providing the search criteria.
@@ -45,8 +43,6 @@ public interface CatalogManager {
     Optional<PublishedResource> getResource(Resource resource);
 
 //    <T extends PublishedResource> Optional<T> getResource(Resource resource, Class<T> clazz);
-
-//    <T extends PublishedResource> T removeResource(Resource resource);
 
     /**
      * Removes the PublishedResource with the given Resource identifier.

@@ -136,17 +136,10 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult countResults = countQuery.evaluate();
 
         int totalCount;
-        if (countResults.hasNext()) {
+        if (countResults.hasNext() && countResults.getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
             BindingSet bindingSet = countResults.next();
-
-            if (!bindingSet.getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
-                // Aggregations return an empty result when no results found
-                countResults.close();
-                conn.close();
-                return SearchResults.emptyResults();
-            }
-
             totalCount = Bindings.requiredLiteral(bindingSet, RESOURCE_COUNT_BINDING).intValue();
+            countResults.close();
         } else {
             countResults.close();
             conn.close();
@@ -170,20 +163,10 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult result = query.evaluate();
 
         List<PublishedResource> resources = new ArrayList<>();
-        while (result.hasNext()) {
+        while (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
             BindingSet bindingSet = result.next();
-
-            if (!bindingSet.getBindingNames().contains(RESOURCE_BINDING)) {
-                // Aggregations return an empty result when no results found
-                result.close();
-                conn.close();
-                return SearchResults.emptyResults();
-            }
-
             Resource resource = vf.createIRI(Bindings.requiredResource(bindingSet, RESOURCE_BINDING).stringValue());
-
             PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
-
             resources.add(publishedResource);
         }
 
@@ -191,7 +174,12 @@ public class SimpleCatalogManager implements CatalogManager {
         conn.close();
 
         int pageNumber = (offset / limit) + 1;
-        return new SimpleSearchResults<>(resources, totalCount, limit, pageNumber);
+
+        if (resources.size() > 0) {
+            return new SimpleSearchResults<>(resources, totalCount, limit, pageNumber);
+        } else {
+            return SearchResults.emptyResults();
+        }
     }
 
     @Override
@@ -204,16 +192,8 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult result = query.evaluate();
 
         // TODO: Handle more than one result (warn?)
-        if (result.hasNext()) {
+        if (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
             BindingSet bindingSet = result.next();
-
-            if (!bindingSet.getBindingNames().contains("resource")) {
-                // Aggregations return an empty result when no results found
-                result.close();
-                conn.close();
-                return Optional.empty();
-            }
-
             PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
 
             result.close();
@@ -273,7 +253,8 @@ public class SimpleCatalogManager implements CatalogManager {
         return new IllegalStateException(String.format("Required property \"%s\" was not present.", propertyName));
     }
 
-    private PublishedResource processResourceBindingSet(BindingSet bindingSet, Resource resource, RepositoryConnection conn) {
+    private PublishedResource processResourceBindingSet(BindingSet bindingSet, Resource resource,
+                                                        RepositoryConnection conn) {
         // Get Required Params
         String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
         Resource type = Bindings.requiredResource(bindingSet, "type");
