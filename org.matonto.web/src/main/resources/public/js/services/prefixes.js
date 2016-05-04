@@ -16,5 +16,6 @@
         self.dataDelim = self.data + 'delimited#';
         self.delim = 'http://matonto.org/ontologies/delimited/';
         self.mappings = 'http://matonto.org/mappings/';
+        self.foaf = 'http://xmlns.com/foaf/0.1/';
     }
 })();
