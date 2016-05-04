@@ -30,7 +30,6 @@
          * If the IRI string is falsey, the JSON object will have empty string values.
          *
          * @param {string} iri The IRI string to split
-         *
          * @returns {object} An object with keys for the beginning, delimiter, and end
          * of the IRI string.
          */
