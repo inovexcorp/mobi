@@ -9,35 +9,43 @@
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>sparql.rest</artifactId>
     <packaging>bundle</packaging>
-
-    <artifactId>persistence.utils</artifactId>
-
     <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rest.util</artifactId>
+            <version>1.0.34-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
             <version>1.0.34-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>1.0.34-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
             <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.0.6</version>
-            <scope>test</scope>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.spockframework</groupId>
-            <artifactId>spock-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
         </dependency>
     </dependencies>
 
@@ -50,9 +58,9 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>MatOnto SPARQL Endpoint</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Import-Package>*</Import-Package>
-                        <Export-Package>org.matonto.persistence.utils</Export-Package>
+                        <Export-Package>org.matonto.sparql.rest; provide:=true</Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
@@ -61,5 +69,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
