@@ -34,7 +34,7 @@
                     }
 
                     dvm.getItemIri = function(item) {
-                        return responseObj.getItemIri(item);
+                        return item['@id'] || responseObj.getItemIri(item);
                     }
 
                     dvm.getTooltipDisplay = function(item) {

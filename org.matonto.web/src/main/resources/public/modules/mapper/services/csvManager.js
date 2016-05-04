@@ -22,7 +22,8 @@
                     config = {
                         transformRequest: angular.identity,
                         headers: {
-                            'Content-Type': undefined
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
                         }
                     };
                 fd.append('delimitedFile', file);
@@ -91,7 +92,8 @@
                     config = {
                         transformRequest: angular.identity,
                         headers: {
-                            'Content-Type': undefined
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
                         }
                     };
 

@@ -235,8 +235,13 @@
                             ontologyManagerService.getImportedOntologies(ontology['@id']).then(function(imported) {
                                 vm.ontologies = _.concat(ontology, imported);
                                 vm.sourceOntology = ontology;
+                                vm.displayPreviousCheck = true;
                             }, onError);
-                        }, onError);
+                        }, function(error) {
+                            console.error(error.statusText);
+                            vm.sourceOntology = undefined;
+                            vm.displayPreviousCheck = true;
+                        });
                     break;
                 default:
                     previousSourceOntologyId = previousSourceOntologyId ? previousSourceOntologyId : mappingManagerService.getSourceOntologyId(vm.mapping.jsonld);

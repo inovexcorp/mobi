@@ -8,7 +8,12 @@
         function ontologyDownloadOverlay() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/ontologyDownloadOverlay/ontologyDownloadOverlay.html'
+                templateUrl: 'modules/ontology-editor/directives/ontologyDownloadOverlay/ontologyDownloadOverlay.html',
+                controllerAs: 'dvm',
+                controller: ['REGEX', function(REGEX) {
+                    var dvm = this;
+                    dvm.fileNamePattern = REGEX.FILENAME;
+                }]
             }
         }
 })();

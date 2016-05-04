@@ -4,6 +4,7 @@ describe('Mapping Name Input directive', function() {
         mappingManagerSvc;
 
     mockMappingManager();
+    injectRegexConstant();
     beforeEach(function() {
         module('mappingNameInput');
 
@@ -68,32 +69,23 @@ describe('Mapping Name Input directive', function() {
             scope.$digest();
             expect(this.element.hasClass('has-success')).toBe(true);
         });
-        it('with the correct error message for invalid characters', function() {
+        it('with an error for invalid characters', function() {
             var isolatedScope = this.element.isolateScope();
-            var invalidChars = ['$', '@', '~', '`', '$', '%', '^', '&', '*', '(', ')', '#', '!', '=', '+', '[', ']', '{', '}', ';', ':', '>', '<', ',', '?', '|', '/', '\'', '\"'];
-            invalidChars.forEach(function(invalidChar) {
-                isolatedScope.name = invalidChar;
-                scope.$digest();
-                var errorMessages = this.element.querySelectorAll('.alert');
-                expect(errorMessages.length).toBe(1);
-                expect(angular.element(errorMessages[0]).text().trim()).toBe('Mapping name is invalid');
-            }, this);
+            isolatedScope.name = '$';
+            scope.$digest();
+            expect(isolatedScope.form.name.$error.pattern).toBe(true);
         });
-        it('with the correct error message if input is a previous mapping name', function() {
+        it('with an error if the input is a previous mapping name', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.name = mappingManagerSvc.previousMappingNames[0];
             scope.$digest();
-            var errorMessages = this.element.querySelectorAll('.alert');
-            expect(errorMessages.length).toBe(1);
-            expect(angular.element(errorMessages[0]).text().trim()).toBe('Mapping name must be unique');
+            expect(isolatedScope.form.name.$error.uniqueName).toBe(true);
         });
-        it('with the correct error message if input is longer than 50 characters', function() {
+        it('with an error if the input is longer than 50 characters', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
             scope.$digest();
-            var errorMessages = this.element.querySelectorAll('.alert');
-            expect(errorMessages.length).toBe(1);
-            expect(angular.element(errorMessages[0]).text().trim()).toBe('Mapping name must be 50 characters or less');
+            expect(isolatedScope.form.name.$error.maxlength).toBe(true);
         });
     });
     it('should not show an error if first name passed is a previous mapping name', function() {
@@ -105,7 +97,7 @@ describe('Mapping Name Input directive', function() {
         element = $compile(element)(scope);
         scope.$digest();
 
-        var errorMessages = element.querySelectorAll('.alert');
-        expect(errorMessages.length).toBe(0);
+        var isolatedScope = element.isolateScope();
+        expect(isolatedScope.form.$valid).toBe(true);
     });
 });

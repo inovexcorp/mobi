@@ -31,6 +31,17 @@ function injectDirectiveTemplate(basePath) {
     });
 }
 
+function injectRegexConstant() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.constant('REGEX', {
+                'IRI': new RegExp('[a-zA-Z]'),
+                'LOCALNAME': new RegExp('[a-zA-Z]')
+            });
+        });
+    });
+}
+
 function mockOntologyManager() {
     beforeEach(function() {
         angular.module('ontologyManager', []);
@@ -155,6 +166,30 @@ function mockPrefixes() {
         module(function($provide) {
             $provide.service('prefixes', function() {
                 this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = '';
+            });
+        });
+    });
+}
+
+function mockSparqlManager() {
+    beforeEach(function() {
+        angular.module('sparqlManager', []);
+
+        module(function($provide) {
+            $provide.service('sparqlManagerService', function($q) {
+                this.data = {
+                    head: {
+                        vars: []
+                    },
+                    results: {
+                        bindings: []
+                    }
+                }
+                this.prefixes = [];
+                this.queryString = this.errorMessage = this.infoMessage = '';
+                this.queryRdf = jasmine.createSpy('queryRdf').and.callFake(function() {
+                    return $q.resolve({});
+                });
             });
         });
     });

@@ -43,7 +43,11 @@
                     dvm.setValidity = function() {
                         if (dvm.validateForm) {
                             dvm.validateForm.$setValidity('validColumnMappings', dvm.invalidColumns.length === 0);
+                            dvm.validateForm.$setValidity('existingOntology', dvm.ontology !== undefined);
                         }
+                    }
+                    dvm.getSourceOntologyId = function() {
+                        return mappingManagerService.getSourceOntologyId(dvm.mapping);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html'

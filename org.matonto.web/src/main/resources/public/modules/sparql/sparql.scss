@@ -1,0 +1,30 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sparql {
+    .sparql-editor {
+        padding-bottom: 15px;
+
+        .top-action-container {
+            padding-bottom: 15px;
+        }
+
+        .CodeMirror {
+            border: 1px solid #ccc;
+            height: 225px;
+        }
+    }
+
+    .sparql-results {
+        border: 1px solid #ccc;
+        overflow-y: auto;
+
+        .table {
+            margin: 0;
+        }
+
+        .message {
+            margin: 10px;
+        }
+    }
+}
