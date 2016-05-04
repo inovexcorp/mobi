@@ -1195,6 +1195,7 @@
                     } else if (_.get(response, 'status') === 204) {
                         console.log('No imported ontologies found');
                         deferred.resolve([]);
+                        $rootScope.showSpinner = false;
                     } else {
                         onError(response);
                     }
