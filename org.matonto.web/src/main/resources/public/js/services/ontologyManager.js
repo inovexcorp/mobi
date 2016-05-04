@@ -849,7 +849,13 @@
                             classes: [],
                             annotations: defaultAnnotations,
                             currentAnnotationSelect: null,
-                            isValid: false
+                            isValid: false,
+                            subClasses: [],
+                            subDataProperties: [],
+                            subObjectProperties: [],
+                            propertyDomain: [],
+                            dataPropertyRange: [],
+                            objectPropertyRange: []
                         }
                     },
                     newClass = {
