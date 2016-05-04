@@ -7,6 +7,10 @@
                 <div id="beginning" class="input-group-addon">{{dvm.beginning}}</div>
                 <input type="text" id="beginsWith" name="beginsWith" class="form-control" aria-describedby="beginning" ng-model="dvm.beginsWith" ng-pattern="/^[a-zA-Z0-9._\-]+[a-zA-Z0-9._\-\/]+[a-zA-Z0-9._\-]$/" required>
             </div>
+            <div ng-messages="iriTemplateForm.beginsWith.$error" class="error-msg">
+                <ng-message when="required">This field is required</ng-message>
+                <ng-message when="pattern">This value is invalid</ng-message>
+            </div>
         </div>
         <div class="template-then form-group">
             <label class="control-label" for="then">Then</label>

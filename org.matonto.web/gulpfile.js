@@ -14,7 +14,8 @@ var gulp = require('gulp'),
     minifyCss = require('gulp-cssmin'),
     rename = require('gulp-rename'),
     sass = require('gulp-sass'),
-    uglify = require('gulp-uglify');
+    uglify = require('gulp-uglify'),
+    ngAnnotate = require('gulp-ng-annotate');
 
 // Project specific path variables
 var src = './src/main/resources/public/',
@@ -39,12 +40,17 @@ var jsFiles = function(prefix) {
     nodeJsFiles = function(prefix) {
         return [
             prefix + '*/lodash.min.js',
+            prefix + '**/codemirror.js',
+            prefix + '**/sparql.js',
+            prefix + '**/matchbrackets.js',
             prefix + '*/angular.min.js',
             prefix + '*/angular-mocks.js',
             prefix + '**/angular-ui-router.min.js',
             prefix + '*/angular-uuid.js',
             prefix + '*/angular-cookies.min.js',
             prefix + '**/angular-file-saver.bundle.min.js',
+            prefix + '**/ui-codemirror.js',
+            prefix + '*/angular-messages.min.js',
             prefix + '**/select.min.js'
         ]
     },
@@ -58,7 +64,8 @@ var jsFiles = function(prefix) {
         return [
             prefix + '**/bootstrap.min.css',
             prefix + '**/font-awesome.min.css',
-            prefix + '**/select.min.css'
+            prefix + '**/select.min.css',
+            prefix + '**/codemirror.css'
         ]
     };
 
@@ -82,6 +89,7 @@ gulp.task('minify-scripts', function() {
 
     return queue({ objectMode: true }, nodeFiles, customFiles)
         .pipe(concat('main.js'))
+        .pipe(ngAnnotate())
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
         .pipe(gulp.dest(dest + 'js'));

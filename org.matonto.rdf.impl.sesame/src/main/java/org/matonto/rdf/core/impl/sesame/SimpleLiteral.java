@@ -81,8 +81,9 @@ public class SimpleLiteral implements Literal {
     @Override
     public OffsetDateTime dateTimeValue() {
         String sesameDateTime = sesameLiteral.stringValue();
+        // TODO: Don't use exceptions for this!
         try {
-            return OffsetDateTime.parse(sesameDateTime, LiteralUtils.OFFSET_TIME_FORMATTER);
+            return OffsetDateTime.parse(sesameDateTime, LiteralUtils.READ_TIME_FORMATTER);
         } catch (DateTimeParseException e) {
             return LocalDateTime.parse(sesameDateTime, LiteralUtils.LOCAL_TIME_FORMATTER)
                     .atOffset(ZoneOffset.UTC);

@@ -21,8 +21,12 @@ matonto-deploy-bundles = {
         org.matonto.ontology.cli \
         org.matonto.ontology.core.impl.owlapi \
         org.matonto.ontology.rest \
+        org.matonto.catalog.api \
+        org.matonto.catalog.impl \
+        org.matonto.catalog.rest \
         org.matonto.swagger.ui \
         org.matonto.web \
+        org.matonto.sparql.rest \
         com.eclipsesource.jaxrs.swagger-all \
         com.eclipsesource.jaxrs.provider.swagger
 }
@@ -45,8 +49,12 @@ matonto-deploy-bundles-dev = {
         org.matonto.ontology.cli \
         org.matonto.ontology.core.impl.owlapi \
         org.matonto.ontology.rest \
+        org.matonto.catalog.api \
+        org.matonto.catalog.impl \
+        org.matonto.catalog.rest \
         org.matonto.swagger.ui \
         org.matonto.web \
+        org.matonto.sparql.rest \
         com.eclipsesource.jaxrs.swagger-all \
         com.eclipsesource.jaxrs.provider.swagger
     obr:url-remove mvn:org.matonto/bnd-index/${bnd.index.version}/xml

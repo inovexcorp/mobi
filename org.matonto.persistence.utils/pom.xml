@@ -19,7 +19,11 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.34-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
