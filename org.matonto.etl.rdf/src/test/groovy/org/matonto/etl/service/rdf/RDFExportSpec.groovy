@@ -2,29 +2,23 @@ package org.matonto.etl.service.rdf
 
 import org.matonto.rdf.api.ModelFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel
-import org.matonto.repository.api.RepositoryManager
+import org.matonto.repository.api.DelegatingRepository
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
-import org.matonto.repository.api.Repository
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.base.RepositoryResult
 
 
 class RDFExportSpec extends Specification {
 
-
     def "Nonexistant repository causes exception" (){
         setup:
-        RepositoryManager rm = Mock()
         RDFExportServiceImpl ex = new RDFExportServiceImpl()
-        ex.setRepositoryManager(rm);
-        File textFile = new ClassPathResource("exporter/testFile.nq").getFile()
 
         when:
         ex.exportToFile("cli-rdf-service", "exporter/testFile.nq")
 
         then:
-        1 * rm.getRepository("cli-rdf-service") >> Optional.empty();
         thrown IllegalArgumentException
     }
 
@@ -58,19 +52,18 @@ class RDFExportSpec extends Specification {
         setup:
         RDFExportServiceImpl exportService = new RDFExportServiceImpl()
         File testFile = new ClassPathResource("exporter/testFile.nt").getFile()
-        RepositoryManager manager = Mock()
-        Repository repo = Mock()
+        def repo = Mock(DelegatingRepository.class)
         RepositoryConnection connection = Mock()
         RepositoryResult result = Mock()
         ModelFactory mf = Mock()
         exportService.setModelFactory(mf)
 
         when:
-        exportService.setRepositoryManager(manager)
+        exportService.addRepository(repo)
         exportService.exportToFile("test", testFile.absolutePath)
 
         then:
-        1 * manager.getRepository("test") >> Optional.of(repo)
+        1 * repo.getRepositoryID() >> "test"
         1 * repo.getConnection() >> connection
         1 * connection.getStatements(null, null, null) >> result
         1 * mf.createModel() >> new LinkedHashModel()
