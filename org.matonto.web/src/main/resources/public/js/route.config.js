@@ -107,6 +107,17 @@
                 data: {
                     title: 'Settings'
                 }
+            })
+            .state('root.sparql', {
+                url: '/sparql',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/sparql/sparql.html'
+                    }
+                },
+                data: {
+                    title: 'SPARQL'
+                }
             });
 
         authenticate.$inject = ['loginManagerService'];

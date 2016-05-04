@@ -20,7 +20,7 @@
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItemWithSub/treeItemWithSub.html',
                 controllerAs: 'dvm',
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
 

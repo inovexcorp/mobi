@@ -38,7 +38,7 @@ public class SimpleMappingManager implements MappingManager {
     public SimpleMappingManager() {}
 
     @Activate
-    public void activate(final Map<String, Object> properties) {
+    public void activate() {
         logger.info("Activating " + COMPONENT_NAME);
         initMappingRegistryResources();
     }
@@ -49,7 +49,7 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Modified
-    public void modified(final Map<String, Object> properties) {
+    public void modified() {
         logger.info("Modifying the " + COMPONENT_NAME);
         initMappingRegistryResources();
     }

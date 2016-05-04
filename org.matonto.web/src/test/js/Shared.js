@@ -153,3 +153,27 @@ function mockPrefixes() {
         });
     });
 }
+
+function mockSparqlManager() {
+    beforeEach(function() {
+        angular.module('sparqlManager', []);
+
+        module(function($provide) {
+            $provide.service('sparqlManagerService', function($q) {
+                this.data = {
+                    head: {
+                        vars: []
+                    },
+                    results: {
+                        bindings: []
+                    }
+                }
+                this.prefixes = [];
+                this.queryString = this.errorMessage = this.infoMessage = '';
+                this.queryRdf = jasmine.createSpy('queryRdf').and.callFake(function() {
+                    return $q.resolve({});
+                });
+            });
+        });
+    });
+}
