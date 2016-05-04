@@ -157,11 +157,13 @@
                     </specIncludes>
                     <preloadSources>
                         <source>js/lodash.min.js</source>
+                        <source>js/codemirror.js</source>
                         <source>js/angular.min.js</source>
                         <source>js/angular-mocks.js</source>
                         <source>js/angular-uuid.js</source>
                         <source>js/angular-cookies.min.js</source>
                         <source>js/angular-file-saver.bundle.min.js</source>
+                        <source>js/ui-codemirror.js</source>
                         <source>js/angular-messages.min.js</source>
                         <source>js/select.min.js</source>
                     </preloadSources>

@@ -14,6 +14,7 @@
             'ontology-editor',
             'webtop',
             'trusted',
+            'escapeHTML',
             'removeMatonto',
             'ui.router',
             'ui.select',
@@ -26,7 +27,9 @@
             'circleButton',
             'customButton',
             'confirmationOverlay',
-            'settings'
+            'settings',
+            'ui.codemirror',
+            'sparql'
         ])
         .constant('_', window._)
         .constant('REGEX', {
