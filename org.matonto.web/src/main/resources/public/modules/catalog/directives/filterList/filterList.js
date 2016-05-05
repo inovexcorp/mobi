@@ -21,18 +21,14 @@
          * @requires catalogManager.catalogManagerService
          *
          * @description 
-         * `filterList` is a directive that creates a series of divs for the passed in
-         * result list filters with uls for the filter options. The directive is replaced
-         * with the content of the template. Each filter option is clickable and depending 
-         * on the filter type, other options will be hidden.
-         *
-         * @param {function} clickFilter The function to be called when a filter option 
-         * is clicked.
-         * @param {Object} filters An object with keys for every filter title and values
-         * of string arrays containing that filter's options
+         * `filterList` is a directive that creates a series of divs for the result list 
+         * filters defined in {@link catalogManager.service:catalogManagerService catalogManagerService}
+         * with uls for the filter options. The directive is replaced with the content of 
+         * the template. Each filter option is clickable and depending on the filter type, 
+         * other options will be hidden.
          *
          * @usage
-         * <filter-list filters="{'Resources': ['Ontology']}" click-filter="console.log('Filter clicked!')"></filter-list>
+         * <filter-list></filter-list>
          */
         .directive('filterList', filterList);
 
@@ -43,36 +39,29 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    clickFilter: '&'
-                },
-                bindToController: {
-                    filters: '='
-                },
+                scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.catalog = catalogManagerService;
 
-                    dvm.getAppliedFilters = function() {
-                        return _.mapValues(dvm.filters, function(options) {
-                            return _.map(_.filter(options, 'applied'), 'value');
-                        });
-                    }
                     dvm.isHidden = function(type, option) {
                         var visible = false;
-                        if (type === 'Resources' && !_.every(dvm.filters[type], ['applied', false]) && !option.applied) {
+                        if (type === 'Resources' && !_.every(dvm.catalog.filters[type], ['applied', false]) && !option.applied) {
                             visible = true;
                         }
                         return visible;
                     }
-                    dvm.updateApplied = function(type, option) {
+                    dvm.applyFilter = function(type, option) {
                         if (type === 'Resources') {
-                            _.forEach(dvm.filters[type], function(opt) {
+                            dvm.catalog.currentPage = 0;
+                            _.forEach(dvm.catalog.filters[type], function(opt) {
                                 if (!angular.equals(opt, option)) {
                                     opt.applied = false;                                    
                                 }
                             });
                         }
                         option.applied = !option.applied;
+                        dvm.catalog.getResources();
                     }
                 },
                 templateUrl: 'modules/catalog/directives/filterList/filterList.html'

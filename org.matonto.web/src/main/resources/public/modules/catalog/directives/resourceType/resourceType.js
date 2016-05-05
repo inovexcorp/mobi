@@ -41,12 +41,12 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    resource: '='
+                    type: '='
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.getType = function(resource) {
-                        return catalogManagerService.getType(resource.type);
+                    dvm.getType = function(type) {
+                        return catalogManagerService.getType(type);
                     }
                 },
                 templateUrl: 'modules/catalog/directives/resourceType/resourceType.html'

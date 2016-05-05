@@ -32,7 +32,38 @@
 
         function catalogManagerService($rootScope, $http, $q, prefixes) {
             var self = this,
-                prefix = '/matontorest/catalog/';
+                prefix = '/matontorest/catalog/',
+                limit = 10;
+
+            self.currentPage = 0;
+            self.results = {
+                size: 0,
+                totalSize: 0,
+                results: [],
+                limit: 0,
+                start: 0
+            };
+            self.selectedResource = undefined;
+            self.filters = {
+                Resources: []
+            };
+            self.sortBy = undefined;
+            self.asc = undefined;
+            self.errorMessage = '';
+            
+            function initialize() {
+                self.getResourceTypes()
+                    .then(function(types) {
+                        self.filters.Resources = _.map(types, function(type) {
+                            return {
+                                value: type,
+                                formatter: self.getType,
+                                applied: false
+                            };
+                        });
+                        self.getResources();
+                    });
+            }
 
             /**
              * @ngdoc method
@@ -48,6 +79,13 @@
              */
             self.getResourceTypes = function() {
                 return $http.get(prefix + 'resource-types')
+                    .then(function(response) {
+                        return $q.resolve(response.data);
+                    });
+            }
+
+            self.getSortOptions = function() {
+                return $http.get(prefix + 'sort-options')
                     .then(function(response) {
                         return $q.resolve(response.data);
                     });
@@ -85,27 +123,25 @@
              * @returns {Promise} A promise that either resolves with a paginated results object 
              * or is rejected with a error message. 
              */
-            self.getResources = function(limit, start, type, order) {
+            self.getResources = function() {
                 $rootScope.showSpinner = true;
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            limit: limit,
-                            start: start
-                        }
-                    };
-                if (type) {
-                    config.params.type = type;
-                }
+                var config = {
+                    params: {
+                        limit: limit,
+                        start: self.currentPage * self.results.limit,
+                        type: _.get(_.find(self.filters.Resources, 'applied'), 'value'),
+                        sortBy: self.sortBy,
+                        asc: self.asc
+                    }
+                };
                 $http.get(prefix + 'resources', config)
                     .then(function(response) {
-                        deferred.resolve(response.data);
+                        self.results = response.data;
                         $rootScope.showSpinner = false;
                     }, function(error) {
-                        deferred.reject(error.statusText);
+                        self.errorMessage = error.statusText;
                         $rootScope.showSpinner = false;
                     });
-                return deferred.promise;
             }
 
             /**
@@ -142,16 +178,14 @@
              */
             self.getResultsPage = function(url) {
                 $rootScope.showSpinner = true;
-                var deferred = $q.defer();
                 $http.get(url)
                     .then(function(response) {
-                        deferred.resolve(response.data);
+                        self.results = response.data;
                         $rootScope.showSpinner = false;
                     }, function(error) {
-                        deferred.reject(error.statusText);
+                        self.errorMessage = error.statusText;
                         $rootScope.showSpinner = false;
                     });
-                return deferred.promise;
             }
 
             /**
@@ -316,6 +350,18 @@
                 return deferred.promise;
             }
 
+            self.downloadResource = function(resourceId) {
+                self.getResourceDistributions(resourceId)
+                    .then(function(distributions) {
+                        var latest = _.last(_.sortBy(distributions, function(dist) {
+                            return self.getDate(dist.modified);
+                        }));
+                        console.log('Downloading ' + latest.title);
+                    }, function(error) {
+                        self.errorMessage = error.statusText;
+                    });
+            }
+
             /**
              * @ngdoc method
              * @name getType
@@ -371,5 +417,7 @@
                 }
                 return dateObj;
             }
+
+            initialize();
         }
 })();

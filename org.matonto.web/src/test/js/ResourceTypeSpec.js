@@ -21,38 +21,38 @@ describe('Resource Type directive', function() {
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.resource = {type: ''};
+            scope.type = '';
 
-            this.element = $compile(angular.element('<resource-type resource="resource"></resource-type>'))(scope);
+            this.element = $compile(angular.element('<resource-type type="type"></resource-type>'))(scope);
             scope.$digest();
         });
-        it('resource should be two way bound', function() {
+        it('type should be two way bound', function() {
             var isolatedScope = this.element.isolateScope();
-            isolatedScope.resource = {'type': 'test'};
+            isolatedScope.type = 'test';
             scope.$digest();
-            expect(scope.resource).toEqual({'type': 'test'});
+            expect(scope.type).toEqual('test');
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.resource = {type: ''};
+            scope.type = '';
 
-            this.element = $compile(angular.element('<resource-type resource="resource"></resource-type>'))(scope);
+            this.element = $compile(angular.element('<resource-type type="type"></resource-type>'))(scope);
             scope.$digest();
         });
-        it('should get the type of a resource', function() {
+        it('should get the shorthand type string', function() {
             var controller = this.element.controller('resourceType');
-            var result = controller.getType(scope.resource);
+            var result = controller.getType(scope.type);
 
             expect(typeof result).toBe('string');
-            expect(catalogManagerSvc.getType).toHaveBeenCalledWith(scope.resource.type);
+            expect(catalogManagerSvc.getType).toHaveBeenCalledWith(scope.type);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.resource = {type: ''};
+            scope.type = '';
 
-            this.element = $compile(angular.element('<resource-type resource="resource"></resource-type>'))(scope);
+            this.element = $compile(angular.element('<resource-type type="type"></resource-type>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -60,17 +60,15 @@ describe('Resource Type directive', function() {
         });
         it('with the correct classes depending on the resource type', function() {
             var controller = this.element.controller('resourceType');
-            spyOn(controller, 'getType').and.callFake(function(resource) {
-                return resource.type;
-            });
+            spyOn(controller, 'getType').and.callFake(_.identity);
             scope.$digest();
             expect(this.element.hasClass('label-default')).toBe(true);
 
-            scope.resource.type = 'Ontology';
+            scope.type = 'Ontology';
             scope.$digest();
             expect(this.element.hasClass('label-primary')).toBe(true);
 
-            scope.resource.type = 'Mapping';
+            scope.type = 'Mapping';
             scope.$digest();
             expect(this.element.hasClass('label-success')).toBe(true);
         });

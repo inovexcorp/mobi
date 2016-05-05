@@ -84,7 +84,7 @@ function mockOntologyManager() {
                 });
                 this.getThenRestructure = jasmine.createSpy('getThenRestructure').and.callFake(function(ontologyId) {
                     if (ontologyId) {
-                        return $q.when({'@id': ontologyId});                        
+                        return $q.when({'@id': ontologyId});
                     } else {
                         return $q.reject('Something went wrong');
                     }
@@ -147,7 +147,33 @@ function mockCatalogManager() {
         angular.module('catalogManager', []);
 
         module(function($provide) {
-            $provide.service('catalogManagerService', function() {
+            $provide.service('catalogManagerService', function($q) {
+                this.selectedResource = undefined;
+                this.currentPage = 0;
+                this.filters = {
+                    Resources: []
+                };
+                this.sortBy = '';
+                this.asc = false;
+                this.errorMessage = '';
+                this.results = {
+                    size: 0,
+                    totalSize: 0,
+                    results: [],
+                    limit: 0,
+                    start: 0,
+                    links: {
+                        base: '',
+                        next: '',
+                        prev: ''
+                    }
+                };
+                this.getResources = jasmine.createSpy('getResources');
+                this.getSortOptions = jasmine.createSpy('getSortOptions').and.callFake(function() {
+                    return $q.when([]);
+                });
+                this.getResultsPage = jasmine.createSpy('getResultsPage');
+                this.downloadResource = jasmine.createSpy('downloadResource');
                 this.getType = jasmine.createSpy('getType').and.callFake(function(type) {
                     return '';
                 });

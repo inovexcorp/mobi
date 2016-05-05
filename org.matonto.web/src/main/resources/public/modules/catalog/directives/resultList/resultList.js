@@ -11,7 +11,7 @@
          * The `resultList` module only provides the `resultList` directive which creates
          * a sortable paginated list of resources.
          */
-        .module('resultList', ['catalogManager'])
+        .module('resultList', ['catalogManager', 'ontologyManager'])
         /**
          * @ngdoc directive
          * @name resultList.directive:resultList
@@ -60,28 +60,57 @@
          */
         .directive('resultList', resultList);
 
-        resultList.$inject = ['catalogManagerService'];
+        resultList.$inject = ['catalogManagerService', 'ontologyManagerService'];
 
-        function resultList(catalogManagerService) {
+        function resultList(catalogManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    results: '=',
-                    orderBy: '=',
-                    currentPage: '=',
-                    clickResource: '&',
-                    changeOrder: '&',
-                    clickLink: '&',
-                    download: '&'
-                },
+                scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.catalog = catalogManagerService;
 
+                    dvm.sortOptions = [];
+                    dvm.catalog.getSortOptions()
+                        .then(function(options) {
+                            _.forEach(options, function(option) {
+                                var label = ontologyManagerService.getBeautifulIRI(option);
+                                dvm.sortOptions.push({
+                                    field: option,
+                                    asc: true,
+                                    label: label + ' (asc)'
+                                });
+                                dvm.sortOptions.push({
+                                    field: option,
+                                    asc: false,
+                                    label: label + ' (desc)'
+                                });
+                            });
+                            dvm.sortOption = dvm.sortOptions[0];
+                        });
+
+                    dvm.getEndingNumber = function() {
+                        return _.min([dvm.catalog.results.totalSize, dvm.catalog.results.start + dvm.catalog.results.limit]);
+                    }
+                    dvm.changeSort = function() {
+                        dvm.catalog.sortBy = dvm.sortOption.field;
+                        dvm.catalog.asc = dvm.sortOption.asc;
+                        dvm.catalog.getResources();
+                    }
                     dvm.getDate = function(date) {
                         var jsDate = catalogManagerService.getDate(date);
                         return jsDate.toDateString();
+                    }
+                    dvm.getPage = function(direction) {
+                        if (direction === 'next') {
+                            dvm.catalog.currentPage += 1;
+                            dvm.catalog.getResultsPage(dvm.catalog.results.links.base + dvm.catalog.results.links.next);
+                        } else {
+                            dvm.catalog.currentPage -= 1;
+                            dvm.catalog.getResultsPage(dvm.catalog.results.links.base + dvm.catalog.results.links.prev);
+                        }
                     }
                 },
                 templateUrl: 'modules/catalog/directives/resultList/resultList.html'
