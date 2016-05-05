@@ -103,9 +103,17 @@ public class SimpleCatalogManagerTest {
         sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
         BindingSet bindingSet = new SesameBindingSet(sesameBindingSet);
 
+        List<String> bindingNames = new ArrayList<>();
+        bindingNames.add("resource");
+        bindingNames.add("title");
+        bindingNames.add("type");
+        bindingNames.add("issued");
+        bindingNames.add("modified");
+
         // when
         when(result.hasNext()).thenReturn(true);
         when(result.next()).thenReturn(bindingSet);
+        when(result.getBindingNames()).thenReturn(bindingNames);
 
         Optional<PublishedResource> optional = manager.getResource(existingResource);
 
