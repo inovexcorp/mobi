@@ -184,4 +184,18 @@ public class SimpleCatalogManagerFullTest {
         Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
         Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
     }
+
+    @Test
+    public void testWithNoEntries() throws Exception {
+        // given
+        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo2.initialize();
+        manager.setRepository(repo2);
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
+
+        // then
+        assertThat(resources.getPage().size(), equalTo(0));
+    }
 }
