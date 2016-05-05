@@ -28,6 +28,7 @@
          * }
          * ```
          * If the IRI string is falsey, the JSON object will have empty string values.
+         * Assumes that the IRI is valid.
          *
          * @param {string} iri The IRI string to split
          * @returns {object} An object with keys for the beginning, delimiter, and end
@@ -37,7 +38,7 @@
 
     function splitIRI() {
         return function(iri) {
-            if(iri) {
+            if(iri && typeof iri !== 'object') {
                 var index,
                     hash = iri.indexOf('#'),
                     slash = iri.lastIndexOf('/'),
