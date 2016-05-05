@@ -9,9 +9,9 @@ describe('Update Refs service', function() {
         module(function($provide) {
             $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
                 return {
-                    begin: '',
-                    then: '',
-                    end: ''
+                    begin: 'aaa',
+                    then: '/',
+                    end: '1'
                 }
             }));
         });
@@ -58,7 +58,7 @@ describe('Update Refs service', function() {
                 refs: ['aaa/1'],
                 items: [
                     {
-                        iri: 'test/0'
+                        iri: 'test/0',
                         namespace: 'aaa/',
                         localName: '1'
                     }
