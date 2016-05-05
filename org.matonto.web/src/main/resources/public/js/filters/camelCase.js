@@ -33,7 +33,7 @@
         return function(value, type) {
             var result = '';
 
-            if(value) {
+            if(value && typeof value !== 'object') {
                 var capitalize = false,
                     whitespace = /\s/,
                     alphaNumeric = /[a-zA-Z0-9]/,
