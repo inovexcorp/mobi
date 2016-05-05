@@ -12,13 +12,10 @@ import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashNamedGraphFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleIRI;
-import org.matonto.rdf.core.impl.sesame.factory.StatementValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
-import org.matonto.repository.impl.sesame.SesameRepositoryResult;
 import org.matonto.repository.impl.sesame.query.SesameBindingSet;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -26,7 +23,6 @@ import org.mockito.MockitoAnnotations;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.SimpleValueFactory;
 import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.query.algebra.evaluation.iterator.CollectionIteration;
 import org.openrdf.query.impl.MapBindingSet;
 
 import java.time.OffsetDateTime;
@@ -34,7 +30,6 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -42,9 +37,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SimpleCatalogManagerTest {
-
-    @Mock
-    RepositoryManager repositoryManager;
 
     @Mock
     Repository repo;
@@ -74,12 +66,11 @@ public class SimpleCatalogManagerTest {
         MockitoAnnotations.initMocks(this);
 
         manager = new SimpleCatalogManager();
-        manager.setRepositoryManager(repositoryManager);
+        manager.setRepository(repo);
         manager.setNamedGraphFactory(ngf);
         manager.setValueFactory(vf);
         manager.setModelFactory(mf);
 
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
         when(repo.getConnection()).thenReturn(conn);
         when(conn.prepareTupleQuery(anyString())).thenReturn(query);
         when(conn.getStatements(any(), any(), any(), any())).thenReturn(repositoryResult);
@@ -112,9 +103,17 @@ public class SimpleCatalogManagerTest {
         sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
         BindingSet bindingSet = new SesameBindingSet(sesameBindingSet);
 
+        List<String> bindingNames = new ArrayList<>();
+        bindingNames.add("resource");
+        bindingNames.add("title");
+        bindingNames.add("type");
+        bindingNames.add("issued");
+        bindingNames.add("modified");
+
         // when
         when(result.hasNext()).thenReturn(true);
         when(result.next()).thenReturn(bindingSet);
+        when(result.getBindingNames()).thenReturn(bindingNames);
 
         Optional<PublishedResource> optional = manager.getResource(existingResource);
 

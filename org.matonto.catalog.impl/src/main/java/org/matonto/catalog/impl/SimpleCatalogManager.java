@@ -7,8 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Ontology;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.config.CatalogConfig;
+import org.matonto.catalog.util.SearchResults;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.Models;
@@ -19,7 +21,6 @@ import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.RepositoryManager;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -32,17 +33,18 @@ import java.util.*;
 )
 public class SimpleCatalogManager implements CatalogManager {
 
-    private RepositoryManager repositoryManager;
-    private String repositoryId;
+    private Repository repository;
     private ValueFactory vf;
     private ModelFactory mf;
     private NamedGraphFactory ngf;
 
+    private Map<Resource, String> sortingOptions = new HashMap<>();
+
     private final Logger log = Logger.getLogger(SimpleCatalogManager.class);
 
-    @Reference
-    protected void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
+    @Reference(name = "repository")
+    protected void setRepository(Repository repository) {
+        this.repository = repository;
     }
 
     @Reference
@@ -62,7 +64,9 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String GET_RESOURCE_QUERY;
     private static final String FIND_RESOURCES_QUERY;
+    private static final String COUNT_RESOURCES_QUERY;
     private static final String RESOURCE_BINDING = "resource";
+    private static final String RESOURCE_COUNT_BINDING = "resource_count";
 
     static {
         try {
@@ -72,6 +76,10 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             FIND_RESOURCES_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/find-resources.rq"),
+                    "UTF-8"
+            );
+            COUNT_RESOURCES_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/count-resources.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -88,10 +96,9 @@ public class SimpleCatalogManager implements CatalogManager {
     protected void start(Map<String, Object> props) {
         CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
         IRI catalogIri = vf.createIRI(config.iri());
-        repositoryId = config.repositoryId();
+        createSortingOptions();
 
         // Create Catalog if it doesn't exist
-        RepositoryConnection conn = getRepositoryConnection();
         if (!resourceExists(catalogIri)) {
             log.debug("Initializing MatOnto Catalog.");
             OffsetDateTime now = OffsetDateTime.now();
@@ -103,9 +110,10 @@ public class SimpleCatalogManager implements CatalogManager {
             namedGraph.add(catalogIri, vf.createIRI(DC + "issued"), vf.createLiteral(now));
             namedGraph.add(catalogIri, vf.createIRI(DC + "modified"), vf.createLiteral(now));
 
+            RepositoryConnection conn = repository.getConnection();
             conn.add(namedGraph);
+            conn.close();
         }
-        conn.close();
     }
 
     @Modified
@@ -114,40 +122,69 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<PublishedResource> findResource(String searchTerm, int limit, int offset) {
-        RepositoryConnection conn = getRepositoryConnection();
+    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset) {
+        return findResource(searchTerm, limit, offset, vf.createIRI(DC + "modified"), false);
+    }
 
-        String queryString = FIND_RESOURCES_QUERY + String.format("\nLIMIT %d\nOFFSET %d", limit, offset);
+    @Override
+    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset,
+                                                                  Resource sortBy, boolean ascending) {
+        RepositoryConnection conn = repository.getConnection();
+
+        // Get Total Count
+        TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_QUERY);
+        TupleQueryResult countResults = countQuery.evaluate();
+
+        int totalCount;
+        if (countResults.hasNext() && countResults.getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
+            BindingSet bindingSet = countResults.next();
+            totalCount = Bindings.requiredLiteral(bindingSet, RESOURCE_COUNT_BINDING).intValue();
+            countResults.close();
+        } else {
+            countResults.close();
+            conn.close();
+            return SearchResults.emptyResults();
+        }
+
+        // Get Results
+        String sortBinding = sortingOptions.get(sortBy) == null ? "modified" : sortingOptions.get(sortBy);
+        String queryString;
+        if (ascending) {
+            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
+                    limit, offset);
+        } else {
+            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d", sortBinding,
+                    limit, offset);
+        }
+
+        log.debug("QUERY: " + queryString);
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult result = query.evaluate();
 
-        Set<PublishedResource> resources = new HashSet<>();
-        while (result.hasNext()) {
+        List<PublishedResource> resources = new ArrayList<>();
+        while (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
             BindingSet bindingSet = result.next();
-
-            if (!bindingSet.getBindingNames().contains(RESOURCE_BINDING)) {
-                // Aggregations return an empty result when no results found
-                result.close();
-                conn.close();
-                return Collections.emptySet();
-            }
-
             Resource resource = vf.createIRI(Bindings.requiredResource(bindingSet, RESOURCE_BINDING).stringValue());
-
             PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
-
             resources.add(publishedResource);
         }
 
         result.close();
         conn.close();
-        return resources;
+
+        int pageNumber = (offset / limit) + 1;
+
+        if (resources.size() > 0) {
+            return new SimpleSearchResults<>(resources, totalCount, limit, pageNumber);
+        } else {
+            return SearchResults.emptyResults();
+        }
     }
 
     @Override
     public Optional<PublishedResource> getResource(Resource resource) {
-        RepositoryConnection conn = getRepositoryConnection();
+        RepositoryConnection conn = repository.getConnection();
 
         TupleQuery query = conn.prepareTupleQuery(GET_RESOURCE_QUERY);
         query.setBinding(RESOURCE_BINDING, resource);
@@ -155,16 +192,8 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult result = query.evaluate();
 
         // TODO: Handle more than one result (warn?)
-        if (result.hasNext()) {
+        if (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
             BindingSet bindingSet = result.next();
-
-            if (!bindingSet.getBindingNames().contains("resource")) {
-                // Aggregations return an empty result when no results found
-                result.close();
-                conn.close();
-                return Optional.empty();
-            }
-
             PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
 
             result.close();
@@ -196,17 +225,16 @@ public class SimpleCatalogManager implements CatalogManager {
         namedGraph.add(resource, vf.createIRI(DC + "issued"), vf.createLiteral(ontology.getIssued()));
         namedGraph.add(resource, vf.createIRI(DC + "modified"), vf.createLiteral(ontology.getModified()));
 
-        ontology.getDistributions().forEach(distribution -> {
-            namedGraph.add(resource, vf.createIRI(DCAT + "distribution"), distribution.getResource());
-        });
+        ontology.getDistributions().forEach(distribution ->
+                namedGraph.add(resource, vf.createIRI(DCAT + "distribution"), distribution.getResource()));
 
-        RepositoryConnection conn = getRepositoryConnection();
+        RepositoryConnection conn = repository.getConnection();
         conn.add(namedGraph);
         conn.close();
     }
 
     private boolean resourceExists(Resource resource) {
-        RepositoryConnection conn = getRepositoryConnection();
+        RepositoryConnection conn = repository.getConnection();
         boolean catalogExists = conn.getStatements(null, null, null, resource).hasNext();
         conn.close();
         return catalogExists;
@@ -225,7 +253,8 @@ public class SimpleCatalogManager implements CatalogManager {
         return new IllegalStateException(String.format("Required property \"%s\" was not present.", propertyName));
     }
 
-    private PublishedResource processResourceBindingSet(BindingSet bindingSet, Resource resource, RepositoryConnection conn) {
+    private PublishedResource processResourceBindingSet(BindingSet bindingSet, Resource resource,
+                                                        RepositoryConnection conn) {
         // Get Required Params
         String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
         Resource type = Bindings.requiredResource(bindingSet, "type");
@@ -272,14 +301,9 @@ public class SimpleCatalogManager implements CatalogManager {
         return builder.build();
     }
 
-    private RepositoryConnection getRepositoryConnection() {
-        Optional<Repository> repository = repositoryManager.getRepository(repositoryId);
-        if (repository.isPresent()) {
-            return repository.get().getConnection();
-        } else {
-            String errorMsg = String.format("Repository \"%s\" is unavailable.", repositoryId);
-            log.error(errorMsg);
-            throw new IllegalStateException(errorMsg);
-        }
+    private void createSortingOptions() {
+        sortingOptions.put(vf.createIRI(DC + "modified"), "modified");
+        sortingOptions.put(vf.createIRI(DC + "issued"), "issued");
+        sortingOptions.put(vf.createIRI(DC + "title"), "title");
     }
 }

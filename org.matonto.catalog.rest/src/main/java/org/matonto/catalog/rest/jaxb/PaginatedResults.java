@@ -12,6 +12,7 @@ public class PaginatedResults<T> {
     private List<T> results;
     private int size;
     private int start;
+    private int totalSize;
 
     @XmlElement
     public Links getLinks() {
@@ -56,5 +57,14 @@ public class PaginatedResults<T> {
 
     public void setStart(int start) {
         this.start = start;
+    }
+
+    @XmlElement
+    public int getTotalSize() {
+        return totalSize;
+    }
+
+    public void setTotalSize(int totalSize) {
+        this.totalSize = totalSize;
     }
 }

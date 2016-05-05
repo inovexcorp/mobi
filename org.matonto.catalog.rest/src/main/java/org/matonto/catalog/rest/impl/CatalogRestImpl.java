@@ -3,9 +3,13 @@ package org.matonto.catalog.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Distribution;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
@@ -13,14 +17,18 @@ import org.matonto.catalog.rest.jaxb.Links;
 import org.matonto.catalog.rest.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 import org.matonto.persistence.utils.Values;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.nio.charset.Charset;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -29,8 +37,12 @@ public class CatalogRestImpl implements CatalogRest {
 
     private CatalogManager catalogManager;
     private Values values;
+    private ValueFactory valueFactory;
 
     private static final Set<String> RESOURCE_TYPES;
+    private static final Set<String> SORT_RESOURCES;
+
+    private static final String DC = "http://purl.org/dc/terms/";
 
     private final Logger log = Logger.getLogger(CatalogRestImpl.class);
 
@@ -39,6 +51,12 @@ public class CatalogRestImpl implements CatalogRest {
         types.add("http://matonto.org/ontologies/catalog#PublishedResource");
         types.add("http://matonto.org/ontologies/catalog#Ontology");
         RESOURCE_TYPES = Collections.unmodifiableSet(types);
+
+        Set<String> sortResources = new HashSet<>();
+        sortResources.add(DC + "modified");
+        sortResources.add(DC + "issued");
+        sortResources.add(DC + "title");
+        SORT_RESOURCES = Collections.unmodifiableSet(sortResources);
     }
 
     @Reference
@@ -49,6 +67,11 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     protected void setValues(Values values) {
         this.values = values;
+    }
+
+    @Reference
+    protected void setValueFactory(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
     }
 
     @Override
@@ -79,20 +102,23 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public PaginatedResults<PublishedResourceMarshaller> listPublishedResources(UriInfo uriInfo, String resourceType,
-                                                                                String searchTerms, int limit,
-                                                                                int start) {
+                                                                                String searchTerms, String sortBy,
+                                                                                boolean asc, int limit, int start) {
+        IRI sortResource = valueFactory.createIRI(sortBy);
+        PaginatedSearchResults<PublishedResource> searchResults =
+                catalogManager.findResource(searchTerms, limit, start, sortResource, asc);
+
         List<PublishedResourceMarshaller> publishedResources = new ArrayList<>();
+        searchResults.getPage().forEach(resource -> publishedResources.add(processResource(resource)));
 
-        catalogManager.findResource(searchTerms, limit, start).forEach(resource ->
-                publishedResources.add(processResource(resource)));
-
-        int size = publishedResources.size();
+        int size = searchResults.getPage().size();
 
         PaginatedResults<PublishedResourceMarshaller> marshaller = new PaginatedResults<>();
         marshaller.setResults(publishedResources);
         marshaller.setLimit(limit);
         marshaller.setSize(size);
         marshaller.setStart(start);
+        marshaller.setTotalSize(searchResults.getTotalSize());
 
         marshaller.setLinks(buildLinks(uriInfo, size, limit, start));
 
@@ -165,6 +191,15 @@ public class CatalogRestImpl implements CatalogRest {
         JSONArray json = new JSONArray();
 
         RESOURCE_TYPES.forEach(json::add);
+
+        return Response.ok(json.toString()).build();
+    }
+
+    @Override
+    public Response getSortOptions() {
+        JSONArray json = new JSONArray();
+
+        SORT_RESOURCES.forEach(json::add);
 
         return Response.ok(json.toString()).build();
     }
@@ -245,15 +280,29 @@ public class CatalogRestImpl implements CatalogRest {
         links.setContext(path);
 
         if (size == limit) {
-            String next = path + String.format("?limit=%d&offset=%d", limit, start + limit);
+            String next = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start + limit);
             links.setNext(next);
         }
 
         if (start != 0) {
-            String prev = path + String.format("?limit=%d&offset=%d", limit, start - limit);
+            String prev = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start - limit);
             links.setPrev(prev);
         }
 
         return links;
+    }
+
+    private String buildQueryString(MultivaluedMap<String, String> queryParams, int start) {
+        List<NameValuePair> params = new ArrayList<>();
+
+        queryParams.forEach( (key, values) -> {
+            if (key.equals("start")) {
+                params.add(new BasicNameValuePair(key, String.valueOf(start)));
+            } else {
+                params.add(new BasicNameValuePair(key, values.get(0)));
+            }
+        });
+
+        return URLEncodedUtils.format(params, '&', Charset.forName("UTF-8"));
     }
 }
