@@ -25,11 +25,10 @@
          * class with different background colors for different resource type IRIs. The
          * directive is replaced with the content of the template.
          *
-         * @param {Object} resource A resource object
-         * @param {string} resource.type The resource type IRI for the resource object
+         * @param {string} type The resource type IRI for a resource object
          *
          * @usage
-         * <resource-type resource="{type: 'https://matonto.org/ontologies/catalog#Ontology'}"></resource-type>
+         * <resource-type type="'https://matonto.org/ontologies/catalog#Ontology'"></resource-type>
          */
         .directive('resourceType', resourceType);
 
