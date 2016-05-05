@@ -31,34 +31,5 @@ matonto-deploy-bundles = {
         com.eclipsesource.jaxrs.provider.swagger
 }
 
-matonto-deploy-bundles-dev = {
-    obr:url-add mvn:org.matonto/bnd-index/${bnd.index.version}/xml
-    obr:url-refresh
-    obr:start -d \
-        org.matonto.persistence.api \
-        org.matonto.persistence.cli \
-        org.matonto.rdf.impl.sesame \
-        org.matonto.repository.impl.sesame \
-        org.matonto.repository.impl.core \
-        org.matonto.etl.api \
-        org.matonto.etl.cli \
-        org.matonto.etl.csv \
-        org.matonto.etl.rdf \
-        org.matonto.etl.rest \
-        org.matonto.ontology.api \
-        org.matonto.ontology.cli \
-        org.matonto.ontology.core.impl.owlapi \
-        org.matonto.ontology.rest \
-        org.matonto.catalog.api \
-        org.matonto.catalog.impl \
-        org.matonto.catalog.rest \
-        org.matonto.swagger.ui \
-        org.matonto.web \
-        org.matonto.sparql.rest \
-        com.eclipsesource.jaxrs.swagger-all \
-        com.eclipsesource.jaxrs.provider.swagger
-    obr:url-remove mvn:org.matonto/bnd-index/${bnd.index.version}/xml
-}
-
 
 

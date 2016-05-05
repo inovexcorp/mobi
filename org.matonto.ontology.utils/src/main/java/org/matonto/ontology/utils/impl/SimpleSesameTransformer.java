@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-@Component (immediate=true, provide = SesameTransformer.class)
+@Component (provide = SesameTransformer.class)
 public class SimpleSesameTransformer implements SesameTransformer {
 
     private static final org.openrdf.model.ValueFactory SESAME_VF = ValueFactoryImpl.getInstance();

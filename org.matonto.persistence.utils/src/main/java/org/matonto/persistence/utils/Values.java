@@ -5,7 +5,7 @@ import aQute.bnd.annotation.component.Reference;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 
-@Component(immediate = true, provide = org.matonto.persistence.utils.Values.class)
+@Component(provide = org.matonto.persistence.utils.Values.class)
 public class Values {
 
     private ValueFactory valueFactory;

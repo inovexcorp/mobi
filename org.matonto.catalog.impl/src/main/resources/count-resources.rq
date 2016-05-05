@@ -3,10 +3,8 @@ PREFIX matontocat: <http://matonto.org/ontologies/catalog#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 
 SELECT
-    ?distribution
+    (COUNT(distinct ?resource) as ?resource_count)
 WHERE {
-	?resource a ?type ;
-	    dcat:distribution ?distribution .
-
+	?resource a ?type .
 	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology, matontocat:Mapping))
 }

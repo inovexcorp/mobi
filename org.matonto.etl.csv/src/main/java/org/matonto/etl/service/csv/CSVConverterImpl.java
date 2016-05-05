@@ -11,7 +11,6 @@ import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
-import org.matonto.rdf.core.utils.Values;
 import org.openrdf.rio.*;
 
 import java.io.*;
