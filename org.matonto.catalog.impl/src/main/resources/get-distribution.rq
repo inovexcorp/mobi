@@ -1,0 +1,12 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX matontocat: <http://matonto.org/ontologies/catalog#>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+
+SELECT
+    ?distribution
+WHERE {
+	?resource a ?type ;
+	    dcat:distribution ?distribution .
+
+	FILTER(?type IN (matontocat:PublishedResource, matontocat:Ontology, matontocat:Mapping))
+}

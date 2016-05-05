@@ -14,7 +14,8 @@ import java.io.File;
 import java.util.Map;
 
 @Component(
-        provide = DelegatingRepository.class,
+        immediate = true,
+        provide = { Repository.class, DelegatingRepository.class },
         name = MemoryRepositoryWrapper.NAME,
         configurationPolicy = ConfigurationPolicy.require,
         designateFactory = MemoryRepositoryConfig.class,

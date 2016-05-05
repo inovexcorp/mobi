@@ -114,6 +114,26 @@
             <artifactId>web</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>sparql.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -123,7 +143,7 @@
                 <artifactId>bnd-indexer-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <localURLs>ALLOWED</localURLs>
+                    <localURLs>REQUIRED</localURLs>
                     <includeTransitive>false</includeTransitive>
                 </configuration>
                 <executions>

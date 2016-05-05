@@ -28,4 +28,7 @@ public class SesameGraphQuery extends SesameOperation implements GraphQuery {
         }
     }
 
+    public String toString() {
+        return sesameGraphQuery.toString();
+    }
 }

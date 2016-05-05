@@ -2,16 +2,16 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'getThisType', 'annotationTab', 'annotationOverlay',
+        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay',
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
         'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'createError'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes', 'REGEX'];
+    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
 
-    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes, REGEX) {
+    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -26,10 +26,6 @@
             if(vm.state) {
                 setVariables(vm.state.oi);
             }
-        }
-
-        vm.getIriPattern = function() {
-            return REGEX.IRI;
         }
 
         /* State Management */
@@ -54,7 +50,12 @@
 
         function submitEdit() {
             if(_.has(vm.ontology, 'matonto.originalId')) {
-                ontologyManagerService.edit(vm.ontology.matonto.originalId);
+                ontologyManagerService.edit(vm.ontology.matonto.originalId)
+                    .then(function(response) {
+                        // TODO: keep the current property selected if it is a property and has moved
+                        stateManagerService.clearState(vm.state.oi);
+                        vm.state = stateManagerService.getState();
+                    });
             }
         }
 
@@ -81,7 +82,7 @@
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
                     vm.showUploadOverlay = false;
                 }, function(response) {
-                    vm.uploadError = response.data.error;
+                    vm.uploadError = response.statusText;
                 });
         }
 
@@ -132,14 +133,22 @@
         }
 
         vm.downloadOntology = function() {
-            ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization)
+            ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization, vm.downloadFileName)
                 .then(function(response) {
                     vm.showDownloadOverlay = false;
                     vm.downloadSerialization = '';
+                    vm.downloadFileName = '';
                     vm.downloadError = false;
                 }, function(response) {
                     vm.downloadError = _.get(response, 'statusText', 'Error downloading ontology. Please try again later.');
                 });
+        }
+
+        vm.openDownloadOverlay = function() {
+            vm.downloadFileName = ontologyManagerService.getBeautifulIRI(angular.copy(vm.ontology['@id'])).replace(' ', '_');
+            vm.downloadError = false;
+            vm.downloadSerialization = '';
+            vm.showDownloadOverlay = true;
         }
 
         /* Prefix (Context) Management */
@@ -186,11 +195,18 @@
         }
 
         vm.closeOntology = function() {
-            ontologyManagerService.closeOntology(vm.state.oi, vm.selected['@id']);
+            ontologyManagerService.closeOntology(vm.state.oi, vm.ontology['@id']);
             stateManagerService.clearState(vm.state.oi);
             vm.selected = {};
             vm.ontology = {};
             vm.showCloseOverlay = false;
+        }
+
+        vm.isThisType = function(property, propertyType) {
+            var lowerCasePropertyTypeIRI = (prefixes.owl + propertyType).toLowerCase();
+            return _.findIndex(_.get(property, '@type', []), function(type) {
+                return type.toLowerCase() === lowerCasePropertyTypeIRI;
+            }) !== -1;
         }
 
         /* Annotation Management */

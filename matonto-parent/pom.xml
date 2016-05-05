@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.matonto</groupId>
@@ -27,6 +25,9 @@
         <openrdf.version>4.0.1</openrdf.version>
         <owlapi.version>4.1.3</owlapi.version>
         <karaf.version>4.0.2</karaf.version>
+        <httpclient.version>4.5.2</httpclient.version>
+        <jaxrs.version>2.0.1</jaxrs.version>
+        <swagger.version>1.5.7</swagger.version>
     </properties>
 
     <dependencyManagement>
@@ -62,6 +63,11 @@
                 <artifactId>sesame-runtime-osgi</artifactId>
                 <version>${openrdf.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-query</artifactId>
+                <version>${openrdf.version}</version>
+            </dependency>
 
             <!-- OWLAPI Dependencies -->
             <dependency>
@@ -92,6 +98,11 @@
                 <version>2.4</version>
             </dependency>
             <dependency>
+                <groupId>com.opencsv</groupId>
+                <artifactId>opencsv</artifactId>
+                <version>3.7</version>
+            </dependency>
+            <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
@@ -102,6 +113,11 @@
                 <version>3.4</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>edu.washington.cs.types.checker</groupId>
                 <artifactId>checker-framework</artifactId>
                 <version>1.7.5</version>
@@ -109,7 +125,7 @@
             <dependency>
                 <groupId>javax.ws.rs</groupId>
                 <artifactId>javax.ws.rs-api</artifactId>
-                <version>2.0</version>
+                <version>${jaxrs.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.servicemix.bundles</groupId>
@@ -124,14 +140,18 @@
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-annotations</artifactId>
-                <version>1.5.6</version>
+                <version>${swagger.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.servicemix.bundles</groupId>
                 <artifactId>org.apache.servicemix.bundles.poi</artifactId>
                 <version>3.14_1</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>4.11</version>
+            </dependency>
 
             <!-- Test Dependencies -->
             <dependency>

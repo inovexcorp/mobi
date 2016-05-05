@@ -2,6 +2,7 @@ package org.matonto.repository.impl.sesame.query
 
 import org.openrdf.model.impl.ValueFactoryImpl
 import org.openrdf.query.BindingSet
+import org.openrdf.query.impl.MapBindingSet
 import spock.lang.Specification
 
 class SesameBindingSetSpec extends Specification {
@@ -54,6 +55,24 @@ class SesameBindingSetSpec extends Specification {
         expect:
         matBindingSet.getBinding("test").get().getName().equals(matBinding.getName())
         matBindingSet.getBinding("test").get().getValue().equals(matBinding.getValue())
+    }
+
+    def "getBinding(String) returns an empty Optional when binding doesn't exist"() {
+        setup:
+        def sesBindingSet = new MapBindingSet();
+        def matBindingSet = new SesameBindingSet(sesBindingSet)
+
+        expect:
+        !matBindingSet.getBinding("test").isPresent()
+    }
+
+    def "getValue(String) returns an empty Optional when binding doesn't exist"() {
+        setup:
+        def sesBindingSet = new MapBindingSet();
+        def matBindingSet = new SesameBindingSet(sesBindingSet)
+
+        expect:
+        !matBindingSet.getValue("test").isPresent()
     }
 
     def "size() returns BindingSet size"() {

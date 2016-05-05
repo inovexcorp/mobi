@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>matonto-parent</artifactId>
+        <groupId>org.matonto</groupId>
+        <version>1.0.34-SNAPSHOT</version>
+        <relativePath>../matonto-parent/pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>index.sesame4</artifactId>
+    <packaging>pom</packaging>
+
+    <properties>
+        <jackson.version>2.6.3</jackson.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-runtime-osgi</artifactId>
+            <version>${openrdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-indexer-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <localURLs>REQUIRED</localURLs>
+                    <includeTransitive>false</includeTransitive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>index</id>
+                        <goals>
+                            <goal>index</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
