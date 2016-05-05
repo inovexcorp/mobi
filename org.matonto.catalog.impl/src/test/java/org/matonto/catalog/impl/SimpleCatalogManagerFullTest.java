@@ -186,7 +186,7 @@ public class SimpleCatalogManagerFullTest {
     }
 
     @Test
-    public void testWithNoEntries() throws Exception {
+    public void testFindResourceWithNoEntries() throws Exception {
         // given
         Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo2.initialize();
@@ -197,5 +197,19 @@ public class SimpleCatalogManagerFullTest {
 
         // then
         assertThat(resources.getPage().size(), equalTo(0));
+    }
+
+    @Test
+    public void testGetResourceWithNoEntries() throws Exception {
+        // given
+        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo2.initialize();
+        manager.setRepository(repo2);
+
+        // when
+        Optional<PublishedResource> resource = manager.getResource(vf.createIRI("http://test.com/123"));
+
+        // then
+        assertThat(resource, equalTo(Optional.empty()));
     }
 }
