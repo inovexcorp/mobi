@@ -12,6 +12,14 @@
         text-align: center;
     }
 
+    .description {
+        font-size: 1.125em;
+
+        p {
+            margin: 0;
+        }
+    }
+
     @-webkit-keyframes FadeIn {
         0% {
             opacity:0; -webkit-transform:scale(.1);
