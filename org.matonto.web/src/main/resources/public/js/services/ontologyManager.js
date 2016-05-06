@@ -752,15 +752,13 @@
                             var data = importedOntologyIris.data,
                                 importedClasses = [],
                                 importedDataProperties = [],
-                                importedObjectProperties = [],
-                                i = 0;
+                                importedObjectProperties = [];
 
-                            while(i < data.length) {
-                                importedClasses = importedClasses.concat(addOntologyIriToElements(data[i].classes, data[i].id));
-                                importedDataProperties = importedDataProperties.concat(addOntologyIriToElements(data[i].dataProperties, data[i].id));
-                                importedObjectProperties = importedObjectProperties.concat(addOntologyIriToElements(data[i].objectProperties, data[i].id));
-                                i++;
-                            }
+                            _.forEach(data, function(item) {
+                                importedClasses = importedClasses.concat(addOntologyIriToElements(item.classes, item.id));
+                                importedDataProperties = importedDataProperties.concat(addOntologyIriToElements(item.dataProperties, item.id));
+                                importedObjectProperties = importedObjectProperties.concat(addOntologyIriToElements(item.objectProperties, item.id));
+                            });
 
                             classes = $filter('orderBy')(classes.concat(importedClasses), 'localName');
                             dataProperties = $filter('orderBy')(dataProperties.concat(importedDataProperties), 'localName');
@@ -775,11 +773,7 @@
                         ontology.matonto.subClasses = classes;
                         ontology.matonto.subDataProperties = dataProperties;
                         ontology.matonto.subObjectProperties = objectProperties;
-
-                        // For now, these just point to classes. They will eventually have some way to link back to class expressions
-                        ontology.matonto.propertyDomain = classes;
-                        ontology.matonto.dataPropertyRange = $filter('orderBy')(classes.concat(datatypes), 'localName');
-                        ontology.matonto.objectPropertyRange = classes;
+                        ontology.matonto.dataPropertyRange = datatypes;
 
                         deferred.resolve(ontology);
                     }, function(response) {
@@ -853,9 +847,7 @@
                             subClasses: [],
                             subDataProperties: [],
                             subObjectProperties: [],
-                            propertyDomain: [],
-                            dataPropertyRange: [],
-                            objectPropertyRange: []
+                            dataPropertyRange: []
                         }
                     },
                     newClass = {

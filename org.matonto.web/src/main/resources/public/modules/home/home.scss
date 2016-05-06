@@ -1,11 +1,49 @@
-/* d3 test styles */
-.home .chart {
-    rect {
-         fill: steelblue;
+.home {
+    h1 {
+        font-size: 5em;
+        margin: 0;
+        padding: .5em;
+        text-align: center;
     }
-    text {
-        fill: white;
-        font: 10px sans-serif;
-        text-anchor: end;
+
+    .lead {
+        margin: 0;
+        padding: .3em 8em 3em;
+        text-align: center;
+    }
+
+    .description {
+        font-size: 1.125em;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    @-webkit-keyframes FadeIn {
+        0% {
+            opacity:0; -webkit-transform:scale(.1);
+        }
+        85% {
+            opacity:1; -webkit-transform:scale(1.05);
+        }
+        100% {
+            -webkit-transform:scale(1);
+        }
+    }
+
+    .module-box {
+        -webkit-animation: FadeIn .75s linear;
+        -webkit-animation-fill-mode:both;
+
+        &:nth-child(2) {
+            -webkit-animation-delay: .5s
+        }
+        &:nth-child(3) {
+            -webkit-animation-delay: 1s
+        }
+        &:nth-child(4) {
+            -webkit-animation-delay: 1.5s
+        }
     }
 }

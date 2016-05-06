@@ -113,11 +113,12 @@
                         deferred.reject(error);
                     });
             } else {
-                deferred.resolve(vm.mapping,jsonld);
+                deferred.resolve(vm.mapping.jsonld);
             }
             deferred.promise.then(function(data) {
                 var mapping = new Blob([angular.toJson(data)], {type: 'application/json'});
                 FileSaver.saveAs(mapping, vm.mapping.name + '.jsonld');
+                vm.initialize();
             }, onError);
         }
 
@@ -223,7 +224,6 @@
                                 jsonld: data,
                                 name: mappingName
                             };
-                            vm.displayPreviousCheck = true;
                             var ontologyId = mappingManagerService.getSourceOntologyId(vm.mapping.jsonld);
                             var ontology = _.find(ontologyManagerService.getList(), {'@id': ontologyId});
                             if (ontology) {
@@ -256,8 +256,9 @@
             vm.sourceOntology = ontology;
 
             if (ontology['@id'] !== previousSourceOntologyId) {
+                vm.ontologies = [ontology];
                 ontologyManagerService.getImportedOntologies(ontology['@id']).then(function(response) {
-                    vm.ontologies = _.concat(ontology, response);
+                    vm.ontologies = _.concat(vm.ontologies, response);
                 }, onError);
             }
 
