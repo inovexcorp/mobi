@@ -1,0 +1,39 @@
+<div class="results">
+    <div class="results-header">
+        <span ng-if="dvm.catalog.results.size === 0">No results found</span>
+        <div ng-if="dvm.catalog.results.size > 0" class="contents">
+            <span>Showing {{dvm.catalog.results.start + 1}}-{{dvm.getEndingNumber()}} of {{dvm.catalog.results.totalSize}}</span>
+            <form class="form-inline">
+                <div class="form-group">
+                    <label class="control-label">Order By</label>
+                    <select class="order-select form-control" ng-options="option as option.label for option in dvm.sortOptions" ng-model="dvm.sortOption" ng-change="dvm.changeSort()"></select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="results-list">
+        <div ng-repeat="resource in dvm.catalog.results.results" class="result">
+            <button class="btn btn-default download-btn" ng-disabled="resource.distributions && !resource.distributions.length" ng-click="dvm.catalog.downloadResource(resource.id)"><i class="fa fa-download"></i></button>
+            <h3><a ng-click="dvm.catalog.selectedResource = resource">{{resource.title}}</a></h3>
+            <p>Date Created: {{dvm.getDate(resource.issued)}}</p>
+            <p>Date Modified: {{dvm.getDate(resource.modified)}}</p>
+            <div><resource-type type="resource.type"></resource-type></div>
+        </div>
+    </div>
+    <div class="page-nav">
+        <ul ng-if="dvm.catalog.results.links" class="pagination">
+            <li ng-if="dvm.catalog.results.links.prev">
+                <a aria-label="Previous" ng-click="dvm.getPage('prev')">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <li class="active"><a>{{dvm.catalog.currentPage + 1}}</a></li>
+            <li ng-if="dvm.catalog.results.links.next">
+                <a aria-label="Next" ng-click="dvm.getPage('next')">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
