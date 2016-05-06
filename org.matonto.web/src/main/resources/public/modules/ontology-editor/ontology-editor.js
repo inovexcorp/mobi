@@ -85,7 +85,6 @@
             ontologyManagerService.delete(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state)
                 .then(function(response) {
                     vm.showDeleteConfirmation = false;
-                    // stateManagerService.clearState(vm.state.oi);
                     vm.selectItem('ontology-editor', vm.state.oi, undefined, undefined);
                 });
         }
