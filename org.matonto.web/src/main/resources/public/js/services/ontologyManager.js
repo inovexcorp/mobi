@@ -752,8 +752,7 @@
                             var data = importedOntologyIris.data,
                                 importedClasses = [],
                                 importedDataProperties = [],
-                                importedObjectProperties = [],
-                                i = 0;
+                                importedObjectProperties = [];
 
                             _.forEach(data, function(item) {
                                 importedClasses = importedClasses.concat(addOntologyIriToElements(item.classes, item.id));
