@@ -137,6 +137,9 @@ function mockMappingManager() {
                 this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.callFake(function(mapping) {
                     return [];
                 });
+                this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.callFake(function(mapping) {
+                    return [];
+                })
             });
         });
     });

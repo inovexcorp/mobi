@@ -99,11 +99,7 @@ describe('Class List directive', function() {
         it('should collect ClassMappings if they exist', function() {
             var controller = this.element.controller('classList');
             var result = controller.getClassMappings();
-            expect(result.length).toBe(0);
-
-            controller.mapping.jsonld = [{'@type': ['ClassMapping']}];
-            result = controller.getClassMappings();
-            expect(result.length).toBe(1);
+            expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalled();
         });
         it('should collect prop mappings', function() {
             var controller = this.element.controller('classList');

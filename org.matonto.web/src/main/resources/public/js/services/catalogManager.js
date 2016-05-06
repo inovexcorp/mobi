@@ -71,7 +71,7 @@
              * @methodOf catalogManager.catalogManagerService
              *
              * @description 
-             * Calls the GET /matontorest/catalog/resource-types endpoint and retuns the
+             * Calls the GET /matontorest/catalog/resource-types endpoint and returns the
              * array of resource type IRIs.
              * 
              * @returns {Promise} A promise that resolves to an array of the IRIs for all 
@@ -84,6 +84,18 @@
                     });
             }
 
+            /**
+             * @ngdoc method
+             * @name getSortOptions
+             * @methodOf catalogManager.catalogManagerService
+             *
+             * @description 
+             * Calls the GET /matontorest/catalog/sort-options endpoint and returns the
+             * array of resource field IRIs.
+             * 
+             * @return {Promise} A promise that resolves to an array of the IRIs for all
+             * supported resource fields to sort by
+             */
             self.getSortOptions = function() {
                 return $http.get(prefix + 'sort-options')
                     .then(function(response) {
@@ -137,9 +149,9 @@
                 $http.get(prefix + 'resources', config)
                     .then(function(response) {
                         self.results = response.data;
-                        $rootScope.showSpinner = false;
                     }, function(error) {
                         self.errorMessage = error.statusText;
+                    }).then(function() {
                         $rootScope.showSpinner = false;
                     });
             }
@@ -181,9 +193,9 @@
                 $http.get(url)
                     .then(function(response) {
                         self.results = response.data;
-                        $rootScope.showSpinner = false;
                     }, function(error) {
                         self.errorMessage = error.statusText;
+                    }).then(function() {
                         $rootScope.showSpinner = false;
                     });
             }
@@ -241,12 +253,14 @@
                     .then(function(response) {
                         if (response.status === 204) {
                             deferred.reject('Resource does not exist');
+                        } else if (response.status === 200) {
+                            deferred.resolve(response.data);
                         } else {
-                            deferred.resolve(response.data);                            
+                            deferred.reject('An error has occured');
                         }
-                        $rootScope.showSpinner = false;
                     }, function(error) {
                         deferred.reject(error.statusText);
+                    }).then(function() {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
@@ -272,12 +286,14 @@
                     .then(function(response) {
                         if (response.status === 204) {
                             deferred.reject('Resource does not exist');
+                        } else if (response.status === 200) {
+                            deferred.resolve(response.data);
                         } else {
-                            deferred.resolve(response.data);                            
+                            deferred.reject('An error has occured');
                         }
-                        $rootScope.showSpinner = false;
                     }, function(error) {
                         deferred.reject(error.statusText);
+                    }).then(function() {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
@@ -342,14 +358,25 @@
                         } else {
                             deferred.resolve(response.data);                            
                         }
-                        $rootScope.showSpinner = false;
                     }, function(error) {
                         deferred.reject(error.statusText);
+                    }).then(function() {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
 
+            /**
+             * @ngdoc method
+             * @name downloadResource
+             * @methodOf catalogManager.catalogManagerService
+             *
+             * @description 
+             * Retrieves the latest distribution for a resource and calls it's download link
+             * (eventually).
+             * 
+             * @param {string} resourceId The id of the resource to download
+             */
             self.downloadResource = function(resourceId) {
                 self.getResourceDistributions(resourceId)
                     .then(function(distributions) {
@@ -357,8 +384,8 @@
                             return self.getDate(dist.modified);
                         }));
                         console.log('Downloading ' + latest.title);
-                    }, function(error) {
-                        self.errorMessage = error.statusText;
+                    }, function(errorMessage) {
+                        self.errorMessage = errorMessage;
                     });
             }
 

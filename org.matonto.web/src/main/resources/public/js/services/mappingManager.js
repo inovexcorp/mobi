@@ -287,8 +287,8 @@
                 }
                 return undefined;
             }
-            self.getClassMappings = function(mapping) {
-                return getAllClassMappings(mapping);
+            self.getAllClassMappings = function(mapping) {
+                return getEntitiesByType(mapping, 'ClassMapping');
             }
             self.getPropMappingsByClass = function(mapping, classMappingId) {
                 var classMapping = getEntityById(mapping, classMappingId);
@@ -334,11 +334,8 @@
             function entityExists(mapping, id) {
                 return !!getEntityById(mapping, id);
             }
-            function getAllClassMappings(mapping) {
-                return getEntitiesByType(mapping, 'ClassMapping');
-            }
             function getClassMappingsByClass(mapping, classId) {
-                return _.filter(getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
+                return _.filter(self.getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
             }
             function getAllDataMappings(mapping) {
                 return getEntitiesByType(mapping, 'DataMapping');
@@ -351,7 +348,7 @@
                 return _.filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
             }
             function findClassWithPropMapping(mapping, propMappingId, type) {
-                return _.find(getAllClassMappings(mapping), function(classMapping) {
+                return _.find(self.getAllClassMappings(mapping), function(classMapping) {
                     return _.map(getProperties(classMapping, type), '@id').indexOf(propMappingId) >= 0;
                 });
             }

@@ -362,7 +362,7 @@
             vm.resetEditingVars();
             vm.editingClassMappingId = classMappingId;
             vm.availableProps = getAvailableProps(vm.editingClassMappingId);
-            vm.numMappedClasses = mappingManagerService.getClassMappings(vm.mapping.jsonld).length;
+            vm.numMappedClasses = mappingManagerService.getAllClassMappings(vm.mapping.jsonld).length;
         }
         vm.openAvailableProp = function(propId) {
             vm.displayPropForm(vm.editingClassMappingId);

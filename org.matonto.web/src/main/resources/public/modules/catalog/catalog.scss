@@ -7,7 +7,9 @@ $preview-width: $results-width;
 $result-header-top-margin: 20px;
 
 .catalog {
-    .filters, .results, .resource-preview {
+    .filters, 
+    .results, 
+    .resource-preview {
         float: left;
         border: 1px solid $gray-lighter;
         height: 100%;

@@ -28,7 +28,8 @@
                     var dvm = this;
 
                     dvm.getClassMappings = function() {
-                        return _.filter(dvm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']});
+                        return mappingManagerService.getAllClassMappings(dvm.mapping.jsonld);
+                        // return _.filter(dvm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']});
                     }
                     dvm.getPropMappings = function(classMapping) {
                         return mappingManagerService.getPropMappingsByClass(dvm.mapping.jsonld, classMapping['@id']);
