@@ -218,7 +218,8 @@
         }
 
         vm.addAnnotation = function() {
-            annotationManagerService.add(vm.selected, vm.ontologies[vm.state.oi].matonto.annotations);
+            var annotations = (vm.state.oi === -1) ? vm.selected.matonto.annotations : vm.ontologies[vm.state.oi].matonto.annotations;
+            annotationManagerService.add(vm.selected, annotations);
             resetAnnotationOverlay();
             vm.entityChanged();
         }
