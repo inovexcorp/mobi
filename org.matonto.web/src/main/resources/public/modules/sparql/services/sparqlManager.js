@@ -8,7 +8,7 @@
         sparqlManagerService.$inject = ['$rootScope', '$http'];
 
         function sparqlManagerService($rootScope, $http) {
-            var prefix = '/matontorest/query';
+            var prefix = '/matontorest';
             var self = this;
 
             self.prefixes = [];
@@ -37,13 +37,11 @@
                 var prefixes = self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
                 var config = {
                     params: {
-                        query: prefixes + self.queryString,
-                        start: self.start,
-                        limit: self.limit
+                        query: prefixes + self.queryString
                     }
                 }
 
-                return $http.get(prefix, config)
+                return $http.get(prefix + '/sparql', config)
                     .then(function(response) {
                         if(_.get(response, 'status') === 200) {
                             self.data = response.data;
