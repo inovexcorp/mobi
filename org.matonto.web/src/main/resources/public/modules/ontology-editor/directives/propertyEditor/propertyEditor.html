@@ -8,7 +8,7 @@
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')">Annotaions</tab-button>
+                    on-click="vm.setEditorTab('annotations')">Annotations</tab-button>
     </div>
 
     <!-- basic tab -->
@@ -60,7 +60,7 @@
                                display-text="'Range'"
                                muted-text="vm.rdfs + 'range'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.objectPropertyRange"></object-select>
+                               select-list="vm.ontology.matonto.subClasses"></object-select>
 
                 <!-- owl:equivalentProperty -->
                 <object-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"

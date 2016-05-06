@@ -50,12 +50,7 @@
 
         function submitEdit() {
             if(_.has(vm.ontology, 'matonto.originalId')) {
-                ontologyManagerService.edit(vm.ontology.matonto.originalId)
-                    .then(function(response) {
-                        // TODO: keep the current property selected if it is a property and has moved
-                        stateManagerService.clearState(vm.state.oi);
-                        vm.state = stateManagerService.getState();
-                    });
+                ontologyManagerService.edit(vm.ontology.matonto.originalId);
             }
         }
 
@@ -218,7 +213,8 @@
         }
 
         vm.addAnnotation = function() {
-            annotationManagerService.add(vm.selected, vm.ontologies[vm.state.oi].matonto.annotations);
+            var annotations = (vm.state.oi === -1) ? vm.selected.matonto.annotations : vm.ontologies[vm.state.oi].matonto.annotations;
+            annotationManagerService.add(vm.selected, annotations);
             resetAnnotationOverlay();
             vm.entityChanged();
         }
