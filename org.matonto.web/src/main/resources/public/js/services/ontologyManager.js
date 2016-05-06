@@ -383,11 +383,13 @@
                             classObj.matonto.properties.push(property);
                             var propertyIRI = $filter('splitIRI')(property['@id']);
                             var subObject = {namespace: propertyIRI.begin + propertyIRI.then, localName: propertyIRI.end};
-                            if(self.isObjectProperty(property['@type'])) {
+
+                            if(pathVariable === 'object-properties') {
                                 ontology.matonto.subObjectProperties.push(subObject);
                             } else {
                                 ontology.matonto.subDataProperties.push(subObject);
                             }
+
                             deferred.resolve(response);
                         } else {
                             console.warn('Property not added');
@@ -458,6 +460,12 @@
                 }
             }
 
+            function removeIdFromArray(id, arr) {
+                var splitId = $filter('splitIRI')(id);
+                var index = _.findIndex(arr, {namespace: splitId.begin + splitId.then, localName: splitId.end});
+                arr.splice(index, 1);
+            }
+
             function deleteOntology(ontologyId, state) {
                 $rootScope.showSpinner = true;
 
@@ -497,7 +505,9 @@
 
                             console.log('Successfully deleted class');
                             updateModels(response, ontology, classObj);
-                            ontologies[state.oi].matonto.classes.splice(state.ci, 1);
+                            ontology.matonto.classes.splice(state.ci, 1);
+                            removeIdFromArray(classId, ontology.matonto.subClasses);
+
                             deferred.resolve(response);
                         } else {
                             console.warn('Class not deleted');
@@ -541,6 +551,12 @@
                                 classObj.matonto.properties.splice(state.pi, 1);
                             } else {
                                 ontology.matonto.noDomains.splice(state.pi, 1);
+                            }
+
+                            if(type === 'object-properties') {
+                                removeIdFromArray(propertyId, ontology.matonto.subObjectProperties);
+                            } else {
+                                removeIdFromArray(propertyId, ontology.matonto.subDataProperties);
                             }
 
                             deferred.resolve(response);
