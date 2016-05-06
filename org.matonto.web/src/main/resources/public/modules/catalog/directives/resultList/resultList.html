@@ -21,19 +21,5 @@
             <div><resource-type type="resource.type"></resource-type></div>
         </div>
     </div>
-    <div class="page-nav">
-        <ul ng-if="dvm.catalog.results.links" class="pagination">
-            <li ng-if="dvm.catalog.results.links.prev">
-                <a aria-label="Previous" ng-click="dvm.getPage('prev')">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            </li>
-            <li class="active"><a>{{dvm.catalog.currentPage + 1}}</a></li>
-            <li ng-if="dvm.catalog.results.links.next">
-                <a aria-label="Next" ng-click="dvm.getPage('next')">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            </li>
-        </ul>
-    </div>
+    <pagination links="dvm.catalog.results.links" current-page="dvm.catalog.currentPage" get-page="dvm.getPage(direction)"></pagination>
 </div>
