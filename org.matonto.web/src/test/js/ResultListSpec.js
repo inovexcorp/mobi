@@ -85,7 +85,6 @@ describe('Result List directive', function() {
             expect(this.element.hasClass('results')).toBe(true);
             expect(this.element.querySelectorAll('.results-header').length).toBe(1);
             expect(this.element.querySelectorAll('.results-list').length).toBe(1);
-            expect(this.element.querySelectorAll('.page-nav').length).toBe(1);
         });
         it('depending on whether results were found', function() {
             var resultsHeader = angular.element(this.element.querySelectorAll('.results-header')[0]);
@@ -119,20 +118,8 @@ describe('Result List directive', function() {
                 }
             }
         });
-        it('depending on whether there are links', function() {
-            scope.catalogManagerService.results.links = undefined;
-            scope.$digest();
-            var pageNav = angular.element(this.element.querySelectorAll('.page-nav')[0]);
-            expect(pageNav.querySelectorAll('ul.pagination').length).toBe(0);
-            
-            scope.catalogManagerService.results.links = {};
-            scope.$digest();
-            expect(pageNav.querySelectorAll('ul.pagination').length).toBe(1);
-            expect(pageNav.querySelectorAll('ul.pagination li').length).toBe(1);
-
-            scope.catalogManagerService.results.links = {prev: 'test', next: 'test'};
-            scope.$digest();
-            expect(pageNav.querySelectorAll('ul.pagination li').length).toBe(3);
+        it('with a pagination', function() {
+            expect(this.element.find('pagination').length).toBe(1);
         });
     });
     it('should call changeSort when a different order option is chosen', function() {
@@ -158,25 +145,6 @@ describe('Result List directive', function() {
         var resourceTitle = element.querySelectorAll('.results-list .result a')[0];
         angular.element(resourceTitle).triggerHandler('click');
         expect(scope.catalogManagerService.selectedResource).toEqual(scope.catalogManagerService.results.results[0]);
-    });
-    it('should call getPage when a change page link is clicked', function() {
-        scope.catalogManagerService = catalogManagerSvc;
-        scope.catalogManagerService.results.size = 1;
-        scope.catalogManagerService.results.results = [{}];
-        scope.catalogManagerService.results.links.prev = 'prev';
-        scope.catalogManagerService.results.links.next = 'next';
-        var element = $compile(angular.element('<result-list></result-list>'))(scope);
-        scope.$digest();
-        var controller = element.controller('resultList');
-        spyOn(controller, 'getPage');
-
-        var prevLink = element.querySelectorAll('.page-nav .pagination li a')[0];
-        angular.element(prevLink).triggerHandler('click');
-        expect(controller.getPage).toHaveBeenCalledWith('prev');
-
-        var nextLink = element.querySelectorAll('.page-nav .pagination li a')[2];
-        angular.element(nextLink).triggerHandler('click');
-        expect(controller.getPage).toHaveBeenCalledWith('next');
     });
     it('should call downloadResource when a resource download button is clicked', function() {
         scope.catalogManagerService = catalogManagerSvc;
