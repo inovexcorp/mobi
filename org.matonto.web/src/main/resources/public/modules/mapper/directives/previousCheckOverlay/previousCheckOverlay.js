@@ -26,13 +26,13 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
+                    var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping.jsonld);
                     dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
                         return parseInt(obj.index, 10) > dvm.filePreview.headers.length - 1;
                     }), 'index');
 
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var propId = mappingManagerService.getPropIdByMappingId(dvm.mapping, dataMappingId);
+                        var propId = mappingManagerService.getPropIdByMappingId(dvm.mapping.jsonld, dataMappingId);
                         var classId = mappingManagerService.getClassIdByMapping(
                             mappingManagerService.findClassWithDataMapping(dvm.mapping.jsonld, dataMappingId)
                         );
