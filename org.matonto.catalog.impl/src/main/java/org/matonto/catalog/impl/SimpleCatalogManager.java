@@ -136,9 +136,10 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult countResults = countQuery.evaluate();
 
         int totalCount;
-        if (countResults.hasNext() && countResults.getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
-            BindingSet bindingSet = countResults.next();
-            totalCount = Bindings.requiredLiteral(bindingSet, RESOURCE_COUNT_BINDING).intValue();
+        BindingSet countBindingSet;
+        if (countResults.hasNext()
+                && (countBindingSet = countResults.next()).getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
+            totalCount = Bindings.requiredLiteral(countBindingSet, RESOURCE_COUNT_BINDING).intValue();
             countResults.close();
         } else {
             countResults.close();
@@ -163,10 +164,10 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult result = query.evaluate();
 
         List<PublishedResource> resources = new ArrayList<>();
-        while (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
-            BindingSet bindingSet = result.next();
-            Resource resource = vf.createIRI(Bindings.requiredResource(bindingSet, RESOURCE_BINDING).stringValue());
-            PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
+        BindingSet resultsBindingSet;
+        while (result.hasNext() && (resultsBindingSet = result.next()).getBindingNames().contains(RESOURCE_BINDING)) {
+            Resource resource = vf.createIRI(Bindings.requiredResource(resultsBindingSet, RESOURCE_BINDING).stringValue());
+            PublishedResource publishedResource = processResourceBindingSet(resultsBindingSet, resource, conn);
             resources.add(publishedResource);
         }
 
@@ -192,8 +193,8 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult result = query.evaluate();
 
         // TODO: Handle more than one result (warn?)
-        if (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
-            BindingSet bindingSet = result.next();
+        BindingSet bindingSet;
+        if (result.hasNext() && (bindingSet = result.next()).getBindingNames().contains(RESOURCE_BINDING)) {
             PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
 
             result.close();

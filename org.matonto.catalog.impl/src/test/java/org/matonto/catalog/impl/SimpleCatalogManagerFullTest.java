@@ -184,4 +184,32 @@ public class SimpleCatalogManagerFullTest {
         Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
         Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
     }
+
+    @Test
+    public void testFindResourceWithNoEntries() throws Exception {
+        // given
+        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo2.initialize();
+        manager.setRepository(repo2);
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
+
+        // then
+        assertThat(resources.getPage().size(), equalTo(0));
+    }
+
+    @Test
+    public void testGetResourceWithNoEntries() throws Exception {
+        // given
+        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo2.initialize();
+        manager.setRepository(repo2);
+
+        // when
+        Optional<PublishedResource> resource = manager.getResource(vf.createIRI("http://test.com/123"));
+
+        // then
+        assertThat(resource, equalTo(Optional.empty()));
+    }
 }

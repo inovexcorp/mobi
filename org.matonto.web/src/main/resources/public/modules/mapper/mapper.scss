@@ -9,10 +9,10 @@ $rdf-controls-height: 34px + $rdf-padding/2;
 .float-container {
     overflow: hidden;
 }
-.mapper {
-    .header-link {
+.header-link {
         font-size: 14px;
     }
+.mapper {
     #mapper-content {
         margin-left: $sidebar-width;
         height: 100%;
