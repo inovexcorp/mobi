@@ -18,21 +18,28 @@
             self.errorMessage = '';
             self.infoMessage = 'Please submit a query to see results here.';
 
+            self.limit = 100;
+            self.start = 0;
+
             function getMessage(response, defaultMessage) {
                 return _.get(response, 'statusText') || defaultMessage;
             }
 
-            self.queryRdf = function() {
+            self.queryRdf = function(limit, start) {
                 $rootScope.showSpinner = true;
 
                 self.data = {};
                 self.errorMessage = '';
                 self.infoMessage = '';
 
-                var prefixes = self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, ' PREFIX ') : '';
+                self.start = start;
+
+                var prefixes = self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
                 var config = {
                     params: {
-                        query: prefixes + self.queryString
+                        query: prefixes + self.queryString,
+                        start: self.start,
+                        limit: self.limit
                     }
                 }
 

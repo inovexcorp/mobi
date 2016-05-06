@@ -10,6 +10,10 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class JSONQueryResults {
 
     private static JSONObject writeValue(Value value) {
@@ -38,7 +42,17 @@ public class JSONQueryResults {
         return result;
     }
 
-    public static JSONObject getResults(TupleQueryResult queryResults) {
+    public static List<JSONObject> getBindings(TupleQueryResult queryResults) {
+        List<JSONObject> bindings = new ArrayList<>();
+        queryResults.forEach(queryResult -> {
+            JSONObject bindingSet = new JSONObject();
+            queryResult.forEach(binding -> bindingSet.put(binding.getName(), writeValue(binding.getValue())));
+            bindings.add(bindingSet);
+        });
+        return bindings;
+    }
+
+    public static JSONObject getResponse(TupleQueryResult queryResults) {
         JSONObject data = new JSONObject();
 
         JSONObject head = new JSONObject();
@@ -47,12 +61,7 @@ public class JSONQueryResults {
         head.put("vars", vars);
 
         JSONObject results = new JSONObject();
-        JSONArray bindings = new JSONArray();
-        queryResults.forEach(queryResult -> {
-            JSONObject bindingSet = new JSONObject();
-            queryResult.forEach(binding -> bindingSet.put(binding.getName(), writeValue(binding.getValue())));
-            bindings.add(bindingSet);
-        });
+        JSONArray bindings = JSONArray.fromObject(getBindings(queryResults));
         results.put("bindings", bindings);
 
         data.put("head", head);

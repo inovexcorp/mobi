@@ -1,0 +1,15 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sparql-results {
+    border: 1px solid #ccc;
+    overflow-y: auto;
+
+    .table {
+        margin: 0;
+    }
+
+    .message {
+        margin: 10px;
+    }
+}

@@ -1,6 +1,7 @@
 describe('SPARQL Manager service', function() {
     var $httpBackend,
-        sparqlManagerSvc;
+        sparqlManagerSvc,
+        url;
 
     beforeEach(function() {
         module('sparqlManager');
@@ -9,6 +10,8 @@ describe('SPARQL Manager service', function() {
             sparqlManagerSvc = sparqlManagerService;
             $httpBackend = _$httpBackend_;
         });
+
+        url = '/matontorest/query?limit=' + sparqlManagerSvc.limit + '&query=';
     });
 
     it('should query the repository', function(done) {
@@ -18,7 +21,7 @@ describe('SPARQL Manager service', function() {
         };
 
         $httpBackend
-            .expectGET('/matontorest/query?query=')
+            .expectGET(url)
             .respond(200, response);
         sparqlManagerSvc.queryRdf();
         $httpBackend.flush();
@@ -30,7 +33,7 @@ describe('SPARQL Manager service', function() {
         var statusMessage = 'Status Message';
 
         $httpBackend
-            .expectGET('/matontorest/query?query=')
+            .expectGET(url)
             .respond(204, undefined, undefined, statusMessage);
         sparqlManagerSvc.queryRdf();
         $httpBackend.flush();
@@ -42,7 +45,7 @@ describe('SPARQL Manager service', function() {
         var defaultStatusMessage = 'There was a problem getting the results.';
 
         $httpBackend
-            .expectGET('/matontorest/query?query=')
+            .expectGET(url)
             .respond(204);
         sparqlManagerSvc.queryRdf();
         $httpBackend.flush();
@@ -54,7 +57,7 @@ describe('SPARQL Manager service', function() {
         var statusMessage = 'Status Message';
 
         $httpBackend
-            .expectGET('/matontorest/query?query=')
+            .expectGET(url)
             .respond(400, undefined, undefined, statusMessage);
         sparqlManagerSvc.queryRdf();
         $httpBackend.flush();
@@ -66,7 +69,7 @@ describe('SPARQL Manager service', function() {
         var defaultStatusMessage = 'A server error has occurred. Please try again later.';
 
         $httpBackend
-            .expectGET('/matontorest/query?query=')
+            .expectGET(url)
             .respond(400);
         sparqlManagerSvc.queryRdf();
         $httpBackend.flush();
