@@ -1,3 +1,133 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+$filters-width: 10%;
+$results-width: 45%;
+$preview-width: $results-width;
+$result-header-top-margin: 20px;
+
+.catalog {
+    .filters, 
+    .results, 
+    .resource-preview {
+        float: left;
+        border: 1px solid $gray-lighter;
+        height: 100%;
+    }
+    .filters {
+        width: $filters-width;
+
+        .filter-header {
+            display: block;
+            font-weight: bold;
+            background-color: $gray;
+            padding: 10px;
+            color: #fff;
+        }
+        ul li {
+            display: block;
+            border-bottom: 1px solid $gray-lighter;
+            position: relative;
+
+            a {
+                display: block;
+                padding: 10px;
+
+                &:hover {
+                    text-decoration: none;
+                }
+                .fa {
+                    display: none;
+                    position: absolute;
+                    top: 25%;
+                    right: 10px;
+                    vertical-align: middle;
+                }
+            }
+            &.applied a {
+                background-color: $gray-light;
+                color: #fff;
+
+                &:hover .fa {
+                    display: inline-block;
+                }
+            }
+            &.not-applied a {
+                color: #000;
+
+                &:hover {
+                    background-color: $gray-lighter;
+
+                    .fa {
+                        display: inline-block;
+                    }
+                }
+            }
+        }
+        .triangle-right {
+            @include right-arrow(20px, $gray-light);
+            position: absolute;
+            top: 0;
+            right: -20px;
+        }
+    }
+    .results {
+        width: $results-width;
+        padding: 0.5em 0.5em 0.5em 1em;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        .results-header {
+            span {
+                font-size: 1.5em;
+            }
+            form {
+                float: right;
+            }
+        }
+        .results-list {
+            padding-bottom: 80px;
+
+            .result {
+                border-bottom: 1px solid $gray-lighter;
+                padding: 0.5em;
+                position: relative;
+
+                h3 {
+                    margin-top: $result-header-top-margin;
+                }
+                .download-btn {
+                    float: right;
+                    margin-top: $result-header-top-margin;
+                }
+            }
+        }
+        .page-nav {
+            display: block;
+            text-align: center;
+            position: fixed;
+            left: $filters-width;
+            right: $preview-width;
+            bottom: 0;
+        }
+    }
+    .resource-preview {
+        width: $preview-width;
+        padding: 0.5em;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        h1 span {
+            font-size: 0.5em;
+            vertical-align: middle;
+        }
+        .keywords {
+            li {
+                margin: 0 5px;
+                float: left;
+                color: $gray-dark;
+                color: $gray-lighter;
+            }
+        }
+    }
+}

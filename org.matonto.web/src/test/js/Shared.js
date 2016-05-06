@@ -84,7 +84,7 @@ function mockOntologyManager() {
                 });
                 this.getThenRestructure = jasmine.createSpy('getThenRestructure').and.callFake(function(ontologyId) {
                     if (ontologyId) {
-                        return $q.when({'@id': ontologyId});                        
+                        return $q.when({'@id': ontologyId});
                     } else {
                         return $q.reject('Something went wrong');
                     }
@@ -137,6 +137,52 @@ function mockMappingManager() {
                 this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.callFake(function(mapping) {
                     return [];
                 });
+                this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.callFake(function(mapping) {
+                    return [];
+                })
+            });
+        });
+    });
+}
+
+function mockCatalogManager() {
+    beforeEach(function() {
+        angular.module('catalogManager', []);
+
+        module(function($provide) {
+            $provide.service('catalogManagerService', function($q) {
+                this.selectedResource = undefined;
+                this.currentPage = 0;
+                this.filters = {
+                    Resources: []
+                };
+                this.sortBy = '';
+                this.asc = false;
+                this.errorMessage = '';
+                this.results = {
+                    size: 0,
+                    totalSize: 0,
+                    results: [],
+                    limit: 0,
+                    start: 0,
+                    links: {
+                        base: '',
+                        next: '',
+                        prev: ''
+                    }
+                };
+                this.getResources = jasmine.createSpy('getResources');
+                this.getSortOptions = jasmine.createSpy('getSortOptions').and.callFake(function() {
+                    return $q.when([]);
+                });
+                this.getResultsPage = jasmine.createSpy('getResultsPage');
+                this.downloadResource = jasmine.createSpy('downloadResource');
+                this.getType = jasmine.createSpy('getType').and.callFake(function(type) {
+                    return '';
+                });
+                this.getDate = jasmine.createSpy('getDate').and.callFake(function(date) {
+                    return new Date();
+                });
             });
         });
     });
@@ -148,7 +194,7 @@ function mockPrefixes() {
 
         module(function($provide) {
             $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = '';
+                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = '';
             });
         });
     });

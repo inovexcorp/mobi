@@ -28,10 +28,10 @@
                     var dvm = this;
 
                     dvm.getClassId = function() {
-                        return mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
+                        return mappingManagerService.getClassIdByMappingId(dvm.mapping.jsonld, dvm.classMappingId);
                     }
                     dvm.getPropId = function() {
-                        return mappingManagerService.getPropIdByMappingId(dvm.mapping, dvm.selectedPropMapping);
+                        return mappingManagerService.getPropIdByMappingId(dvm.mapping.jsonld, dvm.selectedPropMapping);
                     }
                     dvm.getTitle = function() {
                         var classId = dvm.getClassId();
