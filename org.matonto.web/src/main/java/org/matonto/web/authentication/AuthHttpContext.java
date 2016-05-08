@@ -10,9 +10,16 @@ import org.osgi.service.http.HttpContext;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.*;
+import javax.security.auth.login.AccountException;
+import javax.security.auth.login.FailedLoginException;
+import javax.security.auth.login.LoginContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -70,13 +77,69 @@ public abstract class AuthHttpContext implements HttpContext {
 
     protected boolean authenticated(HttpServletRequest req, String username, String password) {
         // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
-        boolean success = ((username.equals("admin") && password.equals("M@tontoRox!")));
+        Optional<Subject> subjectOptional = doAuthenticate(username, password);
 
-        if (success) {
-            req.setAttribute(REMOTE_USER, "admin");
+        if (subjectOptional.isPresent()) {
+            req.setAttribute(REMOTE_USER, username);
+            return true;
+        } else {
+            return false;
         }
+    }
 
-        return success;
+    public Optional<Subject> doAuthenticate(final String username, final String password) {
+        try {
+            Subject subject = new Subject();
+
+            // TODO: the realm (karaf) may need to be configurable
+            String realm = "karaf";
+
+            LoginContext loginContext = new LoginContext(realm, subject, callbacks -> {
+                for (Callback callback : callbacks) {
+                    if (callback instanceof NameCallback) {
+                        ((NameCallback) callback).setName(username);
+                    } else if (callback instanceof PasswordCallback) {
+                        ((PasswordCallback) callback).setPassword(password.toCharArray());
+                    } else {
+                        throw new UnsupportedCallbackException(callback);
+                    }
+                }
+            });
+            loginContext.login();
+
+            // TODO: Configurable?
+            String role = "admin";
+
+            String clazz = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
+            String name = role;
+            int idx = role.indexOf(':');
+            if (idx > 0) {
+                clazz = role.substring(0, idx);
+                name = role.substring(idx + 1);
+            }
+            boolean found = false;
+            for (Principal p : subject.getPrincipals()) {
+                if (p.getClass().getName().equals(clazz)
+                        && p.getName().equals(name)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("User does not have the required role " + role);
+                return Optional.empty();
+            }
+            return Optional.of(subject);
+        } catch (FailedLoginException e) {
+            log.debug("Login failed", e);
+            return Optional.empty();
+        } catch (AccountException e) {
+            log.warn("Account failure", e);
+            return Optional.empty();
+        } catch (GeneralSecurityException e) {
+            log.error("General Security Exception", e);
+            return Optional.empty();
+        }
     }
 
     @Override
