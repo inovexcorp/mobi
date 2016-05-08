@@ -91,8 +91,8 @@ public abstract class AuthHttpContext implements HttpContext {
         try {
             Subject subject = new Subject();
 
-            // TODO: the realm (karaf) may need to be configurable
-            String realm = "karaf";
+            // TODO: the realm may need to be configurable
+            String realm = "matonto";
 
             LoginContext loginContext = new LoginContext(realm, subject, callbacks -> {
                 for (Callback callback : callbacks) {

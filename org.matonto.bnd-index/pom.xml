@@ -134,6 +134,11 @@
             <artifactId>catalog.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
