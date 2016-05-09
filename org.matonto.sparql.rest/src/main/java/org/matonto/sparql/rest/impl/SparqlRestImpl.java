@@ -3,6 +3,9 @@ package org.matonto.sparql.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONObject;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.query.TupleQueryResult;
@@ -18,8 +21,11 @@ import org.matonto.sparql.rest.jaxb.SparqlPaginatedResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component(immediate = true)
@@ -30,6 +36,41 @@ public class SparqlRestImpl implements SparqlRest {
     private RepositoryManager repositoryManager;
 
     private final Logger log = LoggerFactory.getLogger(SparqlRestImpl.class);
+
+    private Links buildLinks(UriInfo uriInfo, int size, int limit, int start) {
+        String path = uriInfo.getPath();
+
+        Links links = new Links();
+        links.setBase(uriInfo.getBaseUri().toString());
+        links.setSelf(uriInfo.getAbsolutePath().toString());
+        links.setContext(path);
+
+        if (size == limit) {
+            String next = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start + limit);
+            links.setNext(next);
+        }
+
+        if (start != 0) {
+            String prev = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start - limit);
+            links.setPrev(prev);
+        }
+
+        return links;
+    }
+
+    private String buildQueryString(MultivaluedMap<String, String> queryParams, int start) {
+        List<NameValuePair> params = new ArrayList<>();
+
+        queryParams.forEach( (key, values) -> {
+            if (key.equals("start")) {
+                params.add(new BasicNameValuePair(key, String.valueOf(start)));
+            } else {
+                params.add(new BasicNameValuePair(key, values.get(0)));
+            }
+        });
+
+        return URLEncodedUtils.format(params, '&', Charset.forName("UTF-8"));
+    }
 
     @Reference
     public void setRepository(RepositoryManager repositoryManager) {
@@ -87,20 +128,21 @@ public class SparqlRestImpl implements SparqlRest {
             List<JSONObject> bindings = JSONQueryResults.getBindings(queryResults);
 
             PaginatedResults<JSONObject> paginatedResults = new PaginatedResults<>();
+            int size;
 
             if((start + limit) > bindings.size()) {
-                paginatedResults.setResults(bindings);
+                paginatedResults.setResults(bindings.subList(start, bindings.size()));
+                size = bindings.size() - start;
             } else {
                 paginatedResults.setResults(bindings.subList(start, start + limit));
+                size = limit;
             }
 
             paginatedResults.setLimit(limit);
             paginatedResults.setStart(start);
             paginatedResults.setTotalSize(bindings.size());
-            // TODO: this depends on the size parameter we don't have at the moment
-            paginatedResults.setLinks(new Links());
-            // TODO: get size which will stop at some point
-            paginatedResults.setSize(0);
+            paginatedResults.setSize(size);
+            paginatedResults.setLinks(buildLinks(uriInfo, size, limit, start));
 
             SparqlPaginatedResults<JSONObject> response = new SparqlPaginatedResults<>();
             response.setBindingNames(queryResults.getBindingNames());
