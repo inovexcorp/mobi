@@ -1,6 +1,6 @@
 <!-- ontology-editor.html -->
-<div class="ontology-editor clearfix" ng-controller="OntologyEditorController as vm">
-    <aside class="left-nav nav">
+<div class="ontology-editor clearfix full-height" ng-controller="OntologyEditorController as vm">
+    <aside class="left-nav nav full-height">
         <ul>
             <li>
                 <button ng-click="vm.save()" title="Save All Changes"
@@ -67,10 +67,10 @@
         </ul>
     </aside>
 
-    <div class="row">
+    <div class="row full-height">
         <!-- navigation structure -->
-        <section class="col-xs-4">
-            <div class="tree-container boxed">
+        <section class="col-xs-4 full-height">
+            <div class="tree-container boxed full-height">
                 <!-- tab buttons -->
                 <div class="btn-group btn-group-justified" role="group">
                     <tab-button is-active="vm.state.tab === 'everything'"
@@ -101,7 +101,7 @@
         </section>
 
         <!-- edit/create form section -->
-        <section class="col-xs-8">
+        <section class="col-xs-8 full-height">
             <div class="editor boxed">
                 <!-- default -->
                 <div ng-if="vm.state.editor === 'default'" class="tab default">
