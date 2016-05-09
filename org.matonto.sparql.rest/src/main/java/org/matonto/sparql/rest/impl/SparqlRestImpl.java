@@ -11,6 +11,7 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.jaxb.Links;
 import org.matonto.rest.util.jaxb.PaginatedResults;
 import org.matonto.sparql.rest.SparqlRest;
 import org.matonto.sparql.rest.jaxb.SparqlPaginatedResults;
@@ -19,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component(immediate = true)
@@ -87,14 +87,20 @@ public class SparqlRestImpl implements SparqlRest {
             List<JSONObject> bindings = JSONQueryResults.getBindings(queryResults);
 
             PaginatedResults<JSONObject> paginatedResults = new PaginatedResults<>();
-            paginatedResults.setResults(bindings.subList(start, start + limit));
+
+            if((start + limit) > bindings.size()) {
+                paginatedResults.setResults(bindings);
+            } else {
+                paginatedResults.setResults(bindings.subList(start, start + limit));
+            }
+
             paginatedResults.setLimit(limit);
             paginatedResults.setStart(start);
-            // TODO: get size which will stop at some point
-            // paginatedResults.setSize(limit);
             paginatedResults.setTotalSize(bindings.size());
             // TODO: this depends on the size parameter we don't have at the moment
-            // paginatedResults.setLinks();
+            paginatedResults.setLinks(new Links());
+            // TODO: get size which will stop at some point
+            paginatedResults.setSize(0);
 
             SparqlPaginatedResults<JSONObject> response = new SparqlPaginatedResults<>();
             response.setBindingNames(queryResults.getBindingNames());

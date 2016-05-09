@@ -10,7 +10,7 @@ import java.util.List;
 public class SparqlPaginatedResults<T> {
 
     private PaginatedResults<T> paginatedResults;
-    private List<String> bindings;
+    private List<String> bindingNames;
 
     @XmlElement
     public PaginatedResults<T> getPaginatedResults() {
@@ -23,10 +23,10 @@ public class SparqlPaginatedResults<T> {
 
     @XmlElement
     public List<String> getBindingNames() {
-        return bindings;
+        return bindingNames;
     }
 
-    public void setBindingNames(List<String> bindings) {
-        this.bindings = bindings;
+    public void setBindingNames(List<String> bindingNames) {
+        this.bindingNames = bindingNames;
     }
 }
