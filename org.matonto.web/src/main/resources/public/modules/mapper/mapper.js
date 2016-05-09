@@ -9,9 +9,9 @@
             'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay','mappingNameOverlay', 'mappingNameInput'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$rootScope', '$scope', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$rootScope', '$scope', '$timeout', '$element', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($rootScope, $scope, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($rootScope, $scope, $timeout, $element, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var confirmChange = false;
         var previousSourceOntologyId;
@@ -39,7 +39,6 @@
         vm.delimitedContainsHeaders;
         vm.delimitedFileName;
         vm.filePreview;
-        vm.tableHeight;
         vm.mapping;
         vm.saveToServer;
         vm.rdfPreview;
@@ -72,7 +71,6 @@
             vm.delimitedContainsHeaders = true;
             vm.delimitedFileName = '';
             vm.filePreview = undefined;
-            vm.tableHeight = 0;
             vm.mapping = angular.copy(defaultMapping);
             vm.saveToServer = true;
             vm.rdfPreview = '';

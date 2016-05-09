@@ -64,7 +64,7 @@
     <!-- Content besides step through sidebar -->
     <div id="mapper-content" class="container-fluid">
         <h3 ng-if="!vm.areOntologies()">No available ontologies to map with</h3>
-        <div id="main" ng-style="{paddingBottom: (vm.tableHeight + 'px')}">
+        <div id="main">
             <file-form ng-if="vm.activeStep === 0 && vm.areOntologies()" 
                 delimited-file="vm.delimitedFile" 
                 on-upload-click="vm.submitFileUpload()" 
@@ -144,7 +144,6 @@
             rows="vm.filePreview.rows" 
             headers="vm.filePreview.headers"
             mapped-columns="vm.mappedColumns" 
-            table-height="vm.tableHeight"
             highlight-idx="vm.isDatatypeProperty(vm.selectedPropId) ? vm.filePreview.headers.indexOf(vm.selectedColumn) : undefined"
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>
