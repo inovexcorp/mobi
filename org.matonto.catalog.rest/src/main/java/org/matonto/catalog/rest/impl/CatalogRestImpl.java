@@ -50,6 +50,7 @@ public class CatalogRestImpl implements CatalogRest {
         Set<String> types = new HashSet<>();
         types.add("http://matonto.org/ontologies/catalog#PublishedResource");
         types.add("http://matonto.org/ontologies/catalog#Ontology");
+        types.add("http://matonto.org/ontologies/catalog#Mapping");
         RESOURCE_TYPES = Collections.unmodifiableSet(types);
 
         Set<String> sortResources = new HashSet<>();
