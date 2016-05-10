@@ -42,8 +42,13 @@
 
         /* Ontology Management */
         function setVariables(oi) {
-            vm.selected = ontologyManagerService.getObject(vm.state);
-            vm.ontology = ontologyManagerService.getOntology(oi);
+            if(oi === undefined) {
+                vm.selected = undefined;
+                vm.ontology = undefined;
+            } else {
+                vm.selected = ontologyManagerService.getObject(vm.state);
+                vm.ontology = ontologyManagerService.getOntology(oi);
+            }
             vm.preview = 'Please select a serialization and hit refresh.';
             vm.serialization = '';
         }
@@ -85,7 +90,11 @@
             ontologyManagerService.delete(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state)
                 .then(function(response) {
                     vm.showDeleteConfirmation = false;
-                    vm.selectItem('ontology-editor', vm.state.oi, undefined, undefined);
+                    if(response.selectOntology) {
+                        vm.selectItem('ontology-editor', vm.state.oi, undefined, undefined);
+                    } else {
+                        vm.selectItem('default', undefined, undefined, undefined);
+                    }
                 });
         }
 
