@@ -9,9 +9,9 @@
             'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay','mappingNameOverlay', 'mappingNameInput'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$rootScope', '$scope', '$timeout', '$element', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$rootScope', '$scope', '$element', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($rootScope, $scope, $timeout, $element, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($rootScope, $scope, $element, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var confirmChange = false;
         var previousSourceOntologyId;

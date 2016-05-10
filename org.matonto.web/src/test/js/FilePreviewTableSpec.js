@@ -101,17 +101,22 @@ describe('File Preview Table directive', function() {
             expect(icon.hasClass('fa-expand')).toBe(true);
             expect(icon.hasClass('fa-compress')).toBe(false);
             expect(this.element.hasClass('big')).toBe(false);
-            expect(this.element.hasClass('no-scroll')).toBe(true);
-            expect(this.element.hasClass('scroll')).toBe(false);
 
             controller.big = true;
-            controller.small = false;
             scope.$digest();
             expect(icon.hasClass('fa-expand')).toBe(false);
             expect(icon.hasClass('fa-compress')).toBe(true);
-            expect(this.element.hasClass('true')).toBe(false);
-            expect(this.element.hasClass('no-scroll')).toBe(false);
-            expect(this.element.hasClass('scroll')).toBe(true);
+            expect(this.element.hasClass('big')).toBe(true);
+        });
+        it('with the correct number of rows depending on the number to show', function() {
+            var controller = this.element.controller('filePreviewTable');
+            scope.rows = [[''], [''], [''], [''], [''], ['']];
+            scope.$digest();
+            expect(this.element.querySelectorAll('tbody tr:not(.hidden)').length).toBe(5);
+
+            controller.showNum = scope.rows.length;
+            scope.$digest();
+            expect(this.element.querySelectorAll('tbody tr:not(.hidden)').length).toBe(scope.rows.length);
         });
         it('with the correct classes if clickable', function() {
             var items = this.element.querySelectorAll('th, td');
@@ -189,7 +194,7 @@ describe('File Preview Table directive', function() {
         expect(tableHeader.hasClass('highlight')).toBe(false);
         for (var i = 0; i < rows.length; i++) {
             var items = rows[i].querySelectorAll('td');
-            expect(angular.element(items[0]).hasC   lass('highlight')).toBe(false);
+            expect(angular.element(items[0]).hasClass('highlight')).toBe(false);
         }
     });
     it('should highlight columns on hover of td', function() {

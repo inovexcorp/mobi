@@ -23,7 +23,6 @@
                         elem[0].addEventListener(transitionEnd, function() {
                             if (ctrl.big) {
                                 ctrl.showNum = scope.rows.length;
-                                ctrl.small = false;
                                 scope.$digest();
                             }
                         });
@@ -32,14 +31,12 @@
                 controller: function() {
                     var dvm = this;
                     dvm.big = false;
-                    dvm.small = true;
                     dvm.showNum = 5;
 
                     dvm.toggleTable = function() {
                         dvm.big = !dvm.big;
                         if (!dvm.big) {
                             dvm.showNum = 5;
-                            dvm.small = true;
                         }
                     }
                 },

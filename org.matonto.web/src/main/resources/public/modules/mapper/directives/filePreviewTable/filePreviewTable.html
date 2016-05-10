@@ -1,4 +1,4 @@
-<div class="file-preview-table" ng-class="{'big': dvm.big, 'no-scroll': dvm.small, 'scroll': !dvm.small}">
+<div class="file-preview-table" ng-class="{'big': dvm.big}">
     <button type="button" class="toggle-table" ng-class="{'opposite': dvm.hoverIdx === headers.length - 1}" ng-click="dvm.toggleTable()">
         <i class="fa" ng-class="{'fa-expand': !dvm.big, 'fa-compress': dvm.big}"></i>
     </button>
@@ -13,7 +13,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="row in rows track by $index" ng-class="{'hidden': dvm.small && $index > dvm.showNum}">
+            <tr ng-repeat="row in rows track by $index" ng-class="{'hidden': $index > dvm.showNum - 1}">
                 <td ng-repeat="item in row track by $index" 
                     ng-mouseover="dvm.hoverIdx = $index"
                     ng-mouseleave="dvm.hoverIdx = undefined"
