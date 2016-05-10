@@ -15,7 +15,7 @@
                 controller: ['sparqlManagerService', 'prefixes', function(sparqlManagerService, prefixes) {
                     var dvm = this;
 
-                    dvm.sparqlManagerService = sparqlManagerService;
+                    dvm.sparql = sparqlManagerService;
 
                     dvm.prefixList = _.map(prefixes, function(value, key) {
                         return key + ': <' + value + '>';

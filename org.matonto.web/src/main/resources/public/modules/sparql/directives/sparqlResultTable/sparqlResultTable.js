@@ -17,13 +17,24 @@
                 controller: ['sparqlManagerService', function(sparqlManagerService) {
                     var dvm = this;
 
-                    dvm.sparqlManagerService = sparqlManagerService;
+                    dvm.sparql = sparqlManagerService;
+
+                    dvm.getPage = function(direction) {
+                        if(direction === 'next') {
+                            dvm.sparql.currentPage += 1;
+                            sparqlManagerService.getResults(dvm.sparql.data.paginatedResults.links.base + dvm.sparql.data.paginatedResults.links.next);
+                        } else {
+                            dvm.sparql.currentPage -= 1;
+                            sparqlManagerService.getResults(dvm.sparql.data.paginatedResults.links.base + dvm.sparql.data.paginatedResults.links.prev);
+                        }
+                    }
                 }],
                 link: function(scope, element) {
                     var resize = function() {
                         var totalHeight = document.getElementsByClassName('sparql')[0].clientHeight;
                         var topHeight = document.getElementsByClassName('sparql-editor')[0].clientHeight;
-                        element.css('height', (totalHeight - topHeight) + 'px');
+                        var pagingHeight = element[0].querySelector('.paging-details').clientHeight;
+                        element.css('height', (totalHeight - topHeight - pagingHeight) + 'px');
                     }
 
                     angular.element($window).bind('resize', function() {

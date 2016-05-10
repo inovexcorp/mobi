@@ -12,4 +12,28 @@
     .message {
         margin: 10px;
     }
+
+    .paging-details {
+        bottom: 15px;
+        left: 0;
+        min-height: 54px;
+        padding: 0 30px;
+        position: fixed;
+        width: 100%;
+
+        .page-count {
+            float: left;
+            font-size: 1.125em;
+            line-height: 54px;
+            margin: 0;
+        }
+
+        .page-nav {
+            float: right;
+
+            .pagination {
+                margin: 15px 0 0;
+            }
+        }
+    }
 }

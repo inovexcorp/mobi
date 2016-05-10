@@ -20,17 +20,24 @@ describe('SPARQL Result Table directive', function() {
             $window = _$window_;
         });
 
-        sparqlManagerSvc.data.head.vars = ['var1', 'var2'];
-
-        sparqlManagerSvc.data.results.bindings = [
-            {
-                var1: {type: 'a-type1', value: 'a-value1'},
-                var2: {type: 'a-type2', value: 'a-value2'}
+        sparqlManagerSvc.data = {
+            paginatedResults: {
+                results: [
+                    {
+                        var1: {type: 'a-type1', value: 'a-value1'},
+                        var2: {type: 'a-type2', value: 'a-value2'}
+                    },
+                    {
+                        var1: {type: 'b-type1', value: 'b-value1'},
+                        var2: {type: 'b-type2', value: 'b-value2'}
+                    }
+                ]
             },
-            {
-                var1: {type: 'b-type1', value: 'b-value1'},
-                var2: {type: 'b-type2', value: 'b-value2'}
-            }
+            bindingNames: ['var1', 'var2']
+        }
+
+        sparqlManagerSvc.results = [
+
         ];
     });
 
@@ -49,19 +56,19 @@ describe('SPARQL Result Table directive', function() {
             var table = element.querySelectorAll('.table');
             expect(table.length).toBe(1);
         });
-        it('<th>s should match sparqlManagerService.data.head.vars.length', function() {
+        it('<th>s should match bindingNames length', function() {
             var theadList = element.querySelectorAll('thead');
             expect(element.html()).not.toContain('None');
             expect(theadList.length).toBe(1);
             var thead = theadList[0];
-            expect(thead.querySelectorAll('th').length).toBe(scope.sparqlManagerService.data.head.vars.length);
+            expect(thead.querySelectorAll('th').length).toBe(scope.sparqlManagerService.data.bindingNames.length);
         });
-        it('<tr>s should match sparqlManagerService.data.results.bindings.length', function() {
+        it('<tr>s should match results length', function() {
             var tbodyList = element.querySelectorAll('tbody');
             expect(element.html()).not.toContain('None');
             expect(tbodyList.length).toBe(1);
             var tbody = tbodyList[0];
-            expect(tbody.querySelectorAll('tr').length).toBe(scope.sparqlManagerService.data.results.bindings.length);
+            expect(tbody.querySelectorAll('tr').length).toBe(scope.sparqlManagerService.data.paginatedResults.results.length);
         });
         it('shows error message if populated', function() {
             var errorP = element.querySelectorAll('.text-danger');
@@ -88,6 +95,7 @@ describe('SPARQL Result Table directive', function() {
         it('resize() is called when window is resized', function() {
             var totalHeight = 200;
             var topHeight = 100;
+            var paginationHeight = 0;
             var html = '<div class="sparql" style="height: ' + totalHeight + 'px;"></div><div class="sparql-editor" style="height: ' + topHeight + 'px;"></div>';
             angular.element(document.body).append(html);
             var element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
@@ -95,7 +103,7 @@ describe('SPARQL Result Table directive', function() {
 
             expect(element.attr('style')).toBe(undefined);
             angular.element($window).triggerHandler('resize');
-            expect(element.attr('style')).toBe('height: ' + (totalHeight - topHeight) + 'px;');
+            expect(element.attr('style')).toBe('height: ' + (totalHeight - topHeight - paginationHeight) + 'px;');
         });
     });
 });
