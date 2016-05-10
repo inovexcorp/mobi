@@ -16,7 +16,7 @@
     .paging-details {
         bottom: 15px;
         left: 0;
-        min-height: 54px;
+        min-height: 49px;
         padding: 0 30px;
         position: fixed;
         width: 100%;
@@ -24,15 +24,16 @@
         .page-count {
             float: left;
             font-size: 1.125em;
-            line-height: 54px;
-            margin: 0;
+            line-height: 34px;
+            margin: 15px 0 0 0;
         }
 
         .page-nav {
             float: right;
 
             .pagination {
-                margin: 15px 0 0;
+                margin: 15px 0 0 0;
+                vertical-align: bottom;
             }
         }
     }
