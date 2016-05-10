@@ -56,6 +56,10 @@ describe('SPARQL Result Table directive', function() {
             var table = element.querySelectorAll('.table');
             expect(table.length).toBe(1);
         });
+        it('based on pagination directive', function() {
+            var pagination = element.querySelectorAll('pagination');
+            expect(pagination.length).toBe(1);
+        });
         it('<th>s should match bindingNames length', function() {
             var theadList = element.querySelectorAll('thead');
             expect(element.html()).not.toContain('None');

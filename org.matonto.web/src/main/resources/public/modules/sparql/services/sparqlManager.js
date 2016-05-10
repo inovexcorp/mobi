@@ -8,7 +8,7 @@
         sparqlManagerService.$inject = ['$rootScope', '$http'];
 
         function sparqlManagerService($rootScope, $http) {
-            var prefix = '/matontorest';
+            var prefix = '/matontorest/sparql/page';
             var self = this;
 
             self.prefixes = [];
@@ -53,7 +53,7 @@
                     }
                 }
 
-                return $http.get(prefix + '/sparqlPage', config)
+                return $http.get(prefix, config)
                     .then(onSuccess, onError)
                     .then(function() {
                         $rootScope.showSpinner = false;

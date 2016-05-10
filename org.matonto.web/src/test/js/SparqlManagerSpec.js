@@ -11,7 +11,7 @@ describe('SPARQL Manager service', function() {
             $httpBackend = _$httpBackend_;
         });
 
-        url = '/matontorest/sparqlPage?limit=100&query=&start=0';
+        url = '/matontorest/sparql/page?limit=100&query=&start=0';
     });
 
     it('should query the repository', function(done) {

@@ -1,5 +1,6 @@
 package org.matonto.sparql.rest;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import net.sf.json.JSONObject;
 import org.matonto.sparql.rest.jaxb.SparqlPaginatedResults;
@@ -10,7 +11,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Path("")
+@Path("/sparql")
+@Api( value = "/sparql" )
 public interface SparqlRest {
 
     /**
@@ -20,7 +22,6 @@ public interface SparqlRest {
      * @return The SPARQL 1.1 results in JSON format.
      */
     @GET
-    @Path("/sparql")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Retrieves the results of the provided SPARQL query.")
     Response queryRdf(@QueryParam("query") String queryString);
@@ -33,7 +34,7 @@ public interface SparqlRest {
      * @return The paginated List of JSONObjects that match the SPARQL query bindings.
      */
     @GET
-    @Path("/sparqlPage")
+    @Path("/page")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Retrieves the paged results of the provided SPARQL query.")
     SparqlPaginatedResults<JSONObject> getPagedResults(

@@ -11,7 +11,6 @@ import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class JSONQueryResults {
