@@ -4,12 +4,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
-import org.matonto.catalog.rest.jaxb.PaginatedResults;
+import org.matonto.rest.util.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.List;
 import java.util.Set;
 
 @Path("/catalog")
