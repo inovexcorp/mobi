@@ -1,5 +1,6 @@
 package org.matonto.web.authentication;
 
+import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.log4j.Logger;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -28,6 +29,12 @@ public abstract class AuthHttpContext implements HttpContext {
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
     private final ConcurrentMap<String, URL> resourceCache = new ConcurrentHashMap<>();
+
+    protected JaasRealm realm;
+
+    public void setRealm(JaasRealm realm) {
+        this.realm = realm;
+    }
 
     /**
      * The bundle that registered the service.
@@ -76,7 +83,6 @@ public abstract class AuthHttpContext implements HttpContext {
     protected abstract void handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
     protected boolean authenticated(HttpServletRequest req, String username, String password) {
-        // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
         Optional<Subject> subjectOptional = doAuthenticate(username, password);
 
         if (subjectOptional.isPresent()) {
@@ -90,11 +96,9 @@ public abstract class AuthHttpContext implements HttpContext {
     public Optional<Subject> doAuthenticate(final String username, final String password) {
         try {
             Subject subject = new Subject();
+            String realmName = realm.getName();
 
-            // TODO: the realm may need to be configurable
-            String realm = "matonto";
-
-            LoginContext loginContext = new LoginContext(realm, subject, callbacks -> {
+            LoginContext loginContext = new LoginContext(realmName, subject, callbacks -> {
                 for (Callback callback : callbacks) {
                     if (callback instanceof NameCallback) {
                         ((NameCallback) callback).setName(username);

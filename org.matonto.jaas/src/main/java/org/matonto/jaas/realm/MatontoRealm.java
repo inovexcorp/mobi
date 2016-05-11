@@ -17,7 +17,8 @@ import java.util.Map;
 @Component(
         immediate = true,
         designateFactory = RealmConfig.class,
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.require,
+        properties = { "realmId=matonto" }
 )
 public class MatontoRealm implements JaasRealm {
 
