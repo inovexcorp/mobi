@@ -77,15 +77,11 @@ public class MappingRestImpl implements MappingRest {
             idList.stream()
                 .map(id -> manager.createMappingIRI(id))
                 .map(this::getMappingAsJson)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .forEach(mappings::add);
         }
 
-        for (int i = 0; i < mappings.size(); i++) {
-            if (mappings.get(i).equals("null")) {
-                logger.info("Mapping " + idList.get(i) + " does not exist");
-                mappings.remove(i);
-            }
-        }
         return Response.status(200).entity(mappings.toString()).build();
     }
 
@@ -93,30 +89,29 @@ public class MappingRestImpl implements MappingRest {
     public Response getMapping(String localName) {
         Resource mappingIRI = manager.createMappingIRI(localName);
         logger.info("Getting mapping " + mappingIRI);
-        JSONObject json;
+        Optional<JSONObject> optJson;
         try {
-            json = getMappingAsJson(mappingIRI);
+            optJson = getMappingAsJson(mappingIRI);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        return json == null ? null : Response.status(200).entity(json.toString()).build();
+        return optJson.isPresent() ? Response.status(200).entity(optJson.get().toString()).build() : null;
     }
 
     @Override
     public Response downloadMapping(String localName) {
         Resource mappingIRI = manager.createMappingIRI(localName);
         logger.info("Downloading mapping " + mappingIRI);
-        JSONObject json;
+        Optional<JSONObject> optJson;
         try {
-            json = getMappingAsJson(mappingIRI);
+            optJson = getMappingAsJson(mappingIRI);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        if (json == null) {
-            return null;
-        } else {
+        if (optJson.isPresent()) {
+            JSONObject json = optJson.get();
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
                 writer.write(json.toString());
@@ -125,6 +120,8 @@ public class MappingRestImpl implements MappingRest {
             };
 
             return Response.ok(stream).build();
+        } else {
+            return null;
         }
     }
 
@@ -149,7 +146,7 @@ public class MappingRestImpl implements MappingRest {
      * @return a JSONObject with the JSON-LD of a mapping
      * @throws MatOntoException thrown if there is an error retrieving the mapping
      */
-    private JSONObject getMappingAsJson(Resource mappingIRI) throws MatOntoException {
+    private Optional<JSONObject> getMappingAsJson(Resource mappingIRI) throws MatOntoException {
         JSONObject json;
         Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
@@ -158,8 +155,8 @@ public class MappingRestImpl implements MappingRest {
             JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
             json = arr.getJSONObject(0);
         } else {
-            return null;
+            return Optional.empty();
         }
-        return json;
+        return Optional.of(json);
     }
 }

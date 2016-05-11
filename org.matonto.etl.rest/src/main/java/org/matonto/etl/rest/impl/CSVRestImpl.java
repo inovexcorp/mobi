@@ -64,17 +64,19 @@ public class CSVRestImpl implements CSVRest {
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
-        File delimitedFile = getUploadedFile(fileName);
-        if (delimitedFile == null) {
+        Optional<File> optDelimitedFile = getUploadedFile(fileName);
+        if (optDelimitedFile.isPresent()) {
+            File delimitedFile = optDelimitedFile.get();
+            String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
+            if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
+                delimitedFile.delete();
+                delimitedFile = new File("data/tmp/" + fileName + "." + newExtension);
+            }
+            uploadFile(fileInputStream, delimitedFile.toPath());
+            return Response.status(200).entity(fileName).build();
+        } else {
             return null;
         }
-        String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
-        if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
-            delimitedFile.delete();
-            delimitedFile = new File("data/tmp/" + fileName + "." + newExtension);
-        }
-        uploadFile(fileInputStream, delimitedFile.toPath());
-        return Response.status(200).entity(fileName).build();
     }
 
     @Override
@@ -85,81 +87,85 @@ public class CSVRestImpl implements CSVRest {
                     Response.Status.BAD_REQUEST);
         }
 
-        File delimitedFile = getUploadedFile(fileName);
-        if (delimitedFile == null) {
+        Optional<File> optDelimitedFile = getUploadedFile(fileName);
+        if (optDelimitedFile.isPresent()) {
+            File delimitedFile = optDelimitedFile.get();
+            String extension = FilenameUtils.getExtension(delimitedFile.getName());
+            char separatorChar = separator.charAt(0);
+
+            // Get InputStream for data to convert
+            InputStream dataToConvert;
+            if (isPreview) {
+                dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
+                        ? createExcelPreviewStream(delimitedFile, containsHeaders)
+                        : createCSVPreviewStream(delimitedFile, containsHeaders);
+            } else {
+                try {
+                    dataToConvert = new FileInputStream(delimitedFile);
+                } catch (FileNotFoundException e) {
+                    throw ErrorUtils.sendError(e, "Error locating delimited file", Response.Status.BAD_REQUEST);
+                }
+            }
+
+            // Convert InputStream to RDF based on Mapping
+            Model model;
+            try {
+                Model mappingModel;
+                if (mappingLocalName != null) {
+                    Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
+                    Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
+                    if (mappingOptional.isPresent()) {
+                        mappingModel = Values.sesameModel(mappingOptional.get());
+                    } else {
+                        throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
+                                Response.Status.BAD_REQUEST);
+                    }
+                } else {
+                    InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
+                    mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
+                }
+                model = Values.sesameModel(csvConverter.convert(dataToConvert,
+                        Values.matontoModel(mappingModel), containsHeaders, extension, separatorChar));
+            } catch (IOException | MatOntoException e) {
+                throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
+            }
+
+            // Write data back to Response
+            logger.info("File mapped: " + delimitedFile.getPath());
+            StringWriter sw = new StringWriter();
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
+            Rio.write(model, rdfWriter);
+            return Response.status(200).entity(sw.toString()).build();
+        } else {
             return null;
         }
-        String extension = FilenameUtils.getExtension(delimitedFile.getName());
-        char separatorChar = separator.charAt(0);
-
-        // Get InputStream for data to convert
-        InputStream dataToConvert;
-        if (isPreview) {
-            dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
-                    ? createExcelPreviewStream(delimitedFile, containsHeaders)
-                    : createCSVPreviewStream(delimitedFile, containsHeaders);
-        } else {
-            try {
-                dataToConvert = new FileInputStream(delimitedFile);
-            } catch (FileNotFoundException e) {
-                throw ErrorUtils.sendError(e, "Error locating delimited file", Response.Status.BAD_REQUEST);
-            }
-        }
-
-        // Convert InputStream to RDF based on Mapping
-        Model model;
-        try {
-            Model mappingModel;
-            if (mappingLocalName != null) {
-                Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
-                Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
-                if (mappingOptional.isPresent()) {
-                    mappingModel = Values.sesameModel(mappingOptional.get());
-                } else {
-                    throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
-                            Response.Status.BAD_REQUEST);
-                }
-            } else {
-                InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
-                mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
-            }
-            model = Values.sesameModel(csvConverter.convert(dataToConvert,
-                    Values.matontoModel(mappingModel), containsHeaders, extension, separatorChar));
-        } catch (IOException | MatOntoException e) {
-            throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
-        }
-
-        // Write data back to Response
-        logger.info("File mapped: " + delimitedFile.getPath());
-        StringWriter sw = new StringWriter();
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
-        Rio.write(model, rdfWriter);
-        return Response.status(200).entity(sw.toString()).build();
     }
 
     @Override
     public Response getRows(String fileName, int rowEnd, String separator) {
-        File file = getUploadedFile(fileName);
-        if (file == null) {
+        Optional<File> optFile = getUploadedFile(fileName);
+        if (optFile.isPresent()) {
+            File file = optFile.get();
+            String extension = FilenameUtils.getExtension(file.getName());
+            int numRows = (rowEnd <= 0) ? 10 : rowEnd;
+
+            logger.info("Getting " + numRows + " rows from " + file.getName());
+            String json;
+            try {
+                if (extension.equals("xls") || extension.equals("xlsx")) {
+                    json = convertExcelRows(file, numRows);
+                } else {
+                    char separatorChar = separator.charAt(0);
+                    json = convertCSVRows(file, numRows, separatorChar);
+                }
+            } catch (Exception e) {
+                throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
+            }
+
+            return Response.status(200).entity(json).build();
+        } else {
             return null;
         }
-        String extension = FilenameUtils.getExtension(file.getName());
-        int numRows = (rowEnd <= 0) ? 10 : rowEnd;
-
-        logger.info("Getting " + numRows + " rows from " + file.getName());
-        String json;
-        try {
-            if (extension.equals("xls") || extension.equals("xlsx")) {
-                json = convertExcelRows(file, numRows);
-            } else {
-                char separatorChar = separator.charAt(0);
-                json = convertCSVRows(file, numRows, separatorChar);
-            }
-        } catch (Exception e) {
-            throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
-        }
-
-        return Response.status(200).entity(json).build();
     }
 
     /**
@@ -168,19 +174,19 @@ public class CSVRestImpl implements CSVRest {
      * @param fileName the name of the uploaded delimited file
      * @return the uploaded file if it was found
      */
-    private File getUploadedFile(String fileName) {
+    private Optional<File> getUploadedFile(String fileName) {
         File directory = new File("data/tmp");
         File[] files = directory.listFiles((dir, name) -> {
             return name.startsWith(fileName + ".");
         });
         if (files.length == 0) {
-            return null;
+            return Optional.empty();
         }
         if (files.length > 1) {
             throw ErrorUtils.sendError("Multiple files exist with same name", Response.Status.BAD_REQUEST);
         }
 
-        return files[0];
+        return Optional.of(files[0]);
     }
 
     /**
