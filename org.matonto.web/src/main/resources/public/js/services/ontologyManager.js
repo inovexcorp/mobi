@@ -476,7 +476,7 @@
                         if(response.data.deleted) {
                             console.log('Successfully deleted ontology');
                             ontologies.splice(state.oi, 1);
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: false });
                         } else {
                             console.warn('Ontology not deleted');
                             deferred.reject(response);
@@ -508,7 +508,7 @@
                             ontology.matonto.classes.splice(state.ci, 1);
                             removeIdFromArray(classId, ontology.matonto.subClasses);
 
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Class not deleted');
                             deferred.reject(response);
@@ -559,7 +559,7 @@
                                 removeIdFromArray(propertyId, ontology.matonto.subDataProperties);
                             }
 
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Property not deleted');
                             deferred.reject(response);
