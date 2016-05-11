@@ -32,6 +32,9 @@ public abstract class AuthHttpContext implements HttpContext {
 
     protected JaasRealm realm;
 
+    private final static String REQUIRED_ROLE = "user";
+    private final static String ROLE_CLASS = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
+
     public void setRealm(JaasRealm realm) {
         this.realm = realm;
     }
@@ -111,26 +114,15 @@ public abstract class AuthHttpContext implements HttpContext {
             });
             loginContext.login();
 
-            // TODO: Configurable?
-            String role = "admin";
-
-            String clazz = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
-            String name = role;
-            int idx = role.indexOf(':');
-            if (idx > 0) {
-                clazz = role.substring(0, idx);
-                name = role.substring(idx + 1);
-            }
             boolean found = false;
             for (Principal p : subject.getPrincipals()) {
-                if (p.getClass().getName().equals(clazz)
-                        && p.getName().equals(name)) {
+                if (p.getClass().getName().equals(ROLE_CLASS) && p.getName().equals(REQUIRED_ROLE)) {
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                log.debug("User does not have the required role " + role);
+                log.debug("User does not have the required role " + REQUIRED_ROLE);
                 return Optional.empty();
             }
             return Optional.of(subject);
