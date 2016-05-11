@@ -9,10 +9,10 @@ $rdf-controls-height: 34px + $rdf-padding/2;
 .float-container {
     overflow: hidden;
 }
-.mapper {
-    .header-link {
+.header-link {
         font-size: 14px;
     }
+.mapper {
     #mapper-content {
         margin-left: $sidebar-width;
         height: 100%;
@@ -20,50 +20,57 @@ $rdf-controls-height: 34px + $rdf-padding/2;
 
         #main {
             height: 100%;
+            padding-bottom: 240px;
         }
-        #fixed-height-container {
+
+        .file-preview-table {
             position: absolute;
             bottom: 0;
             left: 15px;
-            right: 15px;
+            right: 0px;
 
-            #table-container {
-                position: relative;
-                padding-top: 25px;
-                background-color: #fff;
-                overflow-x: auto;
+            background-color: #fff;
+            overflow-x: auto;
+            overflow-y: auto;
+            min-height: 10%;
+            -webkit-transition: all 0.4s ease-in-out;
+                    transition: all 0.4s ease-in-out;
+            
+            &.big {
+                min-height: 100%;
+                max-height: 100%;
+            }
+            .clickable {
+                cursor: pointer;
+            }
+            .disabled {
+                cursor: not-allowed;
+            }
+            .toggle-table {
+                position: absolute;
+                top: 1px;
+                right: 1px;
+                background-color: transparent;
+                border: 1px solid $gray-light;
+                color: $gray-light;
+
+                &:hover {
+                    border-width: 2px;
+                    background-color: $gray-lighter;
+                }
+                &.opposite {
+                    border: 1px solid #fff;
+                    color: #fff;
+                }
+            }
+            .table {
                 width: 100%;
-                -webkit-transition: all 0.4s ease-in-out;
-                        transition: all 0.4s ease-in-out;
-                
-                #file-preview-container {
-                    height: 100%;
-                    width: 100%;
+                margin-bottom: 0;
 
-                    #file-preview {
-                        width: 100%;
-                    }
-                    &.scroll {
-                        overflow-y: auto;
-                    }
-                    &.no-scroll {
-                        overflow-y: hidden; 
-                    }
-                }
-                .clickable {
-                    cursor: pointer;
-                }
-                .disabled {
-                    cursor: not-allowed;
-                }
-                #toggle-table {
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                }
                 th {
                     background-color: $gray-lighter;
                     text-overflow: ellipsis;
+                    white-space: nowrap;
 
                     &.highlight {
                         background-color: $gray-light;
@@ -71,6 +78,7 @@ $rdf-controls-height: 34px + $rdf-padding/2;
                 }
                 td {
                     text-overflow: ellipsis;
+                    white-space: nowrap;
 
                     &.highlight {
                         background-color: $gray-lighter;
@@ -279,7 +287,7 @@ $rdf-controls-height: 34px + $rdf-padding/2;
         }
         .available-props {
             border-radius: 5px;
-            height: 20em;
+            max-height: 20em;
             overflow-y: auto;
             overflow-x: hidden;
             border: 2px solid $gray-light;    

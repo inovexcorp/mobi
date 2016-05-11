@@ -18,6 +18,12 @@
 
     <properties>
         <bnd.index.version>${project.version}</bnd.index.version>
+        <obr.urls>
+            http://nexus.inovexcorp.com/nexus/content/shadows/matonto-releases-obr/.meta/obr.xml \
+            mvn:org.matonto/bnd-index/${project.version}/xml \
+            mvn:org.matonto/index.dependency/${project.version}/xml \
+            mvn:org.matonto/index.sesame4/${project.version}/xml
+        </obr.urls>
     </properties>
 
     <dependencies>

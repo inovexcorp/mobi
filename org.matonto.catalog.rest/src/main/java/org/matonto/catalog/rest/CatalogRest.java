@@ -34,6 +34,8 @@ public interface CatalogRest {
             @Context UriInfo uriInfo,
             @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType,
             @QueryParam("searchTerms") String searchTerms,
+            @DefaultValue("http://purl.org/dc/terms/modified") @QueryParam("sortBy") String sortBy,
+            @DefaultValue("false") @QueryParam("asc") boolean ascending,
             @DefaultValue("100") @QueryParam("limit") int limit,
             @DefaultValue("0") @QueryParam("start") int start);
 
@@ -207,4 +209,15 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Retrieves all the available resource types.")
     Response getResourceTypes();
+
+    /**
+     * Returns all the available sorting options.
+     *
+     * @return all the available sorting options.
+     */
+    @GET
+    @Path("/sort-options")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation("Retrieves all the available sorting options.")
+    Response getSortOptions();
 }

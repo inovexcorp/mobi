@@ -18,3 +18,4 @@ node_modules/
 *.swp
 *.log
 .DS_Store
+*/docs/

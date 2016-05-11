@@ -1,0 +1,13 @@
+<div class="filters">
+    <div class="filter" ng-repeat="(filter, options) in dvm.catalog.filters">
+        <div class="filter-header"><i class="fa fa-filter"></i> {{filter}}</div>
+        <ul class="filter-options">
+            <li ng-repeat="option in options" ng-class="{'applied': option.applied, 'not-applied': !option.applied, 'hidden': dvm.isHidden(filter, option)}">
+                <a ng-click="dvm.applyFilter(filter, option)">
+                    {{option.formatter(option.value)}} <i class="fa" ng-class="{'fa-plus-circle': !option.applied, 'fa-times-circle': option.applied}"></i>
+                </a>
+                <div ng-if="option.applied" class="triangle-right"></div>
+            </li>
+        </ul>
+    </div>
+</div>

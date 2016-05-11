@@ -292,13 +292,7 @@ ul {
 }
 
 /* makes the height of the containers 100% so scrolling works as expected */
-.view-container,
-.view-container > div,
-.view-container > div > .row,
-.left-nav,
-.row > section,
-.row > section > form,
-.tree-container {
+.full-height {
     height: 100%;
 }
 
@@ -495,4 +489,10 @@ ul {
     li button.active {
         color: $brand-info;
     }
+}
+
+/* Pagination styles */
+.page-nav {
+    display: block;
+    text-align: center;
 }

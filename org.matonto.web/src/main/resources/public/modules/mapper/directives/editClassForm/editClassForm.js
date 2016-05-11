@@ -37,7 +37,7 @@
                         $scope.openProp({propId: propId});
                     }
                     dvm.getTitle = function() {
-                        var classId = mappingManagerService.getClassIdByMappingId(dvm.mapping, dvm.classMappingId);
+                        var classId = mappingManagerService.getClassIdByMappingId(dvm.mapping.jsonld, dvm.classMappingId);
                         var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
                         return ontologyManagerService.getEntityName(ontologyManagerService.getClass(ontology, classId));
                     }

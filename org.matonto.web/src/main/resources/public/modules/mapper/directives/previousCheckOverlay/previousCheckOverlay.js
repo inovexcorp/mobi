@@ -26,19 +26,20 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    var mappedColumns = mappingManagerService.getMappedColumns(dvm.mapping);
-                    dvm.invalidColumns = _.sortBy(_.filter(mappedColumns, function(obj) {
-                        return parseInt(obj.index, 10) > dvm.filePreview.headers.length - 1;
-                    }), 'index');
+                    dvm.invalidColumns = _.chain(mappingManagerService.getMappedColumns(dvm.mapping.jsonld))
+                        .forEach(obj => obj.index = parseInt(obj.index, 10))
+                        .filter(obj => obj.index > dvm.filePreview.headers.length - 1)
+                        .sortBy('index')
+                        .value();
 
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var propId = mappingManagerService.getPropIdByMappingId(dvm.mapping, dataMappingId);
+                        var propId = mappingManagerService.getPropIdByMappingId(dvm.mapping.jsonld, dataMappingId);
                         var classId = mappingManagerService.getClassIdByMapping(
                             mappingManagerService.findClassWithDataMapping(dvm.mapping.jsonld, dataMappingId)
                         );
                         var propName = ontologyManagerService.getEntityName(ontologyManagerService.getClassProperty(dvm.ontology, classId, propId));
                         var className = ontologyManagerService.getEntityName(ontologyManagerService.getClass(dvm.ontology, classId));
-                        return className + ": " + propName;
+                        return className + ': ' + propName;
                     }
                     dvm.setValidity = function() {
                         if (dvm.validateForm) {

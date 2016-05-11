@@ -27,6 +27,7 @@
             'circleButton',
             'customButton',
             'confirmationOverlay',
+            'pagination',
             'settings',
             'ui.codemirror',
             'sparql'

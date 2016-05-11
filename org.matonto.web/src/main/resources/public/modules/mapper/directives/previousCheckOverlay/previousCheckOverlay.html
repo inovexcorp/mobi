@@ -9,7 +9,7 @@
             <h3 class="text-danger">Missing Columns</h3>
             <ul>
                 <li ng-repeat="columnObj in dvm.invalidColumns">
-                    Column {{parseInt(columnObj.index, 10) + 1}} - {{dvm.getDataMappingName(columnObj.propId)}}
+                    Column {{columnObj.index + 1}} - {{dvm.getDataMappingName(columnObj.propId)}}
                 </li>
             </ul>
         </div>

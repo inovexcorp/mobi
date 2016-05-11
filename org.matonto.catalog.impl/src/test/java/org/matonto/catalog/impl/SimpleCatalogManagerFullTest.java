@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Distribution;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.NamedGraphFactory;
@@ -14,10 +15,7 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashNamedGraphFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -33,13 +31,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
 
 public class SimpleCatalogManagerFullTest {
-
-    @Mock
-    RepositoryManager repositoryManager;
 
     private Repository repo;
     private SimpleCatalogManager manager;
@@ -51,10 +44,12 @@ public class SimpleCatalogManagerFullTest {
     private Resource dist1IRI;
     private Resource dist2IRI;
 
+    private static final int TOTAL_SIZE = 3;
+
+    private static final String DC = "http://purl.org/dc/terms/";
+
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
@@ -63,12 +58,10 @@ public class SimpleCatalogManagerFullTest {
         dist2IRI = vf.createIRI("http://matonto.org/test/Distribution/2");
 
         manager = new SimpleCatalogManager();
-        manager.setRepositoryManager(repositoryManager);
+        manager.setRepository(repo);
         manager.setNamedGraphFactory(ngf);
         manager.setValueFactory(vf);
         manager.setModelFactory(mf);
-
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -124,12 +117,99 @@ public class SimpleCatalogManagerFullTest {
     }
 
     @Test
-    public void testFindResourcesReturnsCorrectSize() throws Exception {
+    public void testFindResourcesReturnsCorrectDataFirstPage() throws Exception {
         // given
         // when
-        Set<PublishedResource> resources = manager.findResource("", 1, 0);
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
 
         // then
-        Assert.assertThat(resources.size(), equalTo(1));
+        Assert.assertThat(resources.getPage().size(), equalTo(1));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getPageSize(), equalTo(1));
+        Assert.assertThat(resources.getPageNumber(), equalTo(1));
+    }
+
+    @Test
+    public void testFindResourcesReturnsCorrectDataLastPage() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 1);
+
+        // then
+        Assert.assertThat(resources.getPage().size(), equalTo(1));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getPageSize(), equalTo(1));
+        Assert.assertThat(resources.getPageNumber(), equalTo(2));
+    }
+
+    @Test
+    public void testFindResourcesReturnsCorrectDataOnePage() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1000, 0);
+
+        // then
+        Assert.assertThat(resources.getPage().size(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getPageSize(), equalTo(1000));
+        Assert.assertThat(resources.getPageNumber(), equalTo(1));
+    }
+
+    @Test
+    public void testFindResourcesDefaultOrdering() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
+
+        // then
+        Assert.assertThat(resources.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+    }
+
+    @Test
+    public void testFindResourcesOrdering() throws Exception {
+        // given
+        // when
+        PaginatedSearchResults<PublishedResource> resources1 = manager.findResource("", 1, 0, vf.createIRI(DC + "modified"), true);
+        PaginatedSearchResults<PublishedResource> resources2 = manager.findResource("", 1, 0, vf.createIRI(DC + "modified"), false);
+        PaginatedSearchResults<PublishedResource> resources3 = manager.findResource("", 1, 0, vf.createIRI(DC + "issued"), true);
+        PaginatedSearchResults<PublishedResource> resources4 = manager.findResource("", 1, 0, vf.createIRI(DC + "issued"), false);
+        PaginatedSearchResults<PublishedResource> resources5 = manager.findResource("", 1, 0, vf.createIRI(DC + "title"), true);
+        PaginatedSearchResults<PublishedResource> resources6 = manager.findResource("", 1, 0, vf.createIRI(DC + "title"), false);
+
+        // then
+        Assert.assertThat(resources1.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources2.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+        Assert.assertThat(resources3.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+        Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+    }
+
+    @Test
+    public void testFindResourceWithNoEntries() throws Exception {
+        // given
+        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo2.initialize();
+        manager.setRepository(repo2);
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
+
+        // then
+        assertThat(resources.getPage().size(), equalTo(0));
+    }
+
+    @Test
+    public void testGetResourceWithNoEntries() throws Exception {
+        // given
+        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo2.initialize();
+        manager.setRepository(repo2);
+
+        // when
+        Optional<PublishedResource> resource = manager.getResource(vf.createIRI("http://test.com/123"));
+
+        // then
+        assertThat(resource, equalTo(Optional.empty()));
     }
 }
