@@ -6,9 +6,6 @@
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
-
-        <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')">Annotations</tab-button>
     </div>
 
     <!-- basic tab -->
@@ -28,17 +25,7 @@
             <small class="text-muted">Defaults to DatatypeProperty if nothing is provided.</small>
         </string-select>
 
-        <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
-                    display-text="'Label'"
-                    muted-text="vm.rdfs + 'label'"
-                    change-event="vm.entityChanged()"></text-input>
-
-        <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
-                   display-text="'Comment'"
-                   muted-text="vm.rdfs + 'comment'"
-                   change-event="vm.entityChanged()"></text-area>
+        <annotation-tab></annotation-tab>
     </div>
 
     <!-- axioms tab -->
@@ -134,10 +121,5 @@
         <div ng-if="!vm.selected['@type'].length">
             <p class="text-warning">More axioms will become available when you select a type from the first tab.</p>
         </div>
-    </div>
-
-    <!-- annotations tab -->
-    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
-        <annotation-tab></annotation-tab>
     </div>
 </form>

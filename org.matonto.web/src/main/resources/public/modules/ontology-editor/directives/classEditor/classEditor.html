@@ -6,9 +6,6 @@
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
-
-        <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')">Annotations</tab-button>
     </div>
 
     <!-- basic tab -->
@@ -18,17 +15,7 @@
         <!-- static iri -->
         <static-iri display-type="class"></static-iri>
 
-        <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
-                    display-text="'Label'"
-                    muted-text="vm.rdfs + 'label'"
-                    change-event="vm.entityChanged()"></text-input>
-
-        <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
-                   display-text="'Comment'"
-                   muted-text="vm.rdfs + 'comment'"
-                   change-event="vm.entityChanged()"></text-area>
+        <annotation-tab></annotation-tab>
     </div>
 
     <!-- axioms tab -->
@@ -48,10 +35,5 @@
                        muted-text="vm.owl + 'disjointWith'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"></object-select>
-    </div>
-
-    <!-- annotations tab -->
-    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
-        <annotation-tab></annotation-tab>
     </div>
 </form>
