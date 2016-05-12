@@ -72,6 +72,10 @@
                 });
         }
 
+        vm.prettyPrint = function(entity) {
+            return ontologyManagerService.getEntityName(entity);
+        }
+
         vm.setValidity = function(isValid) {
             vm.ontology.matonto.isValid = isValid;
         }
@@ -216,28 +220,26 @@
         /* Annotation Management */
         function resetAnnotationOverlay() {
             vm.showAnnotationOverlay = false;
-            vm.selected.matonto.currentAnnotationKey = '';
-            vm.selected.matonto.currentAnnotationValue = '';
-            vm.selected.matonto.currentAnnotationSelect = null;
+            vm.annotationSelect = undefined;
+            vm.annotationValue = '';
         }
 
-        vm.addAnnotation = function() {
-            var annotations = (vm.state.oi === -1) ? vm.selected.matonto.annotations : vm.ontologies[vm.state.oi].matonto.annotations;
-            annotationManagerService.add(vm.selected, annotations);
+        vm.addAnnotation = function(select, value) {
+            annotationManagerService.add(vm.selected, select, value);
             resetAnnotationOverlay();
             vm.entityChanged();
         }
 
-        vm.editClicked = function(key, index) {
+        vm.editClicked = function(annotation, index) {
             vm.editingAnnotation = true;
+            vm.annotationSelect = annotation;
+            vm.annotationValue = vm.selected[vm.getItemIri(annotation)][index]['@value'];
+            vm.annotationIndex = index;
             vm.showAnnotationOverlay = true;
-            vm.selected.matonto.currentAnnotationKey = key;
-            vm.selected.matonto.currentAnnotationValue = vm.selected[key][index]['@value'];
-            vm.selected.matonto.currentAnnotationIndex = index;
         }
 
-        vm.editAnnotation = function() {
-            annotationManagerService.edit(vm.selected, vm.selected.matonto.currentAnnotationKey, vm.selected.matonto.currentAnnotationValue, vm.selected.matonto.currentAnnotationIndex);
+        vm.editAnnotation = function(select, value) {
+            annotationManagerService.edit(vm.selected, vm.getItemIri(select), value, vm.annotationIndex);
             resetAnnotationOverlay();
             vm.entityChanged();
         }
@@ -249,10 +251,6 @@
 
         vm.getItemNamespace = function(item) {
             return ontologyManagerService.getItemNamespace(item);
-        }
-
-        vm.getAnnotationLocalNameLowercase = function(item) {
-            return annotationManagerService.getLocalNameLowercase(item);
         }
 
         initialize();

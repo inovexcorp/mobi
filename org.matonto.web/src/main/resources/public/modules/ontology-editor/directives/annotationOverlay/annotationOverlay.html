@@ -1,55 +1,31 @@
 <div class="overlay">
     <form name="vm.annotationForm" class="content clearfix" novalidate autocomplete="off">
-        <div ng-if="!vm.editingAnnotation">
-            <!-- section header -->
-            <h6>Add Annotation</h6>
+        <!-- section header -->
+        <h6>{{vm.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h6>
 
-            <!-- annotation list -->
-            <div class="form-group">
-                <label class="control-label">Annotation</label>
-                <ui-select ng-model="vm.selected.matonto.currentAnnotationSelect">
-                    <ui-select-match placeholder="Select an annotation">{{vm.getItemIri($select.selected)}}</ui-select-match>
-                    <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search | orderBy:vm.sortAnnotations">
-                        <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
-                    </ui-select-choices>
-                </ui-select>
-            </div>
-
-            <!-- key, if new -->
-            <div ng-if="vm.selected.matonto.currentAnnotationSelect.localName === 'New OWL AnnotationProperty'" ng-class="{'has-error': vm.annotationForm.iri.$invalid}" class="form-group">
-                <label class="control-label" for="iri">OWLAnnotation IRI</label>
-                <input class="form-control" id="iri" name="iri" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="dvm.iriPattern" required />
-                <p ng-messages="vm.annotationForm.iri.$error" class="error-msg">
-                    <ng-message when="required">This field cannot be empty.</ng-message>
-                    <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
-                </p>
-            </div>
-        </div>
-
-        <div ng-if="vm.editingAnnotation">
-            <!-- section header -->
-            <h6>Edit Annotation</h6>
-
-            <!-- static text showing which annotation you are editing -->
-            <div class="form-group">
-                <label class="control-label">Name</label>
-                <p class="form-control-static">{{vm.selected.matonto.currentAnnotationKey}}</p>
-            </div>
+        <!-- annotation list -->
+        <div class="form-group">
+            <label class="control-label">Annotation</label>
+            <ui-select ng-model="vm.annotationSelect" ng-disabled="vm.editingAnnotation">
+                <ui-select-match placeholder="Select an annotation">{{vm.getItemIri($select.selected)}}</ui-select-match>
+                <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in ((vm.state.oi !== -1) ? vm.ontology.matonto.annotations : vm.selected.matonto.annotations) | filter: $select.search | orderBy:'localName'">
+                    <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
         </div>
 
         <!-- value -->
-        <text-area ng-model="vm.selected.matonto.currentAnnotationValue"
-                   display-text="'Value'"></text-area>
+        <text-area ng-model="vm.annotationValue" display-text="'Value'"></text-area>
 
         <!-- annotation buttons -->
         <div class="btn-container clearfix">
             <custom-button ng-if="!vm.editingAnnotation"
-                           is-disabled-when="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default' || !vm.selected.matonto.currentAnnotationValue"
-                           on-click="vm.addAnnotation()">Add</custom-button>
+                           is-disabled-when="vm.annotationForm.$invalid || vm.annotationSelect === 'default' || !vm.annotationValue"
+                           on-click="vm.addAnnotation(vm.annotationSelect, vm.annotationValue)">Add</custom-button>
 
             <custom-button ng-if="vm.editingAnnotation"
                            is-disabled-when="vm.annotationForm.$invalid"
-                           on-click="vm.editAnnotation()">Edit</custom-button>
+                           on-click="vm.editAnnotation(vm.annotationSelect, vm.annotationValue)">Edit</custom-button>
 
             <custom-button on-click="vm.showAnnotationOverlay = false;" type="'secondary'">Cancel</custom-button>
         </div>

@@ -2,62 +2,21 @@
     'use strict';
 
     angular
-        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj', 'prefixes'])
+        .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj', 'prefixes', 'annotationManager'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'FileSaver', 'Blob', 'updateRefsService', 'responseObj', 'prefixes', 'uuid'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'FileSaver', 'Blob', 'updateRefsService', 'responseObj', 'prefixes', 'uuid', 'annotationManagerService'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, FileSaver, Blob, updateRefsService, responseObj, prefixes, uuid) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, FileSaver, Blob, updateRefsService, responseObj, prefixes, uuid, annotationManagerService) {
             var self = this,
                 prefix = '/matontorest/ontologies',
-                defaultAnnotations = [
-                    {
-                        'namespace': prefixes.rdfs,
-                        'localName': 'seeAlso'
-                    },
-                    {
-                        'namespace': prefixes.rdfs,
-                        'localName': 'isDefinedBy'
-                    },
-                    {
-                        'namespace': prefixes.owl,
-                        'localName': 'deprecated'
-                    },
-                    {
-                        'namespace': prefixes.owl,
-                        'localName': 'versionInfo'
-                    },
-                    {
-                        'namespace': prefixes.owl,
-                        'localName': 'priorVersion'
-                    },
-                    {
-                        'namespace': prefixes.owl,
-                        'localName': 'backwardCompatibleWith'
-                    },
-                    {
-                        'namespace': prefixes.owl,
-                        'localName': 'incompatibleWith'
-                    },
-                    {
-                        'namespace': prefixes.dc,
-                        'localName': 'description'
-                    },
-                    {
-                        'namespace': prefixes.dc,
-                        'localName': 'title'
-                    }
-                ],
-                newAnnotation = {
-                    'namespace': 'Create ',
-                    'localName': 'New OWL AnnotationProperty'
-                },
                 defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
                     return {
                         'namespace': prefixes.xsd,
                         'localName': item
                     }
                 }),
+                defaultAnnotations = annotationManagerService.getDefaultAnnotations(),
                 changedEntries = [],
                 newItems = {},
                 ontologies = [],
@@ -167,40 +126,6 @@
                 return result;
             }
 
-            function addDefaultAnnotations(annotations) {
-                var itemIri, index, split,
-                    i = 1,
-                    exclude = [
-                        'http://www.w3.org/2000/01/rdf-schema#label',
-                        'http://www.w3.org/2000/01/rdf-schema#comment'
-                    ],
-                    defaults = responseObj.stringify(defaultAnnotations),
-                    arr = angular.copy(annotations);
-
-                arr.splice(0, 0, newAnnotation);
-
-                while(i < arr.length) {
-                    itemIri = responseObj.getItemIri(arr[i]);
-                    if(exclude.indexOf(itemIri) !== -1) {
-                        arr.splice(i--, 1);
-                    }
-                    index = defaults.indexOf(itemIri);
-                    if(index !== -1) {
-                        defaults.splice(index, 1);
-                    }
-                    i++;
-                }
-
-                i = 0;
-                while(i < defaults.length) {
-                    split = $filter('splitIRI')(defaults[i]);
-                    arr.push({ namespace: split.begin + split.then, localName: split.end });
-                    i++;
-                }
-
-                return arr;
-            }
-
             function getPrefixes(context) {
                 var inverted = _.invert(context);
                 return {
@@ -262,21 +187,6 @@
                 return copy;
             }
 
-            function restructureLabelAndComment(obj) {
-                var copy = angular.copy(obj);
-                var comment = _.get(obj, prefixes.rdfs + 'comment', null);
-                var label = _.get(obj, prefixes.rdfs + 'label', null);
-
-                if(comment && !_.isArray(comment)) {
-                    copy[prefixes.rdfs + 'comment'] = [comment[0]];
-                }
-                if(label && !_.isArray(label)) {
-                    copy[prefixes.rdfs + 'label'] = [label[0]];
-                }
-
-                return copy;
-            }
-
             function createEntityJson(ontologyMatonto, entity) {
                 var copy = angular.copy(entity);
 
@@ -303,7 +213,6 @@
             function createOntology(ontology) {
                 var deferred = $q.defer();
                 ontology.matonto.originalId = ontology['@id'];
-                ontology = restructureLabelAndComment(ontology);
 
                 var copy = angular.copy(ontology);
                 delete copy.matonto;
@@ -338,8 +247,6 @@
 
             function createClass(ontology, classObj) {
                 var deferred = $q.defer();
-
-                classObj = restructureLabelAndComment(classObj);
 
                 var config = {
                         params: {
@@ -378,7 +285,6 @@
                 if(!types.length) {
                     property['@type'].push(prefixes.owl + 'DatatypeProperty')
                 }
-                property = restructureLabelAndComment(property);
 
                 var config = {
                         params: {
@@ -664,15 +570,13 @@
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
                             properties: [],
-                            originalId: obj['@id'],
-                            currentAnnotationSelect: null
+                            originalId: obj['@id']
                         };
                         classes.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
                         obj.matonto = {
                             icon: chooseIcon(obj, prefixes),
-                            originalId: obj['@id'],
-                            currentAnnotationSelect: null
+                            originalId: obj['@id']
                         };
                         properties.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'AnnotationProperty') !== -1) {
@@ -795,7 +699,7 @@
                             objectProperties = $filter('orderBy')(objectProperties, 'localName');
                         }
 
-                        ontology.matonto.annotations = addDefaultAnnotations(annotations);
+                        ontology.matonto.annotations = $filter('orderBy')(_.unionWith(annotations, defaultAnnotations, _.isEqual), 'localName');
                         ontology.matonto.subClasses = classes;
                         ontology.matonto.subDataProperties = dataProperties;
                         ontology.matonto.subObjectProperties = objectProperties;
@@ -868,7 +772,6 @@
                             delimiter: '#',
                             classes: [],
                             annotations: defaultAnnotations,
-                            currentAnnotationSelect: null,
                             isValid: false,
                             subClasses: [],
                             subDataProperties: [],
@@ -880,16 +783,12 @@
                         '@id': '',
                         '@type': [prefixes.owl + 'Class'],
                         matonto: {
-                            properties: [],
-                            currentAnnotationSelect: null
+                            properties: []
                         }
                     },
                     newProperty = {
                         '@id': '',
-                        '@type': [],
-                        matonto: {
-                            currentAnnotationSelect: null
-                        }
+                        '@type': []
                     };
 
                 existingEntity = function() {
@@ -925,7 +824,6 @@
                             result = setDefaults(ontology, angular.copy(newClass));
                         } else {
                             result = angular.copy(newOntology);
-                            result.matonto.annotations.splice(0, 0, newAnnotation);
                         }
                         newItems[unique] = result;
                     }
@@ -1098,8 +996,6 @@
                         }
 
                         delete copy.matonto;
-
-                        copy = restructureLabelAndComment(copy);
 
                         if(_.get(ontology.matonto, 'context', []).length) {
                             entityjson = {
