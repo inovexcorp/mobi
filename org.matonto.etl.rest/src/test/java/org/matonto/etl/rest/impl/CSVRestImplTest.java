@@ -10,7 +10,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTestNg;
 import org.junit.Assert;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.api.csv.MappingManager;
