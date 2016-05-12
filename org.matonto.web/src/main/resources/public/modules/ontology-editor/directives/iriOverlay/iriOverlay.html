@@ -5,7 +5,7 @@
         <!-- Begins with -->
         <div ng-class="{'has-error': vm.iriForm.iriBegin.$invalid}" class="form-group">
             <label class="control-label" for="iriBegin">Begins with</label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="vm.iriBegin" ng-pattern="dvm.namespacePattern" ng-model-options="{updateOn: 'blur'}" required />
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="vm.iriBegin" ng-pattern="dvm.namespacePattern" required />
             <p ng-messages="vm.iriForm.iriBegin.$error" class="error-msg">
                 <ng-message when="required">Field cannot be empty.</ng-message>
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
