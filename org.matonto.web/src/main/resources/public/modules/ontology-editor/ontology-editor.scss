@@ -31,28 +31,31 @@
         form {
             height: 100%;
 
-            textarea {
-                /* Don't let them change the width of the textareas */
-                &:not(.preview-display) {
-                    resize: vertical;
-                }
+            .textarea-wrapper {
+                bottom: 0;
+                left: 0;
+                overflow: hidden;
+                position: absolute;
+                right: 0;
+                top: 60px;
 
-                /* Ontology preview styles */
-                &.preview-display {
+                textarea {
                     background: $gray-lighter;
                     border: 0;
                     border-top: 1px solid $gray-lighter;
-                    bottom: 0;
-                    left: 0;
+                    font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+                    font-size: .875em;
+                    height: 100%;
                     margin: 0;
                     outline: 0;
                     padding: 15px;
-                    position: absolute;
                     resize: none;
-                    right: 0;
-                    top: 60px;
                     width: 100%;
                 }
+            }
+
+            textarea {
+                resize: vertical;
             }
 
             /* Styles for the sub classes configured */

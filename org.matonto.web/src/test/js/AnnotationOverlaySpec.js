@@ -3,6 +3,7 @@ describe('Annotation Overlay directive', function() {
         scope,
         element;
 
+    injectRegexConstant();
     beforeEach(function() {
         module('annotationOverlay');
 

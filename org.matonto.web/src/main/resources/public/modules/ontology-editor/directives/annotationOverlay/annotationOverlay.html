@@ -16,10 +16,14 @@
             </div>
 
             <!-- key, if new -->
-            <text-input ng-if="vm.selected.matonto.currentAnnotationSelect.localName === 'New Annotation'"
-                        ng-model="vm.selected.matonto.currentAnnotationKey"
-                        display-text="'Name'"
-                        muted-text="'Must be a valid IRI'"></text-input>
+            <div ng-if="vm.selected.matonto.currentAnnotationSelect.localName === 'New OWL AnnotationProperty'" ng-class="{'has-error': vm.annotationForm.iri.$invalid}" class="form-group">
+                <label class="control-label" for="iri">OWLAnnotation IRI</label>
+                <input class="form-control" id="iri" name="iri" ng-model="vm.selected.matonto.currentAnnotationKey" ng-pattern="dvm.iriPattern" required />
+                <p ng-messages="vm.annotationForm.iri.$error" class="error-msg">
+                    <ng-message when="required">This field cannot be empty.</ng-message>
+                    <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
+                </p>
+            </div>
         </div>
 
         <div ng-if="vm.editingAnnotation">
@@ -40,7 +44,7 @@
         <!-- annotation buttons -->
         <div class="btn-container clearfix">
             <custom-button ng-if="!vm.editingAnnotation"
-                           is-disabled-when="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default'"
+                           is-disabled-when="vm.annotationForm.$invalid || vm.selected.matonto.currentAnnotationSelect === 'default' || !vm.selected.matonto.currentAnnotationValue"
                            on-click="vm.addAnnotation()">Add</custom-button>
 
             <custom-button ng-if="vm.editingAnnotation"

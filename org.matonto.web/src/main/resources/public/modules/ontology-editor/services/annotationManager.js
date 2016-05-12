@@ -1,12 +1,14 @@
 (function() {
     'use strict';
 
+    var newAnnotationString = 'New OWL AnnotationProperty';
+
     angular
         .module('annotationManager', ['responseObj', 'splitIRI'])
         .service('annotationManagerService', annotationManagerService)
         .filter('showAnnotations', showAnnotations);
 
-        annotationManagerService.$inject = ['$filter', 'responseObj']
+        annotationManagerService.$inject = ['$filter', 'responseObj'];
 
         function annotationManagerService($filter, responseObj) {
             var self = this;
@@ -29,7 +31,7 @@
                     item = {'@value': value};
 
                 if(responseObj.validateItem(select)) {
-                    if(select.localName === 'New Annotation') {
+                    if(select.localName === newAnnotationString) {
                         temp = key;
                         if(responseObj.stringify(annotations).indexOf(temp) === -1) {
                             var split = $filter('splitIRI')(temp);
@@ -54,7 +56,7 @@
             }
 
             self.getLocalNameLowercase = function(item) {
-                if(item.localName === 'New Annotation') {
+                if(item.localName === newAnnotationString) {
                     return -1;
                 }
                 return item.localName.toLowerCase();
