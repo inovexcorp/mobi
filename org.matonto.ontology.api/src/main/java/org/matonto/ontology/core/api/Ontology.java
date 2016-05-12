@@ -56,8 +56,10 @@ public interface Ontology {
      * of the directlyImports relation as defined in Section 3.4 of the OWL 2 Structural Specification.
      * 
      * Note: The import closure of an ontology O is a set containing O and all the ontologies that O imports. 
-     * The import closure of O SHOULD NOT contain ontologies O1 and O2 such that O1 and O2 are different ontology versions 
-     * from the same ontology series, or O1 contains an ontology annotation owl:incompatibleWith with the value equal to either 
+     * The import closure of O SHOULD NOT contain ontologies O1 and O2 such that O1 and O2
+     * are different ontology versions
+     * from the same ontology series, or O1 contains an ontology annotation owl:incompatibleWith with
+     * the value equal to either
      * the ontology IRI or the version IRI of O2. 
      * 
      * @return set of ontologies
@@ -72,7 +74,8 @@ public interface Ontology {
     Set<Annotation> getOntologyAnnotations();
 
     /**
-     * Gets all the annotations in the ontology, excluding ontology annotations, annotations for other objects such as classes 
+     * Gets all the annotations in the ontology, excluding ontology annotations, annotations
+     * for other objects such as classes
      * and entities
      * 
      * @return ontology annotations
