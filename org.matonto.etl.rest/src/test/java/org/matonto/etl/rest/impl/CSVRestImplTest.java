@@ -14,10 +14,10 @@ import org.glassfish.jersey.test.JerseyTestNg;
 import org.junit.Assert;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.api.csv.MappingManager;
-import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel;
+import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import static org.mockito.Matchers.*;
@@ -39,7 +39,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
+public class CSVRestImplTest extends MatontoRestTestNg {
     private static File testDir;
     private CSVRestImpl rest;
 
@@ -50,17 +50,13 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     MappingManager manager;
 
     @Override
-    protected Application configure() {
+    protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
         rest = new CSVRestImpl();
         rest.setCsvConverter(converter);
         rest.setMappingManager(manager);
 
-        try {
-            when(converter.convert(any(InputStream.class), any(Model.class), anyBoolean(), anyString(), anyChar())).thenReturn(new LinkedHashModel());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        when(converter.convert(any(InputStream.class), any(Model.class), anyBoolean(), anyString(), anyChar())).thenReturn(new LinkedHashModel());
         when(manager.createMappingIRI(anyString())).thenReturn(String::new);
         when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(new LinkedHashModel()));
 
@@ -91,6 +87,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
 
     @Test
     public void uploadDelimitedTest() {
+        System.out.println(testDir.getAbsolutePath());
         String extension, fileName;
         FormDataMultiPart fd;
         Response response;
@@ -138,7 +135,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     public void updateNonexistentDelimitedTest() throws IOException {
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("csv/error").request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(204, response.getStatus());
+        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -160,7 +157,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
     @Test
     public void nonexistentRowsTest() {
         Response response = target().path("csv/error").request().get();
-        Assert.assertEquals(204, response.getStatus());
+        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -250,7 +247,7 @@ public class CSVRestImplTest extends JerseyTestNg.ContainerPerClassTest {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", "[]");
         Response response = target().path("csv/error/map").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(204, response.getStatus());
+        Assert.assertEquals(400, response.getStatus());
     }
 
     private void isJsonld(String str) {

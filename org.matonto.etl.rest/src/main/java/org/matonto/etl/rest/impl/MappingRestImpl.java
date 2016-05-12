@@ -96,7 +96,11 @@ public class MappingRestImpl implements MappingRest {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        return optJson.isPresent() ? Response.status(200).entity(optJson.get().toString()).build() : null;
+        if (optJson.isPresent()) {
+            return Response.status(200).entity(optJson.get().toString()).build();
+        } else {
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -121,7 +125,7 @@ public class MappingRestImpl implements MappingRest {
 
             return Response.ok(stream).build();
         } else {
-            return null;
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
         }
     }
 
@@ -143,7 +147,7 @@ public class MappingRestImpl implements MappingRest {
      * JSON-LD and then into a JSONObject.
      *
      * @param mappingIRI the IRI of a mapping in the mapping registry
-     * @return a JSONObject with the JSON-LD of a mapping
+     * @return a JSONObject with the JSON-LD of a mapping if it exists
      * @throws MatOntoException thrown if there is an error retrieving the mapping
      */
     private Optional<JSONObject> getMappingAsJson(Resource mappingIRI) throws MatOntoException {

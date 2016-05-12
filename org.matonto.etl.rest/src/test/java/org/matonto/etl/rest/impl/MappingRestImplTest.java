@@ -8,7 +8,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTestNg;
 import org.junit.Assert;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.rdf.api.Model;
@@ -16,6 +15,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.Test;
@@ -26,7 +26,6 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -34,14 +33,14 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
-public class MappingRestImplTest extends JerseyTestNg.ContainerPerClassTest {
+public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRestImpl rest;
 
     @Mock
     MappingManager manager;
 
     @Override
-    protected Application configure() {
+    protected Application configureApp() throws Exception {
         ValueFactory factory = SimpleValueFactory.getInstance();
         Model fakeModel = new LinkedHashModel();
         fakeModel.add(factory.createIRI("http://test.org"), factory.createIRI("http://test.org/isTest"), factory.createLiteral(true));
@@ -49,12 +48,8 @@ public class MappingRestImplTest extends JerseyTestNg.ContainerPerClassTest {
         rest = new MappingRestImpl();
         rest.setManager(manager);
 
-        try {
-            when(manager.createMapping(any(File.class))).thenReturn(new LinkedHashModel());
-            when(manager.createMapping(anyString())).thenReturn(new LinkedHashModel());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        when(manager.createMapping(any(File.class))).thenReturn(new LinkedHashModel());
+        when(manager.createMapping(anyString())).thenReturn(new LinkedHashModel());
         when(manager.storeMapping(any(Model.class), any(Resource.class))).thenReturn(true);
         when(manager.deleteMapping(any(Resource.class))).thenReturn(true);
         when(manager.getMappingRegistry()).thenReturn(new HashSet<Resource>());
@@ -158,7 +153,7 @@ public class MappingRestImplTest extends JerseyTestNg.ContainerPerClassTest {
         }
 
         response = target().path("mappings/error").request().get();
-        Assert.assertEquals(204, response.getStatus());
+        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -167,7 +162,7 @@ public class MappingRestImplTest extends JerseyTestNg.ContainerPerClassTest {
         Assert.assertEquals(200, response.getStatus());
 
         response = target().path("mappings/error").request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
-        Assert.assertEquals(204, response.getStatus());
+        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test

@@ -75,7 +75,7 @@ public class CSVRestImpl implements CSVRest {
             uploadFile(fileInputStream, delimitedFile.toPath());
             return Response.status(200).entity(fileName).build();
         } else {
-            return null;
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
     }
 
@@ -137,7 +137,7 @@ public class CSVRestImpl implements CSVRest {
             Rio.write(model, rdfWriter);
             return Response.status(200).entity(sw.toString()).build();
         } else {
-            return null;
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
     }
 
@@ -164,7 +164,7 @@ public class CSVRestImpl implements CSVRest {
 
             return Response.status(200).entity(json).build();
         } else {
-            return null;
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
     }
 
