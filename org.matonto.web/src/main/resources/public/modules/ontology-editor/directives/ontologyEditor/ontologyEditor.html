@@ -100,6 +100,8 @@
             <serialization-select ng-model="vm.serialization"></serialization-select>
             <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
         </div>
-        <textarea class="preview-display" readonly>{{vm.preview}}</textarea>
+        <div class="textarea-wrapper">
+            <textarea class="preview-display" readonly>{{vm.preview}}</textarea>
+        </div>
     </div>
 </form>
