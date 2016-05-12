@@ -68,6 +68,7 @@
                     setVariables(oi);
                 }, function(response) {
                     vm.selected.matonto.createError = response.statusText;
+                    stateManagerService.setEditorTab('basic');
                 });
         }
 
