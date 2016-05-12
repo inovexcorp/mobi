@@ -2,7 +2,7 @@
 <a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
 
 <!-- list of annotations -->
-<div class="annotation" ng-repeat="key in vm.selected | showAnnotations:vm.ontology.matonto.annotations | orderBy:vm.getAnnotationLocalNameLowercase">
+<div class="annotation" ng-repeat="key in vm.selected | showAnnotations:((vm.state.oi !== -1) ? vm.ontology.matonto.annotations : vm.selected.matonto.annotations) | orderBy:vm.getAnnotationLocalNameLowercase">
     <h5 title="{{vm.getItemIri(key)}}">{{key.localName | beautify}}</h5>
     <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(key)]">
         <p>{{value['@id'] || value['@value']}}</p>
