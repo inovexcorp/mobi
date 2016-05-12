@@ -1,4 +1,4 @@
-package org.matonto.catalog.rest.jaxb;
+package org.matonto.rest.util.jaxb;
 
 import javax.xml.bind.annotation.XmlElement;
 

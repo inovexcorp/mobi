@@ -1,8 +1,12 @@
 <blueprint default-activation="eager"
            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+    <!-- Realm -->
+    <reference id="realmRef" interface="org.apache.karaf.jaas.config.JaasRealm" availability="mandatory" filter="(realmId=matonto)" />
+
     <!-- User Authorization Contexts -->
     <bean id="userCurrentContext" class="org.matonto.web.authentication.context.UserCurrentTokenContext">
         <property name="bundle" ref="blueprintBundle"/>
+        <property name="realm" ref="realmRef"/>
     </bean>
     <service id="userCurrentContextService" ref="userCurrentContext" interface="org.osgi.service.http.HttpContext">
         <service-properties>
@@ -12,6 +16,7 @@
 
     <bean id="userLoginContext" class="org.matonto.web.authentication.context.UserLoginTokenContext">
         <property name="bundle" ref="blueprintBundle"/>
+        <property name="realm" ref="realmRef"/>
     </bean>
     <service id="userLoginContextService" ref="userLoginContext" interface="org.osgi.service.http.HttpContext">
         <service-properties>
@@ -21,6 +26,7 @@
 
     <bean id="userLogoutContext" class="org.matonto.web.authentication.context.UserLogoutTokenContext">
         <property name="bundle" ref="blueprintBundle"/>
+        <property name="realm" ref="realmRef"/>
     </bean>
     <service id="userLogoutContextService" ref="userLogoutContext" interface="org.osgi.service.http.HttpContext">
         <service-properties>
@@ -79,6 +85,7 @@
     <!-- REST Authorization Context -->
     <bean id="restContext" class="org.matonto.web.authentication.context.RestTokenContext">
         <property name="bundle" ref="blueprintBundle"/>
+        <property name="realm" ref="realmRef"/>
     </bean>
     <service id="restContextService" ref="restContext" interface="org.osgi.service.http.HttpContext">
         <service-properties>
@@ -89,6 +96,7 @@
     <!-- UI Authorization Context -->
     <bean id="uiContext" class="org.matonto.web.authentication.context.UITokenContext">
         <property name="bundle" ref="blueprintBundle"/>
+        <property name="realm" ref="realmRef"/>
     </bean>
     <service id="uiContextService" ref="uiContext" interface="org.osgi.service.http.HttpContext">
         <service-properties>

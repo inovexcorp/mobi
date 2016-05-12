@@ -13,15 +13,15 @@
                 scope: {},
                 controllerAs: 'dvm',
                 controller: ['sparqlManagerService', 'prefixes', function(sparqlManagerService, prefixes) {
-                    var self = this;
+                    var dvm = this;
 
-                    self.sparqlManagerService = sparqlManagerService;
+                    dvm.sparql = sparqlManagerService;
 
-                    self.prefixList = _.map(prefixes, function(value, key) {
+                    dvm.prefixList = _.map(prefixes, function(value, key) {
                         return key + ': <' + value + '>';
                     });
 
-                    self.editorOptions = {
+                    dvm.editorOptions = {
                         mode: 'application/sparql-query',
                         indentUnit: 4,
                         tabMode: 'indent',

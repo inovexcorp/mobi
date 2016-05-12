@@ -48,6 +48,12 @@
                         'localName': 'title'
                     }
                 ],
+                defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
+                    return {
+                        'namespace': prefixes.xsd,
+                        'localName': item
+                    }
+                }),
                 changedEntries = [],
                 newItems = {},
                 ontologies = [],
@@ -476,7 +482,7 @@
                         if(response.data.deleted) {
                             console.log('Successfully deleted ontology');
                             ontologies.splice(state.oi, 1);
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: false });
                         } else {
                             console.warn('Ontology not deleted');
                             deferred.reject(response);
@@ -508,7 +514,7 @@
                             ontology.matonto.classes.splice(state.ci, 1);
                             removeIdFromArray(classId, ontology.matonto.subClasses);
 
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Class not deleted');
                             deferred.reject(response);
@@ -559,7 +565,7 @@
                                 removeIdFromArray(propertyId, ontology.matonto.subDataProperties);
                             }
 
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Property not deleted');
                             deferred.reject(response);
@@ -789,7 +795,7 @@
                         ontology.matonto.subClasses = classes;
                         ontology.matonto.subDataProperties = dataProperties;
                         ontology.matonto.subObjectProperties = objectProperties;
-                        ontology.matonto.dataPropertyRange = datatypes;
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(_.unionWith(datatypes, defaultDatatypes, _.isEqual), 'localName');
 
                         deferred.resolve(ontology);
                     }, function(response) {
@@ -863,7 +869,7 @@
                             subClasses: [],
                             subDataProperties: [],
                             subObjectProperties: [],
-                            dataPropertyRange: []
+                            dataPropertyRange: $filter('orderBy')(defaultDatatypes, 'localName')
                         }
                     },
                     newClass = {
