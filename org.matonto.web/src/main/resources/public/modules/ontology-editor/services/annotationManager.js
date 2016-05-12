@@ -6,7 +6,7 @@
         .service('annotationManagerService', annotationManagerService)
         .filter('showAnnotations', showAnnotations);
 
-        annotationManagerService.$inject = ['$filter', 'responseObj']
+        annotationManagerService.$inject = ['$filter', 'responseObj'];
 
         function annotationManagerService($filter, responseObj) {
             var self = this;
@@ -29,7 +29,7 @@
                     item = {'@value': value};
 
                 if(responseObj.validateItem(select)) {
-                    if(select.localName === 'New Annotation') {
+                    if(select.localName === 'New OWLAnnotationProperty') {
                         temp = key;
                         if(responseObj.stringify(annotations).indexOf(temp) === -1) {
                             var split = $filter('splitIRI')(temp);

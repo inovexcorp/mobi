@@ -50,7 +50,7 @@
                 ],
                 newAnnotation = {
                     'namespace': 'Create ',
-                    'localName': 'New Annotation'
+                    'localName': 'New OWLAnnotationProperty'
                 },
                 defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
                     return {
