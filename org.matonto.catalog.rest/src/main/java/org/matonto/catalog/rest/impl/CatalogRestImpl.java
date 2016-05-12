@@ -3,9 +3,6 @@ package org.matonto.catalog.rest.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.Distribution;
@@ -13,24 +10,22 @@ import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
-import org.matonto.rest.util.jaxb.Links;
-import org.matonto.rest.util.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 import org.matonto.persistence.utils.Values;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
+import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.jaxb.PaginatedResults;
 
-import javax.ws.rs.core.MultivaluedMap;
+import java.time.OffsetDateTime;
+import java.util.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.nio.charset.Charset;
-import java.time.OffsetDateTime;
-import java.util.*;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
@@ -120,7 +115,7 @@ public class CatalogRestImpl implements CatalogRest {
         marshaller.setStart(start);
         marshaller.setTotalSize(searchResults.getTotalSize());
 
-        marshaller.setLinks(buildLinks(uriInfo, size, limit, start));
+        marshaller.setLinks(LinksUtils.buildLinks(uriInfo, size, limit, start));
 
         return marshaller;
     }
@@ -269,40 +264,5 @@ public class CatalogRestImpl implements CatalogRest {
         marshaller.setBytesSize(distribution.getByteSize());
 
         return marshaller;
-    }
-
-    private Links buildLinks(UriInfo uriInfo, int size, int limit, int start) {
-        String path = uriInfo.getPath();
-
-        Links links = new Links();
-        links.setBase(uriInfo.getBaseUri().toString());
-        links.setSelf(uriInfo.getAbsolutePath().toString());
-        links.setContext(path);
-
-        if (size == limit) {
-            String next = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start + limit);
-            links.setNext(next);
-        }
-
-        if (start != 0) {
-            String prev = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start - limit);
-            links.setPrev(prev);
-        }
-
-        return links;
-    }
-
-    private String buildQueryString(MultivaluedMap<String, String> queryParams, int start) {
-        List<NameValuePair> params = new ArrayList<>();
-
-        queryParams.forEach( (key, values) -> {
-            if (key.equals("start")) {
-                params.add(new BasicNameValuePair(key, String.valueOf(start)));
-            } else {
-                params.add(new BasicNameValuePair(key, values.get(0)));
-            }
-        });
-
-        return URLEncodedUtils.format(params, '&', Charset.forName("UTF-8"));
     }
 }
