@@ -71,6 +71,26 @@
         .overlay form {
             height: auto;
         }
+
+        .annotation-preview {
+            background: $gray-lighter;
+
+            h3 {
+                background: $brand-primary;
+                color: #fff;
+                font-size: 14px;
+                font-weight: normal;
+                line-height: 20px;
+                margin: 0;
+                padding: 6px 12px;
+                text-align: center;
+            }
+
+            pre {
+                border: 0;
+                margin: 0;
+            }
+        }
     }
 
     .btn-circle {

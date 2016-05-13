@@ -64,29 +64,32 @@
             self.create = function(ontology, iri) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                var config = {
-                    params: {
-                        annotationjson: {
-                            '@id': iri,
-                            '@type': [prefixes.owl + 'AnnotationProperty']
+                var annotationjson = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
+                if(_.findIndex(ontology.matonto.jsAnnotations, annotationjson) === -1) {
+                    var config = {
+                        params: {
+                            annotationjson: annotationjson
                         }
                     }
-                }
-                $http.post('/matontorest/ontologies/' + encodeURIComponent(ontology['@id']) + '/annotations', null, config)
-                    .then(function(response) {
-                        if(_.get(response, 'status') === 200) {
-                            var split = $filter('splitIRI')(iri);
-                            ontology.matonto.annotations.push({namespace: split.begin + split.then, localName: split.end});
-                            deferred.resolve(response);
-                        } else {
+                    $http.post('/matontorest/ontologies/' + encodeURIComponent(ontology['@id']) + '/annotations', null, config)
+                        .then(function(response) {
+                            if(_.get(response, 'status') === 200) {
+                                var split = $filter('splitIRI')(iri);
+                                ontology.matonto.annotations.push({namespace: split.begin + split.then, localName: split.end});
+                                ontology.matonto.jsAnnotations.push(annotationjson);
+                                deferred.resolve(response);
+                            } else {
+                                deferred.reject(_.get(response, 'statusText'));
+                            }
+                        }, function(response) {
                             deferred.reject(_.get(response, 'statusText'));
-                        }
-                    }, function(response) {
-                        deferred.reject(_.get(response, 'statusText'));
-                    })
-                    .then(function() {
-                        $rootScope.showSpinner = false;
-                    });
+                        })
+                        .then(function() {
+                            $rootScope.showSpinner = false;
+                        });
+                } else {
+                    deferred.reject('This ontology already has an OWL Annotation declared with that IRI.');
+                }
 
                 return deferred.promise;
             }

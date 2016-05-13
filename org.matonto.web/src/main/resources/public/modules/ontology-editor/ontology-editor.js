@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay',
+        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
@@ -33,6 +33,7 @@
             stateManagerService.setTreeTab(tab);
             vm.state = stateManagerService.getState();
             vm.selected = ontologyManagerService.getObject(vm.state);
+            vm.serialization = '';
         }
 
         vm.setEditorTab = function(tab) {
@@ -107,6 +108,13 @@
             stateManagerService.setState(editor, oi, ci, pi);
             vm.state = stateManagerService.getState();
             setVariables(oi);
+        }
+
+        vm.selectAnnotation = function(oi, index) {
+            stateManagerService.setState('annotation-display', oi, undefined, index);
+            vm.state = stateManagerService.getState();
+            vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.selected = vm.ontology.matonto.jsAnnotations[index];
         }
 
         vm.save = function() {

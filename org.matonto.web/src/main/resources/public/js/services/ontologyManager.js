@@ -589,6 +589,8 @@
                     i++;
                 }
 
+                ontology.matonto.jsAnnotations = jsAnnotations;
+
                 _.forEach(blankNodes, function(blankNode) {
                     if(_.has(blankNode, prefixes.owl + 'unionOf')) {
                         var unionOf = _.get(blankNode, prefixes.owl + 'unionOf');

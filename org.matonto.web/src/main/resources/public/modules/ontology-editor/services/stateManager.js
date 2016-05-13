@@ -31,6 +31,11 @@
                     tab: 'datatype',
                     editor: 'default',
                     editorTab: 'basic'
+                },
+                annotation: {
+                    tab: 'annotation',
+                    editor: 'default',
+                    editorTab: 'basic'
                 }
             }
 
