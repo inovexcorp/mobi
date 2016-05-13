@@ -31,6 +31,7 @@ import java.util.*;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MappingRestImplTest extends MatontoRestTestNg {
@@ -48,6 +49,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         rest = new MappingRestImpl();
         rest.setManager(manager);
 
+        when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
         when(manager.createMapping(any(File.class))).thenReturn(new LinkedHashModel());
         when(manager.createMapping(anyString())).thenReturn(new LinkedHashModel());
         when(manager.storeMapping(any(Model.class), any(Resource.class))).thenReturn(true);
@@ -89,14 +91,29 @@ public class MappingRestImplTest extends MatontoRestTestNg {
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
+        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI().stringValue()));
+    }
+
+    @Test
+    public void putFileTest() {
+        FormDataMultiPart fd = new FormDataMultiPart();
+        InputStream content = getClass().getResourceAsStream("/mapping.jsonld");
+        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
+                content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        Response response = target().path("mappings/test").request().put(Entity.entity(fd, MediaType
+                .MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI("test").stringValue()));
 
         fd = new FormDataMultiPart();
         content = getClass().getResourceAsStream("/mapping.jsonld");
         fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-        response = target().path("mappings").queryParam("Id", "test").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        response = target().path("mappings/none").request().put(Entity.entity(fd, MediaType
+                .MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains("test"));
+        Assert.assertTrue(verify(manager).deleteMapping(manager.createMappingIRI("none")));
+        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI("none").stringValue()));
     }
 
     @Test

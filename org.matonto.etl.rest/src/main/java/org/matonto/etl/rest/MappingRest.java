@@ -15,25 +15,6 @@ import javax.ws.rs.core.Response;
 @Path("/mappings")
 @Api( value = "/mappings" )
 public interface MappingRest {
-
-    /**
-     * Uploads a mapping sent as form data or a JSON-LD string into a data store
-     * with the passed local name.
-     *
-     * @param fileInputStream an InputStream of a mapping file passed as form data
-     * @param fileDetail information about the file being uploaded, including the name
-     * @param jsonld a mapping serialized as JSON-LD
-     * @param mappingId the localName for the new mapping file
-     * @return a response with the IRI for the mapping
-     */
-    @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation("Upload mapping sent as form data.")
-    Response upload(@FormDataParam("file") InputStream fileInputStream,
-                    @FormDataParam("file") FormDataContentDisposition fileDetail,
-                    @FormDataParam("jsonld") String jsonld,
-                    @QueryParam("Id") String mappingId);
-
     /**
      * If passed an id list, produces a JSON array of all the mapping
      * with matching IRIs in the data store. Otherwise just produces a
@@ -46,6 +27,42 @@ public interface MappingRest {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Retrieve list of all mapping IRIs")
     Response getMappingNames(@QueryParam("Ids") List<String> idList);
+
+    /**
+     * Uploads a mapping sent as form data or a JSON-LD string into a data store
+     * with a UUID local name.
+     *
+     * @param fileInputStream an InputStream of a mapping file passed as form data
+     * @param fileDetail information about the file being uploaded, including the name
+     * @param jsonld a mapping serialized as JSON-LD
+     * @return a response with the IRI for the mapping
+     */
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @ApiOperation("Upload mapping sent as form data.")
+    Response upload(@FormDataParam("file") InputStream fileInputStream,
+                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                    @FormDataParam("jsonld") String jsonld);
+
+    /**
+     * Uploads a mapping sent as form data or a JSON-LD string into a data store
+     * with the passed local name. If the mapping already exists, replaces the
+     * existing mapping.
+     *
+     * @param mappingId the local name for the mapping
+     * @param fileInputStream an InputStream of a mapping file passed as form data
+     * @param fileDetail information about the file being uploaded, including the name
+     * @param jsonld a mapping serialized as JSON-LD
+     * @return a response with the IRI for the mapping
+     */
+    @PUT
+    @Path("{mappingName}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @ApiOperation("Replaces a mapping with a new mapping sent as form data")
+    Response upload(@PathParam("mappingName") String mappingId,
+                    @FormDataParam("file") InputStream fileInputStream,
+                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                    @FormDataParam("jsonld") String jsonld);
 
     /**
      * Collects the JSON-LD from an uploaded mapping and returns it as JSON.

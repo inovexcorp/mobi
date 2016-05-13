@@ -64,19 +64,21 @@ public class CSVRestImpl implements CSVRest {
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
+        String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
         Optional<File> optDelimitedFile = getUploadedFile(fileName);
+        Path filePath;
         if (optDelimitedFile.isPresent()) {
             File delimitedFile = optDelimitedFile.get();
-            String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
             if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
                 delimitedFile.delete();
                 delimitedFile = new File("data/tmp/" + fileName + "." + newExtension);
             }
-            uploadFile(fileInputStream, delimitedFile.toPath());
-            return Response.status(200).entity(fileName).build();
+            filePath = delimitedFile.toPath();
         } else {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+            filePath = Paths.get("data/tmp/" + fileName + "." + newExtension);
         }
+        uploadFile(fileInputStream, filePath);
+        return Response.status(200).entity(fileName).build();
     }
 
     @Override

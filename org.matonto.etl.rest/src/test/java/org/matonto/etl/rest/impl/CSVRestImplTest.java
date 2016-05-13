@@ -86,7 +86,6 @@ public class CSVRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void uploadDelimitedTest() {
-        System.out.println(testDir.getAbsolutePath());
         String extension, fileName;
         FormDataMultiPart fd;
         Response response;
@@ -111,6 +110,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
 
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
         Assert.assertEquals(fileName, response.readEntity(String.class));
         List<String> resultLines = Files.readAllLines(Paths.get(testDir.getPath() + "/" + fileName + ".csv"));
         Assert.assertEquals(expectedLines.size(), resultLines.size());
@@ -125,7 +125,9 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         moveResource("test.csv", fileName + ".csv");
 
         FormDataMultiPart fd = getFileFormData("test.xls");
-        target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("csv/" + fileName).request().put(
+                Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
         Assert.assertFalse(Files.exists(Paths.get(testDir.getPath() + "/" + fileName + ".csv")));
         Assert.assertTrue(Files.exists(Paths.get(testDir.getPath() + "/" + fileName + ".xls")));
     }
@@ -133,8 +135,9 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     @Test
     public void updateNonexistentDelimitedTest() throws IOException {
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
-        Response response = target().path("csv/error").request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(400, response.getStatus());
+        Response response = target().path("csv/name").request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        Assert.assertTrue(Files.exists(Paths.get(testDir.getPath() + "/name.csv")));
     }
 
     @Test
