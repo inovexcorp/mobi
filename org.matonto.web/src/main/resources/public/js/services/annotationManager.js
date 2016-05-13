@@ -8,9 +8,9 @@
         .service('annotationManagerService', annotationManagerService)
         .filter('showAnnotations', showAnnotations);
 
-        annotationManagerService.$inject = ['$filter', 'responseObj', 'prefixes'];
+        annotationManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'responseObj', 'prefixes'];
 
-        function annotationManagerService($filter, responseObj, prefixes) {
+        function annotationManagerService($rootScope, $filter, $q, $http, responseObj, prefixes) {
             var self = this;
 
             var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], function(item) {
@@ -59,6 +59,36 @@
 
             self.edit = function(entity, select, value, index) {
                 entity[select][index]['@value'] = value;
+            }
+
+            self.create = function(ontology, iri) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                var config = {
+                    params: {
+                        annotationjson: {
+                            '@id': iri,
+                            '@type': [prefixes.owl + 'AnnotationProperty']
+                        }
+                    }
+                }
+                $http.post('/matontorest/ontologies/' + encodeURIComponent(ontology['@id']) + '/annotations', null, config)
+                    .then(function(response) {
+                        if(_.get(response, 'status') === 200) {
+                            var split = $filter('splitIRI')(iri);
+                            ontology.matonto.annotations.push({namespace: split.begin + split.then, localName: split.end});
+                            deferred.resolve(response);
+                        } else {
+                            deferred.reject(_.get(response, 'statusText'));
+                        }
+                    }, function(response) {
+                        deferred.reject(_.get(response, 'statusText'));
+                    })
+                    .then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+
+                return deferred.promise;
             }
         }
 

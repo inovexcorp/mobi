@@ -2,7 +2,7 @@
     <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')">{{vm.selected['@id'] ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'}}</tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected) || 'New Property'}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
@@ -10,7 +10,7 @@
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <create-error></create-error>
+        <error-display error-message="vm.selected.matonto.createError"></error-display>
 
         <!-- static iri -->
         <static-iri display-type="property"></static-iri>

@@ -138,6 +138,8 @@
                                       cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
 
                 <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
+
+                <create-annotation-overlay ng-if="vm.showCreateAnnotationOverlay"></create-annotation-overlay>
             </div>
         </section>
     </div>

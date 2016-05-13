@@ -6,7 +6,7 @@
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
-        'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'createError'])
+        'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -218,15 +218,16 @@
         }
 
         /* Annotation Management */
-        function resetAnnotationOverlay() {
-            vm.showAnnotationOverlay = false;
+        function resetAnnotationVariables() {
             vm.annotationSelect = undefined;
             vm.annotationValue = '';
+            vm.annotationIndex = 0;
         }
 
         vm.addAnnotation = function(select, value) {
             annotationManagerService.add(vm.selected, select, value);
-            resetAnnotationOverlay();
+            resetAnnotationVariables();
+            vm.showAnnotationOverlay = false;
             vm.entityChanged();
         }
 
@@ -240,7 +241,8 @@
 
         vm.editAnnotation = function(select, value) {
             annotationManagerService.edit(vm.selected, vm.getItemIri(select), value, vm.annotationIndex);
-            resetAnnotationOverlay();
+            resetAnnotationVariables();
+            vm.showAnnotationOverlay = false;
             vm.entityChanged();
         }
 
@@ -251,6 +253,23 @@
 
         vm.getItemNamespace = function(item) {
             return ontologyManagerService.getItemNamespace(item);
+        }
+
+        vm.openAddAnnotationOverlay = function() {
+            resetAnnotationVariables();
+            vm.showAnnotationOverlay = true;
+        }
+
+        vm.createAnnotation = function(iri) {
+            annotationManagerService.create(vm.ontology, vm.createAnnotationIri)
+                .then(function(response) {
+                    vm.createAnnotationError = '';
+                    vm.createAnnotationIri = '';
+                    vm.showCreateAnnotationOverlay = false;
+
+                }, function(errorMessage) {
+                    vm.createAnnotationError = errorMessage;
+                });
         }
 
         initialize();

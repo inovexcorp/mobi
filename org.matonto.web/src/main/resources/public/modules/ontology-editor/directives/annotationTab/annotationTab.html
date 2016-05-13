@@ -1,12 +1,17 @@
-<!-- add annotation button -->
-<a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
+<div class="annotation-container">
+    <!-- add annotation button -->
+    <div class="btn-container clearfix">
+        <a class="btn btn-link pull-left" ng-click="vm.openAddAnnotationOverlay()"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
+        <a class="btn btn-link pull-right" ng-click="vm.showCreateAnnotationOverlay = true"><i class="fa fa-fw fa-plus"></i>Create New OWL Annotation</a>
+    </div>
 
-<!-- list of annotations -->
-<div class="annotation" ng-repeat="annotation in vm.selected | showAnnotations:((vm.state.oi !== -1) ? vm.ontology.matonto.annotations : vm.selected.matonto.annotations) | orderBy:'localName'">
-    <h5 title="{{vm.getItemIri(annotation)}}">{{annotation.localName | beautify}}</h5>
-    <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(annotation)]">
-        <p>{{value['@id'] || value['@value']}}</p>
-        <button ng-if="value['@value']" type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(annotation, $index);" title="Edit"><i class="fa fa-pencil"></i></button>
-        <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(vm.getItemIri(annotation), $index)" title="Delete"><i class="fa fa-times"></i></button>
+    <!-- list of annotations -->
+    <div class="annotation" ng-repeat="annotation in vm.selected | showAnnotations:((vm.state.oi !== -1) ? vm.ontology.matonto.annotations : vm.selected.matonto.annotations) | orderBy:'localName'">
+        <h5>{{annotation.localName | beautify}} <small>&lt;{{vm.getItemIri(annotation)}}&gt;</small></h5>
+        <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(annotation)]">
+            <span>{{value['@id'] || value['@value']}}</span>
+            <button type="button" class="btn btn-link pull-right" ng-click="vm.removeAnnotation(vm.getItemIri(annotation), $index)" title="Delete"><i class="fa fa-times fa-fw"></i></button>
+            <button ng-if="value['@value']" type="button" class="btn btn-link pull-right" ng-click="vm.editClicked(annotation, $index);" title="Edit"><i class="fa fa-pencil fa-fw"></i></button>
+        </div>
     </div>
 </div>

@@ -679,31 +679,24 @@
                             datatypes = ontologyIris.data.datatypes;
 
                         if(importedOntologyIris.status === 200) {
-                            var data = importedOntologyIris.data,
-                                importedClasses = [],
-                                importedDataProperties = [],
-                                importedObjectProperties = [];
+                            var importedClasses = importedDataProperties = importedObjectProperties = [];
 
-                            _.forEach(data, function(item) {
-                                importedClasses = importedClasses.concat(addOntologyIriToElements(item.classes, item.id));
-                                importedDataProperties = importedDataProperties.concat(addOntologyIriToElements(item.dataProperties, item.id));
-                                importedObjectProperties = importedObjectProperties.concat(addOntologyIriToElements(item.objectProperties, item.id));
+                            _.forEach(importedOntologyIris.data, function(item) {
+                                importedClasses = _.concat(importedClasses, addOntologyIriToElements(item.classes, item.id));
+                                importedDataProperties = _.concat(importedDataProperties, addOntologyIriToElements(item.dataProperties, item.id));
+                                importedObjectProperties = _.concat(importedObjectProperties, addOntologyIriToElements(item.objectProperties, item.id));
                             });
 
-                            classes = $filter('orderBy')(classes.concat(importedClasses), 'localName');
-                            dataProperties = $filter('orderBy')(dataProperties.concat(importedDataProperties), 'localName');
-                            objectProperties = $filter('orderBy')(objectProperties.concat(importedObjectProperties), 'localName');
-                        } else {
-                            classes = $filter('orderBy')(classes, 'localName');
-                            dataProperties = $filter('orderBy')(dataProperties, 'localName');
-                            objectProperties = $filter('orderBy')(objectProperties, 'localName');
+                            classes = _.concat(classes, importedClasses);
+                            dataProperties = _.concat(dataProperties, importedDataProperties);
+                            objectProperties = _.concat(objectProperties, importedObjectProperties);
                         }
 
-                        ontology.matonto.annotations = $filter('orderBy')(_.unionWith(annotations, defaultAnnotations, _.isEqual), 'localName');
+                        ontology.matonto.annotations = _.unionWith(annotations, defaultAnnotations, _.isEqual);
                         ontology.matonto.subClasses = classes;
                         ontology.matonto.subDataProperties = dataProperties;
                         ontology.matonto.subObjectProperties = objectProperties;
-                        ontology.matonto.dataPropertyRange = $filter('orderBy')(_.unionWith(datatypes, defaultDatatypes, _.isEqual), 'localName');
+                        ontology.matonto.dataPropertyRange = _.unionWith(datatypes, defaultDatatypes, _.isEqual);
 
                         deferred.resolve(ontology);
                     }, function(response) {
