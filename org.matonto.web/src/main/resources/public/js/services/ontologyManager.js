@@ -587,25 +587,6 @@
                 return result;
             }
 
-            function setId(obj, type, rdfs) {
-                var copy = angular.copy(obj);
-
-                if(copy.matonto.hasOwnProperty('namespace')) {
-                    var localName = '';
-                    var label = _.get(copy, rdfs + 'label', '');
-                    if(label) {
-                        localName = $filter('camelCase')(label[0]['@value'], type);
-                    } else {
-                        localName = type + '_' + uuid.v4();
-                    }
-                    copy['@id'] = copy.matonto.namespace + localName;
-                    delete copy.matonto.namespace;
-                }
-                copy.matonto.originalId = copy['@id'];
-
-                return copy;
-            }
-
             function createEntityJson(entity) {
                 var copy = angular.copy(entity);
                 var context = _.get(copy.matonto, 'context', []);
@@ -630,14 +611,20 @@
                 }
             }
 
+            function initEntity(entity, iri, label) {
+                var copy = angular.copy(entity);
+                copy['@id'] = copy.matonto.originalId = iri;
+                copy[prefixes.dc + 'title'] = copy[prefixes.rdfs + 'label'] = [{'@value': label}];
+                return copy;
+            }
+
             self.createOntology = function(ontologyIri, label) {
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
 
                 var newOntology = angular.copy(ontologyTemplate);
-                newOntology['@id'] = newOntology.matonto.originalId = ontologyIri;
-                newOntology[prefixes.dc + 'title'] = newOntology[prefixes.rdfs + 'label'] = [{'@value': label}];
+                newOntology = initEntity(newOntology, ontologyIri, label);
 
                 var config = {
                         params: {
@@ -667,14 +654,16 @@
                 return deferred.promise;
             }
 
-            self.createClass = function(ontology, classObj) {
+            self.createClass = function(ontology, classIri, label) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                obj = setId(obj, 'class', ontology.matonto.rdfs);
+
+                var newClass = angular.copy(classTemplate);
+                newClass = initEntity(newClass, classIri, label);
 
                 var config = {
                         params: {
-                            resourcejson: createEntityJson(ontology.matonto, classObj)
+                            resourcejson: createEntityJson(newClass)
                         }
                     }
 
@@ -682,9 +671,9 @@
                     .then(function(response) {
                         if(response.data.added) {
                             console.log('Successfully added class');
-                            ontology.matonto.classes.push(classObj);
-                            var classIRI = $filter('splitIRI')(classObj['@id']);
-                            ontology.matonto.subClasses.push({namespace: classIRI.begin + classIRI.then, localName: classIRI.end});
+                            ontology.matonto.classes.push(newClass);
+                            var split = $filter('splitIRI')(newClass['@id']);
+                            ontology.matonto.subClasses.push({namespace: split.begin + split.then, localName: split.end});
                             deferred.resolve(response);
                         } else {
                             console.warn('Class not added');
@@ -1131,12 +1120,7 @@
 
             self.editIRI = function(begin, then, end, selected, ontology) {
                 var fresh = begin + then + end;
-
-                if(selected.matonto.hasOwnProperty('namespace')) {
-                    delete selected.matonto.namespace;
-                } else {
-                    updateRefsService.update(ontology, selected['@id'], fresh);
-                }
+                updateRefsService.update(ontology, selected['@id'], fresh);
                 selected['@id'] = fresh;
             }
 

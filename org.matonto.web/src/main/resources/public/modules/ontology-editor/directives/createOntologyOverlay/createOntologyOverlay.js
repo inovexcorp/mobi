@@ -20,11 +20,11 @@
                     dvm.iriPattern = REGEX.IRI;
                     dvm.iriHasChanged = false;
 
-                    vm.createOntologyIri = prefix;
+                    dvm.createOntologyIri = prefix;
 
                     dvm.nameChanged = function() {
                         if(!dvm.iriHasChanged) {
-                            vm.createOntologyIri = prefix + $filter('camelCase')(dvm.name, 'class');
+                            dvm.createOntologyIri = prefix + $filter('camelCase')(dvm.name, 'class');
                         }
                     }
                 }]

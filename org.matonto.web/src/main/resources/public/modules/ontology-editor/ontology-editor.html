@@ -57,6 +57,7 @@
                     <i class="fa fa-archive fa-fw"></i>
                 </button>
             </li>
+            <li class="separator"></li>
             <li>
                 <button ng-click="vm.showDeleteConfirmation = true" title="Delete Entity"
                         ng-disabled="!vm.selected.hasOwnProperty('matonto')"
@@ -125,7 +126,7 @@
                     <pre class="tab">{{vm.selected | json}}</pre>
                 </div>
 
-                <iri-overlay ng-if="vm.showIriOverlay"></iri-overlay>
+                <iri-overlay ng-if="vm.showIriOverlay" current-iri="vm.currentIri"></iri-overlay>
 
                 <ontology-upload-overlay ng-if="vm.showUploadOverlay"></ontology-upload-overlay>
 
@@ -152,6 +153,8 @@
                 <create-annotation-overlay ng-if="vm.showCreateAnnotationOverlay"></create-annotation-overlay>
 
                 <create-ontology-overlay ng-if="vm.showCreateOntologyOverlay"></create-ontology-overlay>
+
+                <create-class-overlay ng-if="vm.showCreateClassOverlay"></create-class-overlay>
             </div>
         </section>
     </div>

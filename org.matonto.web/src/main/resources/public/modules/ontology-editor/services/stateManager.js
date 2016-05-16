@@ -68,18 +68,18 @@
                 return self.states[self.states.current];
             }
 
-            self.setStateToNew = function(state, ontologies) {
+            self.setStateToNew = function(state, ontologies, type) {
                 var editor,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi;
-                if(oi === -1) {
+                if(type === 'ontology') {
                     oi = ontologies.length - 1;
                     editor = 'ontology-editor';
-                } else if(ci === -1) {
+                } else if(type === 'class') {
                     ci = ontologies[oi].matonto.classes.length - 1;
                     editor = 'class-editor';
-                } else {
+                } else if(type === 'property') {
                     pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
                     editor = 'property-editor';
                 }
