@@ -18,49 +18,49 @@
             </li>
             <li>
                 <a ng-click="vm.showUploadOverlay = true" title="Upload Ontology"
-                   ng-class="{ 'active': vm.showUploadOverlay === true }">
+                   ng-class="{ 'active': vm.showUploadOverlay }">
                     <i class="fa fa-upload fa-fw"></i>
                 </a>
             </li>
             <li>
-                <a ng-click="vm.selectItem('ontology-editor', -1)" title="Create Ontology"
-                   ng-class="{ 'active': vm.state.oi === -1 }">
+                <a ng-click="vm.showCreateOntologyOverlay = true" title="Create Ontology"
+                   ng-class="{ 'active': vm.showCreateOntologyOverlay }">
                     <i class="fa fa-plus fa-fw"></i>
                 </a>
             </li>
             <li class="separator"></li>
             <li>
-                <button ng-click="vm.selectItem('class-editor', vm.state.oi, -1)" title="Create Class"
-                        ng-disabled="vm.state.oi === undefined || vm.state.oi === -1 || vm.state.ci !== undefined || vm.state.editor === 'annotation-display'"
-                        ng-class="{ 'active': vm.state.ci === -1 }">
+                <button ng-click="vm.showCreateClassOverlay = true" title="Create Class"
+                        ng-disabled="vm.state.oi === undefined || vm.state.editor === 'annotation-display'"
+                        ng-class="{ 'active': vm.showCreateClassOverlay }">
                     <i class="fa fa-plus fa-fw"></i>
                 </button>
             </li>
             <li>
-                <button ng-click="vm.selectItem('property-editor', vm.state.oi, vm.state.ci, -1)" title="Create Property"
-                        ng-disabled="vm.state.ci === undefined || vm.state.ci === -1 || vm.state.pi !== undefined"
-                        ng-class="{ 'active': vm.state.pi === -1 }">
+                <button ng-click="vm.showCreatePropertyOverlay = true" title="Create Property"
+                        ng-disabled="vm.state.oi === undefined || vm.state.editor === 'annotation-display'"
+                        ng-class="{ 'active': vm.showCreatePropertyOverlay }">
                     <i class="fa fa-plus fa-fw"></i>
                 </button>
             </li>
             <li>
                 <button ng-click="vm.openDownloadOverlay()" title="Download Ontology"
-                        ng-disabled="!vm.ontology.hasOwnProperty('matonto') || vm.state.oi === -1"
-                        ng-class="{ 'active': vm.showDeleteConfirmation === true }">
+                        ng-disabled="!vm.ontology.hasOwnProperty('matonto')"
+                        ng-class="{ 'active': vm.showDeleteConfirmation }">
                     <i class="fa fa-download fa-fw"></i>
                 </button>
             </li>
             <li>
                 <button ng-click="vm.showCloseOverlay = true" title="Close Ontology"
-                        ng-disabled="vm.state.oi === undefined || vm.state.oi === -1"
+                        ng-disabled="vm.state.oi === undefined"
                         ng-class="{ 'active': vm.showCloseOverlay }">
                     <i class="fa fa-archive fa-fw"></i>
                 </button>
             </li>
             <li>
                 <button ng-click="vm.showDeleteConfirmation = true" title="Delete Entity"
-                        ng-disabled="!vm.selected.hasOwnProperty('matonto') || vm.state.oi === -1 || vm.state.ci === -1 || vm.state.pi === -1"
-                        ng-class="{ 'active': vm.showDeleteConfirmation === true }">
+                        ng-disabled="!vm.selected.hasOwnProperty('matonto')"
+                        ng-class="{ 'active': vm.showDeleteConfirmation }">
                     <i class="fa fa-trash-o fa-fw"></i>
                 </button>
             </li>
@@ -150,6 +150,8 @@
                 <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
 
                 <create-annotation-overlay ng-if="vm.showCreateAnnotationOverlay"></create-annotation-overlay>
+
+                <create-ontology-overlay ng-if="vm.showCreateOntologyOverlay"></create-ontology-overlay>
             </div>
         </section>
     </div>

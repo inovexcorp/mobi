@@ -8,7 +8,7 @@
             <label class="control-label">Annotation</label>
             <ui-select ng-model="vm.annotationSelect" ng-disabled="vm.editingAnnotation">
                 <ui-select-match placeholder="Select an annotation">{{vm.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in ((vm.state.oi !== -1) ? vm.ontology.matonto.annotations : vm.selected.matonto.annotations) | filter: $select.search | orderBy:'localName'">
+                <ui-select-choices group-by="vm.getItemNamespace" repeat="annotation in vm.ontology.matonto.annotations | filter: $select.search | orderBy:'localName'">
                     <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>

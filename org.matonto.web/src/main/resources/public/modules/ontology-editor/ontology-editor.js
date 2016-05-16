@@ -6,7 +6,8 @@
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
-        'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay'])
+        'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay',
+        'createOntologyOverlay'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -52,12 +53,6 @@
             }
             vm.preview = 'Please select a serialization and hit refresh.';
             vm.serialization = '';
-        }
-
-        function submitEdit() {
-            if(_.has(vm.ontology, 'matonto.originalId')) {
-                ontologyManagerService.edit(vm.ontology.matonto.originalId);
-            }
         }
 
         function submitCreate() {
@@ -118,10 +113,8 @@
         }
 
         vm.save = function() {
-            if(vm.state.oi === -1 || vm.state.ci === -1 || vm.state.pi === -1) {
-                submitCreate();
-            } else {
-                submitEdit();
+            if(_.has(vm.ontology, 'matonto.originalId')) {
+                ontologyManagerService.edit(vm.ontology.matonto.originalId);
             }
         }
 
@@ -165,6 +158,16 @@
             vm.downloadError = false;
             vm.downloadSerialization = '';
             vm.showDownloadOverlay = true;
+        }
+
+        vm.createOntology = function(ontologyIri) {
+            ontologyManagerService.createOntology(ontologyIri)
+                .then(function(response) {
+                    vm.createOntologyError = '';
+                    vm.showCreateOntologyOverlay = false;
+                }, function(errorMessage) {
+                    vm.createOntologyError = errorMessage;
+                });
         }
 
         /* Prefix (Context) Management */

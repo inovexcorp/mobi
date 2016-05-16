@@ -6,7 +6,7 @@
     </div>
 
     <!-- list of annotations -->
-    <div class="annotation" ng-repeat="annotation in vm.selected | showAnnotations:((vm.state.oi !== -1) ? vm.ontology.matonto.annotations : vm.selected.matonto.annotations) | orderBy:'localName'">
+    <div class="annotation" ng-repeat="annotation in vm.selected | showAnnotations:vm.ontology.matonto.annotations | orderBy:'localName'">
         <h5>{{annotation.localName | beautify}} <small>&lt;{{vm.getItemIri(annotation)}}&gt;</small></h5>
         <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(annotation)]">
             <span>{{value['@id'] || value['@value']}}</span>
