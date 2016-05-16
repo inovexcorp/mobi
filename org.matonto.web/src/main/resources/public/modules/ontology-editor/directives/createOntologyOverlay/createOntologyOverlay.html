@@ -25,7 +25,7 @@
         <!-- create annotation buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="vm.createOntologyForm.$invalid"
-                           on-click="vm.createOntology(vm.createOntologyIri)">Create</custom-button>
+                           on-click="vm.createOntology(vm.createOntologyIri, dvm.name)">Create</custom-button>
 
             <custom-button on-click="vm.showCreateOntologyOverlay = false;" type="'secondary'">Cancel</custom-button>
         </div>

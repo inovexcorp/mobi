@@ -630,13 +630,14 @@
                 }
             }
 
-            self.createOntology = function(ontologyIri) {
+            self.createOntology = function(ontologyIri, label) {
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
 
                 var newOntology = angular.copy(ontologyTemplate);
                 newOntology['@id'] = newOntology.matonto.originalId = ontologyIri;
+                newOntology[prefixes.dc + 'title'] = newOntology[prefixes.rdfs + 'label'] = [{'@value': label}];
 
                 var config = {
                         params: {

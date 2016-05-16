@@ -1,3 +1,3 @@
 <p>
-    <strong class="text-muted">{{vm.selected.matonto.namespace ? (vm.selected.matonto.namespace + (vm.selected[vm.rdfs + 'label'][0]['@value'] | camelCase:displayType)) : vm.selected['@id']}} <a ng-click="vm.iriType = displayType; vm.showIriOverlay = true;">Edit IRI</a></strong>
+    <strong class="text-muted">{{iri}} <a ng-click="vm.iriType = displayType; vm.showIriOverlay = true;">Edit IRI</a></strong>
 </p>

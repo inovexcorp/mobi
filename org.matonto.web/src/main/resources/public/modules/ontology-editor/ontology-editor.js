@@ -160,8 +160,8 @@
             vm.showDownloadOverlay = true;
         }
 
-        vm.createOntology = function(ontologyIri) {
-            ontologyManagerService.createOntology(ontologyIri)
+        vm.createOntology = function(ontologyIri, label) {
+            ontologyManagerService.createOntology(ontologyIri, label)
                 .then(function(response) {
                     vm.createOntologyError = '';
                     vm.showCreateOntologyOverlay = false;

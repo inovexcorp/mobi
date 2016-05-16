@@ -1,0 +1,26 @@
+<div class="overlay">
+    <form name="vm.createClassForm" class="content clearfix" novalidate autocomplete="off">
+        <!-- section header -->
+        <h6>Create New OWL Ontology</h6>
+
+        <!-- error -->
+        <error-display error-message="vm.createOntologyError"></error-display>
+
+        <!-- name -->
+        <div class="form-group">
+            <custom-label>Name</custom-label>
+            <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()">
+        </div>
+
+        <!-- static iri -->
+        <static-iri display-type="class" iri="dvm.createClassIri"></static-iri>
+
+        <!-- create annotation buttons -->
+        <div class="btn-container clearfix">
+            <custom-button is-disabled-when="vm.createClassForm.$invalid"
+                           on-click="vm.createClass(vm.createClassIri, dvm.name)">Create</custom-button>
+
+            <custom-button on-click="vm.showCreateClassOverlay = false;" type="'secondary'">Cancel</custom-button>
+        </div>
+    </form>
+</div>

@@ -2,25 +2,25 @@
     'use strict';
 
     angular
-        .module('createOntologyOverlay', ['camelCase'])
-        .directive('createOntologyOverlay', createOntologyOverlay);
+        .module('createClassOverlay', ['camelCase'])
+        .directive('createClassOverlay', createClassOverlay);
 
-        function createOntologyOverlay() {
+        function createClassOverlay() {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/createOntologyOverlay/createOntologyOverlay.html',
+                templateUrl: 'modules/ontology-editor/directives/createClassOverlay/createClassOverlay.html',
                 controllerAs: 'dvm',
                 controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
                     var vm = $scope.$parent.vm;
                     var dvm = this;
-                    var date = new Date();
-                    var prefix = 'https://matonto.org/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear() + '/';
+                    var date = new Date().now();
+                    var prefix = vm.ontology['@id'] + '#';
 
                     dvm.iriPattern = REGEX.IRI;
                     dvm.iriHasChanged = false;
 
-                    vm.createOntologyIri = prefix;
+                    vm.createClassIri = prefix;
 
                     dvm.nameChanged = function() {
                         if(!dvm.iriHasChanged) {
