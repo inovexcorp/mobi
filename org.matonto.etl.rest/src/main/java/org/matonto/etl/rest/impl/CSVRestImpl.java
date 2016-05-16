@@ -14,6 +14,7 @@ import org.matonto.etl.rest.CSVRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.core.utils.Values;
+import org.matonto.rest.util.CheckEncoding;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,7 +43,7 @@ public class CSVRestImpl implements CSVRest {
     private MappingManager mappingManager;
     private final Logger logger = LoggerFactory.getLogger(CSVRestImpl.class);
 
-    private static final int NUM_LINE_PREVIEW = 10;
+    private static final long NUM_LINE_PREVIEW = 10;
 
     @Reference
     public void setCsvConverter(CSVConverter csvConverter) {
@@ -55,15 +57,31 @@ public class CSVRestImpl implements CSVRest {
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail) {
+        ByteArrayOutputStream fileOutput;
+        try {
+            fileOutput = toByteArrayOutputStream(fileInputStream);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+        }
+        getCharset(fileOutput.toByteArray());
+
         String fileName = generateUuid();
         String extension = FilenameUtils.getExtension(fileDetail.getFileName());
         Path filePath = Paths.get("data/tmp/" + fileName + "." + extension);
-        uploadFile(fileInputStream, filePath);
+        uploadFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
         return Response.status(200).entity(fileName).build();
     }
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
+        ByteArrayOutputStream fileOutput;
+        try {
+            fileOutput = toByteArrayOutputStream(fileInputStream);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+        }
+        getCharset(fileOutput.toByteArray());
+
         String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
         Optional<File> optDelimitedFile = getUploadedFile(fileName);
         Path filePath;
@@ -77,7 +95,7 @@ public class CSVRestImpl implements CSVRest {
         } else {
             filePath = Paths.get("data/tmp/" + fileName + "." + newExtension);
         }
-        uploadFile(fileInputStream, filePath);
+        uploadFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
         return Response.status(200).entity(fileName).build();
     }
 
@@ -96,18 +114,9 @@ public class CSVRestImpl implements CSVRest {
             char separatorChar = separator.charAt(0);
 
             // Get InputStream for data to convert
-            InputStream dataToConvert;
-            if (isPreview) {
-                dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
-                        ? createExcelPreviewStream(delimitedFile, containsHeaders)
-                        : createCSVPreviewStream(delimitedFile, containsHeaders);
-            } else {
-                try {
-                    dataToConvert = new FileInputStream(delimitedFile);
-                } catch (FileNotFoundException e) {
-                    throw ErrorUtils.sendError(e, "Error locating delimited file", Response.Status.BAD_REQUEST);
-                }
-            }
+            InputStream dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
+                    ? createExcelStream(delimitedFile, containsHeaders, isPreview)
+                    : createCSVStream(delimitedFile, containsHeaders, isPreview);
 
             // Convert InputStream to RDF based on Mapping
             Model model;
@@ -131,7 +140,7 @@ public class CSVRestImpl implements CSVRest {
             } catch (IOException | MatOntoException e) {
                 throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
             }
-
+            
             // Write data back to Response
             logger.info("File mapped: " + delimitedFile.getPath());
             StringWriter sw = new StringWriter();
@@ -216,48 +225,57 @@ public class CSVRestImpl implements CSVRest {
     }
 
     /**
-     * Generates an InputStream with the first 10 lines of an uploaded CSV file.
+     * Generates an InputStream with an uploaded Excel file. If it is a preview, includes
+     * only the first 10 rows.
      *
-     * @param delimitedFile the uploaded CSV file
-     * @param containsHeaders whether or not the uploaded CSV file has a header row
-     * @return an InputStream object with the first 10 rows of the uploaded CSV file
+     * @param delimitedFile the uploaded Excel file
+     * @param containsHeaders whether or not the uploaded Excel file has a header row
+     * @param isPreview whether or not a preview is needed
+     * @return an InputStream object with the uploaded Excel file
      */
-    private InputStream createCSVPreviewStream(File delimitedFile, boolean containsHeaders) {
+    private InputStream createCSVStream(File delimitedFile, boolean containsHeaders, boolean isPreview) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (BufferedReader br = Files.newBufferedReader(delimitedFile.toPath())) {
+        try {
+            Charset charset = getCharset(Files.readAllBytes(delimitedFile.toPath()));
+            BufferedReader br = Files.newBufferedReader(delimitedFile.toPath(), charset);
             int index = 0;
-            int numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
+            long numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
             String line;
-            while ((line = br.readLine()) != null && index < numRows) {
+            while ((line = br.readLine()) != null && (!isPreview || index < numRows)) {
                 byteArrayOutputStream.write(line.getBytes());
                 byteArrayOutputStream.write("\n".getBytes());
                 index++;
             }
+            byteArrayOutputStream.flush();
         } catch (IOException e) {
-            throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Error creating file stream", Response.Status.BAD_REQUEST);
         }
 
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
     /**
-     * Generates an InputStream with the first 10 lines of an uploaded delimited file.
-     * 
-     * @param delimitedFile the uploaded Excel file
-     * @param containsHeaders whether or not the uploaded Excel file has a header row
-     * @return an InputStream object with the first 10 rows of the uploaded Excel file
+     * Generates an InputStream with an uploaded CSV file. If it is a preview, includes
+     * only the first 10 rows.
+     *
+     * @param delimitedFile the uploaded CSV file
+     * @param containsHeaders whether or not the uploaded CSV file has a header row
+     * @param isPreview whether or not a preview is needed
+     * @return an InputStream object with the uploaded CSV file
      */
-    private InputStream createExcelPreviewStream(File delimitedFile, boolean containsHeaders) {
+    private InputStream createExcelStream(File delimitedFile, boolean containsHeaders, boolean isPreview) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
             Workbook wb = WorkbookFactory.create(delimitedFile);
             // Only support single sheet files for now
             Sheet sheet = wb.getSheetAt(0);
-            int numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
+            long mapRows = (isPreview) ? NUM_LINE_PREVIEW : sheet.getPhysicalNumberOfRows();
+            long numRows = (containsHeaders) ? mapRows + 1 : mapRows;
             for (int i = sheet.getPhysicalNumberOfRows() - 1; i >= numRows; i--) {
                 sheet.removeRow(sheet.getRow(i));
             }
             wb.write(byteArrayOutputStream);
+            byteArrayOutputStream.flush();
         } catch (IOException | InvalidFormatException e) {
             throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
         }
@@ -294,7 +312,8 @@ public class CSVRestImpl implements CSVRest {
      * @throws IOException csv file could not be read
      */
     private String convertCSVRows(File input, int numRows, char separator) throws IOException {
-        CSVReader reader = new CSVReader(new FileReader(input), separator);
+        Charset charset = getCharset(Files.readAllBytes(input.toPath()));
+        CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator);
         List<String[]> csvRows = reader.readAll();
         JSONArray returnRows = new JSONArray();
         for (int i = 0; i <= numRows && i < csvRows.size(); i ++) {
@@ -334,6 +353,42 @@ public class CSVRestImpl implements CSVRest {
         }
 
         return rowList.toString();
+    }
+
+    /**
+     * Creates a ByteArrayOutputStream from an InputStream so it can be reused.
+     *
+     * @param in the InputStream to convert
+     * @return a ByteArrayOutputStream with the contents of the InputStream
+     * @throws IOException if a error occurs when accessing the InputStream contents
+     */
+    private ByteArrayOutputStream toByteArrayOutputStream(InputStream in) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int read = 0;
+        while ((read = in.read(buffer, 0, buffer.length)) != -1) {
+            baos.write(buffer, 0, read);
+            baos.flush();
+        }
+        return baos;
+    }
+
+    /**
+     * Retrieves the supported charset of a file in byte array form.
+     *
+     * @param bytes the bytes from a file to grab the charset of
+     * @return the charset of the byte array
+     */
+    private Charset getCharset(byte[] bytes) {
+        Charset charset;
+        Optional<Charset> optCharset = CheckEncoding.getEncoding(bytes);
+        if (optCharset.isPresent()) {
+            charset = optCharset.get();
+        } else {
+            throw ErrorUtils.sendError("Delimited file is not in a supported encoding", Response.Status.BAD_REQUEST);
+        }
+
+        return charset;
     }
 
     /**

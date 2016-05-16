@@ -201,7 +201,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void mapCsvWithDefaultsTest() {
-        String body = testMap("test_csv", "jsonld", "[]", null);
+        String body = testMap("test_csv", "jsonld",     "[]", null);
         isJsonld(body);
 
         body = testMap("test_csv", "mappingName", "test", null);

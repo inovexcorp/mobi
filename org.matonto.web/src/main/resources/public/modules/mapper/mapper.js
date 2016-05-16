@@ -49,6 +49,7 @@
         vm.selectedPropMappingId;
         vm.selectedColumn;
         vm.newProp;
+        vm.errorMessage;
 
         var changePageHandler = $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
             if (_.includes(fromState.name, 'mapper') && !_.includes(toState.name, 'mapper') 
@@ -76,6 +77,7 @@
             vm.rdfPreview = '';
             vm.invalidPropMappings = [];
             vm.isPreviousMapping = false;
+            vm.errorMessage = '';
 
             originalMappingName = '';
             vm.resetEditingVars();
@@ -86,10 +88,12 @@
             var csvError = function(response) {
                 onError(response);
                 vm.filePreview = undefined;
+                vm.errorMessage = response.statusText;
             }
             var csvSuccess = function(data) {
                 vm.delimitedFileName = data;
                 vm.getPreview();
+                vm.errorMessage = '';
             }
             if (vm.delimitedFileName) {
                 csvManagerService.update(vm.delimitedFileName, vm.delimitedFile)

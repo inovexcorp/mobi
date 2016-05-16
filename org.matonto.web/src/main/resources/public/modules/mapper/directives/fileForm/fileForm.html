@@ -1,7 +1,9 @@
 <form class="file-form">
-    <div class="form-group">
+    <div class="file-input-group form-group" ng-class="{'has-error': errorMessage}">
         <h3>Choose Delimited File</h3>
-        <file-input ng-model="dvm.delimitedFile" accept=".csv,.xls,.xlsx,.tsv"></file-input>
+        <file-input ng-model="dvm.delimitedFile" accept=".csv,.xls,.xlsx,.tsv" aria-describedby="encoding-help-block"></file-input>
+        <span id="encoding-help-block" class="help-block">Supports UTF-8 and ISO 8859-1 encoding</span>
+        <div class="error-msg" ng-if="errorMessage">{{errorMessage}}</div>
     </div>
     <div class="form-group">
         <input type="checkbox" ng-model="dvm.containsHeaders">Contains headers</input>
@@ -25,5 +27,5 @@
         <custom-button id="upload-btn" on-click="dvm.uploaded = true; onUploadClick()" pull="'left'" is-disabled-when="!dvm.delimitedFile" aria-describedby="form-help-block">{{dvm.uploaded ? 'Update' : 'Upload'}}</custom-button>
         <custom-button id="continue-btn" ng-if="dvm.uploaded" on-click="onContinueClick()" pull="'left'">Continue</custom-button>
     </div>
-    <span id="form-help-block" class="help-block" ng-if="dvm.uploaded">Click update with desired changes or click continue.</span>    
+    <span id="form-help-block" class="help-block" ng-if="dvm.uploaded">Click update with desired changes or click continue.</span>
 </form>

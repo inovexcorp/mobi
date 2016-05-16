@@ -70,7 +70,8 @@
                 on-upload-click="vm.submitFileUpload()" 
                 on-continue-click="vm.displayMappingSelect()"
                 separator="vm.delimitedSeparator"
-                contains-headers="vm.delimitedContainsHeaders"></file-form>
+                contains-headers="vm.delimitedContainsHeaders"
+                error-message="vm.errorMessage"></file-form>
             <div id="edit-mapping-container" ng-if="vm.activeStep === 4">
                 <div id="mapping-header">
                     <div id="ontology-section">
