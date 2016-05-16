@@ -133,7 +133,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         List<String> ids = Arrays.asList("test1", "test2");
         WebTarget wt = target().path("mappings");
         for (String id : ids) {
-            wt = wt.queryParam("Ids", id);
+            wt = wt.queryParam("ids", id);
         }
         Response response = wt.request().get();
         Assert.assertEquals(200, response.getStatus());
@@ -147,7 +147,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         ids = Arrays.asList("test1", "error");
         wt = target().path("mappings");
         for (String id : ids) {
-            wt = wt.queryParam("Ids", id);
+            wt = wt.queryParam("ids", id);
         }
         response = wt.request().get();
         Assert.assertEquals(200, response.getStatus());

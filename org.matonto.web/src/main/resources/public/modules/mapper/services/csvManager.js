@@ -40,8 +40,8 @@
                 var deferred = $q.defer(),
                     config = {
                         params: {
-                            'Row-Count': rowEnd ? rowEnd : 0,
-                            'Separator': separator
+                            'rowCount': rowEnd ? rowEnd : 0,
+                            'separator': separator
                         }
                     };
 
@@ -96,8 +96,8 @@
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Contains-Headers': containsHeaders,
-                            'Separator': separator
+                            'containsHeaders': containsHeaders,
+                            'separator': separator
                         },
                         headers: {
                             'Content-Type': undefined
@@ -123,8 +123,8 @@
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Contains-Headers': containsHeaders,
-                            'Separator': separator
+                            'containsHeaders': containsHeaders,
+                            'separator': separator
                         },
                         headers: {
                             'Content-Type': undefined
@@ -150,10 +150,10 @@
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Preview': true,
-                            'Format': format,
-                            'Contains-Headers': containsHeaders,
-                            'Separator': separator
+                            'preview': true,
+                            'format': format,
+                            'containsHeaders': containsHeaders,
+                            'separator': separator
                         },
                         headers: {
                             'Content-Type': undefined,

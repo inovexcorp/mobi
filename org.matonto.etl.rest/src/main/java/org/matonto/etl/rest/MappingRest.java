@@ -26,7 +26,7 @@ public interface MappingRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Retrieve list of all mapping IRIs")
-    Response getMappingNames(@QueryParam("Ids") List<String> idList);
+    Response getMappingNames(@QueryParam("ids") List<String> idList);
 
     /**
      * Uploads a mapping sent as form data or a JSON-LD string into a data store
