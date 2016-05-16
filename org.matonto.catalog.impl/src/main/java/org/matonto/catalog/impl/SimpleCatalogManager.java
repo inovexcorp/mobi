@@ -5,10 +5,7 @@ import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Ontology;
-import org.matonto.catalog.api.PaginatedSearchResults;
-import org.matonto.catalog.api.PublishedResource;
+import org.matonto.catalog.api.*;
 import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.catalog.util.SearchResults;
 import org.matonto.exception.MatOntoException;
@@ -67,6 +64,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String COUNT_RESOURCES_QUERY;
     private static final String RESOURCE_BINDING = "resource";
     private static final String RESOURCE_COUNT_BINDING = "resource_count";
+    private static final String TYPE_PREPARE_BINDING = "TYPE";
 
     static {
         try {
@@ -122,13 +120,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset) {
-        return findResource(searchTerm, limit, offset, vf.createIRI(DC + "modified"), false);
-    }
-
-    @Override
-    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset,
-                                                                  Resource sortBy, boolean ascending) {
+    public PaginatedSearchResults<PublishedResource> findResource(PaginatedSearchParams searchParams) {
         RepositoryConnection conn = repository.getConnection();
 
         // Get Total Count
@@ -147,10 +139,21 @@ public class SimpleCatalogManager implements CatalogManager {
             return SearchResults.emptyResults();
         }
 
-        // Get Results
-        String sortBinding = sortingOptions.get(sortBy) == null ? "modified" : sortingOptions.get(sortBy);
+        // Prepare Query
+        int limit = searchParams.getLimit();
+        int offset = searchParams.getOffset();
+
+        Optional<Resource> sortByParam = searchParams.getSortBy();
+        String sortBinding;
+        if (sortByParam.isPresent() && sortingOptions.get(sortByParam.get()) != null) {
+            sortBinding = sortingOptions.get(sortByParam.get());
+        } else {
+            sortBinding = "modified";
+        }
+
+        Optional<Boolean> ascendingParam = searchParams.getAscending();
         String queryString;
-        if (ascending) {
+        if (ascendingParam.isPresent() && ascendingParam.get()) {
             queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
                     limit, offset);
         } else {
@@ -159,8 +162,14 @@ public class SimpleCatalogManager implements CatalogManager {
         }
 
         log.debug("QUERY: " + queryString);
-
         TupleQuery query = conn.prepareTupleQuery(queryString);
+
+        Optional<Resource> typeParam = searchParams.getTypeFilter();
+        if (typeParam.isPresent()) {
+            query.setBinding(TYPE_PREPARE_BINDING, typeParam.get());
+        }
+
+        // Get Results
         TupleQueryResult result = query.evaluate();
 
         List<PublishedResource> resources = new ArrayList<>();

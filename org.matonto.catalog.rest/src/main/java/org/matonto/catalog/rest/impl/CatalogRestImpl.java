@@ -4,10 +4,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import org.apache.log4j.Logger;
-import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Distribution;
-import org.matonto.catalog.api.PaginatedSearchResults;
-import org.matonto.catalog.api.PublishedResource;
+import org.matonto.catalog.api.*;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
@@ -33,6 +30,7 @@ public class CatalogRestImpl implements CatalogRest {
     private CatalogManager catalogManager;
     private Values values;
     private ValueFactory valueFactory;
+    private CatalogFactory catalogFactory;
 
     private static final Set<String> RESOURCE_TYPES;
     private static final Set<String> SORT_RESOURCES;
@@ -70,6 +68,11 @@ public class CatalogRestImpl implements CatalogRest {
         this.valueFactory = valueFactory;
     }
 
+    @Reference
+    protected void setCatalogFactory(CatalogFactory catalogFactory) {
+        this.catalogFactory = catalogFactory;
+    }
+
     @Override
     public PublishedResourceMarshaller getPublishedResource(String resourceId) {
         if (resourceId == null) {
@@ -101,8 +104,15 @@ public class CatalogRestImpl implements CatalogRest {
                                                                                 String searchTerms, String sortBy,
                                                                                 boolean asc, int limit, int start) {
         IRI sortResource = valueFactory.createIRI(sortBy);
-        PaginatedSearchResults<PublishedResource> searchResults =
-                catalogManager.findResource(searchTerms, limit, start, sortResource, asc);
+        IRI typeFilter = valueFactory.createIRI(resourceType);
+
+        PaginatedSearchParams searchParams = catalogFactory.createSearchParamsBuilder(limit, start)
+                .sortBy(sortResource)
+                .typeFilter(typeFilter)
+                .ascending(asc)
+                .build();
+
+        PaginatedSearchResults<PublishedResource> searchResults = catalogManager.findResource(searchParams);
 
         List<PublishedResourceMarshaller> publishedResources = new ArrayList<>();
         searchResults.getPage().forEach(resource -> publishedResources.add(processResource(resource)));
