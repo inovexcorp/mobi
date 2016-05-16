@@ -45,6 +45,7 @@
                         }
                     };
 
+                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(fileName), config)
                     .then(function(response) {
                         var filePreview = {};
@@ -58,8 +59,10 @@
                             });
                             filePreview.rows = response.data;
                         }
+                        $rootScope.showSpinner = false;
                         deferred.resolve(filePreview);
                     }, function(response) {
+                        $rootScope.showSpinner = false;
                         deferred.reject(response);
                     });
                 return deferred.promise;
