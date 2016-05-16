@@ -18,7 +18,6 @@
                 }),
                 defaultAnnotations = annotationManagerService.getDefaultAnnotations(),
                 changedEntries = [],
-                newItems = {},
                 ontologies = [],
                 propertyTypes = [
                     prefixes.owl + 'DatatypeProperty',
@@ -29,16 +28,15 @@
                     '@id': '',
                     '@type': [prefixes.owl + 'Ontology'],
                     matonto: {
-                        rdfs: prefixes.rdfs,
-                        owl: prefixes.owl,
                         delimiter: '#',
                         classes: [],
                         annotations: defaultAnnotations,
-                        isValid: false,
+                        isValid: true,
                         subClasses: [],
                         subDataProperties: [],
                         subObjectProperties: [],
-                        dataPropertyRange: $filter('orderBy')(defaultDatatypes, 'localName')
+                        dataPropertyRange: $filter('orderBy')(defaultDatatypes, 'localName'),
+                        noDomains: []
                     }
                 },
                 classTemplate = {
@@ -50,7 +48,8 @@
                 },
                 propertyTemplate = {
                     '@id': '',
-                    '@type': []
+                    '@type': [],
+                    matonto: {}
                 };
 
             initialize();
@@ -636,7 +635,6 @@
                     .then(function(response) {
                         if(response.data.persisted) {
                             console.log('Successfully created ontology');
-                            newOntology.matonto.isValid = true;
                             ontologies.push(newOntology);
                             deferred.resolve(response);
                         } else {
@@ -690,21 +688,22 @@
                 return deferred.promise;
             }
 
-            self.createProperty = function(ontology, classObj, property) {
+            self.createProperty = function(ontology, propertyIri, label, type, range, domain) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                obj = setId(obj, 'property', ontology.matonto.rdfs);
-                obj.matonto.icon = chooseIcon(obj);
-                var types = _.get(property, '@type', []);
-                var pathVariable = getRestfulPropertyType(types);
 
-                if(!types.length) {
-                    property['@type'].push(prefixes.owl + 'DatatypeProperty')
-                }
+                var newProperty = angular.copy(propertyTemplate);
+                newProperty = initEntity(newProperty, propertyIri, label);
+                newProperty['@type'] = [prefixes.owl + 'DatatypeProperty']; //type;
+                /*newProperty[prefixes.rdfs + 'range'] = range;
+                newProperty[prefixes.rdfs + 'domain'] = domain;
+                newProperty.matonto.icon = chooseIcon(newProperty);*/
+
+                var pathVariable = getRestfulPropertyType(type);
 
                 var config = {
                         params: {
-                            resourcejson: createEntityJson(ontology.matonto, property)
+                            resourcejson: createEntityJson(newProperty)
                         }
                     }
 
@@ -712,9 +711,15 @@
                     .then(function(response) {
                         if(response.data.added) {
                             console.log('Successfully added property');
-                            classObj.matonto.properties.push(property);
-                            var propertyIRI = $filter('splitIRI')(property['@id']);
-                            var subObject = {namespace: propertyIRI.begin + propertyIRI.then, localName: propertyIRI.end};
+                            if(domain) {
+                                // TODO: get class from domain drop down
+                                // classObj.matonto.properties.push(newProperty);
+                            } else {
+                                ontology.matonto.noDomains.push(newProperty);
+                            }
+
+                            var split = $filter('splitIRI')(newProperty['@id']);
+                            var subObject = {namespace: split.begin + split.then, localName: split.end};
 
                             if(pathVariable === 'object-properties') {
                                 ontology.matonto.subObjectProperties.push(subObject);

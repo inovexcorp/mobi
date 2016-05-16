@@ -80,7 +80,11 @@
                     ci = ontologies[oi].matonto.classes.length - 1;
                     editor = 'class-editor';
                 } else if(type === 'property') {
-                    pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
+                    if(ci) {
+                        pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
+                    } else {
+                        pi = ontologies[oi].matonto.noDomains.length - 1;
+                    }
                     editor = 'property-editor';
                 }
                 self.setState(editor, oi, ci, pi);

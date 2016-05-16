@@ -7,7 +7,7 @@
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
         'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay',
-        'createOntologyOverlay', 'createClassOverlay'])
+        'createOntologyOverlay', 'createClassOverlay', 'createPropertyOverlay'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -178,6 +178,17 @@
                     onCreateSuccess('class');
                 }, function(errorMessage) {
                     vm.createClassError = errorMessage;
+                });
+        }
+
+        vm.createProperty = function(propertyIri, label) {
+            ontologyManagerService.createProperty(vm.ontology, propertyIri, label)
+                .then(function(response) {
+                    vm.createPropertyError = '';
+                    vm.showCreatePropertyOverlay = false;
+                    onCreateSuccess('property');
+                }, function(errorMessage) {
+                    vm.createPropertyError = errorMessage;
                 });
         }
 
