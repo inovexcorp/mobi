@@ -44,12 +44,12 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         self.previousMappingNames.push(response.data.replace(prefixes.mappings, ''));
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -74,12 +74,12 @@
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + mappingName, fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         self.previousMappingNames = _.union(self.previousMappingNames, [mappingName]);
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -94,11 +94,11 @@
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(mappingName))
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(_.get(response.data, '@graph', []));
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
