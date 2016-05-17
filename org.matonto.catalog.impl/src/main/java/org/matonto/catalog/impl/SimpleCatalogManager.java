@@ -64,7 +64,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String COUNT_RESOURCES_QUERY;
     private static final String RESOURCE_BINDING = "resource";
     private static final String RESOURCE_COUNT_BINDING = "resource_count";
-    private static final String TYPE_PREPARE_BINDING = "TYPE";
+    private static final String TYPE_PREPARE_BINDING = "type";
 
     static {
         try {
@@ -89,6 +89,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String CATALOG_TYPE = "http://www.w3.org/ns/dcat#Catalog";
     private static final String DC = "http://purl.org/dc/terms/";
     private static final String DCAT = "http://www.w3.org/ns/dcat#";
+    private static final String MATONTO_CAT = "http://matonto.org/ontologies/catalog#";
 
     @Activate
     protected void start(Map<String, Object> props) {
@@ -230,7 +231,7 @@ public class SimpleCatalogManager implements CatalogManager {
         }
 
         NamedGraph namedGraph = ngf.createNamedGraph(resource);
-        namedGraph.add(resource, vf.createIRI(RDF_TYPE), ontology.getType());
+        namedGraph.add(resource, vf.createIRI(RDF_TYPE), vf.createIRI(MATONTO_CAT + "Ontology"));
         namedGraph.add(resource, vf.createIRI(DC + "title"), vf.createLiteral(ontology.getTitle()));
         namedGraph.add(resource, vf.createIRI(DC + "description"), vf.createLiteral(ontology.getDescription()));
         namedGraph.add(resource, vf.createIRI(DC + "issued"), vf.createLiteral(ontology.getIssued()));
@@ -268,9 +269,8 @@ public class SimpleCatalogManager implements CatalogManager {
                                                         RepositoryConnection conn) {
         // Get Required Params
         String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
-        Resource type = Bindings.requiredResource(bindingSet, "type");
 
-        SimplePublishedResourceBuilder builder = new SimplePublishedResourceBuilder(resource, type, title);
+        SimplePublishedResourceBuilder builder = new SimplePublishedResourceBuilder(resource, title);
         builder.issued(Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue());
         builder.modified(Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue());
 
@@ -306,6 +306,14 @@ public class SimpleCatalogManager implements CatalogManager {
                         distBuilder.description(literal.stringValue()));
 
                 builder.addDistribution(distBuilder.build());
+            }
+        });
+
+        bindingSet.getBinding("types").ifPresent(binding -> {
+            String[] types = StringUtils.split(binding.getValue().stringValue(), ",");
+
+            for (String type : types) {
+                builder.addType(vf.createIRI(type));
             }
         });
 

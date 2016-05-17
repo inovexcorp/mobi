@@ -23,5 +23,5 @@ public interface PublishedResource {
 
     Resource getResource();
 
-    Resource getType();
+    Set<Resource> getTypes();
 }

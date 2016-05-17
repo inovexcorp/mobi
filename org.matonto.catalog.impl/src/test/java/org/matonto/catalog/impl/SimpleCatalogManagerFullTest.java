@@ -104,7 +104,7 @@ public class SimpleCatalogManagerFullTest {
         PublishedResource resource = optional.get();
 
         assertEquals("Test Resource 1", resource.getTitle());
-        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getType().stringValue());
+        assertTrue(resource.getTypes().contains(vf.createIRI("http://matonto.org/ontologies/catalog#Ontology")));
         assertEquals(issued, resource.getIssued());
         assertEquals(modified, resource.getModified());
         assertEquals("Test Description", resource.getDescription());

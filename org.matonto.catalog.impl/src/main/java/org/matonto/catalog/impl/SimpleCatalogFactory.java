@@ -28,7 +28,7 @@ public class SimpleCatalogFactory implements CatalogFactory {
 
     @Override
     public OntologyBuilder createOntologyBuilder(Resource resource, String title) {
-        return new SimpleOntologyBuilder(resource, ontologyType, title);
+        return new SimpleOntologyBuilder(resource, title);
     }
 
     @Override

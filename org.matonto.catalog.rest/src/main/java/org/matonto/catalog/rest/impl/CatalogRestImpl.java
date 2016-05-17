@@ -104,12 +104,15 @@ public class CatalogRestImpl implements CatalogRest {
                                                                                 String searchTerms, String sortBy,
                                                                                 boolean asc, int limit, int start) {
         IRI sortResource = valueFactory.createIRI(sortBy);
-        IRI typeFilter = valueFactory.createIRI(resourceType);
 
-        PaginatedSearchParams searchParams = catalogFactory.createSearchParamsBuilder(limit, start, sortResource)
-                .typeFilter(typeFilter)
-                .ascending(asc)
-                .build();
+        PaginatedSearchParamsBuilder builder = catalogFactory.createSearchParamsBuilder(limit, start, sortResource)
+                .ascending(asc);
+
+        if (resourceType != null) {
+            builder.typeFilter(valueFactory.createIRI(resourceType));
+        }
+
+        PaginatedSearchParams searchParams = builder.build();
 
         PaginatedSearchResults<PublishedResource> searchResults = catalogManager.findResource(searchParams);
 
@@ -234,16 +237,17 @@ public class CatalogRestImpl implements CatalogRest {
     private PublishedResourceMarshaller processResource(PublishedResource resource) {
         PublishedResourceMarshaller marshaller = new PublishedResourceMarshaller();
         marshaller.setId(resource.getResource().stringValue());
-        marshaller.setType(resource.getType().stringValue());
         marshaller.setTitle(resource.getTitle());
         marshaller.setDescription(resource.getDescription());
         marshaller.setIssued(getCalendar(resource.getIssued()));
         marshaller.setModified(getCalendar(resource.getModified()));
         marshaller.setIdentifier(resource.getIdentifier());
 
-        Set<String> keywords = new HashSet<>();
-        resource.getKeywords().forEach(keywords::add);
-        marshaller.setKeywords(keywords);
+        Set<String> types = new HashSet<>();
+        resource.getTypes().forEach(res -> types.add(res.stringValue()));
+        marshaller.setTypes(types);
+
+        marshaller.setKeywords(resource.getKeywords());
 
         Set<String> distributions = new HashSet<>();
         resource.getDistributions().forEach(distribution ->

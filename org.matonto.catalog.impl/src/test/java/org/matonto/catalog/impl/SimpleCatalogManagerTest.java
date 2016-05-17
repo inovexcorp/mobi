@@ -30,6 +30,7 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -98,7 +99,7 @@ public class SimpleCatalogManagerTest {
         MapBindingSet sesameBindingSet = new MapBindingSet();
         sesameBindingSet.addBinding("resource", valueFactory.createIRI("http://matonto.org/testCatalog"));
         sesameBindingSet.addBinding("title", valueFactory.createLiteral("Test Resource"));
-        sesameBindingSet.addBinding("type", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        sesameBindingSet.addBinding("types", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
         sesameBindingSet.addBinding("issued", valueFactory.createLiteral(issued.getTime()));
         sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
         BindingSet bindingSet = new SesameBindingSet(sesameBindingSet);
@@ -106,7 +107,7 @@ public class SimpleCatalogManagerTest {
         List<String> bindingNames = new ArrayList<>();
         bindingNames.add("resource");
         bindingNames.add("title");
-        bindingNames.add("type");
+        bindingNames.add("types");
         bindingNames.add("issued");
         bindingNames.add("modified");
 
@@ -123,7 +124,7 @@ public class SimpleCatalogManagerTest {
         PublishedResource resource = optional.get();
 
         assertEquals("Test Resource", resource.getTitle());
-        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getType().stringValue());
+        assertTrue(resource.getTypes().contains(vf.createIRI("http://matonto.org/ontologies/catalog#Ontology")));
         assertEquals(issued.toZonedDateTime().toOffsetDateTime(), resource.getIssued());
         assertEquals(modified.toZonedDateTime().toOffsetDateTime(), resource.getModified());
     }
@@ -139,7 +140,7 @@ public class SimpleCatalogManagerTest {
 //        MapBindingSet sesameBindingSet = new MapBindingSet();
 //        sesameBindingSet.addBinding("resource", valueFactory.createIRI("http://matonto.org/testCatalog"));
 //        sesameBindingSet.addBinding("title", valueFactory.createLiteral("Test Resource"));
-//        sesameBindingSet.addBinding("type", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
+//        sesameBindingSet.addBinding("types", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
 //        sesameBindingSet.addBinding("issued", valueFactory.createLiteral(issued.getTime()));
 //        sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
 //        sesameBindingSet.addBinding("description", valueFactory.createLiteral("Test Description"));
@@ -165,7 +166,7 @@ public class SimpleCatalogManagerTest {
 //        PublishedResource resource = optional.get();
 //
 //        assertEquals("Test Resource", resource.getTitle());
-//        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getType().stringValue());
+//        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getTypes().stringValue());
 //        assertEquals(issued.toZonedDateTime().toOffsetDateTime(), resource.getIssued());
 //        assertEquals(modified.toZonedDateTime().toOffsetDateTime(), resource.getModified());
 //        assertEquals("Test Description", resource.getDescription());
@@ -188,6 +189,8 @@ public class SimpleCatalogManagerTest {
         // given
         IRI ontologyIri = new SimpleIRI("http://matonto.org/catalog/1");
         OffsetDateTime now = OffsetDateTime.now();
+        Set<Resource> types = new HashSet<>();
+        types.add(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
 
         Ontology ontology = mock(Ontology.class);
 
@@ -195,7 +198,7 @@ public class SimpleCatalogManagerTest {
         when(repositoryResult.hasNext()).thenReturn(false);
 
         when(ontology.getResource()).thenReturn(ontologyIri);
-        when(ontology.getType()).thenReturn(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        when(ontology.getTypes()).thenReturn(types);
         when(ontology.getTitle()).thenReturn("MatOnto Catalog");
         when(ontology.getDescription()).thenReturn("Catalog of MatOnto Resources");
         when(ontology.getIssued()).thenReturn(now);
@@ -222,6 +225,8 @@ public class SimpleCatalogManagerTest {
         IRI ontologyIri = new SimpleIRI("http://matonto.org/catalog/1");
         IRI distributionIri = new SimpleIRI("http://matonto.org/distribution/1");
         OffsetDateTime now = OffsetDateTime.now();
+        Set<Resource> types = new HashSet<>();
+        types.add(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
 
         Ontology ontology = mock(Ontology.class);
         Distribution distribution = mock(Distribution.class);
@@ -232,7 +237,7 @@ public class SimpleCatalogManagerTest {
         when(repositoryResult.hasNext()).thenReturn(false);
 
         when(ontology.getResource()).thenReturn(ontologyIri);
-        when(ontology.getType()).thenReturn(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        when(ontology.getTypes()).thenReturn(types);
         when(ontology.getTitle()).thenReturn("MatOnto Catalog");
         when(ontology.getDescription()).thenReturn("Catalog of MatOnto Resources");
         when(ontology.getIssued()).thenReturn(now);
