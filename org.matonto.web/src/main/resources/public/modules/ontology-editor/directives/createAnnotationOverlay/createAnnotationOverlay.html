@@ -7,11 +7,10 @@
         <error-display error-message="vm.createAnnotationError"></error-display>
 
         <!-- new annotation iri -->
-        <div ng-class="{'has-error': vm.createAnnotationForm.iri.$invalid}" class="form-group">
-            <label class="control-label" for="iri">Ontology IRI</label>
+        <div ng-class="{'has-error': vm.createAnnotationForm.iri.$error.pattern}" class="form-group">
+            <label class="control-label" for="iri">Annotation IRI</label>
             <input class="form-control" id="iri" name="iri" ng-model="vm.createAnnotationIri" ng-pattern="dvm.iriPattern" required />
             <p ng-messages="vm.createAnnotationForm.iri.$error" class="error-msg">
-                <ng-message when="required">This field cannot be empty.</ng-message>
                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
             </p>
         </div>

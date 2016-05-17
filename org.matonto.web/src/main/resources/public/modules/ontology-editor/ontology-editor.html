@@ -2,69 +2,69 @@
 <div class="ontology-editor clearfix full-height" ng-controller="OntologyEditorController as vm">
     <aside class="left-nav nav full-height">
         <ul>
-            <li>
-                <button ng-click="vm.save()" title="Save All Changes"
-                        ng-disabled="!vm.ontology.matonto.isValid">
-                    <i class="fa fa-floppy-o fa-fw"></i>
-                </button>
-            </li>
+            <left-nav-item on-click="vm.save()"
+                           nav-title="Save All Changes"
+                           is-disabled-when="!vm.ontology.matonto.isValid"
+                           icon="floppy-o"></left-nav-item>
+
             <li class="separator"></li>
-            <li>
-                <button ng-click="vm.showOpenOverlay = true" title="Open Ontology"
-                        ng-class="{ 'active': vm.showOpenOverlay === true }"
-                        ng-disabled="!vm.ontologyIds.length">
-                    <i class="fa fa-get-pocket fa-fw"></i>
-                </button>
-            </li>
-            <li>
-                <a ng-click="vm.showUploadOverlay = true" title="Upload Ontology"
-                   ng-class="{ 'active': vm.showUploadOverlay }">
-                    <i class="fa fa-upload fa-fw"></i>
-                </a>
-            </li>
-            <li>
-                <a ng-click="vm.showCreateOntologyOverlay = true" title="Create Ontology"
-                   ng-class="{ 'active': vm.showCreateOntologyOverlay }">
-                    <i class="fa fa-plus fa-fw"></i>
-                </a>
-            </li>
+
+            <left-nav-item on-click="vm.showOpenOverlay = true"
+                           nav-title="Open Ontology"
+                           is-disabled-when="!vm.ontologyIds.length"
+                           is-active-when="vm.showOpenOverlay"
+                           icon="get-pocket"></left-nav-item>
+
+            <left-nav-item on-click="vm.showUploadOverlay = true"
+                           nav-title="Upload Ontology"
+                           is-active-when="vm.showUploadOverlay"
+                           icon="upload"></left-nav-item>
+
+            <left-nav-item on-click="vm.showCreateOntologyOverlay = true"
+                           nav-title="Create Ontology"
+                           is-active-when="vm.showCreateOntologyOverlay"
+                           icon="plus"></left-nav-item>
+
             <li class="separator"></li>
-            <li>
-                <button ng-click="vm.showCreateClassOverlay = true" title="Create Class"
-                        ng-disabled="vm.state.oi === undefined || vm.state.editor === 'annotation-display'"
-                        ng-class="{ 'active': vm.showCreateClassOverlay }">
-                    <i class="fa fa-plus fa-fw"></i>
-                </button>
-            </li>
-            <li>
-                <button ng-click="vm.showCreatePropertyOverlay = true" title="Create Property"
-                        ng-disabled="vm.state.oi === undefined || vm.state.editor === 'annotation-display'"
-                        ng-class="{ 'active': vm.showCreatePropertyOverlay }">
-                    <i class="fa fa-plus fa-fw"></i>
-                </button>
-            </li>
-            <li>
-                <button ng-click="vm.openDownloadOverlay()" title="Download Ontology"
-                        ng-disabled="!vm.ontology.hasOwnProperty('matonto')"
-                        ng-class="{ 'active': vm.showDeleteConfirmation }">
-                    <i class="fa fa-download fa-fw"></i>
-                </button>
-            </li>
-            <li>
-                <button ng-click="vm.showCloseOverlay = true" title="Close Ontology"
-                        ng-disabled="vm.state.oi === undefined"
-                        ng-class="{ 'active': vm.showCloseOverlay }">
-                    <i class="fa fa-archive fa-fw"></i>
-                </button>
-            </li>
+
+            <left-nav-item on-click="vm.showCreateClassOverlay = true"
+                           nav-title="Create Class"
+                           is-disabled-when="vm.state.oi === undefined"
+                           is-active-when="vm.showCreateClassOverlay"
+                           icon="plus"></left-nav-item>
+
+            <left-nav-item on-click="vm.showCreatePropertyOverlay = true"
+                           nav-title="Create Property"
+                           is-disabled-when="vm.state.oi === undefined"
+                           is-active-when="vm.showCreatePropertyOverlay"
+                           icon="plus"></left-nav-item>
+
+            <left-nav-item on-click="vm.showCreateAnnotationOverlay = true"
+                           nav-title="Create Annotation"
+                           is-disabled-when="vm.state.oi === undefined"
+                           is-active-when="vm.showCreateAnnotationOverlay"
+                           icon="plus"></left-nav-item>
+
+            <left-nav-item on-click="vm.openDownloadOverlay()"
+                           nav-title="Download Ontology"
+                           is-disabled-when="vm.state.oi === undefined"
+                           is-active-when="vm.showDeleteConfirmation"
+                           icon="download"></left-nav-item>
+
+            <left-nav-item on-click="vm.showCloseOverlay = true"
+                           nav-title="Close Ontology"
+                           is-disabled-when="vm.state.oi === undefined"
+                           is-active-when="vm.showCloseOverlay"
+                           icon="archive"></left-nav-item>
+
             <li class="separator"></li>
-            <li>
-                <button ng-click="vm.showDeleteConfirmation = true" title="Delete Entity"
-                        ng-disabled="!vm.selected.hasOwnProperty('matonto')"
-                        ng-class="{ 'active': vm.showDeleteConfirmation }">
-                    <i class="fa fa-trash-o fa-fw"></i>
-                </button>
-            </li>
+
+
+            <left-nav-item on-click="vm.showDeleteConfirmation = true"
+                           nav-title="Delete Entity"
+                           is-disabled-when="vm.state.oi === undefined"
+                           is-active-when="vm.showDeleteConfirmation"
+                           icon="trash-o"></left-nav-item>
         </ul>
     </aside>
 
