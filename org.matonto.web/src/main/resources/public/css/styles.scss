@@ -387,6 +387,10 @@ ul {
     .ui-select-match-item {
         margin-bottom: 2px;
     }
+
+    &[disabled] input.ui-select-search {
+        display: initial !important;
+    }
 }
 
 .ui-select-bootstrap .ui-select-choices-row.active > a .text-muted {

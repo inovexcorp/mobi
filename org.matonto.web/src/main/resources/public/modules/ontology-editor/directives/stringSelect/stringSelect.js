@@ -10,13 +10,11 @@
         function stringSelect(ontologyManagerService) {
             return {
                 restrict: 'E',
-                transclude: true,
                 scope: {
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
                     groupBy: '&',
-                    onlyStrings: '=',
                     selectList: '=',
                     mutedText: '='
                 },

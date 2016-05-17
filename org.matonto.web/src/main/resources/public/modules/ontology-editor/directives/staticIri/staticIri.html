@@ -1,3 +1,38 @@
 <p class="static-iri">
-    <strong class="text-muted">{{iri}} <a ng-click="dvm.edit()">Edit IRI</a></strong>
+    <strong class="text-muted">{{dvm.iri}} <a ng-click="dvm.showIriOverlay = true">Edit IRI</a></strong>
 </p>
+<div ng-if="dvm.showIriOverlay" class="overlay">
+    <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
+        <!-- section header -->
+        <h6>Edit IRI</h6>
+        <!-- Begins with -->
+        <div ng-class="{'has-error': dvm.iriForm.iriBegin.$invalid}" class="form-group">
+            <label class="control-label" for="iriBegin">Begins with</label>
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" required />
+            <p ng-messages="dvm.iriForm.iriBegin.$error" class="error-msg">
+                <ng-message when="required">Field cannot be empty.</ng-message>
+                <ng-message when="pattern">Value is not a valid namespace.</ng-message>
+            </p>
+        </div>
+        <!-- Then -->
+        <div class="form-group">
+            <label class="control-label" for="iriThen">Then</label>
+            <select class="form-control" id="iriThen" name="iriThen" ng-model="dvm.iriThen">
+                <option value="#">#</option>
+                <option value="/">/</option>
+                <option value=":">:</option>
+            </select>
+        </div>
+        <!-- Ends with -->
+        <div class="form-group">
+            <label class="control-label" for="iriEnd">Ends with</label>
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" required />
+        </div>
+        <!-- buttons -->
+        <div class="btn-container clearfix">
+            <custom-button is-disabled-when="dvm.iriForm.$invalid" on-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.showIriOverlay = false;">Edit</custom-button>
+
+            <custom-button on-click="dvm.showIriOverlay = false" type="'secondary'">Cancel</custom-button>
+        </div>
+    </form>
+</div>

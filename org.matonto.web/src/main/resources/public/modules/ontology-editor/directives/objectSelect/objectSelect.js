@@ -14,9 +14,9 @@
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
-                    onlyStrings: '=',
                     selectList: '=',
-                    mutedText: '='
+                    mutedText: '=',
+                    isDisabledWhen: '='
                 },
                 templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 bindToController: {

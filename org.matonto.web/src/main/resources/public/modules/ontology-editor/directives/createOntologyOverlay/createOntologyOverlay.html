@@ -6,12 +6,6 @@
         <!-- error -->
         <error-display error-message="vm.createOntologyError"></error-display>
 
-        <!-- name -->
-        <div class="form-group">
-            <custom-label>Name</custom-label>
-            <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
-        </div>
-
         <!-- new annotation iri -->
         <div ng-class="{'has-error': vm.createOntologyForm.iri.$error.pattern}" class="form-group">
             <label class="control-label" for="iri">Ontology IRI</label>
@@ -19,6 +13,12 @@
             <p ng-messages="vm.createOntologyForm.iri.$error" class="error-msg">
                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
             </p>
+        </div>
+
+        <!-- name -->
+        <div class="form-group">
+            <custom-label>Name</custom-label>
+            <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
         </div>
 
         <!-- create annotation buttons -->

@@ -18,13 +18,16 @@
 
                     dvm.iriPattern = REGEX.IRI;
                     dvm.createClassIri = prefix;
-                    vm.currentIri = angular.copy(dvm.createClassIri);
 
                     dvm.nameChanged = function() {
-                        if(!vm.iriHasChanged) {
+                        if(!dvm.iriHasChanged) {
                             dvm.createClassIri = prefix + $filter('camelCase')(dvm.name, 'class');
-                            vm.currentIri = angular.copy(dvm.createClassIri);
                         }
+                    }
+
+                    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
+                        dvm.iriHasChanged = true;
+                        dvm.createClassIri = iriBegin + iriThen + iriEnd;
                     }
                 }]
             }

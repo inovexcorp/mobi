@@ -94,26 +94,39 @@
                 if(range) {
                     if(range.length === 1) {
                         switch(range[0]['@id']) {
-                            // TODO: pick better icon for Literal? since it can be for Integers as well
                             case prefixes.xsd + 'string':
-                            case prefixes.rdfs + 'Literal':
                                 icon = 'fa-font';
                                 break;
+                            case prefixes.xsd + 'decimal':
                             case prefixes.xsd + 'double':
-                            case prefixes.xsd + 'nonNegativeInteger':
+                            case prefixes.xsd + 'float':
+                            case prefixes.xsd + 'int':
+                            case prefixes.xsd + 'integer':
+                            case prefixes.xsd + 'long':
                                 icon = 'fa-calculator';
+                                break;
+                            case prefixes.xsd + 'language':
+                                icon = 'fa-language';
+                                break;
+                            case prefixes.xsd + 'anyURI':
+                                icon = 'fa-external-link';
+                                break;
+                            case prefixes.xsd + 'dateTime':
+                                icon = 'fa-clock-o';
+                                break;
+                            case prefixes.xsd + 'boolean':
+                            case prefixes.xsd + 'byte':
+                                icon = 'fa-signal';
                                 break;
                             default:
                                 icon = 'fa-link';
                                 break;
                         }
                     }
-                    // TODO: icon for multiple ranges
                     else {
                         icon = 'fa-cubes';
                     }
                 }
-                // TODO: figure out what to do if there isn't a range
                 else {
                     icon = 'fa-question';
                 }
@@ -612,8 +625,10 @@
 
             function initEntity(entity, iri, label) {
                 var copy = angular.copy(entity);
-                copy['@id'] = copy.matonto.originalId = iri;
-                copy[prefixes.dc + 'title'] = copy[prefixes.rdfs + 'label'] = [{'@value': label}];
+                copy['@id'] = iri;
+                copy.matonto.originalId = iri;
+                copy[prefixes.dc + 'title'] = [{'@value': label}];
+                copy[prefixes.rdfs + 'label'] = [{'@value': label}];
                 return copy;
             }
 
@@ -621,8 +636,8 @@
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
-
                 var newOntology = angular.copy(ontologyTemplate);
+
                 newOntology = initEntity(newOntology, ontologyIri, label);
 
                 var config = {
@@ -654,9 +669,10 @@
 
             self.createClass = function(ontology, classIri, label) {
                 $rootScope.showSpinner = true;
-                var deferred = $q.defer();
 
+                var deferred = $q.defer();
                 var newClass = angular.copy(classTemplate);
+
                 newClass = initEntity(newClass, classIri, label);
 
                 var config = {
@@ -688,18 +704,24 @@
                 return deferred.promise;
             }
 
-            self.createProperty = function(ontology, propertyIri, label, type, range, domain) {
+            self.createProperty = function(ontology, propertyIri, label, types, ranges, domains) {
                 $rootScope.showSpinner = true;
+
                 var deferred = $q.defer();
-
+                var pathVariable = getRestfulPropertyType(types);
                 var newProperty = angular.copy(propertyTemplate);
-                newProperty = initEntity(newProperty, propertyIri, label);
-                newProperty['@type'] = [prefixes.owl + 'DatatypeProperty']; //type;
-                /*newProperty[prefixes.rdfs + 'range'] = range;
-                newProperty[prefixes.rdfs + 'domain'] = domain;
-                newProperty.matonto.icon = chooseIcon(newProperty);*/
 
-                var pathVariable = getRestfulPropertyType(type);
+                newProperty = initEntity(newProperty, propertyIri, label);
+                newProperty['@type'] = types;
+
+                if(domains.length) {
+                    newProperty[prefixes.rdfs + 'domain'] = domains;
+                }
+
+                if(ranges.length) {
+                    newProperty[prefixes.rdfs + 'range'] = ranges;
+                    newProperty.matonto.icon = chooseIcon(newProperty);
+                }
 
                 var config = {
                         params: {
@@ -711,9 +733,12 @@
                     .then(function(response) {
                         if(response.data.added) {
                             console.log('Successfully added property');
-                            if(domain) {
-                                // TODO: get class from domain drop down
-                                // classObj.matonto.properties.push(newProperty);
+                            var classIndex = -1;
+                            if(domains.length) {
+                                _.forEach(domains, function(domain) {
+                                    classIndex = _.findIndex(self.getClasses(ontology), domain);
+                                    ontology.matonto.classes[classIndex].matonto.properties.push(newProperty);
+                                });
                             } else {
                                 ontology.matonto.noDomains.push(newProperty);
                             }
@@ -727,7 +752,7 @@
                                 ontology.matonto.subDataProperties.push(subObject);
                             }
 
-                            deferred.resolve(response);
+                            deferred.resolve(classIndex !== -1 ? classIndex : undefined);
                         } else {
                             console.warn('Property not added');
                             deferred.reject(response);
@@ -1000,11 +1025,18 @@
                                     var domainHasClass = _.findIndex(domains, {'@id': classId}) !== -1;
                                     var inNoDomains = _.findIndex(ontology.matonto.noDomains, {'@id': item.property['@id']}) !== -1;
 
+                                    item.property.matonto.icon = chooseIcon(item.property);
+
                                     // property has no domains, but used to
                                     if(domains.length === 0 && classId) {
                                         ontology.matonto.classes[item.state.ci].matonto.properties.splice(item.state.pi, 1);
                                         if(!inNoDomains) {
                                             ontology.matonto.noDomains.push(item.property);
+                                            // if property is currently selected
+                                            if(currentState.pi === item.state.pi) {
+                                                currentState.ci = undefined;
+                                                currentState.pi = ontology.matonto.noDomains.length - 1;
+                                            }
                                         }
                                     }
                                     // property has domains, but not this class anymore
@@ -1024,7 +1056,13 @@
                                             if(newClassIndex !== -1) {
                                                 var hasProperty = _.findIndex(ontology.matonto.classes[newClassIndex].matonto.properties, {'@id':item.property['@id']}) !== -1;
                                                 if(!hasProperty) {
-                                                    ontology.matonto.classes[newClassIndex].matonto.properties.push(item.property);
+                                                    var classObj = ontology.matonto.classes[newClassIndex];
+                                                    classObj.matonto.properties.push(item.property);
+                                                    // if property is currently selected
+                                                    if(currentState.pi === item.state.pi) {
+                                                        currentState.ci = newClassIndex;
+                                                        currentState.pi = classObj.matonto.properties.length - 1;
+                                                    }
                                                 }
                                             }
                                         }
@@ -1040,7 +1078,7 @@
                                 });
                                 ontology.matonto.originalId = angular.copy(ontology['@id']);
                                 console.log('Ontology successfully updated');
-                                deferred.resolve();
+                                deferred.resolve(currentState);
                             } else {
                                 console.warn("Something wasn't updated properly in the ontology");
                                 deferred.reject();

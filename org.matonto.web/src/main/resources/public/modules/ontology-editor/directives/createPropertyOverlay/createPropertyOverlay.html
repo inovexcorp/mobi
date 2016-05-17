@@ -1,26 +1,46 @@
 <div ng-hide="vm.showIriOverlay === true" class="overlay">
-    <form name="vm.createPropertyForm" class="content clearfix" novalidate autocomplete="off">
+    <div class="content">
         <!-- section header -->
         <h6>Create New OWL Property</h6>
 
         <!-- error -->
         <error-display error-message="vm.createPropertyError"></error-display>
 
-        <!-- name -->
-        <div class="form-group">
-            <custom-label>Name</custom-label>
-            <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
-        </div>
-
         <!-- static iri -->
-        <static-iri display-type="class" iri="vm.currentIri"></static-iri>
+        <static-iri iri="dvm.createPropertyIri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
 
-        <!-- create annotation buttons -->
-        <div class="btn-container clearfix">
-            <custom-button is-disabled-when="vm.createPropertyForm.$invalid"
-                           on-click="vm.createProperty(dvm.createPropertyIri, dvm.name)">Create</custom-button>
+        <form name="vm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
+            <!-- name -->
+            <div class="form-group">
+                <custom-label>Name</custom-label>
+                <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
+            </div>
 
-            <custom-button on-click="vm.showCreatePropertyOverlay = false; vm.createPropertyError = ''" type="'secondary'">Cancel</custom-button>
-        </div>
-    </form>
+            <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
+            <string-select ng-model="dvm.type"
+                           display-text="'Type'"
+                           select-list="dvm.propertyTypes"
+                           change-event="dvm.setRange()">
+            </string-select>
+
+            <!-- domain -->
+            <object-select ng-model="dvm.domain"
+                           display-text="'Domain'"
+                           select-list="vm.ontology.matonto.subClasses"></object-select>
+
+            <!-- range -->
+            <object-select ng-model="dvm.range"
+                           display-text="'Range'"
+                           select-list="dvm.rangeList"
+                           is-disabled-when="!dvm.type.length"></object-select>
+
+            <!-- create annotation buttons -->
+            <div class="btn-container clearfix">
+                <custom-button is-disabled-when="vm.createPropertyForm.$invalid || !dvm.type.length"
+                               on-click="vm.createProperty(dvm.createPropertyIri, dvm.name, dvm.type, dvm.range, dvm.domain)">Create</custom-button>
+
+                <custom-button on-click="vm.showCreatePropertyOverlay = false; vm.createPropertyError = ''" type="'secondary'">Cancel</custom-button>
+            </div>
+        </form>
+    </div>
 </div>

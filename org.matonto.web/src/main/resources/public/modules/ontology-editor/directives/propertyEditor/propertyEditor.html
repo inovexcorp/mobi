@@ -13,16 +13,14 @@
         <error-display error-message="vm.selected.matonto.createError"></error-display>
 
         <!-- static iri -->
-        <static-iri display-type="property" iri="vm.selected['@id']"></static-iri>
+        <static-iri iri="vm.selected['@id']" on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"></static-iri>
 
         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
         <string-select ng-model="vm.selected['@type']"
                        display-text="'Type'"
                        muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.propertyTypes"
-                       only-strings="'true'">
-            <small class="text-muted">Defaults to DatatypeProperty if nothing is provided.</small>
+                       select-list="vm.propertyTypes">
         </string-select>
 
         <annotation-tab></annotation-tab>

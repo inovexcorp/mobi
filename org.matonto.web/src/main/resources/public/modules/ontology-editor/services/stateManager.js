@@ -75,12 +75,15 @@
                     pi = state.pi;
                 if(type === 'ontology') {
                     oi = ontologies.length - 1;
+                    ci = undefined;
+                    pi = undefined;
                     editor = 'ontology-editor';
                 } else if(type === 'class') {
                     ci = ontologies[oi].matonto.classes.length - 1;
+                    pi = undefined;
                     editor = 'class-editor';
                 } else if(type === 'property') {
-                    if(ci) {
+                    if(ci !== undefined) {
                         pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
                     } else {
                         pi = ontologies[oi].matonto.noDomains.length - 1;

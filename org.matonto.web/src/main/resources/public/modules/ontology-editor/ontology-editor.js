@@ -3,7 +3,7 @@
 
     angular
         .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
-        'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'iriOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
+        'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
         'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
         'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
         'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay',
@@ -45,11 +45,10 @@
         /* Ontology Management */
         function setVariables(oi) {
             if(oi === undefined) {
-                vm.selected = vm.ontology = vm.currentIri = undefined;
+                vm.selected = vm.ontology = undefined;
             } else {
                 vm.selected = ontologyManagerService.getObject(vm.state);
                 vm.ontology = ontologyManagerService.getOntology(oi);
-                vm.currentIri = vm.selected['@id'];
                 vm.iriHasChanged = false;
             }
             vm.preview = 'Please select a serialization and hit refresh.';
@@ -107,18 +106,15 @@
         }
 
         vm.save = function() {
-            if(_.has(vm.ontology, 'matonto.originalId')) {
-                ontologyManagerService.edit(vm.ontology.matonto.originalId);
-            }
+            ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.state)
+                .then(function(state) {
+                    vm.state = state;
+                });
         }
 
-        vm.editIRI = function() {
-            if(!vm.showCreateClassOverlay && !vm.showCreatePropertyOverlay) {
-                ontologyManagerService.editIRI(vm.iriBegin, vm.iriThen, vm.iriEnd, vm.selected, vm.ontologies[vm.state.oi]);
-            } else {
-                vm.iriHasChanged = true;
-            }
-            vm.currentIri = vm.iriBegin + vm.iriThen + vm.iriEnd;
+        vm.editIRI = function(iriBegin, iriThen, iriEnd) {
+            vm.entityChanged();
+            ontologyManagerService.editIRI(iriBegin, iriThen, iriEnd, vm.selected, vm.ontologies[vm.state.oi]);
             vm.showIriOverlay = false;
         }
 
@@ -181,9 +177,10 @@
                 });
         }
 
-        vm.createProperty = function(propertyIri, label) {
-            ontologyManagerService.createProperty(vm.ontology, propertyIri, label)
-                .then(function(response) {
+        vm.createProperty = function(propertyIri, label, type, range, domain) {
+            ontologyManagerService.createProperty(vm.ontology, propertyIri, label, type, range, domain)
+                .then(function(classIndex) {
+                    vm.state.ci = classIndex;
                     vm.createPropertyError = '';
                     vm.showCreatePropertyOverlay = false;
                     onCreateSuccess('property');
