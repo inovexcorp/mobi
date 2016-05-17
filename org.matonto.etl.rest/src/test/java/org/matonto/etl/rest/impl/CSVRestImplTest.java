@@ -152,7 +152,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         List<String> expectedLines = getCsvResourceLines("test_tabs.csv");
 
         int rowNum = 5;
-        Response response = target().path("csv/test_tabs_csv").queryParam("Row-Count", rowNum).queryParam("Separator", "\t").request().get();
+        Response response = target().path("csv/test_tabs_csv").queryParam("rowCount", rowNum).queryParam
+                ("separator", "\t").request().get();
         testResultsRows(response, expectedLines, rowNum);
     }
 
@@ -178,11 +179,11 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         int rowNum = 5;
 
         List<String> expectedLines = getExcelResourceLines("test.xls");
-        Response response = target().path("csv/test_oldexcel").queryParam("Row-Count", rowNum).request().get();
+        Response response = target().path("csv/test_oldexcel").queryParam("rowCount", rowNum).request().get();
         testResultsRows(response, expectedLines, rowNum);
 
         expectedLines = getExcelResourceLines("test.xlsx");
-        response = target().path("csv/test_newexcel").queryParam("Row-Count", rowNum).request().get();
+        response = target().path("csv/test_newexcel").queryParam("rowCount", rowNum).request().get();
         testResultsRows(response, expectedLines, rowNum);
     }
 
@@ -211,10 +212,10 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     @Test
     public void mapCsvWithParamsTest() {
         Map<String, Object> params = new HashMap<>();
-        params.put("Format", "turtle");
-        params.put("Preview", true);
-        params.put("Contains-Headers", true);
-        params.put("Separator", "\t");
+        params.put("format", "turtle");
+        params.put("preview", true);
+        params.put("containsHeaders", true);
+        params.put("separator", "\t");
         String body = testMap("test_tabs_csv", "jsonld", "[]", params);
         isNotJsonld(body);
 
@@ -234,9 +235,9 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     @Test
     public void mapExcelWithParamsTest() {
         Map<String, Object> params = new HashMap<>();
-        params.put("Format", "turtle");
-        params.put("Preview", true);
-        params.put("Contains-Headers", true);
+        params.put("format", "turtle");
+        params.put("preview", true);
+        params.put("containsHeaders", true);
         String body = testMap("test_oldexcel", "jsonld", "[]", params);
         isNotJsonld(body);
 

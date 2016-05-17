@@ -47,7 +47,10 @@ describe('CSV Manager service', function() {
             var rowEnd = 5;
             var separator = ',';
             var preview = [[''], [''], [''], [''], ['']];
-            var params = '?Row-Count=' + rowEnd + '&Separator=' + separator;
+            var params = createQueryString({
+                'rowCount': rowEnd, 
+                'separator': separator
+            });
             $httpBackend.expectGET('/matontorest/csv/' + fileName + params, undefined)
                 .respond(200, preview);
             csvManagerSvc.previewFile(fileName, rowEnd, separator, true).then(function(filePreview) {
@@ -64,8 +67,8 @@ describe('CSV Manager service', function() {
             var separator = '\t';
             var preview = [[''], [''], [''], [''], ['']];
             var params = createQueryString({
-                'Row-Count': rowEnd, 
-                'Separator': encodeURIComponent(separator)
+                'rowCount': rowEnd, 
+                'separator': encodeURIComponent(separator)
             });
             $httpBackend.expectGET('/matontorest/csv/' + fileName + params, undefined)
                 .respond(200, preview);
@@ -86,8 +89,8 @@ describe('CSV Manager service', function() {
             var separator = ',';
             var containsHeaders = true;
             var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Separator': separator
+                'containsHeaders': containsHeaders, 
+                'separator': separator
             });
             $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
                 function(data) {
@@ -107,8 +110,8 @@ describe('CSV Manager service', function() {
             var separator = ',';
             var containsHeaders = true;
             var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Separator': separator
+                'containsHeaders': containsHeaders, 
+                'separator': separator
             });
             $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
                 function(data) {
@@ -131,10 +134,10 @@ describe('CSV Manager service', function() {
             var separator = ',';
             var containsHeaders = true;
             var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Format': format,
-                'Preview': true,
-                'Separator': separator
+                'containsHeaders': containsHeaders, 
+                'format': format,
+                'preview': true,
+                'separator': separator
             });
             $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
                 function(data) {
@@ -155,10 +158,10 @@ describe('CSV Manager service', function() {
             var separator = ',';
             var containsHeaders = true;
             var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Format': format,
-                'Preview': true,
-                'Separator': separator
+                'containsHeaders': containsHeaders, 
+                'format': format,
+                'preview': true,
+                'separator': separator
             });
             $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
                 function(data) {

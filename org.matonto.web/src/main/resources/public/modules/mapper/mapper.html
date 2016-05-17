@@ -144,7 +144,7 @@
         <file-preview-table ng-if="vm.filePreview" 
             rows="vm.filePreview.rows" 
             headers="vm.filePreview.headers"
-            mapped-columns="vm.mappedColumns" 
+            available-columns="vm.availableColumns"
             highlight-idx="vm.isDatatypeProperty(vm.selectedPropId) ? vm.filePreview.headers.indexOf(vm.selectedColumn) : undefined"
             on-click="vm.clickColumn(colIndex)"
             is-clickable="!!vm.selectedPropId && vm.isDatatypeProperty(vm.selectedPropId)"></file-preview-table>

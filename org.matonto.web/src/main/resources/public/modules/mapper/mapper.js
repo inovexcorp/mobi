@@ -402,6 +402,7 @@
         /** Set and Delete methods **/
         vm.setIriTemplate = function(prefixEnd, localName) {
             vm.mapping.jsonld = mappingManagerService.editIriTemplate(vm.mapping.jsonld, vm.editingClassMappingId, prefixEnd, localName);
+            changedMapping();
         }
         vm.setMappingName = function(name) {
             vm.mapping.name = name;

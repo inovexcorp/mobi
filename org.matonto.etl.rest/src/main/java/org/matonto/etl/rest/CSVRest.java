@@ -63,8 +63,8 @@ public interface CSVRest {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Gather rows from an uploaded delimited document.")
     Response getRows(@PathParam("documentName") String fileName,
-                     @DefaultValue("10") @QueryParam("Row-Count") int rowEnd,
-                     @DefaultValue(",") @QueryParam("Separator") String separator);
+                     @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
+                     @DefaultValue(",") @QueryParam("separator") String separator);
 
     /**
      * Maps the data in an uploaded delimited document into RDF in JSON-LD format
@@ -89,8 +89,8 @@ public interface CSVRest {
     Response etlFile(@PathParam("documentName") String fileName, 
             @FormDataParam("jsonld") String jsonld,
             @FormDataParam("mappingName") String mappingLocalName,
-            @DefaultValue("jsonld") @QueryParam("Format") String format,
-            @DefaultValue("false") @QueryParam("Preview") boolean isPreview,
-            @DefaultValue("true") @QueryParam("Contains-Headers") boolean containsHeaders,
-            @DefaultValue(",") @QueryParam("Separator") String separator);
+            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @DefaultValue("false") @QueryParam("preview") boolean isPreview,
+            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+            @DefaultValue(",") @QueryParam("separator") String separator);
 }
