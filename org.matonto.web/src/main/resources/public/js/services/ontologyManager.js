@@ -579,11 +579,11 @@
                             objectProperties = _.concat(objectProperties, importedObjectProperties);
                         }
 
-                        ontology.matonto.annotations = _.unionWith(annotations, defaultAnnotations, _.isEqual);
+                        ontology.matonto.annotations = _.unionWith(annotations, defaultAnnotations, _.isMatch);
                         ontology.matonto.subClasses = classes;
                         ontology.matonto.subDataProperties = dataProperties;
                         ontology.matonto.subObjectProperties = objectProperties;
-                        ontology.matonto.dataPropertyRange = _.unionWith(datatypes, defaultDatatypes, _.isEqual);
+                        ontology.matonto.dataPropertyRange = _.unionWith(datatypes, defaultDatatypes, _.isMatch);
 
                         deferred.resolve(ontology);
                     }, function(response) {
