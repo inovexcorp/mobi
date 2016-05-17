@@ -10,7 +10,7 @@
         <h5 ng-click="isClosed = !isClosed" class="clearfix">
             {{annotation.localName | beautify}} <small>&lt;{{vm.getItemIri(annotation)}}&gt;</small><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
         </h5>
-        <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(annotation)]" ng-class="{'hide-annotation': isClosed}">
+        <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(annotation)]" ng-hide="isClosed">
             <span>{{value['@id'] || value['@value']}}</span>
             <button type="button" class="btn btn-link pull-right" ng-click="vm.removeAnnotation(vm.getItemIri(annotation), $index)" title="Delete"><i class="fa fa-times fa-fw"></i></button>
             <button ng-if="value['@value']" type="button" class="btn btn-link pull-right" ng-click="vm.editClicked(annotation, $index);" title="Edit"><i class="fa fa-pencil fa-fw"></i></button>
