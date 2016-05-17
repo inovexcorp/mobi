@@ -1,9 +1,8 @@
 package org.matonto.etl.api.csv;
 
 import org.matonto.exception.MatOntoException;
-import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Model;
-//import org.openrdf.model.Model;
+import org.matonto.rdf.api.Resource;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.File;
@@ -98,4 +97,12 @@ public interface MappingManager {
      *                          could not be made or mapping does not exist
      */
     boolean deleteMapping(@Nonnull Resource mappingIRI) throws MatOntoException;
+
+    /**
+     * Tests whether the passes mapping Resource IRI exists in the mapping registry.
+     *
+     * @param mappingIRI the mapping IRI to test for in the registry
+     * @return true if the registry contains the passed mapping IRI, false otherwise.
+     */
+    boolean mappingExists(@Nonnull Resource mappingIRI) throws MatOntoException;
 }

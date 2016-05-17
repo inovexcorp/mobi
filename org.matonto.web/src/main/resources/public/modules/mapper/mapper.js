@@ -269,7 +269,7 @@
             }
 
             if (vm.saveToServer) {
-                mappingManagerService.upload(vm.mapping.jsonld, vm.mapping.name)
+                mappingManagerService.uploadPut(vm.mapping.jsonld, vm.mapping.name)
                     .then(function(response) {
                         return csvManagerService.mapByUploaded(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                     })
