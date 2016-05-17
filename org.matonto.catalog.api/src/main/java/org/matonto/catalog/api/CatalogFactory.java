@@ -13,5 +13,5 @@ public interface CatalogFactory {
      */
     OntologyBuilder createOntologyBuilder(Resource resource, String title);
 
-    PaginatedSearchParamsBuilder createSearchParamsBuilder(int limit, int offset);
+    PaginatedSearchParamsBuilder createSearchParamsBuilder(int limit, int offset, Resource sortBy);
 }

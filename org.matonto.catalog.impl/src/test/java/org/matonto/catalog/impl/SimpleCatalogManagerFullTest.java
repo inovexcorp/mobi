@@ -74,6 +74,13 @@ public class SimpleCatalogManagerFullTest {
         RepositoryConnection conn = repo.getConnection();
         conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TURTLE)));
         conn.close();
+
+        Map<String, Object> props = new HashMap<>();
+        props.put("title", "MatOnto Test Catalog");
+        props.put("description", "This is a test catalog");
+        props.put("iri", "http://matonto.org/test/catalog");
+
+        manager.start(props);
     }
 
     @After
@@ -145,7 +152,8 @@ public class SimpleCatalogManagerFullTest {
         // given
         int limit = 1;
         int offset = 0;
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset).build();
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
 
         // when
         PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
@@ -162,7 +170,8 @@ public class SimpleCatalogManagerFullTest {
         // given
         int limit = 1;
         int offset = 1;
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset).build();
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
 
         // when
         PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
@@ -179,7 +188,8 @@ public class SimpleCatalogManagerFullTest {
         // given
         int limit = 1000;
         int offset = 0;
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset).build();
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
 
         // when
         PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
@@ -192,20 +202,6 @@ public class SimpleCatalogManagerFullTest {
     }
 
     @Test
-    public void testFindResourcesDefaultOrdering() throws Exception {
-        // given
-        int limit = 1;
-        int offset = 0;
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset).build();
-
-        // when
-        PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
-
-        // then
-        Assert.assertThat(resources.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
-    }
-
-    @Test
     public void testFindResourcesOrdering() throws Exception {
         // given
         IRI modified = vf.createIRI(DC + "modified");
@@ -214,12 +210,12 @@ public class SimpleCatalogManagerFullTest {
 
         int limit = 1;
         int offset = 0;
-        PaginatedSearchParams searchParams1 = new SimpleSearchParams.Builder(limit, offset).sortBy(modified).ascending(true).build();
-        PaginatedSearchParams searchParams2 = new SimpleSearchParams.Builder(limit, offset).sortBy(modified).ascending(false).build();
-        PaginatedSearchParams searchParams3 = new SimpleSearchParams.Builder(limit, offset).sortBy(issued).ascending(true).build();
-        PaginatedSearchParams searchParams4 = new SimpleSearchParams.Builder(limit, offset).sortBy(issued).ascending(false).build();
-        PaginatedSearchParams searchParams5 = new SimpleSearchParams.Builder(limit, offset).sortBy(title).ascending(true).build();
-        PaginatedSearchParams searchParams6 = new SimpleSearchParams.Builder(limit, offset).sortBy(title).ascending(false).build();
+        PaginatedSearchParams searchParams1 = new SimpleSearchParams.Builder(limit, offset, modified).ascending(true).build();
+        PaginatedSearchParams searchParams2 = new SimpleSearchParams.Builder(limit, offset, modified).ascending(false).build();
+        PaginatedSearchParams searchParams3 = new SimpleSearchParams.Builder(limit, offset, issued).ascending(true).build();
+        PaginatedSearchParams searchParams4 = new SimpleSearchParams.Builder(limit, offset, issued).ascending(false).build();
+        PaginatedSearchParams searchParams5 = new SimpleSearchParams.Builder(limit, offset, title).ascending(true).build();
+        PaginatedSearchParams searchParams6 = new SimpleSearchParams.Builder(limit, offset, title).ascending(false).build();
 
         // when
         PaginatedSearchResults<PublishedResource> resources1 = manager.findResource(searchParams1);
@@ -235,7 +231,7 @@ public class SimpleCatalogManagerFullTest {
         Assert.assertThat(resources3.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
         Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
         Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
-        Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+        Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/3"));
     }
 
     @Test
@@ -247,7 +243,8 @@ public class SimpleCatalogManagerFullTest {
 
         int limit = 1;
         int offset = 0;
-        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset).build();
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
 
         // when
         PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
@@ -261,9 +258,10 @@ public class SimpleCatalogManagerFullTest {
         // given
         int limit = 1000;
         int offset = 0;
-        PaginatedSearchParams ontSearchParams = new SimpleSearchParams.Builder(limit, offset).typeFilter(ONT_TYPE).build();
-        PaginatedSearchParams mappingSearchParams = new SimpleSearchParams.Builder(limit, offset).typeFilter(MAPPING_TYPE).build();
-        PaginatedSearchParams fullSearchParams = new SimpleSearchParams.Builder(limit, offset).build();
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams ontSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).typeFilter(ONT_TYPE).build();
+        PaginatedSearchParams mappingSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).typeFilter(MAPPING_TYPE).build();
+        PaginatedSearchParams fullSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
 
         // when
         PaginatedSearchResults<PublishedResource> ontResources = manager.findResource(ontSearchParams);

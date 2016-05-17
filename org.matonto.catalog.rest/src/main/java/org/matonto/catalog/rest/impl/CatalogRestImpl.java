@@ -106,8 +106,7 @@ public class CatalogRestImpl implements CatalogRest {
         IRI sortResource = valueFactory.createIRI(sortBy);
         IRI typeFilter = valueFactory.createIRI(resourceType);
 
-        PaginatedSearchParams searchParams = catalogFactory.createSearchParamsBuilder(limit, start)
-                .sortBy(sortResource)
+        PaginatedSearchParams searchParams = catalogFactory.createSearchParamsBuilder(limit, start, sortResource)
                 .typeFilter(typeFilter)
                 .ascending(asc)
                 .build();

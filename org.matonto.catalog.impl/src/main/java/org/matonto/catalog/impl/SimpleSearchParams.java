@@ -10,7 +10,7 @@ public class SimpleSearchParams implements PaginatedSearchParams {
     private String searchTerm;
     private Resource typeFilter;
     private Resource sortBy;
-    private boolean ascending;
+    private Boolean ascending;
     private int limit;
     private int offset;
 
@@ -25,8 +25,8 @@ public class SimpleSearchParams implements PaginatedSearchParams {
     }
 
     @Override
-    public Optional<Resource> getSortBy() {
-        return Optional.ofNullable(sortBy);
+    public Resource getSortBy() {
+        return sortBy;
     }
 
     @Override
@@ -47,15 +47,16 @@ public class SimpleSearchParams implements PaginatedSearchParams {
     public static class Builder implements PaginatedSearchParamsBuilder {
         private final int limit;
         private final int offset;
+        private final Resource sortBy;
 
         private String searchTerm = null;
         private Resource typeFilter = null;
-        private Resource sortBy = null;
-        private boolean ascending = false;
+        private Boolean ascending = null;
 
-        public Builder(int limit, int offset) {
+        public Builder(int limit, int offset, Resource sortBy) {
             this.limit = limit;
             this.offset = offset;
+            this.sortBy = sortBy;
         }
 
         public Builder searchTerm(String val) {
@@ -65,11 +66,6 @@ public class SimpleSearchParams implements PaginatedSearchParams {
 
         public Builder typeFilter(Resource val) {
             this.typeFilter = val;
-            return this;
-        }
-
-        public Builder sortBy(Resource val) {
-            this.sortBy = val;
             return this;
         }
 

@@ -5,8 +5,8 @@ import org.matonto.rdf.api.Resource;
 import java.util.Optional;
 
 /**
- * Search parameters. Allows paging with the limit and offset parameters. Allows sorting with the sortBy and ascending
- * parameters. Sorts by modified date descending if an inappropriate resource is passed in.
+ * Search parameters. Allows paging with the limit and offset parameters. Enforcing sorting with the required sortBy and
+ * optional ascending parameters.
  */
 public interface PaginatedSearchParams {
 
@@ -14,7 +14,7 @@ public interface PaginatedSearchParams {
 
     Optional<Resource> getTypeFilter();
 
-    Optional<Resource> getSortBy();
+    Resource getSortBy();
 
     Optional<Boolean> getAscending();
 

@@ -8,8 +8,6 @@ public interface PaginatedSearchParamsBuilder {
 
     PaginatedSearchParamsBuilder typeFilter(Resource val);
 
-    PaginatedSearchParamsBuilder sortBy(Resource val);
-
     PaginatedSearchParamsBuilder ascending(boolean val);
 
     PaginatedSearchParams build();

@@ -32,7 +32,7 @@ public class SimpleCatalogFactory implements CatalogFactory {
     }
 
     @Override
-    public PaginatedSearchParamsBuilder createSearchParamsBuilder(int limit, int offset) {
-        return new SimpleSearchParams.Builder(limit, offset);
+    public PaginatedSearchParamsBuilder createSearchParamsBuilder(int limit, int offset, Resource sortBy) {
+        return new SimpleSearchParams.Builder(limit, offset, sortBy);
     }
 }

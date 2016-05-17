@@ -143,22 +143,23 @@ public class SimpleCatalogManager implements CatalogManager {
         int limit = searchParams.getLimit();
         int offset = searchParams.getOffset();
 
-        Optional<Resource> sortByParam = searchParams.getSortBy();
         String sortBinding;
-        if (sortByParam.isPresent() && sortingOptions.get(sortByParam.get()) != null) {
-            sortBinding = sortingOptions.get(sortByParam.get());
+        Resource sortByParam = searchParams.getSortBy();
+        if (sortingOptions.get(sortByParam) != null) {
+            sortBinding = sortingOptions.get(sortByParam);
         } else {
+            log.warn("sortBy parameter must be in the allowed list. Sorting by modified date instead.");
             sortBinding = "modified";
         }
 
-        Optional<Boolean> ascendingParam = searchParams.getAscending();
         String queryString;
+        Optional<Boolean> ascendingParam = searchParams.getAscending();
         if (ascendingParam.isPresent() && ascendingParam.get()) {
             queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
                     limit, offset);
         } else {
-            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d", sortBinding,
-                    limit, offset);
+            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d",
+                    sortBinding, limit, offset);
         }
 
         log.debug("QUERY: " + queryString);
