@@ -13,7 +13,7 @@
                 scope: {
                     headers: '=',
                     rows: '=',
-                    mappedColumns: '=',
+                    availableColumns: '=',
                     highlightIdx: '=',
                     isClickable: '=',
                     onClick: '&'

@@ -26,11 +26,11 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;                        
                     });
 
                 return deferred.promise;
@@ -45,6 +45,7 @@
                         }
                     };
 
+                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(fileName), config)
                     .then(function(response) {
                         var filePreview = {};
@@ -61,6 +62,8 @@
                         deferred.resolve(filePreview);
                     }, function(response) {
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -81,11 +84,11 @@
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(fileName), fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -108,11 +111,11 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -135,11 +138,11 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
