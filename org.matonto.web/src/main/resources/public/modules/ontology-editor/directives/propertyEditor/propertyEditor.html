@@ -2,7 +2,7 @@
     <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected) || 'New Property'}}</tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>

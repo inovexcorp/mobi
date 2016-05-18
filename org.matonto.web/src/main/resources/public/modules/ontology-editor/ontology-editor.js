@@ -49,7 +49,6 @@
             } else {
                 vm.selected = ontologyManagerService.getObject(vm.state);
                 vm.ontology = ontologyManagerService.getOntology(oi);
-                vm.iriHasChanged = false;
             }
             vm.preview = 'Please select a serialization and hit refresh.';
             vm.serialization = '';

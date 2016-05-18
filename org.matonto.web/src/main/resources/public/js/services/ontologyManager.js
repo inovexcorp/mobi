@@ -35,7 +35,7 @@
                         subClasses: [],
                         subDataProperties: [],
                         subObjectProperties: [],
-                        dataPropertyRange: $filter('orderBy')(defaultDatatypes, 'localName'),
+                        dataPropertyRange: defaultDatatypes,
                         noDomains: []
                     }
                 },
@@ -590,12 +590,6 @@
                 return deferred.promise;
             }
 
-            function setDefaults(ontology, entity) {
-                var result = angular.copy(entity);
-                result.matonto.namespace = ontology['@id'] + ontology.matonto.delimiter;
-                return result;
-            }
-
             function createEntityJson(entity) {
                 var copy = angular.copy(entity);
                 var context = _.get(copy.matonto, 'context', []);
@@ -762,7 +756,7 @@
                             deferred.reject(response);
                         }
                     }, function(response) {
-                        console.error('Error in createClass() function');
+                        console.error('Error in createProperty() function');
                         deferred.reject(response);
                     })
                     .then(function() {
@@ -816,8 +810,7 @@
             }
 
             self.getObject = function(state) {
-                var current, newEntity, existingEntity, setDefaults,
-                    oi = state.oi,
+                var oi = state.oi,
                     ci = state.ci,
                     pi = state.pi,
                     tab = state.tab,
