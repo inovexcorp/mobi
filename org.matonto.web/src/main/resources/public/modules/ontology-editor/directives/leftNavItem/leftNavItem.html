@@ -2,6 +2,6 @@
     <button ng-click="onClick()" title="{{navTitle}}"
             ng-class="{ 'active': isActiveWhen }"
             ng-disabled="isDisabledWhen">
-        <i class="fa fa-{{icon}} fa-fw"></i>
+        <span ng-transclude></span>
     </button>
 </li>

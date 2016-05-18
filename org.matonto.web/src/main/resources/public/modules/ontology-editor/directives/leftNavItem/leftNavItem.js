@@ -9,11 +9,11 @@
             return {
                 restrict: 'E',
                 replace: true,
+                transclude: true,
                 scope: {
                     onClick: '&',
                     isActive: '=',
                     isDisabledWhen: '=',
-                    icon: '@',
                     navTitle: '@'
                 },
                 templateUrl: 'modules/ontology-editor/directives/leftNavItem/leftNavItem.html'
