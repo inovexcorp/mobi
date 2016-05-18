@@ -12,11 +12,11 @@
                 transclude: true,
                 scope: {
                     onClick: '&',
-                    isActive: '=',
+                    isActiveWhen: '=',
                     isDisabledWhen: '=',
                     navTitle: '@'
                 },
-                templateUrl: 'modules/ontology-editor/directives/leftNavItem/leftNavItem.html'
+                templateUrl: 'directives/leftNavItem/leftNavItem.html'
             }
         }
 })();
