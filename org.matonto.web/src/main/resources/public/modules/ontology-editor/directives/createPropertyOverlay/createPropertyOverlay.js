@@ -25,7 +25,7 @@
                     dvm.domain = [];
 
                     dvm.nameChanged = function() {
-                        if(!vm.iriHasChanged) {
+                        if(!dvm.iriHasChanged) {
                             dvm.createPropertyIri = prefix + $filter('camelCase')(dvm.name, 'property');
                         }
                     }

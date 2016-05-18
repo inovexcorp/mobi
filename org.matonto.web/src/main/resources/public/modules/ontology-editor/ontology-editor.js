@@ -155,8 +155,8 @@
             vm.showDownloadOverlay = true;
         }
 
-        vm.createOntology = function(ontologyIri, label) {
-            ontologyManagerService.createOntology(ontologyIri, label)
+        vm.createOntology = function(ontologyIri, label, description) {
+            ontologyManagerService.createOntology(ontologyIri, label, description)
                 .then(function(response) {
                     vm.createOntologyError = '';
                     vm.showCreateOntologyOverlay = false;
@@ -166,8 +166,8 @@
                 });
         }
 
-        vm.createClass = function(classIri, label) {
-            ontologyManagerService.createClass(vm.ontology, classIri, label)
+        vm.createClass = function(classIri, label, description) {
+            ontologyManagerService.createClass(vm.ontology, classIri, label, description)
                 .then(function(response) {
                     vm.createClassError = '';
                     vm.showCreateClassOverlay = false;
@@ -177,8 +177,8 @@
                 });
         }
 
-        vm.createProperty = function(propertyIri, label, type, range, domain) {
-            ontologyManagerService.createProperty(vm.ontology, propertyIri, label, type, range, domain)
+        vm.createProperty = function(propertyIri, label, type, range, domain, description) {
+            ontologyManagerService.createProperty(vm.ontology, propertyIri, label, type, range, domain, description)
                 .then(function(classIndex) {
                     vm.state.ci = classIndex;
                     vm.createPropertyError = '';

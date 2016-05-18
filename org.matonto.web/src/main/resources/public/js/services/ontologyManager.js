@@ -127,9 +127,6 @@
                         icon = 'fa-cubes';
                     }
                 }
-                else {
-                    icon = 'fa-question';
-                }
                 // return the class for an icon from Font Awesome
                 return icon;
             }
@@ -623,22 +620,29 @@
                 }
             }
 
-            function initEntity(entity, iri, label) {
+            function initEntity(entity, iri, label, description) {
                 var copy = angular.copy(entity);
+
                 copy['@id'] = iri;
                 copy.matonto.originalId = iri;
                 copy[prefixes.dc + 'title'] = [{'@value': label}];
                 copy[prefixes.rdfs + 'label'] = [{'@value': label}];
+
+                if(description) {
+                    copy[prefixes.dc + 'description'] = [{'@value': description}];
+                    copy[prefixes.rdfs + 'comment'] = [{'@value': description}];
+                }
+
                 return copy;
             }
 
-            self.createOntology = function(ontologyIri, label) {
+            self.createOntology = function(ontologyIri, label, description) {
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
                 var newOntology = angular.copy(ontologyTemplate);
 
-                newOntology = initEntity(newOntology, ontologyIri, label);
+                newOntology = initEntity(newOntology, ontologyIri, label, description);
 
                 var config = {
                         params: {
@@ -667,13 +671,13 @@
                 return deferred.promise;
             }
 
-            self.createClass = function(ontology, classIri, label) {
+            self.createClass = function(ontology, classIri, label, description) {
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
                 var newClass = angular.copy(classTemplate);
 
-                newClass = initEntity(newClass, classIri, label);
+                newClass = initEntity(newClass, classIri, label, description);
 
                 var config = {
                         params: {
@@ -704,14 +708,14 @@
                 return deferred.promise;
             }
 
-            self.createProperty = function(ontology, propertyIri, label, types, ranges, domains) {
+            self.createProperty = function(ontology, propertyIri, label, types, ranges, domains, description) {
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
                 var pathVariable = getRestfulPropertyType(types);
                 var newProperty = angular.copy(propertyTemplate);
 
-                newProperty = initEntity(newProperty, propertyIri, label);
+                newProperty = initEntity(newProperty, propertyIri, label, description);
                 newProperty['@type'] = types;
 
                 if(domains.length) {

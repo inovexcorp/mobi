@@ -12,14 +12,17 @@
         <form name="vm.createClassForm" class="clearfix" novalidate autocomplete="off">
             <!-- name -->
             <div class="form-group">
-                <custom-label>Name</custom-label>
+                <custom-label muted-text="'*Required'">Name</custom-label>
                 <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
             </div>
+
+            <!-- description -->
+            <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
 
             <!-- create annotation buttons -->
             <div class="btn-container clearfix">
                 <custom-button is-disabled-when="vm.createClassForm.$invalid"
-                               on-click="vm.createClass(dvm.createClassIri, dvm.name)">Create</custom-button>
+                               on-click="vm.createClass(dvm.createClassIri, dvm.name, dvm.description)">Create</custom-button>
 
                 <custom-button on-click="vm.showCreateClassOverlay = false; vm.createClassError = ''" type="'secondary'">Cancel</custom-button>
             </div>

@@ -24,7 +24,8 @@ body {
 
     .has-error {
         /* Error label font */
-        .control-label {
+        .control-label,
+        .control-label small {
             color: #f00;
         }
 
