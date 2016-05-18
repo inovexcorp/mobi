@@ -4,7 +4,7 @@
         <h6>Create New OWL Property</h6>
 
         <!-- error -->
-        <error-display error-message="vm.createPropertyError"></error-display>
+        <error-display ng-if="vm.createPropertyError">{{vm.createPropertyError}}</error-display>
 
         <!-- static iri -->
         <static-iri iri="dvm.createPropertyIri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
@@ -38,7 +38,7 @@
                            select-list="dvm.rangeList"
                            is-disabled-when="!dvm.type.length"></object-select>
 
-            <!-- create annotation buttons -->
+            <!-- create property buttons -->
             <div class="btn-container clearfix">
                 <custom-button is-disabled-when="vm.createPropertyForm.$invalid || !dvm.type.length"
                                on-click="vm.createProperty(dvm.createPropertyIri, dvm.name, dvm.type, dvm.range, dvm.domain, dvm.description)">Create</custom-button>

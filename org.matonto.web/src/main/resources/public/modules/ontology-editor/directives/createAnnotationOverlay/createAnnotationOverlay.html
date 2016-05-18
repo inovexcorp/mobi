@@ -4,7 +4,7 @@
         <h6>Create New OWL Annotation</h6>
 
         <!-- error -->
-        <error-display error-message="vm.createAnnotationError"></error-display>
+        <error-display ng-if="vm.createAnnotationError">{{vm.createAnnotationError}}</error-display>
 
         <!-- new annotation iri -->
         <div ng-class="{'has-error': vm.createAnnotationForm.iri.$error.pattern}" class="form-group">

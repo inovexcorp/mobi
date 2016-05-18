@@ -44,17 +44,9 @@
                         var result = itemIri;
 
                         if(tooltipDisplay === 'comment') {
-                            if(_.has(selectedObject, prefixes.rdfs + 'comment')) {
-                                result = selectedObject[prefixes.rdfs + 'comment'][0]['@value'];
-                            } else if(_.has(selectedObject, prefixes.dc + 'description')) {
-                                result = selectedObject[prefixes.dc + 'description'][0]['@value'];
-                            }
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri));
                         } else if(tooltipDisplay === 'label') {
-                            if(_.has(selectedObject, prefixes.rdfs + 'label')) {
-                                result = selectedObject[prefixes.rdfs + 'label'][0]['@value'];
-                            } else if(_.has(selectedObject, prefixes.dc + 'title')) {
-                                result = selectedObject[prefixes.dc + 'title'][0]['@value'];
-                            }
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri));
                         } else if(_.has(selectedObject, '@id')) {
                             result = selectedObject['@id'];
                         }

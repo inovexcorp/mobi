@@ -4,7 +4,7 @@
         <h6>Create New OWL Class</h6>
 
         <!-- error -->
-        <error-display error-message="vm.createClassError"></error-display>
+        <error-display ng-if="vm.createClassError">{{vm.createClassError}}</error-display>
 
         <!-- static iri -->
         <static-iri iri="dvm.createClassIri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
@@ -19,7 +19,7 @@
             <!-- description -->
             <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
 
-            <!-- create annotation buttons -->
+            <!-- create class buttons -->
             <div class="btn-container clearfix">
                 <custom-button is-disabled-when="vm.createClassForm.$invalid"
                                on-click="vm.createClass(dvm.createClassIri, dvm.name, dvm.description)">Create</custom-button>

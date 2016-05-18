@@ -9,10 +9,8 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/errorDisplay/errorDisplay.html',
-                scope: {
-                    errorMessage: '='
-                }
+                transclude: true,
+                templateUrl: 'modules/ontology-editor/directives/errorDisplay/errorDisplay.html'
             }
         }
 })();

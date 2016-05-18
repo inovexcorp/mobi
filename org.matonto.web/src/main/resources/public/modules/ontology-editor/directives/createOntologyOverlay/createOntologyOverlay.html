@@ -4,9 +4,9 @@
         <h6>Create New OWL Ontology</h6>
 
         <!-- error -->
-        <error-display error-message="vm.createOntologyError"></error-display>
+        <error-display ng-if="vm.createOntologyError">{{vm.createOntologyError}}</error-display>
 
-        <!-- new annotation iri -->
+        <!-- new ontology iri -->
         <div ng-class="{'has-error': vm.createOntologyForm.iri.$error.pattern}" class="form-group">
             <custom-label muted-text="'*Required'">Ontology IRI</custom-label>
             <input class="form-control" id="iri" name="iri" ng-model="dvm.createOntologyIri" ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" required />
@@ -24,7 +24,7 @@
         <!-- description -->
         <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
 
-        <!-- create annotation buttons -->
+        <!-- create ontology buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="vm.createOntologyForm.$invalid"
                            on-click="vm.createOntology(dvm.createOntologyIri, dvm.name, dvm.description)">Create</custom-button>

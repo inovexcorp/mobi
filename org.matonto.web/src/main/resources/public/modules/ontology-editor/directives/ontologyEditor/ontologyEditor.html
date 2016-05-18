@@ -13,7 +13,7 @@
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <error-display error-message="vm.selected.matonto.createError"></error-display>
+        <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- ontology iri -->
         <div ng-class="{'has-error': vm.ontologyForm.ontologyIri.$invalid}" class="form-group">

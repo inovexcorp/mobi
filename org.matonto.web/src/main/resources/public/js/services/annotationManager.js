@@ -1,8 +1,6 @@
 (function() {
     'use strict';
 
-    var newAnnotationString = 'New OWL AnnotationProperty';
-
     angular
         .module('annotationManager', ['responseObj', 'splitIRI', 'prefixes'])
         .service('annotationManagerService', annotationManagerService)
@@ -38,16 +36,15 @@
             }
 
             self.remove = function(entity, key, index) {
-                entity[key].splice(index, 1);
+                _.pullAt(entity[key], index);
 
                 if(!entity[key].length) {
                     delete entity[key];
                 }
             }
 
-            self.add = function(entity, select, value) {
-                if(responseObj.validateItem(select)) {
-                    var prop = responseObj.getItemIri(select);
+            self.add = function(entity, prop, value) {
+                if(prop) {
                     var annotation = {'@value': value};
                     if(_.has(entity, prop)) {
                         entity[prop].push(annotation);
@@ -57,8 +54,10 @@
                 }
             }
 
-            self.edit = function(entity, select, value, index) {
-                entity[select][index]['@value'] = value;
+            self.edit = function(entity, prop, value, index) {
+                if(prop) {
+                    entity[prop][index]['@value'] = value;
+                }
             }
 
             self.create = function(ontology, iri) {

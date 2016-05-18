@@ -103,6 +103,7 @@
                             case prefixes.xsd + 'int':
                             case prefixes.xsd + 'integer':
                             case prefixes.xsd + 'long':
+                            case prefixes.xsd + 'nonNegativeInteger':
                                 icon = 'fa-calculator';
                                 break;
                             case prefixes.xsd + 'language':

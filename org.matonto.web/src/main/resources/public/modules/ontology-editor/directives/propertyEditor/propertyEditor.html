@@ -10,7 +10,7 @@
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <error-display error-message="vm.selected.matonto.createError"></error-display>
+        <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- static iri -->
         <static-iri iri="vm.selected['@id']" on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"></static-iri>

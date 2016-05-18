@@ -254,7 +254,7 @@
         }
 
         vm.addAnnotation = function(select, value) {
-            annotationManagerService.add(vm.selected, select, value);
+            annotationManagerService.add(vm.selected, vm.getItemIri(select), value);
             resetAnnotationVariables();
             vm.showAnnotationOverlay = false;
             vm.entityChanged();
@@ -275,9 +275,16 @@
             vm.entityChanged();
         }
 
-        vm.removeAnnotation = function(key, index) {
-            annotationManagerService.remove(vm.selected, key, index);
+        vm.openRemoveAnnotationOverlay = function(key, index) {
+            vm.key = key;
+            vm.index = index;
+            vm.showRemoveAnnotationOverlay = true;
+        }
+
+        vm.removeAnnotation = function() {
+            annotationManagerService.remove(vm.selected, vm.key, vm.index);
             vm.entityChanged();
+            vm.showRemoveAnnotationOverlay = false;
         }
 
         vm.getItemNamespace = function(item) {

@@ -156,16 +156,27 @@
                 <confirmation-overlay ng-if="vm.showDeleteConfirmation"
                                       header-text="'Delete Ontology'"
                                       confirm-click="vm.deleteEntity()"
-                                      cancel-click="vm.showDeleteConfirmation = false;"
+                                      cancel-click="vm.showDeleteConfirmation = false"
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong>?</confirmation-overlay>
 
                 <confirmation-overlay ng-if="vm.showCloseOverlay"
                                       header-text="'Close Overlay'"
                                       confirm-click="vm.closeOntology()"
-                                      cancel-click="vm.showCloseOverlay = false;"
+                                      cancel-click="vm.showCloseOverlay = false"
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
+
+                <confirmation-overlay ng-if="vm.showRemoveAnnotationOverlay"
+                                      header-text="'Remove Annotation'"
+                                      confirm-click="vm.removeAnnotation()"
+                                      cancel-click="vm.showRemoveAnnotationOverlay = false"
+                                      confirm-text="'Yes'"
+                                      cancel-text="'No'">
+                    <p>Are you sure you want to remove annotation:<br><strong>{{vm.key}}</strong></p>
+                    <p>with value:<br><strong>{{vm.selected[vm.key][vm.index]['@value'] || vm.selected[vm.key][0]['@id']}}</strong></p>
+                    <p>from:<br><strong>{{vm.selected['@id']}}</strong>?</p>
+                </confirmation-overlay>
 
                 <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
 
