@@ -1,7 +1,7 @@
-<div class="mapping-name-input form-group" ng-class="{'has-error': form.name.$invalid, 'has-success': form.name.$valid}">
+<div class="mapping-name-input form-group" ng-class="{'has-error': isActive && form.name.$invalid, 'has-success': isActive && form.name.$valid}">
     <label class="control-label">
         Name
-        <input type="text" class="form-control" name="name" ng-model="name" ng-pattern="dvm.localNamePattern" ng-required="required" ng-maxlength="50" unique-name>
+        <input type="text" class="form-control" name="name" ng-model="name" ng-pattern="dvm.localNamePattern" ng-required="required" ng-maxlength="50" ng-focus="focusEvent()" unique-name>
     </label>
     <div class="error-msg" ng-messages="form.name.$error">
         <ng-message when="uniqueName">Mapping name must be unique</ng-message>

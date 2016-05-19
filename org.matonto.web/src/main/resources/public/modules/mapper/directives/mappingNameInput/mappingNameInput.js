@@ -32,7 +32,9 @@
                 controllerAs: 'dvm',
                 scope: {
                     name: '=',
-                    required: '='
+                    required: '=',
+                    isActive: '=',
+                    focusEvent: '&'
                 },
                 link: function(scope, el, attrs, form) {
                     scope.form = form;
