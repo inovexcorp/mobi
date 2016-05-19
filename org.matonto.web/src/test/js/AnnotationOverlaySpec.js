@@ -30,7 +30,7 @@ describe('Annotation Overlay directive', function() {
             scope.$digest();
         });
         it('for a div', function() {
-            expect(element.prop('tagName')).toBe('ANNOTATION-OVERLAY');
+            expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on form (.content)', function() {
             var formList = element.querySelectorAll('.content');

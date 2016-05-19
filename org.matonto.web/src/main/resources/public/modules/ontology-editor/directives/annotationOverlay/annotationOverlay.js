@@ -8,12 +8,8 @@
         function annotationOverlay() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html',
-                controllerAs: 'dvm',
-                controller: ['REGEX', function(REGEX) {
-                    var dvm = this;
-                    dvm.iriPattern = REGEX.IRI;
-                }]
+                replace: true,
+                templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html'
             }
         }
 })();

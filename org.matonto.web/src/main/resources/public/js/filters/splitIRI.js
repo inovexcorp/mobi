@@ -39,18 +39,10 @@
     function splitIRI() {
         return function(iri) {
             if(iri && typeof iri !== 'object') {
-                var index,
-                    hash = iri.indexOf('#'),
-                    slash = iri.lastIndexOf('/'),
-                    colon = iri.lastIndexOf(':');
-
-                if(hash !== -1) {
-                    index = hash;
-                } else if(slash !== -1) {
-                    index = slash;
-                } else {
-                    index = colon;
-                }
+                var hash = iri.indexOf('#');
+                var slash = iri.lastIndexOf('/');
+                var colon = iri.lastIndexOf(':');
+                var index = _.max([hash, slash, colon]);
 
                 return {
                     begin: iri.substring(0, index),

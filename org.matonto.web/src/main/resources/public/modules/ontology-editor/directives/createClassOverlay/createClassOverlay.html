@@ -1,0 +1,31 @@
+<div ng-hide="vm.showIriOverlay === true" class="overlay">
+    <div class="content">
+        <!-- section header -->
+        <h6>Create New OWL Class</h6>
+
+        <!-- error -->
+        <error-display ng-if="vm.createClassError">{{vm.createClassError}}</error-display>
+
+        <!-- static iri -->
+        <static-iri iri="dvm.createClassIri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+
+        <form name="vm.createClassForm" class="clearfix" novalidate autocomplete="off">
+            <!-- name -->
+            <div class="form-group">
+                <custom-label muted-text="'*Required'">Name</custom-label>
+                <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
+            </div>
+
+            <!-- description -->
+            <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
+
+            <!-- create class buttons -->
+            <div class="btn-container clearfix">
+                <custom-button is-disabled-when="vm.createClassForm.$invalid"
+                               on-click="vm.createClass(dvm.createClassIri, dvm.name, dvm.description)">Create</custom-button>
+
+                <custom-button on-click="vm.showCreateClassOverlay = false; vm.createClassError = ''" type="'secondary'">Cancel</custom-button>
+            </div>
+        </form>
+    </div>
+</div>
