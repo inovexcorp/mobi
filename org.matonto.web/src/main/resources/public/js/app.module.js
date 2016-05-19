@@ -5,7 +5,6 @@
         .module('app', [
             'angular-uuid',
             'ngCookies',
-            'ngFileSaver',
             'catalog',
             'home',
             'login',

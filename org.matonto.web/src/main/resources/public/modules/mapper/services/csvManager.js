@@ -93,67 +93,12 @@
                 return deferred.promise;
             }
 
-            self.mapByUploaded = function(fileName, mappingName, containsHeaders, separator) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
-                    config = {
-                        transformRequest: angular.identity,
-                        params: {
-                            'containsHeaders': containsHeaders,
-                            'separator': separator
-                        },
-                        headers: {
-                            'Content-Type': undefined
-                        }
-                    };
-                fd.append('mappingName', mappingName);
-
-                $rootScope.showSpinner = true;
-                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
-                    .then(function(response) {
-                        deferred.resolve(response.data);
-                    }, function(response) {
-                        deferred.reject(response);
-                    }).then(function() {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-
-            self.mapByString = function(fileName, jsonld, containsHeaders, separator) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
-                    config = {
-                        transformRequest: angular.identity,
-                        params: {
-                            'containsHeaders': containsHeaders,
-                            'separator': separator
-                        },
-                        headers: {
-                            'Content-Type': undefined
-                        }
-                    };
-                fd.append('jsonld', angular.toJson(jsonld));
-
-                $rootScope.showSpinner = true;
-                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
-                    .then(function(response) {
-                        deferred.resolve(response.data);
-                    }, function(response) {
-                        deferred.reject(response);
-                    }).then(function() {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-
             self.previewMap = function(fileName, jsonld, containsHeaders, format, separator) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'preview': true,
                             'format': format,
                             'containsHeaders': containsHeaders,
                             'separator': separator
@@ -165,13 +110,22 @@
                     };
                 fd.append('jsonld', angular.toJson(jsonld));
 
-                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
+                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map-preview', fd, config)
                     .then(function(response) {
                         deferred.resolve(response.data);
                     }, function(response) {
                         deferred.reject(response);
                     });
                 return deferred.promise;
+            }
+
+            self.map = function(fileName, mappingName, containsHeaders, separator) {
+                var queryString = '?format=jsonld&mappingName=' + mappingName + '&containsHeaders=' + containsHeaders + '&separator=' + separator;
+                var el = document.createElement('a');
+                el.onclick = function() {
+                    window.open(prefix + '/' + encodeURIComponent(fileName) + '/map' + queryString, '_blank', '');
+                }
+                el.click();
             }
         }
 })();

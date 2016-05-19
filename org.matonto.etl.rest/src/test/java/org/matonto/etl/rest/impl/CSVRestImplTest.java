@@ -188,24 +188,19 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void mapEitherStringOrMappingTest() {
+    public void mapWithoutMappingTest() {
         String mapping = "";
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("jsonld", mapping);
-        fd.field("mappingName", mapping);
-        Response response = target().path("csv/test_csv/map").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("csv/test_csv/map").queryParam("mappingName", mapping)
+                .request().get();
         Assert.assertEquals(400, response.getStatus());
 
-        response = target().path("csv/test_csv/map").request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+        response = target().path("csv/test_csv/map").request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void mapCsvWithDefaultsTest() {
-        String body = testMap("test_csv", "jsonld", "[]", null);
-        isJsonld(body);
-
-        body = testMap("test_csv", "mappingName", "test", null);
+        String body = testMap("test_csv", "test", null);
         isJsonld(body);
     }
 
@@ -213,22 +208,15 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     public void mapCsvWithParamsTest() {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
-        params.put("preview", true);
         params.put("containsHeaders", true);
         params.put("separator", "\t");
-        String body = testMap("test_tabs_csv", "jsonld", "[]", params);
-        isNotJsonld(body);
-
-        body = testMap("test_tabs_csv", "mappingName", "test", params);
+        String body = testMap("test_tabs_csv", "test", params);
         isNotJsonld(body);
     }
 
     @Test
     public void mapExcelWithDefaultsTest() {
-        String body = testMap("test_oldexcel", "jsonld", "[]", null);
-        isJsonld(body);
-
-        body = testMap("test_oldexcel", "mappingName", "test", null);
+        String body = testMap("test_oldexcel", "test", null);
         isJsonld(body);
     }
 
@@ -236,20 +224,68 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     public void mapExcelWithParamsTest() {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
-        params.put("preview", true);
         params.put("containsHeaders", true);
-        String body = testMap("test_oldexcel", "jsonld", "[]", params);
-        isNotJsonld(body);
-
-        body = testMap("test_oldexcel", "mappingName", "test", params);
+        String body = testMap("test_oldexcel", "test", params);
         isNotJsonld(body);
     }
 
     @Test
     public void mapNonexistentDelimitedTest() {
+        Response response = target().path("csv/error/map").queryParam("mappingName", "test").request().get();
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void mapPreviewWithoutMappingTest() {
+        String mapping = "";
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", mapping);
+        Response response = target().path("csv/test_csv/map-preview").request().post(Entity.entity(fd, MediaType
+                .MULTIPART_FORM_DATA));
+        Assert.assertEquals(400, response.getStatus());
+
+        response = target().path("csv/test_csv/map-preview").request().post(Entity.entity(null, MediaType
+                .MULTIPART_FORM_DATA));
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void mapPreviewCsvWithDefaultsTest() {
+        String body = testMapPreview("test_csv", "[]", null);
+        isJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewCsvWithParamsTest() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("format", "turtle");
+        params.put("containsHeaders", true);
+        params.put("separator", "\t");
+        String body = testMapPreview("test_tabs_csv", "[]", params);
+        isNotJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewExcelWithDefaultsTest() {
+        String body = testMapPreview("test_oldexcel", "[]", null);
+        isJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewExcelWithParamsTest() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("format", "turtle");
+        params.put("containsHeaders", true);
+        String body = testMapPreview("test_oldexcel", "[]", params);
+        isNotJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewNonexistentDelimitedTest() {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", "[]");
-        Response response = target().path("csv/error/map").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("csv/error/map-preview").request().post(Entity.entity(fd, MediaType
+                .MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -270,16 +306,28 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         }
     }
 
-    private String testMap(String fileName, String key, String value, Map<String, Object> params) {
+    private String testMapPreview(String fileName, String jsonld, Map<String, Object> params) {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field(key, value);
-        WebTarget wt = target().path("csv/" + fileName + "/map");
+        fd.field("jsonld", jsonld);
+        WebTarget wt = target().path("csv/" + fileName + "/map-preview");
         if (params != null) {
             for (String k : params.keySet()) {
                 wt = wt.queryParam(k, params.get(k));
             }
         }
         Response response = wt.request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        return response.readEntity(String.class);
+    }
+
+    private String testMap(String fileName, String mappingName, Map<String, Object> params) {
+        WebTarget wt = target().path("csv/" + fileName + "/map").queryParam("mappingName", mappingName);
+        if (params != null) {
+            for (String k : params.keySet()) {
+                wt = wt.queryParam(k, params.get(k));
+            }
+        }
+        Response response = wt.request().get();
         Assert.assertEquals(200, response.getStatus());
         return response.readEntity(String.class);
     }

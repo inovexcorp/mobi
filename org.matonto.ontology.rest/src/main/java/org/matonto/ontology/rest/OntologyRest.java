@@ -82,9 +82,10 @@ public interface OntologyRest {
      */
     @GET
     @Path("{ontologyid}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
-                                  @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
+                                  @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                                  @DefaultValue("ontology") @QueryParam("fileName") String fileName);
 
     /**
      * Replaces the ontology's resource with the new data

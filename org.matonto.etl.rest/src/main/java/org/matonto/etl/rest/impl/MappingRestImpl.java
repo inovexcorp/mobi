@@ -119,7 +119,8 @@ public class MappingRestImpl implements MappingRest {
                 writer.close();
             };
 
-            return Response.ok(stream).build();
+            return Response.ok(stream).header("Content-Disposition", "attachment; filename=" + localName
+                    + ".jsonld").build();
         } else {
             throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
         }

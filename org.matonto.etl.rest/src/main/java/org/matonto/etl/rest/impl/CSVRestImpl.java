@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class CSVRestImpl implements CSVRest {
@@ -82,65 +83,117 @@ public class CSVRestImpl implements CSVRest {
     }
 
     @Override
-    public Response etlFile(String fileName, String mappingRdf, String mappingLocalName,
-                            String format, boolean isPreview, boolean containsHeaders, String separator) {
-        if ((mappingRdf == null && mappingLocalName == null) || (mappingRdf != null && mappingLocalName != null)) {
-            throw ErrorUtils.sendError("Must provide either a JSON-LD string or a mapping file name",
-                    Response.Status.BAD_REQUEST);
+    public Response etlFilePreview(String fileName, String mappingRdf, String format, boolean containsHeaders,
+                            String separator) {
+        if (mappingRdf == null || mappingRdf.equals("")) {
+            throw ErrorUtils.sendError("Must provide a JSON-LD string", Response.Status.BAD_REQUEST);
         }
 
         Optional<File> optDelimitedFile = getUploadedFile(fileName);
         if (optDelimitedFile.isPresent()) {
             File delimitedFile = optDelimitedFile.get();
             String extension = FilenameUtils.getExtension(delimitedFile.getName());
-            char separatorChar = separator.charAt(0);
 
             // Get InputStream for data to convert
-            InputStream dataToConvert;
-            if (isPreview) {
-                dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
-                        ? createExcelPreviewStream(delimitedFile, containsHeaders)
-                        : createCSVPreviewStream(delimitedFile, containsHeaders);
-            } else {
-                try {
-                    dataToConvert = new FileInputStream(delimitedFile);
-                } catch (FileNotFoundException e) {
-                    throw ErrorUtils.sendError(e, "Error locating delimited file", Response.Status.BAD_REQUEST);
-                }
-            }
+            InputStream dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
+                    ? createExcelPreviewStream(delimitedFile, containsHeaders)
+                    : createCSVPreviewStream(delimitedFile, containsHeaders);
 
-            // Convert InputStream to RDF based on Mapping
-            Model model;
+            // Parse JSON-LD mapping into a model
+            Model mappingModel;
             try {
-                Model mappingModel;
-                if (mappingLocalName != null) {
-                    Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
-                    Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
-                    if (mappingOptional.isPresent()) {
-                        mappingModel = Values.sesameModel(mappingOptional.get());
-                    } else {
-                        throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
-                                Response.Status.BAD_REQUEST);
-                    }
-                } else {
-                    InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
-                    mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
-                }
-                model = Values.sesameModel(csvConverter.convert(dataToConvert,
-                        Values.matontoModel(mappingModel), containsHeaders, extension, separatorChar));
-            } catch (IOException | MatOntoException e) {
-                throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
+                InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
+                mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
+            } catch (IOException e) {
+                throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
             }
 
             // Write data back to Response
+            String result = etlFile(dataToConvert, mappingModel, extension, containsHeaders, separator, format);
             logger.info("File mapped: " + delimitedFile.getPath());
-            StringWriter sw = new StringWriter();
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
-            Rio.write(model, rdfWriter);
-            return Response.status(200).entity(sw.toString()).build();
+            return Response.status(200).entity(result).build();
         } else {
             throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
+    }
+
+    @Override
+    public Response etlFile(String fileName, String mappingLocalName, String format, boolean containsHeaders,
+                            String separator) {
+        System.out.println("Inside method with " + fileName + ", " + mappingLocalName + ", " + format
+            + ", " + containsHeaders + ", and " + separator);
+        if (mappingLocalName == null || mappingLocalName.equals("")) {
+            throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
+        }
+        Optional<File> optDelimitedFile = getUploadedFile(fileName);
+        if (optDelimitedFile.isPresent()) {
+            File delimitedFile = optDelimitedFile.get();
+            String extension = FilenameUtils.getExtension(delimitedFile.getName());
+
+            // Get InputStream for data to convert
+            InputStream dataToConvert;
+            try {
+                dataToConvert = new FileInputStream(delimitedFile);
+            } catch (FileNotFoundException e) {
+                throw ErrorUtils.sendError(e, "Error locating delimited file", Response.Status.BAD_REQUEST);
+            }
+
+            // Collect uploaded mapping model
+            Model mappingModel;
+            Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
+            Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
+            if (mappingOptional.isPresent()) {
+                mappingModel = Values.sesameModel(mappingOptional.get());
+            } else {
+                throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
+                        Response.Status.BAD_REQUEST);
+            }
+
+            String result = etlFile(dataToConvert, mappingModel, extension, containsHeaders, separator, format);
+            logger.info("File mapped: " + delimitedFile.getPath());
+
+            // Write data into a stream
+            StreamingOutput stream = os -> {
+                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+                writer.write(result);
+                writer.flush();
+                writer.close();
+            };
+            String fileExtension = getRDFFormat(format).getDefaultFileExtension();
+            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName +  "."
+                    + fileExtension).build();
+        } else {
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Converts delimited data in an InputStream into RDF and then writes the result into a string.
+     *
+     * @param delimitedData an InputStream of delimited data
+     * @param mapping a mapping for delimited data in RDF
+     * @param extension the file extension of the delimited data
+     * @param containsHeaders whether or not the delimited data contains a header row
+     * @param separator the separator of columns in the delimited data if it's a CSV
+     * @param format the RDF serialization to return the data as
+     * @return a string with the delimited data converted into RDF
+     */
+    private String etlFile(InputStream delimitedData, Model mapping, String extension, boolean containsHeaders,
+                           String separator, String format) {
+        char separatorChar = separator.charAt(0);
+
+        // Convert InputStream to RDF
+        Model model;
+        try {
+            model = Values.sesameModel(csvConverter.convert(delimitedData,
+                    Values.matontoModel(mapping), containsHeaders, extension, separatorChar));
+        } catch (IOException | MatOntoException e) {
+            throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
+        }
+        StringWriter sw = new StringWriter();
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
+        Rio.write(model, rdfWriter);
+        return sw.toString();
     }
 
     @Override
@@ -203,7 +256,7 @@ public class CSVRestImpl implements CSVRest {
             case "turtle":
                 rdfformat = RDFFormat.TURTLE;
                 break;
-            case "rdfxml":
+            case "rdf/xml":
                 rdfformat = RDFFormat.RDFXML;
                 break;
             case "jsonld":
