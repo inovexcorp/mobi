@@ -57,27 +57,22 @@ public class CSVRestImpl implements CSVRest {
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail) {
         String fileName = generateUuid();
         String extension = FilenameUtils.getExtension(fileDetail.getFileName());
-        Path filePath = Paths.get("data/tmp/" + fileName + "." + extension);
-        uploadFile(fileInputStream, filePath);
-        return Response.status(200).entity(fileName).build();
+
+        Path filePath;
+        try {
+            filePath = Files.createTempFile(fileName, "." + extension);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Error in creating temp file", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        saveStreamToFile(fileInputStream, filePath);
+        return Response.status(200).entity(filePath.getFileName().toString()).build();
     }
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
-        String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
-        Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        Path filePath;
-        if (optDelimitedFile.isPresent()) {
-            File delimitedFile = optDelimitedFile.get();
-            if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
-                delimitedFile.delete();
-                delimitedFile = new File("data/tmp/" + fileName + "." + newExtension);
-            }
-            filePath = delimitedFile.toPath();
-        } else {
-            filePath = Paths.get("data/tmp/" + fileName + "." + newExtension);
-        }
-        uploadFile(fileInputStream, filePath);
+        Path filePath = Paths.get(System.getProperty("java.io.tmpdir") + "/" + fileName);
+        saveStreamToFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
     }
 
@@ -177,18 +172,12 @@ public class CSVRestImpl implements CSVRest {
      * @return the uploaded file if it was found
      */
     private Optional<File> getUploadedFile(String fileName) {
-        File directory = new File("data/tmp");
-        File[] files = directory.listFiles((dir, name) -> {
-            return name.startsWith(fileName + ".");
-        });
-        if (files.length == 0) {
+        Path filePath = Paths.get(System.getProperty("java.io.tmpdir") + "/" + fileName);
+        if (Files.exists(filePath)) {
+            return Optional.of(new File(filePath.toUri()));
+        } else {
             return Optional.empty();
         }
-        if (files.length > 1) {
-            throw ErrorUtils.sendError("Multiple files exist with same name", Response.Status.BAD_REQUEST);
-        }
-
-        return Optional.of(files[0]);
     }
 
     /**
@@ -266,19 +255,19 @@ public class CSVRestImpl implements CSVRest {
     }
 
     /**
-     * Uploads the file in the InputStream to the specified path.
+     * Saves the contents of the InputStream to the specified path.
      *
      * @param fileInputStream a file in an InputStream
      * @param filePath the location to upload the file to
      */
-    private void uploadFile(InputStream fileInputStream, Path filePath) {
+    private void saveStreamToFile(InputStream fileInputStream, Path filePath) {
         try {
             Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
             fileInputStream.close();
         } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Error writing delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error writing delimited file", Response.Status.BAD_REQUEST);
         } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error parsing delimited file", Response.Status.BAD_REQUEST);
         }
         logger.info("File Uploaded: " + filePath);
     }
