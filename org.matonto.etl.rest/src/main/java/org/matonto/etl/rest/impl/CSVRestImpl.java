@@ -1,6 +1,8 @@
 package org.matonto.etl.rest.impl;
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
@@ -25,14 +27,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
+
+import static java.nio.file.FileVisitResult.CONTINUE;
 
 @Component(immediate = true)
 public class CSVRestImpl implements CSVRest {
@@ -43,6 +45,8 @@ public class CSVRestImpl implements CSVRest {
 
     private static final int NUM_LINE_PREVIEW = 10;
 
+    public static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/org.matonto.etl.rest.impl.tmp";
+
     @Reference
     public void setCsvConverter(CSVConverter csvConverter) {
         this.csvConverter = csvConverter;
@@ -51,6 +55,17 @@ public class CSVRestImpl implements CSVRest {
     @Reference
     public void setMappingManager(MappingManager manager) {
         this.mappingManager = manager;
+    }
+
+    @Activate
+    protected void start() throws IOException {
+        deleteDirectory(Paths.get(TEMP_DIR));
+        Files.createDirectory(Paths.get(TEMP_DIR));
+    }
+
+    @Deactivate
+    protected void stop() throws IOException {
+        deleteDirectory(Paths.get(TEMP_DIR));
     }
 
     @Override
@@ -71,7 +86,7 @@ public class CSVRestImpl implements CSVRest {
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
-        Path filePath = Paths.get(System.getProperty("java.io.tmpdir") + "/" + fileName);
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
         saveStreamToFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
     }
@@ -132,7 +147,18 @@ public class CSVRestImpl implements CSVRest {
             StringWriter sw = new StringWriter();
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
             Rio.write(model, rdfWriter);
-            return Response.status(200).entity(sw.toString()).build();
+            Response response = Response.status(200).entity(sw.toString()).build();
+
+            // Remove temp file if not previewing
+            if (!isPreview) {
+                try {
+                    Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
+                } catch (IOException e) {
+                    throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
+                }
+            }
+
+            return response;
         } else {
             throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
@@ -172,7 +198,7 @@ public class CSVRestImpl implements CSVRest {
      * @return the uploaded file if it was found
      */
     private Optional<File> getUploadedFile(String fileName) {
-        Path filePath = Paths.get(System.getProperty("java.io.tmpdir") + "/" + fileName);
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
         if (Files.exists(filePath)) {
             return Optional.of(new File(filePath.toUri()));
         } else {
@@ -332,5 +358,25 @@ public class CSVRestImpl implements CSVRest {
      */
     public String generateUuid() {
         return UUID.randomUUID().toString();
+    }
+
+    private void deleteDirectory(Path dir) throws IOException {
+        Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (exc == null) {
+                    Files.delete(dir);
+                    return CONTINUE;
+                } else {
+                    throw exc;
+                }
+            }
+        });
     }
 }

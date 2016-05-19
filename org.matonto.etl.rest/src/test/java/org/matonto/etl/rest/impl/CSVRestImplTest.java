@@ -54,6 +54,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         when(manager.createMappingIRI(anyString())).thenReturn(String::new);
         when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(new LinkedHashModel()));
 
+        rest.start();
+
         return new ResourceConfig()
             .register(rest)
             .register(MultiPartFeature.class);
@@ -84,7 +86,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(Files.exists(Paths.get(System.getProperty("java.io.tmpdir") + "/" + fileName)));
+        Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
     }
 
     @Test
@@ -97,7 +99,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
         Assert.assertEquals(fileName, response.readEntity(String.class));
-        List<String> resultLines = Files.readAllLines(Paths.get(System.getProperty("java.io.tmpdir") + "/" + fileName));
+        List<String> resultLines = Files.readAllLines(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName));
         Assert.assertEquals(expectedLines.size(), resultLines.size());
         for (int i = 0; i < resultLines.size(); i++) {
             Assert.assertEquals(expectedLines.get(i), resultLines.get(i));
@@ -190,6 +192,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         String body = testMap(fileName, "jsonld", "[]", null);
         isJsonld(body);
 
+        copyResourceToTemp("test.csv", fileName);
+
         body = testMap(fileName, "mappingName", "test", null);
         isJsonld(body);
     }
@@ -219,6 +223,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
 
         String body = testMap(fileName, "jsonld", "[]", null);
         isJsonld(body);
+
+        copyResourceToTemp("test.xls", fileName);
 
         body = testMap(fileName, "mappingName", "test", null);
         isJsonld(body);
@@ -334,6 +340,6 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     private void copyResourceToTemp(String resourceName, String newName) throws IOException {
-        Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(System.getProperty("java.io.tmpdir") + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(CSVRestImpl.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
     }
 }
