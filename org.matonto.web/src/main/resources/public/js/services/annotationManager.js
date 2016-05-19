@@ -10,6 +10,7 @@
 
         function annotationManagerService($rootScope, $filter, $q, $http, responseObj, prefixes) {
             var self = this;
+            var prefix = '/matontorest/ontologies/';
 
             var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], function(item) {
                 return {
@@ -70,7 +71,7 @@
                             annotationjson: annotationjson
                         }
                     }
-                    $http.post('/matontorest/ontologies/' + encodeURIComponent(ontology['@id']) + '/annotations', null, config)
+                    $http.post(prefix + encodeURIComponent(ontology['@id']) + '/annotations', null, config)
                         .then(function(response) {
                             if(_.get(response, 'status') === 200) {
                                 var split = $filter('splitIRI')(iri);
@@ -101,12 +102,10 @@
                 var arr = [];
 
                 if(_.isArray(annotations)) {
-                    _.forEach(annotations, function(annotation) {
+                    arr = _.filter(annotations, function(annotation) {
                         if(responseObj.validateItem(annotation)) {
                             var annotationIri = responseObj.getItemIri(annotation);
-                            if(_.has(entity, annotationIri)) {
-                                arr.push(annotation);
-                            }
+                            return _.has(entity, annotationIri);
                         }
                     });
                 }

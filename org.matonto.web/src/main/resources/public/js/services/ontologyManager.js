@@ -653,11 +653,11 @@
                             deferred.resolve(response);
                         } else {
                             console.warn('Ontology not created');
-                            deferred.reject(response.statusText);
+                            deferred.reject(_.get(response, 'statusText'));
                         }
                     }, function(response) {
                         console.error('Error in createOntology() function');
-                        deferred.reject(response.statusText);
+                        deferred.reject(_.get(response, 'statusText'));
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -690,11 +690,11 @@
                             deferred.resolve(response);
                         } else {
                             console.warn('Class not added');
-                            deferred.reject(response);
+                            deferred.reject(_.get(response, 'statusText'));
                         }
                     }, function(response) {
                         console.error('Error in createClass() function');
-                        deferred.reject(response);
+                        deferred.reject(_.get(response, 'statusText'));
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -754,11 +754,11 @@
                             deferred.resolve(classIndex !== -1 ? classIndex : undefined);
                         } else {
                             console.warn('Property not added');
-                            deferred.reject(response);
+                            deferred.reject(_.get(response, 'statusText'));
                         }
                     }, function(response) {
                         console.error('Error in createProperty() function');
-                        deferred.reject(response);
+                        deferred.reject(_.get(response, 'statusText'));
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
