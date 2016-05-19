@@ -208,7 +208,8 @@ public class OntologyRestImpl implements OntologyRest {
         };
 
         return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                + "." + getRDFFormatFileExtension(rdfFormat)).build();
+                + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type", "application/octet-stream")
+                .build();
     }
 
     @Override

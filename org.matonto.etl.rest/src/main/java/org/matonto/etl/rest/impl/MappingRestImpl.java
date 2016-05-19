@@ -120,7 +120,7 @@ public class MappingRestImpl implements MappingRest {
             };
 
             return Response.ok(stream).header("Content-Disposition", "attachment; filename=" + localName
-                    + ".jsonld").build();
+                    + ".jsonld").header("Content-Type", "application/octet-stream").build();
         } else {
             throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
         }

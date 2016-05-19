@@ -161,7 +161,7 @@ public class CSVRestImpl implements CSVRest {
             };
             String fileExtension = getRDFFormat(format).getDefaultFileExtension();
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName +  "."
-                    + fileExtension).build();
+                    + fileExtension).header("Content-Type", "application/octet-stream").build();
         } else {
             throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
