@@ -53,7 +53,6 @@ describe('Left Nav Item directive', function() {
             expect(element.prop('tagName')).toBe('LI');
         });
         it('based on button', function() {
-            scope.btnIcon = 'fa-square';
             var element = $compile(angular.element('<left-nav-item is-active-when="isActiveWhen" is-disabled-when="isDisabledWhen" nav-title="navTitle" on-click="onClick()"></left-nav-item>'))(scope);
             scope.$digest();
 
@@ -61,13 +60,26 @@ describe('Left Nav Item directive', function() {
             expect(buttonList.length).toBe(1);
         });
         it('based on span', function() {
-            scope.btnSmall = false;
             var element = $compile(angular.element('<left-nav-item is-active-when="isActiveWhen" is-disabled-when="isDisabledWhen" nav-title="navTitle" on-click="onClick()"></left-nav-item>'))(scope);
             scope.$digest();
 
             var spanList = element.querySelectorAll('span');
             expect(spanList.length).toBe(1);
         });
+    });
+    it('sets active class if isActiveWhen is true', function() {
+        scope.isActiveWhen = false;
+        var element = $compile(angular.element('<left-nav-item is-active-when="isActiveWhen" is-disabled-when="isDisabledWhen" nav-title="navTitle" on-click="onClick()"></left-nav-item>'))(scope);
+        scope.$digest();
+
+        var activeList = element.querySelectorAll('.active');
+        expect(activeList.length).toBe(0);
+
+        scope.isActiveWhen = true;
+        scope.$digest();
+
+        activeList = element.querySelectorAll('.active');
+        expect(activeList.length).toBe(1);
     });
     it('calls onClick if button is clicked', function() {
         scope.onClick = jasmine.createSpy('onClick');
