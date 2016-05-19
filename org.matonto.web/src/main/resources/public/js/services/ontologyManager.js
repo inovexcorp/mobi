@@ -48,6 +48,16 @@
                         'localName': 'title'
                     }
                 ],
+                newAnnotation = {
+                    'namespace': 'Create ',
+                    'localName': 'New OWL AnnotationProperty'
+                },
+                defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
+                    return {
+                        'namespace': prefixes.xsd,
+                        'localName': item
+                    }
+                }),
                 changedEntries = [],
                 newItems = {},
                 ontologies = [],
@@ -167,7 +177,7 @@
                     defaults = responseObj.stringify(defaultAnnotations),
                     arr = angular.copy(annotations);
 
-                arr.splice(0, 0, { namespace: 'Create ', localName: 'New Annotation' });
+                arr.splice(0, 0, newAnnotation);
 
                 while(i < arr.length) {
                     itemIri = responseObj.getItemIri(arr[i]);
@@ -476,7 +486,7 @@
                         if(response.data.deleted) {
                             console.log('Successfully deleted ontology');
                             ontologies.splice(state.oi, 1);
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: false });
                         } else {
                             console.warn('Ontology not deleted');
                             deferred.reject(response);
@@ -508,7 +518,7 @@
                             ontology.matonto.classes.splice(state.ci, 1);
                             removeIdFromArray(classId, ontology.matonto.subClasses);
 
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Class not deleted');
                             deferred.reject(response);
@@ -559,7 +569,7 @@
                                 removeIdFromArray(propertyId, ontology.matonto.subDataProperties);
                             }
 
-                            deferred.resolve(response);
+                            deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Property not deleted');
                             deferred.reject(response);
@@ -789,7 +799,7 @@
                         ontology.matonto.subClasses = classes;
                         ontology.matonto.subDataProperties = dataProperties;
                         ontology.matonto.subObjectProperties = objectProperties;
-                        ontology.matonto.dataPropertyRange = datatypes;
+                        ontology.matonto.dataPropertyRange = $filter('orderBy')(_.unionWith(datatypes, defaultDatatypes, _.isEqual), 'localName');
 
                         deferred.resolve(ontology);
                     }, function(response) {
@@ -863,7 +873,7 @@
                             subClasses: [],
                             subDataProperties: [],
                             subObjectProperties: [],
-                            dataPropertyRange: []
+                            dataPropertyRange: $filter('orderBy')(defaultDatatypes, 'localName')
                         }
                     },
                     newClass = {
@@ -915,6 +925,7 @@
                             result = setDefaults(ontology, angular.copy(newClass));
                         } else {
                             result = angular.copy(newOntology);
+                            result.matonto.annotations.splice(0, 0, newAnnotation);
                         }
                         newItems[unique] = result;
                     }
@@ -1360,21 +1371,20 @@
                 $rootScope.showSpinner = true;
 
                 var deferred = $q.defer();
-                var errorMessage = 'An error has occurred, please try again later';
 
                 self.get(ontologyId, rdfFormat)
                     .then(function(response) {
                         var ontology = _.get(response.data, 'ontology');
                         if(ontology) {
                             console.log('Preview has been successfully retrieved');
-                            deferred.resolve(ontology);
+                            deferred.resolve((rdfFormat === 'jsonld') ? $filter('json')(ontology) : ontology);
                         } else {
                             console.warn('getPreview did not return anything in the response.data.ontology');
-                            deferred.reject(errorMessage);
+                            deferred.reject('No data was returned. This typically happens whenever you try to preview a new, unsaved ontology. Please try again after you save the ontology.');
                         }
                     }, function(response) {
                         console.error('Error in getPreview()');
-                        deferred.reject(errorMessage);
+                        deferred.reject('An error has occurred, please try again later');
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;

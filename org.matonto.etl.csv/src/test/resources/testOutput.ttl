@@ -79,7 +79,7 @@
 <http://matonto.org/data/uhtc/material/pqr> a <http://matonto.org/ontologies/uhtc/Material> ;
 	<http://matonto.org/ontologies/uhtc/formula> "SiC" ;
 	<http://matonto.org/ontologies/uhtc/density> "3.21" ;
-	<http://matonto.org/ontologies/uhtc/latticeParameter> "�" ;
+	<http://matonto.org/ontologies/uhtc/latticeParameter> "4.65" ;
 	<http://matonto.org/ontologies/uhtc/crystalStructure> <http://matonto.org/data/uhtc/crystalstructure/Polymorphic> .
 
 <http://matonto.org/data/uhtc/crystalstructure/Polymorphic> a <http://matonto.org/ontologies/uhtc/CrystalStructure> .

@@ -9,9 +9,9 @@
             'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay','mappingNameOverlay', 'mappingNameInput'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$rootScope', '$scope', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$rootScope', '$scope', '$element', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($rootScope, $scope, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($rootScope, $scope, $element, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var confirmChange = false;
         var previousSourceOntologyId;
@@ -39,7 +39,6 @@
         vm.delimitedContainsHeaders;
         vm.delimitedFileName;
         vm.filePreview;
-        vm.tableHeight;
         vm.mapping;
         vm.saveToServer;
         vm.rdfPreview;
@@ -72,7 +71,6 @@
             vm.delimitedContainsHeaders = true;
             vm.delimitedFileName = '';
             vm.filePreview = undefined;
-            vm.tableHeight = 0;
             vm.mapping = angular.copy(defaultMapping);
             vm.saveToServer = true;
             vm.rdfPreview = '';
@@ -271,7 +269,7 @@
             }
 
             if (vm.saveToServer) {
-                mappingManagerService.upload(vm.mapping.jsonld, vm.mapping.name)
+                mappingManagerService.uploadPut(vm.mapping.jsonld, vm.mapping.name)
                     .then(function(response) {
                         return csvManagerService.mapByUploaded(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                     })
@@ -400,6 +398,7 @@
         /** Set and Delete methods **/
         vm.setIriTemplate = function(prefixEnd, localName) {
             vm.mapping.jsonld = mappingManagerService.editIriTemplate(vm.mapping.jsonld, vm.editingClassMappingId, prefixEnd, localName);
+            changedMapping();
         }
         vm.setMappingName = function(name) {
             vm.mapping.name = name;

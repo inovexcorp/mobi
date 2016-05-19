@@ -26,11 +26,11 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;                        
                     });
 
                 return deferred.promise;
@@ -40,11 +40,12 @@
                 var deferred = $q.defer(),
                     config = {
                         params: {
-                            'Row-Count': rowEnd ? rowEnd : 0,
-                            'Separator': separator
+                            'rowCount': rowEnd ? rowEnd : 0,
+                            'separator': separator
                         }
                     };
 
+                $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(fileName), config)
                     .then(function(response) {
                         var filePreview = {};
@@ -61,6 +62,8 @@
                         deferred.resolve(filePreview);
                     }, function(response) {
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -81,11 +84,11 @@
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + encodeURIComponent(fileName), fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -96,8 +99,8 @@
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Contains-Headers': containsHeaders,
-                            'Separator': separator
+                            'containsHeaders': containsHeaders,
+                            'separator': separator
                         },
                         headers: {
                             'Content-Type': undefined
@@ -108,11 +111,11 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -123,8 +126,8 @@
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Contains-Headers': containsHeaders,
-                            'Separator': separator
+                            'containsHeaders': containsHeaders,
+                            'separator': separator
                         },
                         headers: {
                             'Content-Type': undefined
@@ -135,11 +138,11 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map', fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -150,10 +153,10 @@
                     config = {
                         transformRequest: angular.identity,
                         params: {
-                            'Preview': true,
-                            'Format': format,
-                            'Contains-Headers': containsHeaders,
-                            'Separator': separator
+                            'preview': true,
+                            'format': format,
+                            'containsHeaders': containsHeaders,
+                            'separator': separator
                         },
                         headers: {
                             'Content-Type': undefined,
