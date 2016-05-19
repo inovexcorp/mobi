@@ -46,30 +46,30 @@ public class SimpleOntologyId implements OntologyId {
         }
     }
 
-    private SimpleOntologyId(Builder b) {
-        if (b.versionIRI != null && b.ontologyIRI == null) {
+    private SimpleOntologyId(Builder builder) {
+        if (builder.versionIRI != null && builder.ontologyIRI == null) {
             throw new MatontoOntologyException("ontology IRI must not be null if version IRI is not null");
         }
-        this.factory = b.factory;
-        org.semanticweb.owlapi.model.IRI oIRI = null;
-        org.semanticweb.owlapi.model.IRI vIRI = null;
+        this.factory = builder.factory;
+        org.semanticweb.owlapi.model.IRI ontologyIRI = null;
+        org.semanticweb.owlapi.model.IRI versionIRI = null;
 
-        if (b.versionIRI != null) {
-            vIRI = SimpleOntologyValues.owlapiIRI(b.versionIRI);
+        if (builder.versionIRI != null) {
+            versionIRI = SimpleOntologyValues.owlapiIRI(builder.versionIRI);
         }
-        if (b.ontologyIRI != null) {
-            oIRI = SimpleOntologyValues.owlapiIRI(b.ontologyIRI);
+        if (builder.ontologyIRI != null) {
+            ontologyIRI = SimpleOntologyValues.owlapiIRI(builder.ontologyIRI);
         }
-        if (vIRI != null) {
-            ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI),
-                    com.google.common.base.Optional.of(vIRI));
-            this.identifier = factory.createIRI(b.versionIRI.toString());
-        } else if (oIRI != null) {
-            ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(oIRI),
+        if (versionIRI != null) {
+            ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(ontologyIRI),
+                    com.google.common.base.Optional.of(versionIRI));
+            this.identifier = factory.createIRI(builder.versionIRI.toString());
+        } else if (ontologyIRI != null) {
+            ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(ontologyIRI),
                     com.google.common.base.Optional.absent());
-            this.identifier = factory.createIRI(b.ontologyIRI.toString());
-        } else if (b.identifier != null) {
-            this.identifier = b.identifier;
+            this.identifier = factory.createIRI(builder.ontologyIRI.toString());
+        } else if (builder.identifier != null) {
+            this.identifier = builder.identifier;
             ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(),
                     com.google.common.base.Optional.absent());
         } else {

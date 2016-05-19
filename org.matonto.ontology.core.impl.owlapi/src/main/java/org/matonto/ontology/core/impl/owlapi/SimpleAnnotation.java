@@ -16,7 +16,9 @@ public class SimpleAnnotation implements Annotation {
     private Value value;
     private Set<Annotation> annotations;
 
-
+    /**
+     * .
+     */
     public SimpleAnnotation(@Nonnull AnnotationProperty property, Value value, Set<? extends Annotation> annotations) {
         this.property = property;
         this.value = value;
@@ -40,6 +42,9 @@ public class SimpleAnnotation implements Annotation {
         return annotations;
     }
 
+    /**
+     * .
+     */
     public Annotation getAnnotatedAnnotation(@Nonnull Set<Annotation> annotations) {
         if (annotations.isEmpty()) {
             return this;

@@ -80,23 +80,32 @@ public class SimpleOntologyValues {
     }
 
     @Reference
-	protected void setOntologyManager(final OntologyManager aOntologyManager) {
-        ontologyManager = aOntologyManager;
+	protected void setOntologyManager(final OntologyManager manager) {
+        ontologyManager = manager;
     }
 
     public SimpleOntologyValues() {}
 
+    /**
+     * .
+     */
     public static Ontology matontoOntology(OWLOntology ontology, Resource resource) {
         if (ontology == null) {
             return null;
         }
         return new SimpleOntology(ontology, resource, ontologyManager);
     }
-    
+
+    /**
+     * .
+     */
     public static Ontology matontoOntology(OWLOntology ontology) {
         return matontoOntology(ontology, null);
     }
-    
+
+    /**
+     * .
+     */
     public static OWLOntology owlapiOntology(Ontology ontology) {
         if (ontology == null) {
             return null;
@@ -104,6 +113,9 @@ public class SimpleOntologyValues {
         return ((SimpleOntology)ontology).getOwlapiOntology();
     }
 
+    /**
+     * .
+     */
     public static IRI matontoIRI(org.semanticweb.owlapi.model.IRI owlIri) {
         if (owlIri == null) {
             throw new IllegalArgumentException("IRI cannot be null.");
@@ -111,6 +123,9 @@ public class SimpleOntologyValues {
         return factory.createIRI(owlIri.toString());
     }
 
+    /**
+     * .
+     */
     public static org.semanticweb.owlapi.model.IRI owlapiIRI(IRI matontoIri) {
         if (matontoIri == null) {
             return null;
@@ -118,6 +133,9 @@ public class SimpleOntologyValues {
         return org.semanticweb.owlapi.model.IRI.create(matontoIri.stringValue());
     }
 
+    /**
+     * .
+     */
     public static AnonymousIndividual matontoAnonymousIndividual(OWLAnonymousIndividual owlIndividual) {
         if (owlIndividual == null) {
             return null;
@@ -125,6 +143,9 @@ public class SimpleOntologyValues {
         return new SimpleAnonymousIndividual(owlIndividual.getID());
     }
 
+    /**
+     * .
+     */
     public static OWLAnonymousIndividual owlapiAnonymousIndividual(AnonymousIndividual individual) {
         if (individual == null) {
             return null;
@@ -132,6 +153,9 @@ public class SimpleOntologyValues {
         return new OWLAnonymousIndividualImpl(NodeID.getNodeID(individual.getId()));
     }
 
+    /**
+     * .
+     */
     public static Literal matontoLiteral(OWLLiteral owlLiteral) {
         if (owlLiteral == null) {
             return null;
@@ -147,6 +171,9 @@ public class SimpleOntologyValues {
         }
     }
 
+    /**
+     * .
+     */
     public static OWLLiteral owlapiLiteral(Literal literal) {
         if (literal == null) {
             return null;
@@ -155,6 +182,9 @@ public class SimpleOntologyValues {
         return new OWLLiteralImpl(literal.getLabel(), literal.getLanguage().orElse(null), owlapiDatatype(datatype));
     }
 
+    /**
+     * .
+     */
     public static Annotation matontoAnnotation(OWLAnnotation owlAnno) {
         if (owlAnno == null) {
             return null;
@@ -204,6 +234,9 @@ public class SimpleOntologyValues {
         }
     }
 
+    /**
+     * .
+     */
     public static OWLAnnotation owlapiAnnotation(Annotation anno) {
         if (anno == null) {
             return null;
@@ -247,6 +280,9 @@ public class SimpleOntologyValues {
         }
     }
 
+    /**
+     * .
+     */
     public static NamedIndividual matontoNamedIndividual(OWLNamedIndividual owlapiIndividual) {
         if (owlapiIndividual == null) {
             return null;
@@ -256,6 +292,9 @@ public class SimpleOntologyValues {
         return new SimpleNamedIndividual(matontoIri);
     }
 
+    /**
+     * .
+     */
     public static OWLNamedIndividual owlapiNamedIndividual(NamedIndividual matontoIndividual) {
         if (matontoIndividual == null) {
             return null;
@@ -265,6 +304,9 @@ public class SimpleOntologyValues {
         return new OWLNamedIndividualImpl(owlapiIri);
     }
 
+    /**
+     * .
+     */
     public static Individual matontoIndividual(OWLIndividual owlapiIndividual) {
         if (owlapiIndividual instanceof OWLAnonymousIndividual) {
             return matontoAnonymousIndividual((OWLAnonymousIndividual) owlapiIndividual);
@@ -272,7 +314,10 @@ public class SimpleOntologyValues {
             return matontoNamedIndividual((OWLNamedIndividual) owlapiIndividual);
         }
     }
-    
+
+    /**
+     * .
+     */
     public static OWLIndividual owlapiIndividual(Individual matontoIndividual) {
         if (matontoIndividual instanceof AnonymousIndividual) {
             return owlapiAnonymousIndividual((AnonymousIndividual) matontoIndividual);
@@ -281,22 +326,28 @@ public class SimpleOntologyValues {
         }
     }
 
+    /**
+     * .
+     */
     public static OntologyId matontoOntologyId(OWLOntologyID owlId) {
         if (owlId == null) {
             return null;
         }
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> oIRI = owlId.getOntologyIRI();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> vIRI = owlId.getVersionIRI();
-        if (vIRI.isPresent()) {
-            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get()))
-                .versionIRI(matontoIRI(vIRI.get())).build();
-        } else if (oIRI.isPresent()) {
-            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(oIRI.get())).build();
+        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> ontologyIRI = owlId.getOntologyIRI();
+        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> versionIRI = owlId.getVersionIRI();
+        if (versionIRI.isPresent()) {
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(ontologyIRI.get()))
+                .versionIRI(matontoIRI(versionIRI.get())).build();
+        } else if (ontologyIRI.isPresent()) {
+            return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(ontologyIRI.get())).build();
         } else {
             return new SimpleOntologyId.Builder(factory).build();
         }
     }
 
+    /**
+     * .
+     */
     public static OWLOntologyID owlapiOntologyId(OntologyId simpleId) {
         if (simpleId == null) {
             return null;
@@ -304,13 +355,13 @@ public class SimpleOntologyValues {
         if (simpleId instanceof SimpleOntologyId) {
             return ((SimpleOntologyId) simpleId).getOwlapiOntologyId();
         } else {
-            Optional<IRI> oIRI = simpleId.getOntologyIRI();
-            Optional<IRI> vIRI = simpleId.getVersionIRI();
-            if (vIRI.isPresent()) {
-                return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(oIRI.get())),
-                    com.google.common.base.Optional.of(owlapiIRI(vIRI.get())));
-            } else if (oIRI.isPresent()) {
-                return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(oIRI.get())),
+            Optional<IRI> ontologyIRI = simpleId.getOntologyIRI();
+            Optional<IRI> versionIRI = simpleId.getVersionIRI();
+            if (versionIRI.isPresent()) {
+                return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(ontologyIRI.get())),
+                    com.google.common.base.Optional.of(owlapiIRI(versionIRI.get())));
+            } else if (ontologyIRI.isPresent()) {
+                return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(ontologyIRI.get())),
                     com.google.common.base.Optional.absent());
             } else {
                 return new OWLOntologyID();
@@ -318,6 +369,9 @@ public class SimpleOntologyValues {
         }
     }
 
+    /**
+     * .
+     */
     public static OClass matontoClass(OWLClass owlapiClass) {
         if (owlapiClass == null) {
             return null;
@@ -325,7 +379,9 @@ public class SimpleOntologyValues {
         return new SimpleClass(matontoIRI(owlapiClass.getIRI()));
     }
 
-
+    /**
+     * .
+     */
     public static OWLClass owlapiClass(OClass matontoClass) {
         if (matontoClass == null) {
             return null;
@@ -333,6 +389,9 @@ public class SimpleOntologyValues {
         return new OWLClassImpl(owlapiIRI(matontoClass.getIRI()));
     }
 
+    /**
+     * .
+     */
     public static Datatype matontoDatatype(OWLDatatype datatype) {
         if (datatype == null) {
             return null;
@@ -341,10 +400,16 @@ public class SimpleOntologyValues {
         }
     }
 
+    /**
+     * .
+     */
     public static OWLDatatype owlapiDatatype(Datatype datatype) {
         return new OWLDatatypeImpl(owlapiIRI(datatype.getIRI()));
     }
 
+    /**
+     * .
+     */
     public static AxiomType matontoAxiomType(org.semanticweb.owlapi.model.AxiomType axiomType) {
         if (axiomType == null) {
             return null;
@@ -352,6 +417,9 @@ public class SimpleOntologyValues {
         return AxiomType.valueOf(toEnumStandard(axiomType.getName()));
     }
 
+    /**
+     * .
+     */
     public static org.semanticweb.owlapi.model.AxiomType owlapiAxiomType(AxiomType axiomType) {
         if (axiomType == null) {
             return null;
@@ -359,6 +427,9 @@ public class SimpleOntologyValues {
         return org.semanticweb.owlapi.model.AxiomType.getAxiomType(axiomType.getName());
     }
 
+    /**
+     * .
+     */
     public static EntityType matontoEntityType(org.semanticweb.owlapi.model.EntityType entityType) {
         if (entityType == null) {
             return null;
@@ -366,6 +437,9 @@ public class SimpleOntologyValues {
         return EntityType.valueOf(toEnumStandard(entityType.getName()));
     }
 
+    /**
+     * .
+     */
     public static org.semanticweb.owlapi.model.EntityType owlapiEntityType(EntityType entityType) {
         if (entityType == null) {
             return null;
@@ -404,6 +478,9 @@ public class SimpleOntologyValues {
         return owlapiType;
     }
 
+    /**
+     * .
+     */
     public static ClassExpressionType matontoClassExpressionType(org.semanticweb.owlapi.model.ClassExpressionType
                                                                          classExpressionType) {
         if (classExpressionType == null) {
@@ -412,6 +489,9 @@ public class SimpleOntologyValues {
         return ClassExpressionType.valueOf(toEnumStandard(classExpressionType.getName()));
     }
 
+    /**
+     * .
+     */
     public static org.semanticweb.owlapi.model.ClassExpressionType
             owlapiClassExpressionType(ClassExpressionType classExpressionType) {
         if (classExpressionType == null) {
@@ -420,6 +500,9 @@ public class SimpleOntologyValues {
         return org.semanticweb.owlapi.model.ClassExpressionType.valueOf(classExpressionType.getName());
     }
 
+    /**
+     * .
+     */
     public static DataRangeType matontoDataRangeType(org.semanticweb.owlapi.model.DataRangeType dataRangeType) {
         if (dataRangeType == null) {
             return null;
@@ -427,6 +510,9 @@ public class SimpleOntologyValues {
         return DataRangeType.valueOf(toEnumStandard(dataRangeType.getName()));
     }
 
+    /**
+     * .
+     */
     public static org.semanticweb.owlapi.model.DataRangeType owlapiDataRangeType(DataRangeType dataRangeType) {
         if (dataRangeType == null) {
             return null;
@@ -434,6 +520,9 @@ public class SimpleOntologyValues {
         return org.semanticweb.owlapi.model.DataRangeType.valueOf(dataRangeType.getName());
     }
 
+    /**
+     * .
+     */
     public static Facet matontoFacet(OWLFacet facet) {
         if (facet == null) {
             return null;
@@ -441,6 +530,9 @@ public class SimpleOntologyValues {
         return Facet.valueOf(facet.getShortForm());
     }
 
+    /**
+     * .
+     */
     public static OWLFacet owlapiFacet(Facet facet) {
         if (facet == null) {
             return null;
@@ -448,6 +540,9 @@ public class SimpleOntologyValues {
         return OWLFacet.valueOf(facet.getShortForm());
     }
 
+    /**
+     * .
+     */
     public static FacetRestriction matontoFacetRestriction(OWLFacetRestriction facetRestriction) {
         if (facetRestriction == null) {
             return null;
@@ -456,6 +551,9 @@ public class SimpleOntologyValues {
                 matontoLiteral(facetRestriction.getFacetValue()));
     }
 
+    /**
+     * .
+     */
     public static OWLFacetRestriction owlapiFacetRestriction(FacetRestriction facetRestriction) {
         if (facetRestriction == null) {
             return null;
@@ -464,6 +562,9 @@ public class SimpleOntologyValues {
                 owlapiLiteral(facetRestriction.getFacetValue()));
     }
 
+    /**
+     * .
+     */
     public static DataOneOf matontoDataOneOf(OWLDataOneOf dataOneOf) {
         if (dataOneOf == null) {
             return null;
@@ -476,6 +577,9 @@ public class SimpleOntologyValues {
         return new SimpleDataOneOf(matontoValues);
     }
 
+    /**
+     * .
+     */
     public static OWLDataOneOf owlapiDataOneOf(DataOneOf dataOneOf) {
         if (dataOneOf == null) {
             return null;
@@ -488,6 +592,9 @@ public class SimpleOntologyValues {
         return new OWLDataOneOfImpl(owlapiValues);
     }
 
+    /**
+     * .
+     */
     public static ObjectProperty matontoObjectProperty(OWLObjectProperty property) {
         if (property == null) {
             return null;
@@ -495,6 +602,9 @@ public class SimpleOntologyValues {
         return new SimpleObjectProperty(matontoIRI(property.getIRI()));
     }
 
+    /**
+     * .
+     */
     public static OWLObjectProperty owlapiObjectProperty(ObjectProperty property) {
         if (property == null) {
             return null;
@@ -502,6 +612,9 @@ public class SimpleOntologyValues {
         return new OWLObjectPropertyImpl(owlapiIRI(property.getIRI()));
     }
 
+    /**
+     * .
+     */
     public static DataProperty matontoDataProperty(OWLDataProperty property) {
         if (property == null) {
             return null;
@@ -509,6 +622,9 @@ public class SimpleOntologyValues {
         return new SimpleDataProperty(matontoIRI(property.getIRI()));
     }
 
+    /**
+     * .
+     */
     public static OWLDataProperty owlapiDataProperty(DataProperty property) {
         if (property == null) {
             return null;
@@ -516,6 +632,9 @@ public class SimpleOntologyValues {
         return new OWLDataPropertyImpl(owlapiIRI(property.getIRI()));
     }
 
+    /**
+     * .
+     */
     public static AnnotationProperty matontoAnnotationProperty(OWLAnnotationProperty property) {
         if (property == null) {
             return null;
@@ -523,6 +642,9 @@ public class SimpleOntologyValues {
         return new SimpleAnnotationProperty(matontoIRI(property.getIRI()));
     }
 
+    /**
+     * .
+     */
     public static OWLAnnotationProperty owlapiAnnotationProperty(AnnotationProperty property) {
         if (property == null) {
             return null;
@@ -530,18 +652,23 @@ public class SimpleOntologyValues {
         return new OWLAnnotationPropertyImpl(owlapiIRI(property.getIRI()));
     }
 
-    /*
-     * MUST Implement!!!!!!!
+    /**
+     * .
      */
     public static Axiom matontoAxiom(OWLAxiom owlapiAxiom) {
         throw new UnsupportedOperationException();
     }
-    
-    // TODO: Implement!
+
+    /**
+     * .
+     */
     public static OWLAxiom owlapiAxiom(Axiom matontoAxiom) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * .
+     */
     public static DeclarationAxiom matonotoDeclarationAxiom(OWLDeclarationAxiom owlapiAxiom) {
         OWLEntity owlapiEntity = owlapiAxiom.getEntity();
         Entity matontoEntity;
@@ -581,6 +708,9 @@ public class SimpleOntologyValues {
         return new SimpleDeclarationAxiom(matontoEntity, matontoAnnotations);
     }
 
+    /**
+     * .
+     */
     public static OWLDeclarationAxiom owlapiDeclarationAxiom(DeclarationAxiom matontoAxiom) {
         Entity matontoEntity = matontoAxiom.getEntity();
         OWLEntity owlapiEntity;
