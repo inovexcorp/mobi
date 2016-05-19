@@ -109,11 +109,7 @@
              * @param {string} mappingName - The user-defined name for the mapping file
              */
             self.downloadMapping = function(mappingName) {
-                var el = document.createElement('a');
-                el.onclick = function() {
-                    window.open(prefix + '/' + mappingName, '_blank', '');
-                }
-                el.click();
+                window.location = prefix + '/' + mappingName;
             }
 
             // Edit mapping methods 

@@ -121,11 +121,7 @@
 
             self.map = function(fileName, mappingName, containsHeaders, separator) {
                 var queryString = '?format=jsonld&mappingName=' + mappingName + '&containsHeaders=' + containsHeaders + '&separator=' + separator;
-                var el = document.createElement('a');
-                el.onclick = function() {
-                    window.open(prefix + '/' + encodeURIComponent(fileName) + '/map' + queryString, '_blank', '');
-                }
-                el.click();
+                window.location = prefix + '/' + encodeURIComponent(fileName) + '/map' + queryString;
             }
         }
 })();

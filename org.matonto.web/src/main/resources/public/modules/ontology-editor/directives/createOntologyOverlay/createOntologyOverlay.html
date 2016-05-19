@@ -1,0 +1,35 @@
+<div class="overlay">
+    <form name="vm.createOntologyForm" class="content clearfix" novalidate autocomplete="off">
+        <!-- section header -->
+        <h6>Create New OWL Ontology</h6>
+
+        <!-- error -->
+        <error-display ng-if="vm.createOntologyError">{{vm.createOntologyError}}</error-display>
+
+        <!-- new ontology iri -->
+        <div ng-class="{'has-error': vm.createOntologyForm.iri.$error.pattern}" class="form-group">
+            <custom-label muted-text="'*Required'">Ontology IRI</custom-label>
+            <input class="form-control" id="iri" name="iri" ng-model="dvm.createOntologyIri" ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" required />
+            <p ng-messages="vm.createOntologyForm.iri.$error" class="error-msg">
+                <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
+            </p>
+        </div>
+
+        <!-- name -->
+        <div class="form-group">
+            <custom-label muted-text="'*Required'">Name</custom-label>
+            <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
+        </div>
+
+        <!-- description -->
+        <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
+
+        <!-- create ontology buttons -->
+        <div class="btn-container clearfix">
+            <custom-button is-disabled-when="vm.createOntologyForm.$invalid"
+                           on-click="vm.createOntology(dvm.createOntologyIri, dvm.name, dvm.description)">Create</custom-button>
+
+            <custom-button on-click="vm.showCreateOntologyOverlay = false; vm.createOntologyError = ''" type="'secondary'">Cancel</custom-button>
+        </div>
+    </form>
+</div>

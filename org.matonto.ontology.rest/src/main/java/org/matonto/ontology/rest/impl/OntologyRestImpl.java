@@ -343,6 +343,11 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    public Response addAnnotationToOntology(String ontologyIdStr, String annotationJson) {
+        return addEntityToOntology(ontologyIdStr, annotationJson);
+    }
+
+    @Override
     public Response getIRIsInOntology(String ontologyIdStr) {
         JSONObject result = doWithOntology(ontologyIdStr, this::getAllIRIs);      
         return Response.status(200).entity(result.toString()).build();
