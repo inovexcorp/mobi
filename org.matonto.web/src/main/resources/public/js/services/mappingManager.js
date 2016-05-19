@@ -27,10 +27,9 @@
             /**
              * HTTP POST to mappings which uploads a mapping file to data/tmp/ directory.
              * @param {object} mapping - A JSON-LD object with a mapping
-             * @param {string} mappingName - The user-defined name for the mapping file
              * @return {promise} The response data with the name of the uploaded file
              */
-            self.upload = function(mapping, mappingName) {
+            self.uploadPost = function(mapping) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -38,9 +37,6 @@
                         headers: {
                             'Content-Type': undefined,
                             'Accept': 'text/plain'
-                        },
-                        params: {
-                            'Id': mappingName
                         }
                     };
                 fd.append('jsonld', angular.toJson(mapping));
@@ -48,12 +44,42 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
-                        self.previousMappingNames.push(mappingName);
+                        self.previousMappingNames.push(response.data.replace(prefixes.mappings, ''));
                         deferred.resolve(response.data);
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
+            /**
+             * HTTP PUT to mappings/{mappingName} which uploads a mapping file to data/tmp/ directory.
+             * @param {object} mapping - A JSON-LD object with a mapping
+             * @param {string} mappingName - The user-defined name for the mapping file
+             * @return {promise} The response data with the name of the uploaded file
+             */
+            self.uploadPut = function(mapping, mappingName) {
+                var deferred = $q.defer(),
+                    fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'text/plain'
+                        }
+                    };
+                fd.append('jsonld', angular.toJson(mapping));
+
+                $rootScope.showSpinner = true;
+                $http.put(prefix + '/' + mappingName, fd, config)
+                    .then(function(response) {
+                        self.previousMappingNames = _.union(self.previousMappingNames, [mappingName]);
+                        deferred.resolve(response.data);
+                    }, function(response) {
+                        deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -68,11 +94,11 @@
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(mappingName))
                     .then(function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.resolve(_.get(response.data, '@graph', []));
                     }, function(response) {
-                        $rootScope.showSpinner = false;
                         deferred.reject(response);
+                    }).then(function() {
+                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }

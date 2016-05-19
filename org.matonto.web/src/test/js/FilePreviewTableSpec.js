@@ -17,12 +17,12 @@ describe('File Preview Table directive', function() {
         beforeEach(function() {
             scope.headers = [];
             scope.rows = [];
-            scope.mappedColumns = [];
+            scope.availableColumns = [];
             scope.highlightIdx = undefined;
             scope.isClickable = false;
             scope.onClick = jasmine.createSpy('onClick');
 
-            this.element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" mapped-columns="mappedColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
+            this.element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" available-columns="availableColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
             scope.$digest();
         });
 
@@ -38,11 +38,11 @@ describe('File Preview Table directive', function() {
             scope.$digest();
             expect(scope.rows).toEqual([['test']]);
         });
-        it('mappedColumns should be two way bound', function() {
+        it('availableColumns should be two way bound', function() {
             var isolatedScope = this.element.isolateScope();
-            isolatedScope.mappedColumns = ['test'];
+            isolatedScope.availableColumns = ['test'];
             scope.$digest();
-            expect(scope.mappedColumns).toEqual(['test']);
+            expect(scope.availableColumns).toEqual(['test']);
         });
         it('highlightIdx should be two way bound', function() {
             var isolatedScope = this.element.isolateScope();
@@ -66,7 +66,7 @@ describe('File Preview Table directive', function() {
     describe('controller methods', function() {
         it('should set the correct values for toggling the table', function() {
             scope.rows = [[''], [''], [''], [''], [''], ['']];
-            var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" mapped-columns="mappedColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
+            var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" available-columns="availableColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
             scope.$digest();
             var controller = element.controller('filePreviewTable');
             expect(controller.big).toBe(false);
@@ -85,10 +85,10 @@ describe('File Preview Table directive', function() {
         beforeEach(function() {
             scope.headers = [''];
             scope.rows = [[''], [''], [''], [''], ['']];
-            scope.mappedColumns = [];
+            scope.availableColumns = [''];
             scope.highlightIdx = 0;
             scope.isClickable = false;
-            this.element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" mapped-columns="mappedColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
+            this.element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" available-columns="availableColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -130,7 +130,7 @@ describe('File Preview Table directive', function() {
                 expect(angular.element(items[i]).hasClass('clickable')).toBe(true);
                 expect(angular.element(items[i]).hasClass('disabled')).toBe(false);
             }
-            scope.mappedColumns = [''];
+            scope.availableColumns = [];
             scope.$digest();
             for (var i = 0; i < items.length; i++) {
                 expect(angular.element(items[i]).hasClass('clickable')).toBe(false);
@@ -162,7 +162,7 @@ describe('File Preview Table directive', function() {
         });
     });
     it('should call toggleTable when button is clicked', function() {
-        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" mapped-columns="mappedColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
+        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" available-columns="availableColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
         scope.$digest();
         var controller = element.controller('filePreviewTable');
         spyOn(controller, 'toggleTable').and.callThrough();
@@ -174,7 +174,7 @@ describe('File Preview Table directive', function() {
     it('should highlight columns on hover of th', function() {
         scope.headers = [''];
         scope.rows = [[''], [''], [''], [''], ['']];
-        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" mapped-columns="mappedColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
+        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" available-columns="availableColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
         scope.$digest();
         var controller = element.controller('filePreviewTable');
         var tableHeader = angular.element(element.find('th')[0]);
@@ -200,7 +200,7 @@ describe('File Preview Table directive', function() {
     it('should highlight columns on hover of td', function() {
         scope.headers = [''];
         scope.rows = [[''], [''], [''], [''], ['']];
-        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" mapped-columns="mappedColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
+        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" available-columns="availableColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
         scope.$digest();
         var controller = element.controller('filePreviewTable');
         var dataItem = angular.element(element.querySelectorAll('td')[0]);
@@ -226,9 +226,9 @@ describe('File Preview Table directive', function() {
     it('should call onClick when a th or td is clicked', function() {
         scope.headers = [''];
         scope.rows = [[''], [''], [''], [''], ['']];
-        scope.mappedColumns = [];
+        scope.availableColumns = [''];
         scope.onClick = jasmine.createSpy('onClick');
-        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" mapped-columns="mappedColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
+        var element = $compile(angular.element('<file-preview-table headers="headers" rows="rows" available-columns="availableColumns" highlight-idx="highlightIdx" is-clickable="isClickable" on-click="onClick(colIndex)"></file-preview-table>'))(scope);
         scope.$digest();
         angular.element(element.find('th')[0]).triggerHandler('click');
         expect(scope.onClick).not.toHaveBeenCalled();

@@ -38,13 +38,120 @@ public class MappingRestImpl implements MappingRest {
 
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail,
-                           String jsonld, String mappingId) {
+                              String jsonld) {
+        Resource mappingIRI = manager.createMappingIRI();
+        uploadMapping(mappingIRI, fileInputStream, fileDetail, jsonld);
+        logger.info("Mapping Uploaded: " + mappingIRI);
+        return Response.status(200).entity(mappingIRI.stringValue()).build();
+    }
+
+    @Override
+    public Response upload(String mappingId, InputStream fileInputStream, FormDataContentDisposition fileDetail,
+                           String jsonld) {
+        Resource mappingIRI = manager.createMappingIRI(mappingId);
+        try {
+            if (manager.mappingExists(mappingIRI)) {
+                manager.deleteMapping(mappingIRI);
+            }
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        uploadMapping(mappingIRI, fileInputStream, fileDetail, jsonld);
+        logger.info("Mapping Uploaded: " + mappingIRI);
+        return Response.status(200).entity(mappingIRI.stringValue()).build();
+    }
+
+    @Override
+    public Response getMappingNames(List<String> idList) {
+        JSONArray mappings = new JSONArray();
+        if (idList.isEmpty()) {
+            manager.getMappingRegistry().stream()
+                .map(Value::stringValue)
+                .forEach(mappings::add);
+        } else {
+            idList.stream()
+                .map(id -> manager.createMappingIRI(id))
+                .map(this::getMappingAsJson)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(mappings::add);
+        }
+
+        return Response.status(200).entity(mappings.toString()).build();
+    }
+
+    @Override
+    public Response getMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Getting mapping " + mappingIRI);
+        Optional<JSONObject> optJson;
+        try {
+            optJson = getMappingAsJson(mappingIRI);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        if (optJson.isPresent()) {
+            return Response.status(200).entity(optJson.get().toString()).build();
+        } else {
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response downloadMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Downloading mapping " + mappingIRI);
+        Optional<JSONObject> optJson;
+        try {
+            optJson = getMappingAsJson(mappingIRI);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        if (optJson.isPresent()) {
+            JSONObject json = optJson.get();
+            StreamingOutput stream = os -> {
+                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+                writer.write(json.toString());
+                writer.flush();
+                writer.close();
+            };
+
+            return Response.ok(stream).build();
+        } else {
+            throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public Response deleteMapping(String localName) {
+        Resource mappingIRI = manager.createMappingIRI(localName);
+        logger.info("Deleting mapping " + mappingIRI);
+        try {
+            manager.deleteMapping(mappingIRI);
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(200).entity(true).build();
+    }
+
+    /**
+     * Uploads a mapping as either an InputStream or a JSON-LD String with the passed IRI.
+     *
+     * @param mappingIRI the IRI to upload the mapping with
+     * @param fileInputStream an InputStream of a mapping file passed as form data
+     * @param fileDetail information about the file being uploaded, including the name
+     * @param jsonld a mapping serialized as JSON-LD
+     */
+    private void uploadMapping(Resource mappingIRI, InputStream fileInputStream, FormDataContentDisposition fileDetail,
+                               String jsonld) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
                     Response.Status.BAD_REQUEST);
         }
-
-        Resource mappingIRI = mappingId != null ? manager.createMappingIRI(mappingId) : manager.createMappingIRI();
         Model mappingModel;
         try {
             if (fileInputStream != null) {
@@ -60,77 +167,6 @@ public class MappingRestImpl implements MappingRest {
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
-
-        logger.info("Mapping Uploaded: " + mappingIRI);
-
-        return Response.status(200).entity(mappingIRI.stringValue()).build();
-    }
-
-    @Override
-    public Response getMappingNames(List<String> idList) {
-        JSONArray mappings = new JSONArray();
-        if (idList.isEmpty()) {
-            manager.getMappingRegistry().stream()
-                .map(Value::stringValue)
-                .forEach(mappings::add);
-        } else {
-            idList.stream()
-                .map(id -> manager.createMappingIRI(id))
-                .map(this::getMappingAsJson)
-                .forEach(mappings::add);
-        }
-
-        return Response.status(200).entity(mappings.toString()).build();
-    }
-
-    @Override
-    public Response getMapping(String localName) {
-        Resource mappingIRI = manager.createMappingIRI(localName);
-        logger.info("Getting mapping " + mappingIRI);
-        JSONObject json;
-        try {
-            json = getMappingAsJson(mappingIRI);
-        } catch (MatOntoException e) {
-            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
-        }
-
-        return Response.status(200).entity(json.toString()).build();
-    }
-
-    @Override
-    public Response downloadMapping(String localName) {
-        Resource mappingIRI = manager.createMappingIRI(localName);
-        logger.info("Downloading mapping " + mappingIRI);
-        JSONObject json;
-        try {
-            json = getMappingAsJson(mappingIRI);
-        } catch (MatOntoException e) {
-            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
-        }
-
-        StreamingOutput stream = os -> {
-            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-            writer.write(json.toString());
-            writer.flush();
-            writer.close();
-        };
-
-        return Response.ok(stream).build();
-    }
-
-    @Override
-    public Response deleteMapping(String localName) {
-        Resource mappingIRI = manager.createMappingIRI(localName);
-        logger.info("Deleting mapping " + mappingIRI);
-        boolean success = false;
-        try {
-            manager.deleteMapping(mappingIRI);
-            success = true;
-        } catch (MatOntoException e) {
-            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
-        }
-
-        return Response.status(200).entity(success).build();
     }
 
     /**
@@ -138,10 +174,10 @@ public class MappingRestImpl implements MappingRest {
      * JSON-LD and then into a JSONObject.
      *
      * @param mappingIRI the IRI of a mapping in the mapping registry
-     * @return a JSONObject with the JSON-LD of a mapping
+     * @return a JSONObject with the JSON-LD of a mapping if it exists
      * @throws MatOntoException thrown if there is an error retrieving the mapping
      */
-    private JSONObject getMappingAsJson(Resource mappingIRI) throws MatOntoException {
+    private Optional<JSONObject> getMappingAsJson(Resource mappingIRI) throws MatOntoException {
         JSONObject json;
         Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
@@ -150,8 +186,8 @@ public class MappingRestImpl implements MappingRest {
             JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
             json = arr.getJSONObject(0);
         } else {
-            throw ErrorUtils.sendError("Error retrieving mapping", Response.Status.BAD_REQUEST);
+            return Optional.empty();
         }
-        return json;
+        return Optional.of(json);
     }
 }

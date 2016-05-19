@@ -269,7 +269,7 @@
             }
 
             if (vm.saveToServer) {
-                mappingManagerService.upload(vm.mapping.jsonld, vm.mapping.name)
+                mappingManagerService.uploadPut(vm.mapping.jsonld, vm.mapping.name)
                     .then(function(response) {
                         return csvManagerService.mapByUploaded(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                     })
@@ -398,6 +398,7 @@
         /** Set and Delete methods **/
         vm.setIriTemplate = function(prefixEnd, localName) {
             vm.mapping.jsonld = mappingManagerService.editIriTemplate(vm.mapping.jsonld, vm.editingClassMappingId, prefixEnd, localName);
+            changedMapping();
         }
         vm.setMappingName = function(name) {
             vm.mapping.name = name;

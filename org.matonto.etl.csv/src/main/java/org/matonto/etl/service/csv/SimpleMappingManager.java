@@ -175,19 +175,14 @@ public class SimpleMappingManager implements MappingManager {
         return true;
     }
 
-    /**
-     * Tests whether the passes mapping Resource IRI exists in the mapping registry.
-     *
-     * @param resource the mapping IRI to test for in the registry
-     * @return true if the registry contains the passed mapping IRI, false otherwise.
-     */
-    protected boolean mappingExists(@Nonnull Resource resource) {
+    @Override
+    public boolean mappingExists(@Nonnull Resource mappingIRI) {
         RepositoryConnection conn = null;
         boolean exists = false;
         try {
             conn = repository.getConnection();
             RepositoryResult<Statement> statements = conn.getStatements(registrySubject, registryPredicate,
-                    resource, registryContext);
+                    mappingIRI, registryContext);
             if (statements.hasNext()) {
                 exists = true;
             }
