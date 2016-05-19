@@ -16,7 +16,7 @@ import javax.ws.rs.core.Response;
 public interface CSVRest {
 
     /**
-     * Uploads a delimited document to the data/tmp/ directory.
+     * Uploads a delimited document to the temp directory.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
      * @param fileDetail information about the file being uploaded, including the name
@@ -29,7 +29,7 @@ public interface CSVRest {
                     @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail);
 
     /**
-     * Replaces an uploaded delimited document in the data/tmp/ directory with another
+     * Replaces an uploaded delimited document in the temp directory with another
      * delimited file.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
