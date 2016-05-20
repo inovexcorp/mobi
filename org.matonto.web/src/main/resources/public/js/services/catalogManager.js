@@ -212,7 +212,7 @@
              * ```
              * {
              *     id: '',
-             *     type: '',
+             *     types: [],
              *     title: '',
              *     description: '',
              *     issued: {

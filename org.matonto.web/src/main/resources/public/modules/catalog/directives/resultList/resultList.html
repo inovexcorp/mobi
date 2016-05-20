@@ -18,7 +18,7 @@
             <h3><a ng-click="dvm.catalog.selectedResource = resource">{{resource.title}}</a></h3>
             <p>Date Created: {{dvm.getDate(resource.issued)}}</p>
             <p>Date Modified: {{dvm.getDate(resource.modified)}}</p>
-            <div><resource-type type="resource.type"></resource-type></div>
+            <div><resource-type ng-repeat="type in resource.types" type="type"></resource-type></div>
         </div>
     </div>
     <pagination links="dvm.catalog.results.links" current-page="dvm.catalog.currentPage" get-page="dvm.getPage(direction)"></pagination>
