@@ -84,7 +84,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updateNonexistentDelimitedTest() throws IOException {
+    public void updateNonexistentDelimitedTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -93,7 +93,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updateDelimitedReplacesContentTest() throws IOException {
+    public void updateDelimitedReplacesContentTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test_updated.csv");
@@ -120,7 +120,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getRowsFromCsvWithParamsTest() throws IOException {
+    public void getRowsFromCsvWithParamsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test_tabs.csv");
@@ -318,14 +318,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         }
     }
 
-    private List<String> getCsvResourceLines(String fileName) {
-        List<String> expectedLines = new ArrayList<>();
-        try {
-            expectedLines = Files.readAllLines(Paths.get(getClass().getResource("/" + fileName).getPath()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return expectedLines;
+    private List<String> getCsvResourceLines(String fileName) throws Exception {
+        return Files.readAllLines(Paths.get(getClass().getResource("/" + fileName).getPath().replaceFirst("^/(.:/)", "$1")));
     }
 
     private List<String> getExcelResourceLines(String fileName) {

@@ -133,6 +133,7 @@ public class CSVRestImpl implements CSVRest {
                 }
                 model = Values.sesameModel(csvConverter.convert(dataToConvert,
                         Values.matontoModel(mappingModel), containsHeaders, extension, separatorChar));
+                dataToConvert.close();
             } catch (IOException | MatOntoException e) {
                 throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
             }
