@@ -33,7 +33,6 @@ public interface CSVRest {
      * delimited file.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
-     * @param fileDetail information about the file being uploaded, including the name
      * @param fileName the name of the uploaded file on the server to replace
      * @return a response with the name of the file replaced on the server
      */
@@ -42,7 +41,6 @@ public interface CSVRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @ApiOperation("Replace an uploaded delimited file with another")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
-                    @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail,
                     @PathParam("documentName") String fileName);
 
     /**

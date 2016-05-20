@@ -76,7 +76,10 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         for (String file : files) {
             fd = getFileFormData(file);
             response = target().path("csv").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+            String filename = response.readEntity(String.class);
+
             Assert.assertEquals(200, response.getStatus());
+            Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + filename)));
         }
     }
 
