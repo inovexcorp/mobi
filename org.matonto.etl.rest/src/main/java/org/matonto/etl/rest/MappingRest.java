@@ -84,7 +84,7 @@ public interface MappingRest {
      */
     @GET
     @Path("{mappingName}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
     @ApiOperation("Download an uploaded mapping")
     Response downloadMapping(@PathParam("mappingName") String mappingName);
 

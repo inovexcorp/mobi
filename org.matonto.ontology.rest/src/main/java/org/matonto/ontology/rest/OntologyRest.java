@@ -82,9 +82,10 @@ public interface OntologyRest {
      */
     @GET
     @Path("{ontologyid}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
-                                  @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
+                                  @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                                  @DefaultValue("ontology") @QueryParam("fileName") String fileName);
 
     /**
      * Replaces the ontology's resource with the new data
@@ -140,6 +141,20 @@ public interface OntologyRest {
     Response getAnnotationsInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
+     * Create a new owl annotation property in the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param annotationJson the String representing the new annotation in JSON-LD.
+     * @return annotation properties in the ontology with requested ontology ID.
+     */
+    @POST
+    @Path("{ontologyid}/annotations")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addAnnotationToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                     @QueryParam("annotationjson") String annotationJson);
+
+    /**
      * Returns classes in the ontology with requested ontology ID.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
@@ -152,7 +167,7 @@ public interface OntologyRest {
     Response getClassesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
-     * Add resource with to ontology with requested ontology ID from the server.
+     * Add class to ontology with requested ontology ID from the server.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".

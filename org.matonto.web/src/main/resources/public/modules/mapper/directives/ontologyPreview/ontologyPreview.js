@@ -25,7 +25,7 @@
                         return ontologyManagerService.getEntityName(dvm.ontology);
                     }
                     dvm.createDescription = function() {
-                        return _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']", '');
+                        return _.get(dvm.ontology, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']", ''));
                     }
                     dvm.getImports = function() {
                         return _.map(_.get(dvm.ontology, "['" + prefixes.owl + "imports']", []), '@id');

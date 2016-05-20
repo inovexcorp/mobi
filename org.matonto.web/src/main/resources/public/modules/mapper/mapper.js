@@ -9,9 +9,9 @@
             'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay','mappingNameOverlay', 'mappingNameInput'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$rootScope', '$scope', '$element', '$state', '$window', '$q', 'FileSaver', 'Blob', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$rootScope', '$scope', '$element', '$state', '$window', '$q', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($rootScope, $scope, $element, $state, $window, $q, FileSaver, Blob, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($rootScope, $scope, $element, $state, $window, $q, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var confirmChange = false;
         var previousSourceOntologyId;
@@ -40,7 +40,6 @@
         vm.delimitedFileName;
         vm.filePreview;
         vm.mapping;
-        vm.saveToServer;
         vm.rdfPreview;
         vm.invalidPropMappings;
         vm.isPreviousMapping;
@@ -73,7 +72,6 @@
             vm.delimitedFileName = '';
             vm.filePreview = undefined;
             vm.mapping = angular.copy(defaultMapping);
-            vm.saveToServer = true;
             vm.rdfPreview = '';
             vm.invalidPropMappings = [];
             vm.isPreviousMapping = false;
@@ -85,43 +83,22 @@
 
         // Handler for uploading delimited file
         vm.submitFileUpload = function() {
-            var csvError = function(response) {
-                onError(response);
-                vm.filePreview = undefined;
-                vm.errorMessage = response.statusText;
-            }
-            var csvSuccess = function(data) {
-                vm.delimitedFileName = data;
-                vm.getPreview();
-                vm.errorMessage = '';
-            }
-            if (vm.delimitedFileName) {
-                csvManagerService.update(vm.delimitedFileName, vm.delimitedFile)
-                    .then(csvSuccess, csvError);
-            } else {
-                csvManagerService.upload(vm.delimitedFile)
-                    .then(csvSuccess, csvError);
-            }
+            csvManagerService.upload(vm.delimitedFile)
+                .then(function(data) {
+                    vm.delimitedFileName = data;
+                    vm.getPreview();
+                    vm.errorMessage = '';
+                }, function(response) {
+                    onError(response);
+                    vm.filePreview = undefined;
+                    vm.errorMessage = response.statusText;
+                });
         }
 
         // Handler for downloading mapping file
         vm.saveMapping = function() {
-            var deferred = $q.defer();
-            if (vm.saveToServer) {
-                mappingManagerService.downloadMapping(vm.mapping.name)
-                    .then(function(response) {
-                        deferred.resolve(response);
-                    }, function(error) {
-                        deferred.reject(error);
-                    });
-            } else {
-                deferred.resolve(vm.mapping.jsonld);
-            }
-            deferred.promise.then(function(data) {
-                var mapping = new Blob([angular.toJson(data)], {type: 'application/json'});
-                FileSaver.saveAs(mapping, vm.mapping.name + '.jsonld');
-                vm.initialize();
-            }, onError);
+            mappingManagerService.downloadMapping(vm.mapping.name);
+            vm.initialize();
         }
 
         /* Public helper methods */
@@ -167,7 +144,6 @@
         }
         function changedMapping() {
             if (vm.isPreviousMapping) {
-                vm.saveToServer = true;
                 if (!originalMappingName) {
                     originalMappingName = vm.mapping.name;
                     vm.mapping.name = originalMappingName + "_" + Math.floor(Date.now() / 1000);
@@ -267,30 +243,16 @@
             vm.activeStep = 3;
         }
         vm.displayFinish = function() {
-            var deferred = $q.defer();
-            var reject = function(error) {
-                deferred.reject(error);
-            }
-
-            if (vm.saveToServer) {
+            if (_.includes(mappingManagerService.previewMappingNames, vm.mapping.name)) {
+                csvManagerService.map(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
+                vm.activeStep = 5;
+            } else {
                 mappingManagerService.uploadPut(vm.mapping.jsonld, vm.mapping.name)
                     .then(function(response) {
-                        return csvManagerService.mapByUploaded(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
-                    })
-                    .then(function(mappedData) {
-                        deferred.resolve(mappedData);
-                    }, reject);
-            } else {
-                csvManagerService.mapByString(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, vm.delimitedSeparator)
-                    .then(function(mappedData) {
-                        deferred.resolve(mappedData);
-                    }, reject);
+                        csvManagerService.map(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
+                        vm.activeStep = 5;
+                    }, onError);
             }
-            deferred.promise.then(function(data) {
-                var blob = new Blob([angular.toJson(data)], {type: 'application/json'});
-                FileSaver.saveAs(blob, vm.delimitedFileName + '.jsonld');
-                vm.activeStep = 5;
-            }, onError);
         }
         vm.toggleOntologyPreview = function() {
             vm.displayOntologyPreview = !vm.displayOntologyPreview;
@@ -318,7 +280,6 @@
                 vm.displayEditClassForm(_.get(_.find(vm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']}), '@id'));
             } else {
                 vm.isPreviousMapping = true;
-                vm.saveToServer = false;
                 var mappedCols = mappingManagerService.getMappedColumns(vm.mapping.jsonld);
                 _.forEach(mappedCols, function(obj) {
                     if (vm.filePreview.headers[obj.index]) {

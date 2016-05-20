@@ -47,7 +47,7 @@
                         },
                         {
                             name: 'RDF/XML',
-                            value: 'rdfxml'
+                            value: 'rdf/xml'
                         }
                     ];
                 },

@@ -79,10 +79,6 @@
                         <button class="btn btn-primary" ng-click="vm.changeOntology = true; vm.displayOntologySelect()">Change</button>
                     </div>
                     <form id="submit-mapping">
-                        <label ng-hide="vm.isPreviousMapping && vm.saveToServer === false">
-                            <input type="checkbox" ng-model="vm.saveToServer"></input>
-                            Save mapping to server
-                        </label>
                         <div class="actions">
                             <button class="btn btn-primary" ng-click="vm.displayFinish()" 
                                 ng-disabled="vm.invalidPropMappings.length > 0">Submit</button>

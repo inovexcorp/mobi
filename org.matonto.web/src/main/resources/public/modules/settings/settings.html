@@ -4,8 +4,8 @@
     <settings-container header="'Ontology Editor'">
         <custom-setting header="'Drop Down Tooltip Display'" question="'What do you want displayed when you hover over the items in the dropdown?'">
             <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'Full IRI'" value="'@id'" change-event="vm.saveSettings()"></radio-button>
-            <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Label'" value="vm.rdfs + 'label'" change-event="vm.saveSettings()"></radio-button>
-            <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Comment'" value="vm.rdfs + 'comment'" change-event="vm.saveSettings()"></radio-button>
+            <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Label/DC Title'" value="'label'" change-event="vm.saveSettings()"></radio-button>
+            <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Comment/DC Description'" value="'comment'" change-event="vm.saveSettings()"></radio-button>
         </custom-setting>
         <custom-setting header="'Tree Item Display'" question="'What do you want displayed in the tree?'">
             <radio-button ng-model="vm.settings.treeDisplay" display-text="'Pretty Print'" value="'pretty'" change-event="vm.saveSettings()"></radio-button>

@@ -25,7 +25,7 @@
                         return ontologyManagerService.getEntityName(getRangeClass());
                     }
                     dvm.getRangeClassDescription = function() {
-                        return _.get(getRangeClass(), "['" + prefixes.rdfs + "comment'][0]['@value']", '');
+                        return _.get(getRangeClass(), "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']", ''));
                     }
                     function getRangeClass() {
                         var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, dvm.classId);
