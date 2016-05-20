@@ -174,16 +174,13 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void mapEitherStringOrMappingTest() {
+    public void mapWithoutMappingTest() {
         String mapping = "";
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("jsonld", mapping);
-        fd.field("mappingName", mapping);
-
-        Response response = target().path("csv/test.csv/map").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("csv/test.csv/map").queryParam("mappingName", mapping)
+                .request().get();
         Assert.assertEquals(400, response.getStatus());
 
-        response = target().path("csv/test.csv/map").request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+        response = target().path("csv/test.csv/map").request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -191,13 +188,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     public void mapCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
-
-        String body = testMap(fileName, "jsonld", "[]", null);
-        isJsonld(body);
-
-        copyResourceToTemp("test.csv", fileName);
-
-        body = testMap(fileName, "mappingName", "test", null);
+        String body = testMap(fileName, "test", null);
         isJsonld(body);
     }
 
@@ -205,17 +196,12 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     public void mapCsvWithParamsTest() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
-        params.put("preview", true);
         params.put("containsHeaders", true);
         params.put("separator", "\t");
-
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
-        String body = testMap(fileName, "jsonld", "[]", params);
-        isNotJsonld(body);
-
-        body = testMap(fileName, "mappingName", "test", params);
+        String body = testMap(fileName, "test", params);
         isNotJsonld(body);
     }
 
@@ -224,54 +210,104 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, "jsonld", "[]", null);
-        isJsonld(body);
-
-        copyResourceToTemp("test.xls", fileName);
-
-        body = testMap(fileName, "mappingName", "test", null);
+        String body = testMap(fileName, "test", null);
         isJsonld(body);
     }
-
     @Test
     public void mapExcelWithParamsTest() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
-        params.put("preview", true);
         params.put("containsHeaders", true);
 
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, "jsonld", "[]", params);
-        isNotJsonld(body);
-
-        body = testMap(fileName, "mappingName", "test", params);
+        String body = testMap(fileName, "test", params);
         isNotJsonld(body);
     }
 
     @Test
     public void mapNonexistentDelimitedTest() {
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("jsonld", "[]");
-        Response response = target().path("csv/error/map").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("csv/error/map").queryParam("mappingName", "test").request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void etlWithoutPreviewDeletesFile() throws Exception {
+    public void mapDeletesFile() throws Exception {
         Map<String, Object> params = new HashMap<>();
-        params.put("preview", false);
         params.put("containsHeaders", true);
-
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
 
-        testMap(fileName, "jsonld", "[]", params);
-
+        testMap(fileName, "test", params);
         Assert.assertFalse(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+    }
+
+    @Test
+    public void mapPreviewWithoutMappingTest() {
+        String mapping = "";
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", mapping);
+        Response response = target().path("csv/test.csv/map-preview").request().post(Entity.entity(fd, MediaType
+                .MULTIPART_FORM_DATA));
+        Assert.assertEquals(400, response.getStatus());
+
+        response = target().path("csv/test.csv/map-preview").request().post(Entity.entity(null, MediaType
+                .MULTIPART_FORM_DATA));
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void mapPreviewCsvWithDefaultsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+        String body = testMapPreview(fileName, "[]", null);
+        isJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewCsvWithParamsTest() throws Exception{
+        Map<String, Object> params = new HashMap<>();
+        params.put("format", "turtle");
+        params.put("containsHeaders", true);
+        params.put("separator", "\t");
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test_tabs.csv", fileName);
+
+        String body = testMapPreview(fileName, "[]", params);
+        isNotJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewExcelWithDefaultsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        String body = testMapPreview(fileName, "[]", null);
+        isJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewExcelWithParamsTest() throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put("format", "turtle");
+        params.put("containsHeaders", true);
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        String body = testMapPreview(fileName, "[]", params);
+        isNotJsonld(body);
+    }
+
+    @Test
+    public void mapPreviewNonexistentDelimitedTest() throws Exception {
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("jsonld", "[]");
+        Response response = target().path("csv/error/map-preview").request().post(Entity.entity(fd, MediaType
+                .MULTIPART_FORM_DATA));
+        Assert.assertEquals(400, response.getStatus());
     }
 
     private void isJsonld(String str) {
@@ -291,16 +327,28 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         }
     }
 
-    private String testMap(String fileName, String key, String value, Map<String, Object> params) {
+    private String testMapPreview(String fileName, String jsonld, Map<String, Object> params) {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field(key, value);
-        WebTarget wt = target().path("csv/" + fileName + "/map");
+        fd.field("jsonld", jsonld);
+        WebTarget wt = target().path("csv/" + fileName + "/map-preview");
         if (params != null) {
             for (String k : params.keySet()) {
                 wt = wt.queryParam(k, params.get(k));
             }
         }
         Response response = wt.request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        return response.readEntity(String.class);
+    }
+
+    private String testMap(String fileName, String mappingName, Map<String, Object> params) {
+        WebTarget wt = target().path("csv/" + fileName + "/map").queryParam("mappingName", mappingName);
+        if (params != null) {
+            for (String k : params.keySet()) {
+                wt = wt.queryParam(k, params.get(k));
+            }
+        }
+        Response response = wt.request().get();
         Assert.assertEquals(200, response.getStatus());
         return response.readEntity(String.class);
     }

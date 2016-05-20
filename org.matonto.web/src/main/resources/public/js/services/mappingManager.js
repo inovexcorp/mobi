@@ -103,27 +103,13 @@
                 return deferred.promise;
             }
             /**
-             * HTTP GET to mappings/{mappingName} which returns an octet-stream with the
-             * JSON-LD of an uploaded mapping file.
+             * HTTP GET to mappings/{mappingName} using an anchor tag and window.open which 
+             * starts a download of the JSON-LD of an uploaded mapping file.
+             * 
              * @param {string} mappingName - The user-defined name for the mapping file
-             * @return {promise} The response data with the octet-stream containing the 
-             *                   JSON-LD in the uploaded file
              */
             self.downloadMapping = function(mappingName) {
-                var deferred = $q.defer(),
-                    config = {
-                        headers: {
-                            'Accept': 'application/octet-stream'
-                        }
-                    };
-                
-                $http.get(prefix + '/' + encodeURIComponent(mappingName), config)
-                    .then(function(response) {
-                        deferred.resolve(_.get(response.data, '@graph', []));
-                    }, function(response) {
-                        deferred.reject(response);
-                    });
-                return deferred.promise;
+                window.location = prefix + '/' + mappingName;
             }
 
             // Edit mapping methods 

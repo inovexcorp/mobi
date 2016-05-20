@@ -5,9 +5,9 @@
         .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj', 'prefixes', 'annotationManager'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'FileSaver', 'Blob', 'updateRefsService', 'responseObj', 'prefixes', 'uuid', 'annotationManagerService'];
+        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj', 'prefixes', 'uuid', 'annotationManagerService'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, FileSaver, Blob, updateRefsService, responseObj, prefixes, uuid, annotationManagerService) {
+        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes, uuid, annotationManagerService) {
             var self = this,
                 prefix = '/matontorest/ontologies',
                 defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
@@ -855,34 +855,8 @@
             }
 
             self.download = function(ontologyId, rdfFormat, fileName) {
-                var deferred = $q.defer();
-                var config = {
-                        headers: {
-                            Accept: 'application/octet-stream'
-                        },
-                        params: {
-                            rdfformat: rdfFormat
-                        }
-                    };
-
-                $http.get(prefix + '/' + encodeURIComponent(ontologyId), config)
-                    .then(function(response) {
-                        if(_.get(response, 'status') === 200) {
-                            console.log('Successfully downloaded ontology');
-                            var suffix = (rdfFormat === 'turtle') ? 'ttl' : 'xml';
-                            var ontology = new Blob([_.get(response, 'data', '')], {type: 'text/plain'});
-                            FileSaver.saveAs(ontology, fileName + '.' + suffix);
-                            deferred.resolve(response);
-                        } else {
-                            console.warn('Something went wrong with the ontology download');
-                            deferred.reject(response);
-                        }
-                    }, function(response) {
-                        console.error('error in ontologyManager.download()');
-                        deferred.reject(response);
-                    });
-
-                return deferred.promise;
+                var queryString = '?rdfFormat=' + rdfFormat + '&fileName=' + fileName;
+                window.location = prefix + '/' + encodeURIComponent(ontologyId) + queryString;
             }
 
             self.get = function(ontologyId, rdfFormat) {

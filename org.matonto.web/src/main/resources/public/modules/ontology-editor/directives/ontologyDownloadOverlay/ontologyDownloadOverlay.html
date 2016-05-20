@@ -2,9 +2,7 @@
     <form name="vm.downloadForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Download Ontology</h6>
-        <p class="text-danger" ng-if="vm.downloadError">
-            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.downloadError}}
-        </p>
+        
         <!-- serialization -->
         <serialization-select ng-model="vm.downloadSerialization"></serialization-select>
         <!-- file name -->
