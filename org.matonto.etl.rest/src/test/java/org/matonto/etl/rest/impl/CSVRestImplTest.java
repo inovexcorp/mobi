@@ -255,6 +255,22 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         Assert.assertEquals(400, response.getStatus());
     }
 
+    @Test
+    public void etlWithoutPreviewDeletesFile() throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put("preview", false);
+        params.put("containsHeaders", true);
+
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+
+        testMap(fileName, "jsonld", "[]", params);
+
+        Assert.assertFalse(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+    }
+
     private void isJsonld(String str) {
         try {
             JSONArray result = JSONArray.fromObject(str);
@@ -288,7 +304,6 @@ public class CSVRestImplTest extends MatontoRestTestNg {
 
     private void testResultsRows(Response response, List<String> expectedLines, int rowNum) {
         String body = response.readEntity(String.class);
-        System.out.println(body);
         JSONArray lines = JSONArray.fromObject(body);
         Assert.assertEquals(rowNum + 1, lines.size());
         for (int i = 0; i < lines.size(); i++) {
