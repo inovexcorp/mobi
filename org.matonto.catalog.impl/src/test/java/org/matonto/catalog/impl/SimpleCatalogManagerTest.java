@@ -129,61 +129,6 @@ public class SimpleCatalogManagerTest {
         assertEquals(modified.toZonedDateTime().toOffsetDateTime(), resource.getModified());
     }
 
-//    @Test
-//    public void testGetExistingResourceWithOptionals() throws Exception {
-//        // given
-//        IRI existingResource = mock(IRI.class);
-//        GregorianCalendar issued = new GregorianCalendar(2016, 1, 1);
-//        GregorianCalendar modified = new GregorianCalendar(2016, 1, 2);
-//
-//        ValueFactory valueFactory = SimpleValueFactory.getInstance();
-//        MapBindingSet sesameBindingSet = new MapBindingSet();
-//        sesameBindingSet.addBinding("resource", valueFactory.createIRI("http://matonto.org/testCatalog"));
-//        sesameBindingSet.addBinding("title", valueFactory.createLiteral("Test Resource"));
-//        sesameBindingSet.addBinding("types", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
-//        sesameBindingSet.addBinding("issued", valueFactory.createLiteral(issued.getTime()));
-//        sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
-//        sesameBindingSet.addBinding("description", valueFactory.createLiteral("Test Description"));
-//        sesameBindingSet.addBinding("identifier", valueFactory.createLiteral("Test Identifier"));
-//        sesameBindingSet.addBinding("keywords", valueFactory.createLiteral("Test,Keywords"));
-//        sesameBindingSet.addBinding("distributions", valueFactory.createLiteral("http://matonto.org/test/Distribution/1,http://matonto.org/test/Distribution/2"));
-//        BindingSet bindingSet = new SesameBindingSet(sesameBindingSet);
-//
-////        List<org.openrdf.model.Statement> statements = new ArrayList<>();
-////        statements.add(valueFactory.createStatement(valueFactory.createIRI("http://matonto.org/test/Distribution/1"), valueFactory.createIRI(DC + "title"), valueFactory.createLiteral("Test Distribution 1")));
-//
-////        org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> sesRes = new org.openrdf.repository.RepositoryResult<>(new CollectionIteration<>(statements));
-////        RepositoryResult<Statement> repoResults = new SesameRepositoryResult<>(sesRes, new StatementValueFactory());
-//
-//        // when
-//        when(result.hasNext()).thenReturn(true);
-//        when(result.next()).thenReturn(bindingSet);
-//
-//        Optional<PublishedResource> optional = manager.getResource(existingResource);
-//
-//        // then
-//        assertTrue(optional.isPresent());
-//        PublishedResource resource = optional.get();
-//
-//        assertEquals("Test Resource", resource.getTitle());
-//        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getTypes().stringValue());
-//        assertEquals(issued.toZonedDateTime().toOffsetDateTime(), resource.getIssued());
-//        assertEquals(modified.toZonedDateTime().toOffsetDateTime(), resource.getModified());
-//        assertEquals("Test Description", resource.getDescription());
-//        assertEquals("Test Identifier", resource.getIdentifier());
-//
-//        Set<String> expectedKeywords = new HashSet<>();
-//        expectedKeywords.add("Test");
-//        expectedKeywords.add("Keywords");
-//
-//        assertEquals(expectedKeywords, resource.getKeywords());
-//
-////        Set<Distribution> expectedDistributions = new HashSet<>();
-//
-////        assertEquals(2, resource.getDistributions().size());
-////        assertEquals(expectedDistributions, resource.getDistributions());
-//    }
-
     @Test
     public void testCreateOntologyWithoutDistribution() throws Exception {
         // given
@@ -275,17 +220,18 @@ public class SimpleCatalogManagerTest {
         manager.createOntology(ontology);
     }
 
-    @Test
-    public void testRemoveResource() {
-        // given
-        Ontology ontology = mock(Ontology.class);
-
-        // when
-//        when(repositoryResult.hasNext()).thenReturn(true);
-//        when(ontology.getResource()).thenReturn(mock(IRI.class));
-
-        manager.removeResource(ontology);
-    }
+    // TODO: Test and Implement Remove
+//    @Test
+//    public void testRemoveResource() {
+//        // given
+//        Ontology ontology = mock(Ontology.class);
+//
+//        // when
+////        when(repositoryResult.hasNext()).thenReturn(true);
+////        when(ontology.getResource()).thenReturn(mock(IRI.class));
+//
+//        manager.removeResource(ontology);
+//    }
 
     private void checkNamedGraphs(NamedGraph expected, NamedGraph actual) throws Exception {
         try {
