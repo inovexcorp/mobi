@@ -86,7 +86,6 @@ public class CSVRestImpl implements CSVRest {
         Path filePath = Paths.get(TEMP_DIR + "/" + fileName + "." + extension);
 
         saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
-        /*saveStreamToFile(fileInputStream, filePath);*/
         return Response.status(200).entity(filePath.getFileName().toString()).build();
     }
 
@@ -102,7 +101,6 @@ public class CSVRestImpl implements CSVRest {
 
         Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
         saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
-        /*saveStreamToFile(fileInputStream, filePath);*/
         return Response.status(200).entity(fileName).build();
     }
 
