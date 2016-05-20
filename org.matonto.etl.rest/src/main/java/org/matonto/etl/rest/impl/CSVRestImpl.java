@@ -88,9 +88,9 @@ public class CSVRestImpl implements CSVRest {
     }
 
     @Override
-    public Response etlFilePreview(String fileName, String mappingRdf, String format, boolean containsHeaders,
+    public Response etlFilePreview(String fileName, String jsonld, String format, boolean containsHeaders,
                             String separator) {
-        if (mappingRdf == null || mappingRdf.equals("")) {
+        if (jsonld == null || jsonld.equals("")) {
             throw ErrorUtils.sendError("Must provide a JSON-LD string", Response.Status.BAD_REQUEST);
         }
 
@@ -107,7 +107,7 @@ public class CSVRestImpl implements CSVRest {
             // Parse JSON-LD mapping into a model
             Model mappingModel;
             try {
-                InputStream in = new ByteArrayInputStream(mappingRdf.getBytes(StandardCharsets.UTF_8));
+                InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
                 mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
             } catch (IOException e) {
                 throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
@@ -125,8 +125,6 @@ public class CSVRestImpl implements CSVRest {
     @Override
     public Response etlFile(String fileName, String mappingLocalName, String format, boolean containsHeaders,
                             String separator) {
-        System.out.println("Inside method with " + fileName + ", " + mappingLocalName + ", " + format
-                + ", " + containsHeaders + ", and " + separator);
         if (mappingLocalName == null || mappingLocalName.equals("")) {
             throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
         }
