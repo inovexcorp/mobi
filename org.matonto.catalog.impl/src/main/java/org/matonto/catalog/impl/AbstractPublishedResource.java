@@ -17,7 +17,7 @@ public abstract class AbstractPublishedResource implements PublishedResource {
     protected Set<String> keywords;
     protected Set<Distribution> distributions;
     protected Resource resource;
-    protected Resource type;
+    protected Set<Resource> types;
 
     @Override
     public String getTitle() {
@@ -60,7 +60,7 @@ public abstract class AbstractPublishedResource implements PublishedResource {
     }
 
     @Override
-    public Resource getType() {
-        return type;
+    public Set<Resource> getTypes() {
+        return types;
     }
 }

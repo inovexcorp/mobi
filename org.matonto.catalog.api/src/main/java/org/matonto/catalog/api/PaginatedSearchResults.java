@@ -25,7 +25,6 @@ public interface PaginatedSearchResults<T> {
      */
     int getPageSize();
 
-
     /**
      * Returns the current page number for these results. Page numbers start at 1.
      *
