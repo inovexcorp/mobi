@@ -14,9 +14,9 @@
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
-                    onlyStrings: '=',
                     selectList: '=',
-                    mutedText: '='
+                    mutedText: '=',
+                    isDisabledWhen: '='
                 },
                 templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 bindToController: {
@@ -24,7 +24,7 @@
                     selectedId: '='
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: ['$scope', 'prefixes', function($scope, prefixes) {
                     var dvm = this;
                     var vm = $scope.$parent.vm;
                     var tooltipDisplay = settingsManagerService.getTooltipDisplay();
@@ -41,14 +41,14 @@
                         var itemIri = item['@id'] ? item['@id'] : dvm.getItemIri(item);
                         var ontologyIndex = _.get(stateManagerService.getState(), 'oi');
                         var selectedObject = ontologyManagerService.getObjectCopyByIri(itemIri, ontologyIndex);
-                        var result = '';
+                        var result = itemIri;
 
-                        if(_.get(selectedObject, tooltipDisplay) && tooltipDisplay !== '@id') {
-                            result = selectedObject[tooltipDisplay][0]['@value'];
-                        } else if(_.get(selectedObject, '@id')) {
+                        if(tooltipDisplay === 'comment') {
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri));
+                        } else if(tooltipDisplay === 'label') {
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri));
+                        } else if(_.has(selectedObject, '@id')) {
                             result = selectedObject['@id'];
-                        } else {
-                            result = itemIri;
                         }
 
                         return result;

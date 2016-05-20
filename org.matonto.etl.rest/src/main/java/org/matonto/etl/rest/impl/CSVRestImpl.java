@@ -73,19 +73,14 @@ public class CSVRestImpl implements CSVRest {
         String fileName = generateUuid();
         String extension = FilenameUtils.getExtension(fileDetail.getFileName());
 
-        Path filePath;
-        try {
-            filePath = Files.createTempFile(fileName, "." + extension);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Error in creating temp file", Response.Status.INTERNAL_SERVER_ERROR);
-        }
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName + "." + extension);
 
         saveStreamToFile(fileInputStream, filePath);
         return Response.status(200).entity(filePath.getFileName().toString()).build();
     }
 
     @Override
-    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
+    public Response upload(InputStream fileInputStream, String fileName) {
         Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
         saveStreamToFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
@@ -138,6 +133,7 @@ public class CSVRestImpl implements CSVRest {
                 }
                 model = Values.sesameModel(csvConverter.convert(dataToConvert,
                         Values.matontoModel(mappingModel), containsHeaders, extension, separatorChar));
+                dataToConvert.close();
             } catch (IOException | MatOntoException e) {
                 throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
             }

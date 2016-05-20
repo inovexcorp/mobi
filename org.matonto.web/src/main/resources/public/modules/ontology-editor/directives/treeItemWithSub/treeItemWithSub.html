@@ -1,5 +1,6 @@
 <li>
     <a ng-click="onClick()"
+       ng-dblclick="isOpened = !isOpened;"
        ng-class="{'unsaved': currentEntity.matonto.unsaved, 'active': isActive}">
         <i class="fa fa-fw"
            ng-class="{'fa-minus-square-o': isOpened, 'fa-plus-square-o': !isOpened}"

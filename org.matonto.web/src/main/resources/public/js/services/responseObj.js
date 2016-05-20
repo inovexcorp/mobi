@@ -62,39 +62,5 @@
         self.validateItem = function(item) {
             return (item && item.hasOwnProperty('namespace') && item.hasOwnProperty('localName')) ? true : false;
         }
-
-        /**
-         * @ngdoc method
-         * @name stringify
-         * @methodOf responseObj.responseObj
-         * 
-         * @description 
-         * Creates a array of the string representations of each object in an array from the 
-         * {@link ontologyManager.service:ontologyManager ontologyManager} using each object's
-         * IRI. If the passed in response is not an array, returns an empty array.
-         * 
-         * @param {Object[]} response An array of objects with namespaces and local names
-         * @return {string[]} Either an empty array if the passed in response isn't an array or
-         * an array with the IRI of each object in the response array.
-         */
-        self.stringify = function(response) {
-            var arr = [];
-
-            if(Array.isArray(response)) {
-                var item,
-                    i = 0,
-                    temp = angular.copy(response);
-
-                while(i < temp.length) {
-                    item = temp[i];
-                    if(self.validateItem(item)) {
-                        arr.push(item.namespace + item.localName);
-                    }
-                    i++;
-                }
-            }
-
-            return arr;
-        }
     }
 })();
