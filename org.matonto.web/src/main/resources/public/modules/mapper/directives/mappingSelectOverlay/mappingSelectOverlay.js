@@ -19,11 +19,7 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.previousMappings = mappingManagerService.previousMappingNames;
-
-                    dvm.updateMappingName = function() {
-                        dvm.previousMappingName = (dvm.mappingType === 'new') ? '' : dvm.previousMappings[0];
-                        dvm.newMappingName = '';
-                    }
+                    dvm.previousMappingName = _.get(dvm.previousMappings, 0, '');
                 }],
                 templateUrl: 'modules/mapper/directives/mappingSelectOverlay/mappingSelectOverlay.html'
             }
