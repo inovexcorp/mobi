@@ -121,4 +121,15 @@ describe('Mapping Name Input directive', function() {
         var isolatedScope = element.isolateScope();
         expect(isolatedScope.form.$valid).toBe(true);
     });
+    it('should have the correct default values for isActive and required', function() {
+        var form = $compile('<form></form>')(scope);
+        var element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
+        form.append(element);
+        element = $compile(element)(scope);
+        scope.$digest();
+
+        var isolatedScope = element.isolateScope();
+        expect(isolatedScope.isActive).toBe(true);
+        expect(isolatedScope.required).toBe(true);
+    });
 });

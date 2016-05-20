@@ -32,12 +32,14 @@
                 controllerAs: 'dvm',
                 scope: {
                     name: '=',
-                    required: '=',
-                    isActive: '=',
+                    required: '=?',
+                    isActive: '=?',
                     focusEvent: '&'
                 },
                 link: function(scope, el, attrs, form) {
                     scope.form = form;
+                    scope.isActive = angular.isDefined(scope.isActive) ? scope.isActive : true;
+                    scope.required = angular.isDefined(scope.required) ? scope.required : true;
                 },
                 controller: ['REGEX', function(REGEX) {
                     var dvm = this;
