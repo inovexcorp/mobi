@@ -68,31 +68,6 @@
                 return deferred.promise;
             }
 
-            self.update = function(fileName, file) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
-                    config = {
-                        transformRequest: angular.identity,
-                        headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        }
-                    };
-
-                fd.append('delimitedFile', file);
-
-                $rootScope.showSpinner = true;
-                $http.put(prefix + '/' + encodeURIComponent(fileName), fd, config)
-                    .then(function(response) {
-                        deferred.resolve(response.data);
-                    }, function(response) {
-                        deferred.reject(response);
-                    }).then(function() {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-
             self.mapByUploaded = function(fileName, mappingName, containsHeaders, separator) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
