@@ -1,7 +1,6 @@
 package org.matonto.etl.rest.impl;
 
 import net.sf.json.JSONArray;
-import org.apache.commons.io.FileUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.glassfish.jersey.client.ClientConfig;
@@ -21,8 +20,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.when;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;
@@ -30,7 +27,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -39,7 +35,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class CSVRestImplTest extends MatontoRestTestNg {
-    private static File testDir;
     private CSVRestImpl rest;
 
     @Mock
@@ -59,6 +54,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         when(manager.createMappingIRI(anyString())).thenReturn(String::new);
         when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(new LinkedHashModel()));
 
+        rest.start();
+
         return new ResourceConfig()
             .register(rest)
             .register(MultiPartFeature.class);
@@ -69,50 +66,43 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         config.register(MultiPartFeature.class);
     }
 
-    @BeforeClass
-    public void start() throws IOException {
-        testDir = new File("data/tmp/");
-        testDir.mkdirs();
-        moveResource("test.csv", "test_csv.csv");
-        moveResource("test_tabs.csv", "test_tabs_csv.csv");
-        moveResource("test.xls", "test_oldexcel.xls");
-        moveResource("test.xlsx", "test_newexcel.xlsx");
-    }
-
-    @AfterClass
-    public void finish() throws IOException {
-        FileUtils.deleteDirectory(testDir.getParentFile());
-    }
-
     @Test
     public void uploadDelimitedTest() {
-        String extension, fileName;
         FormDataMultiPart fd;
         Response response;
         String[] files = {
                 "test.csv", "test.xls", "test.xlsx"
         };
         for (String file : files) {
-            extension = file.substring(file.indexOf(".") + 1);
             fd = getFileFormData(file);
             response = target().path("csv").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+            String filename = response.readEntity(String.class);
+
             Assert.assertEquals(200, response.getStatus());
-            fileName = response.readEntity(String.class);
-            Assert.assertTrue(Files.exists(Paths.get(testDir.getPath() + "/" + fileName + "." + extension)));
+            Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + filename)));
         }
     }
 
     @Test
-    public void updateDelimitedReplacesContentTest() throws IOException {
-        String fileName = "test_update";
-        moveResource("test.csv", fileName + ".csv");
+    public void updateNonexistentDelimitedTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        FormDataMultiPart fd = getFileFormData("test_updated.csv");
+        Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+    }
+
+    @Test
+    public void updateDelimitedReplacesContentTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test_updated.csv");
 
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
         Assert.assertEquals(fileName, response.readEntity(String.class));
-        List<String> resultLines = Files.readAllLines(Paths.get(testDir.getPath() + "/" + fileName + ".csv"));
+        List<String> resultLines = Files.readAllLines(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName));
         Assert.assertEquals(expectedLines.size(), resultLines.size());
         for (int i = 0; i < resultLines.size(); i++) {
             Assert.assertEquals(expectedLines.get(i), resultLines.get(i));
@@ -120,112 +110,119 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void updateDelimitedWithDifferentFormatTest() throws IOException {
-        String fileName = "test_update";
-        moveResource("test.csv", fileName + ".csv");
-
-        FormDataMultiPart fd = getFileFormData("test.xls");
-        Response response = target().path("csv/" + fileName).request().put(
-                Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertFalse(Files.exists(Paths.get(testDir.getPath() + "/" + fileName + ".csv")));
-        Assert.assertTrue(Files.exists(Paths.get(testDir.getPath() + "/" + fileName + ".xls")));
-    }
-
-    @Test
-    public void updateNonexistentDelimitedTest() throws IOException {
-        FormDataMultiPart fd = getFileFormData("test_updated.csv");
-        Response response = target().path("csv/name").request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(Files.exists(Paths.get(testDir.getPath() + "/name.csv")));
-    }
-
-    @Test
-    public void getRowsFromCsvWithDefaultsTest() {
+    public void getRowsFromCsvWithDefaultsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test.csv");
-        Response response = target().path("csv/test_csv").request().get();
+        Response response = target().path("csv/" + fileName).request().get();
+        Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
     }
 
     @Test
-    public void getRowsFromCsvWithParamsTest() throws IOException {
+    public void getRowsFromCsvWithParamsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test_tabs.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test_tabs.csv");
 
         int rowNum = 5;
-        Response response = target().path("csv/test_tabs_csv").queryParam("rowCount", rowNum).queryParam
-                ("separator", "\t").request().get();
+        Response response = target().path("csv/" + fileName).queryParam("rowCount", rowNum).queryParam("separator", "\t").request().get();
+        Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
     }
 
     @Test
-    public void nonexistentRowsTest() {
+    public void nonExistentRowsTest() {
         Response response = target().path("csv/error").request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void getRowsFromExcelWithDefaultsTest() {
+    public void getRowsFromExcelWithDefaultsTest() throws Exception {
+        String fileName1 = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
-        Response response = target().path("csv/test_oldexcel").request().get();
+        Response response = target().path("csv/" + fileName1).request().get();
+        Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
 
+        String fileName2 = UUID.randomUUID().toString() + ".xlsx";
+        copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
-        response = target().path("csv/test_newexcel").request().get();
+        response = target().path("csv/" + fileName2).request().get();
+        Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
     }
 
     @Test
-    public void getRowsFromExcelWithParamsTest() {
+    public void getRowsFromExcelWithParamsTest() throws Exception {
         int rowNum = 5;
 
+        String fileName1 = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
-        Response response = target().path("csv/test_oldexcel").queryParam("rowCount", rowNum).request().get();
+        Response response = target().path("csv/" + fileName1).queryParam("rowCount", rowNum).request().get();
+        Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
 
+        String fileName2 = UUID.randomUUID().toString() + ".xlsx";
+        copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
-        response = target().path("csv/test_newexcel").queryParam("rowCount", rowNum).request().get();
+        response = target().path("csv/" + fileName2).queryParam("rowCount", rowNum).request().get();
+        Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
     }
 
     @Test
     public void mapWithoutMappingTest() {
         String mapping = "";
-        Response response = target().path("csv/test_csv/map").queryParam("mappingName", mapping)
+        Response response = target().path("csv/test.csv/map").queryParam("mappingName", mapping)
                 .request().get();
         Assert.assertEquals(400, response.getStatus());
 
-        response = target().path("csv/test_csv/map").request().get();
+        response = target().path("csv/test.csv/map").request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void mapCsvWithDefaultsTest() {
-        String body = testMap("test_csv", "test", null);
+    public void mapCsvWithDefaultsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+        String body = testMap(fileName, "test", null);
         isJsonld(body);
     }
 
     @Test
-    public void mapCsvWithParamsTest() {
+    public void mapCsvWithParamsTest() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
         params.put("containsHeaders", true);
         params.put("separator", "\t");
-        String body = testMap("test_tabs_csv", "test", params);
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test_tabs.csv", fileName);
+
+        String body = testMap(fileName, "test", params);
         isNotJsonld(body);
     }
 
     @Test
-    public void mapExcelWithDefaultsTest() {
-        String body = testMap("test_oldexcel", "test", null);
+    public void mapExcelWithDefaultsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        String body = testMap(fileName, "test", null);
         isJsonld(body);
     }
-
     @Test
-    public void mapExcelWithParamsTest() {
+    public void mapExcelWithParamsTest() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
         params.put("containsHeaders", true);
-        String body = testMap("test_oldexcel", "test", params);
+
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        String body = testMap(fileName, "test", params);
         isNotJsonld(body);
     }
 
@@ -236,52 +233,76 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
+    public void mapDeletesFile() throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put("containsHeaders", true);
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+
+        testMap(fileName, "test", params);
+        Assert.assertFalse(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+    }
+
+    @Test
     public void mapPreviewWithoutMappingTest() {
         String mapping = "";
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", mapping);
-        Response response = target().path("csv/test_csv/map-preview").request().post(Entity.entity(fd, MediaType
+        Response response = target().path("csv/test.csv/map-preview").request().post(Entity.entity(fd, MediaType
                 .MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
 
-        response = target().path("csv/test_csv/map-preview").request().post(Entity.entity(null, MediaType
+        response = target().path("csv/test.csv/map-preview").request().post(Entity.entity(null, MediaType
                 .MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void mapPreviewCsvWithDefaultsTest() {
-        String body = testMapPreview("test_csv", "[]", null);
+    public void mapPreviewCsvWithDefaultsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+        String body = testMapPreview(fileName, "[]", null);
         isJsonld(body);
     }
 
     @Test
-    public void mapPreviewCsvWithParamsTest() {
+    public void mapPreviewCsvWithParamsTest() throws Exception{
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
         params.put("containsHeaders", true);
         params.put("separator", "\t");
-        String body = testMapPreview("test_tabs_csv", "[]", params);
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test_tabs.csv", fileName);
+
+        String body = testMapPreview(fileName, "[]", params);
         isNotJsonld(body);
     }
 
     @Test
-    public void mapPreviewExcelWithDefaultsTest() {
-        String body = testMapPreview("test_oldexcel", "[]", null);
+    public void mapPreviewExcelWithDefaultsTest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        String body = testMapPreview(fileName, "[]", null);
         isJsonld(body);
     }
 
     @Test
-    public void mapPreviewExcelWithParamsTest() {
+    public void mapPreviewExcelWithParamsTest() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
         params.put("containsHeaders", true);
-        String body = testMapPreview("test_oldexcel", "[]", params);
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        String body = testMapPreview(fileName, "[]", params);
         isNotJsonld(body);
     }
 
     @Test
-    public void mapPreviewNonexistentDelimitedTest() {
+    public void mapPreviewNonexistentDelimitedTest() throws Exception {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", "[]");
         Response response = target().path("csv/error/map-preview").request().post(Entity.entity(fd, MediaType
@@ -345,14 +366,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         }
     }
 
-    private List<String> getCsvResourceLines(String fileName) {
-        List<String> expectedLines = new ArrayList<>();
-        try {
-            expectedLines = Files.readAllLines(Paths.get(getClass().getResource("/" + fileName).getPath()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return expectedLines;
+    private List<String> getCsvResourceLines(String fileName) throws Exception {
+        return Files.readAllLines(Paths.get(getClass().getResource("/" + fileName).getPath().replaceFirst("^/(.:/)", "$1")));
     }
 
     private List<String> getExcelResourceLines(String fileName) {
@@ -384,8 +399,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         return fd;
     }
 
-    private void moveResource(String resourceName, String newName) throws IOException {
-        String newFile = newName != null ? newName : resourceName;
-        Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(testDir.getPath() + "/" + newFile), StandardCopyOption.REPLACE_EXISTING);
+    private void copyResourceToTemp(String resourceName, String newName) throws IOException {
+        Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(CSVRestImpl.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
     }
 }

@@ -1,6 +1,8 @@
 package org.matonto.etl.rest.impl;
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
@@ -25,15 +27,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
+import static java.nio.file.FileVisitResult.CONTINUE;
 
 @Component(immediate = true)
 public class CSVRestImpl implements CSVRest {
@@ -43,6 +45,8 @@ public class CSVRestImpl implements CSVRest {
     private final Logger logger = LoggerFactory.getLogger(CSVRestImpl.class);
 
     private static final int NUM_LINE_PREVIEW = 10;
+
+    public static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/org.matonto.etl.rest.impl.tmp";
 
     @Reference
     public void setCsvConverter(CSVConverter csvConverter) {
@@ -54,31 +58,32 @@ public class CSVRestImpl implements CSVRest {
         this.mappingManager = manager;
     }
 
+    @Activate
+    protected void start() throws IOException {
+        deleteDirectory(Paths.get(TEMP_DIR));
+        Files.createDirectory(Paths.get(TEMP_DIR));
+    }
+
+    @Deactivate
+    protected void stop() throws IOException {
+        deleteDirectory(Paths.get(TEMP_DIR));
+    }
+
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail) {
         String fileName = generateUuid();
         String extension = FilenameUtils.getExtension(fileDetail.getFileName());
-        Path filePath = Paths.get("data/tmp/" + fileName + "." + extension);
-        uploadFile(fileInputStream, filePath);
-        return Response.status(200).entity(fileName).build();
+
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName + "." + extension);
+
+        saveStreamToFile(fileInputStream, filePath);
+        return Response.status(200).entity(filePath.getFileName().toString()).build();
     }
 
     @Override
-    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail, String fileName) {
-        String newExtension = FilenameUtils.getExtension(fileDetail.getFileName());
-        Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        Path filePath;
-        if (optDelimitedFile.isPresent()) {
-            File delimitedFile = optDelimitedFile.get();
-            if (!newExtension.equals(FilenameUtils.getExtension(delimitedFile.getName()))) {
-                delimitedFile.delete();
-                delimitedFile = new File("data/tmp/" + fileName + "." + newExtension);
-            }
-            filePath = delimitedFile.toPath();
-        } else {
-            filePath = Paths.get("data/tmp/" + fileName + "." + newExtension);
-        }
-        uploadFile(fileInputStream, filePath);
+    public Response upload(InputStream fileInputStream, String fileName) {
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
+        saveStreamToFile(fileInputStream, filePath);
         return Response.status(200).entity(fileName).build();
     }
 
@@ -121,7 +126,7 @@ public class CSVRestImpl implements CSVRest {
     public Response etlFile(String fileName, String mappingLocalName, String format, boolean containsHeaders,
                             String separator) {
         System.out.println("Inside method with " + fileName + ", " + mappingLocalName + ", " + format
-            + ", " + containsHeaders + ", and " + separator);
+                + ", " + containsHeaders + ", and " + separator);
         if (mappingLocalName == null || mappingLocalName.equals("")) {
             throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
         }
@@ -160,8 +165,17 @@ public class CSVRestImpl implements CSVRest {
                 writer.close();
             };
             String fileExtension = getRDFFormat(format).getDefaultFileExtension();
-            return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName +  "."
-                    + fileExtension).header("Content-Type", "application/octet-stream").build();
+            Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
+                    +  "." + fileExtension).header("Content-Type", "application/octet-stream").build();
+
+            // Remove temp file
+            try {
+                Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
+            } catch (IOException e) {
+                throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
+            }
+
+            return response;
         } else {
             throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
@@ -187,6 +201,7 @@ public class CSVRestImpl implements CSVRest {
         try {
             model = Values.sesameModel(csvConverter.convert(delimitedData,
                     Values.matontoModel(mapping), containsHeaders, extension, separatorChar));
+            delimitedData.close();
         } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
@@ -230,18 +245,12 @@ public class CSVRestImpl implements CSVRest {
      * @return the uploaded file if it was found
      */
     private Optional<File> getUploadedFile(String fileName) {
-        File directory = new File("data/tmp");
-        File[] files = directory.listFiles((dir, name) -> {
-            return name.startsWith(fileName + ".");
-        });
-        if (files.length == 0) {
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
+        if (Files.exists(filePath)) {
+            return Optional.of(new File(filePath.toUri()));
+        } else {
             return Optional.empty();
         }
-        if (files.length > 1) {
-            throw ErrorUtils.sendError("Multiple files exist with same name", Response.Status.BAD_REQUEST);
-        }
-
-        return Optional.of(files[0]);
     }
 
     /**
@@ -319,19 +328,19 @@ public class CSVRestImpl implements CSVRest {
     }
 
     /**
-     * Uploads the file in the InputStream to the specified path.
+     * Saves the contents of the InputStream to the specified path.
      *
      * @param fileInputStream a file in an InputStream
      * @param filePath the location to upload the file to
      */
-    private void uploadFile(InputStream fileInputStream, Path filePath) {
+    private void saveStreamToFile(InputStream fileInputStream, Path filePath) {
         try {
             Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
             fileInputStream.close();
         } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Error writing delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error writing delimited file", Response.Status.BAD_REQUEST);
         } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error parsing delimited file", Response.Status.BAD_REQUEST);
         }
         logger.info("File Uploaded: " + filePath);
     }
@@ -396,5 +405,27 @@ public class CSVRestImpl implements CSVRest {
      */
     public String generateUuid() {
         return UUID.randomUUID().toString();
+    }
+
+    private void deleteDirectory(Path dir) throws IOException {
+        if (Files.exists(dir)) {
+            Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    if (exc == null) {
+                        Files.delete(dir);
+                        return CONTINUE;
+                    } else {
+                        throw exc;
+                    }
+                }
+            });
+        }
     }
 }
