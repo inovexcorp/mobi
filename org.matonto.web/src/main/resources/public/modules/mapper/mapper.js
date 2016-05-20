@@ -81,21 +81,14 @@
 
         // Handler for uploading delimited file
         vm.submitFileUpload = function() {
-            var csvError = function(response) {
-                onError(response);
-                vm.filePreview = undefined;
-            }
-            var csvSuccess = function(data) {
-                vm.delimitedFileName = data;
-                vm.getPreview();
-            }
-            if (vm.delimitedFileName) {
-                csvManagerService.update(vm.delimitedFileName, vm.delimitedFile)
-                    .then(csvSuccess, csvError);
-            } else {
-                csvManagerService.upload(vm.delimitedFile)
-                    .then(csvSuccess, csvError);
-            }
+            csvManagerService.upload(vm.delimitedFile)
+                .then(function(data) {
+                    vm.delimitedFileName = data;
+                    vm.getPreview();
+                }, function(response) {
+                    onError(response);
+                    vm.filePreview = undefined;
+                });
         }
 
         // Handler for downloading mapping file
