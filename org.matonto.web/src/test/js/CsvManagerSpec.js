@@ -27,20 +27,6 @@ describe('CSV Manager service', function() {
         //Call httpBackend.flush()
         $httpBackend.flush();
     });
-    it('should update a delimited file', function(done) {
-        var fileName = 'test';
-        $httpBackend.expectPUT('/matontorest/csv/' + fileName, 
-            function(data) {
-                return data instanceof FormData;
-            }, function(headers) {
-                return headers['Content-Type'] === undefined;
-            }).respond(200, fileName);
-        csvManagerSvc.update(fileName, {}).then(function(value) {
-            expect(value).toEqual(fileName);
-            done();
-        });
-        $httpBackend.flush();
-    });
     describe('should retrieve a preview of an uploaded delimited file', function() {
         it('with headers', function(done) {
             var fileName = 'test';
