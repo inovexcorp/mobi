@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.32</version>
+        <version>1.0.34</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -18,19 +18,33 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.poi</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.34</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.api</artifactId>
+            <version>1.0.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.0.31</version>
+            <version>1.0.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.34</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>api</artifactId>
+            <version>1.0.34</version>
         </dependency>
 
         <dependency>
@@ -41,7 +55,6 @@
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>3.5</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -66,6 +79,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>MatOnto ETL Impl - CSV</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             org.matonto.etl.api.csv; provide:=true

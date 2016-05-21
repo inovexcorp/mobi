@@ -1,5 +1,6 @@
 package org.matonto.web.authentication;
 
+import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.log4j.Logger;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -7,20 +8,36 @@ import org.osgi.framework.wiring.BundleWire;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.service.http.HttpContext;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.*;
+import javax.security.auth.login.AccountException;
+import javax.security.auth.login.FailedLoginException;
+import javax.security.auth.login.LoginContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public abstract class AuthHttpContext implements HttpContext {
 
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
     private final ConcurrentMap<String, URL> resourceCache = new ConcurrentHashMap<>();
+
+    protected JaasRealm realm;
+
+    private final static String REQUIRED_ROLE = "user";
+    private final static String ROLE_CLASS = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
+
+    public void setRealm(JaasRealm realm) {
+        this.realm = realm;
+    }
 
     /**
      * The bundle that registered the service.
@@ -69,20 +86,64 @@ public abstract class AuthHttpContext implements HttpContext {
     protected abstract void handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
     protected boolean authenticated(HttpServletRequest req, String username, String password) {
-        // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
-        boolean success = ((username.equals("admin") && password.equals("M@tontoRox!")));
+        Optional<Subject> subjectOptional = doAuthenticate(username, password);
 
-        if (success)
-            req.setAttribute(REMOTE_USER, "admin");
+        if (subjectOptional.isPresent()) {
+            req.setAttribute(REMOTE_USER, username);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-        return success;
+    public Optional<Subject> doAuthenticate(final String username, final String password) {
+        try {
+            Subject subject = new Subject();
+            String realmName = realm.getName();
+
+            LoginContext loginContext = new LoginContext(realmName, subject, callbacks -> {
+                for (Callback callback : callbacks) {
+                    if (callback instanceof NameCallback) {
+                        ((NameCallback) callback).setName(username);
+                    } else if (callback instanceof PasswordCallback) {
+                        ((PasswordCallback) callback).setPassword(password.toCharArray());
+                    } else {
+                        throw new UnsupportedCallbackException(callback);
+                    }
+                }
+            });
+            loginContext.login();
+
+            boolean found = false;
+            for (Principal p : subject.getPrincipals()) {
+                if (p.getClass().getName().equals(ROLE_CLASS) && p.getName().equals(REQUIRED_ROLE)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("User does not have the required role " + REQUIRED_ROLE);
+                return Optional.empty();
+            }
+            return Optional.of(subject);
+        } catch (FailedLoginException e) {
+            log.debug("Login failed", e);
+            return Optional.empty();
+        } catch (AccountException e) {
+            log.warn("Account failure", e);
+            return Optional.empty();
+        } catch (GeneralSecurityException e) {
+            log.error("General Security Exception", e);
+            return Optional.empty();
+        }
     }
 
     @Override
     public URL getResource(String name) {
         final String normalizedName = normalizeResourcePath(rootPath + (name.startsWith("/") ? "" : "/") + name).trim();
 
-        log.debug(String.format("Searching bundle " + bundle + " for resource [%s], normalized to [%s]", name, normalizedName));
+        log.debug(String.format("Searching bundle " + bundle + " for resource [%s], normalized to [%s]",
+                name, normalizedName));
 
         URL url = resourceCache.get(normalizedName);
 
@@ -124,14 +185,14 @@ public abstract class AuthHttpContext implements HttpContext {
     }
 
     @Override
-    public String getMimeType(String s) {
-        if (s.endsWith(".jpg")) {
+    public String getMimeType(String str) {
+        if (str.endsWith(".jpg")) {
             return "image/jpeg";
-        } else if (s.endsWith(".png")) {
+        } else if (str.endsWith(".png")) {
             return "image/png";
-        }  else if (s.endsWith(".css")) {
+        }  else if (str.endsWith(".css")) {
             return "text/css";
-        } else if (s.endsWith(".js")) {
+        } else if (str.endsWith(".js")) {
             return "application/javascript";
         } else {
             return "text/html";

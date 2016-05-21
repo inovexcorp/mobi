@@ -4,11 +4,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.io.InputStream;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
-
 
 @Path("/ontologies")
 @Api( value = "/ontologies" )
@@ -38,7 +37,7 @@ public interface OntologyRest {
     Response getOntologies(@QueryParam("ontologyids") String ontologyIdList);
 
     /**
-     * Ingests/uploads an ontology file to a data store
+     * Ingests/uploads an ontology file to a data store.
      *
      * @param fileInputStream The ontology file to upload
      * @return true if persisted, false otherwise
@@ -47,6 +46,17 @@ public interface OntologyRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     Response uploadFile(@FormDataParam("file") InputStream fileInputStream);
+
+    /**
+     * Ingests an ontology json-ld string to a data store.
+     *
+     * @param ontologyJson The ontology json-ld to upload
+     * @return true if persisted, false otherwise
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    Response uploadOntologyJson(@QueryParam("ontologyjson") String ontologyJson);
 
     /**
      * Returns ontology with requested ontology ID in the requested format
@@ -59,9 +69,8 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
-    Response getOntology(
-            @PathParam("ontologyid") String ontologyIdStr,
-            @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
+    Response getOntology(@PathParam("ontologyid") String ontologyIdStr,
+                         @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
 
     /**
      * Streams the ontology with requested ontology ID to an OutputStream.
@@ -73,9 +82,27 @@ public interface OntologyRest {
      */
     @GET
     @Path("{ontologyid}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
-                                  @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
+                                  @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                                  @DefaultValue("ontology") @QueryParam("fileName") String fileName);
+
+    /**
+     * Replaces the ontology's resource with the new data
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceIdStr the String representing the edited Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the edited Resource.
+     * @return true if updated, false otherwise
+     */
+    @POST
+    @Path("{ontologyid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response saveChangesToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                   @QueryParam("resourceid") String resourceIdStr,
+                                   @QueryParam("resourcejson") String resourceJson);
 
     /**
      * Delete ontology with requested ontology ID from the server.
@@ -114,6 +141,20 @@ public interface OntologyRest {
     Response getAnnotationsInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
+     * Create a new owl annotation property in the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param annotationJson the String representing the new annotation in JSON-LD.
+     * @return annotation properties in the ontology with requested ontology ID.
+     */
+    @POST
+    @Path("{ontologyid}/annotations")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addAnnotationToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                     @QueryParam("annotationjson") String annotationJson);
+
+    /**
      * Returns classes in the ontology with requested ontology ID.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
@@ -124,6 +165,35 @@ public interface OntologyRest {
     @Path("{ontologyid}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     Response getClassesInOntology(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Add class to ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the new class model.
+     * @return true if added, false otherwise.
+     */
+    @POST
+    @Path("{ontologyid}/classes")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addClassToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                @QueryParam("resourcejson") String resourceJson);
+
+    /**
+     * Delete class with requested class ID from ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param classIdStr the String representing the class Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return true if deleted, false otherwise.
+     */
+    @DELETE
+    @Path("{ontologyid}/classes/{classid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response deleteClassFromOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                      @PathParam("classid") String classIdStr);
 
     /**
      * Returns datatypes in the ontology with requested ontology ID.
@@ -150,6 +220,35 @@ public interface OntologyRest {
     Response getObjectPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
+     * Adds the object property to the ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the new property model.
+     * @return true if added, false otherwise.
+     */
+    @POST
+    @Path("{ontologyid}/object-properties")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addObjectPropertyToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                         @QueryParam("resourcejson") String resourceJson);
+
+    /**
+     * Delete object property with requested class ID from ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param propertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return true if deleted, false otherwise.
+     */
+    @DELETE
+    @Path("{ontologyid}/object-properties/{propertyid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response deleteObjectPropertyFromOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                      @PathParam("propertyid") String propertyIdStr);
+
+    /**
      * Returns data properties in the ontology with requested ontology ID.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
@@ -160,6 +259,35 @@ public interface OntologyRest {
     @Path("{ontologyid}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     Response getDataPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Adds the data property to the ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param resourceJson the String representing the new property model.
+     * @return true if added, false otherwise.
+     */
+    @POST
+    @Path("{ontologyid}/data-properties")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response addDataPropertyToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                       @QueryParam("resourcejson") String resourceJson);
+
+    /**
+     * Delete data property with requested class ID from ontology with requested ontology ID from the server.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param propertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return true if deleted, false otherwise.
+     */
+    @DELETE
+    @Path("{ontologyid}/data-properties/{propertyid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    Response deleteDataPropertyFromOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                              @PathParam("propertyid") String propertyIdStr);
 
     /**
      * Returns named individuals in the ontology with requested ontology ID.
@@ -184,6 +312,22 @@ public interface OntologyRest {
     @Path("{ontologyid}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     Response getIRIsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns an array of the imports closure in the requested format from the ontology
+     * with the requested ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return array of imported ontologies from the ontology with the requested ID in the requested format
+     */
+    @GET
+    @Path("{ontologyid}/imported-ontologies")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Retrieves the JSON-LD of all directly imported ontologies")
+    Response getImportsClosure(@PathParam("ontologyid") String ontologyIdStr,
+                                     @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
 
     /**
      * Returns annotation properties in the direct imported ontologies of the ontology with requested ontology ID.

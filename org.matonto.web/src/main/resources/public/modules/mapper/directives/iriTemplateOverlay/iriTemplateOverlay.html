@@ -1,0 +1,34 @@
+<div class="iri-template-overlay overlay lg">
+    <form class="content" name="iriTemplateForm">
+        <h6>Edit IRI Template</h6>
+        <div class="template-begins-with form-group" ng-class="{'has-error': iriTemplateForm.beginsWith.$invalid}">
+            <label class="control-label" for="beginsWith">Begins With</label>
+            <div class="input-group">
+                <div id="beginning" class="input-group-addon">{{dvm.beginning}}</div>
+                <input type="text" id="beginsWith" name="beginsWith" class="form-control" aria-describedby="beginning" ng-model="dvm.beginsWith" ng-pattern="/^[a-zA-Z0-9._\-]+[a-zA-Z0-9._\-\/]+[a-zA-Z0-9._\-]$/" required>
+            </div>
+            <div ng-messages="iriTemplateForm.beginsWith.$error" class="error-msg">
+                <ng-message when="required">This field is required</ng-message>
+                <ng-message when="pattern">This value is invalid</ng-message>
+            </div>
+        </div>
+        <div class="template-then form-group">
+            <label class="control-label" for="then">Then</label>
+            <select id="then" ng-model="dvm.then" class="form-control">
+                <option ng-value="'/'">/</option>
+                <option ng-value="'#'">#</option>
+                <option ng-value="':'">:</option>
+            </select>
+        </div>
+        <div class="template-ends-with form-group">
+            <label class="control-label" for="endsWith">Ends With</label>
+            <p id="ends-with-help-block" class="help-block">Duplicate values will create a single individual with combined data.</p>
+            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-help-block"></select>
+        </div>
+        
+        <div class="btn-container clearfix">
+            <custom-button on-click="cancel()" pull="'left'">Cancel</custom-button>
+            <custom-button on-click="set({prefixEnd: dvm.beginsWith + dvm.then, localName: dvm.endsWith.value})" is-disabled-when="iriTemplateForm.$invalid">Set</custom-button>
+        </div>
+    </form>
+</div>

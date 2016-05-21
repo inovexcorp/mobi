@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Component
+@Component(immediate = true)
 public class SimpleRepositoryManager implements RepositoryManager {
 
     protected Map<String, Repository> initializedRepositories = new HashMap<>();

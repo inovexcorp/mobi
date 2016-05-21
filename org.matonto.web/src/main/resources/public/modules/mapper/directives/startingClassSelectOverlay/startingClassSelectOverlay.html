@@ -1,0 +1,21 @@
+<div class="starting-class-select-overlay overlay lg">
+    <form class="content">
+        <h6>Choose Starting Class</h6>
+        <div class="class-select form-group">
+            <ui-select ng-model="dvm.selectedClass">
+                <ui-select-match placeholder="Select a starting class">
+                    <span title="{{$select.selected['@id']}}">{{dvm.getName($select.selected)}}</span>
+                </ui-select-match>
+                <ui-select-choices group-by="dvm.getOntologyId" repeat="classObj in dvm.getClasses() | filter:$select.search">
+                    <div title="{{classObj['@id']}}" ng-bind-html="dvm.getName(classObj) | highlight:$select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <class-preview class-obj="dvm.selectedClass"></class-preview>
+        
+        <div class="btn-container clearfix">
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue({classId: dvm.selectedClass['@id']})" is-disabled-when="!dvm.selectedClass">Continue</custom-button>
+        </div>
+    </form>
+</div>

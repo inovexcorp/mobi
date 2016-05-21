@@ -31,6 +31,11 @@
                     tab: 'datatype',
                     editor: 'default',
                     editorTab: 'basic'
+                },
+                annotation: {
+                    tab: 'annotation',
+                    editor: 'default',
+                    editorTab: 'basic'
                 }
             }
 
@@ -63,22 +68,31 @@
                 return self.states[self.states.current];
             }
 
-            self.setStateToNew = function(state, ontologies) {
+            self.setStateToNew = function(state, ontologies, type) {
                 var editor,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi;
-                if(oi === -1) {
+                if(type === 'ontology') {
                     oi = ontologies.length - 1;
+                    ci = undefined;
+                    pi = undefined;
                     editor = 'ontology-editor';
-                } else if(ci === -1) {
+                } else if(type === 'class') {
                     ci = ontologies[oi].matonto.classes.length - 1;
+                    pi = undefined;
                     editor = 'class-editor';
-                } else {
-                    pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
+                } else if(type === 'property') {
+                    if(ci !== undefined) {
+                        pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
+                    } else {
+                        pi = ontologies[oi].matonto.noDomains.length - 1;
+                    }
                     editor = 'property-editor';
                 }
                 self.setState(editor, oi, ci, pi);
+
+                return oi;
             }
 
             self.clearState = function(oi) {

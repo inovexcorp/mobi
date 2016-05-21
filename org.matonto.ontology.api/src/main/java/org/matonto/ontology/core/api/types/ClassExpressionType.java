@@ -1,11 +1,10 @@
 package org.matonto.ontology.core.api.types;
 
-import javax.annotation.Nonnull;
-
+import aQute.bnd.annotation.component.Reference;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ValueFactory;
-import aQute.bnd.annotation.component.Reference;
 
+import javax.annotation.Nonnull;
 
 public enum ClassExpressionType {
 	OWL_CLASS("Class"), 

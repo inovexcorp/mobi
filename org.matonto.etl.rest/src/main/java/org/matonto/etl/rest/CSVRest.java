@@ -2,6 +2,7 @@ package org.matonto.etl.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
@@ -15,18 +16,20 @@ import javax.ws.rs.core.Response;
 public interface CSVRest {
 
     /**
-     * Uploads a delimited document to the data/tmp/ directory.
+     * Uploads a delimited document to the temp directory.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
+     * @param fileDetail information about the file being uploaded, including the name
      * @return a response with the name of the file created on the server
     */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation("Upload CSV file sent as form data.")
-    Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream);
+    @ApiOperation("Upload delimited file sent as form data.")
+    Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
+                    @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail);
 
     /**
-     * Replaces an uploaded delimited document in the data/tmp/ directory with another
+     * Replaces an uploaded delimited document in the temp directory with another
      * delimited file.
      *
      * @param fileInputStream an InputStream of a delimited document passed as form data
@@ -36,7 +39,7 @@ public interface CSVRest {
     @PUT
     @Path("{documentName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @ApiOperation("Replace an uploaded CSV file with another")
+    @ApiOperation("Replace an uploaded delimited file with another")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
                     @PathParam("documentName") String fileName);
 
@@ -49,39 +52,60 @@ public interface CSVRest {
      * @param rowEnd the number of rows to retrieve from the delimited document. NOTE:
      *               the default number of rows is 10
      * @param separator the character the columns are separated by
-     * @return a response with a JSON array and the number of columns in the file. Each
-     *         element in the array is a row in the document. The row is an array of
-     *         strings which are the cells in the row in the document
+     * @return a response with a JSON array. Each element in the array is a row in the
+     *         document. The row is an array of strings which are the cells in the row
+     *         in the document.
      */
     @GET
     @Path("{documentName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Gather rows from an uploaded document.")
+    @ApiOperation("Gather rows from an uploaded delimited document.")
     Response getRows(@PathParam("documentName") String fileName,
-                     @DefaultValue("10") @QueryParam("Row-Count") int rowEnd,
-                     @DefaultValue(",") @QueryParam("Separator") String separator);
+                     @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
+                     @DefaultValue(",") @QueryParam("separator") String separator);
 
     /**
-     * Maps the data in an uploaded delimited document into RDF in JSON-LD format
-     * using either an uploaded JSON-LD mapping file or a JSON-LD mapping string.
-     * The file must be present in the data/tmp/ directory.
+     * Maps the data in an uploaded delimited document into RDF in the requested format
+     * using a JSON-LD mapping string. The file must be present in the data/tmp/ directory.
      *
      * @param fileName the name of the delimited document in the data/tmp/ directory
      * @param jsonld a mapping in JSON-LD
-     * @param mappingFileName the name of an uploaded mapping file
+     * @param format the RDF serialization to use if getting a preview
      * @param containsHeaders whether the delimited file has headers
+     * @param separator the character the columns are separated by if it is a CSV
      * @return a response with a JSON object containing the mapping file name and a
-     *      JSON-LD string containing the converted data
+     *      string containing the converted data in the requested format
     */
     @POST
-    @Path("{documentName}/map")
+    @Path("{documentName}/map-preview")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
-    @ApiOperation("ETL the document using an uploaded mapping file or mapping JSON-LD")
-    Response etlFile(@PathParam("documentName") String fileName, 
-            @FormDataParam("jsonld") String jsonld,
-            @FormDataParam("fileName") String mappingFileName,
-            @DefaultValue("jsonld") @QueryParam("Format") String format,
-            @DefaultValue("false") @QueryParam("Preview") boolean isPreview,
-            @DefaultValue("true") @QueryParam("Contains-Headers") boolean containsHeaders);
+    @ApiOperation("ETL an uploaded delimited document using mapping JSON-LD")
+    Response etlFilePreview(@PathParam("documentName") String fileName,
+                    @FormDataParam("jsonld") String jsonld,
+                    @DefaultValue("jsonld") @QueryParam("format") String format,
+                    @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+                    @DefaultValue(",") @QueryParam("separator") String separator);
+
+    /**
+     * Maps the data in an uploaded delimited document into RDF in the requested format
+     * using an uploaded mapping. The file must be present in the data/tmp/ directory.
+     *
+     * @param fileName the name of the delimited document in the data/tmp/ directory
+     * @param mappingLocalName the local name of the mapping IRI
+     * @param format the RDF serialization to use if getting a preview
+     * @param containsHeaders whether the delimited file has headers
+     * @param separator the character the columns are separated by if it is a CSV
+     * @return a response with the converted data in the requested format as an octet-stream
+     *      to download
+     */
+    @GET
+    @Path("{documentName}/map")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @ApiOperation("ETL an uploaded delimited document using an uploaded mapping file")
+    Response etlFile(@PathParam("documentName") String fileName,
+                     @QueryParam("mappingName") String mappingLocalName,
+                     @DefaultValue("jsonld") @QueryParam("format") String format,
+                     @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+                     @DefaultValue(",") @QueryParam("separator") String separator);
 }

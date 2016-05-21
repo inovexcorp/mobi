@@ -96,6 +96,28 @@
                 data: {
                     title: 'Mapper'
                 }
+            })
+            .state('root.settings', {
+                url: '/settings',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/settings/settings.html'
+                    }
+                },
+                data: {
+                    title: 'Settings'
+                }
+            })
+            .state('root.sparql', {
+                url: '/sparql',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/sparql/sparql.html'
+                    }
+                },
+                data: {
+                    title: 'SPARQL'
+                }
             });
 
         authenticate.$inject = ['loginManagerService'];

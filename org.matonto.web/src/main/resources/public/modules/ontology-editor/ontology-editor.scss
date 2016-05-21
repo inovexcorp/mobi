@@ -7,6 +7,10 @@
         z-index: 3;
     }
 
+    > .row {
+        padding-left: 39px;
+    }
+
     /* removes the rounded corners so it fits in the box provided */
     .btn-group > .btn {
         border-radius: 0;
@@ -27,7 +31,29 @@
         form {
             height: 100%;
 
-            /* Don't let them change the height of the textareas */
+            .textarea-wrapper {
+                bottom: 0;
+                left: 0;
+                overflow: hidden;
+                position: absolute;
+                right: 0;
+                top: 60px;
+
+                textarea {
+                    background: $gray-lighter;
+                    border: 0;
+                    border-top: 1px solid $gray-lighter;
+                    font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+                    font-size: .875em;
+                    height: 100%;
+                    margin: 0;
+                    outline: 0;
+                    padding: 15px;
+                    resize: none;
+                    width: 100%;
+                }
+            }
+
             textarea {
                 resize: vertical;
             }
@@ -41,83 +67,29 @@
             }
         }
 
-        /* Add annotation button styles */
-        .btn-annotation {
-            padding: 0px;
-
-            /* Remove underline when hovered */
-            &:hover {
-                text-decoration: none;
-            }
-        }
-
-        /* Annotation styles */
-        .annotation {
-            border-bottom: 1px dotted;
-            cursor: default;
-            padding: 2px;
-            position: relative;
-
-            /* Removes the border from the first item */
-            &:last-child {
-                border: 0;
-            }
-
-            /* Contains the value of the annotation */
-            .value-container {
-                position: relative;
-
-                /* Highlights the value you are hovering over */
-                &:hover {
-                    background-color: $gray-lighter;
-                }
-            }
-
-            /* Spacing for the annotation header */
-            h5 {
-                margin: 3px;
-            }
-
-            /* Removes paragraph margin from the annotation value */
-            p {
-                margin: 0 37px 0 0;
-                padding: 3px;
-            }
-
-            /* Places the button in the top right corner */
-            .btn {
-                border: 0;
-                margin: 3px;
-                padding: 0px;
-                position: absolute;
-                top: 0;
-
-                /* Delete button placement */
-                &.btn-delete {
-                    right: 0;
-                }
-
-                /* Edit button placement */
-                &.btn-edit {
-                    right: 19px;
-                }
-
-                /* Removes default padding from this button */
-                .fa {
-                    margin: 0;
-                }
-            }
-        }
-
         /* ensures that the overlay form heights are automatically set rather than 100% */
         .overlay form {
             height: auto;
         }
-    }
 
-    .btn-circle {
-        bottom: 25px;
-        position: absolute;
-        right: 25px;
+        .annotation-preview {
+            background: $gray-lighter;
+
+            h3 {
+                background: $brand-primary;
+                color: #fff;
+                font-size: 14px;
+                font-weight: normal;
+                line-height: 20px;
+                margin: 0;
+                padding: 6px 12px;
+                text-align: center;
+            }
+
+            pre {
+                border: 0;
+                margin: 0;
+            }
+        }
     }
 }

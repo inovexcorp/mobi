@@ -8,6 +8,7 @@
         function annotationOverlay() {
             return {
                 restrict: 'E',
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html'
             }
         }

@@ -1,6 +1,6 @@
 <div class="tree scroll-without-buttons">
     <!-- property view -->
-    <strong>Object Properties</strong>
+    <strong>{{headerText}}</strong>
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
         <tree-item-with-sub current-entity="ontology"
                             current-ontology="ontology"
@@ -9,20 +9,22 @@
         <li class="container" ng-show="opened">
             <!-- properties associated with classes -->
             <ul ng-repeat="(ci, class) in ontology.matonto.classes">
-                <tree-item ng-repeat="property in class.matonto.properties | getThisType:(ontology.matonto.owl + propertyType)"
+                <tree-item ng-repeat="property in class.matonto.properties"
                            current-entity="property"
                            current-ontology="ontology"
                            is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
-                           on-click="vm.selectItem('property-editor', oi, ci, $index)"></tree-item>
+                           on-click="vm.selectItem('property-editor', oi, ci, $index)"
+                           ng-if="vm.isThisType(property, propertyType)"></tree-item>
             </ul>
 
             <!-- properties not associated with classes -->
             <ul>
-                <tree-item ng-repeat="property in ontology.matonto.noDomains | getThisType:(ontology.matonto.owl + propertyType)"
+                <tree-item ng-repeat="property in ontology.matonto.noDomains"
                            current-entity="property"
                            current-ontology="ontology"
                            is-active="vm.state.oi === oi && vm.state.ci === undefined && vm.state.pi === $index"
-                           on-click="vm.selectItem('property-editor', oi, undefined, $index)"></tree-item>
+                           on-click="vm.selectItem('property-editor', oi, undefined, $index)"
+                           ng-if="vm.isThisType(property, propertyType)"></tree-item>
             </ul>
         </li>
     </ul>

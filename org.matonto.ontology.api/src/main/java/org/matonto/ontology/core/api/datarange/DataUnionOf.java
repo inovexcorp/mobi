@@ -4,5 +4,5 @@ import java.util.Set;
 
 public interface DataUnionOf extends DataRange {
 
-	Set<DataRange> getOperands();
+    Set<DataRange> getOperands();
 }

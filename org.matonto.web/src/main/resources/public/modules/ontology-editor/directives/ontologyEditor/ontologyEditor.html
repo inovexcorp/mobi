@@ -2,46 +2,35 @@
     <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')"
-                    display-text="vm.state.oi !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Ontology'"></tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
 
-        <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')"
-                    display-text="'Annotations'"></tab-button>
+        <!--tab-button is-active="vm.state.editorTab === 'prefix'"
+                    on-click="vm.setEditorTab('prefix')">Prefix</tab-button-->
 
-        <tab-button is-active="vm.state.editorTab === 'prefix'"
-                    on-click="vm.setEditorTab('prefix')"
-                    display-text="'Prefix'"></tab-button>
+        <tab-button is-active="vm.state.editorTab === 'preview'"
+                    on-click="vm.setEditorTab('preview');">Preview</tab-button>
     </div>
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
+        <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
+
         <!-- ontology iri -->
-        <text-input ng-model="vm.selected['@id']"
-                    display-text="'Ontology IRI'"
-                    change-event="vm.entityChanged()"></text-input>
+        <div ng-class="{'has-error': vm.ontologyForm.ontologyIri.$invalid}" class="form-group">
+            <label class="control-label" for="ontologyIri">Ontology IRI</label>
+            <input class="form-control" id="ontologyIri" name="ontologyIri" ng-model="vm.selected['@id']" ng-pattern="dvm.iriPattern" ng-change="vm.setValidity(vm.ontologyForm.$valid); vm.entityChanged();" required />
+            <p ng-messages="vm.ontologyForm.ontologyIri.$error" class="error-msg">
+                <ng-message when="required">This field cannot be empty. Ontology will not be saved.</ng-message>
+                <ng-message when="pattern">The value provided is not a valid IRI. Ontology will not be saved.</ng-message>
+            </p>
+        </div>
 
-        <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
-                    display-text="'Label'"
-                    muted-text="vm.rdfs + 'label'"
-                    change-event="vm.entityChanged()"></text-input>
-
-        <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
-                   display-text="'Comment'"
-                   muted-text="vm.rdfs + 'comment'"
-                   change-event="vm.entityChanged()"></text-area>
-    </div>
-
-    <!-- annotations tab -->
-    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
         <annotation-tab></annotation-tab>
     </div>
 
     <!-- prefix tab -->
-    <div ng-if="vm.state.editorTab === 'prefix'" class="tab clearfix">
-        <!-- prefixes -->
+    <!--div ng-if="vm.state.editorTab === 'prefix'" class="tab clearfix">
+        <!-- prefixes
         <table class="table table-bordered input-table">
             <thead>
             <tr>
@@ -81,9 +70,20 @@
             </tr>
             </tbody>
         </table>
-        <!-- error messages for empty or unique -->
+        <!-- error messages for empty or unique
         <div class="has-warning clearfix" ng-if="vm.showDuplicateMessage">
             <strong ng-if="vm.showDuplicateMessage" class="help-block">Both prefix and value must be unique.</strong>
+        </div>
+    </div-->
+
+    <!-- preview tab -->
+    <div ng-show="vm.state.editorTab === 'preview'" class="tab clearfix">
+        <div class="form-inline">
+            <serialization-select ng-model="vm.serialization"></serialization-select>
+            <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>
+        </div>
+        <div class="textarea-wrapper">
+            <textarea class="preview-display" readonly>{{vm.preview}}</textarea>
         </div>
     </div>
 </form>

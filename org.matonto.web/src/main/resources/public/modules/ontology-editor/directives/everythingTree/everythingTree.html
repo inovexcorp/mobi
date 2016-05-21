@@ -3,9 +3,10 @@
     <strong>Everything</strong>
     <!-- start ontologies -->
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
-        <tree-item-with-sub current-entity="ontology"
+        <tree-item-with-sub ng-class="{'invalid': !ontology.matonto.isValid}"
+                            current-entity="ontology"
                             current-ontology="ontology"
-                            is-active="vm.state.oi === $index && vm.state.ci === undefined && vm.state.pi === undefined"
+                            is-active="vm.state.oi === $index && (vm.state.ci === undefined || vm.state.ci === -1) && vm.state.pi === undefined"
                             is-opened="opened"
                             on-click="vm.selectItem('ontology-editor', $index)"></tree-item-with-sub>
 
@@ -14,7 +15,7 @@
             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
                 <tree-item-with-sub current-entity="class"
                                     current-ontology="ontology"
-                                    is-active="vm.state.oi === oi && vm.state.ci === $index && vm.state.pi === undefined"
+                                    is-active="vm.state.oi === oi && vm.state.ci === $index && (vm.state.pi === undefined || vm.state.pi === -1)"
                                     is-opened="subOpened"
                                     on-click="vm.selectItem('class-editor', oi, $index)"></tree-item-with-sub>
 
@@ -50,34 +51,7 @@
                 </li>
             </ul>
 
-            <!-- start others (these will also be handled differently) -->
-            <ul ng-if="ontology.matonto.others.length" ng-init="opened = false;">
-                <li>
-                    <a ng-click="opened = !opened; $event.stopPropagation();">
-                        <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': opened, 'fa-folder-o': !opened}"></i>Others
-                    </a>
-                </li>
-                <li class="container" ng-show="opened">
-                    <ul ng-repeat="other in ontology.matonto.others">
-                        <a>
-                            <i class="fa fa-fw fa-question"></i>{{other[ontology.matonto.rdfs + 'label'][0]['@value'] || ((other['@id'] | splitIRI).end | beautify)}}
-                        </a>
-                    </ul>
-                </li>
-            </ul>
-
         </li>
     </ul>
-    <div class="creator">
-        <a ng-click="vm.showUploadOverlay = true;"
-           ng-class="{'active': vm.showUploadOverlay}">
-            <i class="fa fa-upload fa-fw"></i>Upload Ontology
-        </a>
-        <a ng-click="vm.showDeleteConfirmation = true;"
-           ng-class="{'disabled': vm.state.editor !== 'ontology-editor' || vm.state.oi === -1}">
-            <i class="fa fa-trash-o fa-fw"></i>Delete Ontology
-        </a>
-    </div>
     <!-- end ontologies -->
 </div>

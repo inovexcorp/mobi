@@ -7,17 +7,30 @@ import aQute.bnd.annotation.component.Reference;
 
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.*;
-import org.openrdf.model.URI;
+import org.matonto.rdf.api.BNode;
+import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
+import org.openrdf.model.*;
+import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
+import java.util.stream.Collectors;
 
-@Component (immediate=true, provide = SesameTransformer.class)
+
+@Component (provide = SesameTransformer.class)
 public class SimpleSesameTransformer implements SesameTransformer {
 
     private static final org.openrdf.model.ValueFactory SESAME_VF = ValueFactoryImpl.getInstance();
     private ValueFactory matontoVF;
+    private ModelFactory matontoMF;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleSesameTransformer.class);
     
     @Activate
@@ -35,7 +48,33 @@ public class SimpleSesameTransformer implements SesameTransformer {
         matontoVF = valueFactory;
     }
 
+    @Reference
+    protected void setMatontoMF(ModelFactory modelFactory) {
+        matontoMF = modelFactory;
+    }
+
     public SimpleSesameTransformer() {}
+
+    @Override
+    public org.openrdf.model.Model sesameModel(Model m){
+        Set<org.openrdf.model.Statement> stmts = m.stream()
+                .map(this::sesameStatement)
+                .collect(Collectors.toSet());
+
+        org.openrdf.model.Model sesameModel = new LinkedHashModel();
+        sesameModel.addAll(stmts);
+
+        return sesameModel;
+    }
+
+    @Override
+    public Model matontoModel(org.openrdf.model.Model m) {
+        Set<Statement> stmts = m.stream()
+                .map(this::matontoStatement)
+                .collect(Collectors.toSet());
+
+        return matontoMF.createModel(stmts);
+    }
 
     @Override
     public org.openrdf.model.Statement sesameStatement(Statement statement) {

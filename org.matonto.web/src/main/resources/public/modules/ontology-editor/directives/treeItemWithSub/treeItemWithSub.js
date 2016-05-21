@@ -2,10 +2,12 @@
     'use strict';
 
     angular
-        .module('treeItemWithSub', [])
+        .module('treeItemWithSub', ['settingsManager', 'ontologyManager'])
         .directive('treeItemWithSub', treeItemWithSub);
 
-        function treeItemWithSub() {
+        treeItemWithSub.$inject = ['settingsManagerService', 'ontologyManagerService'];
+
+        function treeItemWithSub(settingsManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -16,7 +18,20 @@
                     isOpened: '=',
                     onClick: '&'
                 },
-                templateUrl: 'modules/ontology-editor/directives/treeItemWithSub/treeItemWithSub.html'
+                templateUrl: 'modules/ontology-editor/directives/treeItemWithSub/treeItemWithSub.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    var treeDisplay = settingsManagerService.getTreeDisplay();
+
+                    dvm.getTreeDisplay = function(entity) {
+                        var result = entity['@id'];
+                        if(treeDisplay === 'pretty') {
+                            result = ontologyManagerService.getEntityName(entity);
+                        }
+                        return result;
+                    }
+                }
             }
         }
 })();

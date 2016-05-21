@@ -1,0 +1,28 @@
+<div class="mapping-select-overlay overlay lg">
+    <form class="content" name="mappingForm">
+        <h6>Choose Mapping</h6>
+        <div class="new-mapping form-group">
+            <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'new'" display-text="'New'"></radio-button>
+            <mapping-name-input name="dvm.newMappingName" 
+                required="dvm.mappingType === 'new'" 
+                is-active="dvm.mappingType === 'new'"
+                focus-event="dvm.mappingType = 'new'"></mapping-name-input>
+        </div>
+        <div class="previous-mapping form-group">
+            <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'previous'" display-text="'Previous'" is-disabled-when="dvm.previousMappings.length === 0"></radio-button>
+            <select class="form-control" size="10" 
+                ng-model="dvm.previousMappingName" 
+                ng-required="dvm.mappingType === 'previous'"
+                ng-disabled="dvm.previousMappings.length === 0"
+                ng-focus="dvm.mappingType = 'previous'">
+                <option ng-if="dvm.previousMappings.length === 0" value="" disabled hidden></option>
+                <option ng-repeat="mapping in dvm.previousMappings">{{mapping}}</option>
+            </select>
+        </div>
+        
+        <div class="btn-container clearfix">
+            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
+            <custom-button on-click="onClickContinue({mappingType: dvm.mappingType, mappingName: dvm.mappingType === 'new' ? dvm.newMappingName : dvm.previousMappingName})" is-disabled-when="!dvm.mappingType || mappingForm.$invalid">Continue</custom-button>
+        </div>
+    </form>
+</div>

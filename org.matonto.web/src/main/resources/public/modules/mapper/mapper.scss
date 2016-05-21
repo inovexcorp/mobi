@@ -1,13 +1,180 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+$sidebar-width: 150px;
+$overlay-height: 450px;
+
+.float-container {
+    overflow: hidden;
+}
+.header-link {
+    font-size: 14px;
+}
 .mapper {
-    /* styles for the right side */
-    .viewer {
-        /* makes the font smaller for the table */
-        table {
-            font-size: 12px;
+    #mapper-content {
+        margin-left: $sidebar-width;
+        height: 100%;
+        position: relative;
+
+        #main {
+            height: 100%;
+            padding-bottom: 240px;
+        }
+    }
+    .sidebar-wrapper {
+        width: $sidebar-width;
+    }
+    .ontology-preview {
+        overflow-y: auto;
+    }
+    .ontology-preview-overlay {
+        .content {
+            max-height: $overlay-height;
+        }
+    }
+    .mapping-select-overlay {
+        .mapping-radio {
+            width: 100%;
+        }
+        .content {
+            min-height: $overlay-height;
+
+            &>div.form-group {
+                width: 50%;
+                float: left;
+                height: ($overlay-height - 75);
+                padding: 0.5em;
+                margin-bottom: 0;
+            }
+        }
+    }
+    .ontology-select-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .ontology-select, 
+        .ontology-preview {
+            width: 50%;
+            float: left;
+            height: ($overlay-height - 75);
+            padding: 0.5em;
             margin-bottom: 0;
+
+            .ui-select-choices-row {
+                position: relative;
+                i {
+                    float: right;
+                }
+            }
+        }
+    }
+    .previous-check-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .result {
+            width: 100%;
+            float: left;
+            height: ($overlay-height - 75);
+            padding: 0.5em;
+        }
+    }
+    .starting-class-select-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .class-select, 
+        .class-preview {
+            width: 50%;
+            float: left;
+            height: ($overlay-height - 75);
+            padding: 0.5em;
+            margin-bottom: 0;
+        }
+    }
+    .mapping-name-overlay {
+        .content {
+            min-height: $overlay-height;
+        }
+        .form-group {
+            height: ($overlay-height - 75);
+            padding: 0.5em;
+            margin-bottom: 0;
+        }
+    }
+    .finish-overlay {
+        div.form-group {
+            width: 100%;
+            float: left;
+            padding: 0.5em;
+        }
+    }
+    .file-form {
+        margin-top: -1em;
+    }
+    #edit-mapping-container {
+        height: 100%;
+
+        #mapping-header {
+            width: 100%;
+            height: 10%;
+            min-height: 55px;
+
+            #mapping-title {
+                height: 100%;
+                text-align: center;
+
+                button {
+                    padding: 0;
+                    font-size: 0.5em;
+                    vertical-align: middle;
+                }
+            }
+            #ontology-section {
+                display: inline-block;
+                float: left;
+            }
+            #submit-mapping {
+                display: inline-block;
+                float: right;
+                
+                label {
+                    margin-right: 0.5em;
+                }
+                .actions {
+                    float: right;
+                    text-align: center;
+                }
+            }
+        }
+        #edit-mapping {
+            height: 90%;
+            position: relative;
+
+            #edit-cancel, 
+            .prop-form, 
+            .column-form, 
+            .edit-prop, 
+            .edit-class {
+                width: 40%;
+                float: left;
+                padding: 0.5em;
+
+                .form-group {
+                    width: 50%;
+                }
+                .form-btns {
+                    margin-bottom: 0px;
+                }
+                .iri-template {
+                    small {
+                        display: block;
+                        &.iri-template-header {
+                            font-weight: bold;
+                        }
+                    }
+                }
+            }
         }
     }
 }

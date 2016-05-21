@@ -3,25 +3,29 @@ package org.matonto.etl.service.csv;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.*;
 import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.csv.MappingManager;
+import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
-import org.matonto.rdf.core.utils.Values;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.rio.*;
+
 import java.io.*;
 import java.util.*;
-import java.util.regex.*;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-@Component(provide= CSVConverter.class)
+@Component(provide = CSVConverter.class)
 public class CSVConverterImpl implements CSVConverter {
 
     private static final Logger LOGGER = Logger.getLogger(CSVConverterImpl.class);
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
+    private MappingManager mappingManager;
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -33,30 +37,75 @@ public class CSVConverterImpl implements CSVConverter {
         this.modelFactory = modelFactory;
     }
 
-    @Override
-    public Model convert(File csv, File mappingFile, boolean containsHeaders) throws IOException, RDFParseException {
-        Model converted = parseMapping(mappingFile);
-        return convert(new FileReader(csv), converted, containsHeaders);
+    @Reference
+    public void setMappingManager(MappingManager manager) {
+        this.mappingManager = manager;
     }
 
     @Override
-    public Model convert(File csv, Model mappingModel, boolean containsHeaders) throws IOException {
-        return convert(new FileReader(csv), mappingModel, containsHeaders);
+    public Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
+            throws IOException, MatOntoException {
+        Model converted = mappingManager.createMapping(mappingFile);
+        return convert(new FileInputStream(delim), converted, containsHeaders,
+                FilenameUtils.getExtension(delim.getName()), separator);
     }
 
     @Override
-    public Model convert(InputStream csv, File mappingFile, boolean containsHeaders) throws IOException {
-        Model converted = parseMapping(mappingFile);
-        return convert(new InputStreamReader(csv), converted, containsHeaders);
+    public Model convert(File delim, Model mappingModel, boolean containsHeaders, char separator)
+            throws IOException, MatOntoException {
+        return convert(new FileInputStream(delim), mappingModel, containsHeaders,
+                FilenameUtils.getExtension(delim.getName()), separator);
     }
 
     @Override
-    public Model convert(InputStream csv, Model mappingModel, boolean containsHeaders) throws IOException {
-        return convert(new InputStreamReader(csv), mappingModel, containsHeaders);
+    public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
+            throws IOException, MatOntoException {
+        Model converted = mappingManager.createMapping(mappingFile);
+        return convert(delim, converted, containsHeaders, extension, separator);
     }
 
-    private Model convert(Reader csv, Model mappingModel, boolean containsHeaders) throws IOException {
-        char separator = getSeparator(mappingModel);
+    @Override
+    public Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension,
+                         char separator) throws IOException, MatOntoException {
+        return (extension.equals("xls") || extension.equals("xlsx"))
+                ? convertExcel(delim, mappingModel, containsHeaders)
+                : convertCSV(new InputStreamReader(delim), mappingModel, containsHeaders, separator);
+    }
+
+    private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders)
+            throws IOException, MatOntoException {
+        String[] nextRow;
+        Model convertedRDF = modelFactory.createModel();
+        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+
+        try {
+            Workbook wb = WorkbookFactory.create(excel);
+            Sheet sheet = wb.getSheetAt(0);
+            DataFormatter df = new DataFormatter();
+
+            //Traverse each row and convert column into RDF
+            for (Row row : sheet) {
+                // If headers exist, skip them
+                if (containsHeaders && row.getRowNum() == 0) {
+                    continue;
+                }
+                nextRow = new String[row.getPhysicalNumberOfCells()];
+                int index = 0;
+                for (Cell cell : row) {
+                    nextRow[index] = df.formatCellValue(cell);
+                    index++;
+                }
+                writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
+            }
+        } catch (InvalidFormatException e) {
+            throw new MatOntoException(e);
+        }
+
+        return convertedRDF;
+    }
+
+    private Model convertCSV(Reader csv, Model mappingModel, boolean containsHeaders, char separator)
+            throws IOException {
         CSVReader reader = new CSVReader(csv, separator);
         String[] nextLine;
         Model convertedRDF = modelFactory.createModel();
@@ -69,15 +118,29 @@ public class CSVConverterImpl implements CSVConverter {
 
         //Traverse each row and convert column into RDF
         while ((nextLine = reader.readNext()) != null) {
-            for (ClassMapping cm : classMappings) {
-                convertedRDF.addAll(writeClassToModel(cm,nextLine));
-            }
-            //Reset classMappings
-            for (ClassMapping cm : classMappings) {
-                cm.setInstance(false);
-            }
+            writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
         }
         return convertedRDF;
+    }
+
+    /**
+     * Converts a line of data into RDF using class mappings and adds it to the given Model.
+     * Resets the class mappings after iterating through class mappings so there are no
+     * duplicate class instances for the line.
+     *
+     * @param convertedRDF the model to hold the converted data
+     * @param line the data to convert
+     * @param classMappings the classMappings to use when converting the data
+     */
+    private void writeClassMappingsToModel(Model convertedRDF, String[] line, List<ClassMapping> classMappings) {
+        // Write each classMapping to the model
+        for (ClassMapping cm : classMappings) {
+            convertedRDF.addAll(writeClassToModel(cm, line));
+        }
+        //Reset classMappings
+        for (ClassMapping cm : classMappings) {
+            cm.setInstance(false);
+        }
     }
 
     /**
@@ -85,35 +148,9 @@ public class CSVConverterImpl implements CSVConverter {
      *
      * @return A String with a Universally Unique Identifier
      */
-    public String generateUUID() {
+    public String generateUuid() {
         return UUID.randomUUID().toString();
     }
-
-    /**
-     * Pulls the documents delimiting character from the mapping. If no separator is found, a comma is used.
-     *
-     * @param mappingModel The ontology mapping in an RDF Model. See MatOnto Wiki for details.
-     * @return The character that is used to separate values in the document to be loaded.
-     */
-    public char getSeparator(Model mappingModel) {
-        char separator;
-        Model documentModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()),
-                valueFactory.createIRI(Delimited.DOCUMENT.stringValue()));
-        if (documentModel.isEmpty()) {
-            return ',';
-        }
-        IRI documentIRI = Models.subjectIRI(documentModel).get();
-        Model separatorModel = mappingModel.filter(documentIRI,
-                valueFactory.createIRI(Delimited.SEPARATOR.stringValue()), null);
-        if (separatorModel.isEmpty()) {
-            return ',';
-        } else {
-            separator = Models.objectString(separatorModel).get().charAt(0);
-        }
-
-        return separator;
-    }
-
 
     /**
      * Writes RDF statements based on a class mapping and a line of data from CSV.
@@ -139,7 +176,7 @@ public class CSVConverterImpl implements CSVConverter {
         for (Integer i : dataProps.keySet()) {
             IRI property = valueFactory.createIRI(dataProps.get(i));
             try {
-                convertedRDF.add(classInstance, property, valueFactory.createLiteral(nextLine[i - 1]));
+                convertedRDF.add(classInstance, property, valueFactory.createLiteral(nextLine[i]));
             } catch (ArrayIndexOutOfBoundsException e) {
                 //Cell does not contain any data. No need to throw exception.
                 LOGGER.info("Missing data for " + classInstance + ": " + property);
@@ -188,11 +225,9 @@ public class CSVConverterImpl implements CSVConverter {
      * @return The local name portion of a IRI used in RDF data
      */
     String generateLocalName(String localNameTemplate, String[] currentLine) {
-        String uuid = "";
         if ("".equals(localNameTemplate) || localNameTemplate == null) {
             //Only generate UUIDs when necessary. If you really have to waste a UUID go here: http://wasteaguid.info/
-            uuid = generateUUID();
-            return uuid;
+            return generateUuid();
         }
         Pattern pat = Pattern.compile("(\\$\\{)(\\d+|UUID)(\\})");
         Matcher mat = pat.matcher(localNameTemplate);
@@ -200,11 +235,11 @@ public class CSVConverterImpl implements CSVConverter {
         while (mat.find()) {
             if ("UUID".equals(mat.group(2))) {
                 //Once again, only generate UUIDs when necessary
-                mat.appendReplacement(result, generateUUID());
+                mat.appendReplacement(result, generateUuid());
             } else {
                 int colIndex = Integer.parseInt(mat.group(2));
                 try {
-                    mat.appendReplacement(result, currentLine[colIndex - 1]);
+                    mat.appendReplacement(result, currentLine[colIndex]);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     LOGGER.info("Data not available for local name. Using '_'");
                     mat.appendReplacement(result, "_");
@@ -222,7 +257,7 @@ public class CSVConverterImpl implements CSVConverter {
      * @return An ArrayList of ClassMapping Objects created from the mapping model.
      */
     private ArrayList<ClassMapping> parseClassMappings(Model mappingModel) {
-        ArrayList<ClassMapping> classMappings = new ArrayList<ClassMapping>();
+        ArrayList<ClassMapping> classMappings = new ArrayList<>();
 
         Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()),
                 valueFactory.createIRI(Delimited.CLASS_MAPPING_OBJ.stringValue()));
@@ -241,7 +276,7 @@ public class CSVConverterImpl implements CSVConverter {
                 classMapping = uriToObject.get(classMappingIRI);
             } else {
                 classMapping = new ClassMapping();
-                uriToObject.put((IRI) classMappingIRI, classMapping);
+                uriToObject.put(classMappingIRI, classMapping);
             }
 
             //Parse the properties from the Class Mappings
@@ -249,20 +284,23 @@ public class CSVConverterImpl implements CSVConverter {
             //Prefix
             Model prefixModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.HAS_PREFIX.stringValue()), null);
-            if (!prefixModel.isEmpty())
+            if (!prefixModel.isEmpty()) {
                 classMapping.setPrefix(Models.objectString(prefixModel).get());
+            }
 
             //Class that the Class Mapping Maps to
             Model mapsToModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.MAPS_TO.stringValue()), null);
-            if (!mapsToModel.isEmpty())
+            if (!mapsToModel.isEmpty()) {
                 classMapping.setMapping(Models.objectString(mapsToModel).get());
+            }
 
             //Local Name
             Model localNameModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.LOCAL_NAME.stringValue()), null);
-            if (!localNameModel.isEmpty())
+            if (!localNameModel.isEmpty()) {
                 classMapping.setLocalName(Models.objectString(localNameModel).get());
+            }
 
             //Parse the data properties
             Model dataPropertyModel = mappingModel.filter(classMappingIRI,
@@ -305,39 +343,5 @@ public class CSVConverterImpl implements CSVConverter {
             classMappings.add(classMapping);
         }
         return classMappings;
-    }
-
-    /**
-     * Parses a Mapping file into a Model
-     *
-     * @param mapping the mapping file to be parsed to a model
-     * @return An RDF Model containing the data from the mapping file
-     * @throws RDFParseException Thrown if there is a problem with RDF data in the file
-     * @throws IOException       Thrown if there is a problem reading the file.
-     */
-    private Model parseMapping(File mapping) throws RDFParseException, IOException {
-
-        String extension = mapping.getName().split("\\.")[mapping.getName().split("\\.").length - 1];
-        LOGGER.info("FileName = " + mapping.getName() + "\t Extension:" + extension);
-        RDFFormat mapFormat;
-        mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(IllegalArgumentException::new);
-        FileReader reader = new FileReader(mapping);
-        Model model;
-        model = matontoModel(Rio.parse(reader, "", mapFormat));
-
-        return model;
-    }
-
-    /**
-     * Convert Sesame model to MatOnto model
-     * @param m A Sesame Model
-     * @return A Matonto Model
-     */
-    protected Model matontoModel(org.openrdf.model.Model m) {
-        Set<Statement> stmts = m.stream()
-                .map(Values::matontoStatement)
-                .collect(Collectors.toSet());
-
-        return modelFactory.createModel(stmts);
     }
 }

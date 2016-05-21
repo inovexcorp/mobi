@@ -5,9 +5,9 @@ import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 
 public interface DataCardinalityRestriction extends ClassExpression {
 
-	DataPropertyExpression getProperty();
-	
-	int getCardinality();
-	
-	DataRange getDataRange();
+    DataPropertyExpression getProperty();
+
+    int getCardinality();
+
+    DataRange getDataRange();
 }

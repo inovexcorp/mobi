@@ -11,12 +11,10 @@
             return {
                 restrict: 'E',
                 scope: {
-                    bindModel: '=ngModel',
                     changeEvent: '&',
                     displayText: '=',
                     excludeSelf: '=',
                     groupBy: '&',
-                    onlyStrings: '=',
                     selectList: '=',
                     mutedText: '='
                 },
@@ -24,11 +22,11 @@
                     bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: ['$filter', function($filter) {
                     var dvm = this;
 
                     dvm.getItemNamespace = function(item) {
-                        return ontologyManagerService.getItemNamespace(item);
+                        return $filter('splitIRI')(item).begin;
                     }
                 }],
                 templateUrl: 'modules/ontology-editor/directives/stringSelect/stringSelect.html'
