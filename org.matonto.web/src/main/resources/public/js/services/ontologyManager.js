@@ -564,7 +564,9 @@
                             datatypes = ontologyIris.data.datatypes;
 
                         if(importedOntologyIris.status === 200) {
-                            var importedClasses = importedDataProperties = importedObjectProperties = [];
+                            var importedClasses = [];
+                            var importedDataProperties = [];
+                            var importedObjectProperties = [];
 
                             _.forEach(importedOntologyIris.data, function(item) {
                                 importedClasses = _.concat(importedClasses, addOntologyIriToElements(item.classes, item.id));
