@@ -4,15 +4,15 @@ describe('Edit Class Form directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockOntologyManager();
-    mockMappingManager();
     mockPrefixes();
     beforeEach(function() {
         module('editClassForm');
+        mockOntologyManager();
+        mockMappingManager();
 
-        inject(function(mappingManagerService, ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
-            mappingManagerSvc = mappingManagerService;
+        inject(function(_ontologyManagerService_, _mappingManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

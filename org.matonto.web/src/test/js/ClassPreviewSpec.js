@@ -3,12 +3,12 @@ describe('Class Preview directive', function() {
         scope,
         ontologyManagerSvc;
 
-    mockOntologyManager();
     beforeEach(function() {
         module('classPreview');
+        mockOntologyManager();
 
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        inject(function(_ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

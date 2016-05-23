@@ -5,9 +5,9 @@
         .module('csvManager', [])
         .service('csvManagerService', csvManagerService);
 
-        csvManagerService.$inject = ['$rootScope', '$http', '$q'];
+        csvManagerService.$inject = ['$rootScope', '$http', '$q', '$window'];
 
-        function csvManagerService($rootScope, $http, $q) {
+        function csvManagerService($rootScope, $http, $q, $window) {
             var self = this,
                 prefix = '/matontorest/csv';
 
@@ -96,7 +96,7 @@
 
             self.map = function(fileName, mappingName, containsHeaders, separator) {
                 var queryString = '?format=jsonld&mappingName=' + mappingName + '&containsHeaders=' + containsHeaders + '&separator=' + separator;
-                window.location = prefix + '/' + encodeURIComponent(fileName) + '/map' + queryString;
+                $window.location = prefix + '/' + encodeURIComponent(fileName) + '/map' + queryString;
             }
         }
 })();
