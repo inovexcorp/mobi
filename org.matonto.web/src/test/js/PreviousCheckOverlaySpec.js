@@ -4,14 +4,14 @@ describe('Previous Check Overlay directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockOntologyManager();
-    mockMappingManager();
     beforeEach(function() {
         module('previousCheckOverlay');
+        mockOntologyManager();
+        mockMappingManager();
 
-        inject(function(ontologyManagerService, mappingManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
-            mappingManagerSvc = mappingManagerService;
+        inject(function(_ontologyManagerService_, _mappingManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

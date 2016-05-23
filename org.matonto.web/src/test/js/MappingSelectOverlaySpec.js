@@ -3,12 +3,12 @@ describe('Mapping Select Overlay directive', function() {
         scope,
         mappingManagerSvc;
 
-    mockMappingManager();
     beforeEach(function() {
         module('mappingSelectOverlay');
+        mockMappingManager();
 
-        inject(function(mappingManagerService) {
-            mappingManagerSvc = mappingManagerService;
+        inject(function(_mappingManagerService_) {
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

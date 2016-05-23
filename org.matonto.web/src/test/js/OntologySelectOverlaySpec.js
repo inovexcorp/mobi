@@ -3,9 +3,9 @@ describe('Ontology Select Overlay directive', function() {
         scope,
         ontologyManagerSvc;
 
-    mockOntologyManager();
     beforeEach(function() {
         module('ontologySelectOverlay');
+        mockOntologyManager();
 
         module(function($provide) {
             $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
@@ -22,8 +22,8 @@ describe('Ontology Select Overlay directive', function() {
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
 
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        inject(function(_ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

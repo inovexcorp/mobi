@@ -3,17 +3,17 @@ describe('Starting Class Select Overlay directive', function() {
         scope,
         ontologyManagerSvc;
 
-    mockOntologyManager();
     beforeEach(function() {
         module('startingClassSelectOverlay');
+        mockOntologyManager();
 
         module(function($provide) {
             $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
-
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        
+        inject(function(_ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

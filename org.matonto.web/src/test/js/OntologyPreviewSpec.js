@@ -3,13 +3,13 @@ describe('Ontology Preview directive', function() {
         scope,
         ontologyManagerSvc;
 
-    mockOntologyManager();
     mockPrefixes();
     beforeEach(function() {
         module('ontologyPreview');
-
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        mockOntologyManager();
+        
+        inject(function(_ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

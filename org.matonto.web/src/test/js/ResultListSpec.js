@@ -3,13 +3,13 @@ describe('Result List directive', function() {
         scope,
         catalogManagerSvc;
 
-    mockCatalogManager();
-    mockOntologyManager();
     beforeEach(function() {
         module('resultList');
+        mockOntologyManager();
+        mockCatalogManager();
 
-        inject(function(catalogManagerService) {
-            catalogManagerSvc = catalogManagerService;
+        inject(function(_catalogManagerService_) {
+            catalogManagerSvc = _catalogManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

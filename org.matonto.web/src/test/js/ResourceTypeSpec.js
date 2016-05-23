@@ -3,12 +3,12 @@ describe('Resource Type directive', function() {
         scope,
         catalogManagerSvc;
 
-    mockCatalogManager();
     beforeEach(function() {
         module('resourceType');
+        mockCatalogManager();
 
-        inject(function(catalogManagerService) {
-            catalogManagerSvc = catalogManagerService;
+        inject(function(_catalogManagerService_) {
+            catalogManagerSvc = _catalogManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

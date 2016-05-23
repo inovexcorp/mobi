@@ -3,12 +3,12 @@ describe('Resource Preview directive', function() {
         scope,
         catalogManagerSvc;
 
-    mockCatalogManager();
     beforeEach(function() {
         module('resourcePreview');
+        mockCatalogManager();
 
-        inject(function(catalogManagerService) {
-            catalogManagerSvc = catalogManagerService;
+        inject(function(_catalogManagerService_) {
+            catalogManagerSvc = _catalogManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
