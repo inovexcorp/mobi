@@ -61,10 +61,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String GET_RESOURCE_QUERY;
     private static final String FIND_RESOURCES_QUERY;
+    private static final String FIND_RESOURCES_TYPE_FILTER_QUERY;
     private static final String COUNT_RESOURCES_QUERY;
+    private static final String COUNT_RESOURCES_TYPE_FILTER_QUERY;
     private static final String RESOURCE_BINDING = "resource";
     private static final String RESOURCE_COUNT_BINDING = "resource_count";
-    private static final String TYPE_PREPARE_BINDING = "type";
+    private static final String TYPE_FILTER_BINDING = "type_filter";
 
     static {
         try {
@@ -76,8 +78,16 @@ public class SimpleCatalogManager implements CatalogManager {
                     SimpleCatalogManager.class.getResourceAsStream("/find-resources.rq"),
                     "UTF-8"
             );
+            FIND_RESOURCES_TYPE_FILTER_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/find-resources-type-filter.rq"),
+                    "UTF-8"
+            );
             COUNT_RESOURCES_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-resources.rq"),
+                    "UTF-8"
+            );
+            COUNT_RESOURCES_TYPE_FILTER_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/count-resources-type-filter.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -123,9 +133,17 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public PaginatedSearchResults<PublishedResource> findResource(PaginatedSearchParams searchParams) {
         RepositoryConnection conn = repository.getConnection();
+        Optional<Resource> typeParam = searchParams.getTypeFilter();
 
         // Get Total Count
-        TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_QUERY);
+        TupleQuery countQuery;
+        if (typeParam.isPresent()) {
+            countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_TYPE_FILTER_QUERY);
+            countQuery.setBinding(TYPE_FILTER_BINDING, typeParam.get());
+        } else {
+            countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_QUERY);
+        }
+
         TupleQueryResult countResults = countQuery.evaluate();
 
         int totalCount;
@@ -140,6 +158,8 @@ public class SimpleCatalogManager implements CatalogManager {
             return SearchResults.emptyResults();
         }
 
+        log.debug("Resource count: " + totalCount);
+
         // Prepare Query
         int limit = searchParams.getLimit();
         int offset = searchParams.getOffset();
@@ -153,23 +173,29 @@ public class SimpleCatalogManager implements CatalogManager {
             sortBinding = "modified";
         }
 
-        String queryString;
+        String querySuffix;
         Optional<Boolean> ascendingParam = searchParams.getAscending();
         if (ascendingParam.isPresent() && ascendingParam.get()) {
-            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
+            querySuffix = String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
                     limit, offset);
         } else {
-            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d",
+            querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d",
                     sortBinding, limit, offset);
         }
 
-        log.debug("QUERY: " + queryString);
-        TupleQuery query = conn.prepareTupleQuery(queryString);
-
-        Optional<Resource> typeParam = searchParams.getTypeFilter();
+        String queryString;
+        TupleQuery query;
         if (typeParam.isPresent()) {
-            query.setBinding(TYPE_PREPARE_BINDING, typeParam.get());
+            queryString = FIND_RESOURCES_TYPE_FILTER_QUERY + querySuffix;
+            query = conn.prepareTupleQuery(queryString);
+            query.setBinding(TYPE_FILTER_BINDING, typeParam.get());
+        } else {
+            queryString = FIND_RESOURCES_QUERY + querySuffix;
+            query = conn.prepareTupleQuery(queryString);
         }
+
+        log.debug("Query String:\n" + queryString);
+        log.debug("Query Plan:\n" + query);
 
         // Get Results
         TupleQueryResult result = query.evaluate();
@@ -184,6 +210,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
         result.close();
         conn.close();
+
+        log.debug("Result set size: " + resources.size());
 
         int pageNumber = (offset / limit) + 1;
 

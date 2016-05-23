@@ -251,6 +251,7 @@ public class SimpleCatalogManagerFullTest {
 
         // then
         assertThat(resources.getPage().size(), equalTo(0));
+        assertThat(resources.getTotalSize(), equalTo(0));
     }
 
     @Test
@@ -270,7 +271,12 @@ public class SimpleCatalogManagerFullTest {
 
         // then
         Assert.assertThat(ontResources.getPage().size(), equalTo(2));
+        Assert.assertThat(ontResources.getTotalSize(), equalTo(2));
+
         Assert.assertThat(mappingResources.getPage().size(), equalTo(1));
+        Assert.assertThat(mappingResources.getTotalSize(), equalTo(1));
+
         Assert.assertThat(fullResources.getPage().size(), equalTo(3));
+        Assert.assertThat(fullResources.getTotalSize(), equalTo(3));
     }
 }
