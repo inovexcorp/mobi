@@ -7,9 +7,8 @@ import org.matonto.rdf.api.Resource;
 public class SimpleOntologyBuilder extends AbstractPublishedResourceBuilder<OntologyBuilder, Ontology>
         implements OntologyBuilder {
 
-    public SimpleOntologyBuilder(Resource resource, Resource type, String title) {
+    public SimpleOntologyBuilder(Resource resource, String title) {
         this.resource = resource;
-        this.type = type;
         this.title = title;
     }
 

@@ -5,8 +5,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Distribution;
+import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.PublishedResource;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.NamedGraphFactory;
 import org.matonto.rdf.api.Resource;
@@ -43,6 +45,8 @@ public class SimpleCatalogManagerFullTest {
     private Resource publishedResource;
     private Resource dist1IRI;
     private Resource dist2IRI;
+    private IRI ONT_TYPE;
+    private IRI MAPPING_TYPE;
 
     private static final int TOTAL_SIZE = 3;
 
@@ -56,6 +60,8 @@ public class SimpleCatalogManagerFullTest {
         publishedResource = vf.createIRI("http://matonto.org/test/PublishedResource/1");
         dist1IRI = vf.createIRI("http://matonto.org/test/Distribution/1");
         dist2IRI = vf.createIRI("http://matonto.org/test/Distribution/2");
+        ONT_TYPE = vf.createIRI("http://matonto.org/ontologies/catalog#Ontology");
+        MAPPING_TYPE = vf.createIRI("http://matonto.org/ontologies/catalog#Mapping");
 
         manager = new SimpleCatalogManager();
         manager.setRepository(repo);
@@ -68,12 +74,21 @@ public class SimpleCatalogManagerFullTest {
         RepositoryConnection conn = repo.getConnection();
         conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TURTLE)));
         conn.close();
+
+        Map<String, Object> props = new HashMap<>();
+        props.put("title", "MatOnto Test Catalog");
+        props.put("description", "This is a test catalog");
+        props.put("iri", "http://matonto.org/test/catalog");
+
+        manager.start(props);
     }
 
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
     }
+
+    /* Test getResource() */
 
     @Test
     public void testGetExistingResourceWithOptionals() throws Exception {
@@ -89,7 +104,7 @@ public class SimpleCatalogManagerFullTest {
         PublishedResource resource = optional.get();
 
         assertEquals("Test Resource 1", resource.getTitle());
-        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getType().stringValue());
+        assertTrue(resource.getTypes().contains(vf.createIRI("http://matonto.org/ontologies/catalog#Ontology")));
         assertEquals(issued, resource.getIssued());
         assertEquals(modified, resource.getModified());
         assertEquals("Test Description", resource.getDescription());
@@ -117,89 +132,6 @@ public class SimpleCatalogManagerFullTest {
     }
 
     @Test
-    public void testFindResourcesReturnsCorrectDataFirstPage() throws Exception {
-        // given
-        // when
-        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
-
-        // then
-        Assert.assertThat(resources.getPage().size(), equalTo(1));
-        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(resources.getPageSize(), equalTo(1));
-        Assert.assertThat(resources.getPageNumber(), equalTo(1));
-    }
-
-    @Test
-    public void testFindResourcesReturnsCorrectDataLastPage() throws Exception {
-        // given
-        // when
-        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 1);
-
-        // then
-        Assert.assertThat(resources.getPage().size(), equalTo(1));
-        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(resources.getPageSize(), equalTo(1));
-        Assert.assertThat(resources.getPageNumber(), equalTo(2));
-    }
-
-    @Test
-    public void testFindResourcesReturnsCorrectDataOnePage() throws Exception {
-        // given
-        // when
-        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1000, 0);
-
-        // then
-        Assert.assertThat(resources.getPage().size(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
-        Assert.assertThat(resources.getPageSize(), equalTo(1000));
-        Assert.assertThat(resources.getPageNumber(), equalTo(1));
-    }
-
-    @Test
-    public void testFindResourcesDefaultOrdering() throws Exception {
-        // given
-        // when
-        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
-
-        // then
-        Assert.assertThat(resources.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
-    }
-
-    @Test
-    public void testFindResourcesOrdering() throws Exception {
-        // given
-        // when
-        PaginatedSearchResults<PublishedResource> resources1 = manager.findResource("", 1, 0, vf.createIRI(DC + "modified"), true);
-        PaginatedSearchResults<PublishedResource> resources2 = manager.findResource("", 1, 0, vf.createIRI(DC + "modified"), false);
-        PaginatedSearchResults<PublishedResource> resources3 = manager.findResource("", 1, 0, vf.createIRI(DC + "issued"), true);
-        PaginatedSearchResults<PublishedResource> resources4 = manager.findResource("", 1, 0, vf.createIRI(DC + "issued"), false);
-        PaginatedSearchResults<PublishedResource> resources5 = manager.findResource("", 1, 0, vf.createIRI(DC + "title"), true);
-        PaginatedSearchResults<PublishedResource> resources6 = manager.findResource("", 1, 0, vf.createIRI(DC + "title"), false);
-
-        // then
-        Assert.assertThat(resources1.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
-        Assert.assertThat(resources2.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
-        Assert.assertThat(resources3.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
-        Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
-        Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
-        Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
-    }
-
-    @Test
-    public void testFindResourceWithNoEntries() throws Exception {
-        // given
-        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo2.initialize();
-        manager.setRepository(repo2);
-
-        // when
-        PaginatedSearchResults<PublishedResource> resources = manager.findResource("", 1, 0);
-
-        // then
-        assertThat(resources.getPage().size(), equalTo(0));
-    }
-
-    @Test
     public void testGetResourceWithNoEntries() throws Exception {
         // given
         Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
@@ -211,5 +143,140 @@ public class SimpleCatalogManagerFullTest {
 
         // then
         assertThat(resource, equalTo(Optional.empty()));
+    }
+
+    /* Test findResource() */
+
+    @Test
+    public void testFindResourcesReturnsCorrectDataFirstPage() throws Exception {
+        // given
+        int limit = 1;
+        int offset = 0;
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
+
+        // then
+        Assert.assertThat(resources.getPage().size(), equalTo(1));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getPageSize(), equalTo(1));
+        Assert.assertThat(resources.getPageNumber(), equalTo(1));
+    }
+
+    @Test
+    public void testFindResourcesReturnsCorrectDataLastPage() throws Exception {
+        // given
+        int limit = 1;
+        int offset = 1;
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
+
+        // then
+        Assert.assertThat(resources.getPage().size(), equalTo(1));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getPageSize(), equalTo(1));
+        Assert.assertThat(resources.getPageNumber(), equalTo(2));
+    }
+
+    @Test
+    public void testFindResourcesReturnsCorrectDataOnePage() throws Exception {
+        // given
+        int limit = 1000;
+        int offset = 0;
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
+
+        // then
+        Assert.assertThat(resources.getPage().size(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getTotalSize(), equalTo(TOTAL_SIZE));
+        Assert.assertThat(resources.getPageSize(), equalTo(1000));
+        Assert.assertThat(resources.getPageNumber(), equalTo(1));
+    }
+
+    @Test
+    public void testFindResourcesOrdering() throws Exception {
+        // given
+        IRI modified = vf.createIRI(DC + "modified");
+        IRI issued = vf.createIRI(DC + "issued");
+        IRI title = vf.createIRI(DC + "title");
+
+        int limit = 1;
+        int offset = 0;
+        PaginatedSearchParams searchParams1 = new SimpleSearchParams.Builder(limit, offset, modified).ascending(true).build();
+        PaginatedSearchParams searchParams2 = new SimpleSearchParams.Builder(limit, offset, modified).ascending(false).build();
+        PaginatedSearchParams searchParams3 = new SimpleSearchParams.Builder(limit, offset, issued).ascending(true).build();
+        PaginatedSearchParams searchParams4 = new SimpleSearchParams.Builder(limit, offset, issued).ascending(false).build();
+        PaginatedSearchParams searchParams5 = new SimpleSearchParams.Builder(limit, offset, title).ascending(true).build();
+        PaginatedSearchParams searchParams6 = new SimpleSearchParams.Builder(limit, offset, title).ascending(false).build();
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources1 = manager.findResource(searchParams1);
+        PaginatedSearchResults<PublishedResource> resources2 = manager.findResource(searchParams2);
+        PaginatedSearchResults<PublishedResource> resources3 = manager.findResource(searchParams3);
+        PaginatedSearchResults<PublishedResource> resources4 = manager.findResource(searchParams4);
+        PaginatedSearchResults<PublishedResource> resources5 = manager.findResource(searchParams5);
+        PaginatedSearchResults<PublishedResource> resources6 = manager.findResource(searchParams6);
+
+        // then
+        Assert.assertThat(resources1.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources2.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+        Assert.assertThat(resources3.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources4.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/2"));
+        Assert.assertThat(resources5.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/1"));
+        Assert.assertThat(resources6.getPage().iterator().next().getResource().stringValue(), equalTo("http://matonto.org/test/PublishedResource/3"));
+    }
+
+    @Test
+    public void testFindResourceWithNoEntries() throws Exception {
+        // given
+        Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo2.initialize();
+        manager.setRepository(repo2);
+
+        int limit = 1;
+        int offset = 0;
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams searchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+
+        // when
+        PaginatedSearchResults<PublishedResource> resources = manager.findResource(searchParams);
+
+        // then
+        assertThat(resources.getPage().size(), equalTo(0));
+        assertThat(resources.getTotalSize(), equalTo(0));
+    }
+
+    @Test
+    public void testFindResourcesWithTypeFilter() throws Exception {
+        // given
+        int limit = 1000;
+        int offset = 0;
+        IRI modified = vf.createIRI(DC + "modified");
+        PaginatedSearchParams ontSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).typeFilter(ONT_TYPE).build();
+        PaginatedSearchParams mappingSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).typeFilter(MAPPING_TYPE).build();
+        PaginatedSearchParams fullSearchParams = new SimpleSearchParams.Builder(limit, offset, modified).build();
+
+        // when
+        PaginatedSearchResults<PublishedResource> ontResources = manager.findResource(ontSearchParams);
+        PaginatedSearchResults<PublishedResource> mappingResources = manager.findResource(mappingSearchParams);
+        PaginatedSearchResults<PublishedResource> fullResources = manager.findResource(fullSearchParams);
+
+        // then
+        Assert.assertThat(ontResources.getPage().size(), equalTo(2));
+        Assert.assertThat(ontResources.getTotalSize(), equalTo(2));
+
+        Assert.assertThat(mappingResources.getPage().size(), equalTo(1));
+        Assert.assertThat(mappingResources.getTotalSize(), equalTo(1));
+
+        Assert.assertThat(fullResources.getPage().size(), equalTo(3));
+        Assert.assertThat(fullResources.getTotalSize(), equalTo(3));
     }
 }

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.34-SNAPSHOT</version>
+        <version>1.0.39-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
 
     </parent>
@@ -24,17 +24,17 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.0.34-SNAPSHOT</version>
+            <version>1.0.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.0.34-SNAPSHOT</version>
+            <version>1.0.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.0.34-SNAPSHOT</version>
+            <version>1.0.34</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
@@ -87,7 +87,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <workingDirectory>${project.build.directory}</workingDirectory>
+                    <systemPropertyVariables>
+                        <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>

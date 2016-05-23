@@ -12,4 +12,6 @@ public interface CatalogFactory {
      * @return The OntologyBuilder for building an Ontology Catalog resource.
      */
     OntologyBuilder createOntologyBuilder(Resource resource, String title);
+
+    PaginatedSearchParamsBuilder createSearchParamsBuilder(int limit, int offset, Resource sortBy);
 }

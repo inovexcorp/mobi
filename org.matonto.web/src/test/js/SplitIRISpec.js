@@ -62,9 +62,9 @@ describe('Split IRI filter', function() {
                 {
                     value: 'a:a/a:a',
                     result: {
-                        begin: 'a:a',
-                        then: '/',
-                        end: 'a:a'
+                        begin: 'a:a/a',
+                        then: ':',
+                        end: 'a'
                     }  
                 }
             ];
