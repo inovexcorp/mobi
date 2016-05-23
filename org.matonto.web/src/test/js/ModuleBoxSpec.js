@@ -56,8 +56,6 @@ describe('Module Box directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
         it('for class selectors', function() {
-            var contents = element.querySelectorAll('.content');
-            expect(contents.length).toBe(1);
             var iconWrappers = element.querySelectorAll('.icon-wrapper');
             expect(iconWrappers.length).toBe(1);
             var headers = element.querySelectorAll('h2');

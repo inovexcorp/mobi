@@ -2,28 +2,24 @@
 @import "./src/main/resources/public/css/variables";
 
 .module-box {
-    padding: 0 1.5em 1.5em;
+    padding: 1.5em 1.5em 3em;
+    text-align: center;
 
-    .content {
-        border: 1px solid $gray-light;
-        padding: 1.5em 1.5em 3em;
-        text-align: center;
+    .icon-wrapper {
+        border-radius: 3em;
+        color: #fff;
+        display: inline-block;
+        padding: 1.25em 1em;
+    }
 
-        .icon-wrapper {
-            border-radius: 3em;
-            color: #fff;
-            display: inline-block;
-            padding: 1.25em 1em;
-        }
+    h2 {
+        margin: 0;
+        padding: .25em;
+    }
 
-        h2 {
-            margin: 0;
-            padding: .25em;
-        }
-
-        .description {
-            margin: 0;
-            padding: 1em 0;
-        }
+    .description {
+        font-size: 1.125em;
+        margin: 0;
+        padding: 1em 0;
     }
 }

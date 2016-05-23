@@ -1,3 +1,6 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
 .home {
     h1 {
         font-size: 5em;
@@ -22,50 +25,61 @@
 
     @-webkit-keyframes webkitFadeIn {
         0% {
-            opacity:0;
-            -webkit-transform:scale(.1);
+            opacity: 0;
+            -webkit-transform: scale(.1);
         }
         85% {
             opacity:1;
-            -webkit-transform:scale(1.05);
+            -webkit-transform: scale(1.05);
 
         }
         100% {
-            -webkit-transform:scale(1);
+            -webkit-transform: scale(1);
         }
     }
+
     @keyframes FadeIn {
-            0% {
-                opacity:0;
-                transform:scale(.1);
-            }
-            85% {
-                opacity:1;
-                transform:scale(1.05);
-
-            }
-            100% {
-                transform:scale(1);
-            }
+        0% {
+            opacity: 0;
+            transform: scale(.1);
         }
-    .module-box {
-        -webkit-animation: webkitFadeIn .75s linear;
-        animation: FadeIn .75s linear;
-        -webkit-animation-fill-mode:both;
-        animation-fill-mode:both;
-
-
-        &:nth-child(2) {
-            -webkit-animation-delay: .5s;
-            animation-delay: .5s;
+        85% {
+            opacity: 1;
+            transform: scale(1.05);
         }
-        &:nth-child(3) {
-            -webkit-animation-delay: 1s;
-            animation-delay: 1s;
+        100% {
+            transform:scale(1);
         }
-        &:nth-child(4) {
-            -webkit-animation-delay: 1.5s;
-            animation-delay: 1.5s;
+    }
+
+    .module-box-container {
+        border-spacing: 30px;
+        display: table;
+        margin: 0 -15px;
+
+        .module-box {
+            border: 1px solid $gray-light;
+            display: table-cell;
+            padding: 0 1.5em 1.5 em;
+            width: 25%;
+
+            -webkit-animation: webkitFadeIn .75s linear;
+                    animation:       FadeIn .75s linear;
+            -webkit-animation-fill-mode: both;
+                    animation-fill-mode: both;
+
+            &:nth-child(2) {
+                -webkit-animation-delay: .5s;
+                        animation-delay: .5s;
+            }
+            &:nth-child(3) {
+                -webkit-animation-delay: 1s;
+                        animation-delay: 1s;
+            }
+            &:nth-child(4) {
+                -webkit-animation-delay: 1.5s;
+                        animation-delay: 1.5s;
+            }
         }
     }
 }
