@@ -97,13 +97,16 @@ describe('Result List directive', function() {
             expect(resultsHeader.querySelectorAll('div.contents').length).toBe(1);
         });
         it('with the correct number of results', function() {
-            scope.catalogManagerService.results.results = [{}, {distributions: []}, {distributions: [{}]}];
+            scope.catalogManagerService.results.results = [{types: ['type']}, {types: [], distributions: []}, {distributions: [{}]}];
             scope.$digest();
             var resultsList = angular.element(this.element.querySelectorAll('.results-list')[0]);
             var results = resultsList.querySelectorAll('.result');
             expect(results.length).toBe(scope.catalogManagerService.results.results.length);
             for (var i = 0; i < results.length; i++) {
-                expect(results[i].querySelectorAll('resource-type').length).toBe(1);
+                var catalogResult = scope.catalogManagerService.results.results[i];
+                if (catalogResult.types) {
+                    expect(results[i].querySelectorAll('resource-type').length).toBe(catalogResult.types.length);                    
+                }
             }
         });
         it('depending on whether a resource has distributions', function() {
