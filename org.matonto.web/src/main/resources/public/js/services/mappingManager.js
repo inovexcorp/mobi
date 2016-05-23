@@ -109,7 +109,7 @@
              * @param {string} mappingName - The user-defined name for the mapping file
              */
             self.downloadMapping = function(mappingName) {
-                window.location = prefix + '/' + mappingName;
+                $window.location = prefix + '/' + mappingName;
             }
 
             // Edit mapping methods 

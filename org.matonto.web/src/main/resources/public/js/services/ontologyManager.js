@@ -5,9 +5,9 @@
         .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj', 'prefixes', 'annotationManager'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj', 'prefixes', 'uuid', 'annotationManagerService'];
+        ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj', 'prefixes', 'uuid', 'annotationManagerService'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes, uuid, annotationManagerService) {
+        function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes, uuid, annotationManagerService) {
             var self = this,
                 prefix = '/matontorest/ontologies',
                 defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
@@ -856,7 +856,7 @@
 
             self.download = function(ontologyId, rdfFormat, fileName) {
                 var queryString = '?rdfFormat=' + rdfFormat + '&fileName=' + fileName;
-                window.location = prefix + '/' + encodeURIComponent(ontologyId) + queryString;
+                $window.location = prefix + '/' + encodeURIComponent(ontologyId) + queryString;
             }
 
             self.get = function(ontologyId, rdfFormat) {
