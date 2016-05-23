@@ -2,9 +2,9 @@ describe('Ontology Preview Overlay directive', function() {
     var $compile,
         scope;
 
-    mockOntologyManager();
     beforeEach(function() {
         module('ontologyPreviewOverlay');
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

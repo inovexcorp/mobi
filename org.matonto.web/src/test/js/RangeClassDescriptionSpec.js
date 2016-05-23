@@ -4,12 +4,12 @@ describe('Range Class Description directive', function() {
         ontologyManagerSvc;
 
     mockPrefixes();
-    mockOntologyManager();
     beforeEach(function() {
         module('rangeClassDescription');
+        mockOntologyManager();
 
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        inject(function(_ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
