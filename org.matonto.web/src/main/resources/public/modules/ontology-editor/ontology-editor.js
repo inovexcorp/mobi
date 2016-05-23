@@ -104,9 +104,14 @@
             vm.selected = vm.ontology.matonto.jsAnnotations[index];
         }
 
+        vm.disableSave = function() {
+            return !_.get(vm.ontology, 'matonto.isValid', false) || !ontologyManagerService.getChangedListForOntology(_.get(vm.ontology, '@id')).length;
+        }
+
         vm.save = function() {
             ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.state)
                 .then(function(state) {
+                    vm.showSaveOverlay = false;
                     vm.state = state;
                 });
         }

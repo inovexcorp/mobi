@@ -954,7 +954,7 @@
                         changedProperties = [],
                         promises = [];
 
-                    _.forEach(_.filter(changedEntries, { ontologyId: ontologyId }), function(changedEntry) {
+                    _.forEach(self.getChangedListForOntology(ontologyId), function(changedEntry) {
                         var state = angular.copy(changedEntry.state);
                         obj = self.getObject(state);
                         obj.matonto.unsaved = false;
@@ -1175,6 +1175,10 @@
 
             self.clearChangedList = function(ontologyId) {
                 changedEntries = _.reject(changedEntries, { ontologyId: ontologyId });
+            }
+
+            self.getChangedListForOntology = function(ontologyId) {
+                return _.filter(changedEntries, { ontologyId: ontologyId });
             }
 
             self.getClasses = function(ontology) {
