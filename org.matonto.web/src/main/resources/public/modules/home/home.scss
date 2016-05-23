@@ -20,30 +20,52 @@
         }
     }
 
-    @-webkit-keyframes FadeIn {
+    @-webkit-keyframes webkitFadeIn {
         0% {
-            opacity:0; -webkit-transform:scale(.1);
+            opacity:0;
+            -webkit-transform:scale(.1);
         }
         85% {
-            opacity:1; -webkit-transform:scale(1.05);
+            opacity:1;
+            -webkit-transform:scale(1.05);
+
         }
         100% {
             -webkit-transform:scale(1);
         }
     }
+    @keyframes FadeIn {
+            0% {
+                opacity:0;
+                transform:scale(.1);
+            }
+            85% {
+                opacity:1;
+                transform:scale(1.05);
 
+            }
+            100% {
+                transform:scale(1);
+            }
+        }
     .module-box {
-        -webkit-animation: FadeIn .75s linear;
+        -webkit-animation: webkitFadeIn .75s linear;
+        animation: FadeIn .75s linear;
         -webkit-animation-fill-mode:both;
+        animation-fill-mode:both;
+
 
         &:nth-child(2) {
-            -webkit-animation-delay: .5s
+            -webkit-animation-delay: .5s;
+            animation-delay: .5s;
         }
         &:nth-child(3) {
-            -webkit-animation-delay: 1s
+            -webkit-animation-delay: 1s;
+            animation-delay: 1s;
         }
         &:nth-child(4) {
-            -webkit-animation-delay: 1.5s
+            -webkit-animation-delay: 1.5s;
+            animation-delay: 1.5s;
         }
     }
 }
