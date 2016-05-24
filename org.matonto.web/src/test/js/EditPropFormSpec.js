@@ -4,14 +4,14 @@ describe('Edit Prop Form directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockOntologyManager();
-    mockMappingManager();
     beforeEach(function() {
         module('editPropForm');
-
-        inject(function(mappingManagerService, ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
-            mappingManagerSvc = mappingManagerService;
+        mockOntologyManager();
+        mockMappingManager();
+        
+        inject(function(_mappingManagerService_, _ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

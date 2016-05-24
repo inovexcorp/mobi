@@ -4,12 +4,12 @@ describe('Prop Form directive', function() {
         scope,
         ontologyManagerSvc;
 
-    mockOntologyManager();
     beforeEach(function() {
         module('propForm');
+        mockOntologyManager();
 
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        inject(function(_ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$timeout_, _$rootScope_) {

@@ -1,19 +1,19 @@
 describe('CSV Manager service', function() {
     var $httpBackend,
         csvManagerSvc,
-        windowObj = {location: {}};
-
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.value('window', windowObj);
-        });
-    });
+        windowSvc;
 
     beforeEach(function() {
         module('csvManager');
+        module(function($provide) {
+            $provide.service('$window', function() {
+                this.location = '';
+            });
+        });
 
-        inject(function(csvManagerService, _$httpBackend_) {
+        inject(function(csvManagerService, _$window_, _$httpBackend_) {
             csvManagerSvc = csvManagerService;
+            windowSvc = _$window_;
             $httpBackend = _$httpBackend_;
         });
     });
@@ -76,7 +76,6 @@ describe('CSV Manager service', function() {
         });
     });
     describe('should return mapped data from an uploaded delimited file', function() {
-        beforeEach()
         it('using an uploaded mapping', function() {
             var fileName = 'test';
             var mappingFileName = 'mapping';
@@ -90,7 +89,7 @@ describe('CSV Manager service', function() {
                 'separator': separator
             });
             csvManagerSvc.map(fileName, mappingFileName, containsHeaders, separator);
-            expect(window.location).toEqual('/matontorest/csv/' + fileName + '/map' + params);
+            expect(windowSvc.location).toEqual('/matontorest/csv/' + fileName + '/map' + params);
         });
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {

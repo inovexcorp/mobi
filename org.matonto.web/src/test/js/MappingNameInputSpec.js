@@ -3,13 +3,13 @@ describe('Mapping Name Input directive', function() {
         scope,
         mappingManagerSvc;
 
-    mockMappingManager();
     injectRegexConstant();
     beforeEach(function() {
         module('mappingNameInput');
+        mockMappingManager();
 
-        inject(function(mappingManagerService) {
-            mappingManagerSvc = mappingManagerService;
+        inject(function(_mappingManagerService_) {
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {

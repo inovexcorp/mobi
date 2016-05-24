@@ -60,11 +60,10 @@
         .module-box {
             border: 1px solid $gray-light;
             display: table-cell;
-            padding: 0 1.5em 1.5 em;
             width: 25%;
 
-            -webkit-animation: webkitFadeIn .75s linear;
-                    animation:       FadeIn .75s linear;
+            -webkit-animation: webkitFadeIn .75s ease-in;
+                    animation:       FadeIn .75s ease-in;
             -webkit-animation-fill-mode: both;
                     animation-fill-mode: both;
 

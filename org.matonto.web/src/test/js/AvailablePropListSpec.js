@@ -2,9 +2,9 @@ describe('Available Prop List directive', function() {
     var $compile,
         scope;
 
-    mockOntologyManager();
     beforeEach(function() {
         module('availablePropList');
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
