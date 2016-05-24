@@ -33,7 +33,11 @@
         vm.setTreeTab = function(tab) {
             stateManagerService.setTreeTab(tab);
             vm.state = stateManagerService.getState();
-            vm.selected = ontologyManagerService.getObject(vm.state);
+            if(tab !== 'annotation') {
+                vm.selected = ontologyManagerService.getObject(vm.state);
+            } else {
+                vm.selected = vm.ontologies[vm.state.oi].matonto.jsAnnotations[vm.state.pi];
+            }
             vm.serialization = '';
         }
 
@@ -72,6 +76,7 @@
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(file)
                 .then(function(response) {
+                    stateManagerService.setTreeTab('everything');
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
                     vm.showUploadOverlay = false;
                 }, function(response) {
@@ -84,6 +89,7 @@
                 .then(function(response) {
                     vm.showDeleteConfirmation = false;
                     if(response.selectOntology) {
+                        stateManagerService.setTreeTab('everything');
                         vm.selectItem('ontology-editor', vm.state.oi, undefined, undefined);
                     } else {
                         vm.selectItem('default', undefined, undefined, undefined);
@@ -222,6 +228,7 @@
         vm.openOntology = function() {
             ontologyManagerService.openOntology(vm.ontologyIdToOpen)
                 .then(function(response) {
+                    stateManagerService.setTreeTab('everything');
                     vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
                     vm.showOpenOverlay = false;
                     vm.openError = '';
