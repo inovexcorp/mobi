@@ -93,7 +93,7 @@
     <div class="row full-height">
         <!-- navigation structure -->
         <section class="col-xs-4 full-height">
-            <div class="tree-container boxed full-height">
+            <div class="tree-container full-height">
                 <!-- tab buttons -->
                 <div class="btn-group btn-group-justified" role="group">
                     <tab-button is-active="vm.state.tab === 'everything'"
@@ -130,9 +130,9 @@
 
         <!-- edit/create form section -->
         <section class="col-xs-8 full-height">
-            <div class="editor boxed">
+            <div class="editor">
                 <!-- default -->
-                <div ng-if="vm.state.editor === 'default'" class="tab default">
+                <div ng-if="vm.state.editor === 'default'" class="tab default full-height">
                     <p class="lead">Welcome to the Ontology Editor!</p>
                     <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
                 </div>

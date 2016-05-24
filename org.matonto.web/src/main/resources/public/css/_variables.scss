@@ -41,3 +41,6 @@ $screen-md-max:              ($screen-lg-min - 1) !default;
     border-bottom: $size solid transparent;
     border-left: $size solid $color;
 }
+
+$btn-active-bg:     #286090;
+$btn-active-border: #204d74;

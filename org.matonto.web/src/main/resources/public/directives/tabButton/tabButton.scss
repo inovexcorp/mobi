@@ -1,0 +1,27 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.btn-group > .btn {
+    border-radius: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.btn-primary {
+        &.active,
+        &:hover {
+            border-bottom-color: $btn-active-bg;
+        }
+
+        &.active.focus,
+        &.active:focus,
+        &.active:hover,
+        &:active.focus,
+        &:active:focus,
+        &:active:hover {
+            background-color: $btn-active-bg;
+            border-color: $btn-active-border;
+            border-bottom-color: $btn-active-bg;
+        }
+    }
+}
+

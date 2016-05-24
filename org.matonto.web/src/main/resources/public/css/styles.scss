@@ -297,17 +297,6 @@ ul {
     height: 100%;
 }
 
-/* scroll styles */
-.scroll-without-buttons,
-.tab:not(.default) {
-    bottom: 1px;
-    left: 16px;
-    overflow-y: auto;
-    position: absolute;
-    right: 16px;
-    top: 34px;
-}
-
 /* table with inputs */
 .input-table {
     margin: 0;
