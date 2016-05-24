@@ -3,21 +3,23 @@
     <strong>Everything</strong>
     <!-- start ontologies -->
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
-        <tree-item-with-sub ng-class="{'invalid': !ontology.matonto.isValid}"
-                            current-entity="ontology"
-                            current-ontology="ontology"
-                            is-active="vm.state.oi === $index && (vm.state.ci === undefined || vm.state.ci === -1) && vm.state.pi === undefined"
-                            is-opened="opened"
-                            on-click="vm.selectItem('ontology-editor', $index)"></tree-item-with-sub>
+        <tree-item ng-class="{'invalid': !ontology.matonto.isValid}"
+                   current-entity="ontology"
+                   current-ontology="ontology"
+                   is-active="vm.state.oi === $index && (vm.state.ci === undefined || vm.state.ci === -1) && vm.state.pi === undefined"
+                   is-opened="opened"
+                   on-click="vm.selectItem('ontology-editor', $index)"
+                   has-children="!!ontology.matonto.classes.length || !!ontology.matonto.noDomains.length"></tree-item>
 
         <li class="container" ng-show="opened">
             <!-- start classes -->
             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
-                <tree-item-with-sub current-entity="class"
-                                    current-ontology="ontology"
-                                    is-active="vm.state.oi === oi && vm.state.ci === $index && (vm.state.pi === undefined || vm.state.pi === -1)"
-                                    is-opened="subOpened"
-                                    on-click="vm.selectItem('class-editor', oi, $index)"></tree-item-with-sub>
+                <tree-item current-entity="class"
+                           current-ontology="ontology"
+                           is-active="vm.state.oi === oi && vm.state.ci === $index && (vm.state.pi === undefined || vm.state.pi === -1)"
+                           is-opened="subOpened"
+                           on-click="vm.selectItem('class-editor', oi, $index)"
+                           has-children="class.matonto.properties.length"></tree-item>
 
                 <li class="container" ng-show="subOpened">
                     <!-- start properties -->
