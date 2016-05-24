@@ -28,7 +28,6 @@
                     '@id': '',
                     '@type': [prefixes.owl + 'Ontology'],
                     matonto: {
-                        delimiter: '#',
                         classes: [],
                         annotations: defaultAnnotations,
                         isValid: true,
@@ -72,7 +71,6 @@
             }
 
             function initOntology(ontology, obj) {
-                var delimiter = _.last(obj['@id']);
                 obj.matonto = {
                     originalId: obj['@id'],
                     blankNodes: [],
@@ -80,8 +78,9 @@
                     propertyExpressions: {},
                     unionOfs: {},
                     intersectionOfs: {},
-                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#',
-                    isValid: true
+                    isValid: true,
+                    iriBegin: obj['@id'],
+                    iriThen: '#'
                 }
 
                 angular.merge(ontology, obj);
@@ -641,6 +640,8 @@
 
                 newOntology = initEntity(newOntology, ontologyIri, label, description);
 
+                newOntology.matonto.iriBegin = ontologyIri;
+                newOntology.matonto.iriThen = '#';
                 var config = {
                         params: {
                             ontologyjson: createEntityJson(newOntology)
