@@ -131,11 +131,7 @@
         <!-- edit/create form section -->
         <section class="col-xs-8 full-height">
             <div class="editor">
-                <!-- default -->
-                <div ng-if="vm.state.editor === 'default'" class="tab default full-height">
-                    <p class="lead">Welcome to the Ontology Editor!</p>
-                    <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
-                </div>
+                <default-tab ng-if="vm.state.editor === 'default'"></default-tab>
 
                 <ontology-editor ng-if="vm.state.editor === 'ontology-editor'"></ontology-editor>
 
