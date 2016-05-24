@@ -105,7 +105,7 @@
         }
 
         vm.disableSave = function() {
-            return !_.get(vm.ontology, 'matonto.isValid', false) || !ontologyManagerService.getChangedListForOntology(_.get(vm.ontology, '@id')).length;
+            return !_.get(vm.ontology, 'matonto.isValid', false) || !ontologyManagerService.getChangedListForOntology(_.get(vm.ontology, 'matonto.originalId')).length;
         }
 
         vm.save = function() {

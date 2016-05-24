@@ -1,4 +1,4 @@
-<li>
+<li ng-class="{'invalid': !currentEntity.matonto.isValid}">
     <a ng-if="!hasChildren"
        ng-click="onClick()"
        ng-class="{'unsaved': currentEntity.matonto.unsaved, 'active': isActive}">
