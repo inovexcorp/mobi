@@ -222,6 +222,7 @@
         vm.openOntology = function() {
             ontologyManagerService.openOntology(vm.ontologyIdToOpen)
                 .then(function(response) {
+                    vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
                     vm.showOpenOverlay = false;
                     vm.openError = '';
                     vm.ontologyIdToOpen = undefined;
