@@ -639,9 +639,9 @@
                 var newOntology = angular.copy(ontologyTemplate);
 
                 newOntology = initEntity(newOntology, ontologyIri, label, description);
-
                 newOntology.matonto.iriBegin = ontologyIri;
                 newOntology.matonto.iriThen = '#';
+
                 var config = {
                         params: {
                             ontologyjson: createEntityJson(newOntology)

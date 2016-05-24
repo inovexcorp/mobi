@@ -206,17 +206,6 @@ ul {
         width: 100%;
         word-break: break-all;
 
-        /* Increases the padding for links without icons */
-        /*&.text-only {
-            padding-bottom: 3px;
-            padding-right: 4px;
-            padding-top: 3px;
-
-            padding-left: -webkit-calc(1.28571429em + 6px);
-            padding-left:    -moz-calc(1.28571429em + 6px);
-            padding-left:         calc(1.28571429em + 6px);
-        }*/
-
         /* The tree node changes are unsaved */
         &.unsaved .unsaved-icon {
             color: $brand-success;
