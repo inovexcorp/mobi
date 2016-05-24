@@ -14,7 +14,7 @@
                 controller: ['$scope', '$filter', 'REGEX', 'ontologyManagerService', function($scope, $filter, REGEX, ontologyManagerService) {
                     var vm = $scope.$parent.vm;
                     var dvm = this;
-                    var prefix = vm.ontology['@id'] + '#';
+                    var prefix = vm.ontology.matonto.iriBegin + vm.ontology.matonto.iriThen;
                     var setAsObject = false;
                     var setAsDatatype = false;
 

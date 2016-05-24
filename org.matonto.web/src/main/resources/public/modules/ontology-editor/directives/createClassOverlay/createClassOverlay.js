@@ -14,7 +14,7 @@
                 controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
                     var vm = $scope.$parent.vm;
                     var dvm = this;
-                    var prefix = vm.ontology['@id'] + '#';
+                    var prefix = vm.ontology.matonto.iriBegin + vm.ontology.matonto.iriThen;
 
                     dvm.iriPattern = REGEX.IRI;
                     dvm.createClassIri = prefix;
