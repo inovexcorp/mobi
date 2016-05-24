@@ -42,12 +42,10 @@ describe('Annotation Tab directive', function() {
             element = $compile(angular.element('<annotation-tab></annotation-tab>'))(scope);
             scope.$digest();
         });
-        it('for a ANNOTATION-TAB', function() {
-            expect(element.prop('tagName')).toBe('ANNOTATION-TAB');
+        it('for a DIV', function() {
+            expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on annotation button', function() {
-            var button = element.querySelectorAll('.btn-annotation');
-            expect(button.length).toBe(1);
             var icon = element.querySelectorAll('.fa-plus');
             expect(icon.length).toBe(1);
         });
@@ -65,9 +63,9 @@ describe('Annotation Tab directive', function() {
             expect(values.length).toBe(2);
         });
         it('based on buttons', function() {
-            var editButtons = element.querySelectorAll('.btn-edit');
+            var editButtons = element.querySelectorAll('[title=Edit]');
             expect(editButtons.length).toBe(1);
-            var deleteButtons = element.querySelectorAll('.btn-delete');
+            var deleteButtons = element.querySelectorAll('[title=Delete]');
             expect(deleteButtons.length).toBe(2);
         });
     });
@@ -75,7 +73,8 @@ describe('Annotation Tab directive', function() {
         beforeEach(function() {
             scope.vm = {
                 editClicked: jasmine.createSpy('editClicked'),
-                removeAnnotation: jasmine.createSpy('removeAnnotation'),
+                openRemoveAnnotationOverlay: jasmine.createSpy('openRemoveAnnotationOverlay'),
+                openAddAnnotationOverlay: jasmine.createSpy('openAddAnnotationOverlay'),
                 getItemIri: function(key) { return key.localName; },
                 getAnnotationLocalNameLowercase: function(key) { return key.localName; },
                 selected: {
@@ -83,26 +82,31 @@ describe('Annotation Tab directive', function() {
                 },
                 ontology: {
                     matonto: {
-                        annotations: [
-                            'prop1'
-                        ]
+                        annotations: ['prop1']
                     }
                 }
             }
             element = $compile(angular.element('<annotation-tab></annotation-tab>'))(scope);
             scope.$digest();
         });
-        it('should call vm.editClicked when edit button clicked', function() {
-            var editButtons = element.querySelectorAll('.btn-edit');
+        it('should call vm.openAddAnnotationOverlay when add button is clicked', function() {
+            var buttonContainer = element.querySelectorAll('.btn-container');
+            var addButtons = buttonContainer.querySelectorAll('.btn-link');
+            expect(addButtons.length).toBe(1);
+            angular.element(addButtons[0]).triggerHandler('click');
+            expect(scope.vm.openAddAnnotationOverlay).toHaveBeenCalled();
+        });
+        it('should call vm.editClicked when edit button is clicked', function() {
+            var editButtons = element.querySelectorAll('[title=Edit]');
             expect(editButtons.length).toBe(1);
             angular.element(editButtons[0]).triggerHandler('click');
             expect(scope.vm.editClicked).toHaveBeenCalled();
         });
-        it('should call vm.removeAnnotation when remove button clicked', function() {
-            var deleteButtons = element.querySelectorAll('.btn-delete');
+        it('should call vm.openRemoveAnnotationOverlay when remove button is clicked', function() {
+            var deleteButtons = element.querySelectorAll('[title=Delete]');
             expect(deleteButtons.length).toBe(1);
             angular.element(deleteButtons[0]).triggerHandler('click');
-            expect(scope.vm.removeAnnotation).toHaveBeenCalled();
+            expect(scope.vm.openRemoveAnnotationOverlay).toHaveBeenCalled();
         });
     });
 });
