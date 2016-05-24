@@ -2,43 +2,28 @@
     <!-- tab buttons -->
     <div class="btn-group btn-group-justified" role="group">
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')">{{vm.selected['@id'] ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'}}</tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
-
-        <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')">Annotaions</tab-button>
     </div>
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <create-error></create-error>
+        <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- static iri -->
-        <static-iri display-type="property"></static-iri>
+        <static-iri iri="vm.selected['@id']" on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"></static-iri>
 
         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
         <string-select ng-model="vm.selected['@type']"
                        display-text="'Type'"
                        muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.propertyTypes"
-                       only-strings="'true'">
-            <small class="text-muted">Defaults to DatatypeProperty if nothing is provided.</small>
+                       select-list="vm.propertyTypes">
         </string-select>
 
-        <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
-                    display-text="'Label'"
-                    muted-text="vm.rdfs + 'label'"
-                    change-event="vm.entityChanged()"></text-input>
-
-        <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
-                   display-text="'Comment'"
-                   muted-text="vm.rdfs + 'comment'"
-                   change-event="vm.entityChanged()"></text-area>
+        <annotation-tab></annotation-tab>
     </div>
 
     <!-- axioms tab -->
@@ -60,7 +45,7 @@
                                display-text="'Range'"
                                muted-text="vm.rdfs + 'range'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.objectPropertyRange"></object-select>
+                               select-list="vm.ontology.matonto.subClasses"></object-select>
 
                 <!-- owl:equivalentProperty -->
                 <object-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"
@@ -134,10 +119,5 @@
         <div ng-if="!vm.selected['@type'].length">
             <p class="text-warning">More axioms will become available when you select a type from the first tab.</p>
         </div>
-    </div>
-
-    <!-- annotations tab -->
-    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
-        <annotation-tab></annotation-tab>
     </div>
 </form>

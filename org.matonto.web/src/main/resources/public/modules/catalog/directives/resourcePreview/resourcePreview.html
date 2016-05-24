@@ -1,0 +1,17 @@
+<div class="resource-preview">
+    <h3 ng-if="!dvm.catalog.selectedResource" class="text-muted">Select a resource for a preview</h3>
+    <div class="preview" ng-if="dvm.catalog.selectedResource">
+        <h1>{{dvm.catalog.selectedResource.title}} <resource-type ng-repeat="type in dvm.catalog.selectedResource.types" type="type"></resource-type></h1>
+        <p><small>Date Created: {{dvm.getDate(dvm.catalog.selectedResource.issued)}}</small></p>
+        <p><small>Last Modified: {{dvm.getDate(dvm.catalog.selectedResource.modified)}}</small></p>
+        <p>{{dvm.catalog.selectedResource.description}}</p>
+
+        <div class="keywords">
+            <h2>Keywords</h2>
+            <p ng-if="!dvm.catalog.selectedResource.keywords || dvm.catalog.selectedResource.keywords && !dvm.catalog.selectedResource.keywords.length">None</p>
+            <ul ng-if="dvm.catalog.selectedResource.keywords && dvm.catalog.selectedResource.keywords.length">
+                <li ng-repeat="keyword in dvm.catalog.selectedResource.keywords" class="label label-default">{{keyword}}</li>
+            </ul>
+        </div>
+    </div>
+</div>

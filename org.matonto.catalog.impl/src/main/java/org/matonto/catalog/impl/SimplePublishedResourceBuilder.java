@@ -8,9 +8,8 @@ public class SimplePublishedResourceBuilder
         extends AbstractPublishedResourceBuilder<PublishedResourceBuilder, PublishedResource>
         implements PublishedResourceBuilder<PublishedResourceBuilder, PublishedResource> {
 
-    public SimplePublishedResourceBuilder(Resource resource, Resource type, String title) {
+    public SimplePublishedResourceBuilder(Resource resource, String title) {
         this.resource = resource;
-        this.type = type;
         this.title = title;
     }
 

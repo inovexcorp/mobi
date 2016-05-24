@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.34-SNAPSHOT</version>
+        <version>1.0.41-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,12 +28,10 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
-            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>osgi.cmpn</artifactId>
-            <version>6.0.0</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -53,17 +51,21 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.jaas</groupId>
+            <artifactId>org.apache.karaf.jaas.config</artifactId>
+        </dependency>
 
         <!-- REST Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.rest</artifactId>
-            <version>1.0.34-SNAPSHOT</version>
+            <version>1.0.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.rest</artifactId>
-            <version>1.0.34-SNAPSHOT</version>
+            <version>1.0.34</version>
         </dependency>
     </dependencies>
 

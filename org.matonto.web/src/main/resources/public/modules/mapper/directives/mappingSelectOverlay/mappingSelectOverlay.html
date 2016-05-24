@@ -2,15 +2,20 @@
     <form class="content" name="mappingForm">
         <h6>Choose Mapping</h6>
         <div class="new-mapping form-group">
-            <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'new'" display-text="'New'" change-event="dvm.updateMappingName()"></radio-button>
-            <mapping-name-input ng-if="dvm.mappingType === 'new'" name="dvm.newMappingName" required="dvm.mappingType === 'new'"></mapping-name-input>
+            <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'new'" display-text="'New'"></radio-button>
+            <mapping-name-input name="dvm.newMappingName" 
+                required="dvm.mappingType === 'new'" 
+                is-active="dvm.mappingType === 'new'"
+                focus-event="dvm.mappingType = 'new'"></mapping-name-input>
         </div>
         <div class="previous-mapping form-group">
-            <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'previous'" display-text="'Previous'" change-event="dvm.updateMappingName()" is-disabled-when="dvm.previousMappings.length === 0"></radio-button>
+            <radio-button class="mapping-radio" ng-model="dvm.mappingType" value="'previous'" display-text="'Previous'" is-disabled-when="dvm.previousMappings.length === 0"></radio-button>
             <select class="form-control" size="10" 
-                ng-if="dvm.mappingType === 'previous'" 
                 ng-model="dvm.previousMappingName" 
-                ng-required="dvm.mappingType === 'previous'">
+                ng-required="dvm.mappingType === 'previous'"
+                ng-disabled="dvm.previousMappings.length === 0"
+                ng-focus="dvm.mappingType = 'previous'">
+                <option ng-if="dvm.previousMappings.length === 0" value="" disabled hidden></option>
                 <option ng-repeat="mapping in dvm.previousMappings">{{mapping}}</option>
             </select>
         </div>

@@ -1,0 +1,31 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sidebar-wrapper {
+    background-color: $gray-lighter;
+    height: 100%;
+    display: inline-block;
+    padding: 1em;
+    float: left;
+
+    .step-through {
+        text-align: center;
+
+        span {
+            width: 100%;
+            display: block;
+        }
+        .complete {
+            font-weight: normal;
+            color: $gray-base;
+        }
+        .active {
+            font-weight: bold;
+            color: $gray-base;
+        }
+        .upcoming {
+            font-weight: lighter;
+            color: $gray-light;
+        }
+    }
+}

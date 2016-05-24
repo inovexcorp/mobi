@@ -4,14 +4,14 @@ describe('Edit Prop Form directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockOntologyManager();
-    mockMappingManager();
     beforeEach(function() {
         module('editPropForm');
-
-        inject(function(mappingManagerService, ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
-            mappingManagerSvc = mappingManagerService;
+        mockOntologyManager();
+        mockMappingManager();
+        
+        inject(function(_mappingManagerService_, _ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -91,7 +91,7 @@ describe('Edit Prop Form directive', function() {
             scope.columns = [];
             scope.set = jasmine.createSpy('set');
             scope.clickDelete = jasmine.createSpy('clickDelete');
-            scope.mapping = {};
+            scope.mapping = {jsonld: []};
             scope.ontologies = [{'@id': ''}];
             scope.classMappingId = '';
             scope.selectedPropMapping = '';
@@ -104,14 +104,14 @@ describe('Edit Prop Form directive', function() {
             var controller = this.element.controller('editPropForm');
             var result = controller.getClassId();
 
-            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(controller.mapping, controller.classMappingId);
+            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(controller.mapping.jsonld, controller.classMappingId);
             expect(typeof result).toBe('string')
         });
         it('should get the prop id', function() {
             var controller = this.element.controller('editPropForm');
             var result = controller.getPropId();
 
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(controller.mapping, controller.selectedPropMapping);
+            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(controller.mapping.jsonld, controller.selectedPropMapping);
             expect(typeof result).toBe('string')
         });
         it('should get the property title', function() {

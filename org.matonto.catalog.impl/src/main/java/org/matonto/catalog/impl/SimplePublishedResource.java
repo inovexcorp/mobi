@@ -11,6 +11,6 @@ public class SimplePublishedResource extends AbstractPublishedResource {
         keywords = builder.keywords;
         distributions = builder.distributions;
         resource = builder.resource;
-        type = builder.type;
+        types = builder.types;
     }
 }

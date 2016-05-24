@@ -1,7 +1,9 @@
 describe('Annotation Overlay directive', function() {
     var $compile,
-        scope;
+        scope,
+        element;
 
+    injectRegexConstant();
     beforeEach(function() {
         module('annotationOverlay');
 
@@ -15,7 +17,6 @@ describe('Annotation Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
     injectDirectiveTemplate('modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html');
 
     describe('replaces the element with the correct html', function() {
@@ -23,16 +24,54 @@ describe('Annotation Overlay directive', function() {
             element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
             scope.$digest();
         });
-        it('for an ANNOTATION-OVERLAY', function() {
-            expect(element.prop('tagName')).toBe('ANNOTATION-OVERLAY');
+        it('for a div', function() {
+            expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on form (.content)', function() {
-            scope.btnIcon = 'fa-square';
-            var element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
-            scope.$digest();
-
             var formList = element.querySelectorAll('.content');
             expect(formList.length).toBe(1);
+        });
+        it('has correct heading based on variable', function() {
+            var tests = [
+                {
+                    value: true,
+                    result: 'Edit Annotation'
+                },
+                {
+                    value: false,
+                    result: 'Add Annotation'
+                }
+            ];
+            _.forEach(tests, function(test) {
+                scope.vm = {
+                    editingAnnotation: test.value
+                }
+                scope.$digest();
+                var header = element.querySelectorAll('h6');
+                expect(header.length).toBe(1);
+                expect(header[0].innerHTML).toBe(test.result);
+            });
+        });
+        it('has correct button based on variable', function() {
+            var tests = [
+                {
+                    value: true,
+                    result: 'Edit'
+                },
+                {
+                    value: false,
+                    result: 'Add'
+                }
+            ];
+            _.forEach(tests, function(test) {
+                scope.vm = {
+                    editingAnnotation: test.value
+                }
+                scope.$digest();
+                var buttons = element.querySelectorAll('custom-button:not([type])');
+                expect(buttons.length).toBe(1);
+                expect(buttons[0].innerHTML).toBe(test.result);
+            });
         });
     });
 });

@@ -4,15 +4,15 @@ describe('Class List directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockOntologyManager();
-    mockMappingManager();
     mockPrefixes();
     beforeEach(function() {
         module('classList');
+        mockOntologyManager();
+        mockMappingManager();
 
-        inject(function(ontologyManagerService, mappingManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
-            mappingManagerSvc = mappingManagerService;
+        inject(function(_ontologyManagerService_, _mappingManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -99,17 +99,13 @@ describe('Class List directive', function() {
         it('should collect ClassMappings if they exist', function() {
             var controller = this.element.controller('classList');
             var result = controller.getClassMappings();
-            expect(result.length).toBe(0);
-
-            controller.mapping.jsonld = [{'@type': ['ClassMapping']}];
-            result = controller.getClassMappings();
-            expect(result.length).toBe(1);
+            expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalled();
         });
         it('should collect prop mappings', function() {
             var controller = this.element.controller('classList');
             var result = controller.getPropMappings({'@id': 'classMapping'});
 
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping, 'classMapping');
+            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping.jsonld, 'classMapping');
         });
         it('should get a property title', function() {
             var controller = this.element.controller('classList');
@@ -126,7 +122,7 @@ describe('Class List directive', function() {
         it('should test whether all properties have been mapped', function() {
             var controller = this.element.controller('classList');
             var result = controller.mappedAllProps({'@id': ''});
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping, '');
+            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping.jsonld, '');
             expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalled();
             expect(typeof result).toBe('boolean');
         });

@@ -5,7 +5,6 @@
         .module('app', [
             'angular-uuid',
             'ngCookies',
-            'ngFileSaver',
             'catalog',
             'home',
             'login',
@@ -27,6 +26,7 @@
             'circleButton',
             'customButton',
             'confirmationOverlay',
+            'pagination',
             'settings',
             'ui.codemirror',
             'sparql'

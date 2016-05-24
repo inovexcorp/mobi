@@ -5,10 +5,7 @@ import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Ontology;
-import org.matonto.catalog.api.PaginatedSearchResults;
-import org.matonto.catalog.api.PublishedResource;
+import org.matonto.catalog.api.*;
 import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.catalog.util.SearchResults;
 import org.matonto.exception.MatOntoException;
@@ -64,9 +61,12 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String GET_RESOURCE_QUERY;
     private static final String FIND_RESOURCES_QUERY;
+    private static final String FIND_RESOURCES_TYPE_FILTER_QUERY;
     private static final String COUNT_RESOURCES_QUERY;
+    private static final String COUNT_RESOURCES_TYPE_FILTER_QUERY;
     private static final String RESOURCE_BINDING = "resource";
     private static final String RESOURCE_COUNT_BINDING = "resource_count";
+    private static final String TYPE_FILTER_BINDING = "type_filter";
 
     static {
         try {
@@ -78,8 +78,16 @@ public class SimpleCatalogManager implements CatalogManager {
                     SimpleCatalogManager.class.getResourceAsStream("/find-resources.rq"),
                     "UTF-8"
             );
+            FIND_RESOURCES_TYPE_FILTER_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/find-resources-type-filter.rq"),
+                    "UTF-8"
+            );
             COUNT_RESOURCES_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-resources.rq"),
+                    "UTF-8"
+            );
+            COUNT_RESOURCES_TYPE_FILTER_QUERY = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/count-resources-type-filter.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -91,6 +99,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String CATALOG_TYPE = "http://www.w3.org/ns/dcat#Catalog";
     private static final String DC = "http://purl.org/dc/terms/";
     private static final String DCAT = "http://www.w3.org/ns/dcat#";
+    private static final String MATONTO_CAT = "http://matonto.org/ontologies/catalog#";
 
     @Activate
     protected void start(Map<String, Object> props) {
@@ -122,23 +131,26 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset) {
-        return findResource(searchTerm, limit, offset, vf.createIRI(DC + "modified"), false);
-    }
-
-    @Override
-    public PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset,
-                                                                  Resource sortBy, boolean ascending) {
+    public PaginatedSearchResults<PublishedResource> findResource(PaginatedSearchParams searchParams) {
         RepositoryConnection conn = repository.getConnection();
+        Optional<Resource> typeParam = searchParams.getTypeFilter();
 
         // Get Total Count
-        TupleQuery countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_QUERY);
+        TupleQuery countQuery;
+        if (typeParam.isPresent()) {
+            countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_TYPE_FILTER_QUERY);
+            countQuery.setBinding(TYPE_FILTER_BINDING, typeParam.get());
+        } else {
+            countQuery = conn.prepareTupleQuery(COUNT_RESOURCES_QUERY);
+        }
+
         TupleQueryResult countResults = countQuery.evaluate();
 
         int totalCount;
-        if (countResults.hasNext() && countResults.getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
-            BindingSet bindingSet = countResults.next();
-            totalCount = Bindings.requiredLiteral(bindingSet, RESOURCE_COUNT_BINDING).intValue();
+        BindingSet countBindingSet;
+        if (countResults.hasNext()
+                && (countBindingSet = countResults.next()).getBindingNames().contains(RESOURCE_COUNT_BINDING)) {
+            totalCount = Bindings.requiredLiteral(countBindingSet, RESOURCE_COUNT_BINDING).intValue();
             countResults.close();
         } else {
             countResults.close();
@@ -146,32 +158,60 @@ public class SimpleCatalogManager implements CatalogManager {
             return SearchResults.emptyResults();
         }
 
-        // Get Results
-        String sortBinding = sortingOptions.get(sortBy) == null ? "modified" : sortingOptions.get(sortBy);
-        String queryString;
-        if (ascending) {
-            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
-                    limit, offset);
+        log.debug("Resource count: " + totalCount);
+
+        // Prepare Query
+        int limit = searchParams.getLimit();
+        int offset = searchParams.getOffset();
+
+        String sortBinding;
+        Resource sortByParam = searchParams.getSortBy();
+        if (sortingOptions.get(sortByParam) != null) {
+            sortBinding = sortingOptions.get(sortByParam);
         } else {
-            queryString = FIND_RESOURCES_QUERY + String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d", sortBinding,
-                    limit, offset);
+            log.warn("sortBy parameter must be in the allowed list. Sorting by modified date instead.");
+            sortBinding = "modified";
         }
 
-        log.debug("QUERY: " + queryString);
+        String querySuffix;
+        Optional<Boolean> ascendingParam = searchParams.getAscending();
+        if (ascendingParam.isPresent() && ascendingParam.get()) {
+            querySuffix = String.format("\nORDER BY ?%s\nLIMIT %d\nOFFSET %d", sortBinding,
+                    limit, offset);
+        } else {
+            querySuffix = String.format("\nORDER BY DESC(?%s)\nLIMIT %d\nOFFSET %d",
+                    sortBinding, limit, offset);
+        }
 
-        TupleQuery query = conn.prepareTupleQuery(queryString);
+        String queryString;
+        TupleQuery query;
+        if (typeParam.isPresent()) {
+            queryString = FIND_RESOURCES_TYPE_FILTER_QUERY + querySuffix;
+            query = conn.prepareTupleQuery(queryString);
+            query.setBinding(TYPE_FILTER_BINDING, typeParam.get());
+        } else {
+            queryString = FIND_RESOURCES_QUERY + querySuffix;
+            query = conn.prepareTupleQuery(queryString);
+        }
+
+        log.debug("Query String:\n" + queryString);
+        log.debug("Query Plan:\n" + query);
+
+        // Get Results
         TupleQueryResult result = query.evaluate();
 
         List<PublishedResource> resources = new ArrayList<>();
-        while (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
-            BindingSet bindingSet = result.next();
-            Resource resource = vf.createIRI(Bindings.requiredResource(bindingSet, RESOURCE_BINDING).stringValue());
-            PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
+        BindingSet resultsBindingSet;
+        while (result.hasNext() && (resultsBindingSet = result.next()).getBindingNames().contains(RESOURCE_BINDING)) {
+            Resource resource = vf.createIRI(Bindings.requiredResource(resultsBindingSet, RESOURCE_BINDING).stringValue());
+            PublishedResource publishedResource = processResourceBindingSet(resultsBindingSet, resource, conn);
             resources.add(publishedResource);
         }
 
         result.close();
         conn.close();
+
+        log.debug("Result set size: " + resources.size());
 
         int pageNumber = (offset / limit) + 1;
 
@@ -192,8 +232,8 @@ public class SimpleCatalogManager implements CatalogManager {
         TupleQueryResult result = query.evaluate();
 
         // TODO: Handle more than one result (warn?)
-        if (result.hasNext() && result.getBindingNames().contains(RESOURCE_BINDING)) {
-            BindingSet bindingSet = result.next();
+        BindingSet bindingSet;
+        if (result.hasNext() && (bindingSet = result.next()).getBindingNames().contains(RESOURCE_BINDING)) {
             PublishedResource publishedResource = processResourceBindingSet(bindingSet, resource, conn);
 
             result.close();
@@ -219,7 +259,7 @@ public class SimpleCatalogManager implements CatalogManager {
         }
 
         NamedGraph namedGraph = ngf.createNamedGraph(resource);
-        namedGraph.add(resource, vf.createIRI(RDF_TYPE), ontology.getType());
+        namedGraph.add(resource, vf.createIRI(RDF_TYPE), vf.createIRI(MATONTO_CAT + "Ontology"));
         namedGraph.add(resource, vf.createIRI(DC + "title"), vf.createLiteral(ontology.getTitle()));
         namedGraph.add(resource, vf.createIRI(DC + "description"), vf.createLiteral(ontology.getDescription()));
         namedGraph.add(resource, vf.createIRI(DC + "issued"), vf.createLiteral(ontology.getIssued()));
@@ -257,9 +297,8 @@ public class SimpleCatalogManager implements CatalogManager {
                                                         RepositoryConnection conn) {
         // Get Required Params
         String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
-        Resource type = Bindings.requiredResource(bindingSet, "type");
 
-        SimplePublishedResourceBuilder builder = new SimplePublishedResourceBuilder(resource, type, title);
+        SimplePublishedResourceBuilder builder = new SimplePublishedResourceBuilder(resource, title);
         builder.issued(Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue());
         builder.modified(Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue());
 
@@ -295,6 +334,14 @@ public class SimpleCatalogManager implements CatalogManager {
                         distBuilder.description(literal.stringValue()));
 
                 builder.addDistribution(distBuilder.build());
+            }
+        });
+
+        bindingSet.getBinding("types").ifPresent(binding -> {
+            String[] types = StringUtils.split(binding.getValue().stringValue(), ",");
+
+            for (String type : types) {
+                builder.addType(vf.createIRI(type));
             }
         });
 

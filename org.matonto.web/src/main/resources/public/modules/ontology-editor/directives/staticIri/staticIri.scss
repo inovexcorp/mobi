@@ -1,0 +1,12 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.static-iri {
+    strong {
+        word-break: break-all;
+
+        a {
+            white-space: nowrap;
+        }
+    }
+}

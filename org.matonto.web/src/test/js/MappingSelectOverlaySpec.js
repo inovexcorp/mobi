@@ -3,12 +3,12 @@ describe('Mapping Select Overlay directive', function() {
         scope,
         mappingManagerSvc;
 
-    mockMappingManager();
     beforeEach(function() {
         module('mappingSelectOverlay');
+        mockMappingManager();
 
-        inject(function(mappingManagerService) {
-            mappingManagerSvc = mappingManagerService;
+        inject(function(_mappingManagerService_) {
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -41,23 +41,6 @@ describe('Mapping Select Overlay directive', function() {
             expect(scope.onClickContinue).toHaveBeenCalled();
         });
     });
-    describe('controller methods', function() {
-        it('should update the mapping name depending on the mapping type', function() {
-            var element = $compile(angular.element('<mapping-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(mappingType, mappingName)"></mapping-select-overlay>'))(scope);
-            scope.$digest();
-            var controller = element.controller('mappingSelectOverlay');
-            controller.previousMappings = ['test'];
-            controller.mappingType = 'new';
-            controller.updateMappingName();
-
-            expect(controller.newMappingName).toBe('');
-            expect(controller.previousMappingName).toBe('');
-            controller.mappingType = 'previous';
-            controller.updateMappingName();
-            expect(controller.newMappingName).toBe('');
-            expect(controller.previousMappingName).toBe('test');
-        });
-    });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             this.element = $compile(angular.element('<mapping-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(mappingType, mappingName)"></mapping-select-overlay>'))(scope);
@@ -68,21 +51,6 @@ describe('Mapping Select Overlay directive', function() {
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
             expect(this.element.querySelectorAll('.new-mapping').length).toBe(1);
             expect(this.element.querySelectorAll('.previous-mapping').length).toBe(1);
-        });
-        it('depending on the mapping type', function() {
-            expect(this.element.find('mapping-name-input').length).toBe(0);
-            expect(this.element.querySelectorAll('.previous-mapping select').length).toBe(0);
-
-            var controller = this.element.controller('mappingSelectOverlay');
-            controller.mappingType = 'new';
-            scope.$digest();
-            expect(this.element.find('mapping-name-input').length).toBe(1);
-            expect(this.element.querySelectorAll('.previous-mapping select').length).toBe(0);
-
-            controller.mappingType = 'previous';
-            scope.$digest();
-            expect(this.element.querySelectorAll('mapping-name-input').length).toBe(0);
-            expect(this.element.querySelectorAll('.previous-mapping select').length).toBe(1);
         });
         it('with radio buttons for new and previous', function() {
             var radioBtns = this.element.find('radio-button')
@@ -95,10 +63,13 @@ describe('Mapping Select Overlay directive', function() {
         it('with the correct number of previous mapping options', function() {
             var controller = this.element.controller('mappingSelectOverlay');
             controller.mappingType = 'previous';
+            controller.previousMappings = [];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.previous-mapping option').length).toBe(1);
+
             controller.previousMappings = ['test'];
             controller.previousMappingName = 'test';
             scope.$digest();
-
             expect(this.element.querySelectorAll('.previous-mapping option').length).toBe(controller.previousMappings.length);
         });
         it('with custom buttons for back and continue', function() {
@@ -107,5 +78,15 @@ describe('Mapping Select Overlay directive', function() {
             expect(['Back', 'Continue'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Back', 'Continue'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
+    });
+    it('should change the mapping type when focused on the preview mapping select', function() {
+        var element = $compile(angular.element('<mapping-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(mappingType, mappingName)"></mapping-select-overlay>'))(scope);
+        scope.$digest();
+
+        var controller = element.controller('mappingSelectOverlay');
+        expect(controller.mappingType).not.toBe('previous');
+
+        element.find('select').triggerHandler('focus');
+        expect(controller.mappingType).toBe('previous');
     });
 });

@@ -28,10 +28,10 @@
                     var dvm = this;
 
                     dvm.getClassMappings = function() {
-                        return _.filter(dvm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']});
+                        return mappingManagerService.getAllClassMappings(dvm.mapping.jsonld);
                     }
                     dvm.getPropMappings = function(classMapping) {
-                        return mappingManagerService.getPropMappingsByClass(dvm.mapping, classMapping['@id']);
+                        return mappingManagerService.getPropMappingsByClass(dvm.mapping.jsonld, classMapping['@id']);
                     }
                     dvm.getClassTitle = function(classMapping) {
                         var className = getClassName(classMapping);
@@ -54,7 +54,7 @@
                         return propName + ': ' + mappingName;
                     }
                     dvm.mappedAllProps = function(classMapping) {
-                        var mappedProps = mappingManagerService.getPropMappingsByClass(dvm.mapping, classMapping['@id']);
+                        var mappedProps = mappingManagerService.getPropMappingsByClass(dvm.mapping.jsonld, classMapping['@id']);
                         var classId = getClassId(classMapping);
                         var ontology = ontologyManagerService.findOntologyWithClass(dvm.ontologies, classId);
                         var classProps = ontologyManagerService.getClassProperties(ontology, classId);

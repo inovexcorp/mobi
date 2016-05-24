@@ -1,12 +1,19 @@
 describe('CSV Manager service', function() {
     var $httpBackend,
-        csvManagerSvc;
+        csvManagerSvc,
+        windowSvc;
 
     beforeEach(function() {
         module('csvManager');
+        module(function($provide) {
+            $provide.service('$window', function() {
+                this.location = '';
+            });
+        });
 
-        inject(function(csvManagerService, _$httpBackend_) {
+        inject(function(csvManagerService, _$window_, _$httpBackend_) {
             csvManagerSvc = csvManagerService;
+            windowSvc = _$window_;
             $httpBackend = _$httpBackend_;
         });
     });
@@ -27,27 +34,16 @@ describe('CSV Manager service', function() {
         //Call httpBackend.flush()
         $httpBackend.flush();
     });
-    it('should update a delimited file', function(done) {
-        var fileName = 'test';
-        $httpBackend.expectPUT('/matontorest/csv/' + fileName, 
-            function(data) {
-                return data instanceof FormData;
-            }, function(headers) {
-                return headers['Content-Type'] === undefined;
-            }).respond(200, fileName);
-        csvManagerSvc.update(fileName, {}).then(function(value) {
-            expect(value).toEqual(fileName);
-            done();
-        });
-        $httpBackend.flush();
-    });
     describe('should retrieve a preview of an uploaded delimited file', function() {
         it('with headers', function(done) {
             var fileName = 'test';
             var rowEnd = 5;
             var separator = ',';
             var preview = [[''], [''], [''], [''], ['']];
-            var params = '?Row-Count=' + rowEnd + '&Separator=' + separator;
+            var params = createQueryString({
+                'rowCount': rowEnd, 
+                'separator': separator
+            });
             $httpBackend.expectGET('/matontorest/csv/' + fileName + params, undefined)
                 .respond(200, preview);
             csvManagerSvc.previewFile(fileName, rowEnd, separator, true).then(function(filePreview) {
@@ -64,8 +60,8 @@ describe('CSV Manager service', function() {
             var separator = '\t';
             var preview = [[''], [''], [''], [''], ['']];
             var params = createQueryString({
-                'Row-Count': rowEnd, 
-                'Separator': encodeURIComponent(separator)
+                'rowCount': rowEnd, 
+                'separator': encodeURIComponent(separator)
             });
             $httpBackend.expectGET('/matontorest/csv/' + fileName + params, undefined)
                 .respond(200, preview);
@@ -80,63 +76,35 @@ describe('CSV Manager service', function() {
         });
     });
     describe('should return mapped data from an uploaded delimited file', function() {
-        it('using an uploaded mapping', function(done) {
+        it('using an uploaded mapping', function() {
             var fileName = 'test';
-            var mappingFileName = '';
+            var mappingFileName = 'mapping';
             var separator = ',';
             var containsHeaders = true;
+            var format = 'jsonld';
             var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Separator': separator
+                'format': format,
+                'mappingName': mappingFileName,
+                'containsHeaders': containsHeaders, 
+                'separator': separator
             });
-            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined;
-                }).respond(200, []);
-            csvManagerSvc.mapByUploaded(fileName, mappingFileName, containsHeaders, separator).then(function(value) {
-                expect(Array.isArray(value)).toBe(true);
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('using mapping JSON-LD', function(done) {
-            var fileName = 'test';
-            var jsonld = '';
-            var separator = ',';
-            var containsHeaders = true;
-            var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Separator': separator
-            });
-            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined;
-                }).respond(200, []);
-            csvManagerSvc.mapByString(fileName, jsonld, containsHeaders, separator).then(function(value) {
-                expect(Array.isArray(value)).toBe(true);
-                done();
-            });
-            $httpBackend.flush();
+            csvManagerSvc.map(fileName, mappingFileName, containsHeaders, separator);
+            expect(windowSvc.location).toEqual('/matontorest/csv/' + fileName + '/map' + params);
         });
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {
-        it('in JSON-LD', function(done) {
+        it('as JSON-LD using mapping JSON-LD', function(done) {
             var fileName = 'test';
             var jsonld = '';
-            var format = 'jsonld';
             var separator = ',';
             var containsHeaders = true;
+            var format = 'jsonld';
             var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Format': format,
-                'Preview': true,
-                'Separator': separator
+                'containsHeaders': containsHeaders, 
+                'format': format,
+                'separator': separator
             });
-            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
+            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map-preview' + params, 
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -148,19 +116,18 @@ describe('CSV Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('in other formats', function(done) {
+        it('as other formats using mapping JSON-LD', function(done) {
             var fileName = 'test';
             var jsonld = '';
-            var format = 'turtle';
             var separator = ',';
             var containsHeaders = true;
+            var format = 'turtle';
             var params = createQueryString({
-                'Contains-Headers': containsHeaders, 
-                'Format': format,
-                'Preview': true,
-                'Separator': separator
+                'containsHeaders': containsHeaders, 
+                'format': format,
+                'separator': separator
             });
-            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map' + params, 
+            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map-preview' + params, 
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {

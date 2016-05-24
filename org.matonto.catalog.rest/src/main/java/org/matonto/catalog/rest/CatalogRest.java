@@ -4,12 +4,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.matonto.catalog.api.Distribution;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
-import org.matonto.catalog.rest.jaxb.PaginatedResults;
+import org.matonto.rest.util.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.List;
 import java.util.Set;
 
 @Path("/catalog")
@@ -32,7 +31,7 @@ public interface CatalogRest {
     @ApiOperation("Retrieves the published catalog resources.")
     PaginatedResults<PublishedResourceMarshaller> listPublishedResources(
             @Context UriInfo uriInfo,
-            @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType,
+            @QueryParam("type") String resourceType,
             @QueryParam("searchTerms") String searchTerms,
             @DefaultValue("http://purl.org/dc/terms/modified") @QueryParam("sortBy") String sortBy,
             @DefaultValue("false") @QueryParam("asc") boolean ascending,

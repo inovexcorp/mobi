@@ -24,7 +24,8 @@ body {
 
     .has-error {
         /* Error label font */
-        .control-label {
+        .control-label,
+        .control-label small {
             color: #f00;
         }
 
@@ -292,13 +293,7 @@ ul {
 }
 
 /* makes the height of the containers 100% so scrolling works as expected */
-.view-container,
-.view-container > div,
-.view-container > div > .row,
-.left-nav,
-.row > section,
-.row > section > form,
-.tree-container {
+.full-height {
     height: 100%;
 }
 
@@ -393,6 +388,10 @@ ul {
     .ui-select-match-item {
         margin-bottom: 2px;
     }
+
+    &[disabled] input.ui-select-search {
+        display: initial !important;
+    }
 }
 
 .ui-select-bootstrap .ui-select-choices-row.active > a .text-muted {
@@ -462,7 +461,8 @@ ul {
             color: $brand-info;
         }
 
-        .fa {
+        .fa,
+        .create-icon .identifier {
             font-size: 1.5em;
         }
 
@@ -472,6 +472,25 @@ ul {
             line-height: 2em;
             padding-left: 10px;
             vertical-align: top;
+        }
+
+        .create-icon {
+            display: inline-block;
+            position: relative;
+
+            .identifier {
+                display: inline-block;
+                font-weight: bold;
+                text-align: left;
+                padding-left: 3px;
+            }
+
+            .fa {
+                font-size: .75em;
+                position: absolute;
+                right: 2px;
+                top: 0;
+            }
         }
     }
 }
@@ -495,4 +514,10 @@ ul {
     li button.active {
         color: $brand-info;
     }
+}
+
+/* Pagination styles */
+.page-nav {
+    display: block;
+    text-align: center;
 }

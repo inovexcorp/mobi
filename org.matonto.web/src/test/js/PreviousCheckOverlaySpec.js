@@ -4,14 +4,14 @@ describe('Previous Check Overlay directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockOntologyManager();
-    mockMappingManager();
     beforeEach(function() {
         module('previousCheckOverlay');
+        mockOntologyManager();
+        mockMappingManager();
 
-        inject(function(ontologyManagerService, mappingManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
-            mappingManagerSvc = mappingManagerService;
+        inject(function(_ontologyManagerService_, _mappingManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -67,7 +67,7 @@ describe('Previous Check Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.mapping = {};
+            scope.mapping = {jsonld: []};
             scope.ontology = {};
             scope.filePreview = {};
 
@@ -78,7 +78,7 @@ describe('Previous Check Overlay directive', function() {
             var controller = this.element.controller('previousCheckOverlay');
             var result = controller.getDataMappingName('');
 
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(controller.mapping, '');
+            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(controller.mapping.jsonld, '');
             expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
             expect(ontologyManagerSvc.getClassProperty).toHaveBeenCalled();
