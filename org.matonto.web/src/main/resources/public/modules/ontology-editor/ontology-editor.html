@@ -95,7 +95,7 @@
         <section class="col-xs-4 full-height">
             <div class="tree-container full-height">
                 <!-- tab buttons -->
-                <div class="btn-group btn-group-justified" role="group">
+                <tab-button-container>
                     <tab-button is-active="vm.state.tab === 'everything'"
                                 on-click="vm.setTreeTab('everything')">Tree</tab-button>
 
@@ -110,7 +110,7 @@
 
                     <tab-button is-active="vm.state.tab === 'annotation'"
                                 on-click="vm.setTreeTab('annotation')">Annotation</tab-button>
-                </div>
+                </tab-button-container>
 
                 <everything-tree ng-if="vm.state.tab === 'everything'"></everything-tree>
 

@@ -1,0 +1,54 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.tab-button-container {
+    font-size: 0;
+    text-align: center;
+
+    .tab-button {
+        background: $btn-bg-dark;
+        border: 1px solid $btn-bg-darker;
+        border-bottom: 0;
+        color: #fff;
+        display: inline-block;
+        font-size: 14px;
+        padding: 7px 13px;
+        text-decoration: none;
+
+        &.active,
+        &:hover {
+            background: $btn-bg;
+            border-color: $btn-bg-dark;
+        }
+
+        /* one item */
+        &:first-child:nth-last-child(1) {
+        	width: 100%;
+        }
+
+        /* two items */
+        &:first-child:nth-last-child(2),
+        &:first-child:nth-last-child(2) ~ .tab-button {
+        	width: 50%;
+        }
+
+        /* three items */
+        &:first-child:nth-last-child(3),
+        &:first-child:nth-last-child(3) ~ .tab-button {
+        	width: 33.3333%;
+        }
+
+        /* four items */
+        &:first-child:nth-last-child(4),
+        &:first-child:nth-last-child(4) ~ .tab-button {
+        	width: 25%;
+        }
+
+        /* five items */
+        &:first-child:nth-last-child(5),
+        &:first-child:nth-last-child(5) ~ .tab-button {
+        	width: 20%;
+        }
+    }
+}
+
