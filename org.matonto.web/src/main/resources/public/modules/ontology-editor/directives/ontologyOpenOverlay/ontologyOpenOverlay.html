@@ -25,10 +25,9 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!vm.ontologyIdToOpen"
-                           on-click="vm.openOntology()">Open</custom-button>
+            <custom-button is-disabled-when="!vm.ontologyIdToOpen" on-click="vm.openOntology()">Open</custom-button>
 
-            <custom-button on-click="vm.showOpenOverlay = false; vm.openError = '';" type="'secondary'">Cancel</custom-button>
+            <custom-button on-click="vm.showOpenOverlay = false; vm.openError = ''; vm.ontologyIdToOpen = undefined;" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

@@ -59,6 +59,7 @@ var jsFiles = function(prefix) {
     styleFiles = function(prefix, suffix) {
         return [
             prefix + '**/css/**/*.' + suffix,
+            prefix + '**/directives/**/*.' + suffix,
             prefix + '**/modules/**/*.' + suffix
         ]
     },

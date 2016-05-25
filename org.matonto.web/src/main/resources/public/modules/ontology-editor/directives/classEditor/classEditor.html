@@ -1,12 +1,12 @@
 <form name="vm.classForm" class="clearfix" novalidate autocomplete="off">
     <!-- tab buttons -->
-    <div class="btn-group btn-group-justified" role="group">
+    <tab-button-container>
         <tab-button is-active="vm.state.editorTab === 'basic'"
                     on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
-    </div>
+    </tab-button-container>
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">

@@ -19,22 +19,37 @@
                 controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
                     var vm = $scope.$parent.vm;
                     var dvm = this;
+                    var refresh = {};
 
                     dvm.namespacePattern = REGEX.IRI;
                     dvm.localNamePattern = REGEX.LOCALNAME;
 
-                    function setVariables(splitIri) {
+                    function setVariables(obj) {
                         var splitIri = $filter('splitIRI')(dvm.iri);
-                        dvm.iriBegin = splitIri.begin;
-                        dvm.iriThen = splitIri.then;
-                        dvm.iriEnd = splitIri.end;
+                        obj.iriBegin = splitIri.begin;
+                        obj.iriThen = splitIri.then;
+                        obj.iriEnd = splitIri.end;
+                    }
+
+                    dvm.refresh = function(){
+                        dvm.iriBegin = angular.copy(refresh.iriBegin);
+                        dvm.iriThen = angular.copy(refresh.iriThen);
+                        dvm.iriEnd = angular.copy(refresh.iriEnd);
+                    }
+
+                    dvm.afterEdit = function() {
+                        vm.ontology.matonto.iriBegin = angular.copy(dvm.iriBegin);
+                        vm.ontology.matonto.iriThen = angular.copy(dvm.iriThen);
+                        dvm.showIriOverlay = false;
                     }
 
                     $scope.$watch('dvm.iri', function() {
-                        setVariables();
+                        setVariables(dvm);
+                        setVariables(refresh);
                     });
 
-                    setVariables();
+                    setVariables(dvm);
+                    setVariables(refresh);
                 }]
             }
         }

@@ -206,11 +206,6 @@ ul {
         width: 100%;
         word-break: break-all;
 
-        /* Increases the padding for links without icons */
-        &.text-only {
-            padding: 3px 4px 3px 10px;
-        }
-
         /* The tree node changes are unsaved */
         &.unsaved .unsaved-icon {
             color: $brand-success;
@@ -295,17 +290,6 @@ ul {
 /* makes the height of the containers 100% so scrolling works as expected */
 .full-height {
     height: 100%;
-}
-
-/* scroll styles */
-.scroll-without-buttons,
-.tab:not(.default) {
-    bottom: 1px;
-    left: 16px;
-    overflow-y: auto;
-    position: absolute;
-    right: 16px;
-    top: 34px;
 }
 
 /* table with inputs */

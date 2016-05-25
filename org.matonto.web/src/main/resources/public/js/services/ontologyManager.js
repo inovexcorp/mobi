@@ -28,7 +28,6 @@
                     '@id': '',
                     '@type': [prefixes.owl + 'Ontology'],
                     matonto: {
-                        delimiter: '#',
                         classes: [],
                         annotations: defaultAnnotations,
                         isValid: true,
@@ -43,13 +42,16 @@
                     '@id': '',
                     '@type': [prefixes.owl + 'Class'],
                     matonto: {
-                        properties: []
+                        properties: [],
+                        isValid: true
                     }
                 },
                 propertyTemplate = {
                     '@id': '',
                     '@type': [],
-                    matonto: {}
+                    matonto: {
+                        isValid: true
+                    }
                 };
 
             initialize();
@@ -72,7 +74,6 @@
             }
 
             function initOntology(ontology, obj) {
-                var delimiter = _.last(obj['@id']);
                 obj.matonto = {
                     originalId: obj['@id'],
                     blankNodes: [],
@@ -80,8 +81,9 @@
                     propertyExpressions: {},
                     unionOfs: {},
                     intersectionOfs: {},
-                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#',
-                    isValid: true
+                    isValid: true,
+                    iriBegin: obj['@id'],
+                    iriThen: '#'
                 }
 
                 angular.merge(ontology, obj);
@@ -453,13 +455,15 @@
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
                             properties: [],
-                            originalId: obj['@id']
+                            originalId: obj['@id'],
+                            isValid: true
                         };
                         classes.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
                         obj.matonto = {
                             icon: chooseIcon(obj, prefixes),
-                            originalId: obj['@id']
+                            originalId: obj['@id'],
+                            isValid: true
                         };
                         properties.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'AnnotationProperty') !== -1) {
@@ -640,6 +644,8 @@
                 var newOntology = angular.copy(ontologyTemplate);
 
                 newOntology = initEntity(newOntology, ontologyIri, label, description);
+                newOntology.matonto.iriBegin = ontologyIri;
+                newOntology.matonto.iriThen = '#';
 
                 var config = {
                         params: {
@@ -954,7 +960,7 @@
                         changedProperties = [],
                         promises = [];
 
-                    _.forEach(_.filter(changedEntries, { ontologyId: ontologyId }), function(changedEntry) {
+                    _.forEach(self.getChangedListForOntology(ontologyId), function(changedEntry) {
                         var state = angular.copy(changedEntry.state);
                         obj = self.getObject(state);
                         obj.matonto.unsaved = false;
@@ -1175,6 +1181,10 @@
 
             self.clearChangedList = function(ontologyId) {
                 changedEntries = _.reject(changedEntries, { ontologyId: ontologyId });
+            }
+
+            self.getChangedListForOntology = function(ontologyId) {
+                return _.filter(changedEntries, { ontologyId: ontologyId });
             }
 
             self.getClasses = function(ontology) {

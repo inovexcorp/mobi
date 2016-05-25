@@ -15,7 +15,11 @@
                     currentEntity: '=',
                     currentOntology: '=',
                     isActive: '=',
-                    onClick: '&'
+                    onClick: '&',
+                    hasChildren: '='
+                },
+                bindToController: {
+                    isOpened: '='
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
@@ -29,6 +33,10 @@
                             result = ontologyManagerService.getEntityName(entity);
                         }
                         return result;
+                    }
+
+                    dvm.toggleOpen = function() {
+                         dvm.isOpened = !dvm.isOpened;
                     }
                 }
             }
