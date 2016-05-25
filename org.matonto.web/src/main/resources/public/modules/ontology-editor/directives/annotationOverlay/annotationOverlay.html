@@ -24,7 +24,7 @@
                            on-click="vm.addAnnotation(vm.annotationSelect, vm.annotationValue)">Add</custom-button>
 
             <custom-button ng-if="vm.editingAnnotation"
-                           is-disabled-when="vm.annotationForm.$invalid"
+                           is-disabled-when="vm.annotationForm.$invalid || !vm.annotationValue"
                            on-click="vm.editAnnotation(vm.annotationSelect, vm.annotationValue)">Edit</custom-button>
 
             <custom-button on-click="vm.showAnnotationOverlay = false;" type="'secondary'">Cancel</custom-button>

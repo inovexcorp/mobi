@@ -3,11 +3,11 @@
 
     angular
         .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
-        'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'treeItemWithSub',
-        'everythingTree', 'classTree', 'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor',
-        'removeIriFromArray', 'ontologyManager', 'stateManager', 'prefixManager', 'annotationManager', 'responseObj',
-        'serializationSelect', 'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay',
-        'createOntologyOverlay', 'createClassOverlay', 'createPropertyOverlay', 'leftNavItem'])
+        'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'everythingTree', 'classTree',
+        'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
+        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'leftNavItem', 'serializationSelect',
+        'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
+        'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -33,7 +33,11 @@
         vm.setTreeTab = function(tab) {
             stateManagerService.setTreeTab(tab);
             vm.state = stateManagerService.getState();
-            vm.selected = ontologyManagerService.getObject(vm.state);
+            if(tab !== 'annotation') {
+                vm.selected = ontologyManagerService.getObject(vm.state);
+            } else {
+                vm.selected = _.get(vm.ontologies, '[' + vm.state.oi + '].matonto.jsAnnotations[' + vm.state.pi + ']');
+            }
             vm.serialization = '';
         }
 
@@ -72,7 +76,8 @@
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(file)
                 .then(function(response) {
-                    vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
+                    stateManagerService.setTreeTab('everything');
+                    vm.selectItem('ontology-editor', vm.ontologies.length - 1);
                     vm.showUploadOverlay = false;
                 }, function(response) {
                     vm.uploadError = response.statusText;
@@ -84,9 +89,10 @@
                 .then(function(response) {
                     vm.showDeleteConfirmation = false;
                     if(response.selectOntology) {
-                        vm.selectItem('ontology-editor', vm.state.oi, undefined, undefined);
+                        stateManagerService.setTreeTab('everything');
+                        vm.selectItem('ontology-editor', vm.state.oi);
                     } else {
-                        vm.selectItem('default', undefined, undefined, undefined);
+                        vm.selectItem('default');
                     }
                 });
         }
@@ -104,9 +110,14 @@
             vm.selected = vm.ontology.matonto.jsAnnotations[index];
         }
 
+        vm.disableSave = function() {
+            return !_.get(vm.ontology, 'matonto.isValid', false) || !ontologyManagerService.getChangedListForOntology(_.get(vm.ontology, 'matonto.originalId')).length;
+        }
+
         vm.save = function() {
             ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.state)
                 .then(function(state) {
+                    vm.showSaveOverlay = false;
                     vm.state = state;
                 });
         }
@@ -217,6 +228,8 @@
         vm.openOntology = function() {
             ontologyManagerService.openOntology(vm.ontologyIdToOpen)
                 .then(function(response) {
+                    stateManagerService.setTreeTab('everything');
+                    vm.selectItem('ontology-editor', vm.ontologies.length - 1);
                     vm.showOpenOverlay = false;
                     vm.openError = '';
                     vm.ontologyIdToOpen = undefined;

@@ -2,9 +2,10 @@
 <div class="ontology-editor clearfix full-height" ng-controller="OntologyEditorController as vm">
     <aside class="left-nav nav full-height">
         <ul>
-            <left-nav-item on-click="vm.save()"
+            <left-nav-item on-click="vm.showSaveOverlay = true"
                            nav-title="Save All Changes"
-                           is-disabled-when="!vm.ontology.matonto.isValid">
+                           is-disabled-when="vm.disableSave()"
+                           is-active-when="vm.showSaveOverlay">
                 <i class="fa fa-floppy-o fa-fw"></i>
             </left-nav-item>
 
@@ -92,9 +93,9 @@
     <div class="row full-height">
         <!-- navigation structure -->
         <section class="col-xs-4 full-height">
-            <div class="tree-container boxed full-height">
+            <div class="tree-container full-height">
                 <!-- tab buttons -->
-                <div class="btn-group btn-group-justified" role="group">
+                <tab-button-container>
                     <tab-button is-active="vm.state.tab === 'everything'"
                                 on-click="vm.setTreeTab('everything')">Tree</tab-button>
 
@@ -109,7 +110,7 @@
 
                     <tab-button is-active="vm.state.tab === 'annotation'"
                                 on-click="vm.setTreeTab('annotation')">Annotation</tab-button>
-                </div>
+                </tab-button-container>
 
                 <everything-tree ng-if="vm.state.tab === 'everything'"></everything-tree>
 
@@ -129,12 +130,8 @@
 
         <!-- edit/create form section -->
         <section class="col-xs-8 full-height">
-            <div class="editor boxed">
-                <!-- default -->
-                <div ng-if="vm.state.editor === 'default'" class="tab default">
-                    <p class="lead">Welcome to the Ontology Editor!</p>
-                    <p>Click an item in the left pane to get started. This pane will then update accordingly.</p>
-                </div>
+            <div class="editor">
+                <default-tab ng-if="vm.state.editor === 'default'"></default-tab>
 
                 <ontology-editor ng-if="vm.state.editor === 'ontology-editor'"></ontology-editor>
 
@@ -177,6 +174,13 @@
                     <p>with value:<br><strong>{{vm.selected[vm.key][vm.index]['@value'] || vm.selected[vm.key][0]['@id']}}</strong></p>
                     <p>from:<br><strong>{{vm.selected['@id']}}</strong>?</p>
                 </confirmation-overlay>
+
+                <confirmation-overlay ng-if="vm.showSaveOverlay"
+                                      header-text="'Save Ontology Changes'"
+                                      confirm-click="vm.save()"
+                                      cancel-click="vm.showSaveOverlay = false"
+                                      confirm-text="'Yes'"
+                                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.ontology['@id']}}</strong>?</confirmation-overlay>
 
                 <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
 
