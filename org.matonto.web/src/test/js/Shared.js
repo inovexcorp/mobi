@@ -36,7 +36,8 @@ function injectRegexConstant() {
         module(function($provide) {
             $provide.constant('REGEX', {
                 'IRI': new RegExp('[a-zA-Z]'),
-                'LOCALNAME': new RegExp('[a-zA-Z]')
+                'LOCALNAME': new RegExp('[a-zA-Z]'),
+                'FILENAME': new RegExp('[a-zA-Z]')
             });
         });
     });

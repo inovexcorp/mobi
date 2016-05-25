@@ -8,6 +8,7 @@
         function ontologyDownloadOverlay() {
             return {
                 restrict: 'E',
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyDownloadOverlay/ontologyDownloadOverlay.html',
                 controllerAs: 'dvm',
                 controller: ['REGEX', function(REGEX) {
