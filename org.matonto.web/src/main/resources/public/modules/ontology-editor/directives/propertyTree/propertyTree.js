@@ -37,14 +37,10 @@
                         });
 
                         if(!result) {
-                            _.forEach(_.get(ontology, 'matonto.classes', []), function(classObj) {
-                                result = _.some(_.get(classObj, 'matonto.properties', []), function(property) {
+                            result = _.some(_.get(ontology, 'matonto.classes', []), function(classObj) {
+                                return _.some(_.get(classObj, 'matonto.properties', []), function(property) {
                                     return vm.isThisType(property, dvm.propertyType);
                                 });
-
-                                if(result) {
-                                    return false;
-                                }
                             });
                         }
 
