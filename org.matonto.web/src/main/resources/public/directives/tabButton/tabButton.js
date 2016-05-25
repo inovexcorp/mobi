@@ -33,6 +33,7 @@
 
         function tabButton() {
             return {
+                require: '^tabContainer',
                 restrict: 'E',
                 replace: true,
                 transclude: true,

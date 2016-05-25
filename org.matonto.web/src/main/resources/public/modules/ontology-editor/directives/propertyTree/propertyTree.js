@@ -10,29 +10,53 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/propertyTree/propertyTree.html',
+                scope: {
+                    headerText: '@'
+                },
+                bindToController: {
+                    propertyType: '@'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var vm = $scope.$parent.vm;
+                    var result = false;
+
+                    dvm.state = vm.state;
+
+                    function checkType(property) {
+                        if(vm.isThisType(property, dvm.propertyType)) {
+                            result = true;
+                            return false;
+                        }
+                    }
+
+                    dvm.selectItem = function(editor, oi, ci, pi) {
+                        vm.selectItem(editor, oi, ci, pi);
+                    }
+
+                    dvm.isThisType = function(property, propertyType) {
+                        return vm.isThisType(property, propertyType);
+                    }
 
                     dvm.hasChildren = function(ontology) {
-                        if(_.get(ontology, 'matonto.noDomains', []).length) {
-                            return true;
-                        }
+                        result = false;
 
-                        _.forEach(_.get(ontology, 'matonto.classes', []), function(classObj) {
-                            if(_.get(classObj, 'matonto.properties', []).length) {
-                                console.log('here');
-                                return true;
-                            }
+                        _.forEach(_.get(ontology, 'matonto.noDomains', []), function(property) {
+                            checkType(property);
                         });
 
-                        return false;
+                        if(!result) {
+                            _.forEach(_.get(ontology, 'matonto.classes', []), function(classObj) {
+                                _.forEach(_.get(classObj, 'matonto.properties', []), function(property) {
+                                    checkType(property);
+                                });
+                            });
+                        }
+
+                        return result;
                     }
-                },
-                link: function(scope, element, attrs) {
-                    scope.headerText = attrs.headerText;
-                    scope.propertyType = attrs.propertyType;
-                }
+                }]
             }
         }
 })();

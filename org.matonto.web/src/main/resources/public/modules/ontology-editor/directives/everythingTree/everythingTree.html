@@ -2,7 +2,7 @@
     <!-- tree view -->
     <strong>Everything</strong>
     <!-- start ontologies -->
-    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
+    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && (vm.state.ci !== undefined || vm.state.pi !== undefined))">
         <tree-item current-entity="ontology"
                    current-ontology="ontology"
                    is-active="vm.state.oi === $index && (vm.state.ci === undefined || vm.state.ci === -1) && vm.state.pi === undefined"
@@ -33,7 +33,7 @@
             </ul>
 
             <!-- start no domains (these will be handled differently later) -->
-            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = false;">
+            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = (vm.state.ci === undefined && vm.state.pi !== undefined)">
                 <li>
                     <a ng-click="opened = !opened; $event.stopPropagation();">
                         <i class="fa fa-fw"

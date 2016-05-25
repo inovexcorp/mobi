@@ -15,7 +15,7 @@ describe('Tab Button Container directive', function() {
 
     describe('replaces the directive with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<tab-button-container></tab-button>'))(scope);
+            this.element = $compile(angular.element('<tab-button-container></tab-button-container>'))(scope);
             scope.$digest();
         });
         it('based on tag', function() {

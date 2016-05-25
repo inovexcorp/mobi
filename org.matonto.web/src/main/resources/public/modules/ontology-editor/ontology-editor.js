@@ -36,7 +36,7 @@
             if(tab !== 'annotation') {
                 vm.selected = ontologyManagerService.getObject(vm.state);
             } else {
-                vm.selected = vm.ontologies[vm.state.oi].matonto.jsAnnotations[vm.state.pi];
+                vm.selected = _.get(vm.ontologies, '[' + vm.state.oi + '].matonto.jsAnnotations[' + vm.state.pi + ']');
             }
             vm.serialization = '';
         }
@@ -77,7 +77,7 @@
             ontologyManagerService.uploadThenGet(file)
                 .then(function(response) {
                     stateManagerService.setTreeTab('everything');
-                    vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
+                    vm.selectItem('ontology-editor', vm.ontologies.length - 1);
                     vm.showUploadOverlay = false;
                 }, function(response) {
                     vm.uploadError = response.statusText;
@@ -90,9 +90,9 @@
                     vm.showDeleteConfirmation = false;
                     if(response.selectOntology) {
                         stateManagerService.setTreeTab('everything');
-                        vm.selectItem('ontology-editor', vm.state.oi, undefined, undefined);
+                        vm.selectItem('ontology-editor', vm.state.oi);
                     } else {
-                        vm.selectItem('default', undefined, undefined, undefined);
+                        vm.selectItem('default');
                     }
                 });
         }
@@ -229,7 +229,7 @@
             ontologyManagerService.openOntology(vm.ontologyIdToOpen)
                 .then(function(response) {
                     stateManagerService.setTreeTab('everything');
-                    vm.selectItem('ontology-editor', vm.ontologies.length - 1, undefined, undefined);
+                    vm.selectItem('ontology-editor', vm.ontologies.length - 1);
                     vm.showOpenOverlay = false;
                     vm.openError = '';
                     vm.ontologyIdToOpen = undefined;

@@ -42,13 +42,16 @@
                     '@id': '',
                     '@type': [prefixes.owl + 'Class'],
                     matonto: {
-                        properties: []
+                        properties: [],
+                        isValid: true
                     }
                 },
                 propertyTemplate = {
                     '@id': '',
                     '@type': [],
-                    matonto: {}
+                    matonto: {
+                        isValid: true
+                    }
                 };
 
             initialize();
@@ -452,13 +455,15 @@
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
                             properties: [],
-                            originalId: obj['@id']
+                            originalId: obj['@id'],
+                            isValid: true
                         };
                         classes.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
                         obj.matonto = {
                             icon: chooseIcon(obj, prefixes),
-                            originalId: obj['@id']
+                            originalId: obj['@id'],
+                            isValid: true
                         };
                         properties.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'AnnotationProperty') !== -1) {
