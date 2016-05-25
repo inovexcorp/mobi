@@ -44,8 +44,7 @@ describe('Tab Button directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('A');
-            expect(this.element.hasClass('btn')).toBe(true);
-            expect(this.element.hasClass('btn-primary')).toBe(true);
+            expect(this.element.hasClass('tab-button')).toBe(true);
         });
         it('with the correct class based on isActive', function() {
             expect(this.element.hasClass('active')).toBe(false);
