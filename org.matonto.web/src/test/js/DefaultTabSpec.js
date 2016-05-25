@@ -22,7 +22,7 @@ describe('Default Tab directive', function() {
         it('for a div', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
-        it('based on tab .tab class', function() {
+        it('based on .tab', function() {
             expect(element.hasClass('tab')).toBe(true);
         });
         it('based on .lead', function() {
