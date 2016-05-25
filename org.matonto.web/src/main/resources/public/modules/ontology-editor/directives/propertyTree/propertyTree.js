@@ -20,16 +20,8 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var vm = $scope.$parent.vm;
-                    var result = false;
 
                     dvm.state = vm.state;
-
-                    function checkType(property) {
-                        if(vm.isThisType(property, dvm.propertyType)) {
-                            result = true;
-                            return false;
-                        }
-                    }
 
                     dvm.selectItem = function(editor, oi, ci, pi) {
                         vm.selectItem(editor, oi, ci, pi);
@@ -40,17 +32,19 @@
                     }
 
                     dvm.hasChildren = function(ontology) {
-                        result = false;
-
-                        _.forEach(_.get(ontology, 'matonto.noDomains', []), function(property) {
-                            checkType(property);
+                        var result = _.some(_.get(ontology, 'matonto.noDomains', []), function(property) {
+                            return vm.isThisType(property, dvm.propertyType);
                         });
 
                         if(!result) {
                             _.forEach(_.get(ontology, 'matonto.classes', []), function(classObj) {
-                                _.forEach(_.get(classObj, 'matonto.properties', []), function(property) {
-                                    checkType(property);
+                                result = _.some(_.get(classObj, 'matonto.properties', []), function(property) {
+                                    return vm.isThisType(property, dvm.propertyType);
                                 });
+
+                                if(result) {
+                                    return false;
+                                }
                             });
                         }
 

@@ -4,32 +4,4 @@
 .tab-button-container {
     font-size: 0;
     text-align: center;
-
-    .tab-button {
-        background: $btn-bg-dark;
-        border: 1px solid $btn-bg-darker;
-        border-bottom: 0;
-        color: #fff;
-        display: inline-block;
-        font-size: 14px;
-        overflow: hidden;
-        padding: 7px 13px;
-        text-decoration: none;
-        text-overflow: ellipsis;
-        width: 100%;
-
-        &.active,
-        &:hover {
-            background: $btn-bg;
-            border-color: $btn-bg-dark;
-        }
-
-        @for $i from 2 through 5 {
-            &:first-child:nth-last-child(#{$i}),
-            &:first-child:nth-last-child(#{$i}) ~ .tab-button {
-                width: #{100%/$i};
-            }
-        }
-    }
 }
-
