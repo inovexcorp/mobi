@@ -4,13 +4,11 @@ describe('Annotation Overlay directive', function() {
         element;
 
     injectRegexConstant();
+    injectHighlightFilter();
+    injectTrustedFilter();
+
     beforeEach(function() {
         module('annotationOverlay');
-
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

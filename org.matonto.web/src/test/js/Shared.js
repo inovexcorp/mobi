@@ -43,6 +43,46 @@ function injectRegexConstant() {
     });
 }
 
+function injectBeautifyFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
+                return '';
+            }));
+        });
+    });
+}
+
+function injectSplitIRIFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
+                return {
+                    begin: '',
+                    then: '',
+                    end: ''
+                }
+            }));
+        });
+    });
+}
+
+function injectTrustedFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
+        });
+    });
+}
+
+function injectHighlightFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
+        });
+    });
+}
+
 function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
