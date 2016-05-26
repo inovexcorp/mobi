@@ -7,9 +7,9 @@
         <error-display ng-if="vm.createAnnotationError">{{vm.createAnnotationError}}</error-display>
 
         <!-- new annotation iri -->
-        <div ng-class="{'has-error': vm.createAnnotationForm.iri.$error.pattern}" class="form-group">
+        <div ng-class="{'has-error': vm.createAnnotationForm.iri.$invalid}" class="form-group">
             <custom-label muted-text="'*Required'">Annotation IRI</custom-label>
-            <input class="form-control" id="iri" name="iri" ng-model="vm.createAnnotationIri" ng-pattern="dvm.iriPattern" required />
+            <input class="form-control" id="iri" name="iri" ng-model="vm.createAnnotationIri" ng-pattern="dvm.iriPattern" />
             <p ng-messages="vm.createAnnotationForm.iri.$error" class="error-msg">
                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
             </p>
@@ -17,7 +17,7 @@
 
         <!-- create annotation buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="vm.createAnnotationForm.$invalid"
+            <custom-button is-disabled-when="vm.createAnnotationForm.$invalid || !vm.createAnnotationIri"
                            on-click="vm.createAnnotation(vm.createAnnotationIri)">Create</custom-button>
 
             <custom-button on-click="vm.showCreateAnnotationOverlay = false;" type="'secondary'">Cancel</custom-button>

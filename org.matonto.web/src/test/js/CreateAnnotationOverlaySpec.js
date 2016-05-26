@@ -20,6 +20,7 @@ describe('Create Annotation Overlay directive', function() {
         element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);
         scope.$digest();
     });
+
     describe('replaces the element with the correct html', function() {
         it('for a div', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -33,17 +34,15 @@ describe('Create Annotation Overlay directive', function() {
     });
 
     describe('has-error class', function() {
-        it('is not there when variable is undefined', function() {
+        it('is not there when form.iri is valid', function() {
             var formGroup = element.querySelectorAll('.form-group');
             expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
         });
-        it('is there when variable is true', function() {
+        it('is there when form.iri is invalid', function() {
             scope.vm = {
                 createAnnotationForm: {
                     iri: {
-                        '$error': {
-                            pattern: true
-                        }
+                        '$invalid': true
                     }
                 }
             }
