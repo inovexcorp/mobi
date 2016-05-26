@@ -52,4 +52,26 @@ describe('Create Annotation Overlay directive', function() {
             expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
         });
     });
+
+    describe('error-display', function() {
+        beforeEach(function() {
+            element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);
+        });
+        it('is visible when createAnnotationError is true', function() {
+            scope.vm = {
+                createAnnotationError: true
+            }
+            scope.$digest();
+            var errors = element.querySelectorAll('error-display');
+            expect(errors.length).toBe(1);
+        });
+        it('is not visible when createAnnotationError is false', function() {
+            scope.vm = {
+                createAnnotationError: false
+            }
+            scope.$digest();
+            var errors = element.querySelectorAll('error-display');
+            expect(errors.length).toBe(0);
+        });
+    });
 });

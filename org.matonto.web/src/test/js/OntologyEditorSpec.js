@@ -130,4 +130,40 @@ describe('Ontology Editor directive', function() {
             expect(scope.vm.entityChanged).toHaveBeenCalled();
         });
     });
+
+    describe('error-display', function() {
+        beforeEach(function() {
+            element = $compile(angular.element('<ontology-editor></ontology-editor>'))(scope);
+        });
+        it('is visible when createError is true', function() {
+            scope.vm = {
+                selected: {
+                    matonto: {
+                        createError: true
+                    }
+                },
+                state: {
+                    editorTab: 'basic'
+                }
+            }
+            scope.$digest();
+            var errors = element.querySelectorAll('error-display');
+            expect(errors.length).toBe(1);
+        });
+        it('is not visible when createError is false', function() {
+            scope.vm = {
+                selected: {
+                    matonto: {
+                        createError: false
+                    }
+                },
+                state: {
+                    editorTab: 'basic'
+                }
+            }
+            scope.$digest();
+            var errors = element.querySelectorAll('error-display');
+            expect(errors.length).toBe(0);
+        });
+    });
 });

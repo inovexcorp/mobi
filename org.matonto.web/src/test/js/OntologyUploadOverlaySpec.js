@@ -1,15 +1,10 @@
-describe('Ontology Open Overlay directive', function() {
+describe('Ontology Upload Overlay directive', function() {
     var $compile,
         scope,
         element;
 
-    injectBeautifyFilter();
-    injectSplitIRIFilter();
-    injectTrustedFilter();
-    injectHighlightFilter();
-
     beforeEach(function() {
-        module('ontologyOpenOverlay');
+        module('ontologyUploadOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -18,11 +13,11 @@ describe('Ontology Open Overlay directive', function() {
 
     });
 
-    injectDirectiveTemplate('modules/ontology-editor/directives/ontologyOpenOverlay/ontologyOpenOverlay.html');
+    injectDirectiveTemplate('modules/ontology-editor/directives/ontologyUploadOverlay/ontologyUploadOverlay.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<ontology-open-overlay></ontology-open-overlay>'))(scope);
+            element = $compile(angular.element('<ontology-upload-overlay></ontology-upload-overlay>'))(scope);
             scope.$digest();
         });
         it('for a DIV', function() {
@@ -38,19 +33,19 @@ describe('Ontology Open Overlay directive', function() {
 
     describe('error-display', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<ontology-open-overlay></ontology-open-overlay>'))(scope);
+            element = $compile(angular.element('<ontology-upload-overlay></ontology-upload-overlay>'))(scope);
         });
-        it('is visible when openError is true', function() {
+        it('is visible when uploadError is true', function() {
             scope.vm = {
-                openError: true
+                uploadError: true
             }
             scope.$digest();
             var errors = element.querySelectorAll('error-display');
             expect(errors.length).toBe(1);
         });
-        it('is not visible when openError is false', function() {
+        it('is not visible when uploadError is false', function() {
             scope.vm = {
-                openError: false
+                uploadError: false
             }
             scope.$digest();
             var errors = element.querySelectorAll('error-display');
