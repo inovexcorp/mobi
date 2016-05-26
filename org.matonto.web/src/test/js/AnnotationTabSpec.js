@@ -4,11 +4,12 @@ describe('Annotation Tab directive', function() {
         element,
         annotations = [{ localName: 'prop1' }, { localName: 'prop2' }];
 
+    injectBeautifyFilter();
+
     beforeEach(function() {
         module('annotationTab');
 
         module(function($provide) {
-            $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter'));
             $provide.value('showAnnotationsFilter', jasmine.createSpy('showAnnotationsFilter').and.callFake(function(obj, arr) {
                 return obj ? annotations : [];
             }));
