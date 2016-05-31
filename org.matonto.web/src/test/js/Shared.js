@@ -248,3 +248,16 @@ function mockSparqlManager() {
         });
     });
 }
+
+function mockSettingsManager() {
+    module(function($provide) {
+        $provide.service('settingsManagerService', function() {
+            this.getSettings = jasmine.createSpy('getSettings').and.returnValue({});
+            this.setSettings = jasmine.createSpy('setSettings').and.callFake(function(settings) {
+                return settings;
+            });
+            this.getTreeDisplay = jasmine.createSpy('getTreeDisplay').and.returnValue('');
+            this.getTooltipDisplay = jasmine.createSpy('getTooltipDisplay').and.returnValue('');
+        });
+    });
+}
