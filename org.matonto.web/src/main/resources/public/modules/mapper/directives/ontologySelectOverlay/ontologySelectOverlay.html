@@ -14,8 +14,8 @@
         </div>
         <ontology-preview ontology="dvm.selectedOntology"></ontology-preview>
         <div class="btn-container clearfix">
-            <custom-button on-click="onClickBack()" pull="'left'">Back</custom-button>
-            <custom-button on-click="onClickContinue({ontology: dvm.selectedOntology})" is-disabled-when="!dvm.selectedOntology">Continue</custom-button>
+            <custom-button on-click="dvm.back()" pull="'left'">Back</custom-button>
+            <custom-button on-click="dvm.continue()" is-disabled-when="!dvm.selectedOntology">Continue</custom-button>
         </div>
     </form>
 </div>

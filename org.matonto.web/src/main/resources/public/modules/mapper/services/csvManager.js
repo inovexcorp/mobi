@@ -11,6 +11,12 @@
             var self = this,
                 prefix = '/matontorest/csv';
 
+            self.fileObj = undefined;
+            self.filePreview = undefined;
+            self.fileName = '';
+            self.separator = ',';
+            self.containsHeaders = true;
+
             self.upload = function(file) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
@@ -25,58 +31,60 @@
 
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
-                    .then(function(response) {
+                    .then(response => {
                         deferred.resolve(response.data);
-                    }, function(response) {
-                        deferred.reject(response);
-                    }).then(function() {
+                    }, response => {
+                        deferred.reject(_.get(response, 'statusText', ''));
+                    }).then(() => {
                         $rootScope.showSpinner = false;                        
                     });
 
                 return deferred.promise;
             }
 
-            self.previewFile = function(fileName, rowEnd, separator, containsHeaders) {
+            self.previewFile = function(rowEnd) {
                 var deferred = $q.defer(),
                     config = {
                         params: {
                             'rowCount': rowEnd ? rowEnd : 0,
-                            'separator': separator
+                            'separator': self.separator
                         }
                     };
 
                 $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(fileName), config)
-                    .then(function(response) {
-                        var filePreview = {};
-                        if (containsHeaders) {
-                            filePreview.headers = response.data[0];
-                            filePreview.rows = _.drop(response.data, 1);
+                $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
+                    .then(response => {
+                        self.filePreview = {};
+                        if (self.containsHeaders) {
+                            self.filePreview.headers = response.data[0];
+                            self.filePreview.rows = _.drop(response.data, 1);
                         } else {
-                            filePreview.headers = [];
-                            _.times(response.data[0].length, function(index) {
-                                filePreview.headers.push('Column ' + (index + 1));
+                            self.filePreview.headers = [];
+                            _.times(response.data[0].length, index => {
+                                self.filePreview.headers.push('Column ' + (index + 1));
                             });
-                            filePreview.rows = response.data;
+                            self.filePreview.rows = response.data;
                         }
-                        deferred.resolve(filePreview);
-                    }, function(response) {
-                        deferred.reject(response);
-                    }).then(function() {
+                        deferred.resolve();
+                    }, response => {
+                        self.filePreview = undefined;
+                        deferred.reject(_.get(response, 'statusText', ''));
+                    }).then(() => {
                         $rootScope.showSpinner = false;
                     });
+
                 return deferred.promise;
             }
 
-            self.previewMap = function(fileName, jsonld, containsHeaders, format, separator) {
+            self.previewMap = function(jsonld, format) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
                             'format': format,
-                            'containsHeaders': containsHeaders,
-                            'separator': separator
+                            'containsHeaders': self.containsHeaders,
+                            'separator': self.separator
                         },
                         headers: {
                             'Content-Type': undefined,
@@ -85,18 +93,26 @@
                     };
                 fd.append('jsonld', angular.toJson(jsonld));
 
-                $http.post(prefix + '/' + encodeURIComponent(fileName) + '/map-preview', fd, config)
-                    .then(function(response) {
+                $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
+                    .then(response => {
                         deferred.resolve(response.data);
-                    }, function(response) {
-                        deferred.reject(response);
+                    }, response => {
+                        deferred.reject(_.get(response, 'statusText', ''));
                     });
                 return deferred.promise;
             }
 
-            self.map = function(fileName, mappingName, containsHeaders, separator) {
-                var queryString = '?format=jsonld&mappingName=' + mappingName + '&containsHeaders=' + containsHeaders + '&separator=' + separator;
-                $window.location = prefix + '/' + encodeURIComponent(fileName) + '/map' + queryString;
+            self.map = function(mappingName) {
+                var queryString = '?format=jsonld&mappingName=' + mappingName + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
+                $window.location = prefix + '/' + encodeURIComponent(self.fileName) + '/map' + queryString;
+            }
+
+            self.reset = function() {
+                self.fileObj = undefined;
+                self.filePreview = undefined;
+                self.fileName = '';
+                self.separator = ',';
+                self.containsHeaders = true;
             }
         }
 })();

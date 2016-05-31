@@ -21,10 +21,7 @@
                 },
                 controller: function() {
                     var dvm = this;
-
-                    dvm.getName = function(propObj) {
-                        return ontologyManagerService.getEntityName(propObj);
-                    }
+                    dvm.ontology = ontologyManagerService;
                 },
                 templateUrl: 'modules/mapper/directives/propSelect/propSelect.html'
             }

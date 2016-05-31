@@ -2,12 +2,12 @@
     'use strict';
 
     angular
-        .module('rdfPreview', [])
+        .module('rdfPreview', ['csvManager', 'mappingManager'])
         .directive('rdfPreview', rdfPreview)
         .directive('formatRdf', formatRdf);
 
         formatRdf.$inject = ['$filter'];
-        rdfPreview.$inject = ['$window'];
+        rdfPreview.$inject = ['$window', 'csvManagerService', 'mappingManagerService'];
 
         function formatRdf($filter) {
             return {
@@ -24,18 +24,18 @@
                };
         }
 
-        function rdfPreview($window) {
+        function rdfPreview($window, csvManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    preview: '=',
-                    createPreview: '&'
-                },
+                scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.visible = true;
+                    dvm.csv = csvManagerService;
+                    dvm.manager = mappingManagerService;
+                    dvm.visible = false;
+                    dvm.preview = '';
                     dvm.options = [
                         {
                             name: 'JSON-LD',
@@ -50,6 +50,13 @@
                             value: 'rdf/xml'
                         }
                     ];
+                    dvm.generatePreview = function() {
+                        dvm.csv.previewMap(dvm.manager.mapping.jsonld, dvm.serializeOption).then(preview => {
+                            dvm.preview = preview;
+                        }, errorMessage => {
+                            console.log(errorMessage);
+                        });
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/rdfPreview/rdfPreview.html'
             }

@@ -27,8 +27,8 @@
         </div>
         
         <div class="btn-container clearfix">
-            <custom-button on-click="cancel()" pull="'left'">Cancel</custom-button>
-            <custom-button on-click="set({prefixEnd: dvm.beginsWith + dvm.then, localName: dvm.endsWith.value})" is-disabled-when="iriTemplateForm.$invalid">Set</custom-button>
+            <custom-button on-click="dvm.state.editIriTemplate = false" pull="'left'">Cancel</custom-button>
+            <custom-button on-click="dvm.state.editIriTemplate = false; dvm.set()" is-disabled-when="iriTemplateForm.$invalid">Set</custom-button>
         </div>
     </form>
 </div>

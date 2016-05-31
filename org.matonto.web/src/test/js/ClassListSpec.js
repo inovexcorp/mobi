@@ -2,17 +2,23 @@ describe('Class List directive', function() {
     var $compile,
         scope,
         ontologyManagerSvc,
-        mappingManagerSvc;
+        mappingManagerSvc,
+        mapperStateSvc,
+        csvManagerSvc;
 
     mockPrefixes();
     beforeEach(function() {
         module('classList');
         mockOntologyManager();
         mockMappingManager();
+        mockMapperState();
+        mockCsvManager();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_) {
+        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _csvManagerService_) {
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
+            csvManagerSvc = _csvManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -23,89 +29,56 @@ describe('Class List directive', function() {
 
     injectDirectiveTemplate('modules/mapper/directives/classList/classList.html');
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.clickAddProp = jasmine.createSpy('clickAddProp');
-            scope.clickClass = jasmine.createSpy('clickClass');
-            scope.clickProp = jasmine.createSpy('clickProp');
-            scope.clickDelete = jasmine.createSpy('clickDelete');
-            scope.mapping = {};
-            scope.ontologies = [{'@id': ''}]
-            scope.columns = [];
-            scope.invalidPropIds = [];
-
-            this.element = $compile(angular.element('<class-list click-add-prop="clickAddProp(classMappingId)" click-class="clickClass(classMappingId)" click-prop="clickProp(classMappingId, propMappingId)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" columns="columns" invalid-prop-ids="invalidPropIds"></class-list>'))(scope);
-            scope.$digest();
-        });
-        it('mapping should be two way bound', function() {
-            var controller = this.element.controller('classList');
-            controller.mapping = {jsonld: []};
-            scope.$digest();
-            expect(scope.mapping).toEqual({jsonld: []});
-        });
-        it('ontologies should be two way bound', function() {
-            var controller = this.element.controller('classList');
-            controller.ontologies = [{'@id': 'test'}];
-            scope.$digest();
-            expect(scope.ontologies).toEqual([{'@id': 'test'}]);
-        });
-        it('columns should be two way bound', function() {
-            var controller = this.element.controller('classList');
-            controller.columns = ['test'];
-            scope.$digest();
-            expect(scope.columns).toEqual(['test']);
-        });
-        it('invalidPropIds should be two way bound', function() {
-            var controller = this.element.controller('classList');
-            controller.invalidPropIds = ['test'];
-            scope.$digest();
-            expect(scope.invalidPropIds).toEqual(['test']);
-        });
-        it('clickAddProp should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.clickAddProp();
-
-            expect(scope.clickAddProp).toHaveBeenCalled();
-        });
-        it('clickClass should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.clickClass();
-
-            expect(scope.clickClass).toHaveBeenCalled();
-        });
-        it('clickProp should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.clickProp();
-
-            expect(scope.clickProp).toHaveBeenCalled();
-        });
-        it('clickDelete should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.clickDelete();
-
-            expect(scope.clickDelete).toHaveBeenCalled();
-        });
-    });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.mapping = {jsonld: []};
-            scope.ontologies = [{'@id': ''}];
-            scope.columns = [];
-            scope.invalidPropIds = [];
-
-            this.element = $compile(angular.element('<class-list click-add-prop="clickAddProp(classMappingId)" click-class="clickClass(classMappingId)" click-prop="clickProp(classMappingId, propMappingId)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" columns="columns" invalid-prop-ids="invalidPropIds"></class-list>'))(scope);
+            mappingManagerSvc.mapping = {jsonld: []};
+            csvManagerSvc.filePreview = {
+                headers: [],
+                rows: []
+            };
+            this.element = $compile(angular.element('<class-list></class-list>'))(scope);
             scope.$digest();
         });
-        it('should collect ClassMappings if they exist', function() {
+        it('should set the proper state for editing a class', function() {
             var controller = this.element.controller('classList');
-            var result = controller.getClassMappings();
-            expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalled();
+            controller.clickClass({'@id': ''});
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.selectedClassMappingId).toBe('');
         });
-        it('should collect prop mappings', function() {
+        it('should set the proper state for editing a property', function() {
             var controller = this.element.controller('classList');
-            var result = controller.getPropMappings({'@id': 'classMapping'});
-
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping.jsonld, 'classMapping');
+            csvManagerSvc.filePreview.headers = [''];
+            controller.clickProp({'@id': '', columnIndex: [{'@value': 0}]}, {'@id': ''});
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
+            expect(mapperStateSvc.selectedClassMappingId).toBe('');
+            expect(mapperStateSvc.selectedPropMappingId).toBe('');
+            expect(mapperStateSvc.selectedColumn).toBe('');
+        });
+        it('should set the proper state for adding a property', function() {
+            var controller = this.element.controller('classList');
+            controller.clickAddProp({'@id': ''});
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(mapperStateSvc.newProp).toBe(true);
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
+            expect(mapperStateSvc.selectedClassMappingId).toBe('');
+        });
+        it('should retrieve the list of invalid property ids', function() {
+            mapperStateSvc.invalidProps = [{'@id': ''}];
+            var controller = this.element.controller('classList');
+            var result = controller.getInvalidPropIds();
+            _.forEach(result, function(id, index) {
+                expect(id).toBe(mapperStateSvc.invalidProps[index]['@id']);
+            });
+        });
+        it('should get a class title', function() {
+            var controller = this.element.controller('classList');
+            spyOn(controller, 'getLinks');
+            var result = controller.getClassTitle({'@id': ''});
+            expect(controller.getLinks).toHaveBeenCalledWith({'@id': ''});
+            expect(typeof result).toBe('string');
         });
         it('should get a property title', function() {
             var controller = this.element.controller('classList');
@@ -122,146 +95,132 @@ describe('Class List directive', function() {
         it('should test whether all properties have been mapped', function() {
             var controller = this.element.controller('classList');
             var result = controller.mappedAllProps({'@id': ''});
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(controller.mapping.jsonld, '');
+            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
             expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalled();
             expect(typeof result).toBe('boolean');
         });
         it('should get a list of properties linking to a class mapping', function() {
-            scope.mapping.jsonld.push({'@type': ['ObjectMapping'], 'classMapping': [{'@id': ''}]});
-            scope.$digest();
+            mappingManagerSvc.mapping.jsonld.push({'@type': ['ObjectMapping'], 'classMapping': [{'@id': ''}]});
             var controller = this.element.controller('classList');
             var result = controller.getLinks({'@id': ''});
             expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
-        it('should get a class title', function() {
-            var controller = this.element.controller('classList');
-            spyOn(controller, 'getLinks');
-            var result = controller.getClassTitle({'@id': ''});
-            expect(controller.getLinks).toHaveBeenCalledWith({'@id': ''});
-            expect(typeof result).toBe('string');
-        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.mapping = {jsonld: []};
-            scope.ontologies = [{'@id': ''}];
-            scope.columns = [];
-            scope.invalidPropIds = [];
-            this.element = $compile(angular.element('<class-list click-add-prop="clickAddProp(classMappingId)" click-class="clickClass(classMappingId)" click-prop="clickProp(classMappingId, propMappingId)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" columns="columns" invalid-prop-ids="invalidPropIds"></class-list>'))(scope);
+            mappingManagerSvc.mapping = {jsonld: []};
+            csvManagerSvc.filePreview = {
+                headers: [],
+                rows: []
+            };
+            this.element = $compile(angular.element('<class-list></class-list>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('class-list-container')).toBe(true);
-            var classList = this.element.querySelectorAll('ul.class-list');
-            expect(classList.length).toBe(1);
+            expect(this.element.hasClass('class-list')).toBe(true);
+            expect(this.element.querySelectorAll('.boxed').length).toBe(1);
+        });
+        it('depending on whether there is a file preview', function() {
+            expect(this.element.querySelectorAll('ul.list').length).toBe(1);
+
+            csvManagerSvc.filePreview = undefined;
+            scope.$digest();
+            expect(this.element.querySelectorAll('ul.list').length).toBe(0);
         });
         it('depending on the number of class mappings', function() {
             var classMappings = [{'@id': ''}];
-            spyOn(this.element.controller('classList'), 'getClassMappings').and.returnValue(classMappings);
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             scope.$digest();
 
-            var classList = this.element.querySelectorAll('ul.class-list');
+            var classList = this.element.querySelectorAll('ul.list');
             expect(classList[0].childElementCount).toBe(classMappings.length);
         });
         it('depending on the number of property mappings', function() {
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': ''}];
-            spyOn(this.element.controller('classList'), 'getClassMappings').and.returnValue(classMappings);
-            spyOn(this.element.controller('classList'), 'getPropMappings').and.returnValue(propMappings);
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(classMappings);
             scope.$digest();
 
-            var propList = this.element.querySelectorAll('ul.class-list ul.props');
+            var propList = this.element.querySelectorAll('ul.list ul.props');
             expect(propList.length).toBe(1);
-            expect(propList[0].childElementCount).toBe(propMappings.length);
+            expect(propList[0].childElementCount).toBe(propMappings.length + 1);
         });
         it('depending on whether all properties have been mapped', function() {
+            var controller = this.element.controller('classList');
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': ''}];
-            spyOn(this.element.controller('classList'), 'getClassMappings').and.returnValue(classMappings);
-            spyOn(this.element.controller('classList'), 'getPropMappings').and.returnValue(propMappings);
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(classMappings);
+            spyOn(controller, 'mappedAllProps').and.returnValue(true);
             scope.$digest();
 
-            var propList = angular.element(this.element.querySelectorAll('ul.class-list ul.props')[0]);
+            var propList = angular.element(this.element.querySelectorAll('ul.list ul.props')[0]);
             expect(propList.html()).not.toContain('Add Property');
 
-            spyOn(this.element.controller('classList'), 'mappedAllProps').and.returnValue(false);
+            controller.mappedAllProps.and.returnValue(false);
             scope.$digest();
             expect(propList.html()).toContain('Add Property');
         });
         it('if prop mapping is invalid', function() {
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': ''}];
-            spyOn(this.element.controller('classList'), 'getClassMappings').and.returnValue(classMappings);
-            spyOn(this.element.controller('classList'), 'getPropMappings').and.returnValue(propMappings);
-            scope.invalidPropIds = [''];
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(classMappings);
+            spyOn(this.element.controller('classList'), 'getInvalidPropIds').and.returnValue(['']);
             scope.$digest();
 
-            var propItem = this.element.querySelectorAll('ul.class-list ul.props li')[0];
+            var propItem = this.element.querySelectorAll('ul.list ul.props li')[0];
             expect(angular.element(propItem.querySelectorAll('a')[0]).hasClass('text-danger')).toBe(true);
         });
     });
     it('should call clickClass when a class title is clicked', function() {
-        scope.clickClass = jasmine.createSpy('clickClass');
-        scope.mapping = {jsonld: []};
-        scope.ontologies = [{'@id': ''}];
-        scope.columns = [];
-        scope.invalidPropIds = [];
-        var element = $compile(angular.element('<class-list click-add-prop="clickAddProp(classMappingId)" click-class="clickClass(classMappingId)" click-prop="clickProp(classMappingId, propMappingId)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" columns="columns" invalid-prop-ids="invalidPropIds"></class-list>'))(scope);
+        mappingManagerSvc.mapping = {jsonld: []};
+        csvManagerSvc.filePreview = {};
+        var classMapping = {'@id': ''};
+        var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
-        spyOn(element.controller('classList'), 'getClassMappings').and.returnValue([{'@id': ''}]);
+        var controller = element.controller('classList');
+        mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+        spyOn(controller, 'clickClass');
         scope.$digest();
 
-        var classItem = angular.element(element.querySelectorAll('ul.class-list li a')[0]);
+        var classItem = angular.element(element.querySelectorAll('ul.list li a')[0]);
         classItem.triggerHandler('click');
-        expect(scope.clickClass).toHaveBeenCalledWith('');
+        expect(controller.clickClass).toHaveBeenCalledWith(classMapping);
     });
     it('should call clickProp when a prop title is clicked', function() {
-        scope.clickProp = jasmine.createSpy('clickProp');
-        scope.mapping = {jsonld: []};
-        scope.ontologies = [{'@id': ''}];
-        scope.columns = [];
-        scope.invalidPropIds = [];
-        var element = $compile(angular.element('<class-list click-add-prop="clickAddProp(classMappingId)" click-class="clickClass(classMappingId)" click-prop="clickProp(classMappingId, propMappingId)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" columns="columns" invalid-prop-ids="invalidPropIds"></class-list>'))(scope);
+        mappingManagerSvc.mapping = {jsonld: []};
+        csvManagerSvc.filePreview = {};
+        var classMapping = {'@id': ''};
+        var propMapping = {'@id': ''};
+        var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
-        spyOn(element.controller('classList'), 'getClassMappings').and.returnValue([{'@id': ''}]);
-        spyOn(element.controller('classList'), 'getPropMappings').and.returnValue([{'@id': ''}]);
+        var controller = element.controller('classList');
+        mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+        mappingManagerSvc.getPropMappingsByClass.and.returnValue([propMapping]);
+        spyOn(controller, 'clickProp');
         scope.$digest();
 
-        var propItem = angular.element(element.querySelectorAll('ul.class-list ul.props li a')[0]);
+        var propItem = angular.element(element.querySelectorAll('ul.list ul.props li a')[0]);
         propItem.triggerHandler('click');
-        expect(scope.clickProp).toHaveBeenCalledWith('', '');
-    });
-    it('should call clickDelete when a prop delete button is clicked', function() {
-        scope.clickDelete = jasmine.createSpy('clickDelete');
-        scope.mapping = {jsonld: []};
-        scope.ontologies = [{'@id': ''}];
-        scope.columns = [];
-        scope.invalidPropIds = [];
-        var element = $compile(angular.element('<class-list click-add-prop="clickAddProp(classMappingId)" click-class="clickClass(classMappingId)" click-prop="clickProp(classMappingId, propMappingId)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" columns="columns" invalid-prop-ids="invalidPropIds"></class-list>'))(scope);
-        scope.$digest();
-        spyOn(element.controller('classList'), 'getClassMappings').and.returnValue([{'@id': ''}]);
-        spyOn(element.controller('classList'), 'getPropMappings').and.returnValue([{'@id': ''}]);
-        scope.$digest();
-
-        var propDeleteBtn = angular.element(element.querySelectorAll('ul.class-list ul.props li button')[0]);
-        propDeleteBtn.triggerHandler('click');
-        expect(scope.clickDelete).toHaveBeenCalledWith('', '');
+        expect(controller.clickProp).toHaveBeenCalledWith(propMapping, classMapping);
     });
     it('should call clickAddProp when an add prop link is clicked', function() {
-        scope.clickAddProp = jasmine.createSpy('clickAddProp');
-        scope.mapping = {jsonld: []};
-        scope.ontologies = [{'@id': ''}];
-        scope.columns = [];
-        scope.invalidPropIds = [];
-        var element = $compile(angular.element('<class-list click-add-prop="clickAddProp(classMappingId)" click-class="clickClass(classMappingId)" click-prop="clickProp(classMappingId, propMappingId)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" columns="columns" invalid-prop-ids="invalidPropIds"></class-list>'))(scope);
+        mappingManagerSvc.mapping = {jsonld: []};
+        csvManagerSvc.filePreview = {};
+        var classMapping = {'@id': ''};
+        var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
-        spyOn(element.controller('classList'), 'getClassMappings').and.returnValue([{'@id': ''}]);
-        spyOn(element.controller('classList'), 'mappedAllProps').and.returnValue(false);
+        var controller = element.controller('classList');
+        mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+        spyOn(controller, 'mappedAllProps').and.returnValue(false);
+        spyOn(controller, 'clickAddProp');
         scope.$digest();
 
-        var addProp = angular.element(element.querySelectorAll('ul.class-list ul.props li a')[0]);
+        var addProp = angular.element(element.querySelectorAll('ul.list ul.props li a')[0]);
         addProp.triggerHandler('click');
-        expect(scope.clickAddProp).toHaveBeenCalledWith('');
+        expect(controller.clickAddProp).toHaveBeenCalledWith(classMapping);
     });
 });

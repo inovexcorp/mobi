@@ -2,25 +2,23 @@
     'use strict';
 
     angular
-        .module('ontologyPreviewOverlay', ['ontologyManager'])
+        .module('ontologyPreviewOverlay', ['ontologyManager', 'mapperState'])
         .directive('ontologyPreviewOverlay', ontologyPreviewOverlay);
 
-        ontologyPreviewOverlay.$inject = ['ontologyManagerService'];
+        ontologyPreviewOverlay.$inject = ['ontologyManagerService', 'mapperStateService'];
 
-        function ontologyPreviewOverlay(ontologyManagerService) {
+        function ontologyPreviewOverlay(ontologyManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    close: '&'
-                },
-                bindToController: {
                     ontology: '='
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.name = ontologyManagerService.getEntityName(dvm.ontology);
+                    dvm.ontology = ontologyManagerService;
+                    dvm.state = mapperStateService;
                 },
                 templateUrl: 'modules/mapper/directives/ontologyPreviewOverlay/ontologyPreviewOverlay.html'
             }

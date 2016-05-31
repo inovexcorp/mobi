@@ -18,14 +18,13 @@
                 },
                 controller: function() {
                     var dvm = this;
+                    dvm.ontology = ontologyManagerService;
 
                     dvm.createTitle = function() {
-                        return ontologyManagerService.getEntityName(dvm.classObj);
+                        return dvm.ontology.getEntityName(dvm.classObj);
                     }
                     dvm.createPropList = function() {
-                        return _.map(_.get(dvm.classObj, 'matonto.properties'), function(prop) {
-                            return ontologyManagerService.getEntityName(prop);
-                        });
+                        return _.map(_.get(dvm.classObj, 'matonto.properties'), prop => dvm.ontology.getEntityName(prop));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classPreview/classPreview.html'

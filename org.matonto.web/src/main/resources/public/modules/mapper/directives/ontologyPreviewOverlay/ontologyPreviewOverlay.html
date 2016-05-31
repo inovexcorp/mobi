@@ -1,9 +1,9 @@
 <div class="ontology-preview-overlay overlay">
     <form class="content">
-        <h6>{{dvm.name}}</h6>
-        <ontology-preview ontology="dvm.ontology"></ontology-preview>
+        <h6>{{dvm.ontology.getEntityName(ontology)}}</h6>
+        <ontology-preview ontology="ontology"></ontology-preview>
         <div class="btn-container clearfix">
-            <custom-button on-click="close()">Close</custom-button>
+            <custom-button on-click="dvm.state.previewOntology = false">Close</custom-button>
         </div>
     </form>
 </div>

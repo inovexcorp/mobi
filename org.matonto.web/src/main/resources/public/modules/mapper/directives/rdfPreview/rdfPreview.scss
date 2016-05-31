@@ -11,18 +11,17 @@ $rdf-controls-height: 34px + $rdf-padding/2;
     top: 0;
     background-color: $gray;
     color: #fff;
+    z-index: 1;
 
     &.slide {
         -webkit-transition: all 0.8s ease-in-out;
                 transition: all 0.8s ease-in-out;
     }
     &.out {
-        right: -30px;
+        right: 0;
     }
     &.in {
-        right: -webkit-calc(-35% - 30px);
-        right:    -moz-calc(-35% - 30px);
-        right:         calc(-35% - 30px);
+        right: -35%;
     }
     .toggle-btn {
         background-color: $gray;

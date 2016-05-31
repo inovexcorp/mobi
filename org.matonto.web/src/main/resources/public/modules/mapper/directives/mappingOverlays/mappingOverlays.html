@@ -1,0 +1,43 @@
+<mapping-name-overlay ng-if="dvm.state.editMappingName"></mapping-name-overlay>
+<file-upload-overlay ng-if="dvm.state.step === 1"></file-upload-overlay>
+<ontology-select-overlay ng-if="dvm.state.step === 2"></ontology-select-overlay>
+<starting-class-select-overlay ng-if="dvm.state.step === 3"></starting-class-select-overlay>
+<ontology-preview-overlay ng-if="dvm.state.previewOntology" ontology="dvm.manager.getSourceOntology(dvm.manager.mapping.jsonld)"></ontology-preview-overlay>
+<iri-template-overlay ng-if="dvm.state.editIriTemplate"></iri-template-overlay>
+<finish-overlay ng-if="dvm.state.step === 5"></finish-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayCancelConfirm"
+    class="cancel-confirm"
+    header-text="'Cancel Mapping'"
+    confirm-click="dvm.state.displayCancelConfirm = false; dvm.reset()"
+    cancel-click="dvm.state.displayCancelConfirm = false"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to cancel mapping? Any current progress will be lost.</confirmation-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayNewMappingConfirm"
+    class="create-new-mapping"
+    header-text="'Create New Mapping'"
+    confirm-click="dvm.state.displayNewMappingConfirm = false; dvm.state.createMapping(); dvm.csv.reset()"
+    cancel-click="dvm.state.displayNewMappingConfirm = false"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to create a new mapping? Any current progress will be lost.</confirmation-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayDeleteEntityConfirm"
+    class="delete-entity"
+    header-text="'Delete ' + dvm.getDeleteEntityName()"
+    confirm-click="dvm.state.displayDeleteEntityConfirm = false; dvm.deleteEntity()"
+    cancel-click="dvm.state.displayDeleteEntityConfirm = false; dvm.state.deleteId = ''"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to delete <strong>{{dvm.getDeleteEntityName()}}</strong>?
+        <p ng-if="dvm.isClassMapping(dvm.state.deleteId)" class="help-block">
+            Deleting a class will remove any properties that link to it.
+        </p>
+    </confirmation-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
+    class="delete-mapping"
+    header-text="'Delete ' + dvm.manager.mapping.name"
+    confirm-click="dvm.state.displayDeleteMappingConfirm = false; dvm.deleteMapping()"
+    cancel-click="dvm.state.displayDeleteMappingConfirm = false"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to delete <strong>{{dvm.manager.mapping.name}}</strong>?</confirmation-overlay>

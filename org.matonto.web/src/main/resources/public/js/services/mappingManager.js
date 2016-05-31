@@ -11,23 +11,23 @@
             var self = this,
                 prefix = '/matontorest/mappings';
             self.previousMappingNames = [];
+            self.mapping = undefined;
+            self.sourceOntologies = [];
 
             initialize();
 
             function initialize() {
                 $http.get(prefix, {})
-                    .then(function(response) {
-                        self.previousMappingNames = response.data.map(function(name) {
-                            return name.replace(prefixes.mappings, '');
-                        });
+                    .then(response => {
+                        self.previousMappingNames = _.map(response.data, name => name.replace(prefixes.mappings, ''));
                     });
             }
 
             // REST endpoint calls
             /**
-             * HTTP POST to mappings which uploads a mapping file to data/tmp/ directory.
+             * HTTP POST to mappings which uploads a mapping to the repository.
              * @param {object} mapping - A JSON-LD object with a mapping
-             * @return {promise} The response data with the name of the uploaded file
+             * @return {promise} The response data with the name of the uploaded
              */
             self.uploadPost = function(mapping) {
                 var deferred = $q.defer(),
@@ -43,21 +43,21 @@
 
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
-                    .then(function(response) {
+                    .then(response => {
                         self.previousMappingNames.push(response.data.replace(prefixes.mappings, ''));
                         deferred.resolve(response.data);
-                    }, function(response) {
+                    }, response => {
                         deferred.reject(response);
-                    }).then(function() {
+                    }).then(() => {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
             /**
-             * HTTP PUT to mappings/{mappingName} which uploads a mapping file to data/tmp/ directory.
+             * HTTP PUT to mappings/{mappingName} which uploads a mapping to the repository.
              * @param {object} mapping - A JSON-LD object with a mapping
-             * @param {string} mappingName - The user-defined name for the mapping file
-             * @return {promise} The response data with the name of the uploaded file
+             * @param {string} mappingName - The user-defined name for the mapping 
+             * @return {promise} The response data with the name of the uploaded
              */
             self.uploadPut = function(mapping, mappingName) {
                 var deferred = $q.defer(),
@@ -73,12 +73,12 @@
 
                 $rootScope.showSpinner = true;
                 $http.put(prefix + '/' + mappingName, fd, config)
-                    .then(function(response) {
+                    .then(response => {
                         self.previousMappingNames = _.union(self.previousMappingNames, [mappingName]);
                         deferred.resolve(response.data);
-                    }, function(response) {
-                        deferred.reject(response);
-                    }).then(function() {
+                    }, response => {
+                        deferred.reject(_.get(response, 'statusText', ''));
+                    }).then(() => {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
@@ -86,18 +86,18 @@
             /**
              * HTTP GET to mappings/{mappingName} which returns the JSON-LD of an 
              * uploaded mapping file.
-             * @param {string} mappingName - The user-defined name for the mapping file
-             * @return {promise} The response data with the JSON-LD in the uploaded file
+             * @param {string} mappingName - The user-defined name for the mapping
+             * @return {promise} The response data with the JSON-LD in the uploaded mapping
              */
             self.getMapping = function(mappingName) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(mappingName))
-                    .then(function(response) {
+                    .then(response => {
                         deferred.resolve(_.get(response.data, '@graph', []));
-                    }, function(response) {
-                        deferred.reject(response);
-                    }).then(function() {
+                    }, response => {
+                        deferred.reject(_.get(response, 'statusText', ''));
+                    }).then(() => {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
@@ -106,14 +106,33 @@
              * HTTP GET to mappings/{mappingName} using an anchor tag and window.open which 
              * starts a download of the JSON-LD of an uploaded mapping file.
              * 
-             * @param {string} mappingName - The user-defined name for the mapping file
+             * @param {string} mappingName - The user-defined name for the mapping
              */
             self.downloadMapping = function(mappingName) {
                 $window.location = prefix + '/' + mappingName;
             }
+            /**
+             * HTTP DELETE to mappings/{mappingName} to delete a specific mapping
+             * @param {string} mappingName - The user-defined name for the mapping
+             * @return {promise} An indicator of the success of the deletion
+             */
+            self.deleteMapping = function(mappingName) {
+                var deferred = $q.defer();
+                $rootScope.showSpinner = true;
+                $http.delete(prefix + '/' + encodeURIComponent(mappingName))
+                    .then(response => {
+                        _.pull(self.previousMappingNames, mappingName);
+                        deferred.resolve();
+                    }, response => {
+                        deferred.reject(_.get(response, 'statusText', ''));
+                    }).then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
 
             // Edit mapping methods 
-            self.createNewMapping = function(mappingName) {
+            self.createNewMapping = function() {
                 var jsonld = [];
                 var documentEntity = {
                     '@id': prefixes.dataDelim + 'Document',
@@ -251,7 +270,7 @@
                         ["['" + prefixes.delim + "classMapping'][0]['@id']", classMapping['@id']]
                     );
                     // If there are object mappings that use the class mapping, iterate through them
-                    _.forEach(objectMappings, function(objectMapping) {
+                    _.forEach(objectMappings, objectMapping => {
                         // Collect the class mapping that uses the object mapping
                         var classWithObjectMapping = self.findClassWithObjectMapping(newMapping, objectMapping['@id']);
                         // Remove the object property for the object mapping
@@ -261,7 +280,7 @@
                         _.pull(newMapping, objectMapping);
                     });
                     // Remove all properties of the class mapping and the class mapping itself
-                    _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), function(prop) {
+                    _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), prop => {
                         newMapping = self.removeProp(newMapping, classMapping['@id'], prop['@id']);
                     });
                     _.remove(newMapping, {'@id': classMapping['@id']});
@@ -289,18 +308,22 @@
                     "['" + prefixes.delim + "sourceOntology'][0]['@id']"
                 );
             }
+            self.getSourceOntology = function(mapping) {
+                return _.find(self.sourceOntologies, {'@id': self.getSourceOntologyId(mapping)});
+            }
             self.getDataMappingFromClass = function(mapping, classMappingId, propId) {
                 var dataProperties = _.map(getDataProperties(getEntityById(mapping, classMappingId)), '@id');
                 var dataMappings = getMappingsForProp(mapping, propId);
                 if (dataProperties.length && dataMappings.length) {
-                    return _.find(dataMappings, function(mapping) {
-                        return dataProperties.indexOf(mapping['@id']) >= 0;
-                    });
+                    return _.find(dataMappings, mapping => dataProperties.indexOf(mapping['@id']) >= 0);
                 }
                 return undefined;
             }
             self.getAllClassMappings = function(mapping) {
                 return getEntitiesByType(mapping, 'ClassMapping');
+            }
+            self.getAllDataMappings = function(mapping) {
+                return getEntitiesByType(mapping, 'DataMapping');
             }
             self.getPropMappingsByClass = function(mapping, classMappingId) {
                 var classMapping = getEntityById(mapping, classMappingId);
@@ -309,20 +332,14 @@
                     '@id'
                 );
             }
+            self.isClassMapping = function(entity) {
+                return isType(entity, 'ClassMapping');
+            }
             self.isObjectMapping = function(entity) {
                 return isType(entity, 'ObjectMapping');
             }
             self.isDataMapping = function(entity) {
                 return isType(entity, 'DataMapping');
-            }
-            self.getMappedColumns = function(mapping) {
-                return _.map(getAllDataMappings(mapping), function(dataMapping) {
-                    var index = dataMapping[prefixes.delim + 'columnIndex'][0]['@value'];
-                    return {
-                        index,
-                        propId: dataMapping['@id']
-                    };
-                });
             }
             self.findClassWithDataMapping = function(mapping, dataMappingId) {
                 return findClassWithPropMapping(mapping, dataMappingId, 'dataProperty');
@@ -348,21 +365,16 @@
             }
             function getClassMappingsByClass(mapping, classId) {
                 return _.filter(self.getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
-            }
-            function getAllDataMappings(mapping) {
-                return getEntitiesByType(mapping, 'DataMapping');
-            }
+            }            
             function getAllObjectMappings(mapping) {
                 return getEntitiesByType(mapping, 'ObjectMapping');
             }
             function getMappingsForProp(mapping, propId) {
-                var propMappings = _.concat(getAllDataMappings(mapping), getAllObjectMappings(mapping));
+                var propMappings = _.concat(self.getAllDataMappings(mapping), getAllObjectMappings(mapping));
                 return _.filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
             }
             function findClassWithPropMapping(mapping, propMappingId, type) {
-                return _.find(self.getAllClassMappings(mapping), function(classMapping) {
-                    return _.map(getProperties(classMapping, type), '@id').indexOf(propMappingId) >= 0;
-                });
+                return _.find(self.getAllClassMappings(mapping), classMapping => _.map(getProperties(classMapping, type), '@id').indexOf(propMappingId) >= 0);
             }
             function getDataProperties(classMapping) {
                 return getProperties(classMapping, 'dataProperty');
