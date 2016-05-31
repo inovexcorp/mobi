@@ -2,6 +2,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .mapping-list {
+    ul {
+        margin-top: 10px;
+    }
     .list-title {
         padding: 10px;
         text-align: center;

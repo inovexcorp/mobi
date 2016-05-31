@@ -39,6 +39,30 @@ describe('Class List directive', function() {
             this.element = $compile(angular.element('<class-list></class-list>'))(scope);
             scope.$digest();
         });
+        it('should test whether a class has properties', function() {
+            var controller = this.element.controller('classList');
+            var result = controller.hasProps('test');
+            expect(result).toBe(false);
+
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue([{}]);
+            result = controller.hasProps('test');
+        });
+        it('should test whether a class is open', function() {
+            var controller = this.element.controller('classList');
+            var result = controller.isOpen('test');
+            expect(result).toBe(false);
+
+            controller.openedClasses = ['test'];
+            var result = controller.isOpen('test');
+            expect(result).toBe(true);
+        });
+        it('should toggle whether a class is open', function() {
+            var controller = this.element.controller('classList');
+            controller.toggleOpen('test');
+            expect(controller.openedClasses).toContain('test');
+            controller.toggleOpen('test');
+            expect(controller.openedClasses).not.toContain('test');
+        });
         it('should set the proper state for editing a class', function() {
             var controller = this.element.controller('classList');
             controller.clickClass({'@id': ''});
@@ -136,15 +160,32 @@ describe('Class List directive', function() {
             var classList = this.element.querySelectorAll('ul.list');
             expect(classList[0].childElementCount).toBe(classMappings.length);
         });
-        it('depending on the number of property mappings', function() {
+        it('depending on whether a class is open and has props', function() {
+            var controller = this.element.controller('classList');
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
-            mappingManagerSvc.getPropMappingsByClass.and.returnValue(classMappings);
             scope.$digest();
-
+            var toggleBtn = angular.element(this.element.querySelectorAll('ul.list li i')[0]);
+            expect(toggleBtn.hasClass('fa-minus-square-o')).toBe(false);
+            expect(toggleBtn.hasClass('fa-plus-square-o')).toBe(false);
+            expect(toggleBtn.hasClass('fa-minus')).toBe(true);
             var propList = this.element.querySelectorAll('ul.list ul.props');
             expect(propList.length).toBe(1);
+            expect(propList[0].childElementCount).toBe(0);
+
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
+            scope.$digest();
+            expect(toggleBtn.hasClass('fa-minus-square-o')).toBe(false);
+            expect(toggleBtn.hasClass('fa-plus-square-o')).toBe(true);
+            expect(toggleBtn.hasClass('fa-minus')).toBe(false);
+            expect(propList[0].childElementCount).toBe(1);
+          
+            controller.openedClasses = [''];
+            scope.$digest();
+            expect(toggleBtn.hasClass('fa-minus-square-o')).toBe(true);
+            expect(toggleBtn.hasClass('fa-plus-square-o')).toBe(false);
+            expect(toggleBtn.hasClass('fa-minus')).toBe(false);
             expect(propList[0].childElementCount).toBe(propMappings.length + 1);
         });
         it('depending on whether all properties have been mapped', function() {
@@ -154,6 +195,7 @@ describe('Class List directive', function() {
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(classMappings);
             spyOn(controller, 'mappedAllProps').and.returnValue(true);
+            controller.openedClasses = [''];
             scope.$digest();
 
             var propList = angular.element(this.element.querySelectorAll('ul.list ul.props')[0]);
@@ -164,15 +206,17 @@ describe('Class List directive', function() {
             expect(propList.html()).toContain('Add Property');
         });
         it('if prop mapping is invalid', function() {
+            var controller = this.element.controller('classList');
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(classMappings);
-            spyOn(this.element.controller('classList'), 'getInvalidPropIds').and.returnValue(['']);
+            controller.openedClasses = [''];
+            spyOn(controller, 'getInvalidPropIds').and.returnValue(['']);
             scope.$digest();
 
             var propItem = this.element.querySelectorAll('ul.list ul.props li')[0];
-            expect(angular.element(propItem.querySelectorAll('a')[0]).hasClass('text-danger')).toBe(true);
+            expect(angular.element(propItem.querySelectorAll('a')[0]).hasClass('invalid')).toBe(true);
         });
     });
     it('should call clickClass when a class title is clicked', function() {
@@ -184,11 +228,28 @@ describe('Class List directive', function() {
         var controller = element.controller('classList');
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
         spyOn(controller, 'clickClass');
+        controller.openedClasses = [''];
         scope.$digest();
 
         var classItem = angular.element(element.querySelectorAll('ul.list li a')[0]);
         classItem.triggerHandler('click');
         expect(controller.clickClass).toHaveBeenCalledWith(classMapping);
+    });
+    it('should call toggleOpen when a class title is double clicked', function() {
+        mappingManagerSvc.mapping = {jsonld: []};
+        csvManagerSvc.filePreview = {};
+        var classMapping = {'@id': ''};
+        var element = $compile(angular.element('<class-list></class-list>'))(scope);
+        scope.$digest();
+        var controller = element.controller('classList');
+        mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+        spyOn(controller, 'toggleOpen');
+        controller.openedClasses = [''];
+        scope.$digest();
+
+        var classItem = angular.element(element.querySelectorAll('ul.list li a')[0]);
+        classItem.triggerHandler('dblclick');
+        expect(controller.toggleOpen).toHaveBeenCalledWith(classMapping['@id']);
     });
     it('should call clickProp when a prop title is clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};
@@ -201,6 +262,7 @@ describe('Class List directive', function() {
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([propMapping]);
         spyOn(controller, 'clickProp');
+        controller.openedClasses = [''];
         scope.$digest();
 
         var propItem = angular.element(element.querySelectorAll('ul.list ul.props li a')[0]);
@@ -217,6 +279,7 @@ describe('Class List directive', function() {
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
         spyOn(controller, 'mappedAllProps').and.returnValue(false);
         spyOn(controller, 'clickAddProp');
+        controller.openedClasses = [''];
         scope.$digest();
 
         var addProp = angular.element(element.querySelectorAll('ul.list ul.props li a')[0]);
