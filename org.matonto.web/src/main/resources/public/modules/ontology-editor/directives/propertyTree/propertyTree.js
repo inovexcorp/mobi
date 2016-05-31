@@ -10,10 +10,43 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/propertyTree/propertyTree.html',
-                link: function(scope, element, attrs) {
-                    scope.headerText = attrs.headerText;
-                    scope.propertyType = attrs.propertyType;
-                }
+                scope: {
+                    headerText: '@'
+                },
+                bindToController: {
+                    propertyType: '@'
+                },
+                controllerAs: 'dvm',
+                controller: ['$scope', function($scope) {
+                    var dvm = this;
+                    var vm = $scope.$parent.vm;
+
+                    dvm.state = vm.state;
+
+                    dvm.selectItem = function(editor, oi, ci, pi) {
+                        vm.selectItem(editor, oi, ci, pi);
+                    }
+
+                    dvm.isThisType = function(property, propertyType) {
+                        return vm.isThisType(property, propertyType);
+                    }
+
+                    dvm.hasChildren = function(ontology) {
+                        var result = _.some(_.get(ontology, 'matonto.noDomains', []), function(property) {
+                            return vm.isThisType(property, dvm.propertyType);
+                        });
+
+                        if(!result) {
+                            result = _.some(_.get(ontology, 'matonto.classes', []), function(classObj) {
+                                return _.some(_.get(classObj, 'matonto.properties', []), function(property) {
+                                    return vm.isThisType(property, dvm.propertyType);
+                                });
+                            });
+                        }
+
+                        return result;
+                    }
+                }]
             }
         }
 })();
