@@ -124,6 +124,42 @@ ul {
     top: 0;
     z-index: 3;
 
+    /* animation */
+    &.ng-enter {
+        -webkit-transition: 0.2s linear all;
+                transition: 0.2s linear all;
+        opacity: 0;
+        .content {
+            -webkit-transition: 0.2s linear all;
+                    transition: 0.2s linear all;
+            top: -100px;
+        }
+
+        &.ng-enter-active {
+            opacity: 1;
+            .content {
+                top: 0px;
+            }
+        }
+    }
+    &.ng-leave {
+        -webkit-transition: 0.2s linear all;
+                transition: 0.2s linear all;
+        opacity: 1;
+        .content {
+            -webkit-transition: 0.2s linear all;
+                    transition: 0.2s linear all;
+            top: 0px;
+        }
+
+        &.ng-leave-active {
+            opacity: 0;
+            .content {
+                top: 100px;
+            }
+        }
+    }
+
     /* small sized overlay */
     &.sm .content {
         width: 350px;

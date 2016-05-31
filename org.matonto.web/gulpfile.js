@@ -47,6 +47,7 @@ var jsFiles = function(prefix) {
             prefix + '**/matchbrackets.js',
             prefix + '*/angular.min.js',
             prefix + '*/angular-mocks.js',
+            prefix + '*/angular-animate.js',
             prefix + '**/angular-ui-router.min.js',
             prefix + '*/angular-uuid.js',
             prefix + '*/angular-cookies.min.js',
