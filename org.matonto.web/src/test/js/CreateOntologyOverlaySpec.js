@@ -1,4 +1,4 @@
-describe('Create Class Overlay directive', function() {
+describe('Create Ontology Overlay directive', function() {
     var $compile,
         scope,
         element;
@@ -8,7 +8,7 @@ describe('Create Class Overlay directive', function() {
     injectCamelCaseFilter();
 
     beforeEach(function() {
-        module('createClassOverlay');
+        module('createOntologyOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -16,17 +16,14 @@ describe('Create Class Overlay directive', function() {
         });
     });
 
-    injectDirectiveTemplate('modules/ontology-editor/directives/createClassOverlay/createClassOverlay.html');
+    injectDirectiveTemplate('modules/ontology-editor/directives/createOntologyOverlay/createOntologyOverlay.html');
 
     beforeEach(function() {
         scope.onCreate = jasmine.createSpy('onCreate');
         scope.onCancel = jasmine.createSpy('onCancel');
-        scope.createClassError = 'test';
-        scope.showIriOverlay = false;
-        scope.iriBegin = 'begin';
-        scope.iriThen = 'then';
+        scope.createOntologyError = 'test';
 
-        element = $compile(angular.element('<create-class-overlay on-create="onCreate()" on-cancel="onCancel()" create-class-error="createClassError" show-iri-overlay="showIriOverlay" iri-begin="iriBegin" iri-then="iriThen"></create-class-overlay>'))(scope);
+        element = $compile(angular.element('<create-ontology-overlay on-create="onCreate()" on-cancel="onCancel()" create-ontology-error="createOntologyError"></create-ontology-overlay>'))(scope);
         scope.$digest();
     });
 
@@ -36,15 +33,10 @@ describe('Create Class Overlay directive', function() {
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
-        it('createClassError should be two way bound', function() {
-            isolatedScope.createClassError = 'new';
+        it('createOntologyError should be two way bound', function() {
+            isolatedScope.createOntologyError = 'new';
             scope.$digest();
-            expect(scope.createClassError).toEqual('new');
-        });
-        it('showIriOverlay should be two way bound', function() {
-            isolatedScope.showIriOverlay = true;
-            scope.$digest();
-            expect(scope.showIriOverlay).toEqual(true);
+            expect(scope.createOntologyError).toEqual('new');
         });
         it('onCreate should be called in parent scope', function() {
             isolatedScope.onCreate();
@@ -53,23 +45,6 @@ describe('Create Class Overlay directive', function() {
         it('onCancel should be called in parent scope', function() {
             isolatedScope.onCancel();
             expect(scope.onCancel).toHaveBeenCalled();
-        });
-    });
-    describe('controller bound variables', function() {
-        var controller;
-
-        beforeEach(function() {
-            controller = element.controller('createClassOverlay');
-        });
-        it('iriBegin should be one way bound', function() {
-            controller.iriBegin = 'new';
-            scope.$digest();
-            expect(scope.iriBegin).toBe('begin');
-        });
-        it('iriThen should be one way bound', function() {
-            controller.iriThen = 'new';
-            scope.$digest();
-            expect(scope.iriThen).toBe('then');
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -96,7 +71,7 @@ describe('Create Class Overlay directive', function() {
         var controller;
 
         beforeEach(function() {
-            controller = element.controller('createClassOverlay');
+            controller = element.controller('createOntologyOverlay');
         });
         describe('nameChanged',function() {
             beforeEach(function() {
@@ -104,8 +79,10 @@ describe('Create Class Overlay directive', function() {
             });
             it('changes iri if iriHasChanged is false', function() {
                 controller.iriHasChanged = false;
+                var date = new Date();
+                var prefix = 'https://matonto.org/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear() + '/';
                 controller.nameChanged();
-                expect(controller.iri).toEqual(controller.iriBegin + controller.iriThen + controller.name);
+                expect(controller.iri).toEqual(prefix + controller.name);
             });
             it('does not change iri if iriHasChanged is true', function() {
                 controller.iriHasChanged = true;
@@ -113,10 +90,6 @@ describe('Create Class Overlay directive', function() {
                 controller.nameChanged();
                 expect(controller.iri).toEqual('iri');
             });
-        });
-        it('onEdit changes iri based on the params', function() {
-            controller.onEdit('begin', 'then', 'end');
-            expect(controller.iri).toBe('begin' + 'then' + 'end');
         });
     });
 });

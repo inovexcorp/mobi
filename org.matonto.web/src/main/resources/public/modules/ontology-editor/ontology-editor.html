@@ -192,7 +192,10 @@
 
                 <create-annotation-overlay ng-if="vm.showCreateAnnotationOverlay"></create-annotation-overlay>
 
-                <create-ontology-overlay ng-if="vm.showCreateOntologyOverlay"></create-ontology-overlay>
+                <create-ontology-overlay ng-if="vm.showCreateOntologyOverlay"
+                                         on-create="vm.createOntology(ontologyIri, label, description)"
+                                         on-cancel="vm.showCreateOntologyOverlay = false; vm.createOntologyError = ''"
+                                         create-ontology-error="vm.createOntologyError"></create-ontology-overlay>
 
                 <create-class-overlay ng-if="vm.showCreateClassOverlay"
                                       on-create="vm.createClass(classIri, label, description)"
