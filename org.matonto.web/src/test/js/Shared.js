@@ -83,6 +83,16 @@ function injectHighlightFilter() {
     });
 }
 
+function injectCamelCaseFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('camelCaseFilter', jasmine.createSpy('camelCaseFilter').and.callFake(function(str) {
+                return str;
+            }));
+        });
+    });
+}
+
 function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {

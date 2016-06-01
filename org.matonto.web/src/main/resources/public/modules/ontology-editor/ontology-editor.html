@@ -194,7 +194,13 @@
 
                 <create-ontology-overlay ng-if="vm.showCreateOntologyOverlay"></create-ontology-overlay>
 
-                <create-class-overlay ng-if="vm.showCreateClassOverlay"></create-class-overlay>
+                <create-class-overlay ng-if="vm.showCreateClassOverlay"
+                                      on-create="vm.createClass(classIri, label, description)"
+                                      on-cancel="vm.showCreateClassOverlay = false; vm.createClassError = ''"
+                                      create-class-error="vm.createClassError"
+                                      show-iri-overlay="vm.showIriOverlay"
+                                      iri-begin="vm.ontology.matonto.iriBegin"
+                                      iri-then="vm.ontology.matonto.iriThen"></create-class-overlay>
 
                 <create-property-overlay ng-if="vm.showCreatePropertyOverlay"></create-property-overlay>
             </div>

@@ -1,15 +1,15 @@
-<div ng-hide="vm.showIriOverlay === true" class="overlay">
+<div ng-hide="showIriOverlay" class="overlay">
     <div class="content">
         <!-- section header -->
         <h6>Create New OWL Class</h6>
 
         <!-- error -->
-        <error-display ng-if="vm.createClassError">{{vm.createClassError}}</error-display>
+        <error-display ng-if="createClassError">{{createClassError}}</error-display>
 
         <!-- static iri -->
-        <static-iri iri="dvm.createClassIri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="dvm.iri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
 
-        <form name="vm.createClassForm" class="clearfix" novalidate autocomplete="off">
+        <form name="dvm.createClassForm" class="clearfix" novalidate autocomplete="off">
             <!-- name -->
             <div class="form-group">
                 <custom-label muted-text="'*Required'">Name</custom-label>
@@ -21,10 +21,10 @@
 
             <!-- create class buttons -->
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="vm.createClassForm.$invalid"
-                               on-click="vm.createClass(dvm.createClassIri, dvm.name, dvm.description)">Create</custom-button>
+                <custom-button is-disabled-when="dvm.createClassForm.$invalid"
+                               on-click="onCreate({classIri: dvm.iri, label: dvm.name, description: dvm.description})">Create</custom-button>
 
-                <custom-button on-click="vm.showCreateClassOverlay = false; vm.createClassError = ''" type="'secondary'">Cancel</custom-button>
+                <custom-button on-click="onCancel()" type="'secondary'">Cancel</custom-button>
             </div>
         </form>
     </div>
