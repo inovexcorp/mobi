@@ -20,10 +20,10 @@
          * @name filePreviewTable.directive:filePreviewTable
          * @scope
          * @restrict E
-         * @requires  ontologyManager.ontologyManagerService
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
-         * @requires  csvManager.csvManagerService
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
          *
          * @description 
          * `filePreviewTable` is a directive that creates a div with a table of rows from an uploaded 
@@ -33,9 +33,6 @@
          * is clicked, it also switches the highlighted column. The directive assumes that a CSS transition 
          * has been set on the parent div and sets event listeners for transition ends to only show more 
          * rows once the transition has completed. The directive is replaced by the contents of its template.
-         *
-         * @usage
-         * <file-preview-table></file-preview-table>
          */
         .directive('filePreviewTable', filePreviewTable);
 

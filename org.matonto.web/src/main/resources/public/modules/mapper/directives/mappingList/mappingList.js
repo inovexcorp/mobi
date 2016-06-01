@@ -18,17 +18,14 @@
          * @name mappingList.directive:mappingList
          * @scope
          * @restrict E
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
          *
          * @description 
          * `mappingList` is a directive that creates a "boxed" div with an unordered list of the 
          * all the saved mappings in the repository. Each mapping name is clickable and sets the
          * selected mapping for the mapping tool. The directive is replaced by the contents of 
          * its template.
-         *
-         * @usage
-         * <mapping-list></mapping-list>
          */
         .directive('mappingList', mappingList);
 

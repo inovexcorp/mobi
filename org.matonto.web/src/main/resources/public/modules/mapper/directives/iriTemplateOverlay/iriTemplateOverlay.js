@@ -20,10 +20,10 @@
          * @name iriTemplateOverlay.directive:iriTemplateOverlay
          * @scope
          * @restrict E
-         * @requires  prefixes.prefixes
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
-         * @requires  csvManager.csvManagerService
+         * @requires  prefixes.service:prefixes
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
          *
          * @description 
          * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the 
@@ -31,9 +31,6 @@
          * the namespace, the delimiter between the namespace and local name, and the dynamically created
          * local name. The local name can either be a UUID or a column header. The directive is replaced 
          * by the contents of its template.
-         *
-         * @usage
-         * <iri-template-overlay></iri-template-overlay>
          */
         .directive('iriTemplateOverlay', iriTemplateOverlay);
 

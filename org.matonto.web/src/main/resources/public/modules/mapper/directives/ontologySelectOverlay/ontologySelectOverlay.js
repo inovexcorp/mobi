@@ -2,12 +2,39 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologySelectOverlay
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         *
+         * @description 
+         * The `ontologySelectOverlay` module only provides the `ontologySelectOverlay` directive 
+         * which creates an overlay with functionality to select an ontology.
+         */
         .module('ontologySelectOverlay', ['ontologyManager', 'mapperState', 'mappingManager'])
+        /**
+         * @ngdoc directive
+         * @name ontologySelectOverlay.directive:ontologySelectOverlay
+         * @scope
+         * @restrict E
+         * @requires  $q
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         *
+         * @description 
+         * `ontologySelectOverlay` is a directive that creates an overlay containing a select with
+         * all the ontologies saved in the repository along with an 
+         * {@link ontologyPreview.directive:ontologyPreview ontologyPreview} of the currently selected ontology. 
+         * The directive is replaced by the contents of its template.
+         */
         .directive('ontologySelectOverlay', ontologySelectOverlay);
 
-        ontologySelectOverlay.$inject = ['$filter', '$q', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
+        ontologySelectOverlay.$inject = ['$q', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
 
-        function ontologySelectOverlay($filter, $q, ontologyManagerService, mapperStateService, mappingManagerService) {
+        function ontologySelectOverlay($q, ontologyManagerService, mapperStateService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',

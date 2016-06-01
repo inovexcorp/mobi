@@ -18,17 +18,14 @@
          * @name mapperSideBar.directive:mapperSideBar
          * @scope
          * @restrict E
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
          *
          * @description 
          * `mapperSideBar` is a directive that creates a "left-nav" div with buttons for mapping
          * tool actions. These actions are navigating to the mapping list, creating a new mapping,
          * downloading a mapping, adding a property mapping, and deleting either an entity in a 
          * mapping or a mapping itself. The directive is replaced by the contents of its template.
-         *
-         * @usage
-         * <mapper-side-bar></mapper-side-bar>
          */
         .directive('mapperSideBar', mapperSideBar);
 

@@ -20,17 +20,14 @@
          * @name finishOverlay.directive:finishOverlay
          * @scope
          * @restrict E
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
-         * @requires  csvManager.csvManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
          *
          * @description 
          * `finishOverlay` is a directive that creates an overlay with button to finish the mapping 
          * process and optionally save the mapping locally. The directive is replaced by the contents 
          * of its template.
-         *
-         * @usage
-         * <finish-overlay></finish-overlay>
          */
         .directive('finishOverlay', finishOverlay);
 

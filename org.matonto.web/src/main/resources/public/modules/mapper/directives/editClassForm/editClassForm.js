@@ -20,17 +20,14 @@
          * @name editClassForm.directive:editClassForm
          * @scope
          * @restrict E
-         * @requires  prefixes.prefixes
-         * @requires  ontologyManager.ontologyManagerService
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
+         * @requires  prefixes.service:prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
          *
          * @description 
          * `editClassForm` is a directive that creates a form with functionality to change the selected
          * class' IRI template. The directive is replaced by the contents of its template.
-         *
-         * @usage
-         * <edit-class-form></edit-class-form>
          */
         .directive('editClassForm', editClassForm);
 

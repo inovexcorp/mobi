@@ -21,11 +21,11 @@
          * @name fileUploadOverlay.directive:fileUploadOverlay
          * @scope
          * @restrict E
-         * @requires  prefixes.prefixes
-         * @requires  ontologyManager.ontologyManagerService
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
-         * @requires  csvManager.csvManagerService
+         * @requires  prefixes.service:prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
          *
          * @description 
          * `fileUploadOverlay` is a directive that creates an overlay with a form to upload a delimited 
@@ -34,9 +34,6 @@
          * mappings is rendered. If a pre-existing mapping is being used, clicking the "Continue" button
          * will jump ahead in the mapper steps. If a new mapping is being created, it procedes to the 
          * next step. The directive is replaced by the contents of its template.
-         *
-         * @usage
-         * <file-upload-overlay></file-upload-overlay>
          */
         .directive('fileUploadOverlay', fileUploadOverlay);
 

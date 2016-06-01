@@ -2,7 +2,40 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name mappingOverlays
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         * @requires  csvManager
+         *
+         * @description 
+         * The `mappingOverlays` module only provides the `mappingOverlays` directive which creates
+         * all the overlays used in the mapping tool.
+         */
         .module('mappingOverlays', ['mappingManager', 'mapperState', 'csvManager', 'ontologyManager'])
+        /**
+         * @ngdoc directive
+         * @name mappingOverlays.directive:mappingOverlays
+         * @scope
+         * @restrict E
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
+         *
+         * @description 
+         * `mappingOverlays` is a directive that creates all of the overlay used in the mapping tool. 
+         * Those overlays are {@link mappingNameOverlay.directive:mappingNameOverlay mappingNameOverlay},
+         * {@link fileUploadOverlay.directive:fileUploadOverlay fileUploadOverlay},
+         * {@link ontologySelectOverlay.directive:ontologySelectOverlay ontologySelectOverlay},
+         * {@link startingClassSelectOverlay.directive:startingClassSelectOverlay startingClassSelectOverlay},
+         * {@link ontologyPreviewOverlay.directive:ontologyPreviewOverlay ontologyPreviewOverlay}, 
+         * {@link iriTemplateOverlay.directive:iriTemplateOverlay iriTemplateOverlay},
+         * {@link finishOverlay.directive:finishOverlay finishOverlay}, 
+         * and several {@link confirmationOverlay.directive:confirmationOverlay confirmationOverlays}.
+         */
         .directive('mappingOverlays', mappingOverlays);
 
         mappingOverlays.$inject = ['mappingManagerService', 'mapperStateService', 'csvManagerService', 'ontologyManagerService']

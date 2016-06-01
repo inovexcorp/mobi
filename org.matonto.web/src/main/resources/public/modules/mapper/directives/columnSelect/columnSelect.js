@@ -23,9 +23,6 @@
          *
          * @param {string[]} columns an array of column headers
          * @param {string} selectedColumn the currently selected column header
-         *
-         * @usage
-         * <column-select columns="['Column 1', 'Column 2']" selected-column="'Column 1'"></column-select>
          */
         .directive('columnSelect', columnSelect);
 

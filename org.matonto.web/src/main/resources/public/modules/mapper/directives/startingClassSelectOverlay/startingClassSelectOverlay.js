@@ -2,7 +2,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name startingClassSelectOverlay
+         * @requires  prefixes
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         *
+         * @description 
+         * The `startingClassSelectOverlay` module only provides the `startingClassSelectOverlay` 
+         * directive which creates and overlay with a ui-select to select a class and a preview
+         * area for the selected class.
+         */
         .module('startingClassSelectOverlay', ['prefixes', 'ontologyManager', 'mapperState', 'mappingManager'])
+        /**
+         * @ngdoc directive
+         * @name startingClassSelectOverlay.directive:startingClassSelectOverlay
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         *
+         * @description 
+         * `startingClassSelectOverlay` is a directive that creates an overlay containing a ui-select 
+         * with all the classes defined within the select ontology and all the classes defined in its 
+         * imported ontology and a {@link classPreview.directive:classPreview classPreview} of the selected class. 
+         * The classes in the ui-select are sorted by the ontology they are defined in. The directive 
+         * is replaced by the contents of its template.
+         */
         .directive('startingClassSelectOverlay', startingClassSelectOverlay);
 
         startingClassSelectOverlay.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];

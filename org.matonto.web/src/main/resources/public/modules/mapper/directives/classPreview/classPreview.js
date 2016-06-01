@@ -17,7 +17,7 @@
          * @name classPreview.directive:classPreview
          * @scope
          * @restrict E
-         * @requires  ontologyManager.ontologyManagerService
+         * @requires  ontologyManager.service:ontologyManagerService
          *
          * @description 
          * `classPreview` is a directive that creates a div with a brief description of the passed 
@@ -25,9 +25,6 @@
          * The directive is replaced by the contents of its template.
          *
          * @param {object} classObj the class object from an ontology to preview
-         *
-         * @usage
-         * <class-preview class-obj="{'@id': 'http://matonto.org/ontologies/uhtc/Class', matonto: {properties: [{'@id': 'http://matonto.org/ontologies/uhtc/property'}]}}"></class-preview>
          */
         .directive('classPreview', classPreview);
 

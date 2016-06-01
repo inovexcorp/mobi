@@ -2,7 +2,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name rangeClassDescription
+         * @requires  prefixes
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         *
+         * @description 
+         * The `rangeClassDescription` module only provides the `rangeClassDescription` directive 
+         * which creates a brief description of the class an object property links to.
+         */
         .module('rangeClassDescription', ['prefixes', 'ontologyManager', 'mappingManager'])
+        /**
+         * @ngdoc directive
+         * @name rangeClassDescription.directive:rangeClassDescription
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         *
+         * @description 
+         * `rangeClassDescription` is a directive which creates a div with the name of the class
+         * an object property links to and a brief description of that class. The object property 
+         * in question is determined using the class id of the parent class and the property id. 
+         * The directive is replaced by the contents of its template.
+         *
+         * @param {string} classId the id of the parent class
+         * @param {string} selectedPropId the id of the object property
+         */
         .directive('rangeClassDescription', rangeClassDescription);
 
         rangeClassDescription.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];

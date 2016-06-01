@@ -29,13 +29,6 @@
          * @param {boolean} [required=true] whether or not the `mappingNameInput` should be required
          * @param {boolean} [isActive=true] whether or not the `mappingNameInput` is active
          * @param {function} [focusEvent=undefined] an event to call when the text input has focus
-         *
-         * @usage
-         * <!-- With defaults -->
-         * <mapping-name-input name="'mapping'"></mapping-name-input>
-         *
-         * <!-- With the other optional attributes -->
-         * <mapping-name-input name="'mapping'" required="false" is-active="false" focus-event="console.log('Focus')"></mapping-name-input>
          */
         .directive('mappingNameInput', mappingNameInput)
         /**
@@ -47,9 +40,6 @@
          * mapping names. It requires the parent element to have an ngModel. If the ngModel value
          * is in the previous mapping names list, it sets the uniqueName validity of the parent element 
          * to false.
-         * 
-         * @usage
-         * <input type="text" ng-model="'test'" unique-name/>
          */
         .directive('uniqueName', uniqueName);
 

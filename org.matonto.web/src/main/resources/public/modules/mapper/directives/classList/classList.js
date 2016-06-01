@@ -22,20 +22,17 @@
          * @name classList.directive:classList
          * @scope
          * @restrict E
-         * @requires  prefixes.prefixes
-         * @requires  ontologyManager.ontologyManagerService
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
-         * @requires  csvManager.csvManagerService
+         * @requires  prefixes.service:prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
          *
          * @description 
          * `classList` is a directive that creates a "boxed" div with an unordered list of the 
          * class and property mappings in the selected mapping. The properties for each class
          * mapping are listed beneath them and are collapsible. Each class that has properties left
          * to map has an "Add Property" link. The directive is replaced by the contents of its template.
-         *
-         * @usage
-         * <class-list></class-list>
          */
         .directive('classList', classList);
 

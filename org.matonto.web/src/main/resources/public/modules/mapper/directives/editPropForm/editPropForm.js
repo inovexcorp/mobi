@@ -22,11 +22,11 @@
          * @name editPropForm.directive:editPropForm
          * @scope
          * @restrict E
-         * @requires  prefixes.prefixes
-         * @requires  ontologyManager.ontologyManagerService
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
-         * @requires  csvManager.csvManagerService
+         * @requires  prefixes.service:prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
          *
          * @description 
          * `editPropForm` is a directive that creates a form with functionality to change the column for 
@@ -34,9 +34,6 @@
          * mapping is a data mapping, a column select is rendered with a "Set" button. If the selected property
          * is an object mapping, a range class description is rendered. The directive is replaced by the 
          * contents of its template.
-         *
-         * @usage
-         * <edit-prop-form></edit-prop-form>
          */
         .directive('editPropForm', editPropForm);
 

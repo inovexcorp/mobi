@@ -20,10 +20,10 @@
          * @name mappingEditor.directive:mappingEditor
          * @scope
          * @restrict E
-         * @requires  ontologyManager.ontologyManagerService
-         * @requires  mappingManager.mappingManagerService
-         * @requires  mapperState.mapperStateService
-         * @requires  csvManager.csvManagerService
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
          *
          * @description 
          * `mappingEditor` is a directive that creates a div with three main sections: the header area
@@ -34,9 +34,6 @@
          * main editor area contains a pull out for previewing the mapped data, the list of class mappings 
          * and their property mappings in the mapping, and form for editing class and property mappings 
          * and adding new property mappings. The directive is replaced by the contents of its template.
-         *
-         * @usage
-         * <mapping-editor></mapping-editor>
          */
         .directive('mappingEditor', mappingEditor);
 
