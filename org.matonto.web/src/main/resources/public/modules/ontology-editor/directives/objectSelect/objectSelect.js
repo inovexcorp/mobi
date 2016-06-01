@@ -10,6 +10,8 @@
         function objectSelect(ontologyManagerService, responseObj, settingsManagerService, stateManagerService) {
             return {
                 restrict: 'E',
+                replace: true,
+                templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 scope: {
                     changeEvent: '&',
                     displayText: '=',
@@ -18,19 +20,18 @@
                     mutedText: '=',
                     isDisabledWhen: '='
                 },
-                templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 bindToController: {
                     bindModel: '=ngModel',
-                    selectedId: '='
+                    selectedId: '=',
+                    ontologyId: '@'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', 'prefixes', function($scope, prefixes) {
+                controller: ['prefixes', function(prefixes) {
                     var dvm = this;
-                    var vm = $scope.$parent.vm;
                     var tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
                     dvm.getItemOntologyIri = function(item) {
-                        return item.ontologyIri || vm.ontologies[vm.state.oi]['@id'];
+                        return item.ontologyIri || dvm.ontologyId;
                     }
 
                     dvm.getItemIri = function(item) {
