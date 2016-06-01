@@ -300,6 +300,7 @@
 
         vm.openAddAnnotationOverlay = function() {
             resetAnnotationVariables();
+            vm.editingAnnotation = false;
             vm.showAnnotationOverlay = true;
         }
 
