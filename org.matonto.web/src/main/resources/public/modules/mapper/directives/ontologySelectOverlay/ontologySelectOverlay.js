@@ -22,7 +22,7 @@
                     var ontologyObjs = angular.copy(dvm.ontology.getList());
                     var sourceOntology;
 
-                    if (dvm.manager.sourceOntologies && dvm.manager.sourceOntologies.length) {
+                    if (dvm.manager.sourceOntologies.length) {
                         sourceOntology = dvm.manager.getSourceOntology(dvm.manager.mapping.jsonld);
                         ontologyObjs = _.union(ontologyObjs, [sourceOntology]);
                     }

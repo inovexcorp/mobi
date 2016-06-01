@@ -62,7 +62,7 @@
                     name: '',
                     jsonld: []
                 };
-                manager.sourceOntologies = undefined;
+                manager.sourceOntologies = [];
                 self.editMappingName = true;
                 self.resetEdit();
             }
