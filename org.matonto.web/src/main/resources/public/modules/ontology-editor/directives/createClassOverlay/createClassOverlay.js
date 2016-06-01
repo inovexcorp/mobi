@@ -17,8 +17,8 @@
                     showIriOverlay: '='
                 },
                 bindToController: {
-                    iriBegin: '@',
-                    iriThen: '@'
+                    iriBegin: '=',
+                    iriThen: '='
                 },
                 controllerAs: 'dvm',
                 controller: ['$filter', 'REGEX', function($filter, REGEX) {

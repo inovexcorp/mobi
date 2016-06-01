@@ -205,7 +205,16 @@
                                       iri-begin="vm.ontology.matonto.iriBegin"
                                       iri-then="vm.ontology.matonto.iriThen"></create-class-overlay>
 
-                <create-property-overlay ng-if="vm.showCreatePropertyOverlay"></create-property-overlay>
+                <create-property-overlay ng-if="vm.showCreatePropertyOverlay"
+                                         on-create="vm.createProperty(propertyIri, label, type, range, domain, description)"
+                                         on-cancel="vm.showCreatePropertyOverlay = false; vm.createPropertyError = ''"
+                                         create-property-error="vm.createPropertyError"
+                                         show-iri-overlay="vm.showIriOverlay"
+                                         iri-begin="vm.ontology.matonto.iriBegin"
+                                         iri-then="vm.ontology.matonto.iriThen"
+                                         property-types="vm.propertyTypes"
+                                         sub-classes="vm.ontology.matonto.subClasses"
+                                         property-range="vm.ontology.matonto.dataPropertyRange"></create-property-overlay>
             </div>
         </section>
     </div>

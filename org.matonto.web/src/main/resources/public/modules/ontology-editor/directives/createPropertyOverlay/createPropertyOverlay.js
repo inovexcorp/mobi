@@ -10,40 +10,51 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createPropertyOverlay/createPropertyOverlay.html',
+                scope: {
+                    onCreate: '&',
+                    onCancel: '&',
+                    createPropertyError: '=',
+                    showIriOverlay: '='
+                },
+                bindToController: {
+                    iriBegin: '=',
+                    iriThen: '=',
+                    propertyTypes: '=',
+                    subClasses: '=',
+                    propertyRange: '='
+                },
                 controllerAs: 'dvm',
-                controller: ['$scope', '$filter', 'REGEX', 'ontologyManagerService', function($scope, $filter, REGEX, ontologyManagerService) {
-                    var vm = $scope.$parent.vm;
+                controller: ['$filter', 'REGEX', 'ontologyManagerService', function($filter, REGEX, ontologyManagerService) {
                     var dvm = this;
-                    var prefix = vm.ontology.matonto.iriBegin + vm.ontology.matonto.iriThen;
+                    var prefix = dvm.iriBegin + dvm.iriThen;
                     var setAsObject = false;
                     var setAsDatatype = false;
 
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.createPropertyIri = prefix;
-                    dvm.propertyTypes = vm.propertyTypes;
+                    dvm.iri = prefix;
                     dvm.range = [];
                     dvm.domain = [];
 
                     dvm.nameChanged = function() {
                         if(!dvm.iriHasChanged) {
-                            dvm.createPropertyIri = prefix + $filter('camelCase')(dvm.name, 'property');
+                            dvm.iri = prefix + $filter('camelCase')(dvm.name, 'property');
                         }
                     }
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
-                        dvm.createPropertyIri = iriBegin + iriThen + iriEnd;
+                        dvm.iri = iriBegin + iriThen + iriEnd;
                     }
 
                     dvm.setRange = function() {
                         var isObjectProperty = ontologyManagerService.isObjectProperty(dvm.type);
                         if(isObjectProperty && !setAsObject) {
-                            dvm.rangeList = vm.ontology.matonto.subClasses;
+                            dvm.rangeList = dvm.subClasses;
                             dvm.range = [];
                             setAsObject = true;
                             setAsDatatype = false;
                         } else if(!isObjectProperty && !setAsDatatype) {
-                            dvm.rangeList = vm.ontology.matonto.dataPropertyRange;
+                            dvm.rangeList = dvm.propertyRange;
                             dvm.range = [];
                             setAsObject = false;
                             setAsDatatype = true;

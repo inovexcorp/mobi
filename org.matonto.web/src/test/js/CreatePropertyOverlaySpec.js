@@ -1,4 +1,4 @@
-describe('Create Class Overlay directive', function() {
+describe('Create Property Overlay directive', function() {
     var $compile,
         scope,
         element;
@@ -8,7 +8,8 @@ describe('Create Class Overlay directive', function() {
     injectCamelCaseFilter();
 
     beforeEach(function() {
-        module('createClassOverlay');
+        module('createPropertyOverlay');
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -16,17 +17,20 @@ describe('Create Class Overlay directive', function() {
         });
     });
 
-    injectDirectiveTemplate('modules/ontology-editor/directives/createClassOverlay/createClassOverlay.html');
+    injectDirectiveTemplate('modules/ontology-editor/directives/createPropertyOverlay/createPropertyOverlay.html');
 
     beforeEach(function() {
         scope.onCreate = jasmine.createSpy('onCreate');
         scope.onCancel = jasmine.createSpy('onCancel');
-        scope.createClassError = 'test';
+        scope.createPropertyError = 'test';
         scope.showIriOverlay = false;
         scope.iriBegin = 'begin';
         scope.iriThen = 'then';
+        scope.propertyTypes = ['type1'];
+        scope.subClasses = ['subClass1'];
+        scope.propertyRange = ['range1'];
 
-        element = $compile(angular.element('<create-class-overlay on-create="onCreate()" on-cancel="onCancel()" create-class-error="createClassError" show-iri-overlay="showIriOverlay" iri-begin="iriBegin" iri-then="iriThen"></create-class-overlay>'))(scope);
+        element = $compile(angular.element('<create-property-overlay on-create="onCreate()" on-cancel="onCancel()" create-property-error="createPropertyError" show-iri-overlay="showIriOverlay" iri-begin="iriBegin" iri-then="iriThen" property-types="propertyTypes" sub-classes="subClasses" property-range="propertyRange"></create-property-overlay>'))(scope);
         scope.$digest();
     });
 
@@ -36,10 +40,10 @@ describe('Create Class Overlay directive', function() {
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
-        it('createClassError should be two way bound', function() {
-            isolatedScope.createClassError = 'new';
+        it('createPropertyError should be two way bound', function() {
+            isolatedScope.createPropertyError = 'new';
             scope.$digest();
-            expect(scope.createClassError).toEqual('new');
+            expect(scope.createPropertyError).toEqual('new');
         });
         it('showIriOverlay should be two way bound', function() {
             isolatedScope.showIriOverlay = true;
@@ -59,7 +63,7 @@ describe('Create Class Overlay directive', function() {
         var controller;
 
         beforeEach(function() {
-            controller = element.controller('createClassOverlay');
+            controller = element.controller('createPropertyOverlay');
         });
         it('iriBegin should be two way bound', function() {
             controller.iriBegin = 'new';
@@ -70,6 +74,21 @@ describe('Create Class Overlay directive', function() {
             controller.iriThen = 'new';
             scope.$digest();
             expect(scope.iriThen).toBe('new');
+        });
+        it('propertyTypes should be two way bound', function() {
+            controller.propertyTypes = [];
+            scope.$digest();
+            expect(scope.propertyTypes.length).toBe(0);
+        });
+        it('subClasses should be two way bound', function() {
+            controller.subClasses = [];
+            scope.$digest();
+            expect(scope.subClasses.length).toBe(0);
+        });
+        it('propertyRange should be two way bound', function() {
+            controller.propertyRange = [];
+            scope.$digest();
+            expect(scope.propertyRange.length).toBe(0);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -96,11 +115,11 @@ describe('Create Class Overlay directive', function() {
         var controller;
 
         beforeEach(function() {
-            controller = element.controller('createClassOverlay');
+            controller = element.controller('createPropertyOverlay');
         });
         describe('nameChanged',function() {
             beforeEach(function() {
-                controller.name = 'Name';
+                controller.name = 'name';
             });
             it('changes iri if iriHasChanged is false', function() {
                 controller.iriHasChanged = false;
