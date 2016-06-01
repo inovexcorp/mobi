@@ -2,7 +2,42 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name editPropForm
+         * @requires  prefixes
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         * @requires  csvManager
+         *
+         * @description 
+         * The `editPropForm` module only provides the `editPropForm` directive which creates
+         * a form with functionality to change the column for a datatype property mapping or simply 
+         * preview an object property mapping.
+         */
         .module('editPropForm', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'csvManager'])
+        /**
+         * @ngdoc directive
+         * @name editPropForm.directive:editPropForm
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  ontologyManager.ontologyManagerService
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         * @requires  csvManager.csvManagerService
+         *
+         * @description 
+         * `editPropForm` is a directive that creates a form with functionality to change the column for 
+         * a datatype property mapping or simply preview an object property mapping. If the selected property
+         * mapping is a data mapping, a column select is rendered with a "Set" button. If the selected property
+         * is an object mapping, a range class description is rendered. The directive is replaced by the 
+         * contents of its template.
+         *
+         * @usage
+         * <edit-prop-form></edit-prop-form>
+         */
         .directive('editPropForm', editPropForm);
 
         editPropForm.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'csvManagerService'];

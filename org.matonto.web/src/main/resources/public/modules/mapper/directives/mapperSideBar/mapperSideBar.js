@@ -2,7 +2,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name mapperSideBar
+         * @requires  mappingManager
+         * @requires  mapperState
+         *
+         * @description 
+         * The `mapperSideBar` module only provides the `mapperSideBar` directive which creates
+         * a left navigation of action buttons for the mapping tool.
+         */
         .module('mapperSideBar', ['mapperState', 'mappingManager'])
+        /**
+         * @ngdoc directive
+         * @name mapperSideBar.directive:mapperSideBar
+         * @scope
+         * @restrict E
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         *
+         * @description 
+         * `mapperSideBar` is a directive that creates a "left-nav" div with buttons for mapping
+         * tool actions. These actions are navigating to the mapping list, creating a new mapping,
+         * downloading a mapping, adding a property mapping, and deleting either an entity in a 
+         * mapping or a mapping itself. The directive is replaced by the contents of its template.
+         *
+         * @usage
+         * <mapper-side-bar></mapper-side-bar>
+         */
         .directive('mapperSideBar', mapperSideBar);
 
         mapperSideBar.$inject = ['mapperStateService', 'mappingManagerService'];
@@ -23,9 +50,11 @@
                     }
                     dvm.createMapping = function() {
                         if (!dvm.state.editMapping) {
+                            dvm.state.displayNewMappingConfirm = false;                            
                             dvm.state.createMapping();
+                        } else {
+                            dvm.state.displayNewMappingConfirm = true;                            
                         }
-                        dvm.state.displayNewMappingConfirm = dvm.state.editMapping;
                     }
                     dvm.downloadMapping = function() {
                         dvm.manager.downloadMapping(dvm.manager.mapping.name);

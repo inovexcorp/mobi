@@ -2,7 +2,42 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name fileUploadOverlay
+         * @requires  prefixes
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         * @requires  csvManager
+         *
+         * @description 
+         * The `fileUploadOverlay` module only provides the `fileUploadOverlay` directive which creates
+         * an overlay with functionality to upload a delimited file to use for mapping.
+         */
         .module('fileUploadOverlay', ['prefixes', 'csvManager', 'mapperState', 'mappingManager', 'ontologyManager'])
+        /**
+         * @ngdoc directive
+         * @name fileUploadOverlay.directive:fileUploadOverlay
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  ontologyManager.ontologyManagerService
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         * @requires  csvManager.csvManagerService
+         *
+         * @description 
+         * `fileUploadOverlay` is a directive that creates an overlay with a form to upload a delimited 
+         * file. If a pre-existing mapping is being used and there are data mappings to column indexes 
+         * that do not exist in the uploaded file, an error is shown and a list of the problem data 
+         * mappings is rendered. If a pre-existing mapping is being used, clicking the "Continue" button
+         * will jump ahead in the mapper steps. If a new mapping is being created, it procedes to the 
+         * next step. The directive is replaced by the contents of its template.
+         *
+         * @usage
+         * <file-upload-overlay></file-upload-overlay>
+         */
         .directive('fileUploadOverlay', fileUploadOverlay);
 
         fileUploadOverlay.$inject = ['prefixes', 'csvManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];

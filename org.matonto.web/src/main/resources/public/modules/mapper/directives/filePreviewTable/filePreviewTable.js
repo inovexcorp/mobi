@@ -2,7 +2,41 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name filePreviewTable
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         * @requires  csvManager
+         *
+         * @description 
+         * The `filePreviewTable` module only provides the `filePreviewTable` directive which creates
+         * an expandable preview of an uploaded delimited file.
+         */
         .module('filePreviewTable', ['csvManager', 'mapperState', 'mappingManager', 'ontologyManager'])
+        /**
+         * @ngdoc directive
+         * @name filePreviewTable.directive:filePreviewTable
+         * @scope
+         * @restrict E
+         * @requires  ontologyManager.ontologyManagerService
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         * @requires  csvManager.csvManagerService
+         *
+         * @description 
+         * `filePreviewTable` is a directive that creates a div with a table of rows from an uploaded 
+         * delimited file and a button to toggle the number of rows shown. The rows are hidden using 
+         * ngIf. A passed in highlight index can be used to highlight a specific column. The table 
+         * can also be clickable and sets the selected column when a th or td is clicked. When a column
+         * is clicked, it also switches the highlighted column. The directive assumes that a CSS transition 
+         * has been set on the parent div and sets event listeners for transition ends to only show more 
+         * rows once the transition has completed. The directive is replaced by the contents of its template.
+         *
+         * @usage
+         * <file-preview-table></file-preview-table>
+         */
         .directive('filePreviewTable', filePreviewTable);
 
         filePreviewTable.$inject = ['csvManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];

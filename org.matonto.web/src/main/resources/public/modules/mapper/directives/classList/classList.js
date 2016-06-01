@@ -2,7 +2,41 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classList
+         * @requires  prefixes
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         * @requires  csvManager
+         *
+         * @description 
+         * The `classList` module only provides the `classList` directive which creates
+         * a "boxed" area with a list of all the class and property mappings in the selected
+         * mapping.
+         */
         .module('classList', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'csvManager'])
+        /**
+         * @ngdoc directive
+         * @name classList.directive:classList
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  ontologyManager.ontologyManagerService
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         * @requires  csvManager.csvManagerService
+         *
+         * @description 
+         * `classList` is a directive that creates a "boxed" div with an unordered list of the 
+         * class and property mappings in the selected mapping. The properties for each class
+         * mapping are listed beneath them and are collapsible. Each class that has properties left
+         * to map has an "Add Property" link. The directive is replaced by the contents of its template.
+         *
+         * @usage
+         * <class-list></class-list>
+         */
         .directive('classList', classList);
 
         classList.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'csvManagerService'];

@@ -2,7 +2,33 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name mappingNameOverlay
+         * @requires  mappingManager
+         * @requires  mapperState
+         *
+         * @description 
+         * The `mappingNameOverlay` module only provides the `mappingNameOverlay` directive which creates
+         * an overlay with a {@link mappingNameInput.directive:mappingNameInput} to edit a mapping name.
+         */
         .module('mappingNameOverlay', ['mappingManager', 'mapperState'])
+        /**
+         * @ngdoc directive
+         * @name mappingNameOverlay.directive:mappingNameOverlay
+         * @scope
+         * @restrict E
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         *
+         * @description 
+         * `mappingNameOverlay` is a directive that creates an overlay containing a 
+         * {@link mappingNameInput.directive:mappingNameInput} to edit the currently selected mapping's 
+         * name. The directive is replaced by the contents of its template.
+         *
+         * @usage
+         * <mapping-name-overlay></mapping-name-overlay>
+         */
         .directive('mappingNameOverlay', mappingNameOverlay);
 
         mappingNameOverlay.$inject = ['mappingManagerService', 'mapperStateService']

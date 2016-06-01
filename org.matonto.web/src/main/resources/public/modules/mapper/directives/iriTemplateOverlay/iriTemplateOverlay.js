@@ -2,7 +2,39 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name iriTemplateOverlay
+         * @requires  prefixes
+         * @requires  mappingManager
+         * @requires  mapperState
+         * @requires  csvManager
+         *
+         * @description 
+         * The `iriTemplateOverlay` module only provides the `iriTemplateOverlay` directive which creates
+         * an overlay with functionality to change the IRI template of the selected class mapping.
+         */
         .module('iriTemplateOverlay', ['prefixes', 'mapperState', 'mappingManager', 'csvManager'])
+        /**
+         * @ngdoc directive
+         * @name iriTemplateOverlay.directive:iriTemplateOverlay
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         * @requires  csvManager.csvManagerService
+         *
+         * @description 
+         * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the 
+         * IRI template of the selected class mapping. The overlay splits the IRI template into part of 
+         * the namespace, the delimiter between the namespace and local name, and the dynamically created
+         * local name. The local name can either be a UUID or a column header. The directive is replaced 
+         * by the contents of its template.
+         *
+         * @usage
+         * <iri-template-overlay></iri-template-overlay>
+         */
         .directive('iriTemplateOverlay', iriTemplateOverlay);
 
         iriTemplateOverlay.$inject = ['prefixes', 'mapperStateService', 'mappingManagerService', 'csvManagerService'];

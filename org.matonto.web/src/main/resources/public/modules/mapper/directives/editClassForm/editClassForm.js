@@ -2,7 +2,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name editClassForm
+         * @requires  prefixes
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         *
+         * @description 
+         * The `editClassForm` module only provides the `editClassForm` directive which creates
+         * a form with functionality to change the selected class' IRI template.
+         */
         .module('editClassForm', ['prefixes', 'mapperState', 'mappingManager', 'ontologyManager'])
+        /**
+         * @ngdoc directive
+         * @name editClassForm.directive:editClassForm
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  ontologyManager.ontologyManagerService
+         * @requires  mappingManager.mappingManagerService
+         * @requires  mapperState.mapperStateService
+         *
+         * @description 
+         * `editClassForm` is a directive that creates a form with functionality to change the selected
+         * class' IRI template. The directive is replaced by the contents of its template.
+         *
+         * @usage
+         * <edit-class-form></edit-class-form>
+         */
         .directive('editClassForm', editClassForm);
 
         editClassForm.$inject = ['prefixes', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
