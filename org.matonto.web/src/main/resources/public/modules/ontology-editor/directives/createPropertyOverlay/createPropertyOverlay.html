@@ -31,14 +31,16 @@
             <object-select ng-model="dvm.domain"
                            display-text="'Domain'"
                            select-list="dvm.subClasses"
-                           ontology-id="{{ontologyId}}"></object-select>
+                           ontology-id="{{ontologyId}}"
+                           matonto="matonto"></object-select>
 
             <!-- range -->
             <object-select ng-model="dvm.range"
                            display-text="'Range'"
                            select-list="dvm.rangeList"
                            is-disabled-when="!dvm.type.length"
-                           ontology-id="{{ontologyId}}"></object-select>
+                           ontology-id="{{ontologyId}}"
+                           matonto="matonto"></object-select>
 
             <!-- create property buttons -->
             <div class="btn-container clearfix">

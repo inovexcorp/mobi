@@ -15,7 +15,8 @@
                     onCancel: '&',
                     createPropertyError: '=',
                     showIriOverlay: '=',
-                    ontologyId: '@'
+                    ontologyId: '@',
+                    matonto: '='
                 },
                 bindToController: {
                     iriBegin: '=',

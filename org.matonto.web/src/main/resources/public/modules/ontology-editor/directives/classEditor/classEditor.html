@@ -27,7 +27,8 @@
                        muted-text="vm.rdfs + 'subClassOf'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"
-                       ontology-id="{{vm.ontology['@id']}}"></object-select>
+                       ontology-id="{{vm.ontology['@id']}}"
+                       matonto="vm.ontology.matonto"></object-select>
 
         <!-- owl:disjointWith -->
         <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
@@ -36,6 +37,7 @@
                        muted-text="vm.owl + 'disjointWith'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"
-                       ontology-id="{{vm.ontology['@id']}}"></object-select>
+                       ontology-id="{{vm.ontology['@id']}}"
+                       matonto="vm.ontology.matonto"></object-select>
     </div>
 </form>

@@ -30,8 +30,9 @@ describe('Create Property Overlay directive', function() {
         scope.propertyTypes = ['type1'];
         scope.subClasses = ['subClass1'];
         scope.propertyRange = ['range1'];
+        scope.matonto = {};
 
-        element = $compile(angular.element('<create-property-overlay ontology-id="ontologyId" on-create="onCreate()" on-cancel="onCancel()" create-property-error="createPropertyError" show-iri-overlay="showIriOverlay" iri-begin="iriBegin" iri-then="iriThen" property-types="propertyTypes" sub-classes="subClasses" property-range="propertyRange"></create-property-overlay>'))(scope);
+        element = $compile(angular.element('<create-property-overlay matonto="matonto" ontology-id="ontologyId" on-create="onCreate()" on-cancel="onCancel()" create-property-error="createPropertyError" show-iri-overlay="showIriOverlay" iri-begin="iriBegin" iri-then="iriThen" property-types="propertyTypes" sub-classes="subClasses" property-range="propertyRange"></create-property-overlay>'))(scope);
         scope.$digest();
     });
 
@@ -50,6 +51,11 @@ describe('Create Property Overlay directive', function() {
             isolatedScope.showIriOverlay = true;
             scope.$digest();
             expect(scope.showIriOverlay).toEqual(true);
+        });
+        it('matonto should be two way bound', function() {
+            isolatedScope.matonto = {prop: 'new'};
+            scope.$digest();
+            expect(scope.matonto.hasOwnProperty('prop')).toEqual(true);
         });
         it('onCreate should be called in parent scope', function() {
             isolatedScope.onCreate();

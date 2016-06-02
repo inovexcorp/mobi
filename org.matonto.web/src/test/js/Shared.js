@@ -140,6 +140,7 @@ function mockOntologyManager() {
             this.findOntologyWithClass = jasmine.createSpy('findOntologyWithClass').and.callFake(function(ontologyList, classId) {
                 return {};
             });
+            this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
         });
     });
 }
@@ -233,7 +234,7 @@ function mockPrefixes() {
 
         module(function($provide) {
             $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = '';
+                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = this.dc = '';
             });
         });
     });
@@ -268,6 +269,30 @@ function mockSettingsManager() {
             });
             this.getTreeDisplay = jasmine.createSpy('getTreeDisplay').and.returnValue('');
             this.getTooltipDisplay = jasmine.createSpy('getTooltipDisplay').and.returnValue('');
+        });
+    });
+}
+
+function mockStateManager() {
+    module(function($provide) {
+        $provide.service('stateManagerService', function() {
+            this.states = {};
+            this.setTreeTab = jasmine.createSpy('setTreeTab');
+            this.setEditorTab = jasmine.createSpy('setEditorTab');
+            this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
+            this.setState = jasmine.createSpy('setState');
+            this.getState = jasmine.createSpy('getState').and.returnValue({oi: 0, ci: 0, pi: 0});
+            this.setStateToNew = jasmine.createSpy('setStateToNew').and.returnValue(0);
+            this.clearState = jasmine.createSpy('clearState');
+        });
+    });
+}
+
+function mockResponseObj() {
+    module(function($provide) {
+        $provide.service('responseObj', function() {
+            this.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('');
+            this.validateItem = jasmine.createSpy('validateItm').and.returnValue(true);
         });
     });
 }
