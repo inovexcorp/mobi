@@ -13,7 +13,10 @@
         <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- static iri -->
-        <static-iri iri="vm.selected['@id']" on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="vm.selected['@id']"
+                    on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"
+                    ontology-iri-begin="vm.ontology.matonto.iriBegin"
+                    ontology-iri-then="vm.ontology.matonto.iriThen"></static-iri>
 
         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
         <string-select ng-model="vm.selected['@type']"

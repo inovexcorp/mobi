@@ -7,7 +7,10 @@
         <error-display ng-if="createClassError">{{createClassError}}</error-display>
 
         <!-- static iri -->
-        <static-iri iri="dvm.iri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="dvm.iri"
+                    on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"
+                    ontology-iri-begin="dvm.iriBegin"
+                    ontology-iri-then="dvm.iriThen"></static-iri>
 
         <form name="dvm.createClassForm" class="clearfix" novalidate autocomplete="off">
             <!-- name -->

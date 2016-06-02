@@ -13,11 +13,12 @@
                     onEdit: '&'
                 },
                 bindToController: {
-                    iri: '='
+                    iri: '=',
+                    ontologyIriBegin: '=',
+                    ontologyIriThen: '='
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
-                    var vm = $scope.$parent.vm;
                     var dvm = this;
                     var refresh = {};
 
@@ -38,8 +39,8 @@
                     }
 
                     dvm.afterEdit = function() {
-                        vm.ontology.matonto.iriBegin = angular.copy(dvm.iriBegin);
-                        vm.ontology.matonto.iriThen = angular.copy(dvm.iriThen);
+                        dvm.ontologyIriBegin = angular.copy(dvm.iriBegin);
+                        dvm.ontologyIriThen = angular.copy(dvm.iriThen);
                         dvm.showIriOverlay = false;
                     }
 
