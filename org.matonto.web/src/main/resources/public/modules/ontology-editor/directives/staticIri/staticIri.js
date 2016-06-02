@@ -20,22 +20,22 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
                     var dvm = this;
-                    var refresh = {};
 
+                    dvm.refresh = {};
                     dvm.namespacePattern = REGEX.IRI;
                     dvm.localNamePattern = REGEX.LOCALNAME;
 
-                    function setVariables(obj) {
+                    dvm.setVariables = function(obj) {
                         var splitIri = $filter('splitIRI')(dvm.iri);
                         obj.iriBegin = splitIri.begin;
                         obj.iriThen = splitIri.then;
                         obj.iriEnd = splitIri.end;
                     }
 
-                    dvm.refresh = function(){
-                        dvm.iriBegin = angular.copy(refresh.iriBegin);
-                        dvm.iriThen = angular.copy(refresh.iriThen);
-                        dvm.iriEnd = angular.copy(refresh.iriEnd);
+                    dvm.resetVariables = function() {
+                        dvm.iriBegin = angular.copy(dvm.refresh.iriBegin);
+                        dvm.iriThen = angular.copy(dvm.refresh.iriThen);
+                        dvm.iriEnd = angular.copy(dvm.refresh.iriEnd);
                     }
 
                     dvm.afterEdit = function() {
@@ -45,12 +45,12 @@
                     }
 
                     $scope.$watch('dvm.iri', function() {
-                        setVariables(dvm);
-                        setVariables(refresh);
+                        dvm.setVariables(dvm);
+                        dvm.setVariables(dvm.refresh);
                     });
 
-                    setVariables(dvm);
-                    setVariables(refresh);
+                    dvm.setVariables(dvm);
+                    dvm.setVariables(dvm.refresh);
                 }]
             }
         }
