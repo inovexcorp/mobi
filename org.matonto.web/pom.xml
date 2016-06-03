@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.42-SNAPSHOT</version>
+        <version>1.0.43-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -157,15 +157,15 @@
                         <include>*Spec.js</include>
                     </specIncludes>
                     <preloadSources>
-                        <source>js/lodash.min.js</source>
-                        <source>js/codemirror.js</source>
-                        <source>js/angular.min.js</source>
-                        <source>js/angular-mocks.js</source>
-                        <source>js/angular-uuid.js</source>
-                        <source>js/angular-cookies.min.js</source>
-                        <source>js/ui-codemirror.js</source>
-                        <source>js/angular-messages.min.js</source>
-                        <source>js/select.min.js</source>
+                        <source>js/lodash/lodash.min.js</source>
+                        <source>js/codemirror/codemirror.js</source>
+                        <source>js/angular/angular.min.js</source>
+                        <source>js/angular-mocks/angular-mocks.js</source>
+                        <source>js/angular-uuid/angular-uuid.js</source>
+                        <source>js/angular-cookies/angular-cookies.min.js</source>
+                        <source>js/angular-ui-codemirror/ui-codemirror.js</source>
+                        <source>js/angular-messages/angular-messages.min.js</source>
+                        <source>js/ui-select/select.min.js</source>
                     </preloadSources>
                 </configuration>
             </plugin>
