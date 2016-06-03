@@ -13,7 +13,7 @@
          * which creates an overlay containing an {@link ontologyPreview.directive:ontologyPreview ontologyPreview}
          * of the passed ontology.
          */
-        .module('ontologyPreviewOverlayOverlay', ['ontologyManager', 'mapperState'])
+        .module('ontologyPreviewOverlay', ['ontologyManager', 'mapperState'])
         /**
          * @ngdoc directive
          * @name ontologyPreviewOverlay.directive:ontologyPreviewOverlay
@@ -29,11 +29,11 @@
          *
          * @param {object} ontology an ontology object from the {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
          */
-        .directive('ontologyPreviewOverlayOverlay', ontologyPreviewOverlayOverlay);
+        .directive('ontologyPreviewOverlay', ontologyPreviewOverlay);
 
-        ontologyPreviewOverlayOverlay.$inject = ['ontologyManagerService', 'mapperStateService'];
+        ontologyPreviewOverlay.$inject = ['ontologyManagerService', 'mapperStateService'];
 
-        function ontologyPreviewOverlayOverlay(ontologyManagerService, mapperStateService) {
+        function ontologyPreviewOverlay(ontologyManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -46,7 +46,7 @@
                     dvm.ontology = ontologyManagerService;
                     dvm.state = mapperStateService;
                 },
-                templateUrl: 'modules/mapper/directives/ontologyPreviewOverlayOverlay/ontologyPreviewOverlayOverlay.html'
+                templateUrl: 'modules/mapper/directives/ontologyPreviewOverlay/ontologyPreviewOverlay.html'
             }
         }
 })();

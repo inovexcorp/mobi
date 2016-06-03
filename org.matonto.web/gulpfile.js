@@ -50,7 +50,6 @@ var jsFiles = function(prefix) {
             prefix + '**/angular-ui-router.min.js',
             prefix + '*/angular-uuid.js',
             prefix + '*/angular-cookies.min.js',
-            prefix + '**/angular-file-saver.bundle.min.js',
             prefix + '**/ui-codemirror.js',
             prefix + '*/angular-messages.min.js',
             prefix + '**/select.min.js'
