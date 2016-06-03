@@ -26,8 +26,8 @@ describe('Annotation Tab directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             scope.vm = {
-                getItemIri: function(key) { return key.localName; },
-                getAnnotationLocalNameLowercase: function(key) { return key.localName; },
+                getItemIri: jasmine.createSpy('getItemIri').and.callFake(function(key) { return key.localName; }),
+                getAnnotationLocalNameLowercase: jasmine.createSpy('getAnnotationLocalNameLowercase').and.callFake(function(key) { return key.localName; }),
                 selected: {
                     'prop1': [{'@id': 'value1'}],
                     'prop2': [{'@value': 'value2'}]
@@ -70,14 +70,14 @@ describe('Annotation Tab directive', function() {
             expect(deleteButtons.length).toBe(2);
         });
     });
-    describe('parent controller functions', function() {
+    describe('user interactions', function() {
         beforeEach(function() {
             scope.vm = {
                 editClicked: jasmine.createSpy('editClicked'),
                 openRemoveAnnotationOverlay: jasmine.createSpy('openRemoveAnnotationOverlay'),
                 openAddAnnotationOverlay: jasmine.createSpy('openAddAnnotationOverlay'),
-                getItemIri: function(key) { return key.localName; },
-                getAnnotationLocalNameLowercase: function(key) { return key.localName; },
+                getItemIri: jasmine.createSpy('getItemIri').and.callFake(function(key) { return key.localName; }),
+                getAnnotationLocalNameLowercase: jasmine.createSpy('getAnnotationLocalNameLowercase').and.callFake(function(key) { return key.localName; }),
                 selected: {
                     'prop1': [{'@value': 'value1'}]
                 },

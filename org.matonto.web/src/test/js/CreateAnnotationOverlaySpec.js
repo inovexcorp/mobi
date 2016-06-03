@@ -31,47 +31,47 @@ describe('Create Annotation Overlay directive', function() {
                 expect(items.length).toBe(1);
             });
         });
-    });
-
-    describe('has-error class', function() {
-        it('is not there when form.iri is valid', function() {
-            var formGroup = element.querySelectorAll('.form-group');
-            expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
-        });
-        it('is there when form.iri is invalid', function() {
-            scope.vm = {
-                createAnnotationForm: {
-                    iri: {
-                        '$invalid': true
+        describe('has-error class', function() {
+            it('is not there when form.iri is valid', function() {
+                var formGroup = element.querySelectorAll('.form-group');
+                expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
+            });
+            it('is there when form.iri is invalid', function() {
+                scope.vm = {
+                    createAnnotationForm: {
+                        iri: {
+                            '$error': {
+                                pattern: true
+                            }
+                        }
                     }
                 }
-            }
-            scope.$digest();
+                scope.$digest();
 
-            var formGroup = element.querySelectorAll('.form-group');
-            expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
+                var formGroup = element.querySelectorAll('.form-group');
+                expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
+            });
         });
-    });
-
-    describe('error-display', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);
-        });
-        it('is visible when createAnnotationError is true', function() {
-            scope.vm = {
-                createAnnotationError: true
-            }
-            scope.$digest();
-            var errors = element.querySelectorAll('error-display');
-            expect(errors.length).toBe(1);
-        });
-        it('is not visible when createAnnotationError is false', function() {
-            scope.vm = {
-                createAnnotationError: false
-            }
-            scope.$digest();
-            var errors = element.querySelectorAll('error-display');
-            expect(errors.length).toBe(0);
+        describe('error-display', function() {
+            beforeEach(function() {
+                element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);
+            });
+            it('is visible when createAnnotationError is true', function() {
+                scope.vm = {
+                    createAnnotationError: true
+                }
+                scope.$digest();
+                var errors = element.querySelectorAll('error-display');
+                expect(errors.length).toBe(1);
+            });
+            it('is not visible when createAnnotationError is false', function() {
+                scope.vm = {
+                    createAnnotationError: false
+                }
+                scope.$digest();
+                var errors = element.querySelectorAll('error-display');
+                expect(errors.length).toBe(0);
+            });
         });
     });
 });

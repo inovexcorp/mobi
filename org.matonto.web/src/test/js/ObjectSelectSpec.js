@@ -94,7 +94,7 @@ describe('Object Select directive', function() {
         it('ontologyId should be one way bound', function() {
             controller.ontologyId = 'new';
             scope.$digest();
-            expect(scope.ontologyId).toEqual('ontologyId');
+            expect(scope.ontologyId).not.toEqual('new');
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -149,10 +149,10 @@ describe('Object Select directive', function() {
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
-                controller.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('test');
+                spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
-                ontologyManagerService.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({'@id': 'id'});
+                ontologyManagerService.getObjectCopyByIri.and.returnValue({'@id': 'id'});
                 var result = controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });
@@ -169,7 +169,7 @@ describe('Object Select directive', function() {
                             {'@value': 'description'}
                         ]
                     }
-                    ontologyManagerService.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue(selectedObject);
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe('comment');
                 });
@@ -179,7 +179,7 @@ describe('Object Select directive', function() {
                             {'@value': 'description'}
                         ]
                     }
-                    ontologyManagerService.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue(selectedObject);
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe('description');
                 });
@@ -201,7 +201,7 @@ describe('Object Select directive', function() {
                             {'@value': 'title'}
                         ]
                     }
-                    ontologyManagerService.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue(selectedObject);
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe('label');
                 });
@@ -211,7 +211,7 @@ describe('Object Select directive', function() {
                             {'@value': 'title'}
                         ]
                     }
-                    ontologyManagerService.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue(selectedObject);
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe('title');
                 });
@@ -222,12 +222,12 @@ describe('Object Select directive', function() {
             });
         });
         describe('isBlankNode should return', function() {
-            it('false for these values', function() {
+            it('false for falsey values', function() {
                 _.forEach([undefined, null, [], true], function(item) {
                     expect(controller.isBlankNode(item)).toBe(false);
                 });
             });
-            it('true for these values', function() {
+            it('true for strings containing "_:b"', function() {
                 _.forEach(['_:b', '_:b1', 'stuff_:b'], function(item) {
                     expect(controller.isBlankNode(item)).toBe(true);
                 });
@@ -244,19 +244,19 @@ describe('Object Select directive', function() {
                 scope.$digest();
             });
             it('undefined if isBlankNode returns false', function() {
-                controller.isBlankNode = jasmine.createSpy('isBlankNode').and.returnValue(false);
+                spyOn(controller, 'isBlankNode').and.returnValue(false);
                 var result = controller.getBlankNodeValue();
                 expect(result).toBe(undefined);
             });
             it('id if isBlankNode returns true and id does not match any property', function() {
-                controller.isBlankNode = jasmine.createSpy('isBlankNode').and.returnValue(true);
+                spyOn(controller, 'isBlankNode').and.returnValue(true);
                 _.forEach(['_:b11', '_:b22', 'test', ''], function(item) {
                     var result = controller.getBlankNodeValue(item);
                     expect(result).toBe(item);
                 });
             });
             it('property name when id does match property', function() {
-                controller.isBlankNode = jasmine.createSpy('isBlankNode').and.returnValue(true);
+                spyOn(controller, 'isBlankNode').and.returnValue(true);
                 var tests = [
                     {id: '_:b1', result: 'prop'},
                     {id: '_:b2', result: 'class'},

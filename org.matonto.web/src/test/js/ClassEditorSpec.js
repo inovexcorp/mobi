@@ -25,81 +25,80 @@ describe('Class Editor directive', function() {
             var tabContainer = element.querySelectorAll('tab-button-container');
             expect(tabContainer.length).toBe(1);
         });
-    });
-    describe('shows correct tab based on vm.state.editorTab', function() {
-        it('for basic', function() {
-            scope.vm = {
-                state: {
-                    editorTab: 'basic'
-                },
-                selected: {
-                    matonto: {
-                        createError: 'error'
+        describe('shows correct tab based on vm.state.editorTab', function() {
+            it('for basic', function() {
+                scope.vm = {
+                    state: {
+                        editorTab: 'basic'
+                    },
+                    selected: {
+                        matonto: {
+                            createError: 'error'
+                        }
                     }
                 }
-            }
-            element = $compile(angular.element('<class-editor></class-editor>'))(scope);
-            scope.$digest();
+                element = $compile(angular.element('<class-editor></class-editor>'))(scope);
+                scope.$digest();
 
-            var tabs = element.querySelectorAll('.tab');
-            expect(tabs.length).toBe(1);
+                var tabs = element.querySelectorAll('.tab');
+                expect(tabs.length).toBe(1);
 
-            var errorDisplay = element.querySelectorAll('error-display');
-            expect(errorDisplay.length).toBe(1);
+                var errorDisplay = element.querySelectorAll('error-display');
+                expect(errorDisplay.length).toBe(1);
 
-            var staticIri = element.querySelectorAll('static-iri');
-            expect(staticIri.length).toBe(1);
+                var staticIri = element.querySelectorAll('static-iri');
+                expect(staticIri.length).toBe(1);
 
-            var annotationTab = element.querySelectorAll('annotation-tab');
-            expect(annotationTab.length).toBe(1);
-        });
-        it('for axioms', function() {
-            scope.vm = {
-                state: {
-                    editorTab: 'axioms'
-                }
-            }
-            element = $compile(angular.element('<class-editor></class-editor>'))(scope);
-            scope.$digest();
-
-            var objectSelects = element.querySelectorAll('object-select');
-            expect(objectSelects.length).toBe(2);
-        });
-    });
-
-    describe('error-display', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<class-editor></class-editor>'))(scope);
-        });
-        it('is visible when createError is true', function() {
-            scope.vm = {
-                selected: {
-                    matonto: {
-                        createError: true
+                var annotationTab = element.querySelectorAll('annotation-tab');
+                expect(annotationTab.length).toBe(1);
+            });
+            it('for axioms', function() {
+                scope.vm = {
+                    state: {
+                        editorTab: 'axioms'
                     }
-                },
-                state: {
-                    editorTab: 'basic'
                 }
-            }
-            scope.$digest();
-            var errors = element.querySelectorAll('error-display');
-            expect(errors.length).toBe(1);
+                element = $compile(angular.element('<class-editor></class-editor>'))(scope);
+                scope.$digest();
+
+                var objectSelects = element.querySelectorAll('object-select');
+                expect(objectSelects.length).toBe(2);
+            });
         });
-        it('is not visible when createError is false', function() {
-            scope.vm = {
-                selected: {
-                    matonto: {
-                        createError: false
+        describe('error-display', function() {
+            beforeEach(function() {
+                element = $compile(angular.element('<class-editor></class-editor>'))(scope);
+            });
+            it('is visible when createError is true', function() {
+                scope.vm = {
+                    selected: {
+                        matonto: {
+                            createError: true
+                        }
+                    },
+                    state: {
+                        editorTab: 'basic'
                     }
-                },
-                state: {
-                    editorTab: 'basic'
                 }
-            }
-            scope.$digest();
-            var errors = element.querySelectorAll('error-display');
-            expect(errors.length).toBe(0);
+                scope.$digest();
+                var errors = element.querySelectorAll('error-display');
+                expect(errors.length).toBe(1);
+            });
+            it('is not visible when createError is false', function() {
+                scope.vm = {
+                    selected: {
+                        matonto: {
+                            createError: false
+                        }
+                    },
+                    state: {
+                        editorTab: 'basic'
+                    }
+                }
+                scope.$digest();
+                var errors = element.querySelectorAll('error-display');
+                expect(errors.length).toBe(0);
+            });
         });
     });
 });

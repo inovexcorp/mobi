@@ -29,27 +29,26 @@ describe('Ontology Upload Overlay directive', function() {
                 expect(items.length).toBe(1);
             });
         });
-    });
-
-    describe('error-display', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<ontology-upload-overlay></ontology-upload-overlay>'))(scope);
-        });
-        it('is visible when uploadError is true', function() {
-            scope.vm = {
-                uploadError: true
-            }
-            scope.$digest();
-            var errors = element.querySelectorAll('error-display');
-            expect(errors.length).toBe(1);
-        });
-        it('is not visible when uploadError is false', function() {
-            scope.vm = {
-                uploadError: false
-            }
-            scope.$digest();
-            var errors = element.querySelectorAll('error-display');
-            expect(errors.length).toBe(0);
+        describe('error-display', function() {
+            beforeEach(function() {
+                element = $compile(angular.element('<ontology-upload-overlay></ontology-upload-overlay>'))(scope);
+            });
+            it('is visible when uploadError is true', function() {
+                scope.vm = {
+                    uploadError: true
+                }
+                scope.$digest();
+                var errors = element.querySelectorAll('error-display');
+                expect(errors.length).toBe(1);
+            });
+            it('is not visible when uploadError is false', function() {
+                scope.vm = {
+                    uploadError: false
+                }
+                scope.$digest();
+                var errors = element.querySelectorAll('error-display');
+                expect(errors.length).toBe(0);
+            });
         });
     });
 });

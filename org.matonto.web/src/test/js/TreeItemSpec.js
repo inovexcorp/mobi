@@ -78,38 +78,41 @@ describe('Tree Item directive', function() {
             scope.$digest();
             expect(element.prop('tagName')).toBe('LI');
         });
-        describe('when hasChildren is false', function() {
-            beforeEach(function() {
-                scope.hasChildren = false;
-                scope.$digest();
+        describe('depending on if hasChildren', function() {
+            describe('is false', function() {
+                beforeEach(function() {
+                    scope.hasChildren = false;
+                    scope.$digest();
+                });
+                it('it has an anchor', function() {
+                    var anchors = element.querySelectorAll('a');
+                    expect(anchors.length).toBe(1);
+                });
+                it('is has two icons', function() {
+                    var icons = element.querySelectorAll('i');
+                    expect(icons.length).toBe(2);
+                });
             });
-            it('it has an anchor', function() {
-                var anchors = element.querySelectorAll('a');
-                expect(anchors.length).toBe(1);
-            });
-            it('is has two icons', function() {
-                var icons = element.querySelectorAll('i');
-                expect(icons.length).toBe(2);
+            describe('is true', function() {
+                beforeEach(function() {
+                    scope.hasChildren = true;
+                    scope.$digest();
+                });
+                it('it has an anchor', function() {
+                    var anchors = element.querySelectorAll('a');
+                    expect(anchors.length).toBe(1);
+                });
+                it('is has two icons', function() {
+                    var icons = element.querySelectorAll('i');
+                    expect(icons.length).toBe(2);
+                });
+                it('it has an anchor with a double click attribute', function() {
+                    var anchors = element.querySelectorAll('[ng-dblclick]');
+                    expect(anchors.length).toBe(1);
+                });
             });
         });
-        describe('when hasChildren is true', function() {
-            beforeEach(function() {
-                scope.hasChildren = true;
-                scope.$digest();
-            });
-            it('it has an anchor', function() {
-                var anchors = element.querySelectorAll('a');
-                expect(anchors.length).toBe(1);
-            });
-            it('is has two icons', function() {
-                var icons = element.querySelectorAll('i');
-                expect(icons.length).toBe(2);
-            });
-            it('it has an anchor with a double click attribute', function() {
-                var anchors = element.querySelectorAll('[ng-dblclick]');
-                expect(anchors.length).toBe(1);
-            });
-        });
+
         describe('when isActive', function() {
             it('is true it should have active class', function() {
                 scope.isActive = true;
@@ -162,7 +165,7 @@ describe('Tree Item directive', function() {
             });
         });
         it('should call toggleOpen when double clicked', function() {
-            controller.toggleOpen = jasmine.createSpy('toggleOpen');
+            spyOn(controller, 'toggleOpen');
             var anchor = element.querySelectorAll('a')[0];
             angular.element(anchor).triggerHandler('dblclick');
             expect(controller.toggleOpen).toHaveBeenCalled();

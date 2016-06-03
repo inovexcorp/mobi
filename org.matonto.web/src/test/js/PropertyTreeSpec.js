@@ -45,7 +45,7 @@ describe('Property Tree directive', function() {
             var isolatedScope = element.isolateScope();
             isolatedScope.headerText = 'new';
             scope.$digest();
-            expect(scope.headerText).toEqual('test');
+            expect(scope.headerText).not.toEqual('new');
         });
     });
     describe('controller bound variables', function() {
@@ -57,12 +57,12 @@ describe('Property Tree directive', function() {
         it('propertyType should be one way bound', function() {
             controller.propertyType = 'new';
             scope.$digest();
-            expect(scope.propertyType).toEqual('test');
+            expect(scope.propertyType).not.toEqual('new');
         });
         it('state should be two way bound', function() {
             controller.state = {prop: 'new'};
             scope.$digest();
-            expect(scope.state.hasOwnProperty('prop')).toBe(true);
+            expect(scope.state).toEqual({prop: 'new'});
         });
         it('ontologies should be two way bound', function() {
             controller.ontologies = [];
@@ -90,7 +90,7 @@ describe('Property Tree directive', function() {
             expect(uls.length).toBe(3);
         });
         it('based on container tree-items', function() {
-            element.controller('propertyTree').isThisType = jasmine.createSpy('isThisType').and.returnValue(true);
+            spyOn(element.controller('propertyTree'), 'isThisType').and.returnValue(true);
             scope.$digest();
 
             var lis = element.querySelectorAll('.container tree-item');

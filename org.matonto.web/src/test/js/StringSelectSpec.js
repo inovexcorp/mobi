@@ -53,6 +53,8 @@ describe('String Select directive', function() {
             expect(scope.selectList.length).toBe(1);
             expect(scope.selectList[0]).toBe('new value');
         });
+    });
+    describe('controller bound variables', function() {
         it('bindModel should be two way bound to controller', function() {
             var controller = element.controller('stringSelect');
             controller.bindModel = 'new value';
