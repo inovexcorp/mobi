@@ -28,7 +28,7 @@ describe('Ontology Editor directive', function() {
             var tabContainer = element.querySelectorAll('tab-button-container');
             expect(tabContainer.length).toBe(1);
         });
-        describe('shows correct tab based on vm.state.editorTab', function() {
+        describe('based on vm.state.editorTab', function() {
             it('for basic', function() {
                 scope.vm = {
                     state: {
@@ -40,7 +40,6 @@ describe('Ontology Editor directive', function() {
                         }
                     }
                 }
-                element = $compile(angular.element('<ontology-editor></ontology-editor>'))(scope);
                 scope.$digest();
 
                 var tabs = element.querySelectorAll('.tab');
@@ -71,41 +70,33 @@ describe('Ontology Editor directive', function() {
                 expect(textAreaWrappers.length).toBe(1);
             });
         });
-        describe('has-error class', function() {
+        describe('and has-error class', function() {
             beforeEach(function() {
                 scope.vm = {
                     state: {
                         editorTab: 'basic'
                     }
                 }
-                element = $compile(angular.element('<ontology-editor></ontology-editor>'))(scope);
                 scope.$digest();
             });
-            it('is not there when vm.selected["@id"] is provided', function() {
-                scope.vm.selected = {
-                    '@id': 'https://matonto.org'
-                }
-                scope.$digest();
+            it('is not there when vm.selected["@id"] is valid', function() {
                 var formGroup = element.querySelectorAll('.form-group');
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
             });
-            it('is not there when vm.selected["@id"] is provided incorrectly', function() {
-                scope.vm.selected = {
-                    '@id': '...'
+            it('is not there when vm.selected["@id"] is invalid', function() {
+                scope.vm.ontologyForm = {
+                    ontologyIri: {
+                        '$error': {
+                            pattern: true
+                        }
+                    }
                 }
                 scope.$digest();
-                var formGroup = element.querySelectorAll('.form-group');
-                expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
-            });
-            it('is there when vm.selected["@id"] is undefined', function() {
                 var formGroup = element.querySelectorAll('.form-group');
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
             });
         });
-        describe('error-display', function() {
-            beforeEach(function() {
-                element = $compile(angular.element('<ontology-editor></ontology-editor>'))(scope);
-            });
+        describe('and error-display', function() {
             it('is visible when createError is true', function() {
                 scope.vm = {
                     selected: {

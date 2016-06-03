@@ -34,10 +34,7 @@ describe('Ontology Open Overlay directive', function() {
                 expect(items.length).toBe(1);
             });
         });
-        describe('error-display', function() {
-            beforeEach(function() {
-                element = $compile(angular.element('<ontology-open-overlay></ontology-open-overlay>'))(scope);
-            });
+        describe('and error-display', function() {
             it('is visible when openError is true', function() {
                 scope.vm = {
                     openError: true

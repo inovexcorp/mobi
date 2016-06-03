@@ -29,10 +29,7 @@ describe('Ontology Upload Overlay directive', function() {
                 expect(items.length).toBe(1);
             });
         });
-        describe('error-display', function() {
-            beforeEach(function() {
-                element = $compile(angular.element('<ontology-upload-overlay></ontology-upload-overlay>'))(scope);
-            });
+        describe('and error-display', function() {
             it('is visible when uploadError is true', function() {
                 scope.vm = {
                     uploadError: true

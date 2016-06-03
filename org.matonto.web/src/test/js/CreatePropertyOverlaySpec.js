@@ -89,17 +89,17 @@ describe('Create Property Overlay directive', function() {
         it('propertyTypes should be two way bound', function() {
             controller.propertyTypes = [];
             scope.$digest();
-            expect(scope.propertyTypes.length).toBe(0);
+            expect(scope.propertyTypes).toEqual([]);
         });
         it('subClasses should be two way bound', function() {
             controller.subClasses = [];
             scope.$digest();
-            expect(scope.subClasses.length).toBe(0);
+            expect(scope.subClasses).toEqual([]);
         });
         it('propertyRange should be two way bound', function() {
             controller.propertyRange = [];
             scope.$digest();
-            expect(scope.propertyRange.length).toBe(0);
+            expect(scope.propertyRange).toEqual([]);
         });
     });
     describe('replaces the element with the correct html', function() {

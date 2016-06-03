@@ -67,7 +67,7 @@ describe('Property Tree directive', function() {
         it('ontologies should be two way bound', function() {
             controller.ontologies = [];
             scope.$digest();
-            expect(scope.ontologies.length).toBe(0);
+            expect(scope.ontologies).toEqual([]);
         });
         it('selectItem should be called in parent scope', function() {
             controller.selectItem();

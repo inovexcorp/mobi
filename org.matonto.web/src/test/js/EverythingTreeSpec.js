@@ -55,7 +55,7 @@ describe('Everything Tree directive', function() {
             var treeItems = element.querySelectorAll('.container tree-item');
             expect(treeItems.length).toBe(3);
         });
-        describe('ensure proper tree-item length', function() {
+        describe('based on tree-item length', function() {
             it('when ontology.noDomains is empty', function() {
                 scope.vm.ontologies[0].matonto.noDomains = [];
                 scope.$digest();

@@ -28,7 +28,7 @@ describe('Property Editor directive', function() {
             var tabContainer = element.querySelectorAll('tab-button-container');
             expect(tabContainer.length).toBe(1);
         });
-        describe('shows correct tab based on vm.state.editorTab', function() {
+        describe('based on vm.state.editorTab', function() {
             it('for basic', function() {
                 scope.vm = {
                     state: {
@@ -40,7 +40,6 @@ describe('Property Editor directive', function() {
                         }
                     }
                 }
-                element = $compile(angular.element('<property-editor></property-editor>'))(scope);
                 scope.$digest();
 
                 var tabs = element.querySelectorAll('.tab');
@@ -103,11 +102,7 @@ describe('Property Editor directive', function() {
                 });
             });
         });
-
-        describe('error-display', function() {
-            beforeEach(function() {
-                element = $compile(angular.element('<property-editor></property-editor>'))(scope);
-            });
+        describe('and error-display', function() {
             it('is visible when createError is true', function() {
                 scope.vm = {
                     selected: {

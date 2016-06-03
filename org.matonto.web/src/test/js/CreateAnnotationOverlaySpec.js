@@ -31,7 +31,7 @@ describe('Create Annotation Overlay directive', function() {
                 expect(items.length).toBe(1);
             });
         });
-        describe('has-error class', function() {
+        describe('and has-error class', function() {
             it('is not there when form.iri is valid', function() {
                 var formGroup = element.querySelectorAll('.form-group');
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
@@ -52,7 +52,7 @@ describe('Create Annotation Overlay directive', function() {
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
             });
         });
-        describe('error-display', function() {
+        describe('and error-display', function() {
             beforeEach(function() {
                 element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);
             });

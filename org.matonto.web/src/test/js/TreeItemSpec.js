@@ -41,12 +41,12 @@ describe('Tree Item directive', function() {
         it('currentEntity should be two way bound', function() {
             isolatedScope.currentEntity = {'@id': 'new value'};
             scope.$digest();
-            expect(scope.currentEntity['@id']).toBe('new value');
+            expect(scope.currentEntity).toEqual({'@id': 'new value'});
         });
         it('currentOntology should be two way bound', function() {
             isolatedScope.currentOntology = {'@id': 'new value'};
             scope.$digest();
-            expect(scope.currentOntology['@id']).toBe('new value');
+            expect(scope.currentOntology).toEqual({'@id': 'new value'});
         });
         it('isActive should be two way bound', function() {
             isolatedScope.isActive = true;
@@ -84,11 +84,11 @@ describe('Tree Item directive', function() {
                     scope.hasChildren = false;
                     scope.$digest();
                 });
-                it('it has an anchor', function() {
+                it('and it has an anchor', function() {
                     var anchors = element.querySelectorAll('a');
                     expect(anchors.length).toBe(1);
                 });
-                it('is has two icons', function() {
+                it('and it has two icons', function() {
                     var icons = element.querySelectorAll('i');
                     expect(icons.length).toBe(2);
                 });
@@ -98,29 +98,28 @@ describe('Tree Item directive', function() {
                     scope.hasChildren = true;
                     scope.$digest();
                 });
-                it('it has an anchor', function() {
+                it('and it has an anchor', function() {
                     var anchors = element.querySelectorAll('a');
                     expect(anchors.length).toBe(1);
                 });
-                it('is has two icons', function() {
+                it('and it has two icons', function() {
                     var icons = element.querySelectorAll('i');
                     expect(icons.length).toBe(2);
                 });
-                it('it has an anchor with a double click attribute', function() {
+                it('and it has an anchor with a double click attribute', function() {
                     var anchors = element.querySelectorAll('[ng-dblclick]');
                     expect(anchors.length).toBe(1);
                 });
             });
         });
-
         describe('when isActive', function() {
-            it('is true it should have active class', function() {
+            it('is true', function() {
                 scope.isActive = true;
                 scope.$digest();
                 var anchor = element.querySelectorAll('a')[0];
                 expect(angular.element(anchor).hasClass('active')).toBe(true);
             });
-            it('is false it should not have active class', function() {
+            it('is false', function() {
                 scope.isActive = false;
                 scope.$digest();
                 var anchor = element.querySelectorAll('a')[0];

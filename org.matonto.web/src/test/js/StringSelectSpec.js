@@ -55,7 +55,7 @@ describe('String Select directive', function() {
         });
     });
     describe('controller bound variables', function() {
-        it('bindModel should be two way bound to controller', function() {
+        it('bindModel should be two way bound', function() {
             var controller = element.controller('stringSelect');
             controller.bindModel = 'new value';
             scope.$digest();

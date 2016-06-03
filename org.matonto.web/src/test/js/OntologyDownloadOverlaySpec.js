@@ -31,7 +31,7 @@ describe('Ontology Download Overlay directive', function() {
                 expect(items.length).toBe(1);
             });
         });
-        describe('has-error class', function() {
+        describe('and has-error class', function() {
             it('is not there when variable is undefined', function() {
                 var formGroup = element.querySelectorAll('.form-group');
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
