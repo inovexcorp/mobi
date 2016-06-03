@@ -4,7 +4,7 @@ PREFIX dcat: <http://www.w3.org/ns/dcat#>
 
 SELECT
     ?resource
-    ?type
+    (GROUP_CONCAT(DISTINCT ?type ; separator = ",") AS ?types)
     ?title
     ?issued
     ?modified
@@ -24,5 +24,5 @@ WHERE {
 	OPTIONAL { ?resource dc:identifier ?identifier } .
     OPTIONAL { ?resource dcat:keyword ?keyword } .
     OPTIONAL { ?resource dcat:distribution ?distribution } .
-} GROUP BY ?resource ?type ?title ?issued ?modified ?description ?identifier
+} GROUP BY ?resource ?title ?issued ?modified ?description ?identifier
 		

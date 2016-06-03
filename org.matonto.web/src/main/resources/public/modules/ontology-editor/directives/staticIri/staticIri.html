@@ -32,9 +32,11 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="dvm.iriForm.$invalid" on-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.showIriOverlay = false;">Edit</custom-button>
+            <custom-button is-disabled-when="dvm.iriForm.$invalid" on-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.afterEdit();">Edit</custom-button>
 
             <custom-button on-click="dvm.showIriOverlay = false" type="'secondary'">Cancel</custom-button>
+
+            <custom-button on-click="dvm.refresh()" pull="'left'"><i class="fa fa-refresh"></i></custom-button>
         </div>
     </form>
 </div>

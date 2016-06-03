@@ -31,7 +31,7 @@ public interface CatalogRest {
     @ApiOperation("Retrieves the published catalog resources.")
     PaginatedResults<PublishedResourceMarshaller> listPublishedResources(
             @Context UriInfo uriInfo,
-            @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType,
+            @QueryParam("type") String resourceType,
             @QueryParam("searchTerms") String searchTerms,
             @DefaultValue("http://purl.org/dc/terms/modified") @QueryParam("sortBy") String sortBy,
             @DefaultValue("false") @QueryParam("asc") boolean ascending,

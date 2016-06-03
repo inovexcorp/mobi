@@ -2,9 +2,10 @@
     <!-- class view -->
     <strong>Classes</strong>
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
-        <tree-item-with-sub current-entity="ontology"
-                            current-ontology="ontology"
-                            is-opened="opened"></tree-item-with-sub>
+        <tree-item current-entity="ontology"
+                   current-ontology="ontology"
+                   is-opened="opened"
+                   has-children="ontology.matonto.classes.length"></tree-item>
 
         <li class="container" ng-show="opened">
             <ul>

@@ -5,13 +5,12 @@ describe('SPARQL Result Table directive', function() {
         sparqlManagerSvc,
         element;
 
-    mockSparqlManager();
-
     beforeEach(function() {
         module('sparqlResultTable');
+        mockSparqlManager();
 
-        inject(function(sparqlManagerService) {
-            sparqlManagerSvc = sparqlManagerService;
+        inject(function(_sparqlManagerService_) {
+            sparqlManagerSvc = _sparqlManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_, _$window_) {

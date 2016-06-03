@@ -1,6 +1,7 @@
 package org.matonto.etl.rest.impl;
 
 import net.sf.json.JSONArray;
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.glassfish.jersey.client.ClientConfig;
@@ -367,7 +368,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     private List<String> getCsvResourceLines(String fileName) throws Exception {
-        return Files.readAllLines(Paths.get(getClass().getResource("/" + fileName).getPath().replaceFirst("^/(.:/)", "$1")));
+        return IOUtils.readLines(getClass().getClassLoader().getResourceAsStream(fileName));
     }
 
     private List<String> getExcelResourceLines(String fileName) {

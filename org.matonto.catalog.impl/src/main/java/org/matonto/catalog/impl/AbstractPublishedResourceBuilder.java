@@ -14,7 +14,6 @@ public abstract class AbstractPublishedResourceBuilder<T extends PublishedResour
 
     protected String title;
     protected Resource resource;
-    protected Resource type;
 
     protected String description = "";
     protected OffsetDateTime issued = OffsetDateTime.now();
@@ -22,6 +21,7 @@ public abstract class AbstractPublishedResourceBuilder<T extends PublishedResour
     protected String identifier = "";
     protected Set<String> keywords = new HashSet<>();
     protected Set<Distribution> distributions = new HashSet<>();
+    protected Set<Resource> types = new HashSet<>();
 
     @Override
     public T description(String val) {
@@ -51,6 +51,11 @@ public abstract class AbstractPublishedResourceBuilder<T extends PublishedResour
 
     public T addDistribution(Distribution val) {
         this.distributions.add(val);
+        return getThis();
+    }
+
+    public T addType(Resource val) {
+        this.types.add(val);
         return getThis();
     }
 

@@ -3,12 +3,12 @@ describe('Resource Preview directive', function() {
         scope,
         catalogManagerSvc;
 
-    mockCatalogManager();
     beforeEach(function() {
         module('resourcePreview');
+        mockCatalogManager();
 
-        inject(function(catalogManagerService) {
-            catalogManagerSvc = catalogManagerService;
+        inject(function(_catalogManagerService_) {
+            catalogManagerSvc = _catalogManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -51,8 +51,14 @@ describe('Resource Preview directive', function() {
             expect(this.element.querySelectorAll('h3.text-muted').length).toBe(0);
             expect(this.element.querySelectorAll('.preview').length).toBe(1);            
         });
-        it('with a resource type', function() {
+        it('with resource types if the resource has them', function() {
             scope.catalogManagerService.selectedResource = {};
+            scope.$digest();
+            expect(this.element.find('resource-type').length).toBe(0);
+            scope.catalogManagerService.selectedResource = {types: []};
+            scope.$digest();
+            expect(this.element.find('resource-type').length).toBe(0);
+            scope.catalogManagerService.selectedResource = {types: ['test']};
             scope.$digest();
             expect(this.element.find('resource-type').length).toBe(1);
         });

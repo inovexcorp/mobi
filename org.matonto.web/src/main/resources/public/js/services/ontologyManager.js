@@ -5,9 +5,9 @@
         .module('ontologyManager', ['splitIRI', 'beautify', 'updateRefs', 'camelCase', 'responseObj', 'prefixes', 'annotationManager'])
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$rootScope', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj', 'prefixes', 'uuid', 'annotationManagerService'];
+        ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'updateRefsService', 'responseObj', 'prefixes', 'uuid', 'annotationManagerService'];
 
-        function ontologyManagerService($rootScope, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes, uuid, annotationManagerService) {
+        function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, updateRefsService, responseObj, prefixes, uuid, annotationManagerService) {
             var self = this,
                 prefix = '/matontorest/ontologies',
                 defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
@@ -28,7 +28,6 @@
                     '@id': '',
                     '@type': [prefixes.owl + 'Ontology'],
                     matonto: {
-                        delimiter: '#',
                         classes: [],
                         annotations: defaultAnnotations,
                         isValid: true,
@@ -43,13 +42,16 @@
                     '@id': '',
                     '@type': [prefixes.owl + 'Class'],
                     matonto: {
-                        properties: []
+                        properties: [],
+                        isValid: true
                     }
                 },
                 propertyTemplate = {
                     '@id': '',
                     '@type': [],
-                    matonto: {}
+                    matonto: {
+                        isValid: true
+                    }
                 };
 
             initialize();
@@ -72,7 +74,6 @@
             }
 
             function initOntology(ontology, obj) {
-                var delimiter = _.last(obj['@id']);
                 obj.matonto = {
                     originalId: obj['@id'],
                     blankNodes: [],
@@ -80,8 +81,9 @@
                     propertyExpressions: {},
                     unionOfs: {},
                     intersectionOfs: {},
-                    delimiter: _.includes(['#', ':', '/'], delimiter) ? delimiter : '#',
-                    isValid: true
+                    isValid: true,
+                    iriBegin: obj['@id'],
+                    iriThen: '#'
                 }
 
                 angular.merge(ontology, obj);
@@ -453,13 +455,15 @@
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
                             properties: [],
-                            originalId: obj['@id']
+                            originalId: obj['@id'],
+                            isValid: true
                         };
                         classes.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
                         obj.matonto = {
                             icon: chooseIcon(obj, prefixes),
-                            originalId: obj['@id']
+                            originalId: obj['@id'],
+                            isValid: true
                         };
                         properties.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'AnnotationProperty') !== -1) {
@@ -564,7 +568,9 @@
                             datatypes = ontologyIris.data.datatypes;
 
                         if(importedOntologyIris.status === 200) {
-                            var importedClasses = importedDataProperties = importedObjectProperties = [];
+                            var importedClasses = [];
+                            var importedDataProperties = [];
+                            var importedObjectProperties = [];
 
                             _.forEach(importedOntologyIris.data, function(item) {
                                 importedClasses = _.concat(importedClasses, addOntologyIriToElements(item.classes, item.id));
@@ -638,6 +644,8 @@
                 var newOntology = angular.copy(ontologyTemplate);
 
                 newOntology = initEntity(newOntology, ontologyIri, label, description);
+                newOntology.matonto.iriBegin = ontologyIri;
+                newOntology.matonto.iriThen = '#';
 
                 var config = {
                         params: {
@@ -856,7 +864,7 @@
 
             self.download = function(ontologyId, rdfFormat, fileName) {
                 var queryString = '?rdfFormat=' + rdfFormat + '&fileName=' + fileName;
-                window.location = prefix + '/' + encodeURIComponent(ontologyId) + queryString;
+                $window.location = prefix + '/' + encodeURIComponent(ontologyId) + queryString;
             }
 
             self.get = function(ontologyId, rdfFormat) {
@@ -952,7 +960,7 @@
                         changedProperties = [],
                         promises = [];
 
-                    _.forEach(_.filter(changedEntries, { ontologyId: ontologyId }), function(changedEntry) {
+                    _.forEach(self.getChangedListForOntology(ontologyId), function(changedEntry) {
                         var state = angular.copy(changedEntry.state);
                         obj = self.getObject(state);
                         obj.matonto.unsaved = false;
@@ -1173,6 +1181,10 @@
 
             self.clearChangedList = function(ontologyId) {
                 changedEntries = _.reject(changedEntries, { ontologyId: ontologyId });
+            }
+
+            self.getChangedListForOntology = function(ontologyId) {
+                return _.filter(changedEntries, { ontologyId: ontologyId });
             }
 
             self.getClasses = function(ontology) {

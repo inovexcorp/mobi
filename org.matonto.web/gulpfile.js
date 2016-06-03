@@ -41,33 +41,33 @@ var jsFiles = function(prefix) {
     },
     nodeJsFiles = function(prefix) {
         return [
-            prefix + '*/lodash.min.js',
-            prefix + '**/codemirror.js',
-            prefix + '**/sparql.js',
-            prefix + '**/matchbrackets.js',
-            prefix + '*/angular.min.js',
-            prefix + '*/angular-mocks.js',
-            prefix + '**/angular-ui-router.min.js',
-            prefix + '*/angular-uuid.js',
-            prefix + '*/angular-cookies.min.js',
-            prefix + '**/angular-file-saver.bundle.min.js',
-            prefix + '**/ui-codemirror.js',
-            prefix + '*/angular-messages.min.js',
-            prefix + '**/select.min.js'
+            prefix + 'lodash/**/lodash.min.js',
+            prefix + 'codemirror/**/codemirror.js',
+            prefix + 'codemirror/**/sparql.js',
+            prefix + 'codemirror/**/matchbrackets.js',
+            prefix + 'angular/**/angular.min.js',
+            prefix + 'angular-mocks/**/angular-mocks.js',
+            prefix + 'angular-ui-router/**/angular-ui-router.min.js',
+            prefix + 'angular-uuid/**/angular-uuid.js',
+            prefix + 'angular-cookies/**/angular-cookies.min.js',
+            prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
+            prefix + 'angular-messages/**/angular-messages.min.js',
+            prefix + 'ui-select/**/select.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
         return [
             prefix + '**/css/**/*.' + suffix,
+            prefix + '**/directives/**/*.' + suffix,
             prefix + '**/modules/**/*.' + suffix
         ]
     },
     nodeStyleFiles = function(prefix) {
         return [
-            prefix + '**/bootstrap.min.css',
-            prefix + '**/font-awesome.min.css',
-            prefix + '**/select.min.css',
-            prefix + '**/codemirror.css'
+            prefix + 'bootstrap/**/bootstrap.min.css',
+            prefix + 'font-awesome/**/font-awesome.min.css',
+            prefix + 'ui-select/**/select.min.css',
+            prefix + 'codemirror/**/codemirror.css'
         ]
     };
 
@@ -133,17 +133,19 @@ gulp.task('html', function() {
         .pipe(gulp.dest(dest));
 });
 
-// Moves all bower js files to build folder
+// Moves all node_modules js files to build folder
 gulp.task('move-node-js', function() {
-    return gulp.src(nodeJsFiles(nodeDir))
-        .pipe(flatten())
+    return gulp.src(nodeJsFiles(nodeDir), {base: './'})
+        .pipe(flatten({includeParents: 2}))
+        .pipe(flatten({includeParents: -1}))
         .pipe(gulp.dest(dest + 'js'));
 });
 
-// Moves all bower css files to build folder
+// Moves all node_modules css files to build folder
 gulp.task('move-node-css', function() {
-    return gulp.src(nodeStyleFiles(nodeDir))
-        .pipe(flatten())
+    return gulp.src(nodeStyleFiles(nodeDir), {base: './'})
+        .pipe(flatten({includeParents: 2}))
+        .pipe(flatten({includeParents: -1}))
         .pipe(gulp.dest(dest + 'css'));
 });
 
@@ -174,20 +176,26 @@ gulp.task('change-to-css', function() {
 
 // Injects un-minified CSS and JS files
 gulp.task('inject-unminified', ['move-custom-js', 'move-custom-not-js', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
-    var allJsFiles = nodeJsFiles(dest).concat(jsFiles(dest)),
-        allStyleFiles = nodeStyleFiles(dest).concat(styleFiles(dest, 'css')),
+    var allJsFiles = nodeJsFiles(dest + 'js/').concat(jsFiles(dest)),
+        allStyleFiles = nodeStyleFiles(dest + 'css/').concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);
     return injectFiles(allFiles);
 });
 
-// Get icons from font-awesome
-gulp.task('icons', function() {
+// Get icons from font-awesome for minified build
+gulp.task('icons-minified', function() {
     return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
         .pipe(gulp.dest(dest + 'fonts'));
 });
 
+// Get icons from font-awesome for un-minified build
+gulp.task('icons-unminified', function() {
+    return gulp.src(nodeDir + '/font-awesome/fonts/**.*')
+        .pipe(gulp.dest(dest + 'css/fonts'));
+});
+
 // Production Task (minified)
-gulp.task('prod', ['minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons']);
+gulp.task('prod', ['minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons']);
+gulp.task('default', ['move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);

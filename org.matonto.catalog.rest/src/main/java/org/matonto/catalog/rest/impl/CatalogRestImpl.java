@@ -4,10 +4,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import org.apache.log4j.Logger;
-import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Distribution;
-import org.matonto.catalog.api.PaginatedSearchResults;
-import org.matonto.catalog.api.PublishedResource;
+import org.matonto.catalog.api.*;
 import org.matonto.catalog.rest.CatalogRest;
 import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
@@ -33,6 +30,7 @@ public class CatalogRestImpl implements CatalogRest {
     private CatalogManager catalogManager;
     private Values values;
     private ValueFactory valueFactory;
+    private CatalogFactory catalogFactory;
 
     private static final Set<String> RESOURCE_TYPES;
     private static final Set<String> SORT_RESOURCES;
@@ -70,6 +68,11 @@ public class CatalogRestImpl implements CatalogRest {
         this.valueFactory = valueFactory;
     }
 
+    @Reference
+    protected void setCatalogFactory(CatalogFactory catalogFactory) {
+        this.catalogFactory = catalogFactory;
+    }
+
     @Override
     public PublishedResourceMarshaller getPublishedResource(String resourceId) {
         if (resourceId == null) {
@@ -101,8 +104,17 @@ public class CatalogRestImpl implements CatalogRest {
                                                                                 String searchTerms, String sortBy,
                                                                                 boolean asc, int limit, int start) {
         IRI sortResource = valueFactory.createIRI(sortBy);
-        PaginatedSearchResults<PublishedResource> searchResults =
-                catalogManager.findResource(searchTerms, limit, start, sortResource, asc);
+
+        PaginatedSearchParamsBuilder builder = catalogFactory.createSearchParamsBuilder(limit, start, sortResource)
+                .ascending(asc);
+
+        if (resourceType != null) {
+            builder.typeFilter(valueFactory.createIRI(resourceType));
+        }
+
+        PaginatedSearchParams searchParams = builder.build();
+
+        PaginatedSearchResults<PublishedResource> searchResults = catalogManager.findResource(searchParams);
 
         List<PublishedResourceMarshaller> publishedResources = new ArrayList<>();
         searchResults.getPage().forEach(resource -> publishedResources.add(processResource(resource)));
@@ -225,16 +237,17 @@ public class CatalogRestImpl implements CatalogRest {
     private PublishedResourceMarshaller processResource(PublishedResource resource) {
         PublishedResourceMarshaller marshaller = new PublishedResourceMarshaller();
         marshaller.setId(resource.getResource().stringValue());
-        marshaller.setType(resource.getType().stringValue());
         marshaller.setTitle(resource.getTitle());
         marshaller.setDescription(resource.getDescription());
         marshaller.setIssued(getCalendar(resource.getIssued()));
         marshaller.setModified(getCalendar(resource.getModified()));
         marshaller.setIdentifier(resource.getIdentifier());
 
-        Set<String> keywords = new HashSet<>();
-        resource.getKeywords().forEach(keywords::add);
-        marshaller.setKeywords(keywords);
+        Set<String> types = new HashSet<>();
+        resource.getTypes().forEach(res -> types.add(res.stringValue()));
+        marshaller.setTypes(types);
+
+        marshaller.setKeywords(resource.getKeywords());
 
         Set<String> distributions = new HashSet<>();
         resource.getDistributions().forEach(distribution ->
