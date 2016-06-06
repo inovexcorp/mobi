@@ -58,7 +58,7 @@
                         var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, dvm.getClassId());
                         dvm.manager.mapping.jsonld = dvm.manager.addDataProp(dvm.manager.mapping.jsonld, ontology, dvm.state.selectedClassMappingId, propId, columnIdx);
                         var propMappingId = _.get(dvm.manager.getDataMappingFromClass(dvm.manager.mapping.jsonld, dvm.state.selectedClassMappingId, propId), '@id');
-                        _.remove(dvm.invalidProps, {'@id': propMappingId});
+                        _.remove(dvm.state.invalidProps, {'@id': propMappingId});
                         dvm.state.resetEdit();
                         dvm.state.changedMapping();
                     }

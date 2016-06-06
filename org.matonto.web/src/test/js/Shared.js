@@ -166,6 +166,8 @@ function mockMapperState() {
             this.invalidProps = [];
             this.availableColumns = [];
             this.availableProps = [];
+            this.openedClasses = [];
+            this.invalidOntology = false;
             this.editMappingName = false;
             this.displayCancelConfirm = false;
             this.displayNewMappingConfirm = false;

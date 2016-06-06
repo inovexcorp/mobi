@@ -58,28 +58,53 @@ describe('Mapping Preview directive', function() {
             expect(ontologyManagerSvc.getBeautifulIRI).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
-        it('should set the correct state for using a mapping', function() {
-            var controller = this.element.controller('mappingPreview');
-            var ontology = {'@id': 'test'};
-            ontologyManagerSvc.getList.and.returnValue([ontology]);
-            mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology['@id']);
-            controller.useMapping();
-            scope.$apply();
-            expect(mapperStateSvc.editMapping).toBe(true);
-            expect(mapperStateSvc.newMapping).toBe(false);
-            expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(ontology['@id']);
-            expect(mappingManagerSvc.sourceOntologies).toContain(ontology);
-            expect(mapperStateSvc.step).toBe(1);
+        describe('should set the correct state for using a mapping', function() {
+            it('if the ontology is valid', function() {
+                var controller = this.element.controller('mappingPreview');
+                var ontology = {'@id': 'test'};
+                ontologyManagerSvc.getList.and.returnValue([ontology]);
+                mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology['@id']);
+                controller.useMapping();
+                scope.$apply();
+                expect(mapperStateSvc.editMapping).toBe(true);
+                expect(mapperStateSvc.newMapping).toBe(false);
+                expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(ontology['@id']);
+                expect(mappingManagerSvc.sourceOntologies).toContain(ontology);
+                expect(mapperStateSvc.step).toBe(1);
 
-            ontologyManagerSvc.getList.and.returnValue([]);
-            controller.useMapping();
-            scope.$apply();
-            expect(mapperStateSvc.editMapping).toBe(true);
-            expect(mapperStateSvc.newMapping).toBe(false);
-            expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith(ontology['@id']);
-            expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(1);
+                ontologyManagerSvc.getList.and.returnValue([]);
+                controller.useMapping();
+                scope.$apply();
+                expect(mapperStateSvc.editMapping).toBe(true);
+                expect(mapperStateSvc.newMapping).toBe(false);
+                expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith(ontology['@id']);
+                expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(1);
+            });
+            it('if the ontology is invalid', function() {
+                var controller = this.element.controller('mappingPreview');
+                var ontology = {'@id': 'test'};
+                ontologyManagerSvc.getList.and.returnValue([ontology]);
+                mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology['@id']);
+                mappingManagerSvc.getAllClassMappings.and.returnValue([{'mapsTo': 'test'}]);
+                ontologyManagerSvc.getClass.and.returnValue(undefined);
+                controller.useMapping();
+                scope.$apply();
+                expect(mapperStateSvc.editMapping).toBe(true);
+                expect(mapperStateSvc.newMapping).toBe(false);
+                expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.sourceOntologies).not.toContain(ontology);
+                expect(mapperStateSvc.step).toBe(0);
+                expect(mapperStateSvc.invalidOntology).toBe(true);
+            });
+        });
+        it('should get the column index of a data mapping', function() {
+            var controller = this.element.controller('mappingPreview');
+            var propMapping = {'columnIndex': [{'@value': '0'}]};
+            var result = controller.getColumnIndex(propMapping);
+            expect(result).toBe(0);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -132,6 +157,22 @@ describe('Mapping Preview directive', function() {
             _.forEach(classListItems, function(item) {
                 expect(item.querySelectorAll('.props > li').length).toBe(propMappings.length);
             });
+        });
+        it('depending on the type of property mapping', function() {
+            mappingManagerSvc.mapping = {jsonld: []};
+            var classMappings = [{'@id': ''}];
+            var propMappings = [{'@id': '', '@type': 'DataMapping', 'columnIndex': [{'@value': '0'}]}];
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
+            scope.$digest();
+            var propItem = angular.element(this.element.querySelectorAll('.props > li')[0]);
+            expect(propItem.html()).toContain('Column');
+
+            var propMappings = [{'@id': ''}];
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
+            scope.$digest();
+            propItem = angular.element(this.element.querySelectorAll('.props > li')[0]);
+            expect(propItem.html()).not.toContain('Column');
         });
     });
 });

@@ -11,14 +11,13 @@
          * contains various variables to hold the state of the mapping tool page and 
          * utility functions to update those variables.
          */
-        .module('mapperState', ['prefixes', 'mappingManager', 'mapperState', 'ontologyManager'])
+        .module('mapperState', ['prefixes', 'mappingManager', 'ontologyManager', 'csvManager'])
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService
-         * @requires $rootScope
-         * @requires $http
-         * @requires $q
-         * @requires $window
+         * @requires prefixes.service:prefixes
+         * @requires mappingManager.service:mappingManagerService
+         * @requires ontologyManager.service:ontologyManagerService
          *
          * @description 
          * `mapperStateService` is a service which contains various variables to hold the 
@@ -26,16 +25,16 @@
          */
         .service('mapperStateService', mapperStateService);
 
-        mapperStateService.$inject = ['prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
+        mapperStateService.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService', 'csvManagerService'];
 
-        function mapperStateService(prefixes, mappingManagerService, mapperStateService, ontologyManagerService) {
+        function mapperStateService(prefixes, mappingManagerService, ontologyManagerService, csvManagerService) {
             var self = this;
-            var cachedOntologyId = undefined;
+            var cachedOntologyId = '';
             var cachedSourceOntologies = undefined;
             var originalMappingName = '';
             var manager = mappingManagerService,
-                csv = mapperStateService,
-                ontology = ontologyManagerService;
+                ontology = ontologyManagerService,
+                csv = csvManagerService;
 
             /**
              * @ngdoc property
@@ -102,6 +101,27 @@
              * {@link mappingManager.mappingManagerService#mapping mapping}.
              */
             self.availableProps = [];
+            /**
+             * @ngdoc property
+             * @name mapperState.mapperStateService#openedClasses
+             * @propertyOf mapperState.service:mapperStateService
+             *
+             * @description 
+             * `openedClasses` holds an array of class mapping ids indicating which ones should be 
+             * opened in the {@link classList.directive:classList classList}
+             */
+            self.openedClasses = [];
+            /**
+             * @ngdoc property
+             * @name mapperState.mapperStateService#invalidOntology
+             * @propertyOf mapperState.service:mapperStateService
+             *
+             * @description 
+             * `invalidOntology` holds a boolean indicating whether or not the source ontology for the 
+             * currently selected {@link mappingManager.mappingManagerService#mapping mapping} is 
+             * incompatible.
+             */
+            self.invalidOntology = false;
             /**
              * @ngdoc property
              * @name mapperState.mapperStateService#editMappingName
@@ -258,8 +278,9 @@
                 self.step = 0;
                 self.invalidProps = [];
                 self.availableColumns = [];
-                self.invalidProps = [];
+                self.availableProps = [];
                 originalMappingName = '';
+                self.openedClasses = [];
             }
             /**
              * @ngdoc method
@@ -351,6 +372,17 @@
             }
             /**
              * @ngdoc method
+             * @name mapperState.mapperStateService#getCachedSourceOntologies
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description 
+             * Gets the saved source ontologies.
+             */
+            self.getCachedSourceOntologies = function() {
+                return cachedSourceOntologies;
+            }
+            /**
+             * @ngdoc method
              * @name mapperState.mapperStateService#getMappedColumns
              * @methodOf mapperState.service:mapperStateService
              *
@@ -363,8 +395,8 @@
              */
             self.getMappedColumns = function() {
                 return _.chain(manager.getAllDataMappings(manager.mapping.jsonld))
-                    .map(dataMapping => parseInt(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'), 10)
-                    .forEach(index => _.get(csv.filePreview.headers, index))
+                    .map(dataMapping => parseInt(_.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'), 10))
+                    .map(index => _.get(csv.filePreview.headers, index))
                     .value();
             }
             /**

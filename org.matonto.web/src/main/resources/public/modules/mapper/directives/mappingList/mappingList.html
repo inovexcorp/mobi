@@ -2,7 +2,7 @@
     <div class="tree boxed full-height">
         <h3 class="list-title bg-primary">Mappings</h3>
         <ul>
-            <li ng-repeat="mappingName in dvm.manager.previousMappingNames"><a ng-click="dvm.onClick(mappingName)">{{mappingName}}</a></li>
+            <li ng-repeat="mappingName in dvm.manager.previousMappingNames"><a ng-click="dvm.onClick(mappingName)" ng-class="{'active': mappingName === dvm.manager.mapping.name}">{{mappingName}}</a></li>
         </ul>
     </div>
 </section>

@@ -77,6 +77,7 @@
                             dvm.manager.mapping.jsonld = dvm.manager.addDataProp(dvm.manager.mapping.jsonld, ontology, dvm.state.selectedClassMappingId, propId, columnIdx);
                         }
                         
+                        dvm.state.openedClasses = _.union(dvm.state.openedClasses, [dvm.state.selectedClassMappingId]);
                         dvm.state.resetEdit();
                         dvm.state.changedMapping();
                     }

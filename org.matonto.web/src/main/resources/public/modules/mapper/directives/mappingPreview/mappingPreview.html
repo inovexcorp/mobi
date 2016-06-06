@@ -18,7 +18,7 @@
                         {{dvm.getClassName(classMapping)}}
                         <ul class="props">
                             <li ng-repeat="propMapping in dvm.manager.getPropMappingsByClass(dvm.manager.mapping.jsonld, classMapping['@id'])">
-                                {{dvm.getPropName(propMapping)}}
+                                {{dvm.getPropName(propMapping)}}{{dvm.manager.isDataMapping(propMapping) ? ' - Column ' + dvm.getColumnIndex(propMapping) : ''}}
                             </li>
                         </ul>
                     </li>

@@ -50,20 +50,19 @@
                     dvm.manager = mappingManagerService;
                     dvm.state = mapperStateService;
                     dvm.csv = csvManagerService;
-                    dvm.openedClasses = [];
 
                     dvm.hasProps = function(classMapping) {
                         return dvm.manager.getPropMappingsByClass(dvm.manager.mapping.jsonld, classMapping['@id']).length > 0;
                     }
                     dvm.toggleOpen = function(classMappingId) {
                         if (dvm.isOpen(classMappingId)) {
-                            _.pull(dvm.openedClasses, classMappingId);
+                            _.pull(dvm.state.openedClasses, classMappingId);
                         } else {
-                            dvm.openedClasses.push(classMappingId);
+                            dvm.state.openedClasses.push(classMappingId);
                         }
                     }
                     dvm.isOpen = function(classMappingId) {
-                        return _.includes(dvm.openedClasses, classMappingId);
+                        return _.includes(dvm.state.openedClasses, classMappingId);
                     }
                     dvm.clickClass = function(classMapping) {
                         dvm.state.resetEdit();

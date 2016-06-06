@@ -7,12 +7,13 @@
          * @name mapperSideBar
          * @requires  mappingManager
          * @requires  mapperState
+         * @requires ontologyManager
          *
          * @description 
          * The `mapperSideBar` module only provides the `mapperSideBar` directive which creates
          * a left navigation of action buttons for the mapping tool.
          */
-        .module('mapperSideBar', ['mapperState', 'mappingManager'])
+        .module('mapperSideBar', ['mapperState', 'mappingManager', 'ontologyManager'])
         /**
          * @ngdoc directive
          * @name mapperSideBar.directive:mapperSideBar
@@ -20,6 +21,7 @@
          * @restrict E
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
+         * @requires ontologyManager.service:ontologyManagerService
          *
          * @description 
          * `mapperSideBar` is a directive that creates a "left-nav" div with buttons for mapping
@@ -29,9 +31,9 @@
          */
         .directive('mapperSideBar', mapperSideBar);
 
-        mapperSideBar.$inject = ['mapperStateService', 'mappingManagerService'];
+        mapperSideBar.$inject = ['mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function mapperSideBar(mapperStateService, mappingManagerService) {
+        function mapperSideBar(mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -41,7 +43,11 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.manager = mappingManagerService;
+                    dvm.ontology = ontologyManagerService;
 
+                    dvm.noOntologies = function() {
+                        return _.concat(dvm.ontology.getList(), dvm.ontology.getOntologyIds()).length === 0;
+                    }
                     dvm.mappingList = function() {
                         dvm.state.displayCancelConfirm = dvm.state.editMapping;
                     }

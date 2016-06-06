@@ -62,6 +62,16 @@ describe('Mapping List directive', function() {
             scope.$digest();
             expect(this.element.find('li').length).toBe(mappingManagerSvc.previousMappingNames.length);
         });
+        it('depending on whether the mapping is selected', function() {
+            mappingManagerSvc.previousMappingNames = ['test1'];
+            scope.$digest();
+            var mappingName = angular.element(this.element.querySelectorAll('li a'));
+            expect(mappingName.hasClass('active')).toBe(false);
+
+            mappingManagerSvc.mapping = {name: 'test1'};
+            scope.$digest();
+            expect(mappingName.hasClass('active')).toBe(true);
+        });
     });
     it('should call onClick when a mapping name is clicked', function() {
         mappingManagerSvc.previousMappingNames = ['test1'];

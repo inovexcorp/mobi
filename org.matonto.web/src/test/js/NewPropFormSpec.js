@@ -69,6 +69,7 @@ describe('New Prop Form directive', function() {
             spyOn(controller, 'isObjectProperty').and.returnValue(true);
             mappingManagerSvc.getClassIdByMappingId.calls.reset();
             ontologyManagerSvc.findOntologyWithClass.calls.reset();
+            var classMappingId = mapperStateSvc.selectedClassMappingId;
             controller.set();
             expect(mappingManagerSvc.addObjectProp).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.sourceOntologies, 
                 mapperStateSvc.selectedClassMappingId, mapperStateSvc.selectedProp['@id']);
@@ -77,9 +78,11 @@ describe('New Prop Form directive', function() {
             expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+            expect(mapperStateSvc.openedClasses).toContain(classMappingId);
 
             controller.isObjectProperty.and.returnValue(false);
             mappingManagerSvc.addObjectProp.calls.reset();
+            classMappingId = mapperStateSvc.selectedClassMappingId;
             controller.set();
             expect(mappingManagerSvc.addObjectProp).not.toHaveBeenCalled();
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId);
@@ -87,6 +90,7 @@ describe('New Prop Form directive', function() {
             expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+            expect(mapperStateSvc.openedClasses).toContain(classMappingId);
         });
         it('should set the correct state for setting a property and continuing to the next', function() {
             var controller = this.element.controller('newPropForm');

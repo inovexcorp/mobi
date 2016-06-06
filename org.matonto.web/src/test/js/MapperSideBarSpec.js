@@ -2,17 +2,20 @@ describe('Mapper Side Bar directive', function() {
     var $compile,
         scope,
         mappingManagerSvc,
-        mapperStateSvc;
+        mapperStateSvc,
+        ontologyManagerSvc;
 
     mockPrefixes();
     beforeEach(function() {
         module('mapperSideBar');
         mockMappingManager();
         mockMapperState();
+        mockOntologyManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_) {
+        inject(function(_mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -27,6 +30,22 @@ describe('Mapper Side Bar directive', function() {
         beforeEach(function() {
             this.element = $compile(angular.element('<mapper-side-bar></mapper-side-bar>'))(scope);
             scope.$digest();
+        });
+        it('should test whether there are ontologies availabale', function() {
+            var controller = this.element.controller('mapperSideBar');
+            var result = controller.noOntologies();
+            expect(result).toBe(true);
+
+            ontologyManagerSvc.getList.and.returnValue([{}]);
+            scope.$digest();
+            result = controller.noOntologies();
+            expect(result).toBe(false);
+
+            ontologyManagerSvc.getList.and.returnValue([]);
+            ontologyManagerSvc.getOntologyIds.and.returnValue(['']);
+            scope.$digest();
+            result = controller.noOntologies();
+            expect(result).toBe(false);
         });
         it('should navigate to the mapping list', function() {
             var controller = this.element.controller('mapperSideBar');

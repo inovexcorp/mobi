@@ -99,7 +99,10 @@ describe('Mapping Overlays directive', function() {
             spyOn(controller, 'isClassMapping').and.returnValue(true);
             var deleteId = 'test';
             mapperStateSvc.deleteId = deleteId;
+            mapperStateSvc.openedClasses = [deleteId];
+            scope.$digest();
             controller.deleteEntity();
+            expect(mapperStateSvc.openedClasses).not.toContain(deleteId);
             expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
             expect(mappingManagerSvc.findClassWithDataMapping).not.toHaveBeenCalled();
             expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
@@ -209,6 +212,15 @@ describe('Mapping Overlays directive', function() {
             mapperStateSvc.editIriTemplate = false;
             scope.$digest();
             expect(this.element.find('iri-template-overlay').length).toBe(0);
+        });
+        it('depending on whether the soruce ontology is invalid', function() {
+            mapperStateSvc.invalidOntology = true;
+            scope.$digest();
+            expect(this.element.find('invalid-ontology-overlay').length).toBe(1);
+
+            mapperStateSvc.invalidOntology = false;
+            scope.$digest();
+            expect(this.element.find('invalid-ontology-overlay').length).toBe(0);
         });
         it('depending on whether a cancel should be confirmed', function() {
             mapperStateSvc.displayCancelConfirm = true;

@@ -61,6 +61,23 @@ describe('Edit Prop Form directive', function() {
             expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalled();
             expect(result).toBe(false);
         });
+        it('should set a new column index correctly', function() {
+            var controller = this.element.controller('editPropForm');
+            var prop = {'@id': 'test'};
+            csvManagerSvc.filePreview = {headers: []};
+            spyOn(controller, 'getPropId').and.returnValue(prop['@id']);
+            spyOn(controller, 'isObjectProperty').and.returnValue(false);
+            mappingManagerSvc.getDataMappingFromClass.and.returnValue(prop);
+            mapperStateSvc.invalidProps = [prop];
+            scope.$digest();
+            controller.set();
+            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalled();
+            expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
+            expect(mappingManagerSvc.getDataMappingFromClass).toHaveBeenCalled();
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+            expect(mapperStateSvc.invalidProps).not.toContain(prop);
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

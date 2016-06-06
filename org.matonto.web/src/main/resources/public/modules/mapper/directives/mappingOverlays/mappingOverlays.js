@@ -80,6 +80,7 @@
                     }
                     dvm.deleteEntity = function() {
                         if (dvm.isClassMapping(dvm.state.deleteId)) {
+                            _.pull(dvm.state.openedClasses, dvm.state.deleteId);
                             dvm.manager.mapping.jsonld = dvm.manager.removeClass(dvm.manager.mapping.jsonld, dvm.state.deleteId);
                         } else {
                             var classMapping = dvm.manager.findClassWithDataMapping(dvm.manager.mapping.jsonld, dvm.state.deleteId) 

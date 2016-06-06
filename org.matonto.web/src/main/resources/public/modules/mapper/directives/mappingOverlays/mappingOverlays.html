@@ -4,6 +4,7 @@
 <starting-class-select-overlay ng-if="dvm.state.step === 3"></starting-class-select-overlay>
 <ontology-preview-overlay ng-if="dvm.state.previewOntology" ontology="dvm.manager.getSourceOntology(dvm.manager.mapping.jsonld)"></ontology-preview-overlay>
 <iri-template-overlay ng-if="dvm.state.editIriTemplate"></iri-template-overlay>
+<invalid-ontology-overlay ng-if="dvm.state.invalidOntology"></invalid-ontology-overlay>
 <finish-overlay ng-if="dvm.state.step === 5"></finish-overlay>
 
 <confirmation-overlay ng-if="dvm.state.displayCancelConfirm"
