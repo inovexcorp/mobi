@@ -11,9 +11,9 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-public class CheckEncoding {
+public class CharsetUtils {
     private static Charset[] supportedCharsets = new Charset[] {StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1};
-    private static final Logger logger = LoggerFactory.getLogger(CheckEncoding.class);
+    private static final Logger logger = LoggerFactory.getLogger(CharsetUtils.class);
 
     /**
      * Determines which of the supported charsets the byte array is encoded with.

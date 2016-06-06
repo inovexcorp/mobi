@@ -16,7 +16,7 @@ import org.matonto.etl.rest.CSVRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.core.utils.Values;
-import org.matonto.rest.util.CheckEncoding;
+import org.matonto.rest.util.CharsetUtils;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
@@ -446,7 +446,7 @@ public class CSVRestImpl implements CSVRest {
      */
     private Charset getCharset(byte[] bytes) {
         Charset charset;
-        Optional<Charset> optCharset = CheckEncoding.getEncoding(bytes);
+        Optional<Charset> optCharset = CharsetUtils.getEncoding(bytes);
         if (optCharset.isPresent()) {
             charset = optCharset.get();
         } else {
