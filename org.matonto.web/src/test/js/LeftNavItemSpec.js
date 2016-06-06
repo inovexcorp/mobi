@@ -3,6 +3,7 @@ describe('Left Nav Item directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('leftNavItem');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Left Nav Item directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/leftNavItem/leftNavItem.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

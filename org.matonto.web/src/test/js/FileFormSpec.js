@@ -3,6 +3,7 @@ describe('File Form directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('fileForm');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('File Form directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/fileForm/fileForm.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

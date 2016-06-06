@@ -4,6 +4,7 @@ describe('Mapping Select Overlay directive', function() {
         mappingManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('mappingSelectOverlay');
         mockMappingManager();
 
@@ -16,8 +17,6 @@ describe('Mapping Select Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mappingSelectOverlay/mappingSelectOverlay.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

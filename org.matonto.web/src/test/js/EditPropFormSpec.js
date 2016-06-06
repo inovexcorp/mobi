@@ -5,6 +5,7 @@ describe('Edit Prop Form directive', function() {
         mappingManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('editPropForm');
         mockOntologyManager();
         mockMappingManager();
@@ -19,8 +20,6 @@ describe('Edit Prop Form directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/editPropForm/editPropForm.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

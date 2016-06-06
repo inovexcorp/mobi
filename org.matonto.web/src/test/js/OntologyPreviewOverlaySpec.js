@@ -3,6 +3,7 @@ describe('Ontology Preview Overlay directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('ontologyPreviewOverlay');
         mockOntologyManager();
 
@@ -11,8 +12,6 @@ describe('Ontology Preview Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/ontologyPreviewOverlay/ontologyPreviewOverlay.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

@@ -6,6 +6,7 @@ describe('Edit Class Form directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('editClassForm');
         mockOntologyManager();
         mockMappingManager();
@@ -20,8 +21,6 @@ describe('Edit Class Form directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/editClassForm/editClassForm.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

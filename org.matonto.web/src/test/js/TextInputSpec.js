@@ -3,6 +3,7 @@ describe('Text Input directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         angular.module('customLabel', []);
         module('textInput');
 
@@ -11,8 +12,6 @@ describe('Text Input directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/textInput/textInput.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

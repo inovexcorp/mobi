@@ -15,7 +15,9 @@ var gulp = require('gulp'),
     rename = require('gulp-rename'),
     sass = require('gulp-sass'),
     uglify = require('gulp-uglify'),
-    ngAnnotate = require('gulp-ng-annotate');
+    ngAnnotate = require('gulp-ng-annotate'),
+    jasmine = require('gulp-jasmine-phantom'),
+    templateCache = require('gulp-angular-templatecache');
 
 // Project specific path variables
 var src = './src/main/resources/public/',
@@ -80,6 +82,23 @@ var injectFiles = function(files) {
         ))
         .pipe(gulp.dest(dest));
 };
+
+gulp.task('cacheTemplates', function() {
+    return gulp.src(src + '**/*.html')
+        .pipe(templateCache({standalone: true}))
+        .pipe(gulp.dest('./target/'));
+});
+
+gulp.task('jasmine', ['cacheTemplates'], function() {
+    return gulp.src('./src/test/js/*Spec.js')
+        .pipe(jasmine({
+            keepRunner: 'target/',
+            integration: true,
+            abortOnFail: true,
+            vendor: nodeJsFiles(nodeDir).concat(jsFiles(src)).concat(['./target/templates.js', './src/test/js/Shared.js']),
+            jasmineVersion: '2.1'
+        }));
+});
 
 // Concatenate and minifies JS Files
 gulp.task('minify-scripts', function() {
@@ -195,7 +214,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
+gulp.task('prod', ['jasmine', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+gulp.task('default', ['jasmine', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);

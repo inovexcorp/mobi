@@ -3,6 +3,7 @@ describe('File Preview Table directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('filePreviewTable');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('File Preview Table directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/filePreviewTable/filePreviewTable.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

@@ -3,6 +3,7 @@ describe('Available Prop List directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('availablePropList');
         mockOntologyManager();
 
@@ -11,8 +12,6 @@ describe('Available Prop List directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/availablePropList/availablePropList.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

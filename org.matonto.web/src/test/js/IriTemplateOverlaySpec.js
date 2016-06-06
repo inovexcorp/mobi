@@ -4,6 +4,7 @@ describe('IRI Template Overlay directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('iriTemplateOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -11,8 +12,6 @@ describe('IRI Template Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

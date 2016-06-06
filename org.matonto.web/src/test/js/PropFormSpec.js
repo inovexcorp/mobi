@@ -5,6 +5,7 @@ describe('Prop Form directive', function() {
         ontologyManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('propForm');
         mockOntologyManager();
 
@@ -18,8 +19,6 @@ describe('Prop Form directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/propForm/propForm.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

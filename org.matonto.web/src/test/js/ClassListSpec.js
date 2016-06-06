@@ -6,6 +6,7 @@ describe('Class List directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('classList');
         mockOntologyManager();
         mockMappingManager();
@@ -20,8 +21,6 @@ describe('Class List directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/classList/classList.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

@@ -3,6 +3,7 @@ describe('Finish Overlay directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('finishOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Finish Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/finishOverlay/finishOverlay.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

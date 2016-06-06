@@ -3,6 +3,7 @@ describe('SPARQL Editor directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('sparqlEditor');
 
         module(function($provide) {
@@ -17,8 +18,6 @@ describe('SPARQL Editor directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/sparql/directives/sparqlEditor/sparqlEditor.html');
 
     describe('replaces the element with the correct html', function() {
         it('for a form', function() {

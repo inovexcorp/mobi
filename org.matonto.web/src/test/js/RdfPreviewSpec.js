@@ -4,6 +4,7 @@ describe('RDF Preview directive', function() {
         jsonFilter = jasmine.createSpy('jsonFilter');
 
     beforeEach(function() {
+        module('templates');
         module('rdfPreview');
 
         module(function($provide) {
@@ -15,8 +16,6 @@ describe('RDF Preview directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/rdfPreview/rdfPreview.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

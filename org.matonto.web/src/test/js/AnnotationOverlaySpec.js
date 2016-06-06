@@ -5,6 +5,7 @@ describe('Annotation Overlay directive', function() {
 
     injectRegexConstant();
     beforeEach(function() {
+        module('templates');
         module('annotationOverlay');
 
         module(function($provide) {
@@ -22,7 +23,7 @@ describe('Annotation Overlay directive', function() {
 
     // Shared setup function for loading the directive's template into the
     // $templateCache
-    injectDirectiveTemplate('modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html');
+    // injectDirectiveTemplate('modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

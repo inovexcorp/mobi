@@ -3,6 +3,7 @@ describe('Step Through Sidebar directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('stepThroughSidebar');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Step Through Sidebar directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/stepThroughSidebar/stepThroughSidebar.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

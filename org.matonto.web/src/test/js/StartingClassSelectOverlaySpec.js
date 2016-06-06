@@ -4,6 +4,7 @@ describe('Starting Class Select Overlay directive', function() {
         ontologyManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('startingClassSelectOverlay');
         mockOntologyManager();
 
@@ -21,8 +22,6 @@ describe('Starting Class Select Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/startingClassSelectOverlay/startingClassSelectOverlay.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

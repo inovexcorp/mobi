@@ -3,6 +3,7 @@ describe('Column Form directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('columnForm');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Column Form directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/columnForm/columnForm.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

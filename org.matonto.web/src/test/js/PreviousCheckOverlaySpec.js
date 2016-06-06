@@ -5,6 +5,7 @@ describe('Previous Check Overlay directive', function() {
         mappingManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('previousCheckOverlay');
         mockOntologyManager();
         mockMappingManager();
@@ -19,8 +20,6 @@ describe('Previous Check Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/previousCheckOverlay/previousCheckOverlay.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {
