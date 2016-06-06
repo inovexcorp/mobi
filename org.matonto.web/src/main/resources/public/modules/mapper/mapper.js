@@ -48,6 +48,7 @@
         vm.selectedPropMappingId;
         vm.selectedColumn;
         vm.newProp;
+        vm.errorMessage;
 
         var changePageHandler = $rootScope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
             if (_.includes(fromState.name, 'mapper') && !_.includes(toState.name, 'mapper') 
@@ -74,6 +75,7 @@
             vm.rdfPreview = '';
             vm.invalidPropMappings = [];
             vm.isPreviousMapping = false;
+            vm.errorMessage = '';
 
             originalMappingName = '';
             vm.resetEditingVars();
@@ -85,9 +87,11 @@
                 .then(function(data) {
                     vm.delimitedFileName = data;
                     vm.getPreview();
+                    vm.errorMessage = '';
                 }, function(response) {
                     onError(response);
                     vm.filePreview = undefined;
+                    vm.errorMessage = response.statusText;
                 });
         }
 

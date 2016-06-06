@@ -11,6 +11,7 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
+                    errorMessage: '=',
                     onUploadClick: '&',
                     onContinueClick: '&'
                 },
