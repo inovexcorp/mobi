@@ -1,5 +1,6 @@
 package org.matonto.etl.cli;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -7,12 +8,18 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.log4j.Logger;
-import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.csv.DelimitedConverter;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.rdf.api.Model;
+import org.matonto.rdf.core.utils.Values;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 
 import java.io.File;
+import java.io.FileInputStream;
 
 @Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
@@ -37,10 +44,10 @@ public class CLITransform implements Action {
     private static final Logger LOGGER = Logger.getLogger(CLITransform.class);
 
     @Reference
-    private CSVConverter csvConverter;
+    private DelimitedConverter converter;
 
-    public void setCSVConverter(CSVConverter csvConverter) {
-        this.csvConverter = csvConverter;
+    public void setDelimitedConverter(DelimitedConverter delimitedConverter) {
+        this.converter = delimitedConverter;
     }
 
     @Reference
@@ -75,7 +82,18 @@ public class CLITransform implements Action {
         }
 
         try {
-            Model model = csvConverter.convert(newFile, mappingFile, true, (char) ',');
+            String extension = FilenameUtils.getExtension(newFile.getName());
+            Model mapping = Values.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", RDFFormat.TURTLE));
+            Model model;
+            if (extension.equals("xls") || extension.equals("xlsx")) {
+                ExcelConfig config = new ExcelConfig.Builder(new FileInputStream(newFile), mapping)
+                        .containsHeaders(true).build();
+                model = converter.convert(config);
+            } else {
+                SVConfig config = new SVConfig.Builder(new FileInputStream(newFile), mapping)
+                        .containsHeaders(true).separator((char) ',').build();
+                model = converter.convert(config);
+            }
 
             if (repositoryID != null) {
                 rdfImportService.importModel(repositoryID, model);

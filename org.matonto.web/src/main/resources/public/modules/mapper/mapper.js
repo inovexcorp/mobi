@@ -2,16 +2,16 @@
     'use strict';
 
     angular
-        .module('mapper', ['csvManager', 'file-input', 'ontologyManager', 'prefixes', 'mappingManager', 'stepThroughSidebar', 
+        .module('mapper', ['delimitedManager', 'file-input', 'ontologyManager', 'prefixes', 'mappingManager', 'stepThroughSidebar', 
             'fileForm', 'filePreviewTable', 'mappingSelectOverlay', 'ontologySelectOverlay', 'ontologyPreview', 
             'startingClassSelectOverlay', 'classPreview', 'classList', 'propForm', 'propSelect', 'columnForm', 'columnSelect',
             'rangeClassDescription', 'editPropForm', 'editClassForm', 'availablePropList', 'finishOverlay', 'ontologyPreviewOverlay',
             'rdfPreview', 'previousCheckOverlay', 'iriTemplateOverlay','mappingNameOverlay', 'mappingNameInput'])
         .controller('MapperController', MapperController);
 
-    MapperController.$inject = ['$rootScope', '$scope', '$element', '$state', '$window', '$q', 'prefixes', 'csvManagerService', 'ontologyManagerService', 'mappingManagerService'];
+    MapperController.$inject = ['$rootScope', '$scope', '$element', '$state', '$window', '$q', 'prefixes', 'delimitedManagerService', 'ontologyManagerService', 'mappingManagerService'];
 
-    function MapperController($rootScope, $scope, $element, $state, $window, $q, prefixes, csvManagerService, ontologyManagerService, mappingManagerService) {
+    function MapperController($rootScope, $scope, $element, $state, $window, $q, prefixes, delimitedManagerService, ontologyManagerService, mappingManagerService) {
         var vm = this;
         var confirmChange = false;
         var previousSourceOntologyId;
@@ -83,7 +83,7 @@
 
         // Handler for uploading delimited file
         vm.submitFileUpload = function() {
-            csvManagerService.upload(vm.delimitedFile)
+            delimitedManagerService.upload(vm.delimitedFile)
                 .then(function(data) {
                     vm.delimitedFileName = data;
                     vm.getPreview();
@@ -153,7 +153,7 @@
 
         /* File Preview Table Methods */
         vm.getPreview = function() {
-            csvManagerService.previewFile(vm.delimitedFileName, 100, vm.delimitedSeparator, vm.delimitedContainsHeaders)
+            delimitedManagerService.previewFile(vm.delimitedFileName, 100, vm.delimitedSeparator, vm.delimitedContainsHeaders)
                 .then(function(data) {
                     vm.filePreview = data;
                 }, function(error) {
@@ -244,12 +244,12 @@
         }
         vm.displayFinish = function() {
             if (_.includes(mappingManagerService.previewMappingNames, vm.mapping.name)) {
-                csvManagerService.map(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
+                delimitedManagerService.map(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                 vm.activeStep = 5;
             } else {
                 mappingManagerService.uploadPut(vm.mapping.jsonld, vm.mapping.name)
                     .then(function(response) {
-                        csvManagerService.map(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
+                        delimitedManagerService.map(vm.delimitedFileName, vm.mapping.name, vm.delimitedContainsHeaders, vm.delimitedSeparator);
                         vm.activeStep = 5;
                     }, onError);
             }
@@ -354,7 +354,7 @@
             }
         }
         vm.generateRdfPreview = function(format) {
-            csvManagerService.previewMap(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, format, vm.delimitedSeparator)
+            delimitedManagerService.previewMap(vm.delimitedFileName, vm.mapping.jsonld, vm.delimitedContainsHeaders, format, vm.delimitedSeparator)
                 .then(function(preview) {
                     vm.rdfPreview = preview;
                 }, onError);

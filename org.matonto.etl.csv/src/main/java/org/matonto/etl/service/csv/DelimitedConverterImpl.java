@@ -3,29 +3,30 @@ package org.matonto.etl.service.csv;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.matonto.etl.api.csv.CSVConverter;
-import org.matonto.etl.api.csv.MappingManager;
+import org.apache.poi.util.IOUtils;
+import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.csv.DelimitedConverter;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
+import org.matonto.rest.util.CharsetUtils;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Component(provide = CSVConverter.class)
-public class CSVConverterImpl implements CSVConverter {
-
-    private static final Logger LOGGER = Logger.getLogger(CSVConverterImpl.class);
+@Component(provide = DelimitedConverter.class)
+public class DelimitedConverterImpl implements DelimitedConverter {
+    private static final Logger LOGGER = Logger.getLogger(DelimitedConverterImpl.class);
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
-    private MappingManager mappingManager;
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -37,42 +38,48 @@ public class CSVConverterImpl implements CSVConverter {
         this.modelFactory = modelFactory;
     }
 
-    @Reference
-    public void setMappingManager(MappingManager manager) {
-        this.mappingManager = manager;
+    @Override
+    public Model convert(SVConfig config) throws IOException, MatOntoException {
+        return convertSV(config.getData(), config.getMapping(), config.getContainsHeaders(),
+                config.getSeparator(), config.getLimit(), config.getOffset());
     }
 
     @Override
-    public Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
+    public Model convert(ExcelConfig config) throws IOException, MatOntoException {
+        return convertExcel(config.getData(), config.getMapping(), config.getContainsHeaders(), config.getLimit(),
+                config.getOffset());
+    }
+
+    private Model convertSV(InputStream sv, Model mappingModel, boolean containsHeaders, char separator, long limit,
+                            long offset)
             throws IOException, MatOntoException {
-        Model converted = mappingManager.createMapping(mappingFile);
-        return convert(new FileInputStream(delim), converted, containsHeaders,
-                FilenameUtils.getExtension(delim.getName()), separator);
+        ByteArrayOutputStream out = toByteArrayOutputStream(sv);
+        Optional<Charset> charsetOpt = CharsetUtils.getEncoding(IOUtils.toByteArray(
+                new ByteArrayInputStream(out.toByteArray())));
+        if (!charsetOpt.isPresent()) {
+            throw new MatOntoException("Unsupported character set");
+        }
+        CSVReader reader = new CSVReader(new InputStreamReader(
+                new ByteArrayInputStream(out.toByteArray()), charsetOpt.get()), separator);
+        String[] nextLine;
+        Model convertedRDF = modelFactory.createModel();
+        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+        long index = offset;
+
+        // If headers exist, skip them
+        if (containsHeaders) {
+            reader.readNext();
+        }
+
+        //Traverse each row and convert column into RDF
+        while ((nextLine = reader.readNext()) != null && (limit == 0 || index < limit + offset)) {
+            writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
+            index++;
+        }
+        return convertedRDF;
     }
 
-    @Override
-    public Model convert(File delim, Model mappingModel, boolean containsHeaders, char separator)
-            throws IOException, MatOntoException {
-        return convert(new FileInputStream(delim), mappingModel, containsHeaders,
-                FilenameUtils.getExtension(delim.getName()), separator);
-    }
-
-    @Override
-    public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
-            throws IOException, MatOntoException {
-        Model converted = mappingManager.createMapping(mappingFile);
-        return convert(delim, converted, containsHeaders, extension, separator);
-    }
-
-    @Override
-    public Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension,
-                         char separator) throws IOException, MatOntoException {
-        return (extension.equals("xls") || extension.equals("xlsx"))
-                ? convertExcel(delim, mappingModel, containsHeaders)
-                : convertCSV(new InputStreamReader(delim), mappingModel, containsHeaders, separator);
-    }
-
-    private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders)
+    private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders, long limit, long offset)
             throws IOException, MatOntoException {
         String[] nextRow;
         Model convertedRDF = modelFactory.createModel();
@@ -86,14 +93,15 @@ public class CSVConverterImpl implements CSVConverter {
             //Traverse each row and convert column into RDF
             for (Row row : sheet) {
                 // If headers exist, skip them
-                if (containsHeaders && row.getRowNum() == 0) {
+                if ((containsHeaders && row.getRowNum() == 0) || (limit != 0 && row.getRowNum() < offset && row
+                        .getRowNum() >= limit + offset)) {
                     continue;
                 }
                 nextRow = new String[row.getPhysicalNumberOfCells()];
-                int index = 0;
+                int cellIndex = 0;
                 for (Cell cell : row) {
-                    nextRow[index] = df.formatCellValue(cell);
-                    index++;
+                    nextRow[cellIndex] = df.formatCellValue(cell);
+                    cellIndex++;
                 }
                 writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
             }
@@ -101,25 +109,6 @@ public class CSVConverterImpl implements CSVConverter {
             throw new MatOntoException(e);
         }
 
-        return convertedRDF;
-    }
-
-    private Model convertCSV(Reader csv, Model mappingModel, boolean containsHeaders, char separator)
-            throws IOException {
-        CSVReader reader = new CSVReader(csv, separator);
-        String[] nextLine;
-        Model convertedRDF = modelFactory.createModel();
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
-
-        // If headers exist, skip them
-        if (containsHeaders) {
-            reader.readNext();
-        }
-
-        //Traverse each row and convert column into RDF
-        while ((nextLine = reader.readNext()) != null) {
-            writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
-        }
         return convertedRDF;
     }
 
@@ -343,5 +332,23 @@ public class CSVConverterImpl implements CSVConverter {
             classMappings.add(classMapping);
         }
         return classMappings;
+    }
+
+    /**
+     * Creates a ByteArrayOutputStream from an InputStream so it can be reused.
+     *
+     * @param in the InputStream to convert
+     * @return a ByteArrayOutputStream with the contents of the InputStream
+     * @throws IOException if a error occurs when accessing the InputStream contents
+     */
+    private ByteArrayOutputStream toByteArrayOutputStream(InputStream in) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int read = 0;
+        while ((read = in.read(buffer, 0, buffer.length)) != -1) {
+            baos.write(buffer, 0, read);
+            baos.flush();
+        }
+        return baos;
     }
 }

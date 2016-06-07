@@ -11,9 +11,10 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
-import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.csv.DelimitedConverter;
 import org.matonto.etl.api.csv.MappingManager;
-import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel;
 import org.matonto.rest.util.MatontoRestTestNg;
@@ -35,11 +36,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-public class CSVRestImplTest extends MatontoRestTestNg {
-    private CSVRestImpl rest;
+public class DelimitedRestImplTest extends MatontoRestTestNg {
+    private DelimitedRestImpl rest;
 
     @Mock
-    CSVConverter converter;
+    DelimitedConverter converter;
 
     @Mock
     MappingManager manager;
@@ -47,11 +48,12 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        rest = new CSVRestImpl();
-        rest.setCsvConverter(converter);
+        rest = new DelimitedRestImpl();
+        rest.setDelimitedConverter(converter);
         rest.setMappingManager(manager);
 
-        when(converter.convert(any(InputStream.class), any(Model.class), anyBoolean(), anyString(), anyChar())).thenReturn(new LinkedHashModel());
+        when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
+        when(converter.convert(any(ExcelConfig.class))).thenReturn(new LinkedHashModel());
         when(manager.createMappingIRI(anyString())).thenReturn(String::new);
         when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(new LinkedHashModel()));
 
@@ -76,11 +78,12 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         };
         for (String file : files) {
             fd = getFileFormData(file);
-            response = target().path("csv").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+            response = target().path("delimited-files").request().post(Entity.entity(fd,
+                    MediaType.MULTIPART_FORM_DATA));
             String filename = response.readEntity(String.class);
 
             Assert.assertEquals(200, response.getStatus());
-            Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + filename)));
+            Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + filename)));
         }
     }
 
@@ -88,9 +91,10 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     public void updateNonexistentDelimitedTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
-        Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd,
+                MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+        Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
     }
 
     @Test
@@ -100,10 +104,11 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         List<String> expectedLines = getCsvResourceLines("test_updated.csv");
 
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
-        Response response = target().path("csv/" + fileName).request().put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd,
+                MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
         Assert.assertEquals(fileName, response.readEntity(String.class));
-        List<String> resultLines = Files.readAllLines(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName));
+        List<String> resultLines = Files.readAllLines(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName));
         Assert.assertEquals(expectedLines.size(), resultLines.size());
         for (int i = 0; i < resultLines.size(); i++) {
             Assert.assertEquals(expectedLines.get(i), resultLines.get(i));
@@ -115,7 +120,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test.csv");
-        Response response = target().path("csv/" + fileName).request().get();
+        Response response = target().path("delimited-files/" + fileName).request().get();
         Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
     }
@@ -127,14 +132,15 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         List<String> expectedLines = getCsvResourceLines("test_tabs.csv");
 
         int rowNum = 5;
-        Response response = target().path("csv/" + fileName).queryParam("rowCount", rowNum).queryParam("separator", "\t").request().get();
+        Response response = target().path("delimited-files/" + fileName).queryParam("rowCount", rowNum)
+                .queryParam("separator", "\t").request().get();
         Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
     }
 
     @Test
     public void nonExistentRowsTest() {
-        Response response = target().path("csv/error").request().get();
+        Response response = target().path("delimited-files/error").request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -143,14 +149,14 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         String fileName1 = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
-        Response response = target().path("csv/" + fileName1).request().get();
+        Response response = target().path("delimited-files/" + fileName1).request().get();
         Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
 
         String fileName2 = UUID.randomUUID().toString() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
-        response = target().path("csv/" + fileName2).request().get();
+        response = target().path("delimited-files/" + fileName2).request().get();
         Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
     }
@@ -162,14 +168,14 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         String fileName1 = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
-        Response response = target().path("csv/" + fileName1).queryParam("rowCount", rowNum).request().get();
+        Response response = target().path("delimited-files/" + fileName1).queryParam("rowCount", rowNum).request().get();
         Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
 
         String fileName2 = UUID.randomUUID().toString() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
-        response = target().path("csv/" + fileName2).queryParam("rowCount", rowNum).request().get();
+        response = target().path("delimited-files/" + fileName2).queryParam("rowCount", rowNum).request().get();
         Assert.assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
     }
@@ -177,11 +183,11 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     @Test
     public void mapWithoutMappingTest() {
         String mapping = "";
-        Response response = target().path("csv/test.csv/map").queryParam("mappingName", mapping)
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingName", mapping)
                 .request().get();
         Assert.assertEquals(400, response.getStatus());
 
-        response = target().path("csv/test.csv/map").request().get();
+        response = target().path("delimited-files/test.csv/map").request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -229,7 +235,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void mapNonexistentDelimitedTest() {
-        Response response = target().path("csv/error/map").queryParam("mappingName", "test").request().get();
+        Response response = target().path("delimited-files/error/map").queryParam("mappingName", "test").request()
+                .get();
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -240,10 +247,10 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        Assert.assertTrue(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+        Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
 
         testMap(fileName, "test", params);
-        Assert.assertFalse(Files.exists(Paths.get(CSVRestImpl.TEMP_DIR + "/" + fileName)));
+        Assert.assertFalse(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
     }
 
     @Test
@@ -251,12 +258,12 @@ public class CSVRestImplTest extends MatontoRestTestNg {
         String mapping = "";
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", mapping);
-        Response response = target().path("csv/test.csv/map-preview").request().post(Entity.entity(fd, MediaType
-                .MULTIPART_FORM_DATA));
+        Response response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(fd,
+                MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
 
-        response = target().path("csv/test.csv/map-preview").request().post(Entity.entity(null, MediaType
-                .MULTIPART_FORM_DATA));
+        response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(null,
+                MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -306,8 +313,8 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     public void mapPreviewNonexistentDelimitedTest() throws Exception {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", "[]");
-        Response response = target().path("csv/error/map-preview").request().post(Entity.entity(fd, MediaType
-                .MULTIPART_FORM_DATA));
+        Response response = target().path("delimited-files/error/map-preview").request().post(Entity.entity(fd,
+                MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -331,7 +338,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     private String testMapPreview(String fileName, String jsonld, Map<String, Object> params) {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", jsonld);
-        WebTarget wt = target().path("csv/" + fileName + "/map-preview");
+        WebTarget wt = target().path("delimited-files/" + fileName + "/map-preview");
         if (params != null) {
             for (String k : params.keySet()) {
                 wt = wt.queryParam(k, params.get(k));
@@ -343,7 +350,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     private String testMap(String fileName, String mappingName, Map<String, Object> params) {
-        WebTarget wt = target().path("csv/" + fileName + "/map").queryParam("mappingName", mappingName);
+        WebTarget wt = target().path("delimited-files/" + fileName + "/map").queryParam("mappingName", mappingName);
         if (params != null) {
             for (String k : params.keySet()) {
                 wt = wt.queryParam(k, params.get(k));
@@ -401,6 +408,7 @@ public class CSVRestImplTest extends MatontoRestTestNg {
     }
 
     private void copyResourceToTemp(String resourceName, String newName) throws IOException {
-        Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(CSVRestImpl.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(getClass().getResourceAsStream("/" + resourceName),
+                Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
     }
 }

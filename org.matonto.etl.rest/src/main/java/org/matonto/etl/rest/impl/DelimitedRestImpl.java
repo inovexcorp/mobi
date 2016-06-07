@@ -10,9 +10,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.matonto.etl.api.csv.CSVConverter;
-import org.matonto.etl.api.csv.MappingManager;
-import org.matonto.etl.rest.CSVRest;
+import org.matonto.etl.api.csv.*;
+import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.rest.DelimitedRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.core.utils.Values;
@@ -40,19 +41,18 @@ import javax.ws.rs.core.StreamingOutput;
 import static java.nio.file.FileVisitResult.CONTINUE;
 
 @Component(immediate = true)
-public class CSVRestImpl implements CSVRest {
-
-    private CSVConverter csvConverter;
+public class DelimitedRestImpl implements DelimitedRest {
+    private DelimitedConverter converter;
     private MappingManager mappingManager;
-    private final Logger logger = LoggerFactory.getLogger(CSVRestImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
 
     private static final long NUM_LINE_PREVIEW = 10;
 
     public static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/org.matonto.etl.rest.impl.tmp";
 
     @Reference
-    public void setCsvConverter(CSVConverter csvConverter) {
-        this.csvConverter = csvConverter;
+    public void setDelimitedConverter(DelimitedConverter delimitedConverter) {
+        this.converter = delimitedConverter;
     }
 
     @Reference
@@ -106,37 +106,39 @@ public class CSVRestImpl implements CSVRest {
 
     @Override
     public Response etlFilePreview(String fileName, String jsonld, String format, boolean containsHeaders,
-                            String separator) {
+                                   String separator) {
         if (jsonld == null || jsonld.equals("")) {
             throw ErrorUtils.sendError("Must provide a JSON-LD string", Response.Status.BAD_REQUEST);
         }
 
         Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        if (optDelimitedFile.isPresent()) {
-            File delimitedFile = optDelimitedFile.get();
-            String extension = FilenameUtils.getExtension(delimitedFile.getName());
-
-            // Get InputStream for data to convert
-            InputStream dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
-                    ? createExcelStream(delimitedFile, containsHeaders, true)
-                    : createCSVStream(delimitedFile, containsHeaders, true);
-
-            // Parse JSON-LD mapping into a model
-            Model mappingModel;
-            try {
-                InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
-                mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
-            } catch (IOException e) {
-                throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
-            }
-
-            // Write data back to Response
-            String result = etlFile(dataToConvert, mappingModel, extension, containsHeaders, separator, format);
-            logger.info("File mapped: " + delimitedFile.getPath());
-            return Response.status(200).entity(result).build();
-        } else {
+        if (!optDelimitedFile.isPresent()) {
             throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
+        File delimitedFile = optDelimitedFile.get();
+        String extension = FilenameUtils.getExtension(delimitedFile.getName());
+
+        // Parse JSON-LD mapping into a model
+        Model mappingModel;
+        try {
+            InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
+            mappingModel = Rio.parse(in, "", RDFFormat.JSONLD);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
+        }
+
+        String result;
+        if (extension.equals("xls") || extension.equals("xlsx")) {
+            result = etlFile(createExcelConfig(delimitedFile, mappingModel, containsHeaders, NUM_LINE_PREVIEW),
+                    format);
+        } else {
+            result = etlFile(createSVConfig(delimitedFile, mappingModel, containsHeaders, separator,
+                    NUM_LINE_PREVIEW), format);
+        }
+
+        // Write data back to Response
+        logger.info("File mapped: " + delimitedFile.getPath());
+        return Response.status(200).entity(result).build();
     }
 
     @Override
@@ -145,75 +147,66 @@ public class CSVRestImpl implements CSVRest {
         if (mappingLocalName == null || mappingLocalName.equals("")) {
             throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
         }
+
         Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        if (optDelimitedFile.isPresent()) {
-            File delimitedFile = optDelimitedFile.get();
-            String extension = FilenameUtils.getExtension(delimitedFile.getName());
-
-            // Get InputStream for data to convert
-            InputStream dataToConvert = (extension.equals("xls") || extension.equals("xlsx"))
-                    ? createExcelStream(delimitedFile, containsHeaders, false)
-                    : createCSVStream(delimitedFile, containsHeaders, false);
-
-            // Collect uploaded mapping model
-            Model mappingModel;
-            Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
-            Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
-            if (mappingOptional.isPresent()) {
-                mappingModel = Values.sesameModel(mappingOptional.get());
-            } else {
-                throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
-                        Response.Status.BAD_REQUEST);
-            }
-
-            String result = etlFile(dataToConvert, mappingModel, extension, containsHeaders, separator, format);
-            logger.info("File mapped: " + delimitedFile.getPath());
-
-            // Write data into a stream
-            StreamingOutput stream = os -> {
-                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(result);
-                writer.flush();
-                writer.close();
-            };
-            String fileExtension = getRDFFormat(format).getDefaultFileExtension();
-            Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                    +  "." + fileExtension).header("Content-Type", "application/octet-stream").build();
-
-            // Remove temp file
-            try {
-                Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
-            } catch (IOException e) {
-                throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
-            }
-
-            return response;
-        } else {
+        if (!optDelimitedFile.isPresent()) {
             throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
         }
+        File delimitedFile = optDelimitedFile.get();
+        String extension = FilenameUtils.getExtension(delimitedFile.getName());
+
+        // Collect uploaded mapping model
+        Model mappingModel;
+        Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
+        Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
+        if (mappingOptional.isPresent()) {
+            mappingModel = Values.sesameModel(mappingOptional.get());
+        } else {
+            throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
+                    Response.Status.BAD_REQUEST);
+        }
+
+        String result;
+        if (extension.equals("xls") || extension.equals("xlsx")) {
+            result = etlFile(createExcelConfig(delimitedFile, mappingModel, containsHeaders), format);
+        } else {
+            result = etlFile(createSVConfig(delimitedFile, mappingModel, containsHeaders, separator), format);
+        }
+        logger.info("File mapped: " + delimitedFile.getPath());
+
+        // Write data into a stream
+        StreamingOutput stream = os -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+            writer.write(result);
+            writer.flush();
+            writer.close();
+        };
+        String fileExtension = getRDFFormat(format).getDefaultFileExtension();
+        Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
+                +  "." + fileExtension).header("Content-Type", "application/octet-stream").build();
+
+        // Remove temp file
+        try {
+            Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
+        }
+
+        return response;
     }
 
     /**
-     * Converts delimited data in an InputStream into RDF and then writes the result into a string.
+     * Converts delimited SV data in an InputStream into RDF and then writes the result into a string.
      *
-     * @param delimitedData an InputStream of delimited data
-     * @param mapping a mapping for delimited data in RDF
-     * @param extension the file extension of the delimited data
-     * @param containsHeaders whether or not the delimited data contains a header row
-     * @param separator the separator of columns in the delimited data if it's a CSV
+     * @param config separated value configuration for the conversion
      * @param format the RDF serialization to return the data as
      * @return a string with the delimited data converted into RDF
      */
-    private String etlFile(InputStream delimitedData, Model mapping, String extension, boolean containsHeaders,
-                           String separator, String format) {
-        char separatorChar = separator.charAt(0);
-
+    private String etlFile(SVConfig config, String format) {
         // Convert InputStream to RDF
         Model model;
         try {
-            model = Values.sesameModel(csvConverter.convert(delimitedData,
-                    Values.matontoModel(mapping), containsHeaders, extension, separatorChar));
-            delimitedData.close();
+            model = Values.sesameModel(converter.convert(config));
         } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
@@ -221,6 +214,62 @@ public class CSVRestImpl implements CSVRest {
         RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
         Rio.write(model, rdfWriter);
         return sw.toString();
+    }
+
+    /**
+     * Converts delimited Excel data in an InputStream into RDF and then writes the result into a string.
+     *
+     * @param config excel configuration for the conversion
+     * @param format the RDF serialization to return the data as
+     * @return a string with the delimited data converted into RDF
+     */
+    private String etlFile(ExcelConfig config, String format) {
+        // Convert InputStream to RDF
+        Model model;
+        try {
+            model = Values.sesameModel(converter.convert(config));
+        } catch (IOException | MatOntoException e) {
+            throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
+        }
+        StringWriter sw = new StringWriter();
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
+        Rio.write(model, rdfWriter);
+        return sw.toString();
+    }
+
+    private SVConfig createSVConfig(File csvFile, Model mapping, boolean containsHeaders, String separator) {
+        return createSVConfig(csvFile, mapping, containsHeaders, separator, 0);
+    }
+
+    private SVConfig createSVConfig(File csvFile, Model mapping, boolean containsHeaders, String separator,
+                                    long limit) {
+        char separatorChar = separator.charAt(0);
+        // Get InputStream for data to convert
+        InputStream csv;
+        try {
+            csv = new FileInputStream(csvFile);
+        } catch (FileNotFoundException e) {
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+        }
+        return new SVConfig.Builder(csv, Values.matontoModel(mapping)).containsHeaders(containsHeaders)
+                .separator(separatorChar).limit(limit).build();
+    }
+
+    private ExcelConfig createExcelConfig(File excelFile, Model mapping, boolean containsHeaders) {
+        return createExcelConfig(excelFile, mapping, containsHeaders, 0);
+    }
+
+    private ExcelConfig createExcelConfig(File excelFile, Model mapping, boolean containsHeaders,
+                                          long limit) {
+        // Get InputStream for data to convert
+        InputStream excel;
+        try {
+            excel = new FileInputStream(excelFile);
+        } catch (FileNotFoundException e) {
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+        }
+        return new ExcelConfig.Builder(excel, Values.matontoModel(mapping)).containsHeaders(containsHeaders)
+                .limit(limit).build();
     }
 
     @Override
@@ -287,65 +336,6 @@ public class CSVRestImpl implements CSVRest {
         }
 
         return rdfformat;
-    }
-
-    /**
-     * Generates an InputStream with an uploaded Excel file. If it is a preview, includes
-     * only the first 10 rows.
-     *
-     * @param delimitedFile the uploaded Excel file
-     * @param containsHeaders whether or not the uploaded Excel file has a header row
-     * @param isPreview whether or not a preview is needed
-     * @return an InputStream object with the uploaded Excel file
-     */
-    private InputStream createCSVStream(File delimitedFile, boolean containsHeaders, boolean isPreview) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try {
-            Charset charset = getCharset(Files.readAllBytes(delimitedFile.toPath()));
-            BufferedReader br = Files.newBufferedReader(delimitedFile.toPath(), charset);
-            int index = 0;
-            long numRows = (containsHeaders) ? NUM_LINE_PREVIEW + 1 : NUM_LINE_PREVIEW;
-            String line;
-            while ((line = br.readLine()) != null && (!isPreview || index < numRows)) {
-                byteArrayOutputStream.write(line.getBytes());
-                byteArrayOutputStream.write("\n".getBytes());
-                index++;
-            }
-            byteArrayOutputStream.flush();
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error creating file stream", Response.Status.BAD_REQUEST);
-        }
-
-        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-    }
-
-    /**
-     * Generates an InputStream with an uploaded CSV file. If it is a preview, includes
-     * only the first 10 rows.
-     *
-     * @param delimitedFile the uploaded CSV file
-     * @param containsHeaders whether or not the uploaded CSV file has a header row
-     * @param isPreview whether or not a preview is needed
-     * @return an InputStream object with the uploaded CSV file
-     */
-    private InputStream createExcelStream(File delimitedFile, boolean containsHeaders, boolean isPreview) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try {
-            Workbook wb = WorkbookFactory.create(delimitedFile);
-            // Only support single sheet files for now
-            Sheet sheet = wb.getSheetAt(0);
-            long mapRows = (isPreview) ? NUM_LINE_PREVIEW : sheet.getPhysicalNumberOfRows();
-            long numRows = (containsHeaders) ? mapRows + 1 : mapRows;
-            for (int i = sheet.getPhysicalNumberOfRows() - 1; i >= numRows; i--) {
-                sheet.removeRow(sheet.getRow(i));
-            }
-            wb.write(byteArrayOutputStream);
-            byteArrayOutputStream.flush();
-        } catch (IOException | InvalidFormatException e) {
-            throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
-        }
-
-        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
     /**

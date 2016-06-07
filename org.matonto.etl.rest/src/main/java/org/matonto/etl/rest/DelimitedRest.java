@@ -11,9 +11,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 
-@Path("/csv")
-@Api( value = "/csv" )
-public interface CSVRest {
+@Path("/delimited-files")
+@Api( value = "/delimited-files" )
+public interface DelimitedRest {
 
     /**
      * Uploads a delimited document to the temp directory.

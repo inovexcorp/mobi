@@ -1,18 +1,18 @@
-describe('CSV Manager service', function() {
+describe('Delimited Manager service', function() {
     var $httpBackend,
-        csvManagerSvc,
+        delimitedManagerSvc,
         windowSvc;
 
     beforeEach(function() {
-        module('csvManager');
+        module('delimitedManager');
         module(function($provide) {
             $provide.service('$window', function() {
                 this.location = '';
             });
         });
 
-        inject(function(csvManagerService, _$window_, _$httpBackend_) {
-            csvManagerSvc = csvManagerService;
+        inject(function(delimitedManagerService, _$window_, _$httpBackend_) {
+            delimitedManagerSvc = delimitedManagerService;
             windowSvc = _$window_;
             $httpBackend = _$httpBackend_;
         });
@@ -20,14 +20,14 @@ describe('CSV Manager service', function() {
 
     it('should upload a delimited file', function(done) {
         //Do httpBackend when or expect
-        $httpBackend.expectPOST('/matontorest/csv', 
+        $httpBackend.expectPOST('/matontorest/delimited-files', 
             function(data) {
                 return data instanceof FormData;
             }, function(headers) {
                 return headers['Content-Type'] === undefined;
             }).respond(200, '');
         //Call method
-        csvManagerSvc.upload({}).then(function(value) {
+        delimitedManagerSvc.upload({}).then(function(value) {
             expect(value).toEqual('');
             done();
         });
@@ -44,9 +44,9 @@ describe('CSV Manager service', function() {
                 'rowCount': rowEnd, 
                 'separator': separator
             });
-            $httpBackend.expectGET('/matontorest/csv/' + fileName + params, undefined)
+            $httpBackend.expectGET('/matontorest/delimited-files/' + fileName + params, undefined)
                 .respond(200, preview);
-            csvManagerSvc.previewFile(fileName, rowEnd, separator, true).then(function(filePreview) {
+            delimitedManagerSvc.previewFile(fileName, rowEnd, separator, true).then(function(filePreview) {
                 expect(typeof filePreview).toBe('object');
                 expect(filePreview.headers).toEqual(preview[0]);
                 expect(filePreview.rows.length).toBe(preview.length - 1);
@@ -63,9 +63,9 @@ describe('CSV Manager service', function() {
                 'rowCount': rowEnd, 
                 'separator': encodeURIComponent(separator)
             });
-            $httpBackend.expectGET('/matontorest/csv/' + fileName + params, undefined)
+            $httpBackend.expectGET('/matontorest/delimited-files/' + fileName + params, undefined)
                 .respond(200, preview);
-            csvManagerSvc.previewFile(fileName, rowEnd, separator, false).then(function(filePreview) {
+            delimitedManagerSvc.previewFile(fileName, rowEnd, separator, false).then(function(filePreview) {
                 expect(typeof filePreview).toBe('object');
                 expect(filePreview.headers).not.toEqual(preview[0]);
                 expect(filePreview.headers.length).toBe(preview[0].length);
@@ -88,8 +88,8 @@ describe('CSV Manager service', function() {
                 'containsHeaders': containsHeaders, 
                 'separator': separator
             });
-            csvManagerSvc.map(fileName, mappingFileName, containsHeaders, separator);
-            expect(windowSvc.location).toEqual('/matontorest/csv/' + fileName + '/map' + params);
+            delimitedManagerSvc.map(fileName, mappingFileName, containsHeaders, separator);
+            expect(windowSvc.location).toEqual('/matontorest/delimited-files/' + fileName + '/map' + params);
         });
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {
@@ -104,13 +104,13 @@ describe('CSV Manager service', function() {
                 'format': format,
                 'separator': separator
             });
-            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map-preview' + params, 
+            $httpBackend.expectPOST('/matontorest/delimited-files/' + fileName + '/map-preview' + params, 
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined && headers['Accept'] === 'application/json';
                 }).respond(200, []);
-            csvManagerSvc.previewMap(fileName, jsonld, containsHeaders, format, separator).then(function(value) {
+            delimitedManagerSvc.previewMap(fileName, jsonld, containsHeaders, format, separator).then(function(value) {
                 expect(Array.isArray(value)).toBe(true);
                 done();
             });
@@ -127,13 +127,13 @@ describe('CSV Manager service', function() {
                 'format': format,
                 'separator': separator
             });
-            $httpBackend.expectPOST('/matontorest/csv/' + fileName + '/map-preview' + params, 
+            $httpBackend.expectPOST('/matontorest/delimited-files/' + fileName + '/map-preview' + params, 
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
                 }).respond(200, []);
-            csvManagerSvc.previewMap(fileName, jsonld, containsHeaders, format, separator).then(function(value) {
+            delimitedManagerSvc.previewMap(fileName, jsonld, containsHeaders, format, separator).then(function(value) {
                 expect(Array.isArray(value)).toBe(true);
                 done();
             });

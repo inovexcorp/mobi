@@ -2,14 +2,14 @@
     'use strict';
 
     angular
-        .module('csvManager', [])
-        .service('csvManagerService', csvManagerService);
+        .module('delimitedManager', [])
+        .service('delimitedManagerService', delimitedManagerService);
 
-        csvManagerService.$inject = ['$rootScope', '$http', '$q', '$window'];
+        delimitedManagerService.$inject = ['$rootScope', '$http', '$q', '$window'];
 
-        function csvManagerService($rootScope, $http, $q, $window) {
+        function delimitedManagerService($rootScope, $http, $q, $window) {
             var self = this,
-                prefix = '/matontorest/csv';
+                prefix = '/matontorest/delimited-files';
 
             self.upload = function(file) {
                 var deferred = $q.defer(),
