@@ -73,6 +73,17 @@ var jsFiles = function(prefix) {
         ]
     };
 
+//Method to run jasmine tests
+var runJasmine = function(vendorFiles) {
+    return gulp.src('./src/test/js/*Spec.js')
+        .pipe(jasmine({
+            integration: true,
+            abortOnFail: true,
+            vendor: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']),
+            jasmineVersion: '2.1'
+        }));
+}
+
 // Inject method for minified and unminified
 var injectFiles = function(files) {
     return gulp.src(dest + 'index.html')
@@ -89,15 +100,12 @@ gulp.task('cacheTemplates', function() {
         .pipe(gulp.dest('./target/'));
 });
 
-gulp.task('jasmine', ['cacheTemplates'], function() {
-    return gulp.src('./src/test/js/*Spec.js')
-        .pipe(jasmine({
-            keepRunner: 'target/',
-            integration: true,
-            abortOnFail: true,
-            vendor: nodeJsFiles(nodeDir).concat(jsFiles(src)).concat(['./target/templates.js', './src/test/js/Shared.js']),
-            jasmineVersion: '2.1'
-        }));
+gulp.task('jasmine-minified', ['cacheTemplates', 'minify-scripts'], function() {
+    return runJasmine([dest + '**/*.js']);
+});
+
+gulp.task('jasmine-unminified', ['cacheTemplates', 'move-custom-js'], function() {
+    return runJasmine(nodeJsFiles(nodeDir).concat(jsFiles(dest)));
 });
 
 // Concatenate and minifies JS Files
@@ -214,7 +222,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['jasmine', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
+gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['jasmine', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);
