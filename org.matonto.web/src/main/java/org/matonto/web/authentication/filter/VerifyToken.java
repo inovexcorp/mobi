@@ -2,7 +2,7 @@ package org.matonto.web.authentication.filter;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
-import org.matonto.web.authentication.utils.TokenUtils;
+import org.matonto.web.security.utils.TokenUtils;
 
 import java.io.IOException;
 import java.util.Optional;

@@ -4,8 +4,8 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.matonto.web.authentication.AuthHttpContext;
-import org.matonto.web.authentication.utils.TokenUtils;
 import org.matonto.web.authentication.utils.UserCredentials;
+import org.matonto.web.security.utils.TokenUtils;
 
 import java.io.IOException;
 import java.util.Optional;
