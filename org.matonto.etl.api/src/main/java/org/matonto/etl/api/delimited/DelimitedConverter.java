@@ -1,4 +1,4 @@
-package org.matonto.etl.api.csv;
+package org.matonto.etl.api.delimited;
 
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;

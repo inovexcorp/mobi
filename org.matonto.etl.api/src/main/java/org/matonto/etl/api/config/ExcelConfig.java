@@ -3,12 +3,13 @@ package org.matonto.etl.api.config;
 import org.matonto.rdf.api.Model;
 
 import java.io.InputStream;
+import java.util.Optional;
 
 public class ExcelConfig {
     private InputStream data;
     private Model mapping;
     private boolean containsHeaders = true;
-    private long limit = 0;
+    private Optional<Long> limit;
     private long offset = 0;
 
     private ExcelConfig(Builder builder) {
@@ -31,7 +32,7 @@ public class ExcelConfig {
         return containsHeaders;
     }
 
-    public long getLimit() {
+    public Optional<Long> getLimit() {
         return limit;
     }
 
@@ -43,7 +44,7 @@ public class ExcelConfig {
         private InputStream data;
         private Model mapping;
         private boolean containsHeaders = true;
-        private long limit = 0;
+        private Optional<Long> limit = Optional.empty();
         private long offset = 0;
 
         public Builder(InputStream data, Model mapping) {
@@ -57,7 +58,7 @@ public class ExcelConfig {
         }
 
         public Builder limit(long limit) {
-            this.limit = limit;
+            this.limit = Optional.of(limit);
             return this;
         }
 

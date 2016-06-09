@@ -9,7 +9,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.util.IOUtils;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.config.ExcelConfig;
-import org.matonto.etl.api.csv.DelimitedConverter;
+import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
@@ -50,9 +50,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 config.getOffset());
     }
 
-    private Model convertSV(InputStream sv, Model mappingModel, boolean containsHeaders, char separator, long limit,
-                            long offset)
-            throws IOException, MatOntoException {
+    private Model convertSV(InputStream sv, Model mappingModel, boolean containsHeaders, char separator,
+                            Optional<Long> limit, long offset) throws IOException, MatOntoException {
         ByteArrayOutputStream out = toByteArrayOutputStream(sv);
         Optional<Charset> charsetOpt = CharsetUtils.getEncoding(IOUtils.toByteArray(
                 new ByteArrayInputStream(out.toByteArray())));
@@ -71,16 +70,21 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             reader.readNext();
         }
 
+        // Skip to offset point
+        while (reader.getLinesRead() - (containsHeaders ? 1 : 0) < offset) {
+            reader.readNext();
+        }
+
         //Traverse each row and convert column into RDF
-        while ((nextLine = reader.readNext()) != null && (limit == 0 || index < limit + offset)) {
+        while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
             writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
             index++;
         }
         return convertedRDF;
     }
 
-    private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders, long limit, long offset)
-            throws IOException, MatOntoException {
+    private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders, Optional<Long> limit,
+                               long offset) throws IOException, MatOntoException {
         String[] nextRow;
         Model convertedRDF = modelFactory.createModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
@@ -92,9 +96,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
             //Traverse each row and convert column into RDF
             for (Row row : sheet) {
-                // If headers exist, skip them
-                if ((containsHeaders && row.getRowNum() == 0) || (limit != 0 && row.getRowNum() < offset && row
-                        .getRowNum() >= limit + offset)) {
+                // If headers exist or the row is before the offset point, skip the row
+                if ((containsHeaders && row.getRowNum() == 0) || row.getRowNum() - (containsHeaders ? 1 : 0) < offset
+                        || (limit.isPresent() && row.getRowNum() >= limit.get() + offset)) {
                     continue;
                 }
                 nextRow = new String[row.getPhysicalNumberOfCells()];

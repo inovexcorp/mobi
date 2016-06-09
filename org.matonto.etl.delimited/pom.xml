@@ -84,12 +84,12 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto ETL Impl - CSV</Bundle-Name>
+                        <Bundle-Name>MatOnto ETL Impl - Delimited</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             org.matonto.etl.api.csv; provide:=true
                         </Export-Package>
-                        <Export-Service>org.matonto.etl.api.csv.DelimitedConverter</Export-Service>
+                        <Export-Service>org.matonto.etl.api.delimited.DelimitedConverter</Export-Service>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

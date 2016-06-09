@@ -1,4 +1,4 @@
-package org.matonto.etl.api.csv;
+package org.matonto.etl.api.delimited;
 
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;

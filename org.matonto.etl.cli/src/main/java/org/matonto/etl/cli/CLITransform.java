@@ -10,7 +10,7 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.log4j.Logger;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
-import org.matonto.etl.api.csv.DelimitedConverter;
+import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.rdf.api.Model;

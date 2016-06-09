@@ -1,7 +1,7 @@
 package org.matonto.etl.service.csv;
 
 import aQute.bnd.annotation.component.*;
-import org.matonto.etl.api.csv.MappingManager;
+import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.*;

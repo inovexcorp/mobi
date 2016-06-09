@@ -3,13 +3,14 @@ package org.matonto.etl.api.config;
 import org.matonto.rdf.api.Model;
 
 import java.io.InputStream;
+import java.util.Optional;
 
 public class SVConfig {
     private InputStream data;
     private Model mapping;
     private boolean containsHeaders = true;
     private char separator = ',';
-    private long limit = 0;
+    private Optional<Long> limit;
     private long offset = 0;
 
     private SVConfig(Builder builder) {
@@ -37,7 +38,7 @@ public class SVConfig {
         return separator;
     }
 
-    public long getLimit() {
+    public Optional<Long> getLimit() {
         return limit;
     }
 
@@ -50,7 +51,7 @@ public class SVConfig {
         private Model mapping;
         private boolean containsHeaders = true;
         private char separator = ',';
-        private long limit = 0;
+        private Optional<Long> limit = Optional.empty();
         private long offset = 0;
 
         public Builder(InputStream data, Model mapping) {
@@ -69,7 +70,7 @@ public class SVConfig {
         }
 
         public Builder limit(long limit) {
-            this.limit = limit;
+            this.limit = Optional.of(limit);
             return this;
         }
 
