@@ -147,7 +147,8 @@
              * success of the REST call.
              * 
              * @param {number} rowEnd the number of rows to retrieve from the uploaded delimited file
-             * @return {Promise} A Promise that resolves if the call succeeded and rejects if it did not
+             * @return {Promise} A Promise that resolves if the call succeeded and rejects if the preview 
+             * was empty or the call did not succeed
              */
             self.previewFile = function(rowEnd) {
                 var deferred = $q.defer(),
@@ -161,18 +162,23 @@
                 $rootScope.showSpinner = true;
                 $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
                     .then(response => {
-                        self.filePreview = {};
-                        if (self.containsHeaders) {
-                            self.filePreview.headers = response.data[0];
-                            self.filePreview.rows = _.drop(response.data, 1);
+                        if (response.data.length === 0) {
+                            self.filePreview = undefined;
+                            deferred.reject("No rows were found");
                         } else {
-                            self.filePreview.headers = [];
-                            _.times(response.data[0].length, index => {
-                                self.filePreview.headers.push('Column ' + (index + 1));
-                            });
-                            self.filePreview.rows = response.data;
+                            self.filePreview = {};
+                            if (self.containsHeaders) {
+                                self.filePreview.headers = response.data[0];
+                                self.filePreview.rows = _.drop(response.data, 1);
+                            } else {
+                                self.filePreview.headers = [];
+                                _.times(response.data[0].length, index => {
+                                    self.filePreview.headers.push('Column ' + (index + 1));
+                                });
+                                self.filePreview.rows = response.data;
+                            }
+                            deferred.resolve();
                         }
-                        deferred.resolve();
                     }, response => {
                         self.filePreview = undefined;
                         deferred.reject(_.get(response, 'statusText', ''));

@@ -35,6 +35,24 @@ describe('CSV Manager service', function() {
         $httpBackend.flush();
     });
     describe('should retrieve a preview of an uploaded delimited file', function() {
+        it('unless there are no rows', function() {
+            csvManagerSvc.fileName = 'test';
+            csvManagerSvc.separator = ',';
+            csvManagerSvc.containsHeaders = true;
+            var rowEnd = 5;
+            var params = createQueryString({
+                'rowCount': rowEnd, 
+                'separator': csvManagerSvc.separator
+            });
+            $httpBackend.expectGET('/matontorest/csv/' + csvManagerSvc.fileName + params, undefined)
+                .respond(200, []);
+            csvManagerSvc.previewFile(rowEnd).then(function() {
+                fail('Promise should have rejected');
+            }, function(result) {
+                expect(typeof result).toBe('string');
+            });
+            $httpBackend.flush();
+        });
         it('with headers', function() {
             csvManagerSvc.fileName = 'test';
             csvManagerSvc.separator = ',';

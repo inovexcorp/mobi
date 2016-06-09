@@ -26,9 +26,9 @@
             <custom-button on-click="dvm.upload()" pull="'left'" is-disabled-when="!dvm.csv.fileObj" aria-describedby="form-help-block">{{!dvm.fileForm.$error.fileUploaded ? 'Update' : 'Upload'}}</custom-button>
             <span id="form-help-block" class="help-block" ng-if="!dvm.fileForm.$error.fileUploaded">Click update with desired changes or click continue.</span>
         </div>
-        <p ng-if="dvm.fileForm.$error.fileUploaded" class="error-msg">{{dvm.errorMessage}}</p>
+        <h3 ng-if="dvm.fileForm.$error.fileUploaded" class="error-msg">{{dvm.errorMessage}}</h3>
         <div ng-if="dvm.state.invalidProps.length" class="invalid-props">
-            <h3 class="text-danger">Missing Columns</h3>
+            <h3 class="error-msg">Missing Columns</h3>
             <ul>
                 <li ng-repeat="columnObj in dvm.state.invalidProps">
                     Column {{columnObj.index + 1}} - {{dvm.getDataMappingName(columnObj['@id'])}}
