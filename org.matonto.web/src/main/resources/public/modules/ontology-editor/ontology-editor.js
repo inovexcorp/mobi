@@ -10,9 +10,9 @@
         'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
+    OntologyEditorController.$inject = ['$window', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
 
-    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
+    function OntologyEditorController($window, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -27,6 +27,10 @@
             if(vm.state) {
                 setVariables(vm.state.oi);
             }
+        }
+
+        vm.openDocs = function() {
+            $window.open('http://docs.matonto.org/#ontology_editor');
         }
 
         /* State Management */
