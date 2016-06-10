@@ -36,8 +36,59 @@ function injectRegexConstant() {
         module(function($provide) {
             $provide.constant('REGEX', {
                 'IRI': new RegExp('[a-zA-Z]'),
-                'LOCALNAME': new RegExp('[a-zA-Z]')
+                'LOCALNAME': new RegExp('[a-zA-Z]'),
+                'FILENAME': new RegExp('[a-zA-Z]')
             });
+        });
+    });
+}
+
+function injectBeautifyFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
+                return '';
+            }));
+        });
+    });
+}
+
+function injectSplitIRIFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
+                return {
+                    begin: '',
+                    then: '',
+                    end: ''
+                }
+            }));
+        });
+    });
+}
+
+function injectTrustedFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
+        });
+    });
+}
+
+function injectHighlightFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
+        });
+    });
+}
+
+function injectCamelCaseFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('camelCaseFilter', jasmine.createSpy('camelCaseFilter').and.callFake(function(str) {
+                return str;
+            }));
         });
     });
 }
@@ -89,6 +140,7 @@ function mockOntologyManager() {
             this.findOntologyWithClass = jasmine.createSpy('findOntologyWithClass').and.callFake(function(ontologyList, classId) {
                 return {};
             });
+            this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
         });
     });
 }
@@ -182,7 +234,7 @@ function mockPrefixes() {
 
         module(function($provide) {
             $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = '';
+                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = this.dc = '';
             });
         });
     });
@@ -204,6 +256,43 @@ function mockSparqlManager() {
             this.queryRdf = jasmine.createSpy('queryRdf').and.callFake(function() {
                 return $q.resolve({});
             });
+        });
+    });
+}
+
+function mockSettingsManager() {
+    module(function($provide) {
+        $provide.service('settingsManagerService', function() {
+            this.getSettings = jasmine.createSpy('getSettings').and.returnValue({});
+            this.setSettings = jasmine.createSpy('setSettings').and.callFake(function(settings) {
+                return settings;
+            });
+            this.getTreeDisplay = jasmine.createSpy('getTreeDisplay').and.returnValue('');
+            this.getTooltipDisplay = jasmine.createSpy('getTooltipDisplay').and.returnValue('');
+        });
+    });
+}
+
+function mockStateManager() {
+    module(function($provide) {
+        $provide.service('stateManagerService', function() {
+            this.states = {};
+            this.setTreeTab = jasmine.createSpy('setTreeTab');
+            this.setEditorTab = jasmine.createSpy('setEditorTab');
+            this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
+            this.setState = jasmine.createSpy('setState');
+            this.getState = jasmine.createSpy('getState').and.returnValue({oi: 0, ci: 0, pi: 0});
+            this.setStateToNew = jasmine.createSpy('setStateToNew').and.returnValue(0);
+            this.clearState = jasmine.createSpy('clearState');
+        });
+    });
+}
+
+function mockResponseObj() {
+    module(function($provide) {
+        $provide.service('responseObj', function() {
+            this.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('');
+            this.validateItem = jasmine.createSpy('validateItm').and.returnValue(true);
         });
     });
 }

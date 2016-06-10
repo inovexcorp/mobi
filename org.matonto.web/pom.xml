@@ -167,6 +167,7 @@
                         <source>js/angular-messages/angular-messages.min.js</source>
                         <source>js/ui-select/select.min.js</source>
                     </preloadSources>
+                    <format>progress</format>
                 </configuration>
             </plugin>
 

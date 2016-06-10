@@ -1,15 +1,18 @@
-<div ng-hide="vm.showIriOverlay === true" class="overlay">
+<div ng-hide="showIriOverlay === true" class="overlay">
     <div class="content">
         <!-- section header -->
         <h6>Create New OWL Property</h6>
 
         <!-- error -->
-        <error-display ng-if="vm.createPropertyError">{{vm.createPropertyError}}</error-display>
+        <error-display ng-if="createPropertyError">{{createPropertyError}}</error-display>
 
         <!-- static iri -->
-        <static-iri iri="dvm.createPropertyIri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="dvm.iri"
+                    on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"
+                    ontology-iri-begin="dvm.iriBegin"
+                    ontology-iri-then="dvm.iriThen"></static-iri>
 
-        <form name="vm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
+        <form name="dvm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
             <!-- name -->
             <div class="form-group">
                 <custom-label muted-text="'*Required'">Name</custom-label>
@@ -30,20 +33,24 @@
             <!-- domain -->
             <object-select ng-model="dvm.domain"
                            display-text="'Domain'"
-                           select-list="vm.ontology.matonto.subClasses"></object-select>
+                           select-list="dvm.subClasses"
+                           ontology-id="{{ontologyId}}"
+                           matonto="matonto"></object-select>
 
             <!-- range -->
             <object-select ng-model="dvm.range"
                            display-text="'Range'"
                            select-list="dvm.rangeList"
-                           is-disabled-when="!dvm.type.length"></object-select>
+                           is-disabled-when="!dvm.type.length"
+                           ontology-id="{{ontologyId}}"
+                           matonto="matonto"></object-select>
 
             <!-- create property buttons -->
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="vm.createPropertyForm.$invalid || !dvm.type.length"
-                               on-click="vm.createProperty(dvm.createPropertyIri, dvm.name, dvm.type, dvm.range, dvm.domain, dvm.description)">Create</custom-button>
+                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length"
+                               on-click="onCreate({propertyIri: dvm.iri, label: dvm.name, type: dvm.type, range: dvm.range, domain: dvm.domain, description: dvm.description})">Create</custom-button>
 
-                <custom-button on-click="vm.showCreatePropertyOverlay = false; vm.createPropertyError = ''" type="'secondary'">Cancel</custom-button>
+                <custom-button on-click="onCancel()" type="'secondary'">Cancel</custom-button>
             </div>
         </form>
     </div>
