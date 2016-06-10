@@ -8,6 +8,7 @@
         function ontologyEditor() {
             return {
                 restrict: 'E',
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyEditor/ontologyEditor.html',
                 controllerAs: 'dvm',
                 controller: ['REGEX', function(REGEX) {

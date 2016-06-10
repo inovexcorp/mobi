@@ -8,6 +8,7 @@
         function classEditor() {
             return {
                 restrict: 'E',
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/classEditor/classEditor.html'
             }
         }
