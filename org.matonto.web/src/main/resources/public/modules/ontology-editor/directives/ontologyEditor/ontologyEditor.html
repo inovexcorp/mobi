@@ -4,9 +4,6 @@
         <tab-button is-active="vm.state.editorTab === 'basic'"
                     on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
 
-        <!--tab-button is-active="vm.state.editorTab === 'prefix'"
-                    on-click="vm.setEditorTab('prefix')">Prefix</tab-button-->
-
         <tab-button is-active="vm.state.editorTab === 'preview'"
                     on-click="vm.setEditorTab('preview');">Preview</tab-button>
     </tab-button-container>
@@ -16,11 +13,10 @@
         <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- ontology iri -->
-        <div ng-class="{'has-error': vm.ontologyForm.ontologyIri.$invalid}" class="form-group">
-            <label class="control-label" for="ontologyIri">Ontology IRI</label>
+        <div ng-class="{'has-error': vm.ontologyForm.ontologyIri.$error.pattern}" class="form-group">
+            <custom-label muted-text="'*Required'">Ontology IRI</custom-label>
             <input class="form-control" id="ontologyIri" name="ontologyIri" ng-model="vm.selected['@id']" ng-pattern="dvm.iriPattern" ng-change="vm.setValidity(vm.ontologyForm.$valid); vm.entityChanged();" required />
             <p ng-messages="vm.ontologyForm.ontologyIri.$error" class="error-msg">
-                <ng-message when="required">This field cannot be empty. Ontology will not be saved.</ng-message>
                 <ng-message when="pattern">The value provided is not a valid IRI. Ontology will not be saved.</ng-message>
             </p>
         </div>
@@ -28,56 +24,8 @@
         <annotation-tab></annotation-tab>
     </div>
 
-    <!-- prefix tab -->
-    <!--div ng-if="vm.state.editorTab === 'prefix'" class="tab clearfix">
-        <!-- prefixes
-        <table class="table table-bordered input-table">
-            <thead>
-            <tr>
-                <th class="prefix-col">Prefix</th>
-                <th>Value</th>
-                <th class="action-button"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat="item in vm.selected.matonto.context track by $index">
-                <td>
-                    <input id="prefix-{{$index}}" type="text" value="{{item.key}}" ng-readonly="!editKey" />
-                    <button type="button" class="btn btn-link edit" ng-click="vm.editPrefix(editKey, item.key, $index); editKey = !editKey;">
-                        <i class="fa fa-pencil" ng-class="{'fa-pencil': !editKey, 'fa-floppy-o': editKey}"></i>
-                    </button>
-                </td>
-                <td>
-                    <input id="value-{{$index}}" type="text" value="{{item.value}}" ng-readonly="!editValue" />
-                    <button type="button" class="btn btn-link edit" ng-click="vm.editValue(editValue, item.key, item.value, $index); editValue = !editValue;">
-                        <i class="fa fa-pencil" ng-class="{'fa-pencil': !editValue, 'fa-floppy-o': editValue}"></i>
-                    </button>
-                </td>
-                <td class="action-button">
-                    <button type="button" class="btn btn-link remove" ng-click="vm.removePrefix(item.key)"><i class="fa fa-minus"></i></button>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <input type="text" ng-model="vm.key" placeholder="Enter new prefix..." ng-change="vm.showDuplicateMessage = false;" />
-                </td>
-                <td>
-                    <input type="text" ng-model="vm.value" placeholder="Enter new value..." ng-change="vm.showDuplicateMessage = false;" />
-                </td>
-                <td class="action-button">
-                    <button type="button" class="btn btn-link add" ng-disabled="!vm.key || !vm.value" ng-click="vm.addPrefix(vm.key, vm.value);"><i class="fa fa-plus"></i></button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        <!-- error messages for empty or unique
-        <div class="has-warning clearfix" ng-if="vm.showDuplicateMessage">
-            <strong ng-if="vm.showDuplicateMessage" class="help-block">Both prefix and value must be unique.</strong>
-        </div>
-    </div-->
-
     <!-- preview tab -->
-    <div ng-show="vm.state.editorTab === 'preview'" class="tab clearfix">
+    <div ng-if="vm.state.editorTab === 'preview'" class="tab clearfix">
         <div class="form-inline">
             <serialization-select ng-model="vm.serialization"></serialization-select>
             <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>

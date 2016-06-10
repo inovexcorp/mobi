@@ -2,7 +2,7 @@
     <a ng-if="!hasChildren"
        ng-click="onClick()"
        ng-class="{'unsaved': currentEntity.matonto.unsaved, 'active': isActive}">
-        <i class="fa fa-fw {{currentEntity.matonto.icon}}" ng-class="{'fa-minus': !currentEntity.matonto.icon}"
+        <i class="fa fa-fw {{currentEntity.matonto.icon}}" ng-class="{'fa-square-o': !currentEntity.matonto.icon}"
         ></i>{{dvm.getTreeDisplay(currentEntity)}}
         <i ng-show="currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
     </a>

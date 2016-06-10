@@ -2,15 +2,16 @@ describe('SPARQL Editor directive', function() {
     var $compile,
         scope;
 
+    injectTrustedFilter();
+    injectHighlightFilter();
+    mockPrefixes();
+
     beforeEach(function() {
         module('templates');
         module('sparqlEditor');
 
         module(function($provide) {
             $provide.value('escapeHTMLFilter', jasmine.createSpy('escapeHTMLFilter'));
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-            $provide.value('prefixes', jasmine.createSpy('prefixes'));
         });
 
         inject(function(_$compile_, _$rootScope_) {

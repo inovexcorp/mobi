@@ -72,7 +72,7 @@
             vm.ontology.matonto.isValid = isValid;
         }
 
-        vm.uploadOntology = function(isValid, file, namespace, localName) {
+        vm.uploadOntology = function(file, namespace, localName) {
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(file)
                 .then(function(response) {

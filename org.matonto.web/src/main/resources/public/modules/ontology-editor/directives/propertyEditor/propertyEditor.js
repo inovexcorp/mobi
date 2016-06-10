@@ -8,6 +8,7 @@
         function propertyEditor() {
             return {
                 restrict: 'E',
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/propertyEditor/propertyEditor.html'
             }
         }
