@@ -2,19 +2,16 @@
     'use strict';
 
     angular
-        .module('stringSelect', ['customLabel', 'ontologyManager'])
+        .module('stringSelect', [])
         .directive('stringSelect', stringSelect);
 
-        stringSelect.$inject = ['ontologyManagerService'];
-
-        function stringSelect(ontologyManagerService) {
+        function stringSelect() {
             return {
                 restrict: 'E',
+                replace: true,
                 scope: {
                     changeEvent: '&',
                     displayText: '=',
-                    excludeSelf: '=',
-                    groupBy: '&',
                     selectList: '=',
                     mutedText: '='
                 },

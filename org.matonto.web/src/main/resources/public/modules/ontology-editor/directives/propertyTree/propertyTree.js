@@ -14,32 +14,31 @@
                     headerText: '@'
                 },
                 bindToController: {
-                    propertyType: '@'
+                    propertyType: '@',
+                    selectItem: '&',
+                    state: '=',
+                    ontologies: '='
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: ['$scope', 'prefixes', function($scope, prefixes) {
                     var dvm = this;
-                    var vm = $scope.$parent.vm;
-
-                    dvm.state = vm.state;
-
-                    dvm.selectItem = function(editor, oi, ci, pi) {
-                        vm.selectItem(editor, oi, ci, pi);
-                    }
 
                     dvm.isThisType = function(property, propertyType) {
-                        return vm.isThisType(property, propertyType);
+                        var lowerCasePropertyTypeIRI = (prefixes.owl + propertyType).toLowerCase();
+                        return _.findIndex(_.get(property, '@type', []), function(type) {
+                            return type.toLowerCase() === lowerCasePropertyTypeIRI;
+                        }) !== -1;
                     }
 
                     dvm.hasChildren = function(ontology) {
                         var result = _.some(_.get(ontology, 'matonto.noDomains', []), function(property) {
-                            return vm.isThisType(property, dvm.propertyType);
+                            return dvm.isThisType(property, dvm.propertyType);
                         });
 
                         if(!result) {
                             result = _.some(_.get(ontology, 'matonto.classes', []), function(classObj) {
                                 return _.some(_.get(classObj, 'matonto.properties', []), function(property) {
-                                    return vm.isThisType(property, dvm.propertyType);
+                                    return dvm.isThisType(property, dvm.propertyType);
                                 });
                             });
                         }

@@ -8,6 +8,7 @@
         function serializationSelect() {
             return {
                 restrict: 'E',
+                replace: true,
                 scope: {
                     bindModel: '=ngModel'
                 },

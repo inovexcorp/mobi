@@ -8,6 +8,7 @@
         function ontologyOpenOverlay() {
             return {
                 restrict: 'E',
+                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyOpenOverlay/ontologyOpenOverlay.html'
             }
         }
