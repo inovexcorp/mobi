@@ -1,7 +1,4 @@
 <form name="dvm.form" class="sparql-editor">
-    <div class="btn-container clearfix top-action-container">
-        <custom-button on-click="dvm.sparql.queryRdf()" is-disabled-when="!dvm.sparql.queryString.length" pull="'left'">Execute</custom-button>
-    </div>
     <div class="form-group">
         <custom-label muted-text="mutedText">Prefixes:</custom-label>
         <ui-select multiple ng-model="dvm.sparql.prefixes">

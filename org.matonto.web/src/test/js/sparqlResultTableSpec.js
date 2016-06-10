@@ -51,6 +51,10 @@ describe('SPARQL Result Table directive', function() {
         it('for a div', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
+        it('based on table-container', function() {
+            var container = element.querySelectorAll('.table-container');
+            expect(container.length).toBe(1);
+        });
         it('based on table', function() {
             var table = element.querySelectorAll('.table');
             expect(table.length).toBe(1);
@@ -106,7 +110,8 @@ describe('SPARQL Result Table directive', function() {
 
             expect(element.attr('style')).toBe(undefined);
             angular.element($window).triggerHandler('resize');
-            expect(element.attr('style')).toBe('height: ' + (totalHeight - topHeight - paginationHeight) + 'px;');
+            expect(element.attr('style')).toContain('height: ' + (totalHeight - topHeight) + 'px;');
+            expect(element.attr('style')).toContain('padding-bottom: ' + (paginationHeight + 10) + 'px;');
         });
     });
 });

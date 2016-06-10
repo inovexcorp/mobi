@@ -27,13 +27,6 @@ describe('SPARQL Editor directive', function() {
 
             expect(element.prop('tagName')).toBe('FORM');
         });
-        it('based on top-action-container', function() {
-            var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
-            scope.$digest();
-
-            var actionContainers = element.querySelectorAll('.top-action-container');
-            expect(actionContainers.length).toBe(1);
-        });
         it('based on form-group', function() {
             var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
             scope.$digest();
