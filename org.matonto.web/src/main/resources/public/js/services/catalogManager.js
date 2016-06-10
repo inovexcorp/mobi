@@ -47,8 +47,8 @@
             self.filters = {
                 Resources: []
             };
-            self.sortBy = undefined;
-            self.asc = undefined;
+            self.sortBy = '';
+            self.asc = false;
             self.errorMessage = '';
             
             function initialize() {
@@ -61,7 +61,6 @@
                                 applied: false
                             };
                         });
-                        self.getResources();
                     });
             }
 
