@@ -5,6 +5,7 @@
         
         <!-- serialization -->
         <serialization-select ng-model="vm.downloadSerialization"></serialization-select>
+
         <!-- file name -->
         <div ng-class="{'has-error': vm.downloadForm.fileName.$error.pattern}" class="form-group">
             <label class="control-label" for="fileName">File Name</label>
@@ -13,6 +14,7 @@
                 <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
             </p>
         </div>
+
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="!vm.downloadSerialization || vm.downloadForm.$invalid" on-click="vm.downloadOntology()">Download</custom-button>

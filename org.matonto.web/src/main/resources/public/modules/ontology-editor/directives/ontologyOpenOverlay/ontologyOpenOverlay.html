@@ -2,9 +2,10 @@
     <form name="vm.openForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Open Ontology</h6>
-        <p class="text-danger" ng-if="vm.openError">
-            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.openError}}
-        </p>
+
+        <!-- error display -->
+        <error-display ng-if="vm.openError">{{vm.openError}}</error-display>
+
         <!-- list of ontologies -->
         <div class="form-group">
             <custom-label muted-text="mutedText">Ontology</custom-label>
@@ -23,6 +24,7 @@
                 </ui-select-choices>
             </ui-select>
         </div>
+
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="!vm.ontologyIdToOpen" on-click="vm.openOntology()">Open</custom-button>
