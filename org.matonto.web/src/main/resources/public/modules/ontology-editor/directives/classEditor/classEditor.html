@@ -13,7 +13,10 @@
         <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- static iri -->
-        <static-iri iri="vm.selected['@id']" on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="vm.selected['@id']"
+                    on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"
+                    ontology-iri-begin="vm.ontology.matonto.iriBegin"
+                    ontology-iri-then="vm.ontology.matonto.iriThen"></static-iri>
 
         <annotation-tab></annotation-tab>
     </div>
@@ -26,7 +29,9 @@
                        display-text="'Sub Class Of'"
                        muted-text="vm.rdfs + 'subClassOf'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"></object-select>
+                       select-list="vm.ontology.matonto.subClasses"
+                       ontology-id="{{vm.ontology['@id']}}"
+                       matonto="vm.ontology.matonto"></object-select>
 
         <!-- owl:disjointWith -->
         <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
@@ -34,6 +39,8 @@
                        display-text="'Disjoint With'"
                        muted-text="vm.owl + 'disjointWith'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"></object-select>
+                       select-list="vm.ontology.matonto.subClasses"
+                       ontology-id="{{vm.ontology['@id']}}"
+                       matonto="vm.ontology.matonto"></object-select>
     </div>
 </form>
