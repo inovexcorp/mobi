@@ -6,6 +6,7 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
+import org.matonto.rest.util.ErrorUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -94,12 +95,10 @@ public class TokenUtils {
             }
         } catch (ParseException e) {
             String msg = "Problem Parsing JWT Token";
-            LOG.error(msg, e);
-            throw new WebApplicationException(msg, e, Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(e, msg, Response.Status.INTERNAL_SERVER_ERROR);
         } catch (JOSEException e) {
             String msg = "Problem Creating or Verifying JWT Token";
-            LOG.error(msg, e);
-            throw new WebApplicationException(msg, e, Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(e, msg, Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 

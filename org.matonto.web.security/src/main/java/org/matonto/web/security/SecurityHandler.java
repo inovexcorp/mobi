@@ -8,6 +8,7 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.log4j.Logger;
+import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.utils.TokenUtils;
 
 import javax.ws.rs.WebApplicationException;
@@ -18,7 +19,7 @@ import java.security.Principal;
 import java.text.ParseException;
 import java.util.Optional;
 
-@Component
+@Component(immediate = true)
 public class SecurityHandler implements AuthenticationHandler, AuthorizationHandler {
 
     private static final Logger LOG = Logger.getLogger(TokenUtils.class.getName());
@@ -48,8 +49,7 @@ public class SecurityHandler implements AuthenticationHandler, AuthorizationHand
                 subject = token.getJWTClaimsSet().getSubject();
             } catch (ParseException e) {
                 String msg = "Problem Parsing JWT Token";
-                LOG.error(msg, e);
-                throw new WebApplicationException(msg, e, Response.Status.INTERNAL_SERVER_ERROR);
+                throw ErrorUtils.sendError(e, msg, Response.Status.INTERNAL_SERVER_ERROR);
             }
 
             if (scope.equals(TokenUtils.ANON_SCOPE)) {

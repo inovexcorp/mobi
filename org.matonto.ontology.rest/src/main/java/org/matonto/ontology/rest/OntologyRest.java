@@ -233,6 +233,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getObjectPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
