@@ -15,16 +15,23 @@ describe('File Form directive', function() {
 
     describe('in isolated scope', function() {
         beforeEach(function() {
+            scope.errorMessage = '';
             scope.onUploadClick = jasmine.createSpy('onUploadClick');
             scope.onContinueClick = jasmine.createSpy('onContinueClick');
             scope.delimitedFile = {};
             scope.separator = '';
             scope.containsHeaders = true;
 
-            this.element = $compile(angular.element('<file-form on-upload-click="onUploadClick()" on-continue-click="onContinueClick()" delimited-file="delimitedFile" separator="separator" contains-headers="containsHeaders"></file-form>'))(scope);
+            this.element = $compile(angular.element('<file-form error-message="errorMessage" on-upload-click="onUploadClick()" on-continue-click="onContinueClick()" delimited-file="delimitedFile" separator="separator" contains-headers="containsHeaders"></file-form>'))(scope);
             scope.$digest();
         });
 
+        it('errorMessage should be two way bound', function() {
+            var isolatedScope = this.element.isolateScope();
+            isolatedScope.errorMessage = 'test';
+            scope.$digest();
+            expect(scope.errorMessage).toEqual('test');
+        });
         it('onUploadClick should be called in the parent scope', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.onUploadClick();
@@ -59,7 +66,7 @@ describe('File Form directive', function() {
     describe('controller methods', function() {
         it('should test whether delimitedFile is an Excel File', function() {
             scope.delimitedFile = {};
-            var element = $compile(angular.element('<file-form on-upload-click="onUploadClick()" on-continue-click="onContinueClick()" delimited-file="delimitedFile" separator="separator" contains-headers="containsHeaders"></file-form>'))(scope);
+            var element = $compile(angular.element('<file-form error-message="errorMessage" on-upload-click="onUploadClick()" on-continue-click="onContinueClick()" delimited-file="delimitedFile" separator="separator" contains-headers="containsHeaders"></file-form>'))(scope);
             scope.$digest();
             var controller = element.controller('fileForm');
             var result = controller.isExcel();
@@ -78,13 +85,14 @@ describe('File Form directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
+            scope.errorMessage = '';
             scope.onUploadClick = jasmine.createSpy('onUploadClick');
             scope.onContinueClick = jasmine.createSpy('onContinueClick');
             scope.delimitedFile = undefined;
             scope.separator = '';
             scope.containsHeaders = true;
 
-            this.element = $compile(angular.element('<file-form on-upload-click="onUploadClick()" on-continue-click="onContinueClick()" delimited-file="delimitedFile" separator="separator" contains-headers="containsHeaders"></file-form>'))(scope);
+            this.element = $compile(angular.element('<file-form error-message="errorMessage" on-upload-click="onUploadClick()" on-continue-click="onContinueClick()" delimited-file="delimitedFile" separator="separator" contains-headers="containsHeaders"></file-form>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -93,11 +101,21 @@ describe('File Form directive', function() {
         it('with a file input', function() {
             expect(this.element.find('file-input').length).toBe(1);
         });
+        it('depending on whether there is an error message', function() {
+            var fileInputGroup = angular.element(this.element.querySelectorAll('.file-input-group')[0]);
+            expect(fileInputGroup.hasClass('has-error')).toBe(false);
+            expect(this.element.querySelectorAll('.error-msg').length).toBe(0);
+
+            scope.errorMessage = 'test';
+            scope.$digest();
+            expect(fileInputGroup.hasClass('has-error')).toBe(true);
+            expect(this.element.querySelectorAll('.error-msg').length).toBe(1);
+        });
         it('depending whether a file has been uploaded', function() {
             var buttons = this.element.find('custom-button');
             expect(buttons.length).toBe(1);
             expect(angular.element(buttons[0]).text()).toBe('Upload');
-            expect(this.element.querySelectorAll('span.help-block').length).toBe(0);
+            expect(this.element.querySelectorAll('span.help-block').length).toBe(1);
 
             this.element.controller('fileForm').uploaded = true;
             scope.$digest();
@@ -105,7 +123,7 @@ describe('File Form directive', function() {
             expect(buttons.length).toBe(2);
             expect(['Update', 'Continue'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Update', 'Continue'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
-            expect(this.element.querySelectorAll('span.help-block').length).toBe(1);
+            expect(this.element.querySelectorAll('span.help-block').length).toBe(2);
         });
         it('depending on the type of file', function() {
             scope.delimitedFile = {name: 'test.csv'};
