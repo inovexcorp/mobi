@@ -4,6 +4,7 @@ describe('Class Tree directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('classTree');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -22,8 +23,6 @@ describe('Class Tree directive', function() {
         }
 
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/classTree/classTree.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
