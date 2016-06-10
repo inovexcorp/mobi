@@ -23,11 +23,21 @@ describe('Ontology Upload Overlay directive', function() {
         it('for a DIV', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
-        _.forEach(['.content', 'h6', '.form-group', '.btn-container'], function(item) {
-            it('based on ' + item, function() {
-                var items = element.querySelectorAll(item);
-                expect(items.length).toBe(1);
-            });
+        it('based on .content', function() {
+            var items = element.querySelectorAll('.content');
+            expect(items.length).toBe(1);
+        });
+        it('based on h6', function() {
+            var items = element.querySelectorAll('h6');
+            expect(items.length).toBe(1);
+        });
+        it('based on .form-group', function() {
+            var items = element.querySelectorAll('.form-group');
+            expect(items.length).toBe(1);
+        });
+        it('based on .btn-container', function() {
+            var items = element.querySelectorAll('.btn-container');
+            expect(items.length).toBe(1);
         });
         describe('and error-display', function() {
             it('is visible when uploadError is true', function() {

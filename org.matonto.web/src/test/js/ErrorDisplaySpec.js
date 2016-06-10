@@ -25,11 +25,13 @@ describe('Error Display directive', function() {
         it('based on .error-msg', function() {
             expect(element.hasClass('error-msg')).toBe(true);
         });
-        _.forEach(['i', 'span'], function(item) {
-            it('based on ' + item, function() {
-                var items = element.querySelectorAll(item);
-                expect(items.length).toBe(1);
-            });
+        it('based on i', function() {
+            var items = element.querySelectorAll('i');
+            expect(items.length).toBe(1);
+        });
+        it('based on h6', function() {
+            var items = element.querySelectorAll('span');
+            expect(items.length).toBe(1);
         });
     });
 });

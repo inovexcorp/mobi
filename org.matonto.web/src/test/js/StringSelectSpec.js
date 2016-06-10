@@ -38,20 +38,23 @@ describe('String Select directive', function() {
     });
 
     describe('in isolated scope', function() {
-        _.forEach(['displayText', 'mutedText'], function(item) {
-            it(item + ' should be two way bound', function() {
-                var isolatedScope = element.isolateScope();
-                isolatedScope[item] = 'new value';
-                scope.$digest();
-                expect(scope[item]).toBe('new value');
-            });
+        it('displayText should be two way bound', function() {
+            var isolatedScope = element.isolateScope();
+            isolatedScope.displayText = 'new value';
+            scope.$digest();
+            expect(scope.displayText).toEqual('new value');
+        });
+        it('mutedText should be two way bound', function() {
+            var isolatedScope = element.isolateScope();
+            isolatedScope.mutedText = 'new value';
+            scope.$digest();
+            expect(scope.mutedText).toEqual('new value');
         });
         it('selectList should be two way bound', function() {
             var isolatedScope = element.isolateScope();
             isolatedScope.selectList = ['new value'];
             scope.$digest();
-            expect(scope.selectList.length).toBe(1);
-            expect(scope.selectList[0]).toBe('new value');
+            expect(scope.selectList).toEqual(['new value']);
         });
     });
     describe('controller bound variables', function() {
@@ -69,11 +72,13 @@ describe('String Select directive', function() {
         it('has form-group class', function() {
             expect(element.hasClass('form-group')).toBe(true);
         });
-        _.forEach(['custom-label', 'ui-select'], function(item) {
-            it('based on ' + item, function() {
-                var items = element.querySelectorAll(item);
-                expect(items.length).toBe(1);
-            });
+        it('based on custom-label', function() {
+            var items = element.querySelectorAll('custom-label');
+            expect(items.length).toBe(1);
+        });
+        it('based on ui-select', function() {
+            var items = element.querySelectorAll('ui-select');
+            expect(items.length).toBe(1);
         });
     });
     it('makes sure getItemNamespace calls splitIRI', function() {

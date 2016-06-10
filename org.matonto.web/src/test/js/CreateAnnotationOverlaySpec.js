@@ -25,11 +25,25 @@ describe('Create Annotation Overlay directive', function() {
         it('for a div', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
-        _.forEach(['.content', 'h6', '.form-group', '.btn-container', '.error-msg'], function(item) {
-            it('based on ' + item, function() {
-                var items = element.querySelectorAll(item);
-                expect(items.length).toBe(1);
-            });
+        it('based on .content', function() {
+            var items = element.querySelectorAll('.content');
+            expect(items.length).toBe(1);
+        });
+        it('based on h6', function() {
+            var items = element.querySelectorAll('h6');
+            expect(items.length).toBe(1);
+        });
+        it('based on .form-group', function() {
+            var items = element.querySelectorAll('.form-group');
+            expect(items.length).toBe(1);
+        });
+        it('based on .btn-container', function() {
+            var items = element.querySelectorAll('.btn-container');
+            expect(items.length).toBe(1);
+        });
+        it('based on .error-msg', function() {
+            var items = element.querySelectorAll('.error-msg');
+            expect(items.length).toBe(1);
         });
         describe('and has-error class', function() {
             it('is not there when form.iri is valid', function() {
@@ -53,9 +67,6 @@ describe('Create Annotation Overlay directive', function() {
             });
         });
         describe('and error-display', function() {
-            beforeEach(function() {
-                element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);
-            });
             it('is visible when createAnnotationError is true', function() {
                 scope.vm = {
                     createAnnotationError: true

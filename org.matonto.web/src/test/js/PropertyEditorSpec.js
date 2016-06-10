@@ -64,7 +64,6 @@ describe('Property Editor directive', function() {
                             editorTab: 'axioms'
                         }
                     }
-                    element = $compile(angular.element('<property-editor></property-editor>'))(scope);
                 });
                 it('with empty @type', function() {
                     scope.vm.selected = {

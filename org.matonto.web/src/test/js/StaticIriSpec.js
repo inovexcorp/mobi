@@ -68,15 +68,21 @@ describe('Static IRI directive', function() {
         it('for a STATIC-IRI', function() {
             expect(element.prop('tagName')).toBe('STATIC-IRI');
         });
-        _.forEach(['.static-iri', 'form', 'h6', '.btn-container'], function(item) {
-            it('based on ' + item, function() {
-                var items = element.querySelectorAll(item);
-                expect(items.length).toBe(1);
-            });
+        it('based on .static-iri', function() {
+            var items = element.querySelectorAll('.static-iri');
+            expect(items.length).toBe(1);
         });
-        it('based on .form-control', function() {
-            var uls = element.querySelectorAll('.form-control');
-            expect(uls.length).toBe(3);
+        it('based on h6', function() {
+            var items = element.querySelectorAll('h6');
+            expect(items.length).toBe(1);
+        });
+        it('based on form', function() {
+            var items = element.querySelectorAll('form');
+            expect(items.length).toBe(1);
+        });
+        it('based on .btn-container', function() {
+            var items = element.querySelectorAll('.btn-container');
+            expect(items.length).toBe(1);
         });
     });
     describe('controller methods', function() {

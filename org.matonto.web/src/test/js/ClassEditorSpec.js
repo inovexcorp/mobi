@@ -63,7 +63,7 @@ describe('Class Editor directive', function() {
                 expect(objectSelects.length).toBe(2);
             });
         });
-        describe('error-display', function() {
+        describe('and error-display', function() {
             it('is visible when createError is true', function() {
                 scope.vm = {
                     selected: {

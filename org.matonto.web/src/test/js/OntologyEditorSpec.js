@@ -60,7 +60,6 @@ describe('Ontology Editor directive', function() {
                         editorTab: 'preview'
                     }
                 }
-                element = $compile(angular.element('<ontology-editor></ontology-editor>'))(scope);
                 scope.$digest();
 
                 var formsInline = element.querySelectorAll('.form-inline');

@@ -55,7 +55,7 @@ describe('Create Property Overlay directive', function() {
         it('matonto should be two way bound', function() {
             isolatedScope.matonto = {prop: 'new'};
             scope.$digest();
-            expect(scope.matonto.hasOwnProperty('prop')).toEqual(true);
+            expect(scope.matonto).toEqual({prop: 'new'});
         });
         it('onCreate should be called in parent scope', function() {
             isolatedScope.onCreate();

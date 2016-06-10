@@ -72,12 +72,12 @@ describe('Object Select directive', function() {
         it('selectList should be two way bound', function() {
             isolatedScope.selectList = ['new'];
             scope.$digest();
-            expect(scope.selectList.length).toEqual(1);
+            expect(scope.selectList).toEqual(['new']);
         });
         it('bindModel should be two way bound', function() {
             isolatedScope.bindModel = ['new'];
             scope.$digest();
-            expect(scope.bindModel.length).toEqual(1);
+            expect(scope.bindModel).toEqual(['new']);
         });
     });
     describe('controller bound variables', function() {
