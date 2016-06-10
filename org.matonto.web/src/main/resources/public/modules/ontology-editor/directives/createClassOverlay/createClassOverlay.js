@@ -10,24 +10,33 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createClassOverlay/createClassOverlay.html',
+                scope: {
+                    onCreate: '&',
+                    onCancel: '&',
+                    createClassError: '=',
+                    showIriOverlay: '='
+                },
+                bindToController: {
+                    iriBegin: '=',
+                    iriThen: '='
+                },
                 controllerAs: 'dvm',
-                controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
-                    var vm = $scope.$parent.vm;
+                controller: ['$filter', 'REGEX', function($filter, REGEX) {
                     var dvm = this;
-                    var prefix = vm.ontology.matonto.iriBegin + vm.ontology.matonto.iriThen;
+                    var prefix = dvm.iriBegin + dvm.iriThen;
 
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.createClassIri = prefix;
+                    dvm.iri = prefix;
 
                     dvm.nameChanged = function() {
                         if(!dvm.iriHasChanged) {
-                            dvm.createClassIri = prefix + $filter('camelCase')(dvm.name, 'class');
+                            dvm.iri = prefix + $filter('camelCase')(dvm.name, 'class');
                         }
                     }
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
-                        dvm.createClassIri = iriBegin + iriThen + iriEnd;
+                        dvm.iri = iriBegin + iriThen + iriEnd;
                     }
                 }]
             }
