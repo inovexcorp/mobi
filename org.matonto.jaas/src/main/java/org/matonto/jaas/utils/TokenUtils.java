@@ -1,4 +1,4 @@
-package org.matonto.web.security.utils;
+package org.matonto.jaas.utils;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -6,20 +6,16 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
-import org.matonto.rest.util.ErrorUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.Map;
 import java.util.Optional;
 
 public class TokenUtils {
@@ -78,27 +74,19 @@ public class TokenUtils {
         }
     }
 
-    public static Optional<SignedJWT> verifyToken(String tokenString) {
+    public static Optional<SignedJWT> verifyToken(String tokenString) throws ParseException, JOSEException {
         if (tokenString == null) {
             return Optional.empty();
         }
 
-        try {
-            SignedJWT signedJWT = SignedJWT.parse(tokenString);
-            JWSVerifier verifier = new MACVerifier(KEY);
+        SignedJWT signedJWT = SignedJWT.parse(tokenString);
+        JWSVerifier verifier = new MACVerifier(KEY);
 
-            // Verify Token
-            if (signedJWT.verify(verifier)) {
-                return Optional.of(signedJWT);
-            } else {
-                return Optional.empty();
-            }
-        } catch (ParseException e) {
-            String msg = "Problem Parsing JWT Token";
-            throw ErrorUtils.sendError(e, msg, Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (JOSEException e) {
-            String msg = "Problem Creating or Verifying JWT Token";
-            throw ErrorUtils.sendError(e, msg, Response.Status.INTERNAL_SERVER_ERROR);
+        // Verify Token
+        if (signedJWT.verify(verifier)) {
+            return Optional.of(signedJWT);
+        } else {
+            return Optional.empty();
         }
     }
 

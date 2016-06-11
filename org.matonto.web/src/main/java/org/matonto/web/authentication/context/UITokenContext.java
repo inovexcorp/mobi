@@ -2,13 +2,13 @@ package org.matonto.web.authentication.context;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
+import org.matonto.jaas.utils.TokenUtils;
 import org.matonto.web.authentication.AuthHttpContext;
-import org.matonto.web.security.utils.TokenUtils;
 
-import java.io.IOException;
-import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Optional;
 
 public class UITokenContext extends AuthHttpContext {
 

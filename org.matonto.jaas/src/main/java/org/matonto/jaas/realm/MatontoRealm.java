@@ -25,6 +25,7 @@ public class MatontoRealm implements JaasRealm {
     private static final String KARAF_ETC = System.getProperty("karaf.etc");
     private static final String REALM = "matonto";
     private static final String PROPERTIES_MODULE = "org.apache.karaf.jaas.modules.properties.PropertiesLoginModule";
+    private static final String TOKEN_MODULE = "org.matonto.jaas.modules.token.TokenLoginModule";
 
     private BundleContext bundleContext;
     private volatile Map<String, Object> properties;
@@ -67,9 +68,24 @@ public class MatontoRealm implements JaasRealm {
         propertiesOptions.put("encryption.algorithm", config.encryptionAlgorithm());
         propertiesOptions.put("encryption.encoding", config.encryptionEncoding());
 
+        Map<String, Object> tokenOptions = new HashMap<>();
+        tokenOptions.put(BundleContext.class.getName(), bundleContext);
+        tokenOptions.put(ProxyLoginModule.PROPERTY_MODULE, TOKEN_MODULE);
+        tokenOptions.put(ProxyLoginModule.PROPERTY_BUNDLE, Long.toString(bundleContext.getBundle().getBundleId()));
+        tokenOptions.put("users", KARAF_ETC + File.separatorChar + "matonto-users.properties");
+        tokenOptions.put("detailed.login.exception", properties.get("detailed.login.exception"));
+        tokenOptions.put("encryption.name", config.encryptionName());
+        tokenOptions.put("encryption.enabled", config.encryptionEnabled());
+        tokenOptions.put("encryption.prefix", config.encryptionPrefix());
+        tokenOptions.put("encryption.suffix", config.encryptionSuffix());
+        tokenOptions.put("encryption.algorithm", config.encryptionAlgorithm());
+        tokenOptions.put("encryption.encoding", config.encryptionEncoding());
+
         return new AppConfigurationEntry[] {
                 new AppConfigurationEntry(ProxyLoginModule.class.getName(),
                         AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, propertiesOptions),
+                new AppConfigurationEntry(ProxyLoginModule.class.getName(),
+                        AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, tokenOptions),
         };
     }
 }
