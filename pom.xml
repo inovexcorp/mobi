@@ -47,6 +47,7 @@
         <module>org.matonto.index.dependency</module>
         <module>org.matonto.index.sesame4</module>
         <module>org.matonto.jaas</module>
+        <module>org.matonto.web.security</module>
     </modules>
 
     <properties>

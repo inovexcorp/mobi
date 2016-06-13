@@ -139,6 +139,11 @@
             <artifactId>jaas</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>web.security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
