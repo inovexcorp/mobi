@@ -8,6 +8,7 @@ import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.modules.AbstractKarafLoginModule;
 import org.apache.karaf.jaas.modules.properties.PropertiesBackingEngine;
 import org.apache.log4j.Logger;
+import org.matonto.jaas.config.LoginModuleConfig;
 import org.matonto.jaas.utils.TokenUtils;
 
 import javax.security.auth.Subject;
@@ -30,14 +31,12 @@ public class TokenLoginModule extends AbstractKarafLoginModule {
 
     private static final Logger LOG = Logger.getLogger(TokenLoginModule.class.getName());
 
-    private static final String USERS_FILE = "users";
-
     private String usersFileString;
 
     @Override
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState, Map<String, ?> options) {
         super.initialize(subject, callbackHandler, options);
-        usersFileString = options.get(USERS_FILE) + "";
+        usersFileString = options.get(LoginModuleConfig.USERS_FILE) + "";
         LOG.debug("Initialized TokenLoginModule usersFileString=" + usersFileString);
     }
 
@@ -91,7 +90,7 @@ public class TokenLoginModule extends AbstractKarafLoginModule {
 
         if (!tokenOptional.isPresent()) {
             if (!this.detailedLoginExcepion) {
-                String msg = "login failed";
+                String msg = "Login failed";
                 LOG.debug(msg);
                 throw new FailedLoginException(msg);
             } else {
@@ -117,7 +116,7 @@ public class TokenLoginModule extends AbstractKarafLoginModule {
         String userInfos = users.getProperty(user);
         if (userInfos == null) {
             if (!this.detailedLoginExcepion) {
-                throw new FailedLoginException("login failed");
+                throw new FailedLoginException("Login failed");
             } else {
                 throw new FailedLoginException("User " + user + " does not exist");
             }
@@ -153,7 +152,7 @@ public class TokenLoginModule extends AbstractKarafLoginModule {
     @Override
     public boolean abort() throws LoginException {
         clear();
-        LOG.debug("abort");
+        LOG.debug("Abort");
         return true;
     }
 
@@ -161,7 +160,7 @@ public class TokenLoginModule extends AbstractKarafLoginModule {
     public boolean logout() throws LoginException {
         subject.getPrincipals().removeAll(principals);
         principals.clear();
-        LOG.debug("logout");
+        LOG.debug("Logout");
         return true;
     }
 }

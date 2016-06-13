@@ -105,7 +105,7 @@ public class TokenBackingEngine implements BackingEngine {
         try {
             users.store(new FileOutputStream(usersFileString), "");
         } catch (IOException ex) {
-            LOG.error("Cannot remove users file,", ex);
+            LOG.error("Cannot update users file,", ex);
         }
     }
 
@@ -200,6 +200,8 @@ public class TokenBackingEngine implements BackingEngine {
             }
             String newUserInfo = userInfoBuffer.toString();
             users.put(username, newUserInfo);
+        } else {
+            LOG.warn("Attempted to delete role from non-existent user, " + username);
         }
 
         try {
@@ -263,7 +265,7 @@ public class TokenBackingEngine implements BackingEngine {
             }
         }
 
-        // nobody is using this group any more, remote it
+        // nobody is using this group any more, remove it
         deleteUser(GROUP_PREFIX + group);
     }
 
@@ -283,7 +285,7 @@ public class TokenBackingEngine implements BackingEngine {
         if (users.getProperty(groupName) == null) {
             addUserInternal(groupName, "group");
         } else {
-            throw new IllegalArgumentException("Group: " + group + " already exist");
+            throw new IllegalArgumentException("Group: " + group + " already exists");
         }
     }
 }
