@@ -6,7 +6,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.0.46-SNAPSHOT</version>
+    <version>1.0.46</version>
 
     <packaging>pom</packaging>
 
