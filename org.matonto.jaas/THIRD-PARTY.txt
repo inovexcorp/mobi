@@ -1,0 +1,6 @@
+
+Lists of 4 third-party dependencies.
+     (Apache License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
+     (Apache License, Version 2.0) Apache Karaf :: JAAS :: Boot (org.apache.karaf.jaas:org.apache.karaf.jaas.boot:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.boot/)
+     (Apache License, Version 2.0) Apache Karaf :: JAAS :: Config (org.apache.karaf.jaas:org.apache.karaf.jaas.config:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.config/)
+     (Apache License, Version 2.0) org.osgi.core (org.osgi:org.osgi.core:6.0.0 - http://www.osgi.org)
