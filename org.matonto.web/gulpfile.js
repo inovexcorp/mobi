@@ -15,7 +15,8 @@ var gulp = require('gulp'),
     rename = require('gulp-rename'),
     sass = require('gulp-sass'),
     uglify = require('gulp-uglify'),
-    ngAnnotate = require('gulp-ng-annotate');
+    ngAnnotate = require('gulp-ng-annotate'),
+    strip = require('gulp-strip-comments');
 
 // Project specific path variables
 var src = './src/main/resources/public/',
@@ -130,6 +131,7 @@ gulp.task('images', function() {
 // Moves all of the html files to build folder
 gulp.task('html', function() {
     return gulp.src(src + '**/*.html')
+        .pipe(strip.html())
         .pipe(gulp.dest(dest));
 });
 
@@ -160,10 +162,11 @@ gulp.task('move-custom-js', function() {
 });
 
 // Moves all custom non-js files to build folder
-gulp.task('move-custom-not-js', function() {
+gulp.task('move-custom-not-js', ['html'], function() {
     return gulp.src(src + '**/*')
         .pipe(ignore.exclude('**/*.scss'))
         .pipe(ignore.exclude('**/*.js'))
+        .pipe(ignore.exclude('**/*.html'))
         .pipe(gulp.dest(dest));
 });
 
