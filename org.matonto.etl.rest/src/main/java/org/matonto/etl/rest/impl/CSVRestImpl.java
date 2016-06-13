@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -329,43 +330,20 @@ public class CSVRestImpl implements CSVRest {
      * @return an InputStream object with the uploaded CSV file
      */
     private InputStream createExcelStream(File delimitedFile, boolean containsHeaders, boolean isPreview) {
-        Workbook wb = null;
-        ByteArrayOutputStream byteArrayOutputStream = null;
-
-        try {
-            byteArrayOutputStream = new ByteArrayOutputStream();
-            try {
-                wb = WorkbookFactory.create(delimitedFile);
-                // Only support single sheet files for now
-                Sheet sheet = wb.getSheetAt(0);
-                long mapRows = (isPreview) ? NUM_LINE_PREVIEW : sheet.getPhysicalNumberOfRows();
-                long numRows = (containsHeaders) ? mapRows + 1 : mapRows;
-                for (int i = sheet.getPhysicalNumberOfRows() - 1; i >= numRows; i--) {
-                    sheet.removeRow(sheet.getRow(i));
-                }
-                wb.write(byteArrayOutputStream);
-                byteArrayOutputStream.flush();
-            } catch (IOException | InvalidFormatException e) {
-                throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
+        try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            Workbook wb = WorkbookFactory.create(delimitedFile)) {
+            // Only support single sheet files for now
+            Sheet sheet = wb.getSheetAt(0);
+            long mapRows = (isPreview) ? NUM_LINE_PREVIEW : sheet.getPhysicalNumberOfRows();
+            long numRows = (containsHeaders) ? mapRows + 1 : mapRows;
+            for (int i = sheet.getPhysicalNumberOfRows() - 1; i >= numRows; i--) {
+                sheet.removeRow(sheet.getRow(i));
             }
-
-
+            wb.write(byteArrayOutputStream);
+            byteArrayOutputStream.flush();
             return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-        } finally {
-            if(wb != null){
-                try {
-                    wb.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }if(byteArrayOutputStream != null){
-                try {
-                    byteArrayOutputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
+        } catch (IOException | InvalidFormatException e) {
+            throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
         }
     }
 
