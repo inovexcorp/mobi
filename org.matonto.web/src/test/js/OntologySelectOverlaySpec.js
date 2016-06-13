@@ -3,24 +3,14 @@ describe('Ontology Select Overlay directive', function() {
         scope,
         ontologyManagerSvc;
 
+    injectBeautifyFilter();
+    injectSplitIRIFilter();
+    injectTrustedFilter();
+    injectHighlightFilter();
+
     beforeEach(function() {
         module('ontologySelectOverlay');
         mockOntologyManager();
-
-        module(function($provide) {
-            $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
-                return '';
-            }));
-            $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
-                return {
-                    begin: '',
-                    then: '',
-                    end: ''
-                }
-            }));
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
 
         inject(function(_ontologyManagerService_) {
             ontologyManagerSvc = _ontologyManagerService_;
