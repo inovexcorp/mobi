@@ -1,11 +1,6 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
+import aQute.bnd.annotation.component.*;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -30,7 +25,11 @@ import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import aQute.bnd.annotation.component.*;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import javax.annotation.Nonnull;
 
 
 @Component (provide = OntologyManager.class,
@@ -87,7 +86,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-	public Set<Resource> getOntologyRegistry() {
+    public Set<Resource> getOntologyRegistry() {
         RepositoryConnection conn = null;
         Set<Resource> registry = new HashSet<>();
         try {
@@ -104,22 +103,22 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-	public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException {
+    public Ontology createOntology(OntologyId ontologyId) throws MatontoOntologyException {
         return new SimpleOntology(ontologyId, this);
     }
 
     @Override
-	public Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException {
+    public Ontology createOntology(File file) throws MatontoOntologyException, FileNotFoundException {
         return new SimpleOntology(file, this);
     }
 
     @Override
-	public Ontology createOntology(IRI iri) throws MatontoOntologyException {
+    public Ontology createOntology(IRI iri) throws MatontoOntologyException {
         return new SimpleOntology(iri, this);
     }
 
     @Override
-	public Ontology createOntology(InputStream inputStream) throws MatontoOntologyException {
+    public Ontology createOntology(InputStream inputStream) throws MatontoOntologyException {
         return new SimpleOntology(inputStream, this);
     }
 
@@ -195,7 +194,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-	public boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException {
+    public boolean storeOntology(@Nonnull Ontology ontology) throws MatontoOntologyException {
         Resource resource = ontology.getOntologyId().getOntologyIdentifier();
         if (ontologyExists(resource)) {
             throw new MatontoOntologyException("Ontology with the ontology ID already exists.");
@@ -223,7 +222,7 @@ public class SimpleOntologyManager implements OntologyManager {
         }
     }
 
-    private Model getModelFromJSON(String json) {
+    private Model getModelFromJson(String json) {
         try {
             InputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
             return transformer.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
@@ -241,25 +240,25 @@ public class SimpleOntologyManager implements OntologyManager {
             final RepositoryConnection conn = repository.getConnection();
 
             try {
-                Model changedModel = getModelFromJSON(resourceJson);
+                Model changedModel = getModelFromJson(resourceJson);
 
                 Resource newSubject = Models.subject(changedModel).orElseThrow(() ->
                         new MatontoOntologyException("No subject was available in the resourceJson"));
 
-                boolean hasNewOntologyIRI = originalResource.equals(ontologyResource) &&
-                        !ontologyResource.equals(newSubject);
+                boolean hasNewOntologyIRI = originalResource.equals(ontologyResource)
+                        && !ontologyResource.equals(newSubject);
 
-                Resource context = hasNewOntologyIRI ?
-                        (new SimpleOntology(resourceJson, this)).getOntologyId().getOntologyIdentifier() :
+                Resource context = hasNewOntologyIRI
+                        ? (new SimpleOntology(resourceJson, this)).getOntologyId().getOntologyIdentifier() :
                         ontologyResource;
 
                 conn.begin();
 
                 // Ontology IRI has changed, so update the context of all statements
-                if(hasNewOntologyIRI) {
+                if (hasNewOntologyIRI) {
                     conn.getStatements(null, null, null, ontologyResource).forEach(stmt -> {
                         conn.remove(stmt);
-                        if(!stmt.getSubject().equals(newSubject)) {
+                        if (!stmt.getSubject().equals(newSubject)) {
                             conn.add(stmt, context);
                         }
                     });
@@ -313,7 +312,7 @@ public class SimpleOntologyManager implements OntologyManager {
             final RepositoryConnection conn = repository.getConnection();
 
             try {
-                Model changedModel = getModelFromJSON(resourceJson);
+                Model changedModel = getModelFromJson(resourceJson);
                 conn.begin();
                 changedModel.forEach(stmt -> conn.add(stmt, ontologyResource));
                 conn.commit();
