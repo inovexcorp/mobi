@@ -1,10 +1,10 @@
 <div class="prop-select">
     <ui-select ng-model="dvm.selectedProp" on-select="onChange()">
         <ui-select-match placeholder="Select a property">
-            <span title="{{$select.selected['@id']}}">{{dvm.getName($select.selected)}}</span>
+            <span title="{{$select.selected['@id']}}">{{dvm.om.getEntityName($select.selected)}}</span>
         </ui-select-match>
-        <ui-select-choices repeat="prop['@id'] as prop in props | filter:$select.search">
-            <div title="{{prop['@id']}}" ng-bind-html="dvm.getName(prop) | highlight:$select.search | trusted"></div>
+        <ui-select-choices repeat="prop in props | filter:$select.search">
+            <div title="{{prop['@id']}}" ng-bind-html="dvm.om.getEntityName(prop) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
 </div>
