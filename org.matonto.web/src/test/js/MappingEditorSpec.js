@@ -46,7 +46,7 @@ describe('Mapping Editor directive', function() {
             controller.changeOntology();
             expect(mapperStateSvc.changeOntology).toBe(true);
             expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(2);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
         });
         it('should submit the mapping', function() {
             var controller = this.element.controller('mappingEditor');
@@ -57,7 +57,7 @@ describe('Mapping Editor directive', function() {
             expect(mappingManagerSvc.uploadPut).not.toHaveBeenCalled();
             expect(csvManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(5);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
 
             mappingManagerSvc.previousMappingNames = [];
             controller.submit();
@@ -65,7 +65,7 @@ describe('Mapping Editor directive', function() {
             expect(mappingManagerSvc.uploadPut).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.name);
             expect(csvManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(5);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -78,7 +78,6 @@ describe('Mapping Editor directive', function() {
             expect(this.element.hasClass('mapping-editor')).toBe(true);
             expect(this.element.querySelectorAll('.ontology-section').length).toBe(1);
             expect(this.element.querySelectorAll('.submit-mapping').length).toBe(1);
-            expect(this.element.querySelectorAll('.actions').length).toBe(1);
             expect(this.element.querySelectorAll('.mapping-title').length).toBe(1);
             expect(this.element.querySelectorAll('.edit-mapping').length).toBe(1);
         });
@@ -131,6 +130,12 @@ describe('Mapping Editor directive', function() {
             expect(this.element.find('edit-prop-form').length).toBe(0);
             expect(this.element.find('new-prop-form').length).toBe(1);
             expect(this.element.querySelectorAll('.edit-cancel').length).toBe(1);
+        });
+        it('depending on whether the mapping was saved successfully', function() {
+            var controller = this.element.controller('mappingEditor');
+            controller.saveError = true;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.form-container .error-msg').length).toBe(1);
         });
     });
     it('should set the correct state when the ontology name is clicked', function() {

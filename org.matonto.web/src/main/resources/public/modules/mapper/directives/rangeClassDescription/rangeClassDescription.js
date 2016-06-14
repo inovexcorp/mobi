@@ -48,20 +48,20 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.manager = mappingManagerService;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.getRangeClassName = function() {
-                        return dvm.ontology.getEntityName(getRangeClass());
+                        return dvm.om.getEntityName(getRangeClass());
                     }
                     dvm.getRangeClassDescription = function() {
                         return _.get(getRangeClass(), "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(getRangeClass(), "['" + prefixes.dc + "description'][0]['@value']", ''));
                     }
                     function getRangeClass() {
-                        var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, dvm.classId);
-                        var propObj = dvm.ontology.getClassProperty(ontology, dvm.classId, dvm.selectedPropId);
+                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, dvm.classId);
+                        var propObj = dvm.om.getClassProperty(ontology, dvm.classId, dvm.selectedPropId);
                         var rangeClassId = _.get(propObj, "['"+ prefixes.rdfs + "range'][0]['@id']");
-                        return dvm.ontology.getClass(dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, rangeClassId), rangeClassId);
+                        return dvm.om.getClass(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, rangeClassId), rangeClassId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/rangeClassDescription/rangeClassDescription.html'

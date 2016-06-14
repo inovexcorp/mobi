@@ -108,7 +108,7 @@ describe('Ontology Select Overlay directive', function() {
         });
         it('should set the correct state for continuing', function() {
             var sourceOntologies = angular.copy(mappingManagerSvc.sourceOntologies);
-            mapperStateSvc.step = 2;
+            // mapperStateSvc.step = 2;
             mapperStateSvc.changeOntology = false;
             var controller = this.element.controller('ontologySelectOverlay');
             controller.selectedOntologyId = '';
@@ -118,9 +118,8 @@ describe('Ontology Select Overlay directive', function() {
             expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
             expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalled();
             expect(mappingManagerSvc.sourceOntologies).toEqual(sourceOntologies);
-            expect(mapperStateSvc.step).toBe(3);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
 
-            mapperStateSvc.step = 2;
             mapperStateSvc.changeOntology = true;
             controller.continue();
             expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
@@ -128,9 +127,8 @@ describe('Ontology Select Overlay directive', function() {
             expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
             expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalled();
             expect(mappingManagerSvc.sourceOntologies).toEqual(sourceOntologies);
-            expect(mapperStateSvc.step).toBe(3);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
 
-            mapperStateSvc.step = 2;
             controller.selectedOntology = {'@id': 'test'};
             controller.selectedOntologyId = controller.selectedOntology['@id'];
             controller.continue();
@@ -139,7 +137,7 @@ describe('Ontology Select Overlay directive', function() {
             expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.selectedOntologyId);
             expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(controller.selectedOntologyId);
             expect(mappingManagerSvc.sourceOntologies).not.toEqual(sourceOntologies);
-            expect(mapperStateSvc.step).toBe(3);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
         });
         it('should set the correct state for going back', function() {
             var controller = this.element.controller('ontologySelectOverlay');
@@ -147,7 +145,7 @@ describe('Ontology Select Overlay directive', function() {
             mapperStateSvc.changeOntology = true;
             controller.back();
             expect(mapperStateSvc.restoreCachedSourceOntologies).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(4);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
             expect(mapperStateSvc.changeOntology).toBe(false);
             expect(mappingManagerSvc.sourceOntologies).toEqual(sourceOntologies);
             expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
@@ -156,7 +154,7 @@ describe('Ontology Select Overlay directive', function() {
             mapperStateSvc.changeOntology = false;
             controller.back();
             expect(mapperStateSvc.restoreCachedSourceOntologies).not.toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(1);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
             expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
         });

@@ -39,22 +39,22 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
-                    dvm.newName = _.get(dvm.manager.mapping, 'name', '');
+                    dvm.mm = mappingManagerService;
+                    dvm.newName = _.get(dvm.mm.mapping, 'name', '');
 
                     dvm.set = function() {
                         if (dvm.state.step === 0) {
-                            dvm.state.step = 1;
-                            dvm.manager.mapping.jsonld = dvm.manager.createNewMapping();
+                            dvm.state.step = dvm.state.fileUploadStep;
+                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping();
                         }
-                        dvm.manager.mapping.name = dvm.newName;
+                        dvm.mm.mapping.name = dvm.newName;
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {
                         if (dvm.state.step === 0) {
                             dvm.state.editMapping = false;
                             dvm.state.newMapping = false;
-                            dvm.manager.mapping = undefined;
+                            dvm.mm.mapping = undefined;
                         }
                         dvm.state.editMappingName = false;
                     }

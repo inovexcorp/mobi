@@ -347,6 +347,9 @@
             self.findClassWithObjectMapping = function(mapping, objectMappingId) {
                 return findClassWithPropMapping(mapping, objectMappingId, 'objectProperty');
             } 
+            self.getPropMappingTitle = function(className, propName) {
+                return className + ': ' + propName;
+            }
 
             // Private helper methods
             function cleanPropertyArray(classMapping, propType) {

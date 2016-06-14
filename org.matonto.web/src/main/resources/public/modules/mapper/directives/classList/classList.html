@@ -1,14 +1,14 @@
 <div class="class-list col-xs-4 full-height">
     <div class="tree boxed">
-        <ul class="list" ng-if="dvm.csv.filePreview">
-            <li ng-repeat="classMapping in dvm.manager.getAllClassMappings(dvm.manager.mapping.jsonld)">
+        <ul class="list" ng-if="dvm.cm.filePreview">
+            <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld)">
                 <a ng-click="dvm.clickClass(classMapping)" ng-dblclick="dvm.toggleOpen(classMapping['@id'])" ng-class="{'active': classMapping['@id'] === dvm.state.selectedClassMappingId && !dvm.state.selectedPropMappingId && !dvm.state.newProp}">
                     <i class="fa fa-fw"
                        ng-class="{'fa-minus-square-o': dvm.isOpen(classMapping['@id']) && dvm.hasProps(classMapping), 'fa-plus-square-o': !dvm.isOpen(classMapping['@id']) && dvm.hasProps(classMapping), 'fa-square-o': !dvm.hasProps(classMapping)}"
                        ng-click="dvm.toggleOpen(classMapping['@id'])"></i>
                     {{dvm.getClassTitle(classMapping)}}</a>
                 <ul class="props">
-                    <li ng-if="dvm.isOpen(classMapping['@id'])" ng-repeat="propMapping in dvm.manager.getPropMappingsByClass(dvm.manager.mapping.jsonld, classMapping['@id'])">
+                    <li ng-if="dvm.isOpen(classMapping['@id'])" ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id'])">
                         <a ng-click="dvm.clickProp(propMapping, classMapping)" ng-class="{'invalid': dvm.getInvalidPropIds().indexOf(propMapping['@id']) >= 0, 'active': propMapping['@id'] === dvm.state.selectedPropMappingId && !dvm.state.newProp}">{{dvm.getPropTitle(propMapping, classMapping)}}</a>
                     </li>
                     <li ng-if="!dvm.mappedAllProps(classMapping)"><a ng-click="dvm.clickAddProp(classMapping)"><i class="fa fa-plus"></i> Add Property</a></li>

@@ -55,30 +55,30 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.csv = csvManagerService;
-                    dvm.manager = mappingManagerService;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.cm = csvManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
                     dvm.errorMessage = '';
 
                     dvm.isExcel = function() {
-                        var fileName = _.get(dvm.csv.fileObj, 'name');
+                        var fileName = _.get(dvm.cm.fileObj, 'name');
                         return _.includes(fileName, 'xls');
                     }
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var ontology = dvm.manager.getSourceOntology(dvm.manager.mapping.jsonld);
-                        var propId = dvm.manager.getPropIdByMappingId(dvm.manager.mapping.jsonld, dataMappingId);
-                        var classId = dvm.manager.getClassIdByMapping(
-                            dvm.manager.findClassWithDataMapping(dvm.manager.mapping.jsonld, dataMappingId)
+                        var ontology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
+                        var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dataMappingId);
+                        var classId = dvm.mm.getClassIdByMapping(
+                            dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId)
                         );
-                        var propName = dvm.ontology.getEntityName(dvm.ontology.getClassProperty(ontology, classId, propId));
-                        var className = dvm.ontology.getEntityName(dvm.ontology.getClass(ontology, classId));
-                        return className + ': ' + propName;
+                        var propName = dvm.om.getEntityName(dvm.om.getClassProperty(ontology, classId, propId));
+                        var className = dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
+                        return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.upload = function() {
-                        dvm.csv.upload(dvm.csv.fileObj).then(data => {
-                            dvm.csv.fileName = data;
+                        dvm.cm.upload(dvm.cm.fileObj).then(data => {
+                            dvm.cm.fileName = data;
                             dvm.setUploadValidity(true);
-                            return dvm.csv.previewFile(100);
+                            return dvm.cm.previewFile(100);
                         }, onError).then(() => {
                             if (!dvm.state.newMapping) {
                                 testColumns();
@@ -86,7 +86,7 @@
                         }, onError);
                     }
                     dvm.cancel = function() {
-                        dvm.csv.reset();
+                        dvm.cm.reset();
                         if (dvm.state.newMapping) {
                             dvm.state.step = 0;
                             dvm.state.editMappingName = true;
@@ -96,10 +96,10 @@
                     }
                     dvm.continue = function() {
                         if (dvm.state.newMapping) {
-                            dvm.state.step = 2;                        
+                            dvm.state.step = dvm.state.ontologySelectStep;
                         } else {
-                            dvm.state.step = 4;
-                            var classes = dvm.manager.getAllClassMappings(dvm.manager.mapping.jsonld);
+                            dvm.state.step = dvm.state.editMappingStep;
+                            var classes = dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld);
                             dvm.state.selectedClassMappingId = _.get(classes, "[0]['@id']");
                             dvm.state.updateAvailableProps();
                         }
@@ -107,18 +107,17 @@
                     dvm.setUploadValidity = function(bool) {
                         dvm.fileForm.$setValidity('fileUploaded', bool);
                     }
-
                     function testColumns() {
-                        dvm.state.invalidProps = _.chain(dvm.manager.getAllDataMappings(dvm.manager.mapping.jsonld))
+                        dvm.state.invalidProps = _.chain(dvm.mm.getAllDataMappings(dvm.mm.mapping.jsonld))
                             .map(dataMapping => _.pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
                             .forEach(obj => _.set(obj, 'index', parseInt(obj['@id', prefixes.delim + 'columnIndex'][0]['@value'], 10)))
-                            .filter(obj => obj.index > dvm.csv.filePreview.headers.length - 1)
+                            .filter(obj => obj.index > dvm.cm.filePreview.headers.length - 1)
                             .sortBy('index')
                             .value();
                     }
                     function onError(errorMessage) {
                         dvm.errorMessage = errorMessage;
-                        dvm.csv.filePreview = undefined;
+                        dvm.cm.filePreview = undefined;
                         dvm.setUploadValidity(false);
                         dvm.state.invalidProps = [];
                     }

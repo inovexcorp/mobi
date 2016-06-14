@@ -43,17 +43,17 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
-                    var ontologyObjs = angular.copy(dvm.ontology.getList());
+                    var ontologyObjs = angular.copy(dvm.om.getList());
                     var sourceOntology;
 
-                    if (dvm.manager.sourceOntologies.length) {
-                        sourceOntology = dvm.manager.getSourceOntology(dvm.manager.mapping.jsonld);
+                    if (dvm.mm.sourceOntologies.length) {
+                        sourceOntology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
                         ontologyObjs = _.union(ontologyObjs, [sourceOntology]);
                     }
-                    dvm.ontologyIds = _.union(dvm.ontology.getOntologyIds(), _.map(ontologyObjs, '@id'));
+                    dvm.ontologyIds = _.union(dvm.om.getOntologyIds(), _.map(ontologyObjs, '@id'));
                     if (sourceOntology) {
                         dvm.selectedOntology = angular.copy(sourceOntology);
                         dvm.selectedOntologyId = dvm.ontologyIds[dvm.ontologyIds.indexOf(dvm.selectedOntology['@id'])];
@@ -70,7 +70,7 @@
                         var deferred = $q.defer();
                         var ontology = _.find(ontologyObjs, {'@id': ontologyId});
                         if (!ontology) {
-                            dvm.ontology.getThenRestructure(ontologyId).then(response => {
+                            dvm.om.getThenRestructure(ontologyId).then(response => {
                                 ontologyObjs.push(response);
                                 deferred.resolve(response);
                             });
@@ -84,9 +84,9 @@
                     dvm.getName = function(ontologyId) {
                         var ontology = _.find(ontologyObjs, {'@id': ontologyId});
                         if (ontology) {
-                            return dvm.ontology.getEntityName(ontology);                            
+                            return dvm.om.getEntityName(ontology);                            
                         } else {
-                            return dvm.ontology.getBeautifulIRI(ontologyId);
+                            return dvm.om.getBeautifulIRI(ontologyId);
                         }
                     }
 
@@ -95,25 +95,25 @@
                             dvm.state.cacheSourceOntologies();
                         }
                         if (dvm.state.getCachedSourceOntologyId() !== dvm.selectedOntologyId) {
-                            dvm.manager.mapping.jsonld = dvm.manager.setSourceOntology(dvm.manager.mapping.jsonld, dvm.selectedOntologyId);                        
-                            dvm.manager.sourceOntologies = [dvm.selectedOntology];
-                            dvm.ontology.getImportedOntologies(dvm.selectedOntologyId).then(response => {
-                                dvm.manager.sourceOntologies = _.concat(dvm.manager.sourceOntologies, response);
+                            dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, dvm.selectedOntologyId);                        
+                            dvm.mm.sourceOntologies = [dvm.selectedOntology];
+                            dvm.om.getImportedOntologies(dvm.selectedOntologyId).then(response => {
+                                dvm.mm.sourceOntologies = _.concat(dvm.mm.sourceOntologies, response);
                             });
                         }
 
-                        dvm.state.step = 3;
+                        dvm.state.step = dvm.state.startingClassSelectStep;
                     }
 
                     dvm.back = function() {
                         if (dvm.state.changeOntology) {
                             dvm.state.restoreCachedSourceOntologies();
                             dvm.state.changeOntology = false;
-                            dvm.state.step = 4;
+                            dvm.state.step = dvm.state.editMappingStep;
                         } else {
-                            dvm.manager.mapping.jsonld = dvm.manager.setSourceOntology(dvm.manager.mapping.jsonld, '');                        
-                            dvm.manager.sourceOntologies = [];
-                            dvm.state.step = 1;
+                            dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, '');                        
+                            dvm.mm.sourceOntologies = [];
+                            dvm.state.step = dvm.state.fileUploadStep;
                         }
                     }
                 },

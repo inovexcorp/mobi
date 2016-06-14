@@ -36,6 +36,13 @@
                 ontology = ontologyManagerService,
                 csv = csvManagerService;
 
+            // Static step indexes
+            self.fileUploadStep = 1;
+            self.ontologySelectStep = 2;
+            self.startingClassSelectStep = 3;
+            self.editMappingStep = 4;
+            self.finishStep = 5;
+
             /**
              * @ngdoc property
              * @name mapperState.mapperStateService#editMapping
@@ -356,8 +363,9 @@
              * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies}.
              */
             self.restoreCachedSourceOntologies = function() {
-                manager.sourceOntologies = cachedSourceOntologies;
+                manager.sourceOntologies = angular.copy(cachedSourceOntologies);
                 manager.setSourceOntology(manager.mapping.jsonld, cachedOntologyId);
+                self.clearCachedSourceOntologies();
             }
             /**
              * @ngdoc method

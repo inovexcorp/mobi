@@ -35,7 +35,7 @@ describe('Mapping Name Overlay directive', function() {
             mapperStateSvc.step = 0;
             controller.newName = 'test1';
             controller.set();
-            expect(mapperStateSvc.step).toBe(1);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
             expect(mappingManagerSvc.createNewMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
             expect(mapperStateSvc.editMappingName).toBe(false);

@@ -158,28 +158,28 @@ describe('Mapping Overlays directive', function() {
             expect(this.element.find('starting-class-select-overlay').length).toBe(0);
             expect(this.element.find('finish-overlay').length).toBe(0);
 
-            mapperStateSvc.step = 1;
+            mapperStateSvc.step = mapperStateSvc.fileUploadStep;
             scope.$digest();
             expect(this.element.find('file-upload-overlay').length).toBe(1);
             expect(this.element.find('ontology-select-overlay').length).toBe(0);
             expect(this.element.find('starting-class-select-overlay').length).toBe(0);
             expect(this.element.find('finish-overlay').length).toBe(0);
 
-            mapperStateSvc.step = 2;
+            mapperStateSvc.step = mapperStateSvc.ontologySelectStep;
             scope.$digest();
             expect(this.element.find('file-upload-overlay').length).toBe(0);
             expect(this.element.find('ontology-select-overlay').length).toBe(1);
             expect(this.element.find('starting-class-select-overlay').length).toBe(0);
             expect(this.element.find('finish-overlay').length).toBe(0);
 
-            mapperStateSvc.step = 3;
+            mapperStateSvc.step = mapperStateSvc.startingClassSelectStep;
             scope.$digest();
             expect(this.element.find('file-upload-overlay').length).toBe(0);
             expect(this.element.find('ontology-select-overlay').length).toBe(0);
             expect(this.element.find('starting-class-select-overlay').length).toBe(1);
             expect(this.element.find('finish-overlay').length).toBe(0);
 
-            mapperStateSvc.step = 5;
+            mapperStateSvc.step = mapperStateSvc.finishStep;
             scope.$digest();
             expect(this.element.find('file-upload-overlay').length).toBe(0);
             expect(this.element.find('ontology-select-overlay').length).toBe(0);

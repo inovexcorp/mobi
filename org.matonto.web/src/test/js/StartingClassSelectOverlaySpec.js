@@ -53,7 +53,7 @@ describe('Starting Class Select Overlay directive', function() {
         it('should set the correct state for going back', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
             controller.back();
-            expect(mapperStateSvc.step).toBe(2);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
         });
         it('should set the correct state for continuing', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
@@ -69,7 +69,7 @@ describe('Starting Class Select Overlay directive', function() {
             expect(mappingManagerSvc.addClass).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(4);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
 
             mapperStateSvc.changeOntology = true;
             controller.continue();
@@ -82,7 +82,7 @@ describe('Starting Class Select Overlay directive', function() {
             expect(mappingManagerSvc.addClass).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(4);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
         });
     });
     describe('replaces the element with the correct html', function() {

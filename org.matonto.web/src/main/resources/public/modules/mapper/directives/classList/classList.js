@@ -46,13 +46,13 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.ontology = ontologyManagerService;
-                    dvm.manager = mappingManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.csv = csvManagerService;
+                    dvm.cm = csvManagerService;
 
                     dvm.hasProps = function(classMapping) {
-                        return dvm.manager.getPropMappingsByClass(dvm.manager.mapping.jsonld, classMapping['@id']).length > 0;
+                        return dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']).length > 0;
                     }
                     dvm.toggleOpen = function(classMappingId) {
                         if (dvm.isOpen(classMappingId)) {
@@ -74,7 +74,7 @@
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.selectedPropMappingId = propMapping['@id'];
                         dvm.state.updateAvailableColumns();
-                        dvm.state.selectedColumn = dvm.csv.filePreview.headers[parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']"), 10)];
+                        dvm.state.selectedColumn = dvm.cm.filePreview.headers[parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']"), 10)];
                     }
                     dvm.clickAddProp = function(classMapping) {
                         dvm.state.resetEdit();
@@ -97,54 +97,54 @@
                     dvm.getPropTitle = function(propMapping, classMapping) {
                         var propName = getPropName(propMapping, classMapping);
                         var mappingName = '';
-                        if (dvm.manager.isObjectMapping(propMapping)) {
-                            var wrapperClassMapping = _.find(dvm.manager.mapping.jsonld, {'@id': propMapping[prefixes.delim + 'classMapping'][0]['@id']});
+                        if (dvm.mm.isObjectMapping(propMapping)) {
+                            var wrapperClassMapping = _.find(dvm.mm.mapping.jsonld, {'@id': propMapping[prefixes.delim + 'classMapping'][0]['@id']});
                             mappingName = getClassName(wrapperClassMapping);
-                        } else if (dvm.manager.isDataMapping(propMapping)) {
+                        } else if (dvm.mm.isDataMapping(propMapping)) {
                             var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                            mappingName = dvm.csv.filePreview.headers[index];
+                            mappingName = dvm.cm.filePreview.headers[index];
                         }
                         return propName + ': ' + mappingName;
                     }
                     dvm.mappedAllProps = function(classMapping) {
-                        var mappedProps = dvm.manager.getPropMappingsByClass(dvm.manager.mapping.jsonld, classMapping['@id']);
+                        var mappedProps = dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']);
                         var classId = getClassId(classMapping);
-                        var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, classId);
-                        var classProps = dvm.ontology.getClassProperties(ontology, classId);
+                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
+                        var classProps = dvm.om.getClassProperties(ontology, classId);
 
                         return mappedProps.length === classProps.length;
                     }
                     dvm.getLinks = function(classMapping) {
                         var objectMappings = _.filter(
-                            _.filter(dvm.manager.mapping.jsonld, {'@type': [prefixes.delim + 'ObjectMapping']}),
+                            _.filter(dvm.mm.mapping.jsonld, {'@type': [prefixes.delim + 'ObjectMapping']}),
                             ["['" + prefixes.delim + "classMapping'][0]['@id']", classMapping['@id']]
                         );
                         return _.join(
                             _.map(objectMappings, objectMapping => {
-                                var wrapperClassMapping = dvm.manager.findClassWithObjectMapping(dvm.manager.mapping.jsonld, objectMapping['@id']);
+                                var wrapperClassMapping = dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, objectMapping['@id']);
                                 var className = getClassName(wrapperClassMapping);
                                 var propName = getPropName(objectMapping, wrapperClassMapping);
-                                return className + ': ' + propName;
+                                return dvm.mm.getPropMappingTitle(className, propName);
                             }),
                             ', '
                         );
                     }
                     function getClassName(classMapping) {
                         var classId = getClassId(classMapping);
-                        var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, classId);
-                        return dvm.ontology.getEntityName(dvm.ontology.getClass(ontology, classId));
+                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
+                        return dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
                     }
                     function getPropName(propMapping, classMapping) {
                         var classId = getClassId(classMapping);
-                        var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, classId);
+                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
                         var propId = getPropId(propMapping);
-                        return dvm.ontology.getEntityName(dvm.ontology.getClassProperty(ontology, classId, propId));
+                        return dvm.om.getEntityName(dvm.om.getClassProperty(ontology, classId, propId));
                     }
                     function getClassId(classMapping) {
-                        return dvm.manager.getClassIdByMapping(classMapping);
+                        return dvm.mm.getClassIdByMapping(classMapping);
                     }
                     function getPropId(propMapping) {
-                        return dvm.manager.getPropIdByMapping(propMapping);
+                        return dvm.mm.getPropIdByMapping(propMapping);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classList/classList.html'

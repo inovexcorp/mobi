@@ -44,11 +44,11 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.manager = mappingManagerService;
+                    dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.csv = csvManagerService;
+                    dvm.cm = csvManagerService;
 
-                    var classMapping = _.find(dvm.manager.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                    var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                     var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var prefixEnd = prefix.replace(regex, '');
@@ -56,14 +56,14 @@
                     dvm.beginsWith = prefixEnd.slice(0, -1);
                     dvm.then = prefixEnd[prefixEnd.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
-                    _.forEach(dvm.csv.filePreview.headers, (column, idx) => {
+                    _.forEach(dvm.cm.filePreview.headers, (column, idx) => {
                         dvm.localNameOptions.push({text: column, value: '${' + idx + '}'});
                     });
                     var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']")});
                     dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 
                     dvm.set = function() {
-                        dvm.manager.mapping.jsonld = dvm.manager.editIriTemplate(dvm.manager.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
+                        dvm.mm.mapping.jsonld = dvm.mm.editIriTemplate(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
                         dvm.state.changedMapping();
                     }
                 },

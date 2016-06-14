@@ -38,13 +38,13 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
+                    dvm.mm = mappingManagerService;
 
                     dvm.close = function() {
                         dvm.state.initialize();
                         dvm.state.invalidOntology = false;
-                        dvm.manager.mapping = undefined;
-                        dvm.manager.sourceOntologies = [];
+                        dvm.mm.mapping = undefined;
+                        dvm.mm.sourceOntologies = [];
                     }
                 },
                 templateUrl: 'modules/mapper/directives/invalidOntologyOverlay/invalidOntologyOverlay.html'

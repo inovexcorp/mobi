@@ -43,7 +43,7 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.om = ontologyManagerService;
                     dvm.state = mapperStateService;
                 },
                 templateUrl: 'modules/mapper/directives/ontologyPreviewOverlay/ontologyPreviewOverlay.html'

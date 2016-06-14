@@ -41,25 +41,25 @@
                     var dvm = this;
                     var openedMappings = [];
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
+                    dvm.mm = mappingManagerService;
 
                     dvm.onClick = function(mappingName) {
                         var openedMapping = _.find(openedMappings, {name: mappingName});
                         if (openedMapping) {
-                            dvm.manager.mapping = openedMapping;
+                            dvm.mm.mapping = openedMapping;
                         } else {
-                            dvm.manager.getMapping(mappingName).then(jsonld => {
+                            dvm.mm.getMapping(mappingName).then(jsonld => {
                                 var mapping = {
                                     jsonld,
                                     name: mappingName
                                 };
-                                dvm.manager.mapping = mapping;
+                                dvm.mm.mapping = mapping;
                                 openedMappings.push(mapping);
                             }, errorMessage => {
                                 console.log(errorMessage);
                             });
                         }
-                        _.remove(openedMappings, mapping => dvm.manager.previousMappingNames.indexOf(mapping.name) < 0);
+                        _.remove(openedMappings, mapping => dvm.mm.previousMappingNames.indexOf(mapping.name) < 0);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingList/mappingList.html'

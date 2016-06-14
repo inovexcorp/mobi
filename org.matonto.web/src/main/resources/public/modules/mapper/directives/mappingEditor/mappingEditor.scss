@@ -28,13 +28,15 @@
         .submit-mapping {
             display: inline-block;
             float: right;
-            
-            label {
-                margin-right: 0.5em;
+            text-align: center;
+
+            button, 
+            a {
+                float: left;
             }
-            .actions {
-                float: right;
-                text-align: center;
+            a {
+                clear: both;
+                width: 100%;
             }
         }
     }

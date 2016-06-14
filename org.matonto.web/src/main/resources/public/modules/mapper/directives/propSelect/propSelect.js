@@ -49,7 +49,7 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.om = ontologyManagerService;
                 },
                 templateUrl: 'modules/mapper/directives/propSelect/propSelect.html'
             }

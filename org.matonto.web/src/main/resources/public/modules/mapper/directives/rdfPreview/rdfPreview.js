@@ -64,8 +64,8 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.csv = csvManagerService;
-                    dvm.manager = mappingManagerService;
+                    dvm.cm = csvManagerService;
+                    dvm.mm = mappingManagerService;
                     dvm.visible = false;
                     dvm.preview = '';
                     dvm.options = [
@@ -83,7 +83,7 @@
                         }
                     ];
                     dvm.generatePreview = function() {
-                        dvm.csv.previewMap(dvm.manager.mapping.jsonld, dvm.serializeOption).then(preview => {
+                        dvm.cm.previewMap(dvm.mm.mapping.jsonld, dvm.serializeOption).then(preview => {
                             dvm.preview = preview;
                         }, errorMessage => {
                             console.log(errorMessage);

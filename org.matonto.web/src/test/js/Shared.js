@@ -177,6 +177,7 @@ function mockMappingManager() {
             this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.returnValue([]);
             this.getAllDataMappings = jasmine.createSpy('getAllDataMappings').and.returnValue([]);
             this.getDataMappingFromClass = jasmine.createSpy('getDataMappingFromClass').and.returnValue({});
+            this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
         });
     });
 }
@@ -212,6 +213,11 @@ function mockCsvManager() {
 function mockMapperState() {
     module(function($provide) {
         $provide.service('mapperStateService', function() {
+            this.fileUploadStep = 1;
+            this.ontologySelectStep = 2;
+            this.startingClassSelectStep = 3;
+            this.editMappingStep = 4;
+            this.finishStep = 5;
             this.editMapping = false;
             this.newMapping = false;
             this.step = 0;

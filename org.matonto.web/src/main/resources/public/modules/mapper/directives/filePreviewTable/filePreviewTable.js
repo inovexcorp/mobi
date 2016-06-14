@@ -56,10 +56,10 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.csv = csvManagerService;
+                    dvm.cm = csvManagerService;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.big = false;
                     dvm.showNum = 5;
@@ -71,14 +71,14 @@
                         }
                     }
                     dvm.getHighlightIdx = function() {
-                        return dvm.isClickable() ? dvm.csv.filePreview.headers.indexOf(dvm.state.selectedColumn) : -1;
+                        return dvm.isClickable() ? dvm.cm.filePreview.headers.indexOf(dvm.state.selectedColumn) : -1;
                     }
                     dvm.isClickable = function() {
-                        return dvm.manager.isDataMapping(_.find(dvm.manager.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId})) 
-                            || (!!dvm.state.selectedProp && !dvm.ontology.isObjectProperty(_.get(dvm.state.selectedProp, '@type', [])));
+                        return dvm.mm.isDataMapping(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId})) 
+                            || (!!dvm.state.selectedProp && !dvm.om.isObjectProperty(_.get(dvm.state.selectedProp, '@type', [])));
                     }
                     dvm.clickColumn = function(index) {
-                        dvm.state.selectedColumn = dvm.csv.filePreview.headers[index];
+                        dvm.state.selectedColumn = dvm.cm.filePreview.headers[index];
                     }
                 },
                 templateUrl: 'modules/mapper/directives/filePreviewTable/filePreviewTable.html'

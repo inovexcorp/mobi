@@ -41,20 +41,20 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.manager = mappingManagerService;
+                    dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.getIriTemplate = function() {
-                        var classMapping = _.find(dvm.manager.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                        var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                         var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
                         var localName = _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']", '');
                         return prefix + localName;
                     }
                     dvm.getTitle = function() {
-                        var classId = dvm.manager.getClassIdByMappingId(dvm.manager.mapping.jsonld, dvm.state.selectedClassMappingId);
-                        var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, classId);
-                        return dvm.ontology.getEntityName(dvm.ontology.getClass(ontology, classId));
+                        var classId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId);
+                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
+                        return dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editClassForm/editClassForm.html'

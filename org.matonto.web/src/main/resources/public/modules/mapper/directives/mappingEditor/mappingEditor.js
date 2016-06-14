@@ -48,32 +48,33 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
-                    dvm.ontology = ontologyManagerService;
-                    dvm.csv = csvManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.cm = csvManagerService;
 
                     dvm.getSourceOntologyName = function() {
-                        return dvm.ontology.getEntityName(dvm.manager.getSourceOntology(_.get(dvm.manager.mapping, 'jsonld')));
+                        return dvm.om.getEntityName(dvm.mm.getSourceOntology(_.get(dvm.mm.mapping, 'jsonld')));
                     }
                     dvm.changeOntology = function() {
                         dvm.state.changeOntology = true;
                         dvm.state.cacheSourceOntologies();
-                        dvm.state.step = 2;
+                        dvm.state.step = dvm.state.ontologySelectStep;
                     }
                     dvm.submit = function() {
                         var deferred = $q.defer();
-                        if (_.includes(dvm.manager.previousMappingNames, dvm.manager.mapping.name)) {
+                        if (_.includes(dvm.mm.previousMappingNames, dvm.mm.mapping.name)) {
                             deferred.resolve();
                         } else {
-                            dvm.manager.uploadPut(dvm.manager.mapping.jsonld, dvm.manager.mapping.name)
+                            dvm.mm.uploadPut(dvm.mm.mapping.jsonld, dvm.mm.mapping.name)
                                 .then(() => deferred.resolve(), errorMessage => deferred.reject(errorMessage));
                         }
                         deferred.promise.then(() => {
-                            dvm.csv.map(dvm.manager.mapping.name);
+                            dvm.cm.map(dvm.mm.mapping.name);
                             dvm.state.resetEdit();
-                            dvm.state.step = 5;
+                            dvm.state.step = dvm.state.finishStep;
+                            dvm.saveError = false;
                         }, errorMessage => {
-                            console.log(errorMessage);
+                            dvm.saveError = true;
                         });
                         
                     }

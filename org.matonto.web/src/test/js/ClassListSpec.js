@@ -128,6 +128,7 @@ describe('Class List directive', function() {
             var controller = this.element.controller('classList');
             var result = controller.getLinks({'@id': ''});
             expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalled();
+            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
     });

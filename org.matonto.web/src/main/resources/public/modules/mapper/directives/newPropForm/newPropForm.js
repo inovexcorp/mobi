@@ -48,9 +48,9 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
-                    dvm.ontology = ontologyManagerService;
-                    dvm.csv = csvManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.cm = csvManagerService;
 
                     dvm.update = function() {
                         if (!dvm.isObjectProperty()) {
@@ -58,23 +58,23 @@
                         }
                     }
                     dvm.isObjectProperty = function() {
-                        return dvm.ontology.isObjectProperty(_.get(dvm.state.selectedProp, '@type', []));
+                        return dvm.om.isObjectProperty(_.get(dvm.state.selectedProp, '@type', []));
                     }
                     dvm.getClassName = function() {
-                        var classId = dvm.manager.getClassIdByMappingId(dvm.manager.mapping.jsonld, dvm.state.selectedClassMappingId);
-                        var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, classId);
-                        return dvm.ontology.getEntityName(dvm.ontology.getClass(ontology, classId));
+                        var classId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId);
+                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
+                        return dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
                     }
                     dvm.set = function() {
                         if (dvm.isObjectProperty()) {
-                            dvm.manager.mapping.jsonld = dvm.manager.addObjectProp(dvm.manager.mapping.jsonld, dvm.manager.sourceOntologies, 
+                            dvm.mm.mapping.jsonld = dvm.mm.addObjectProp(dvm.mm.mapping.jsonld, dvm.mm.sourceOntologies, 
                                 dvm.state.selectedClassMappingId, dvm.state.selectedProp['@id']);
                         } else {
-                            var columnIdx = dvm.csv.filePreview.headers.indexOf(dvm.state.selectedColumn);
+                            var columnIdx = dvm.cm.filePreview.headers.indexOf(dvm.state.selectedColumn);
                             var propId = dvm.state.selectedProp['@id'];
-                            var classId = dvm.manager.getClassIdByMappingId(dvm.manager.mapping.jsonld, dvm.state.selectedClassMappingId)
-                            var ontology = dvm.ontology.findOntologyWithClass(dvm.manager.sourceOntologies, classId);
-                            dvm.manager.mapping.jsonld = dvm.manager.addDataProp(dvm.manager.mapping.jsonld, ontology, dvm.state.selectedClassMappingId, propId, columnIdx);
+                            var classId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId)
+                            var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
+                            dvm.mm.mapping.jsonld = dvm.mm.addDataProp(dvm.mm.mapping.jsonld, ontology, dvm.state.selectedClassMappingId, propId, columnIdx);
                         }
                         
                         dvm.state.openedClasses = _.union(dvm.state.openedClasses, [dvm.state.selectedClassMappingId]);

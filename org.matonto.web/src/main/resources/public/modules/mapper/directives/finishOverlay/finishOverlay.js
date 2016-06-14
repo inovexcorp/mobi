@@ -42,19 +42,19 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
-                    dvm.csv = csvManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.cm = csvManagerService;
 
                     dvm.save = function() {
-                        dvm.manager.downloadMapping(dvm.manager.mapping.name);
+                        dvm.mm.downloadMapping(dvm.mm.mapping.name);
                         dvm.finish();
                     }
                     dvm.finish = function() {
                         dvm.state.initialize();
                         dvm.state.resetEdit();
-                        dvm.manager.mapping = undefined;
-                        dvm.manager.sourceOntologies = [];
-                        dvm.csv.reset();
+                        dvm.mm.mapping = undefined;
+                        dvm.mm.sourceOntologies = [];
+                        dvm.cm.reset();
                     }
                 },
                 templateUrl: 'modules/mapper/directives/finishOverlay/finishOverlay.html'

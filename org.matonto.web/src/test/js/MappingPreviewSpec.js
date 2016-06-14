@@ -71,7 +71,7 @@ describe('Mapping Preview directive', function() {
                 expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
                 expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(ontology['@id']);
                 expect(mappingManagerSvc.sourceOntologies).toContain(ontology);
-                expect(mapperStateSvc.step).toBe(1);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
 
                 ontologyManagerSvc.getList.and.returnValue([]);
                 controller.useMapping();
@@ -80,7 +80,7 @@ describe('Mapping Preview directive', function() {
                 expect(mapperStateSvc.newMapping).toBe(false);
                 expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith(ontology['@id']);
                 expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalled();
-                expect(mapperStateSvc.step).toBe(1);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
             });
             it('if the ontology is invalid', function() {
                 var controller = this.element.controller('mappingPreview');

@@ -4,7 +4,7 @@
         <prop-select props="dvm.state.availableProps" selected-prop="dvm.state.selectedProp" on-change="dvm.update()"></prop-select>
     </div>
     <range-class-description ng-if="dvm.state.selectedProp && dvm.isObjectProperty()" 
-        class-id="{{dvm.manager.getClassIdByMappingId(dvm.manager.mapping.jsonld, dvm.state.selectedClassMappingId)}}" 
+        class-id="{{dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId)}}" 
         selected-prop-id="{{dvm.state.selectedProp['@id']}}"></range-class-description>
 
     <div class="form-group" ng-if="dvm.state.selectedProp && !dvm.isObjectProperty()">

@@ -42,11 +42,11 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.manager = mappingManagerService;
-                    dvm.ontology = ontologyManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.noOntologies = function() {
-                        return _.concat(dvm.ontology.getList(), dvm.ontology.getOntologyIds()).length === 0;
+                        return _.concat(dvm.om.getList(), dvm.om.getOntologyIds()).length === 0;
                     }
                     dvm.mappingList = function() {
                         dvm.state.displayCancelConfirm = dvm.state.editMapping;
@@ -60,7 +60,7 @@
                         }
                     }
                     dvm.downloadMapping = function() {
-                        dvm.manager.downloadMapping(dvm.manager.mapping.name);
+                        dvm.mm.downloadMapping(dvm.mm.mapping.name);
                     }
                     dvm.addPropMapping = function() {
                         var classMappingId = dvm.state.selectedClassMappingId;

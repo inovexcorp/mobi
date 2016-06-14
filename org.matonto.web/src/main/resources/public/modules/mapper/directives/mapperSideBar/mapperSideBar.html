@@ -18,7 +18,7 @@
 
         <left-nav-item on-click="dvm.downloadMapping()"
                        nav-title="Download Mapping"
-                       is-disabled-when="dvm.state.editMapping || !dvm.manager.mapping">
+                       is-disabled-when="dvm.state.editMapping || !dvm.mm.mapping">
             <i class="fa fa-download fa-fw"></i>
         </left-nav-item>
 
@@ -38,7 +38,7 @@
 
         <left-nav-item on-click="dvm.state.editMapping && dvm.state.selectedClassMappingId ? dvm.deleteEntity() : dvm.deleteMapping()"
                        nav-title="Delete Entity"
-                       is-disabled-when="(!dvm.state.editMapping && !dvm.manager.mapping) || (dvm.state.editMapping && !dvm.state.selectedClassMappingId) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.state.newProp) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.manager.getAllClassMappings(dvm.manager.mapping.jsonld).length === 1)">
+                       is-disabled-when="(!dvm.state.editMapping && !dvm.mm.mapping) || (dvm.state.editMapping && !dvm.state.selectedClassMappingId) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.state.newProp) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld).length === 1)">
             <i class="fa fa-trash-o fa-fw"></i>
         </left-nav-item>
     </ul>

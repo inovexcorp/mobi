@@ -53,6 +53,7 @@ describe('Edit Prop Form directive', function() {
 
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
+            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string')
         });
         it('should test whether property is an object property', function() {

@@ -61,6 +61,7 @@ describe('File Upload Overlay directive', function() {
             expect(ontologyManagerSvc.getClassProperty).toHaveBeenCalled();
             expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
         it('should upload a file', function() {
@@ -106,7 +107,7 @@ describe('File Upload Overlay directive', function() {
             mapperStateSvc.newMapping = true;
             var name = mapperStateSvc.selectedClassMappingId;
             controller.continue();
-            expect(mapperStateSvc.step).toBe(2);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
             expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(name);
             expect(mapperStateSvc.updateAvailableProps).not.toHaveBeenCalled();
@@ -115,7 +116,7 @@ describe('File Upload Overlay directive', function() {
             mappingManagerSvc.getAllClassMappings.and.returnValue([classObj])
             mapperStateSvc.newMapping = false;
             controller.continue();
-            expect(mapperStateSvc.step).toBe(4);
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
             expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
             expect(mapperStateSvc.selectedClassMappingId).toBe(classObj['@id']);
             expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
@@ -147,11 +148,11 @@ describe('File Upload Overlay directive', function() {
         it('depending on the type of file', function() {
             csvManagerSvc.fileObj = {name: 'test.csv'};
             scope.$digest();
-            expect(this.element.querySelectorAll('input[type=radio]').length).toBe(3);
+            expect(this.element.find('radio-button').length).toBe(3);
 
             csvManagerSvc.fileObj = {name: 'test.xls'};
             scope.$digest();
-            expect(this.element.querySelectorAll('input[type=radio]').length).toBe(0);
+            expect(this.element.find('radio-button').length).toBe(0);
         });
         it('depending on whether the file was uploaded correctly', function() {
             var controller = this.element.controller('fileUploadOverlay');

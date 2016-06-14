@@ -67,9 +67,13 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.getCachedSourceOntologies()).toEqual(undefined);
     });
     it('should restore the cached source ontology values to the current mapping', function() {
+        var ontologyId = mapperStateSvc.getCachedSourceOntologyId();
+        var ontologies = mapperStateSvc.getCachedSourceOntologies();
         mapperStateSvc.restoreCachedSourceOntologies();
-        expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.getCachedSourceOntologyId());
-        expect(mappingManagerSvc.sourceOntologies).toEqual(mapperStateSvc.getCachedSourceOntologies());
+        expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, ontologyId);
+        expect(mappingManagerSvc.sourceOntologies).toEqual(ontologies);
+        expect(mapperStateSvc.getCachedSourceOntologyId()).toBe('');
+        expect(mapperStateSvc.getCachedSourceOntologies()).toEqual(undefined);
     });
     it('should return a list of all the mapped column headers', function() {
         var dataMappings = [{'columnIndex': [{'@value': '0'}], index: 0}];
