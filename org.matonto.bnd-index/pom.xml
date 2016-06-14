@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.46-SNAPSHOT</version>
+        <version>1.0.47-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -160,6 +160,11 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>web.security</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

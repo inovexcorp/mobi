@@ -30,6 +30,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
 import java.util.List;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -48,6 +49,7 @@ public interface MappingRest {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieve list of all mapping IRIs")
     Response getMappingNames(@QueryParam("ids") List<String> idList);
 
@@ -62,6 +64,7 @@ public interface MappingRest {
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("user")
     @ApiOperation("Upload mapping sent as form data.")
     Response upload(@FormDataParam("file") InputStream fileInputStream,
                     @FormDataParam("file") FormDataContentDisposition fileDetail,
@@ -81,6 +84,7 @@ public interface MappingRest {
     @PUT
     @Path("{mappingName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("user")
     @ApiOperation("Replaces a mapping with a new mapping sent as form data")
     Response upload(@PathParam("mappingName") String mappingId,
                     @FormDataParam("file") InputStream fileInputStream,
@@ -96,6 +100,7 @@ public interface MappingRest {
     @GET
     @Path("{mappingName}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieve JSON-LD of an uploaded mapping")
     Response getMapping(@PathParam("mappingName") String mappingName);
 
@@ -108,6 +113,7 @@ public interface MappingRest {
     @GET
     @Path("{mappingName}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
+    @RolesAllowed("user")
     @ApiOperation("Download an uploaded mapping")
     Response downloadMapping(@PathParam("mappingName") String mappingName);
 
@@ -119,6 +125,7 @@ public interface MappingRest {
      */
     @DELETE
     @Path("{mappingName}")
+    @RolesAllowed("user")
     @ApiOperation("Delete an uploaded mapping")
     Response deleteMapping(@PathParam("mappingName") String mappingName);
 }

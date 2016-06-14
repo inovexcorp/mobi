@@ -81,40 +81,6 @@
         </service-properties>
     </service>
 
-    <!--&lt;!&ndash; User Filter &ndash;&gt;`-->
-    <!--<service id="verifyTokenFilter" interface="javax.servlet.Filter" ranking="3">-->
-        <!--<service-properties>-->
-            <!--<entry key="urlPatterns" value="/matontorest/user/current"/>-->
-        <!--</service-properties>-->
-        <!--<bean class="org.matonto.web.authentication.filter.VerifyToken"/>-->
-    <!--</service>-->
-
-    <!--<service id="genUnauthTokenFilter" interface="javax.servlet.Filter" ranking="2">-->
-        <!--<service-properties>-->
-            <!--<entry key="urlPatterns" value="/matontorest/user/current"/>-->
-            <!--<entry key="init.skipIfTokenExists" value="true"/>-->
-        <!--</service-properties>-->
-        <!--<bean class="org.matonto.web.authentication.filter.GenerateUnauthToken"/>-->
-    <!--</service>-->
-
-    <!--<service id="writePayloadFilter" interface="javax.servlet.Filter" ranking="1">-->
-        <!--<service-properties>-->
-            <!--<entry key="urlPatterns" value="/matontorest/user/current"/>-->
-        <!--</service-properties>-->
-        <!--<bean class="org.matonto.web.authentication.filter.WritePayload"/>-->
-    <!--</service>-->
-
-    <!-- REST Authorization Context -->
-    <bean id="restContext" class="org.matonto.web.authentication.context.RestTokenContext">
-        <property name="bundle" ref="blueprintBundle"/>
-        <property name="realm" ref="realmRef"/>
-    </bean>
-    <service id="restContextService" ref="restContext" interface="org.osgi.service.http.HttpContext">
-        <service-properties>
-            <entry key="httpContext.id" value="restCtxId"/>
-        </service-properties>
-    </service>
-
     <!-- UI Authorization Context -->
     <bean id="uiContext" class="org.matonto.web.authentication.context.UITokenContext">
         <property name="bundle" ref="blueprintBundle"/>

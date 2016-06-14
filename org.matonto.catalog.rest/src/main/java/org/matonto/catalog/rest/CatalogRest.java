@@ -30,6 +30,7 @@ import org.matonto.catalog.rest.jaxb.DistributionMarshaller;
 import org.matonto.rest.util.jaxb.PaginatedResults;
 import org.matonto.catalog.rest.jaxb.PublishedResourceMarshaller;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.util.Set;
@@ -51,6 +52,7 @@ public interface CatalogRest {
     @GET
     @Path("/resources")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieves the published catalog resources.")
     PaginatedResults<PublishedResourceMarshaller> listPublishedResources(
             @Context UriInfo uriInfo,
@@ -71,6 +73,7 @@ public interface CatalogRest {
     @GET
     @Path("/resources/{resourceId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieves the published catalog resource by its ID.")
     PublishedResourceMarshaller getPublishedResource(@PathParam("resourceId") String resourceId);
 
@@ -84,6 +87,7 @@ public interface CatalogRest {
     @POST
     @Path("/resources")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Publishes a new resource to the catalog.")
     Response createPublishedResource(PublishedResourceMarshaller resource,
                                      @DefaultValue("http://matonto.org/ontologies/catalog#PublishedResource") @QueryParam("type") String resourceType);
@@ -98,6 +102,7 @@ public interface CatalogRest {
     @DELETE
     @Path("/resources/{resourceId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Removes a published resource from the catalog.")
     Response deletePublishedResource(@PathParam("resourceId") String resourceId);
 
@@ -140,6 +145,7 @@ public interface CatalogRest {
     @GET
     @Path("/resources/{resourceId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieves all the distributions for the supplied resourceId.")
     Set<DistributionMarshaller> getDistributions(@PathParam("resourceId") String resourceId);
 
@@ -154,6 +160,7 @@ public interface CatalogRest {
     @POST
     @Path("/resources/{resourceId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Publishes a new distribution for the specified resource.")
     Response createDistribution(Distribution distribution,
                                 @PathParam("resourceId") String resourceId);
@@ -168,6 +175,7 @@ public interface CatalogRest {
     @DELETE
     @Path("/resources/{resourceId}/distributions")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Removes all the distribution from the specified resource.")
     Response deleteDistributions(@PathParam("resourceId") String resourceId);
 
@@ -183,6 +191,7 @@ public interface CatalogRest {
     @GET
     @Path("/resources/{resourceId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieves the published resource distribution by its ID.")
     DistributionMarshaller getDistribution(@PathParam("resourceId") String resourceId,
                                            @PathParam("distributionId") String distributionId);
@@ -199,6 +208,7 @@ public interface CatalogRest {
     @DELETE
     @Path("/resources/{resourceId}/distributions/{distributionId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieves the published catalog resource by its ID.")
     Response deleteDistribution(@PathParam("resourceId") String resourceId,
                                 @PathParam("distributionId") String distributionId);
@@ -229,6 +239,7 @@ public interface CatalogRest {
     @GET
     @Path("/resource-types")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieves all the available resource types.")
     Response getResourceTypes();
 
@@ -240,6 +251,7 @@ public interface CatalogRest {
     @GET
     @Path("/sort-options")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Retrieves all the available sorting options.")
     Response getSortOptions();
 }

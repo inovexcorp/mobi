@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.0.46-SNAPSHOT</version>
+    <version>1.0.47-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -70,6 +70,7 @@
         <module>org.matonto.index.dependency</module>
         <module>org.matonto.index.sesame4</module>
         <module>org.matonto.jaas</module>
+        <module>org.matonto.web.security</module>
     </modules>
 
     <properties>
