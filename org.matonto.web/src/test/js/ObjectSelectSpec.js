@@ -73,11 +73,6 @@ describe('Object Select directive', function() {
             scope.$digest();
             expect(scope.selectList).toEqual(['new']);
         });
-        it('bindModel should be two way bound', function() {
-            isolatedScope.bindModel = ['new'];
-            scope.$digest();
-            expect(scope.bindModel).toEqual(['new']);
-        });
     });
     describe('controller bound variables', function() {
         var controller;
@@ -94,6 +89,11 @@ describe('Object Select directive', function() {
             controller.ontologyId = 'new';
             scope.$digest();
             expect(scope.ontologyId).not.toEqual('new');
+        });
+        it('bindModel should be two way bound', function() {
+            controller.bindModel = ['new'];
+            scope.$digest();
+            expect(scope.bindModel).toEqual(['new']);
         });
     });
     describe('replaces the element with the correct html', function() {
