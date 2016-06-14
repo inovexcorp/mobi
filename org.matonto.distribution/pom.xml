@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.46-SNAPSHOT</version>
+        <version>1.0.47-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -156,6 +156,7 @@
                         <feature>jax-rs-connector</feature>
                         <feature>jax-rs-provider-multipart</feature>
                         <feature>jax-rs-provider-gson</feature>
+                        <feature>jax-rs-provider-security</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>
