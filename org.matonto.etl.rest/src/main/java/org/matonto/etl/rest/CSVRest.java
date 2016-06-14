@@ -6,6 +6,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -24,6 +25,7 @@ public interface CSVRest {
     */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("user")
     @ApiOperation("Upload delimited file sent as form data.")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
                     @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail);
@@ -39,6 +41,7 @@ public interface CSVRest {
     @PUT
     @Path("{documentName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("user")
     @ApiOperation("Replace an uploaded delimited file with another")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
                     @PathParam("documentName") String fileName);
@@ -59,6 +62,7 @@ public interface CSVRest {
     @GET
     @Path("{documentName}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation("Gather rows from an uploaded delimited document.")
     Response getRows(@PathParam("documentName") String fileName,
                      @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
@@ -80,6 +84,7 @@ public interface CSVRest {
     @Path("{documentName}/map-preview")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using mapping JSON-LD")
     Response etlFilePreview(@PathParam("documentName") String fileName,
                     @FormDataParam("jsonld") String jsonld,
@@ -102,6 +107,7 @@ public interface CSVRest {
     @GET
     @Path("{documentName}/map")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded mapping file")
     Response etlFile(@PathParam("documentName") String fileName,
                      @QueryParam("mappingName") String mappingLocalName,

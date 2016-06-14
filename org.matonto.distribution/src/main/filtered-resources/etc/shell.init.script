@@ -26,6 +26,7 @@ matonto-deploy-bundles = {
         org.matonto.catalog.rest \
         org.matonto.swagger.ui \
         org.matonto.web \
+        org.matonto.web.security \
         org.matonto.sparql.rest \
         org.matonto.jaas \
         com.eclipsesource.jaxrs.swagger-all 
