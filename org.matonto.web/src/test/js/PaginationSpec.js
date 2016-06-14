@@ -3,6 +3,7 @@ describe('Pagination directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('pagination');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Pagination directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/pagination/pagination.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

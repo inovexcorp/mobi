@@ -8,6 +8,7 @@ describe('Object Select directive', function() {
     injectHighlightFilter();
 
     beforeEach(function() {
+        module('templates');
         module('objectSelect');
         mockOntologyManager();
         mockSettingsManager();
@@ -26,8 +27,6 @@ describe('Object Select directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/objectSelect/objectSelect.html');
 
     beforeEach(function() {
         scope.changeEvent = jasmine.createSpy('changeEvent');

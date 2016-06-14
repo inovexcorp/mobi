@@ -8,6 +8,7 @@ describe('IRI Template Overlay directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('iriTemplateOverlay');
         mockMapperState();
         mockMappingManager();
@@ -24,8 +25,6 @@ describe('IRI Template Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html');
 
     describe('should intialize with the correct values', function() {
         it('based on the selected class mapping id', function() {

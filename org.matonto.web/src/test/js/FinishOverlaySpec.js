@@ -6,6 +6,7 @@ describe('Finish Overlay directive', function() {
         csvManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('finishOverlay');
         mockMappingManager();
         mockMapperState();
@@ -22,8 +23,6 @@ describe('Finish Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/finishOverlay/finishOverlay.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

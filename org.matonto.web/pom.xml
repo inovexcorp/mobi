@@ -5,7 +5,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.47</version>
+        <version>1.0.48</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -109,70 +109,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.github.klieber</groupId>
-                <artifactId>phantomjs-maven-plugin</artifactId>
-                <version>0.7</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>install</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <version>2.1.1</version>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.github.searls</groupId>
-                <artifactId>jasmine-maven-plugin</artifactId>
-                <version>2.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
-                    <webDriverCapabilities>
-                        <capability>
-                            <name>phantomjs.binary.path</name>
-                            <value>${phantomjs.binary}</value>
-                        </capability>
-                    </webDriverCapabilities>
-                    <customRunnerTemplate>${project.basedir}/src/test/js/CustomRunnerTemplate.template</customRunnerTemplate>
-                    <jsSrcDir>target/classes/build</jsSrcDir>
-                    <sourceIncludes>
-                        <include>js/app.module.js</include>
-                        <include>js/filters/*.js</include>
-                        <include>js/services/*.js</include>
-                        <include>js/directives/**/*.js</include>
-                        <include>modules/**/*.js</include>
-                        <include>**/*.js</include>
-                        <include>**/*.html</include>
-                    </sourceIncludes>
-                    <jsTestSrcDir>src/test/js</jsTestSrcDir>
-                    <specIncludes>
-                        <include>Shared.js</include>
-                        <include>*Spec.js</include>
-                    </specIncludes>
-                    <preloadSources>
-                        <source>js/lodash/lodash.min.js</source>
-                        <source>js/codemirror/codemirror.js</source>
-                        <source>js/angular/angular.min.js</source>
-                        <source>js/angular-mocks/angular-mocks.js</source>
-                        <source>js/angular-uuid/angular-uuid.js</source>
-                        <source>js/angular-cookies/angular-cookies.min.js</source>
-                        <source>js/angular-ui-codemirror/ui-codemirror.js</source>
-                        <source>js/angular-messages/angular-messages.min.js</source>
-                        <source>js/ui-select/select.min.js</source>
-                    </preloadSources>
-                    <format>progress</format>
-                </configuration>
             </plugin>
 
             <plugin>

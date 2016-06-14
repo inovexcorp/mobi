@@ -4,6 +4,7 @@ describe('Error Display directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('errorDisplay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -11,8 +12,6 @@ describe('Error Display directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/errorDisplay/errorDisplay.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

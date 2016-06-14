@@ -6,6 +6,7 @@ describe('Range Class Description directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('rangeClassDescription');
         mockOntologyManager();
         mockMappingManager();
@@ -20,8 +21,6 @@ describe('Range Class Description directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/rangeClassDescription/rangeClassDescription.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

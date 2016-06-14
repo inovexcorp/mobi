@@ -6,6 +6,7 @@ describe('SPARQL Result Table directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('sparqlResultTable');
         mockSparqlManager();
 
@@ -39,8 +40,6 @@ describe('SPARQL Result Table directive', function() {
 
         ];
     });
-
-    injectDirectiveTemplate('modules/sparql/directives/sparqlResultTable/sparqlResultTable.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
