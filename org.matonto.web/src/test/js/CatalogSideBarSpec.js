@@ -41,7 +41,7 @@ describe('Catalog Side Bar directive', function() {
             expect(this.element.hasClass('left-nav')).toBe(true);
         });
         it('with the correct number of nav items', function() {
-            expect(this.element.find('left-nav-item').length).toBe(2);
+            expect(this.element.find('left-nav-item').length).toBe(1);
         });
     });
 });
