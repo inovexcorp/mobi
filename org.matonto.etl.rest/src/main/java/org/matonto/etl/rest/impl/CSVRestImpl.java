@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -184,7 +185,7 @@ public class CSVRestImpl implements CSVRest {
             try {
                 Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
             } catch (IOException e) {
-                throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.INTERNAL_SERVER_ERROR);
             }
 
             return response;
@@ -329,9 +330,8 @@ public class CSVRestImpl implements CSVRest {
      * @return an InputStream object with the uploaded CSV file
      */
     private InputStream createExcelStream(File delimitedFile, boolean containsHeaders, boolean isPreview) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try {
-            Workbook wb = WorkbookFactory.create(delimitedFile);
+        try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            Workbook wb = WorkbookFactory.create(delimitedFile)) {
             // Only support single sheet files for now
             Sheet sheet = wb.getSheetAt(0);
             long mapRows = (isPreview) ? NUM_LINE_PREVIEW : sheet.getPhysicalNumberOfRows();
@@ -341,11 +341,10 @@ public class CSVRestImpl implements CSVRest {
             }
             wb.write(byteArrayOutputStream);
             byteArrayOutputStream.flush();
+            return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
         } catch (IOException | InvalidFormatException e) {
             throw ErrorUtils.sendError("Error creating preview file", Response.Status.BAD_REQUEST);
         }
-
-        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
     /**
