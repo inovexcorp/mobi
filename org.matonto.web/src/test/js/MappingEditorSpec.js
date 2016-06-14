@@ -7,6 +7,7 @@ describe('Mapping Editor directive', function() {
         ontologyManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('mappingEditor');
         mockMappingManager();
         mockMapperState();
@@ -25,8 +26,6 @@ describe('Mapping Editor directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mappingEditor/mappingEditor.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

@@ -8,6 +8,7 @@ describe('File Upload Overlay directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('fileUploadOverlay');
         mockMappingManager();
         mockMapperState();
@@ -26,8 +27,6 @@ describe('File Upload Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/fileUploadOverlay/fileUploadOverlay.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

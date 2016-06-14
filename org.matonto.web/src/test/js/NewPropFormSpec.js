@@ -8,6 +8,7 @@ describe('New Prop Form directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('newPropForm');
         mockOntologyManager();
         mockMappingManager();
@@ -26,8 +27,6 @@ describe('New Prop Form directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/newPropForm/newPropForm.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

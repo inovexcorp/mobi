@@ -7,6 +7,7 @@ describe('Mapping Preview directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('mappingPreview');
         mockOntologyManager();
         mockMappingManager();
@@ -23,8 +24,6 @@ describe('Mapping Preview directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mappingPreview/mappingPreview.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

@@ -5,6 +5,7 @@ describe('Invalid Ontology Overlay directive', function() {
         mapperStateSvc;
 
     beforeEach(function() {
+        module('templates');
         module('invalidOntologyOverlay');
         mockMappingManager();
         mockMapperState();
@@ -19,8 +20,6 @@ describe('Invalid Ontology Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/invalidOntologyOverlay/invalidOntologyOverlay.html');
 
     describe('controller methods', function() {
         beforeEach(function() {
