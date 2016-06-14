@@ -6,6 +6,7 @@ describe('Ontology Download Overlay directive', function() {
     injectRegexConstant();
 
     beforeEach(function() {
+        module('templates');
         module('ontologyDownloadOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -13,8 +14,6 @@ describe('Ontology Download Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/ontologyDownloadOverlay/ontologyDownloadOverlay.html');
 
     beforeEach(function() {
         element = $compile(angular.element('<ontology-download-overlay></ontology-download-overlay>'))(scope);

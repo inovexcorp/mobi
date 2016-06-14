@@ -6,12 +6,12 @@
         <div class="controls form-group">
             <label>
                 Serialization
-                <select ng-model="serializeOption" class="form-control">
+                <select ng-model="dvm.serializeOption" class="form-control">
                     <option ng-repeat="option in dvm.options" value="{{option.value}}">{{option.name}}</option>
                 </select>
             </label>
-            <button class="btn btn-default" ng-click="createPreview({format: serializeOption})">Refresh</button>
+            <button class="btn btn-default" ng-click="dvm.generatePreview()">Refresh</button>
         </div>
-        <textarea format-rdf id="text-preview" class="form-control" ng-style="{'height': dvm.textareaHeight + 'px'}" ng-model="preview" readonly></textarea>
+        <textarea format-rdf id="text-preview" class="form-control" ng-model="dvm.preview" readonly></textarea>
     </form>
 </div>

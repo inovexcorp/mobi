@@ -128,7 +128,7 @@ public class CatalogRestImpl implements CatalogRest {
         marshaller.setStart(start);
         marshaller.setTotalSize(searchResults.getTotalSize());
 
-        marshaller.setLinks(LinksUtils.buildLinks(uriInfo, size, limit, start));
+        marshaller.setLinks(LinksUtils.buildLinks(uriInfo, size, searchResults.getTotalSize(), limit, start));
 
         return marshaller;
     }
