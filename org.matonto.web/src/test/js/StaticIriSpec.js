@@ -7,6 +7,7 @@ describe('Static IRI directive', function() {
     injectSplitIRIFilter();
 
     beforeEach(function() {
+        module('templates');
         module('staticIri');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -14,8 +15,6 @@ describe('Static IRI directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/staticIri/staticIri.html');
 
     beforeEach(function() {
         scope.onEdit = jasmine.createSpy('onEdit');

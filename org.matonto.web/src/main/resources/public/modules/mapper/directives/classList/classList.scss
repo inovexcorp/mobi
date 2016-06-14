@@ -1,17 +1,13 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.class-list-container {
-    width: 25%;
-    padding: 0.5em;
-    height: 100%;
-    float: left;
-    border: 1px solid $gray-light;
+.class-list {
     overflow-y: auto;
 
-    .class-list {
+    .list {
         li {
             text-overflow: ellipsis;
+            width: auto;
         }
         .props li {
             margin-left: 1em;
@@ -19,14 +15,11 @@
             position: relative;
             text-overflow: ellipsis;
 
-            .delete {
-                background-color: transparent;
-                border: none;
-                position: absolute;
-                right: 0;
+            a.invalid {
+                color: $brand-danger;
 
                 &:hover {
-                    color: $gray-lighter;
+                    color: #fff;
                 }
             }
         }
