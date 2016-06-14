@@ -4,6 +4,7 @@ describe('Result List directive', function() {
         catalogManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('resultList');
         mockOntologyManager();
         mockCatalogManager();
@@ -17,8 +18,6 @@ describe('Result List directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/catalog/directives/resultList/resultList.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

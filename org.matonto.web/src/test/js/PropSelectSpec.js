@@ -4,6 +4,7 @@ describe('Prop Select directive', function() {
         ontologyManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('propSelect');
         mockOntologyManager();
 
@@ -21,8 +22,6 @@ describe('Prop Select directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/propSelect/propSelect.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

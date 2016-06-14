@@ -4,6 +4,7 @@ describe('Resource Type directive', function() {
         catalogManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('resourceType');
         mockCatalogManager();
 
@@ -16,8 +17,6 @@ describe('Resource Type directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/catalog/directives/resourceType/resourceType.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

@@ -6,6 +6,7 @@ describe('Property Editor directive', function() {
     injectRegexConstant();
 
     beforeEach(function() {
+        module('templates');
         module('propertyEditor');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -13,8 +14,6 @@ describe('Property Editor directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/propertyEditor/propertyEditor.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

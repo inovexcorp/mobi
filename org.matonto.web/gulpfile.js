@@ -15,7 +15,9 @@ var gulp = require('gulp'),
     rename = require('gulp-rename'),
     sass = require('gulp-sass'),
     uglify = require('gulp-uglify'),
-    ngAnnotate = require('gulp-ng-annotate');
+    ngAnnotate = require('gulp-ng-annotate'),
+    jasmine = require('gulp-jasmine-phantom'),
+    templateCache = require('gulp-angular-templatecache');
 
 // Project specific path variables
 var src = './src/main/resources/public/',
@@ -71,6 +73,17 @@ var jsFiles = function(prefix) {
         ]
     };
 
+//Method to run jasmine tests
+var runJasmine = function(vendorFiles) {
+    return gulp.src('./src/test/js/*Spec.js')
+        .pipe(jasmine({
+            integration: true,
+            abortOnFail: true,
+            vendor: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']),
+            jasmineVersion: '2.1'
+        }));
+}
+
 // Inject method for minified and unminified
 var injectFiles = function(files) {
     return gulp.src(dest + 'index.html')
@@ -80,6 +93,20 @@ var injectFiles = function(files) {
         ))
         .pipe(gulp.dest(dest));
 };
+
+gulp.task('cacheTemplates', function() {
+    return gulp.src(src + '**/*.html')
+        .pipe(templateCache({standalone: true}))
+        .pipe(gulp.dest('./target/'));
+});
+
+gulp.task('jasmine-minified', ['cacheTemplates', 'minify-scripts'], function() {
+    return runJasmine([dest + '**/*.js']);
+});
+
+gulp.task('jasmine-unminified', ['cacheTemplates', 'move-custom-js'], function() {
+    return runJasmine(nodeJsFiles(nodeDir).concat(jsFiles(dest)));
+});
 
 // Concatenate and minifies JS Files
 gulp.task('minify-scripts', function() {
@@ -195,7 +222,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
+gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);

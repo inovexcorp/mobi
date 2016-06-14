@@ -5,6 +5,7 @@ describe('Mapping Name Overlay directive', function() {
         mapperStateSvc;
 
     beforeEach(function() {
+        module('templates');
         module('mappingNameOverlay');
         mockMappingManager();
         mockMapperState();
@@ -19,8 +20,6 @@ describe('Mapping Name Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mappingNameOverlay/mappingNameOverlay.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

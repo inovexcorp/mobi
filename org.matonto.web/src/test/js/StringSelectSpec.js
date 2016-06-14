@@ -9,6 +9,7 @@ describe('String Select directive', function() {
     injectSplitIRIFilter();
 
     beforeEach(function() {
+        module('templates');
         module('stringSelect');
 
         module(function($provide) {
@@ -23,8 +24,6 @@ describe('String Select directive', function() {
             $filter = _$filter_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/stringSelect/stringSelect.html');
 
     beforeEach(function() {
         scope.bindModel = '';

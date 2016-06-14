@@ -8,6 +8,7 @@ describe('Mapping Overlays directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('mappingOverlays');
         mockOntologyManager();
         mockMappingManager();
@@ -26,8 +27,6 @@ describe('Mapping Overlays directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mappingOverlays/mappingOverlays.html');
 
     describe('controller methods', function() {
         beforeEach(function() {
