@@ -1,5 +1,5 @@
 
-Lists of 312 third-party dependencies.
+Lists of 313 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (Unknown license) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -10,6 +10,8 @@ Lists of 312 third-party dependencies.
      (Eclipse Public License - v 1.0) (GNU Lesser General Public License) Logback Core Module (ch.qos.logback:logback-core:1.1.2 - http://logback.qos.ch)
      (The Apache Software License, Version 2.0) JCommander (com.beust:jcommander:1.27 - http://beust.com/jcommander)
      (Eclipse Public License - v 1.0) OSGi JAX-RS Features (com.eclipsesource.jaxrs:features:5.3 - https://github.com/hstaudacher/osgi-jax-rs-connector)
+     (COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL - Version 1.1)) (GNU GENERAL PUBLIC LICENSE (GPL Version 2, June 1991)) Jersey All (Rebundled) (com.eclipsesource.jaxrs:jersey-all:2.18 - https://github.com/hstaudacher/osgi-jax-rs-connector)
+     (Eclipse Public License - v 1.0) OSGi JAX-RS Security Provider (com.eclipsesource.jaxrs:provider-security:2.2 - https://github.com/hstaudacher/osgi-jax-rs-connector)
      (GNU Lesser General Public License, Version 2.1) (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.3.0 - http://wiki.fasterxml.com/JacksonHome)
      (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.6.3 - http://github.com/FasterXML/jackson)
      (The Apache Software License, Version 2.0) Jackson-core (com.fasterxml.jackson.core:jackson-core:2.4.4 - https://github.com/FasterXML/jackson)
@@ -49,7 +51,6 @@ Lists of 312 third-party dependencies.
      (The Apache Software License, Version 2.0) swagger-annotations (io.swagger:swagger-annotations:1.5.7 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
      (CDDL + GPLv2 with classpath exception) javax.annotation API (javax.annotation:javax.annotation-api:1.2 - http://jcp.org/en/jsr/detail?id=250)
      (The Apache Software License, Version 2.0) javax.inject (javax.inject:javax.inject:1 - http://code.google.com/p/atinject/)
-     (CDDL + GPLv2 with classpath exception) Java Servlet API (javax.servlet:javax.servlet-api:3.0.1 - http://servlet-spec.java.net)
      (CDDL + GPLv2 with classpath exception) Java Servlet API (javax.servlet:javax.servlet-api:3.1.0 - http://servlet-spec.java.net)
      (Unknown license) jstl (javax.servlet:jstl:1.1.2 - no url defined)
      (Unknown license) servlet-api (javax.servlet:servlet-api:2.3 - no url defined)

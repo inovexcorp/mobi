@@ -1,6 +1,15 @@
 
-Lists of 4 third-party dependencies.
+Lists of 13 third-party dependencies.
      (Apache License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
+     (The Apache Software License, Version 2.0) Nimbus JOSE+JWT (com.nimbusds:nimbus-jose-jwt:4.11 - https://bitbucket.org/connect2id/nimbus-jose-jwt)
+     (The Apache Software License, Version 2.0) Commons IO (commons-io:commons-io:2.4 - http://commons.apache.org/io/)
+     (CDDL + GPLv2 with classpath exception) Java Servlet API (javax.servlet:javax.servlet-api:3.1.0 - http://servlet-spec.java.net)
+     (CDDL 1.1) (GPL2 w/ CPE) javax.ws.rs-api (javax.ws.rs:javax.ws.rs-api:2.0.1 - http://jax-rs-spec.java.net)
+     (The Apache Software License, Version 2.0) Apache Log4j (log4j:log4j:1.2.17 - http://logging.apache.org/log4j/1.2/)
+     (Unknown license) "Java Concurrency in Practice" book annotations (net.jcip:jcip-annotations:1.0 - http://jcip.net/)
+     (The Apache Software License, Version 2.0) JSON Small and Fast Parser (net.minidev:json-smart:1.3.1 - http://json-smart/)
+     (The Apache Software License, Version 2.0) Apache Felix File Install (org.apache.felix:org.apache.felix.fileinstall:3.5.0 - http://felix.apache.org/site/apache-felix-file-install.html)
      (Apache License, Version 2.0) Apache Karaf :: JAAS :: Boot (org.apache.karaf.jaas:org.apache.karaf.jaas.boot:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.boot/)
      (Apache License, Version 2.0) Apache Karaf :: JAAS :: Config (org.apache.karaf.jaas:org.apache.karaf.jaas.config:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.config/)
+     (Apache License, Version 2.0) Apache Karaf :: JAAS :: Modules (org.apache.karaf.jaas:org.apache.karaf.jaas.modules:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.modules/)
      (Apache License, Version 2.0) org.osgi.core (org.osgi:org.osgi.core:6.0.0 - http://www.osgi.org)

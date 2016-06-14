@@ -1,5 +1,5 @@
 
-Lists of 129 third-party dependencies.
+Lists of 132 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (Unknown license) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (ASF 2.0) Code Generation Library (cglib:cglib:3.1 - http://cglib.sourceforge.net/)
@@ -34,6 +34,7 @@ Lists of 129 third-party dependencies.
      (The Apache Software License, Version 2.0) ezmorph (net.sf.ezmorph:ezmorph:1.0.6 - http://ezmorph.sourceforge.net)
      (The Apache Software License, Version 2.0) Apache Aries Blueprint Bundle (org.apache.aries.blueprint:org.apache.aries.blueprint:1.1.0 - http://aries.apache.org/default-parent/java5-parent/org.apache.aries.blueprint)
      (Apache License, Version 2.0) Apache Commons Lang (org.apache.commons:commons-lang3:3.4 - http://commons.apache.org/proper/commons-lang/)
+     (The Apache Software License, Version 2.0) Apache Felix File Install (org.apache.felix:org.apache.felix.fileinstall:3.5.0 - http://felix.apache.org/site/apache-felix-file-install.html)
      (Apache License) Fluent HttpClient (org.apache.httpcomponents:fluent-hc:4.2.5 - http://hc.apache.org/httpcomponents-client)
      (Apache License, Version 2.0) Apache HttpClient (org.apache.httpcomponents:httpclient:4.5.2 - http://hc.apache.org/httpcomponents-client)
      (Apache License) HttpClient Cache (org.apache.httpcomponents:httpclient-cache:4.2.5 - http://hc.apache.org/httpcomponents-client)
@@ -42,7 +43,9 @@ Lists of 129 third-party dependencies.
      (Apache License) Apache HttpCore NIO (org.apache.httpcomponents:httpcore-nio:4.2.5 - http://hc.apache.org/httpcomponents-core-ga)
      (Apache License) Apache HttpCore OSGi bundle (org.apache.httpcomponents:httpcore-osgi:4.2.5 - http://hc.apache.org/httpcomponents-core-ga)
      (Apache License) HttpMime (org.apache.httpcomponents:httpmime:4.2.5 - http://hc.apache.org/httpcomponents-client)
+     (Apache License, Version 2.0) Apache Karaf :: JAAS :: Boot (org.apache.karaf.jaas:org.apache.karaf.jaas.boot:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.boot/)
      (Apache License, Version 2.0) Apache Karaf :: JAAS :: Config (org.apache.karaf.jaas:org.apache.karaf.jaas.config:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.config/)
+     (Apache License, Version 2.0) Apache Karaf :: JAAS :: Modules (org.apache.karaf.jaas:org.apache.karaf.jaas.modules:4.0.2 - http://www.apache.org/karaf/jaas/org.apache.karaf.jaas.modules/)
      (Apache 2) Lucene Common Analyzers (org.apache.lucene:lucene-analyzers-common:4.10.4 - http://lucene.apache.org/lucene-parent/lucene-analyzers-common)
      (Apache 2) Lucene Core (org.apache.lucene:lucene-core:4.10.4 - http://lucene.apache.org/lucene-parent/lucene-core)
      (Apache 2) Lucene Highlighter (org.apache.lucene:lucene-highlighter:4.10.4 - http://lucene.apache.org/lucene-parent/lucene-highlighter)

@@ -6,7 +6,7 @@ Lists of 33 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache Commons Logging (commons-logging:commons-logging:1.2 - http://commons.apache.org/proper/commons-logging/)
      (GNU General Public License, version 2, with the Classpath Exception) Checker framework (edu.washington.cs.types.checker:checker-framework:1.7.5 - http://types.cs.washington.edu/checker-framework)
      (CDDL + GPLv2 with classpath exception) javax.annotation API (javax.annotation:javax.annotation-api:1.2 - http://jcp.org/en/jsr/detail?id=250)
-     (CDDL + GPLv2 with classpath exception) Java Servlet API (javax.servlet:javax.servlet-api:3.0.1 - http://servlet-spec.java.net)
+     (CDDL + GPLv2 with classpath exception) Java Servlet API (javax.servlet:javax.servlet-api:3.1.0 - http://servlet-spec.java.net)
      (The Apache Software License, Version 2.0) Bean Validation API (javax.validation:validation-api:1.1.0.Final - http://beanvalidation.org)
      (CDDL 1.1) (GPL2 w/ CPE) javax.ws.rs-api (javax.ws.rs:javax.ws.rs-api:2.0.1 - http://jax-rs-spec.java.net)
      (Eclipse Public License 1.0) JUnit (junit:junit:4.12 - http://junit.org)
