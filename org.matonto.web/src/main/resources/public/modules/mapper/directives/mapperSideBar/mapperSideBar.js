@@ -31,9 +31,9 @@
          */
         .directive('mapperSideBar', mapperSideBar);
 
-        mapperSideBar.$inject = ['mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        mapperSideBar.$inject = ['$window', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function mapperSideBar(mapperStateService, mappingManagerService, ontologyManagerService) {
+        function mapperSideBar($window, mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -45,6 +45,9 @@
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
 
+                    dvm.openDocs = function() {
+                        $window.open("http://docs.matonto.org/#mapping_tool");
+                    }
                     dvm.noOntologies = function() {
                         return _.concat(dvm.om.getList(), dvm.om.getOntologyIds()).length === 0;
                     }

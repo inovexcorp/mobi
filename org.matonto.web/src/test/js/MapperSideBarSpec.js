@@ -3,7 +3,8 @@ describe('Mapper Side Bar directive', function() {
         scope,
         mappingManagerSvc,
         mapperStateSvc,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        windowSvc;
 
     mockPrefixes();
     beforeEach(function() {
@@ -12,6 +13,11 @@ describe('Mapper Side Bar directive', function() {
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();
+        module(function($provide) {
+            $provide.service('$window', function() {
+                this.open = jasmine.createSpy('open');
+            });
+        });
 
         inject(function(_mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
             mappingManagerSvc = _mappingManagerService_;
@@ -19,9 +25,10 @@ describe('Mapper Side Bar directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _$window_ {
             $compile = _$compile_;
             scope = _$rootScope_;
+            windowSvc = _$window_;
         });
     });
 
@@ -102,6 +109,11 @@ describe('Mapper Side Bar directive', function() {
             controller.deleteMapping();
             expect(mapperStateSvc.displayDeleteMappingConfirm).toBe(true);
         });
+        it('should open the Mapping Tool documentation', function() {
+            var controller = this.element.controller('mapperSideBar');
+            controller.openDocs();
+            expect(windowSvc.open).toHaveBeenCalledWith('http://docs.matonto.org/#mapping_tool');
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
@@ -113,7 +125,7 @@ describe('Mapper Side Bar directive', function() {
             expect(this.element.hasClass('left-nav')).toBe(true);
         });
         it('with the correct number of nav items', function() {
-            expect(this.element.find('left-nav-item').length).toBe(5);
+            expect(this.element.find('left-nav-item').length).toBe(6);
         });
     });
 });

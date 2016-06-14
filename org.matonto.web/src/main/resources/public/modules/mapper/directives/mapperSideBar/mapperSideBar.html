@@ -41,5 +41,10 @@
                        is-disabled-when="(!dvm.state.editMapping && !dvm.mm.mapping) || (dvm.state.editMapping && !dvm.state.selectedClassMappingId) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.state.newProp) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld).length === 1)">
             <i class="fa fa-trash-o fa-fw"></i>
         </left-nav-item>
+
+        <left-nav-item on-click="dvm.openDocs()"
+            nav-title="About the Mapping Tool">
+            <i class="fa fa-question-circle-o fa-fw"></i>
+        </left-nav-item>
     </ul>
 </aside>
