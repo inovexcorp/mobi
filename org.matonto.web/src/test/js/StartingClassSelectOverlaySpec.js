@@ -1,19 +1,26 @@
 describe('Starting Class Select Overlay directive', function() {
     var $compile,
         scope,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        mappingManagerSvc,
+        mapperStateSvc;
 
+    mockPrefixes();
     beforeEach(function() {
         module('startingClassSelectOverlay');
         mockOntologyManager();
+        mockMappingManager();
+        mockMapperState();
 
         module(function($provide) {
             $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
         
-        inject(function(_ontologyManagerService_) {
+        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
             ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -24,39 +31,10 @@ describe('Starting Class Select Overlay directive', function() {
 
     injectDirectiveTemplate('modules/mapper/directives/startingClassSelectOverlay/startingClassSelectOverlay.html');
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.onClickBack = jasmine.createSpy('onClickBack');
-            scope.onClickContinue = jasmine.createSpy('onClickContinue');
-            scope.ontologies = [{'@id': ''}];
-
-            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontologies="ontologies"></starting-class-select-overlay>'))(scope);
-            scope.$digest();
-        });
-
-        it('onClickBack should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.onClickBack();
-
-            expect(scope.onClickBack).toHaveBeenCalled();
-        });
-        it('onClickContinue should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.onClickContinue();
-
-            expect(scope.onClickContinue).toHaveBeenCalled();
-        });
-        it('ontologies should be two way bound', function() {
-            var controller = this.element.controller('startingClassSelectOverlay');
-            controller.ontologies = [{'@id': 'test'}];
-            scope.$digest();
-            expect(scope.ontologies).toEqual([{'@id': 'test'}]);
-        });
-    });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.ontologies = [{'@id': ''}];
-            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontologies="ontologies"></starting-class-select-overlay>'))(scope);
+            mappingManagerSvc.mapping = {jsonld: []};
+            this.element = $compile(angular.element('<starting-class-select-overlay></starting-class-select-overlay>'))(scope);
             scope.$digest();
         });
         it('should get the id of the ontology with a class', function() {
@@ -69,20 +47,48 @@ describe('Starting Class Select Overlay directive', function() {
             ontologyManagerSvc.getClasses.calls.reset();
             var controller = this.element.controller('startingClassSelectOverlay');
             var result = controller.getClasses();
-            expect(ontologyManagerSvc.getClasses.calls.count()).toBe(scope.ontologies.length);
+            expect(ontologyManagerSvc.getClasses.calls.count()).toBe(mappingManagerSvc.sourceOntologies.length);
             expect(Array.isArray(result)).toBe(true);
         });
-        it('should get the name of the passed class', function() {
+        it('should set the correct state for going back', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
-            var result = controller.getName({});
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({});
-            expect(typeof result).toBe('string');
+            controller.back();
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
+        });
+        it('should set the correct state for continuing', function() {
+            var controller = this.element.controller('startingClassSelectOverlay');
+            mapperStateSvc.changeOntology = false;
+            controller.selectedClass = {'@id': ''};
+            controller.continue();
+            expect(mapperStateSvc.clearCachedSourceOntologies).not.toHaveBeenCalled();
+            expect(mappingManagerSvc.getSourceOntologyId).not.toHaveBeenCalled();
+            expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
+            expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
+            expect(mapperStateSvc.changedMapping).not.toHaveBeenCalled();
+            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalledWith(mappingManagerSvc.sourceOntologies, controller.selectedClass['@id']);
+            expect(mappingManagerSvc.addClass).toHaveBeenCalled();
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+
+            mapperStateSvc.changeOntology = true;
+            controller.continue();
+            expect(mapperStateSvc.clearCachedSourceOntologies).toHaveBeenCalled();
+            expect(mappingManagerSvc.getSourceOntologyId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
+            expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+            expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalled();
+            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalledWith(mappingManagerSvc.sourceOntologies, controller.selectedClass['@id']);
+            expect(mappingManagerSvc.addClass).toHaveBeenCalled();
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.ontologies = [{'@id': ''}];
-            this.element = $compile(angular.element('<starting-class-select-overlay on-click-back="onClickBack()" on-click-continue="onClickContinue(classId)" ontologies="ontologies"></starting-class-select-overlay>'))(scope);
+            mappingManagerSvc.mapping = {jsonld: []};
+            this.element = $compile(angular.element('<starting-class-select-overlay></starting-class-select-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
