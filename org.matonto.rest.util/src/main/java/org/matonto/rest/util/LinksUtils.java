@@ -38,7 +38,7 @@ public class LinksUtils {
      * @param start the starting index of the results.
      * @return Links for the provided details.
      */
-    public static Links buildLinks(UriInfo uriInfo, int size, int limit, int start) {
+    public static Links buildLinks(UriInfo uriInfo, int size, int totalSize, int limit, int start) {
         String path = uriInfo.getPath();
 
         Links links = new Links();
@@ -46,7 +46,7 @@ public class LinksUtils {
         links.setSelf(uriInfo.getAbsolutePath().toString());
         links.setContext(path);
 
-        if (size == limit) {
+        if (size == limit && totalSize - (start + limit) > 0) {
             String next = path + "?" + buildQueryString(uriInfo.getQueryParameters(), start + limit);
             links.setNext(next);
         }
