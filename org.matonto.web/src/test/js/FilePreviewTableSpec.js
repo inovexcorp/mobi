@@ -7,6 +7,7 @@ describe('File Preview Table directive', function() {
         csvManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('filePreviewTable');
         mockCsvManager();
         mockOntologyManager();
@@ -25,8 +26,6 @@ describe('File Preview Table directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/filePreviewTable/filePreviewTable.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

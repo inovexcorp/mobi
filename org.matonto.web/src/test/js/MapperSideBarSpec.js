@@ -7,6 +7,7 @@ describe('Mapper Side Bar directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('mapperSideBar');
         mockMappingManager();
         mockMapperState();
@@ -23,8 +24,6 @@ describe('Mapper Side Bar directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mapperSideBar/mapperSideBar.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

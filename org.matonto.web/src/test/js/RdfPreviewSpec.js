@@ -6,6 +6,7 @@ describe('RDF Preview directive', function() {
         mappingManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('rdfPreview');
         mockMappingManager();
         mockCsvManager();
@@ -24,8 +25,6 @@ describe('RDF Preview directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/rdfPreview/rdfPreview.html');
 
     describe('controller methods', function() {
         it('should generate an RDF preview', function() {

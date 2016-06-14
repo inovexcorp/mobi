@@ -3,6 +3,7 @@ describe('Column Select directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('columnSelect');
 
         module(function($provide) {
@@ -15,8 +16,6 @@ describe('Column Select directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/columnSelect/columnSelect.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

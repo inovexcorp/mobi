@@ -3,6 +3,7 @@ describe('Tab Button directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('tabButton');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Tab Button directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/tabButton/tabButton.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

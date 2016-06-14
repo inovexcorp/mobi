@@ -6,6 +6,7 @@ describe('Mapping List directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('mappingList');
         mockMappingManager();
         mockMapperState();
@@ -20,8 +21,6 @@ describe('Mapping List directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mappingList/mappingList.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

@@ -6,6 +6,7 @@ describe('Tree Item directive', function() {
     injectRegexConstant();
 
     beforeEach(function() {
+        module('templates');
         module('treeItem');
         mockSettingsManager();
         mockOntologyManager();
@@ -15,8 +16,6 @@ describe('Tree Item directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/treeItem/treeItem.html');
 
     describe('in isolated scope', function() {
         var isolatedScope;

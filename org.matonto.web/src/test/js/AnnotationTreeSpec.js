@@ -4,6 +4,7 @@ describe('Annotation Tree directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('annotationTree');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -22,8 +23,6 @@ describe('Annotation Tree directive', function() {
         }
 
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/annotationTree/annotationTree.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

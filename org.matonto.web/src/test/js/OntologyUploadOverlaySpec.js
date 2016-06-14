@@ -4,6 +4,7 @@ describe('Ontology Upload Overlay directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('ontologyUploadOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -12,8 +13,6 @@ describe('Ontology Upload Overlay directive', function() {
         });
 
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/ontologyUploadOverlay/ontologyUploadOverlay.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

@@ -7,6 +7,7 @@ describe('Starting Class Select Overlay directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('startingClassSelectOverlay');
         mockOntologyManager();
         mockMappingManager();
@@ -28,8 +29,6 @@ describe('Starting Class Select Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/startingClassSelectOverlay/startingClassSelectOverlay.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

@@ -11,6 +11,7 @@ describe('Ontology Select Overlay directive', function() {
     injectHighlightFilter();
 
     beforeEach(function() {
+        module('templates');
         module('ontologySelectOverlay');
         mockOntologyManager();
         mockMappingManager();
@@ -27,8 +28,6 @@ describe('Ontology Select Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/ontologySelectOverlay/ontologySelectOverlay.html');
 
     describe('should intialize with the correct values', function() {
         it('using opened and closed ontologies', function() {
