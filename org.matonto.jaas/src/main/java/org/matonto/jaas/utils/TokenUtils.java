@@ -1,4 +1,4 @@
-package org.matonto.web.authentication.utils;
+package org.matonto.jaas.utils;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -7,17 +7,18 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 public class TokenUtils {
-
     private static final Logger LOG = Logger.getLogger(TokenUtils.class.getName());
 
     // Generate random 256-bit (32-byte) shared secret
@@ -60,6 +61,33 @@ public class TokenUtils {
         }
 
         return null;
+    }
+
+    public static String getTokenString(ContainerRequestContext req) {
+        javax.ws.rs.core.Cookie cookie = req.getCookies().get(TOKEN_NAME);
+
+        if (cookie == null) {
+            LOG.debug("MatOnto web token cookie not found.");
+            return null;
+        } else {
+            return cookie.getValue();
+        }
+    }
+
+    public static Optional<SignedJWT> verifyToken(String tokenString) throws ParseException, JOSEException {
+        if (tokenString == null) {
+            return Optional.empty();
+        }
+
+        SignedJWT signedJWT = SignedJWT.parse(tokenString);
+        JWSVerifier verifier = new MACVerifier(KEY);
+
+        // Verify Token
+        if (signedJWT.verify(verifier)) {
+            return Optional.of(signedJWT);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public static Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException {
@@ -119,6 +147,7 @@ public class TokenUtils {
     public static Cookie createSecureTokenCookie(SignedJWT signedJWT) {
         Cookie cookie = new Cookie(TOKEN_NAME, signedJWT.serialize());
         cookie.setSecure(true);
+        cookie.setPath("/");
 
         return cookie;
     }
@@ -127,6 +156,7 @@ public class TokenUtils {
         String payload = token.getPayload().toString();
         response.getWriter().write(payload);
         response.getWriter().flush();
+        response.setContentType(MediaType.APPLICATION_JSON);
     }
 
     /**

@@ -2,12 +2,12 @@ package org.matonto.web.authentication.filter;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.log4j.Logger;
-import org.matonto.web.authentication.utils.TokenUtils;
+import org.matonto.jaas.utils.TokenUtils;
 
-import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 public class GenerateUnauthToken implements Filter {
 
