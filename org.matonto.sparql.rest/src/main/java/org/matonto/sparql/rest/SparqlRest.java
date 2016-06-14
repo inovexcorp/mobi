@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import net.sf.json.JSONObject;
 import org.matonto.sparql.rest.jaxb.SparqlPaginatedResults;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -23,6 +24,7 @@ public interface SparqlRest {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation(value = "Retrieves the results of the provided SPARQL query.")
     Response queryRdf(@QueryParam("query") String queryString);
 
@@ -36,6 +38,7 @@ public interface SparqlRest {
     @GET
     @Path("/page")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation(value = "Retrieves the paged results of the provided SPARQL query.")
     SparqlPaginatedResults<JSONObject> getPagedResults(
             @QueryParam("query") String queryString,
