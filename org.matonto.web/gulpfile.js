@@ -49,6 +49,7 @@ var jsFiles = function(prefix) {
             prefix + 'codemirror/**/matchbrackets.js',
             prefix + 'angular/**/angular.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
+            prefix + 'angular-animate/**/angular-animate.js',
             prefix + 'angular-ui-router/**/angular-ui-router.min.js',
             prefix + 'angular-uuid/**/angular-uuid.js',
             prefix + 'angular-cookies/**/angular-cookies.min.js',

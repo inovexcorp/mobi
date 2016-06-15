@@ -5,6 +5,7 @@
         .module('app', [
             'angular-uuid',
             'ngCookies',
+            'ngAnimate',
             'catalog',
             'home',
             'login',
