@@ -40,8 +40,8 @@
                 replace: true,
                 transclude: true,
                 scope: {
-                    moduleName: '=',
-                    docUrl: '=',
+                    moduleName: '@',
+                    docUrl: '@',
                 },
                 link: function(scope, el, attrs, ctrl) {
                     scope.openDocs = function() {

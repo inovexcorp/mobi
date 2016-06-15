@@ -24,26 +24,26 @@ describe('Left Nav directive', function() {
             scope.moduleName = '';
             scope.docUrl = '';
 
-            this.element = $compile(angular.element('<left-nav module-name="moduleName" doc-url="docUrl"></left-nav>'))(scope);
+            this.element = $compile(angular.element('<left-nav module-name="{{moduleName}}" doc-url="{{docUrl}}"></left-nav>'))(scope);
             scope.$digest();
         });
-        it('moduleName should be two way bound', function() {
+        it('moduleName should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.moduleName = 'name';
             scope.$digest();
-            expect(scope.moduleName).toBe('name');
+            expect(scope.moduleName).not.toBe('name');
         });
-        it('docUrl should be two way bound', function() {
+        it('docUrl should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.docUrl = 'url';
             scope.$digest();
-            expect(scope.docUrl).toBe('url');
+            expect(scope.docUrl).not.toBe('url');
         });
     });
     describe('scope methods', function() {
         it('open the passed in doc url', function() {
             scope.docUrl = '';
-            var element = $compile(angular.element('<left-nav module-name="moduleName" doc-url="docUrl"></left-nav>'))(scope);
+            var element = $compile(angular.element('<left-nav module-name="{{moduleName}}" doc-url="{{docUrl}}"></left-nav>'))(scope);
             scope.$digest();
             var isolatedScope = element.isolateScope();
             isolatedScope.openDocs();
@@ -52,7 +52,7 @@ describe('Left Nav directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<left-nav module-name="moduleName" doc-url="docUrl"></left-nav>'))(scope);
+            this.element = $compile(angular.element('<left-nav module-name="{{moduleName}}" doc-url="{{docUrl}}"></left-nav>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
