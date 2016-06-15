@@ -25,6 +25,8 @@
             'stringSelect',
             'circleButton',
             'customButton',
+            'leftNav',
+            'leftNavItem',
             'confirmationOverlay',
             'pagination',
             'settings',

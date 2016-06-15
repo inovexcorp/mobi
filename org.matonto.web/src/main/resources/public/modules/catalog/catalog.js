@@ -2,5 +2,5 @@
     'use strict';
 
     angular
-        .module('catalog', ['resourcePreview', 'resultList', 'filterList', 'resourceType']);
+        .module('catalog', ['resourcePreview', 'resultList', 'filterList', 'resourceType', 'catalogSideBar']);
 })();

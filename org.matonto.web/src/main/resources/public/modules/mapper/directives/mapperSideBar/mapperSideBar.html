@@ -1,45 +1,43 @@
-<aside class="mapper-side-bar left-nav nav full-height">
-    <ul>
-        <left-nav-item on-click="dvm.mappingList()"
-                       nav-title="Open Mapping List"
-                       is-active-when="!dvm.state.editMapping">
-            <i class="fa fa-list fa-fw"></i>
-        </left-nav-item>
+<left-nav class="mapper-side-bar" module-name="Mapping Tool" doc-url="http://docs.matonto.org/#mapping_tool">
+  <left-nav-item on-click="dvm.mappingList()"
+                 nav-title="Open Mapping List"
+                 is-active-when="!dvm.state.editMapping">
+      <i class="fa fa-list fa-fw"></i>
+  </left-nav-item>
 
-        <left-nav-item on-click="dvm.createMapping()"
-                       nav-title="Create Mapping"
-                       is-active-when="dvm.state.newMapping"
-                       is-disabled-when="dvm.noOntologies()">
-            <span class="create-icon">
-                <span class="fa-fw identifier">M</span>
-                <i class="fa fa-plus"></i>
-            </span>
-        </left-nav-item>
+  <left-nav-item on-click="dvm.createMapping()"
+                 nav-title="Create Mapping"
+                 is-active-when="dvm.state.newMapping"
+                 is-disabled-when="dvm.noOntologies()">
+      <span class="create-icon">
+          <span class="fa-fw identifier">M</span>
+          <i class="fa fa-plus"></i>
+      </span>
+  </left-nav-item>
 
-        <left-nav-item on-click="dvm.downloadMapping()"
-                       nav-title="Download Mapping"
-                       is-disabled-when="dvm.state.editMapping || !dvm.mm.mapping">
-            <i class="fa fa-download fa-fw"></i>
-        </left-nav-item>
+  <left-nav-item on-click="dvm.downloadMapping()"
+                 nav-title="Download Mapping"
+                 is-disabled-when="dvm.state.editMapping || !dvm.mm.mapping">
+      <i class="fa fa-download fa-fw"></i>
+  </left-nav-item>
 
-        <li class="separator"></li>
+  <li class="separator"></li>
 
-        <left-nav-item on-click="dvm.addPropMapping()"
-                       nav-title="Add Property Mapping"
-                       is-active-when="dvm.state.newProp"
-                       is-disabled-when="!dvm.state.editMapping || !dvm.state.selectedClassMappingId || dvm.state.selectedPropMappingId || (dvm.state.selectedClassMappingId && dvm.state.availableProps.length === 0)">
-            <span class="create-icon">
-                <span class="fa-fw identifier">P</span>
-                <i class="fa fa-plus"></i>
-            </span>
-        </left-nav-item>
+  <left-nav-item on-click="dvm.addPropMapping()"
+                 nav-title="Add Property Mapping"
+                 is-active-when="dvm.state.newProp"
+                 is-disabled-when="!dvm.state.editMapping || !dvm.state.selectedClassMappingId || dvm.state.selectedPropMappingId || (dvm.state.selectedClassMappingId && dvm.state.availableProps.length === 0)">
+      <span class="create-icon">
+          <span class="fa-fw identifier">P</span>
+          <i class="fa fa-plus"></i>
+      </span>
+  </left-nav-item>
 
-        <li class="separator"></li>
+  <li class="separator"></li>
 
-        <left-nav-item on-click="dvm.state.editMapping && dvm.state.selectedClassMappingId ? dvm.deleteEntity() : dvm.deleteMapping()"
-                       nav-title="Delete Entity"
-                       is-disabled-when="(!dvm.state.editMapping && !dvm.mm.mapping) || (dvm.state.editMapping && !dvm.state.selectedClassMappingId) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.state.newProp) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld).length === 1)">
-            <i class="fa fa-trash-o fa-fw"></i>
-        </left-nav-item>
-    </ul>
-</aside>
+  <left-nav-item on-click="dvm.state.editMapping && dvm.state.selectedClassMappingId ? dvm.deleteEntity() : dvm.deleteMapping()"
+                 nav-title="Delete Entity"
+                 is-disabled-when="(!dvm.state.editMapping && !dvm.mm.mapping) || (dvm.state.editMapping && !dvm.state.selectedClassMappingId) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.state.newProp) || (dvm.state.editMapping && dvm.state.selectedClassMappingId && dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld).length === 1)">
+      <i class="fa fa-trash-o fa-fw"></i>
+  </left-nav-item>
+</left-nav>
