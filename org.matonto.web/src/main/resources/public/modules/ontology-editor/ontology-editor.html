@@ -1,94 +1,92 @@
 <!-- ontology-editor.html -->
 <div class="ontology-editor clearfix full-height" ng-controller="OntologyEditorController as vm">
-    <aside class="left-nav nav full-height">
-        <ul>
-            <left-nav-item on-click="vm.showSaveOverlay = true"
-                           nav-title="Save All Changes"
-                           is-disabled-when="vm.disableSave()"
-                           is-active-when="vm.showSaveOverlay">
-                <i class="fa fa-floppy-o fa-fw"></i>
-            </left-nav-item>
+    <left-nav module-name="Ontology Editor" doc-url="http://docs.matonto.org/#ontology_editor">
+      <left-nav-item on-click="vm.showSaveOverlay = true"
+                     nav-title="Save All Changes"
+                     is-disabled-when="vm.disableSave()"
+                     is-active-when="vm.showSaveOverlay">
+          <i class="fa fa-floppy-o fa-fw"></i>
+      </left-nav-item>
 
-            <li class="separator"></li>
+      <li class="separator"></li>
 
-            <left-nav-item on-click="vm.showOpenOverlay = true"
-                           nav-title="Open Ontology"
-                           is-disabled-when="!vm.ontologyIds.length"
-                           is-active-when="vm.showOpenOverlay">
-                <i class="fa fa-folder-open fa-fw"></i>
-            </left-nav-item>
+      <left-nav-item on-click="vm.showOpenOverlay = true"
+                     nav-title="Open Ontology"
+                     is-disabled-when="!vm.ontologyIds.length"
+                     is-active-when="vm.showOpenOverlay">
+          <i class="fa fa-folder-open fa-fw"></i>
+      </left-nav-item>
 
-            <left-nav-item on-click="vm.showUploadOverlay = true"
-                           nav-title="Upload Ontology"
-                           is-active-when="vm.showUploadOverlay">
-                <i class="fa fa-upload fa-fw"></i>
-            </left-nav-item>
+      <left-nav-item on-click="vm.showUploadOverlay = true"
+                     nav-title="Upload Ontology"
+                     is-active-when="vm.showUploadOverlay">
+          <i class="fa fa-upload fa-fw"></i>
+      </left-nav-item>
 
-            <left-nav-item on-click="vm.showCreateOntologyOverlay = true"
-                           nav-title="Create Ontology"
-                           is-active-when="vm.showCreateOntologyOverlay">
-                <span class="create-icon">
-                    <span class="fa-fw identifier">O</span>
-                    <i class="fa fa-plus"></i>
-                </span>
-            </left-nav-item>
+      <left-nav-item on-click="vm.showCreateOntologyOverlay = true"
+                     nav-title="Create Ontology"
+                     is-active-when="vm.showCreateOntologyOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">O</span>
+              <i class="fa fa-plus"></i>
+          </span>
+      </left-nav-item>
 
-            <li class="separator"></li>
+      <li class="separator"></li>
 
-            <left-nav-item on-click="vm.showCreateClassOverlay = true"
-                           nav-title="Create Class"
-                           is-disabled-when="vm.state.oi === undefined"
-                           is-active-when="vm.showCreateClassOverlay">
-                <span class="create-icon">
-                    <span class="fa-fw identifier">C</span>
-                    <i class="fa fa-plus"></i>
-                </span>
-            </left-nav-item>
+      <left-nav-item on-click="vm.showCreateClassOverlay = true"
+                     nav-title="Create Class"
+                     is-disabled-when="vm.state.oi === undefined"
+                     is-active-when="vm.showCreateClassOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">C</span>
+              <i class="fa fa-plus"></i>
+          </span>
+      </left-nav-item>
 
-            <left-nav-item on-click="vm.showCreatePropertyOverlay = true"
-                           nav-title="Create Property"
-                           is-disabled-when="vm.state.oi === undefined"
-                           is-active-when="vm.showCreatePropertyOverlay">
-                <span class="create-icon">
-                    <span class="fa-fw identifier">P</span>
-                    <i class="fa fa-plus"></i>
-                </span>
-            </left-nav-item>
+      <left-nav-item on-click="vm.showCreatePropertyOverlay = true"
+                     nav-title="Create Property"
+                     is-disabled-when="vm.state.oi === undefined"
+                     is-active-when="vm.showCreatePropertyOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">P</span>
+              <i class="fa fa-plus"></i>
+          </span>
+      </left-nav-item>
 
-            <left-nav-item on-click="vm.showCreateAnnotationOverlay = true"
-                           nav-title="Create Annotation"
-                           is-disabled-when="vm.state.oi === undefined"
-                           is-active-when="vm.showCreateAnnotationOverlay">
-                <span class="create-icon">
-                    <span class="fa-fw identifier">A</span>
-                    <i class="fa fa-plus"></i>
-                </span>
-            </left-nav-item>
+      <left-nav-item on-click="vm.showCreateAnnotationOverlay = true"
+                     nav-title="Create Annotation"
+                     is-disabled-when="vm.state.oi === undefined"
+                     is-active-when="vm.showCreateAnnotationOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">A</span>
+              <i class="fa fa-plus"></i>
+          </span>
+      </left-nav-item>
 
-            <left-nav-item on-click="vm.openDownloadOverlay()"
-                           nav-title="Download Ontology"
-                           is-disabled-when="vm.state.oi === undefined"
-                           is-active-when="vm.showDeleteConfirmation">
-                <i class="fa fa-download fa-fw"></i>
-            </left-nav-item>
+      <left-nav-item on-click="vm.openDownloadOverlay()"
+                     nav-title="Download Ontology"
+                     is-disabled-when="vm.state.oi === undefined"
+                     is-active-when="vm.showDeleteConfirmation">
+          <i class="fa fa-download fa-fw"></i>
+      </left-nav-item>
 
-            <left-nav-item on-click="vm.showCloseOverlay = true"
-                           nav-title="Close Ontology"
-                           is-disabled-when="vm.state.oi === undefined"
-                           is-active-when="vm.showCloseOverlay">
-                <i class="fa fa-folder fa-fw"></i>
-            </left-nav-item>
+      <left-nav-item on-click="vm.showCloseOverlay = true"
+                     nav-title="Close Ontology"
+                     is-disabled-when="vm.state.oi === undefined"
+                     is-active-when="vm.showCloseOverlay">
+          <i class="fa fa-folder fa-fw"></i>
+      </left-nav-item>
 
-            <li class="separator"></li>
+      <li class="separator"></li>
 
-            <left-nav-item on-click="vm.showDeleteConfirmation = true"
-                           nav-title="Delete Entity"
-                           is-disabled-when="vm.state.oi === undefined"
-                           is-active-when="vm.showDeleteConfirmation">
-                <i class="fa fa-trash-o fa-fw"></i>
-            </left-nav-item>
-        </ul>
-    </aside>
+      <left-nav-item on-click="vm.showDeleteConfirmation = true"
+                     nav-title="Delete Entity"
+                     is-disabled-when="vm.state.oi === undefined"
+                     is-active-when="vm.showDeleteConfirmation">
+          <i class="fa fa-trash-o fa-fw"></i>
+      </left-nav-item>
+    </left-nav>
 
     <div class="row full-height">
         <!-- navigation structure -->

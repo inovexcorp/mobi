@@ -103,14 +103,16 @@ describe('Mapper Side Bar directive', function() {
             expect(mapperStateSvc.displayDeleteMappingConfirm).toBe(true);
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('fills the element with the correct html', function() {
         beforeEach(function() {
             this.element = $compile(angular.element('<mapper-side-bar></mapper-side-bar>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapper-side-bar')).toBe(true);
-            expect(this.element.hasClass('left-nav')).toBe(true);
+            expect(this.element..prop('tagName')).toBe('MAPPER-SIDE-BAR');
+            var leftNav = this.element.find('left-nav');
+            expect(leftNav.length).toBe(1);
+            expect(leftNav.hasClass('mapper-side-bar')).toBe(true);
         });
         it('with the correct number of nav items', function() {
             expect(this.element.find('left-nav-item').length).toBe(5);

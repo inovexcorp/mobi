@@ -11,6 +11,11 @@
         padding-left: 39px;
     }
 
+    .left-nav li:last-child {
+        position: absolute;
+        bottom: 0;
+    }
+
     .default {
         border: 2px solid $btn-bg;
     }
