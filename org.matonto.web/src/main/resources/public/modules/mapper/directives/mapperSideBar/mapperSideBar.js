@@ -27,7 +27,7 @@
          * `mapperSideBar` is a directive that creates a "left-nav" div with buttons for mapping
          * tool actions. These actions are navigating to the mapping list, creating a new mapping,
          * downloading a mapping, adding a property mapping, and deleting either an entity in a 
-         * mapping or a mapping itself. The directive is replaced by the contents of its template.
+         * mapping or a mapping itself.
          */
         .directive('mapperSideBar', mapperSideBar);
 
@@ -37,7 +37,6 @@
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
-                replace: true,
                 scope: {},
                 controller: function() {
                     var dvm = this;
