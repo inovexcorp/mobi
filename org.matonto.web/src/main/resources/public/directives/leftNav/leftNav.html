@@ -1,0 +1,9 @@
+<aside class="left-nav nav full-height">
+    <ul>
+        <ng-transclude></ng-transclude>
+        <left-nav-item class="doc-link" on-click="openDocs()"
+            nav-title="{{'About the ' + moduleName}}">
+            <i class="fa fa-question-circle-o fa-fw"></i>
+        </left-nav-item>
+    </ul>
+</aside>

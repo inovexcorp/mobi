@@ -16,30 +16,18 @@
          * @name catalogSideBar.directive:catalogSideBar
          * @scope
          * @restrict E
-         * @requires $window
          *
          * @description 
          * `catalogSideBar` is a directive that creates a "left-nav" div with buttons for catalog
-         * actions. The only action is opening the user guide for the catalog on the documentation 
-         * site. The directive is replaced by the contents of its template.
+         * actions. There are currently no actions for the catalog.
          */
         .directive('catalogSideBar', catalogSideBar);
 
-        catalogSideBar.$inject = ['$window'];
-
-        function catalogSideBar($window) {
+        function catalogSideBar() {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
-                replace: true,
                 scope: {},
-                controller: function() {
-                    var dvm = this;
-
-                    dvm.openDocs = function() {
-                        $window.open("http://docs.matonto.org/#catalog");
-                    }
-                },
                 templateUrl: 'modules/catalog/directives/catalogSideBar/catalogSideBar.html'
             }
         }

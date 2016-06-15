@@ -498,6 +498,10 @@ ul {
     li button.active {
         color: $brand-info;
     }
+    li.doc-link {
+        position: absolute;
+        bottom: 0;
+    }
 }
 
 /* Pagination styles */

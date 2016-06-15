@@ -27,17 +27,16 @@
          * `mapperSideBar` is a directive that creates a "left-nav" div with buttons for mapping
          * tool actions. These actions are navigating to the mapping list, creating a new mapping,
          * downloading a mapping, adding a property mapping, and deleting either an entity in a 
-         * mapping or a mapping itself. The directive is replaced by the contents of its template.
+         * mapping or a mapping itself.
          */
         .directive('mapperSideBar', mapperSideBar);
 
-        mapperSideBar.$inject = ['$window', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        mapperSideBar.$inject = ['mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function mapperSideBar($window, mapperStateService, mappingManagerService, ontologyManagerService) {
+        function mapperSideBar(mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
-                replace: true,
                 scope: {},
                 controller: function() {
                     var dvm = this;
@@ -45,9 +44,6 @@
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
 
-                    dvm.openDocs = function() {
-                        $window.open("http://docs.matonto.org/#mapping_tool");
-                    }
                     dvm.noOntologies = function() {
                         return _.concat(dvm.om.getList(), dvm.om.getOntologyIds()).length === 0;
                     }

@@ -5,14 +5,14 @@
         .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'everythingTree', 'classTree',
         'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
-        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'leftNavItem', 'serializationSelect',
+        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect',
         'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
         'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
         .controller('OntologyEditorController', OntologyEditorController);
 
-    OntologyEditorController.$inject = ['$window', 'ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
+    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
 
-    function OntologyEditorController($window, ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
+    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
         var vm = this;
 
         vm.ontologies = ontologyManagerService.getList();
@@ -28,11 +28,7 @@
                 setVariables(vm.state.oi);
             }
         }
-
-        vm.openDocs = function() {
-            $window.open('http://docs.matonto.org/#ontology_editor');
-        }
-
+        
         /* State Management */
         vm.setTreeTab = function(tab) {
             stateManagerService.setTreeTab(tab);

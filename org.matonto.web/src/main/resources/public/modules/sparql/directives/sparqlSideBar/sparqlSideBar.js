@@ -18,31 +18,23 @@
          * @scope
          * @restrict E
          * @requires sparqlManager.service:sparqlManagerServicec
-         * @requires $window
          *
          * @description 
          * `sparqlSideBar` is a directive that creates a "left-nav" div with buttons for SPARQL
-         * query actions. These actions are executing the entered query and opening the user 
-         * guide for the SPARQL Query Editor on the documentation site. The directive is 
-         * replaced by the contents of its template.
+         * query actions. The only action is executing the entered query.
          */
         .directive('sparqlSideBar', sparqlSideBar);
 
-        sparqlSideBar.$inject = ['$window', 'sparqlManagerService'];
+        sparqlSideBar.$inject = ['sparqlManagerService'];
 
-        function sparqlSideBar($window, sparqlManagerService) {
+        function sparqlSideBar(sparqlManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
-                replace: true,
                 scope: {},
                 controller: function() {
                     var dvm = this;
                     dvm.sparql = sparqlManagerService;
-
-                    dvm.openDocs = function() {
-                        $window.open("http://docs.matonto.org/#sparql_query_editor");
-                    }
                 },
                 templateUrl: 'modules/sparql/directives/sparqlSideBar/sparqlSideBar.html'
             }
