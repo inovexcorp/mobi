@@ -164,9 +164,9 @@ function mockMappingManager() {
     });
 }
 
-function mockCsvManager() {
+function mockDelimitedManager() {
     module(function($provide) {
-        $provide.service('csvManagerService', function($q) {
+        $provide.service('delimitedManagerService', function($q) {
             this.fileObj = undefined;
             this.filePreview = undefined;
             this.fileName = '';

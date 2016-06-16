@@ -8,13 +8,13 @@
          * @requires  ontologyManager
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `newPropForm` module only provides the `newPropForm` directive which creates
          * a form to add a new property mapping to the selected mapping.
          */
-        .module('newPropForm', ['ontologyManager', 'mappingManager', 'mapperState', 'csvManager'])
+        .module('newPropForm', ['ontologyManager', 'mappingManager', 'mapperState', 'delimitedManager'])
         /**
          * @ngdoc directive
          * @name newPropForm.directive:newPropForm
@@ -23,7 +23,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `newPropForm` is a directive that creates a form with functionality to add a new 
@@ -37,9 +37,9 @@
          */
         .directive('newPropForm', newPropForm);
 
-        newPropForm.$inject = ['ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'csvManagerService'];
+        newPropForm.$inject = ['ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
 
-        function newPropForm(ontologyManagerService, mappingManagerService, mapperStateService, csvManagerService) {
+        function newPropForm(ontologyManagerService, mappingManagerService, mapperStateService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -50,7 +50,7 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.cm = csvManagerService;
+                    dvm.cm = delimitedManagerService;
 
                     dvm.update = function() {
                         if (!dvm.isObjectProperty()) {

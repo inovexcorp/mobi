@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>etl.csv</artifactId>
+    <artifactId>etl.delimited</artifactId>
 
     <packaging>bundle</packaging>
 
@@ -34,12 +34,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.0.44-SNAPSHOT</version>
+            <version>1.0.53-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.0.44-SNAPSHOT</version>
+            <version>1.0.49</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -87,7 +87,7 @@
                         <Bundle-Name>MatOnto ETL Impl - Delimited</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.etl.api.csv; provide:=true
+                            org.matonto.etl.api.delimited; provide:=true
                         </Export-Package>
                         <Export-Service>org.matonto.etl.api.delimited.DelimitedConverter</Export-Service>
                         <Service-Component>*</Service-Component>

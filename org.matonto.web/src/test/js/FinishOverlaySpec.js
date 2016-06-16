@@ -3,19 +3,19 @@ describe('Finish Overlay directive', function() {
         scope,
         mappingManagerSvc,
         mapperStateSvc,
-        csvManagerSvc;
+        delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('finishOverlay');
         mockMappingManager();
         mockMapperState();
-        mockCsvManager();
+        mockDelimitedManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _csvManagerService_) {
+        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -35,7 +35,7 @@ describe('Finish Overlay directive', function() {
             controller.finish();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(csvManagerSvc.reset).toHaveBeenCalled();
+            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
             expect(mappingManagerSvc.mapping).toEqual(undefined);
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         });

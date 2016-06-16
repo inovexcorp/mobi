@@ -9,13 +9,13 @@
          * @requires  ontologyManager
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `fileUploadOverlay` module only provides the `fileUploadOverlay` directive which creates
          * an overlay with functionality to upload a delimited file to use for mapping.
          */
-        .module('fileUploadOverlay', ['prefixes', 'csvManager', 'mapperState', 'mappingManager', 'ontologyManager'])
+        .module('fileUploadOverlay', ['prefixes', 'delimitedManager', 'mapperState', 'mappingManager', 'ontologyManager'])
         /**
          * @ngdoc directive
          * @name fileUploadOverlay.directive:fileUploadOverlay
@@ -25,7 +25,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `fileUploadOverlay` is a directive that creates an overlay with a form to upload a delimited 
@@ -37,16 +37,16 @@
          */
         .directive('fileUploadOverlay', fileUploadOverlay);
 
-        fileUploadOverlay.$inject = ['prefixes', 'csvManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        fileUploadOverlay.$inject = ['prefixes', 'delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function fileUploadOverlay(prefixes, csvManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
+        function fileUploadOverlay(prefixes, delimitedManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {},
                 link: function(scope, el, attrs, ctrl) {
-                    if (csvManagerService.fileObj) {
+                    if (delimitedManagerService.fileObj) {
                         ctrl.setUploadValidity(true);
                     } else {
                         ctrl.setUploadValidity(false);
@@ -55,7 +55,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.cm = csvManagerService;
+                    dvm.cm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.errorMessage = '';

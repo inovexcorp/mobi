@@ -80,6 +80,7 @@ var runJasmine = function(vendorFiles) {
         .pipe(jasmine({
             integration: true,
             abortOnFail: true,
+            keepRunner: './target/',
             vendor: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']),
             jasmineVersion: '2.1'
         }));

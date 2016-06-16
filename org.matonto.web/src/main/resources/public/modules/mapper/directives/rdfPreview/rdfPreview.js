@@ -11,7 +11,7 @@
          * a container for generating a preview of delimited data mapped into RDF, and 
          * the `formatRdf` directive used for formatting the mapped data preview string.
          */
-        .module('rdfPreview', ['csvManager', 'mappingManager'])
+        .module('rdfPreview', ['delimitedManager', 'mappingManager'])
         /**
          * @ngdoc directive
          * @name rdfPreview.directive:rdfPreview
@@ -39,7 +39,7 @@
         .directive('formatRdf', formatRdf);
 
         formatRdf.$inject = ['$filter'];
-        rdfPreview.$inject = ['$window', 'csvManagerService', 'mappingManagerService'];
+        rdfPreview.$inject = ['$window', 'delimitedManagerService', 'mappingManagerService'];
 
         function formatRdf($filter) {
             return {
@@ -56,7 +56,7 @@
                };
         }
 
-        function rdfPreview($window, csvManagerService, mappingManagerService) {
+        function rdfPreview($window, delimitedManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,7 +64,7 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.cm = csvManagerService;
+                    dvm.cm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.visible = false;
                     dvm.preview = '';

@@ -4,7 +4,7 @@ describe('IRI Template Overlay directive', function() {
         prefixes,
         mappingManagerSvc,
         mapperStateSvc,
-        csvManagerSvc;
+        delimitedManagerSvc;
 
     mockPrefixes();
     beforeEach(function() {
@@ -12,12 +12,12 @@ describe('IRI Template Overlay directive', function() {
         module('iriTemplateOverlay');
         mockMapperState();
         mockMappingManager();
-        mockCsvManager();
+        mockDelimitedManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _csvManagerService_) {
+        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -40,7 +40,7 @@ describe('IRI Template Overlay directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [classMapping]
             };
-            csvManagerSvc.filePreview = {headers: ['a']};
+            delimitedManagerSvc.filePreview = {headers: ['a']};
             var element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
             var controller = element.controller('iriTemplateOverlay');
@@ -51,14 +51,14 @@ describe('IRI Template Overlay directive', function() {
                 delete opt['$$hashKey'];
             });
             expect(cleanOptions[0]).toEqual({text: 'UUID', value: '${UUID}'});
-            expect(cleanOptions).toContain({text: csvManagerSvc.filePreview.headers[0], value: localName});
-            expect(controller.endsWith).toEqual({text: csvManagerSvc.filePreview.headers[0], value: localName});
+            expect(cleanOptions).toContain({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
+            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            csvManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.filePreview = {headers: []};
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
         });
@@ -73,7 +73,7 @@ describe('IRI Template Overlay directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            csvManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.filePreview = {headers: []};
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
         });

@@ -8,13 +8,13 @@
          * @requires  prefixes
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `iriTemplateOverlay` module only provides the `iriTemplateOverlay` directive which creates
          * an overlay with functionality to change the IRI template of the selected class mapping.
          */
-        .module('iriTemplateOverlay', ['prefixes', 'mapperState', 'mappingManager', 'csvManager'])
+        .module('iriTemplateOverlay', ['prefixes', 'mapperState', 'mappingManager', 'delimitedManager'])
         /**
          * @ngdoc directive
          * @name iriTemplateOverlay.directive:iriTemplateOverlay
@@ -23,7 +23,7 @@
          * @requires  prefixes.service:prefixes
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the 
@@ -34,9 +34,9 @@
          */
         .directive('iriTemplateOverlay', iriTemplateOverlay);
 
-        iriTemplateOverlay.$inject = ['prefixes', 'mapperStateService', 'mappingManagerService', 'csvManagerService'];
+        iriTemplateOverlay.$inject = ['prefixes', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
 
-        function iriTemplateOverlay(prefixes, mapperStateService, mappingManagerService, csvManagerService) {
+        function iriTemplateOverlay(prefixes, mapperStateService, mappingManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -46,7 +46,7 @@
                     var dvm = this;
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.cm = csvManagerService;
+                    dvm.cm = delimitedManagerService;
 
                     var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                     var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');

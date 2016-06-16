@@ -69,7 +69,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.rest</artifactId>
-            <version>1.0.44-SNAPSHOT</version>
+            <version>1.0.53-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

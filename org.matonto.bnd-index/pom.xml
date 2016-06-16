@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>etl.csv</artifactId>
+            <artifactId>etl.delimited</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

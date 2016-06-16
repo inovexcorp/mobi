@@ -4,7 +4,7 @@ describe('Mapping Overlays directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        csvManagerSvc;
+        delimitedManagerSvc;
 
     mockPrefixes();
     beforeEach(function() {
@@ -13,13 +13,13 @@ describe('Mapping Overlays directive', function() {
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
-        mockCsvManager();
+        mockDelimitedManager();
         
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _csvManagerService_) {
+        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -41,7 +41,7 @@ describe('Mapping Overlays directive', function() {
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mappingManagerSvc.mapping).toBe(undefined);
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
-            expect(csvManagerSvc.reset).toHaveBeenCalled();
+            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         });
         it('should test whether an entity is a class mapping', function() {
             var controller = this.element.controller('mappingOverlays');

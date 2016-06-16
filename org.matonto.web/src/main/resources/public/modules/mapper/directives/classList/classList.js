@@ -9,14 +9,14 @@
          * @requires  ontologyManager
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `classList` module only provides the `classList` directive which creates
          * a "boxed" area with a list of all the class and property mappings in the selected
          * mapping.
          */
-        .module('classList', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'csvManager'])
+        .module('classList', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'delimitedManager'])
         /**
          * @ngdoc directive
          * @name classList.directive:classList
@@ -26,7 +26,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `classList` is a directive that creates a "boxed" div with an unordered list of the 
@@ -36,9 +36,9 @@
          */
         .directive('classList', classList);
 
-        classList.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'csvManagerService'];
+        classList.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
 
-        function classList(prefixes, ontologyManagerService, mappingManagerService, mapperStateService, csvManagerService) {
+        function classList(prefixes, ontologyManagerService, mappingManagerService, mapperStateService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -49,7 +49,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.cm = csvManagerService;
+                    dvm.cm = delimitedManagerService;
 
                     dvm.hasProps = function(classMapping) {
                         return dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']).length > 0;

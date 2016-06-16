@@ -3,7 +3,7 @@ describe('Mapping Editor directive', function() {
         scope,
         mappingManagerSvc,
         mapperStateSvc,
-        csvManagerSvc,
+        delimitedManagerSvc,
         ontologyManagerSvc;
 
     beforeEach(function() {
@@ -11,13 +11,13 @@ describe('Mapping Editor directive', function() {
         module('mappingEditor');
         mockMappingManager();
         mockMapperState();
-        mockCsvManager();
+        mockDelimitedManager();
         mockOntologyManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _csvManagerService_, _ontologyManagerService_) {
+        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_) {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
@@ -54,7 +54,7 @@ describe('Mapping Editor directive', function() {
             controller.submit();
             scope.$apply();
             expect(mappingManagerSvc.uploadPut).not.toHaveBeenCalled();
-            expect(csvManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
 
@@ -62,7 +62,7 @@ describe('Mapping Editor directive', function() {
             controller.submit();
             scope.$apply();
             expect(mappingManagerSvc.uploadPut).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.name);
-            expect(csvManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
         });

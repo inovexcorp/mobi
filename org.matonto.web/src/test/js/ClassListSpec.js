@@ -4,7 +4,7 @@ describe('Class List directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        csvManagerSvc;
+        delimitedManagerSvc;
 
     mockPrefixes();
     beforeEach(function() {
@@ -13,13 +13,13 @@ describe('Class List directive', function() {
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
-        mockCsvManager();
+        mockDelimitedManager();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _csvManagerService_) {
+        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -31,7 +31,7 @@ describe('Class List directive', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            csvManagerSvc.filePreview = {
+            delimitedManagerSvc.filePreview = {
                 headers: [],
                 rows: []
             };
@@ -71,7 +71,7 @@ describe('Class List directive', function() {
         });
         it('should set the proper state for editing a property', function() {
             var controller = this.element.controller('classList');
-            csvManagerSvc.filePreview.headers = [''];
+            delimitedManagerSvc.filePreview.headers = [''];
             controller.clickProp({'@id': '', columnIndex: [{'@value': 0}]}, {'@id': ''});
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe('Class List directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            csvManagerSvc.filePreview = {
+            delimitedManagerSvc.filePreview = {
                 headers: [],
                 rows: []
             };
@@ -148,7 +148,7 @@ describe('Class List directive', function() {
         it('depending on whether there is a file preview', function() {
             expect(this.element.querySelectorAll('ul.list').length).toBe(1);
 
-            csvManagerSvc.filePreview = undefined;
+            delimitedManagerSvc.filePreview = undefined;
             scope.$digest();
             expect(this.element.querySelectorAll('ul.list').length).toBe(0);
         });
@@ -261,7 +261,7 @@ describe('Class List directive', function() {
     });
     it('should call clickClass when a class title is clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};
-        csvManagerSvc.filePreview = {};
+        delimitedManagerSvc.filePreview = {};
         var classMapping = {'@id': ''};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
@@ -277,7 +277,7 @@ describe('Class List directive', function() {
     });
     it('should call toggleOpen when a class title is double clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};
-        csvManagerSvc.filePreview = {};
+        delimitedManagerSvc.filePreview = {};
         var classMapping = {'@id': ''};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
@@ -293,7 +293,7 @@ describe('Class List directive', function() {
     });
     it('should call clickProp when a prop title is clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};
-        csvManagerSvc.filePreview = {};
+        delimitedManagerSvc.filePreview = {};
         var classMapping = {'@id': ''};
         var propMapping = {'@id': ''};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
@@ -311,7 +311,7 @@ describe('Class List directive', function() {
     });
     it('should call clickAddProp when an add prop link is clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};
-        csvManagerSvc.filePreview = {};
+        delimitedManagerSvc.filePreview = {};
         var classMapping = {'@id': ''};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();

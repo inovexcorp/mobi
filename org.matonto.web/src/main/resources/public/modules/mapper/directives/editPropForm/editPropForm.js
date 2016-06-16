@@ -9,14 +9,14 @@
          * @requires  ontologyManager
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `editPropForm` module only provides the `editPropForm` directive which creates
          * a form with functionality to change the column for a datatype property mapping or simply 
          * preview an object property mapping.
          */
-        .module('editPropForm', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'csvManager'])
+        .module('editPropForm', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'delimitedManager'])
         /**
          * @ngdoc directive
          * @name editPropForm.directive:editPropForm
@@ -26,7 +26,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `editPropForm` is a directive that creates a form with functionality to change the column for 
@@ -37,9 +37,9 @@
          */
         .directive('editPropForm', editPropForm);
 
-        editPropForm.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'csvManagerService'];
+        editPropForm.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
 
-        function editPropForm(prefixes, ontologyManagerService, mappingManagerService, mapperStateService, csvManagerService) {
+        function editPropForm(prefixes, ontologyManagerService, mappingManagerService, mapperStateService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -50,7 +50,7 @@
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.cm = csvManagerService;
+                    dvm.cm = delimitedManagerService;
 
                     dvm.set = function() {
                         var columnIdx = dvm.cm.filePreview.headers.indexOf(dvm.state.selectedColumn);
