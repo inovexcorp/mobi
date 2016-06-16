@@ -4,25 +4,18 @@ describe('Annotation Overlay directive', function() {
         element;
 
     injectRegexConstant();
+    injectHighlightFilter();
+    injectTrustedFilter();
+
     beforeEach(function() {
+        module('templates');
         module('annotationOverlay');
 
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
-
-        // To test out a directive, you need to inject $compile and $rootScope
-        // and save them to use
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
     });
-
-    // Shared setup function for loading the directive's template into the
-    // $templateCache
-    injectDirectiveTemplate('modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

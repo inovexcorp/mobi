@@ -4,6 +4,7 @@
     angular
         .module('sparql', [
             'sparqlEditor',
-            'sparqlResultTable'
+            'sparqlResultTable',
+            'sparqlSideBar'
         ]);
 })();

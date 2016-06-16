@@ -3,6 +3,7 @@ describe('Custom Label directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('customLabel');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Custom Label directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/customLabel/customLabel.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

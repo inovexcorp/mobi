@@ -1274,7 +1274,7 @@
                         } else {
                             console.warn('Ontology was not found or opened for some reason');
                             deferred.reject(response.statusText);
-                        $rootScope.showSpinner = false;
+                            $rootScope.showSpinner = false;
                         }
                     }, function(response) {
                         console.error('We were unable to retrieve the ontology to open it.')

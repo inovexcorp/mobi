@@ -5,7 +5,7 @@
         .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'everythingTree', 'classTree',
         'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
-        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'leftNavItem', 'serializationSelect',
+        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect',
         'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
         'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
         .controller('OntologyEditorController', OntologyEditorController);
@@ -28,7 +28,7 @@
                 setVariables(vm.state.oi);
             }
         }
-
+        
         /* State Management */
         vm.setTreeTab = function(tab) {
             stateManagerService.setTreeTab(tab);
@@ -72,7 +72,7 @@
             vm.ontology.matonto.isValid = isValid;
         }
 
-        vm.uploadOntology = function(isValid, file, namespace, localName) {
+        vm.uploadOntology = function(file, namespace, localName) {
             vm.uploadError = false;
             ontologyManagerService.uploadThenGet(file)
                 .then(function(response) {

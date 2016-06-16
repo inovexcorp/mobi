@@ -1,14 +1,7 @@
 <form class="edit-class">
     <h4>{{dvm.getTitle()}}</h4>
     <div class="iri-template">
-        <small class="iri-template-header muted-text">IRI Template <a ng-click="editIri()">Edit</a></small>
+        <small class="iri-template-header muted-text">IRI Template <a ng-click="dvm.state.editIriTemplate = true">Edit</a></small>
         <small class="muted-text">{{dvm.getIriTemplate()}}</small>
-    </div>
-    <div class="form-group">
-        <h5>Available Properties</h5>
-        <available-prop-list props="props" open-prop="dvm.openProperty(propId)"></available-prop-list>
-    </div>
-    <div class="form-btns form-group btn-container">
-        <custom-button type="'secondary'" on-click="clickDelete({classMappingId: dvm.classMappingId})" pull="'left'" is-disabled-when="isLastClass">Delete</custom-button>
     </div>
 </form>

@@ -3,6 +3,7 @@ describe('Tab Button Container directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('tabButtonContainer');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -10,8 +11,6 @@ describe('Tab Button Container directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/tabButtonContainer/tabButtonContainer.html');
 
     describe('replaces the directive with the correct html', function() {
         beforeEach(function() {
