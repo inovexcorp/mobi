@@ -1,6 +1,7 @@
 package org.matonto.etl.api.delimited;
 
 import org.matonto.exception.MatOntoException;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.openrdf.rio.RDFFormat;
@@ -13,6 +14,14 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 public interface MappingManager {
+
+    MappingId createMappingId(Resource id);
+
+    MappingId createMappingId(IRI mappingIRI);
+
+    MappingId createMappingId(IRI mappingIRI, IRI versionIRI);
+
+    String getMappingLocalName(IRI iri);
 
     /**
      * Retrieves the mapping registry.
@@ -27,7 +36,7 @@ public interface MappingManager {
      *
      * @return an IRI Resource for a mapping with a new UUID local name
      */
-    Resource createMappingIRI();
+    IRI createMappingIRI();
 
     /**
      * Generates a mapping IRI Resource with the passed local name.
@@ -35,7 +44,7 @@ public interface MappingManager {
      * @param localName the local name to use for the mapping IRI Resource
      * @return an IRI Resource for a mapping with the passed local name
      */
-    Resource createMappingIRI(String localName);
+    IRI createMappingIRI(String localName);
 
     /**
      * Creates a MatOnto Model with the mapping in the given file.

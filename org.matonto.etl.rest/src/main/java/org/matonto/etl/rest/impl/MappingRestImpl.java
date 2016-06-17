@@ -11,6 +11,7 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.StreamingOutput;
 public class MappingRestImpl implements MappingRest {
 
     private MappingManager manager;
+    private ValueFactory factory;
     private final Logger logger = LoggerFactory.getLogger(MappingRestImpl.class);
 
     @Reference
@@ -36,34 +38,39 @@ public class MappingRestImpl implements MappingRest {
         this.manager = manager;
     }
 
-    @Override
-    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail,
-                              String jsonld) {
-        Resource mappingIRI = manager.createMappingIRI();
-        uploadMapping(mappingIRI, fileInputStream, fileDetail, jsonld);
-        logger.info("Mapping Uploaded: " + mappingIRI);
-        return Response.status(200).entity(mappingIRI.stringValue()).build();
+    @Reference
+    public void setFactory(ValueFactory factory) {
+        this.factory = factory;
     }
 
     @Override
-    public Response upload(String mappingId, InputStream fileInputStream, FormDataContentDisposition fileDetail,
+    public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail,
+                              String jsonld) {
+        Resource mappingId = manager.createMappingId(manager.createMappingIRI()).getMappingIdentifier();
+        uploadMapping(mappingId, fileInputStream, fileDetail, jsonld);
+        logger.info("Mapping Uploaded: " + mappingId);
+        return Response.status(200).entity(mappingId.stringValue()).build();
+    }
+
+    @Override
+    public Response upload(String mappingIRI, InputStream fileInputStream, FormDataContentDisposition fileDetail,
                            String jsonld) {
-        Resource mappingIRI = manager.createMappingIRI(mappingId);
+        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
         try {
-            if (manager.mappingExists(mappingIRI)) {
-                manager.deleteMapping(mappingIRI);
+            if (manager.mappingExists(mappingId)) {
+                manager.deleteMapping(mappingId);
             }
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        uploadMapping(mappingIRI, fileInputStream, fileDetail, jsonld);
-        logger.info("Mapping Uploaded: " + mappingIRI);
-        return Response.status(200).entity(mappingIRI.stringValue()).build();
+        uploadMapping(mappingId, fileInputStream, fileDetail, jsonld);
+        logger.info("Mapping Uploaded: " + mappingId);
+        return Response.status(200).entity(mappingId.stringValue()).build();
     }
 
     @Override
-    public Response getMappingNames(List<String> idList) {
+    public Response getMappings(List<String> idList) {
         JSONArray mappings = new JSONArray();
         if (idList.isEmpty()) {
             manager.getMappingRegistry().stream()
@@ -71,7 +78,7 @@ public class MappingRestImpl implements MappingRest {
                 .forEach(mappings::add);
         } else {
             idList.stream()
-                .map(id -> manager.createMappingIRI(id))
+                .map(id -> factory.createIRI(id))
                 .map(this::getMappingAsJson)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -82,12 +89,12 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
-    public Response getMapping(String localName) {
-        Resource mappingIRI = manager.createMappingIRI(localName);
-        logger.info("Getting mapping " + mappingIRI);
+    public Response getMapping(String mappingIRI) {
+        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        logger.info("Getting mapping " + mappingId);
         Optional<JSONObject> optJson;
         try {
-            optJson = getMappingAsJson(mappingIRI);
+            optJson = getMappingAsJson(mappingId);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -100,12 +107,12 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
-    public Response downloadMapping(String localName) {
-        Resource mappingIRI = manager.createMappingIRI(localName);
+    public Response downloadMapping(String mappingIRI) {
+        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
         logger.info("Downloading mapping " + mappingIRI);
         Optional<JSONObject> optJson;
         try {
-            optJson = getMappingAsJson(mappingIRI);
+            optJson = getMappingAsJson(mappingId);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -119,19 +126,20 @@ public class MappingRestImpl implements MappingRest {
                 writer.close();
             };
 
-            return Response.ok(stream).header("Content-Disposition", "attachment; filename=" + localName
-                    + ".jsonld").header("Content-Type", "application/octet-stream").build();
+            return Response.ok(stream).header("Content-Disposition", "attachment; filename="
+                    + manager.getMappingLocalName(factory.createIRI(mappingIRI)) + ".jsonld").header("Content-Type",
+                    "application/octet-stream").build();
         } else {
             throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
         }
     }
 
     @Override
-    public Response deleteMapping(String localName) {
-        Resource mappingIRI = manager.createMappingIRI(localName);
-        logger.info("Deleting mapping " + mappingIRI);
+    public Response deleteMapping(String mappingIRI) {
+        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        logger.info("Deleting mapping " + mappingId);
         try {
-            manager.deleteMapping(mappingIRI);
+            manager.deleteMapping(mappingId);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }

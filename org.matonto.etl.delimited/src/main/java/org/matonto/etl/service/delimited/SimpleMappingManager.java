@@ -1,6 +1,7 @@
 package org.matonto.etl.service.delimited;
 
 import aQute.bnd.annotation.component.*;
+import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Statements;
@@ -87,14 +88,37 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public Resource createMappingIRI() {
+    public IRI createMappingIRI() {
         String localName = generateUuid();
         return factory.createIRI(Delimited.MAPPING.stringValue() + "/" + localName.trim());
     }
 
     @Override
-    public Resource createMappingIRI(String localName) {
+    public IRI createMappingIRI(String localName) {
         return factory.createIRI(Delimited.MAPPING.stringValue() + "/" + localName.trim());
+    }
+
+    @Override
+    public String getMappingLocalName(IRI iri) {
+        if (iri.getNamespace().equals(Delimited.MAPPING.stringValue())) {
+            return iri.getLocalName();
+        }
+        return iri.getNamespace().replace(Delimited.MAPPING.stringValue(), "");
+    }
+
+    @Override
+    public MappingId createMappingId(Resource id) {
+        return new SimpleMappingId.Builder(factory).id(id).build();
+    }
+
+    @Override
+    public MappingId createMappingId(IRI mappingIRI) {
+        return new SimpleMappingId.Builder(factory).mappingIRI(mappingIRI).build();
+    }
+
+    @Override
+    public MappingId createMappingId(IRI mappingIRI, IRI versionIRI) {
+        return new SimpleMappingId.Builder(factory).mappingIRI(mappingIRI).versionIRI(versionIRI).build();
     }
 
     @Override

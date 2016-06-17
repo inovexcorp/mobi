@@ -17,6 +17,7 @@ import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.rest.DelimitedRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rest.util.CharsetUtils;
 import org.matonto.rest.util.ErrorUtils;
@@ -46,6 +47,7 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 public class DelimitedRestImpl implements DelimitedRest {
     private DelimitedConverter converter;
     private MappingManager mappingManager;
+    private ValueFactory factory;
     private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
 
     private static final long NUM_LINE_PREVIEW = 10;
@@ -60,6 +62,11 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     public void setMappingManager(MappingManager manager) {
         this.mappingManager = manager;
+    }
+
+    @Reference
+    public void setFactory(ValueFactory factory) {
+        this.factory = factory;
     }
 
     @Activate
@@ -144,9 +151,9 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Override
-    public Response etlFile(String fileName, String mappingLocalName, String format, boolean containsHeaders,
+    public Response etlFile(String fileName, String mappingIRI, String format, boolean containsHeaders,
                             String separator) {
-        if (mappingLocalName == null || mappingLocalName.equals("")) {
+        if (mappingIRI == null || mappingIRI.equals("")) {
             throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
         }
 
@@ -159,12 +166,12 @@ public class DelimitedRestImpl implements DelimitedRest {
 
         // Collect uploaded mapping model
         Model mappingModel;
-        Resource mappingIRI = mappingManager.createMappingIRI(mappingLocalName);
-        Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingIRI);
+        Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingId);
         if (mappingOptional.isPresent()) {
             mappingModel = Values.sesameModel(mappingOptional.get());
         } else {
-            throw ErrorUtils.sendError("Mapping " + mappingIRI + " does not exist",
+            throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist",
                     Response.Status.BAD_REQUEST);
         }
 
