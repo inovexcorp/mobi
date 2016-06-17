@@ -1,4 +1,4 @@
-package org.matonto.etl.service.csv;
+package org.matonto.etl.service.delimited;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;

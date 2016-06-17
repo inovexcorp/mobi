@@ -1,4 +1,4 @@
-package org.matonto.etl.service.csv;
+package org.matonto.etl.service.delimited;
 
 public enum Delimited {
     MAPPING("http://matonto.org/mappings"),
