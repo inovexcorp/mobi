@@ -240,38 +240,27 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     private SVConfig createSVConfig(File csvFile, Model mapping, boolean containsHeaders, String separator) {
-        return createSVConfig(csvFile, mapping, containsHeaders, separator, 0);
+        char separatorChar = separator.charAt(0);
+        return new SVConfig.Builder(getDocumentInputStream(csvFile), Values.matontoModel(mapping))
+                .containsHeaders(containsHeaders).separator(separatorChar).build();
     }
 
     private SVConfig createSVConfig(File csvFile, Model mapping, boolean containsHeaders, String separator,
                                     long limit) {
         char separatorChar = separator.charAt(0);
-        // Get InputStream for data to convert
-        InputStream csv;
-        try {
-            csv = new FileInputStream(csvFile);
-        } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
-        }
-        return new SVConfig.Builder(csv, Values.matontoModel(mapping)).containsHeaders(containsHeaders)
-                .separator(separatorChar).limit(limit).build();
+        return new SVConfig.Builder(getDocumentInputStream(csvFile), Values.matontoModel(mapping))
+                .containsHeaders(containsHeaders).separator(separatorChar).limit(limit).build();
     }
 
     private ExcelConfig createExcelConfig(File excelFile, Model mapping, boolean containsHeaders) {
-        return createExcelConfig(excelFile, mapping, containsHeaders, 0);
+        return new ExcelConfig.Builder(getDocumentInputStream(excelFile), Values.matontoModel(mapping))
+                .containsHeaders(containsHeaders).build();
     }
 
     private ExcelConfig createExcelConfig(File excelFile, Model mapping, boolean containsHeaders,
                                           long limit) {
-        // Get InputStream for data to convert
-        InputStream excel;
-        try {
-            excel = new FileInputStream(excelFile);
-        } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
-        }
-        return new ExcelConfig.Builder(excel, Values.matontoModel(mapping)).containsHeaders(containsHeaders)
-                .limit(limit).build();
+        return new ExcelConfig.Builder(getDocumentInputStream(excelFile), Values.matontoModel(mapping))
+                .containsHeaders(containsHeaders).limit(limit).build();
     }
 
     @Override
@@ -477,5 +466,16 @@ public class DelimitedRestImpl implements DelimitedRest {
                 }
             });
         }
+    }
+
+    private InputStream getDocumentInputStream(File delimited) {
+        // Get InputStream for data to convert
+        InputStream data;
+        try {
+            data = new FileInputStream(delimited);
+        } catch (FileNotFoundException e) {
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+        }
+        return data;
     }
 }
