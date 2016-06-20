@@ -36,7 +36,9 @@ describe('Mapping Name Overlay directive', function() {
             controller.set();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
             expect(mappingManagerSvc.createNewMapping).toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
+            expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+            expect(mappingManagerSvc.mapping.name).toBe(mappingManagerSvc.getMappingId(controller.newName));
+            // expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
             expect(mapperStateSvc.editMappingName).toBe(false);
 
             mappingManagerSvc.createNewMapping.calls.reset();
@@ -45,7 +47,9 @@ describe('Mapping Name Overlay directive', function() {
             controller.set();
             expect(mapperStateSvc.step).toBe(1);
             expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
+            expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+            expect(mappingManagerSvc.mapping.name).toBe(mappingManagerSvc.getMappingId(controller.newName));
+            // expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
             expect(mapperStateSvc.editMappingName).toBe(false);
         });
         it('should set the correct state for canceling', function() {

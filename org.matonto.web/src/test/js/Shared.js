@@ -130,6 +130,12 @@ function mockMappingManager() {
             this.deleteMapping = jasmine.createSpy('deleteMapping').and.callFake(function(mappingName) {
                 return mappingName ? $q.when() : $q.reject('Something went wrong');
             });
+            this.getMappingName = jasmine.createSpy('getMappingName').and.callFake(function(mappingId) {
+                return mappingId;
+            });
+            this.getMappingId = jasmine.createSpy('getMappingId').and.callFake(function(mappingName) {
+                return mappingName;
+            });
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
             this.setSourceOntology = jasmine.createSpy('setSourceOntology').and.returnValue([]);
             this.addClass = jasmine.createSpy('addClass').and.returnValue([]);

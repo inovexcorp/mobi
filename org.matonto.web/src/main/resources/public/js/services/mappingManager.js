@@ -19,7 +19,7 @@
             function initialize() {
                 $http.get(prefix, {})
                     .then(response => {
-                        self.previousMappingNames = _.map(response.data, name => name.replace(prefixes.mappings, ''));
+                        self.previousMappingNames = response.data;
                     });
             }
 
@@ -44,7 +44,7 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(response => {
-                        self.previousMappingNames.push(response.data.replace(prefixes.mappings, ''));
+                        self.previousMappingNames.push(response.data);
                         deferred.resolve(response.data);
                     }, response => {
                         deferred.reject(response);
@@ -54,12 +54,12 @@
                 return deferred.promise;
             }
             /**
-             * HTTP PUT to mappings/{mappingName} which uploads a mapping to the repository.
+             * HTTP PUT to mappings/{mappingIRI} which uploads a mapping to the repository.
              * @param {object} mapping - A JSON-LD object with a mapping
-             * @param {string} mappingName - The user-defined name for the mapping 
+             * @param {string} mappingId - The IRI for the mapping 
              * @return {promise} The response data with the name of the uploaded
              */
-            self.uploadPut = function(mapping, mappingName) {
+            self.uploadPut = function(mapping, mappingId) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -72,9 +72,9 @@
                 fd.append('jsonld', angular.toJson(mapping));
 
                 $rootScope.showSpinner = true;
-                $http.put(prefix + '/' + mappingName, fd, config)
+                $http.put(prefix + '/' + encodeURIComponent(mappingId), fd, config)
                     .then(response => {
-                        self.previousMappingNames = _.union(self.previousMappingNames, [mappingName]);
+                        self.previousMappingNames = _.union(self.previousMappingNames, [mappingId]);
                         deferred.resolve(response.data);
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', ''));
@@ -84,15 +84,15 @@
                 return deferred.promise;
             }
             /**
-             * HTTP GET to mappings/{mappingName} which returns the JSON-LD of an 
+             * HTTP GET to mappings/{mappingIRI} which returns the JSON-LD of an 
              * uploaded mapping file.
-             * @param {string} mappingName - The user-defined name for the mapping
+             * @param {string} mappingId - The IRI of the mapping
              * @return {promise} The response data with the JSON-LD in the uploaded mapping
              */
-            self.getMapping = function(mappingName) {
+            self.getMapping = function(mappingId) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(mappingName))
+                $http.get(prefix + '/' + encodeURIComponent(mappingId))
                     .then(response => {
                         deferred.resolve(_.get(response.data, '@graph', []));
                     }, response => {
@@ -103,25 +103,25 @@
                 return deferred.promise;
             }
             /**
-             * HTTP GET to mappings/{mappingName} using an anchor tag and window.open which 
+             * HTTP GET to mappings/{mappingIRI} using an anchor tag and window.open which 
              * starts a download of the JSON-LD of an uploaded mapping file.
              * 
-             * @param {string} mappingName - The user-defined name for the mapping
+             * @param {string} mappingId - The IRI of the mapping
              */
-            self.downloadMapping = function(mappingName) {
-                $window.location = prefix + '/' + mappingName;
+            self.downloadMapping = function(mappingId) {
+                $window.location = prefix + '/' + encodeURIComponent(mappingId);
             }
             /**
-             * HTTP DELETE to mappings/{mappingName} to delete a specific mapping
-             * @param {string} mappingName - The user-defined name for the mapping
+             * HTTP DELETE to mappings/{mappingIRI} to delete a specific mapping
+             * @param {string} mappingId - The id of the mapping
              * @return {promise} An indicator of the success of the deletion
              */
-            self.deleteMapping = function(mappingName) {
+            self.deleteMapping = function(mappingId) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
-                $http.delete(prefix + '/' + encodeURIComponent(mappingName))
+                $http.delete(prefix + '/' + encodeURIComponent(mappingId))
                     .then(response => {
-                        _.pull(self.previousMappingNames, mappingName);
+                        _.pull(self.previousMappingNames, mappingId);
                         deferred.resolve();
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', ''));
@@ -129,6 +129,12 @@
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
+            }
+            self.getMappingName = function(mappingId) {
+                return typeof mappingId === 'string' ? mappingId.replace(prefixes.mappings, '') : '';
+            }
+            self.getMappingId = function(mappingName) {
+                return prefixes.mappings + mappingName;
             }
 
             // Edit mapping methods 

@@ -40,14 +40,14 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.newName = _.get(dvm.mm.mapping, 'name', '');
+                    dvm.newName = dvm.mm.getMappingName(_.get(dvm.mm.mapping, 'name', ''));
 
                     dvm.set = function() {
                         if (dvm.state.step === 0) {
                             dvm.state.step = dvm.state.fileUploadStep;
                             dvm.mm.mapping.jsonld = dvm.mm.createNewMapping();
                         }
-                        dvm.mm.mapping.name = dvm.newName;
+                        dvm.mm.mapping.name = dvm.mm.getMappingId(dvm.newName);
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {
