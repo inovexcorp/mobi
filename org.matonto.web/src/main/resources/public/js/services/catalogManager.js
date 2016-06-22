@@ -35,7 +35,40 @@
                 prefix = '/matontorest/catalog/',
                 limit = 10;
 
+            /**
+             * @ngdoc property
+             * @name currentPage
+             * @propertyOf catalogManager.service:catalogManagerService
+             *
+             * @description 
+             * `currentPage` holds the index of the current page of results.
+             */
             self.currentPage = 0;
+            /**
+             * @ngdoc property
+             * @name results
+             * @propertyOf catalogManager.service:catalogManagerService
+             *
+             * @description 
+             * `results` holds the results of the most recent call to `/matontorest/catalog/resources`.
+             * The structure of this object is:
+             * ```
+             * {
+             *     links: {
+             *         base: '',
+             *         context: '',
+             *         next: '',
+             *         prev: '',
+             *         self: ''
+             *     },
+             *     limit: 10,
+             *     results: [],
+             *     size: 0,
+             *     start: 0,
+             *     totalSize: 0
+             * }
+             * ```
+             */
             self.results = {
                 size: 0,
                 totalSize: 0,
@@ -43,12 +76,86 @@
                 limit: 0,
                 start: 0
             };
+            /**
+             * @ngdoc property
+             * @name selectedResource
+             * @propertyOf catalogManager.service:catalogManagerService
+             *
+             * @description 
+             * `selectedResource` holds the resource object of the most recently clicked result in the 
+             * {@link resultsList.directive:resultsList Result List}. The structure of this object is:
+             * ```
+             * {
+             *     id: '',
+             *     types: [],
+             *     title: '',
+             *     description: '',
+             *     issued: {
+             *         year: 2016,
+             *         month: 4,
+             *         day: 29,
+             *         timezone: 0,
+             *         hour: 0,
+             *         minute: 0,
+             *         second: 0,
+             *         fractionalSecond: 0
+             *     },
+             *     modified: {
+             *         year: 2016,
+             *         month: 4,
+             *         day: 29,
+             *         timezone: 0,
+             *         hour: 0,
+             *         minute: 0,
+             *         second: 0,
+             *         fractionalSecond: 0
+             *     },
+             *     identifier: '',
+             *     keywords: [],
+             *     distributions: []
+             * }
+             * ```
+             */
             self.selectedResource = undefined;
+            /**
+             * @ngdoc property
+             * @name filters
+             * @propertyOf catalogManager.service:catalogManagerService
+             *
+             * @description 
+             * `filters` holds all the filters to apply to the next call to `matontorest/catalog/resources`.
+             * All filters in this list are used to populate the {@link filterList.directive:filterList Filter List}.
+             */
             self.filters = {
                 Resources: []
             };
+            /**
+             * @ngdoc property
+             * @name sortBy
+             * @propertyOf catalogManager.service:catalogManagerService
+             *
+             * @description 
+             * `sortBy` holds the IRI of the field to sort the resources by in the next call to 
+             * `matontorest/catalog/resources`.
+             */
             self.sortBy = '';
+            /**
+             * @ngdoc property
+             * @name asc
+             * @propertyOf catalogManager.service:catalogManagerService
+             *
+             * @description 
+             * `asc` holds the direction of the sort applied to the next call to `matontorest/catalog/resources`.
+             */
             self.asc = false;
+            /**
+             * @ngdoc property
+             * @name errorMessage
+             * @propertyOf catalogManager.service:catalogManagerService
+             *
+             * @description 
+             * `errorMessage` holds the latest error message returned by the other methods making HTTP calls.
+             */
             self.errorMessage = '';
             
             function initialize() {
@@ -123,14 +230,11 @@
              *     limit: 10,
              *     results: [],
              *     size: 0,
-             *     start: 0
+             *     start: 0,
+             *     totalSize: 0
              * }
              * ```
              * 
-             * @param {number} limit The number of results to display per page
-             * @param {number} start The index to start this page of results at
-             * @param {string=undefined} type The resource type IRI to restrict these results to
-             * @param {string} order The source key to sort the resutls by
              * @returns {Promise} A promise that either resolves with a paginated results object 
              * or is rejected with a error message. 
              */
@@ -176,7 +280,8 @@
              *     limit: 10,
              *     results: [],
              *     size: 0,
-             *     start: 0
+             *     start: 0,
+             *     totalSize: 0
              * }
              * ```
              * This method is meant to be used with 'links.next' and 'links.prev' URLS from a paginated 
@@ -239,7 +344,6 @@
              *     distributions: []
              * }
              * ```
-             * 
              * 
              * @param {string} resourceId The id of the resource to retrieve.
              * @return {Promise} A promise the resolves to the resource if it exists or is rejected to
@@ -400,7 +504,10 @@
              * @return {string} The local name of a resource type IRI
              */
             self.getType = function(type) {
-                return type.replace(prefixes.catalog, '');
+                if (typeof type === 'string') {
+                    return type.replace(prefixes.catalog, '');                
+                }
+                return '';
             }
 
             /**

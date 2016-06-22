@@ -47,7 +47,7 @@
                         self.previousMappingNames.push(response.data.replace(prefixes.mappings, ''));
                         deferred.resolve(response.data);
                     }, response => {
-                        deferred.reject(response);
+                        deferred.reject(_.get(response, 'statusText', ''));
                     }).then(() => {
                         $rootScope.showSpinner = false;
                     });
@@ -266,7 +266,7 @@
                     var classMapping = getEntityById(newMapping, classMappingId);
                     var classId = self.getClassIdByMapping(classMapping);
                     var objectMappings = _.filter(
-                        getAllObjectMappings(newMapping),
+                        self.getAllObjectMappings(newMapping),
                         ["['" + prefixes.delim + "classMapping'][0]['@id']", classMapping['@id']]
                     );
                     // If there are object mappings that use the class mapping, iterate through them
@@ -276,8 +276,10 @@
                         // Remove the object property for the object mapping
                         _.remove(classWithObjectMapping[prefixes.delim + 'objectProperty'], {'@id': objectMapping['@id']});
                         cleanPropertyArray(classWithObjectMapping, 'objectProperty');
+                        //Replace class mapping
+                        newMapping.splice(_.findIndex(newMapping, {'@id': classWithObjectMapping['@id']}), 1, classWithObjectMapping);
                         // Remove object mapping
-                        _.pull(newMapping, objectMapping);
+                        _.remove(newMapping, objectMapping);
                     });
                     // Remove all properties of the class mapping and the class mapping itself
                     _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), prop => {
@@ -294,18 +296,19 @@
                 return self.getClassIdByMapping(getEntityById(mapping, classMappingId));
             }
             self.getClassIdByMapping = function(classMapping) {
-                return _.get(classMapping, "['" + prefixes.delim + "mapsTo'][0]['@id']");
+                return _.get(classMapping, "['" + prefixes.delim + "mapsTo'][0]['@id']", '');
             }
             self.getPropIdByMappingId = function(mapping, propMappingId) {
                 return self.getPropIdByMapping(getEntityById(mapping, propMappingId));
             }
             self.getPropIdByMapping = function(propMapping) {
-                return _.get(propMapping, "['" + prefixes.delim + "hasProperty'][0]['@id']");
+                return _.get(propMapping, "['" + prefixes.delim + "hasProperty'][0]['@id']", '');
             }
             self.getSourceOntologyId = function(mapping) {
                 return _.get(
                     getEntityById(mapping, prefixes.dataDelim + 'Document'),
-                    "['" + prefixes.delim + "sourceOntology'][0]['@id']"
+                    "['" + prefixes.delim + "sourceOntology'][0]['@id']",
+                    ''
                 );
             }
             self.getSourceOntology = function(mapping) {
@@ -324,6 +327,9 @@
             }
             self.getAllDataMappings = function(mapping) {
                 return getEntitiesByType(mapping, 'DataMapping');
+            }
+            self.getAllObjectMappings = function(mapping) {
+                return getEntitiesByType(mapping, 'ObjectMapping');
             }
             self.getPropMappingsByClass = function(mapping, classMappingId) {
                 var classMapping = getEntityById(mapping, classMappingId);
@@ -369,11 +375,9 @@
             function getClassMappingsByClass(mapping, classId) {
                 return _.filter(self.getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
             }            
-            function getAllObjectMappings(mapping) {
-                return getEntitiesByType(mapping, 'ObjectMapping');
-            }
+            
             function getMappingsForProp(mapping, propId) {
-                var propMappings = _.concat(self.getAllDataMappings(mapping), getAllObjectMappings(mapping));
+                var propMappings = _.concat(self.getAllDataMappings(mapping), self.getAllObjectMappings(mapping));
                 return _.filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
             }
             function findClassWithPropMapping(mapping, propMappingId, type) {
