@@ -82,7 +82,7 @@
 
       <left-nav-item on-click="vm.showDeleteConfirmation = true"
                      nav-title="Delete Entity"
-                     is-disabled-when="vm.state.oi === undefined"
+                     is-disabled-when="vm.state.oi === undefined || vm.state.tab === 'annotation'"
                      is-active-when="vm.showDeleteConfirmation">
           <i class="fa fa-trash-o fa-fw"></i>
       </left-nav-item>

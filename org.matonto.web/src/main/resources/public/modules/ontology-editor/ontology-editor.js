@@ -93,7 +93,7 @@
                         stateManagerService.setTreeTab('everything');
                         vm.selectItem('ontology-editor', vm.state.oi);
                     } else {
-                        vm.selectItem('default');
+                        stateManagerService.clearState(vm.state.oi);
                     }
                 });
         }
