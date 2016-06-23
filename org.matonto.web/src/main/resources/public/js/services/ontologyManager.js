@@ -35,7 +35,8 @@
                         subDataProperties: [],
                         subObjectProperties: [],
                         dataPropertyRange: defaultDatatypes,
-                        noDomains: []
+                        noDomains: [],
+                        jsAnnotations: []
                     }
                 },
                 classTemplate = {
