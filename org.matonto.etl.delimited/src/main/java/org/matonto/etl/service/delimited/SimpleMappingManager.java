@@ -247,8 +247,8 @@ public class SimpleMappingManager implements MappingManager {
      * the repository.
      */
     private void initMappingRegistryResources() {
-        registryContext = factory.createIRI("https://matonto.org/registries/mappings");
-        registrySubject = factory.createIRI("https://matonto.org/registries/mappings");
-        registryPredicate = factory.createIRI("https://matonto.org/registries#hasItem");
+        registryContext = factory.createIRI("https://matonto.org/registry/mappings");
+        registrySubject = factory.createIRI("https://matonto.org/registry/mappings");
+        registryPredicate = factory.createIRI("https://matonto.org/registry#hasItem");
     }
 }

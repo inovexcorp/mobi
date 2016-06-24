@@ -38,6 +38,7 @@
             } else {
                 vm.selected = _.get(vm.ontologies, '[' + vm.state.oi + '].matonto.jsAnnotations[' + vm.state.pi + ']');
             }
+            vm.ontology = ontologyManagerService.getOntology(vm.state.oi);
             vm.serialization = '';
         }
 

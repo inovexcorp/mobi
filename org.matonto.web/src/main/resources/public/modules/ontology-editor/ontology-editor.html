@@ -36,7 +36,7 @@
 
       <left-nav-item on-click="vm.showCreateClassOverlay = true"
                      nav-title="Create Class"
-                     is-disabled-when="vm.state.oi === undefined"
+                     is-disabled-when="vm.state.oi === undefined || !(vm.state.tab === 'everything' || vm.state.tab === 'class')"
                      is-active-when="vm.showCreateClassOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">C</span>
@@ -46,7 +46,7 @@
 
       <left-nav-item on-click="vm.showCreatePropertyOverlay = true"
                      nav-title="Create Property"
-                     is-disabled-when="vm.state.oi === undefined"
+                     is-disabled-when="vm.state.oi === undefined || !(vm.state.tab === 'everything' || vm.state.tab === 'object' || vm.state.tab === 'datatype')"
                      is-active-when="vm.showCreatePropertyOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">P</span>
@@ -56,7 +56,7 @@
 
       <left-nav-item on-click="vm.showCreateAnnotationOverlay = true"
                      nav-title="Create Annotation"
-                     is-disabled-when="vm.state.oi === undefined"
+                     is-disabled-when="vm.state.oi === undefined || !(vm.state.tab === 'everything' || vm.state.tab === 'annotation')"
                      is-active-when="vm.showCreateAnnotationOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">A</span>
