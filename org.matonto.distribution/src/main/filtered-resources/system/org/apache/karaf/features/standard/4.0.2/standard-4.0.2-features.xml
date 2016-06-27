@@ -116,7 +116,7 @@
         <!--<bundle start-level="30">mvn:org.apache.felix/org.apache.felix.bundlerepository/2.0.6</bundle>-->
         <bundle start-level="30">mvn:org.apache.felix/org.apache.felix.bundlerepository/2.0.8</bundle>
         <!--<bundle start-level="30">mvn:org.apache.karaf.obr/org.apache.karaf.obr.core/4.0.2</bundle>-->
-        <bundle start-level="30">mvn:org.apache.karaf.obr/org.apache.karaf.obr.core/4.0.5-SNAPSHOT</bundle>
+        <bundle start-level="30">mvn:org.apache.karaf.obr/org.apache.karaf.obr.core/4.0.5</bundle>
         <bundle start-level="30">mvn:org.ops4j.pax.url/pax-url-obr/2.4.3/jar/uber</bundle>
     </feature>
     <feature name="bundle" description="Provide Bundle support" version="4.0.2">
