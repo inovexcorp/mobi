@@ -9,6 +9,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
+import org.matonto.etl.api.delimited.Mapping;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.rdf.api.IRI;
@@ -20,6 +21,7 @@ import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.rio.RDFFormat;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;
@@ -44,6 +46,12 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     @Mock
     MappingManager manager;
 
+    @Mock
+    Mapping mapping;
+
+    @Mock
+    MappingId mappingId;
+
     @Override
     protected Application configureApp() throws Exception {
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -54,15 +62,18 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         rest.setManager(manager);
         rest.setFactory(factory);
 
+        when(mappingId.getMappingIdentifier()).thenReturn(factory.createIRI("http://test.org"));
+        when(mapping.getModel()).thenReturn(fakeModel);
+        when(mapping.getId()).thenReturn(mappingId);
         when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
-        when(manager.createMapping(any(File.class))).thenReturn(new LinkedHashModel());
-        when(manager.createMapping(anyString())).thenReturn(new LinkedHashModel());
-        when(manager.storeMapping(any(Model.class), any(Resource.class))).thenReturn(true);
+        when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mapping);
+        when(manager.createMapping(anyString())).thenReturn(mapping);
+        when(manager.storeMapping(any(Mapping.class))).thenReturn(true);
         when(manager.deleteMapping(any(Resource.class))).thenReturn(true);
         when(manager.getMappingRegistry()).thenReturn(new HashSet<Resource>());
         when(manager.createMappingIRI()).thenReturn(factory.createIRI("http://test.org"));
         when(manager.createMappingIRI(anyString())).thenAnswer(i -> factory.createIRI("http://test.org/" + i.getArguments()[0]));
-        when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(fakeModel));
+        when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(mapping));
         when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
@@ -114,28 +125,6 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
         Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI().stringValue()));
-    }
-
-    @Test
-    public void putFileTest() {
-        FormDataMultiPart fd = new FormDataMultiPart();
-        InputStream content = getClass().getResourceAsStream("/mapping.jsonld");
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
-                content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-        Response response = target().path("mappings/" + encode(manager.createMappingIRI("test").toString())).request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI("test").stringValue()));
-
-        fd = new FormDataMultiPart();
-        content = getClass().getResourceAsStream("/mapping.jsonld");
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
-                content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-        response = target().path("mappings/" + encode(manager.createMappingIRI("none").toString())).request()
-                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(verify(manager).deleteMapping(manager.createMappingIRI("none")));
-        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI("none").stringValue()));
     }
 
     @Test

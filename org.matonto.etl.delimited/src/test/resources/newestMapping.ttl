@@ -1,33 +1,33 @@
-@prefix delim-data: <http://matonto.org/data/delimited#> .
+@prefix : <http://matonto.org/mappings/newest_mapping/> .
 @prefix delim: <http://matonto.org/ontologies/delimited/> .
 @prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
 
-delim-data:Document rdfs:type               delim:Document .
+<http://matonto.org/mappings/newest_mapping> rdfs:type delim:Mapping.
 
-delim-data:Material rdfs:type               delim:ClassMapping ;
-                    delim:mapsTo            uhtc:Material ;
-                    delim:dataProperty      delim-data:DataMapping1 ;
-                    delim:dataProperty      delim-data:DataMapping2 ;
-                    delim:dataProperty      delim-data:DataMapping3 ;
-                    delim:objectProperty    delim-data:ObjectMapping1 ;
-                    delim:hasPrefix         "http://matonto.org/data/uhtc/material/" ;
-                    delim:localName         "${UUID}" .
+:Material rdfs:type               delim:ClassMapping ;
+          delim:mapsTo            uhtc:Material ;
+          delim:dataProperty      :DataMapping1 ;
+          delim:dataProperty      :DataMapping2 ;
+          delim:dataProperty      :DataMapping3 ;
+          delim:objectProperty    :ObjectMapping1 ;
+          delim:hasPrefix         "http://matonto.org/data/uhtc/material/" ;
+          delim:localName         "${UUID}" .
 
-delim-data:CrystalStructure rdfs:type           delim:ClassMapping ;
-                            delim:mapsTo        uhtc:CrystalStructure ;
-                            delim:hasPrefix     "http://matonto.org/data/uhtc/crystalstructure/" ;
-                            delim:localName     "${2}" .
+:CrystalStructure rdfs:type           delim:ClassMapping ;
+                  delim:mapsTo        uhtc:CrystalStructure ;
+                  delim:hasPrefix     "http://matonto.org/data/uhtc/crystalstructure/" ;
+                  delim:localName     "${2}" .
 
 
-delim-data:DataMapping1     delim:columnIndex       "1" ;
-                            delim:hasProperty       uhtc:formula .
+:DataMapping1     delim:columnIndex       "1" ;
+                  delim:hasProperty       uhtc:formula .
 
-delim-data:DataMapping2     delim:columnIndex       "6" ;
-                            delim:hasProperty       uhtc:density .
+:DataMapping2     delim:columnIndex       "6" ;
+                  delim:hasProperty       uhtc:density .
 
-delim-data:DataMapping3     delim:columnIndex       "3" ;
-                            delim:hasProperty       uhtc:latticeParameter .
+:DataMapping3     delim:columnIndex       "3" ;
+                  delim:hasProperty       uhtc:latticeParameter .
 
-delim-data:ObjectMapping1   delim:classMapping      delim-data:CrystalStructure ;
-                            delim:hasProperty       uhtc:crystalStructure .
+:ObjectMapping1   delim:classMapping      :CrystalStructure ;
+                  delim:hasProperty       uhtc:crystalStructure .

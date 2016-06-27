@@ -29,7 +29,6 @@
         self.dc = 'http://purl.org/dc/elements/1.1/';
         self.xsd = 'http://www.w3.org/2001/XMLSchema#';
         self.data = 'http://matonto.org/data/';
-        self.dataDelim = self.data + 'delimited#';
         self.delim = 'http://matonto.org/ontologies/delimited/';
         self.mappings = 'http://matonto.org/mappings/';
         self.catalog = 'http://matonto.org/ontologies/catalog#';

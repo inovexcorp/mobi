@@ -5,6 +5,7 @@ import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.matonto.etl.api.delimited.Mapping;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
@@ -46,27 +47,27 @@ public class MappingRestImpl implements MappingRest {
     @Override
     public Response upload(InputStream fileInputStream, FormDataContentDisposition fileDetail,
                               String jsonld) {
-        Resource mappingId = manager.createMappingId(manager.createMappingIRI()).getMappingIdentifier();
-        uploadMapping(mappingId, fileInputStream, fileDetail, jsonld);
-        logger.info("Mapping Uploaded: " + mappingId);
-        return Response.status(200).entity(mappingId.stringValue()).build();
-    }
-
-    @Override
-    public Response upload(String mappingIRI, InputStream fileInputStream, FormDataContentDisposition fileDetail,
-                           String jsonld) {
-        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
+            throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
+                    Response.Status.BAD_REQUEST);
+        }
+        Mapping mapping;
         try {
-            if (manager.mappingExists(mappingId)) {
-                manager.deleteMapping(mappingId);
+            if (fileInputStream != null) {
+                RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName())
+                        .orElseThrow(IllegalArgumentException::new);
+                mapping = manager.createMapping(fileInputStream, format);
+            } else {
+                mapping = manager.createMapping(jsonld);
             }
+            manager.storeMapping(mapping);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing mapping", Response.Status.BAD_REQUEST);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
-
-        uploadMapping(mappingId, fileInputStream, fileDetail, jsonld);
-        logger.info("Mapping Uploaded: " + mappingId);
-        return Response.status(200).entity(mappingId.stringValue()).build();
+        logger.info("Mapping Uploaded: " + mapping.getId().getMappingIdentifier().stringValue());
+        return Response.status(200).entity(mapping.getId().getMappingIdentifier().stringValue()).build();
     }
 
     @Override
@@ -90,7 +91,13 @@ public class MappingRestImpl implements MappingRest {
 
     @Override
     public Response getMapping(String mappingIRI) {
-        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        Resource mappingId;
+        try {
+            mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, "Invalid mapping IRI", Response.Status.BAD_REQUEST);
+        }
+
         logger.info("Getting mapping " + mappingId);
         Optional<JSONObject> optJson;
         try {
@@ -108,7 +115,13 @@ public class MappingRestImpl implements MappingRest {
 
     @Override
     public Response downloadMapping(String mappingIRI) {
-        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        Resource mappingId;
+        try {
+            mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, "Invalid mapping IRI", Response.Status.BAD_REQUEST);
+        }
+
         logger.info("Downloading mapping " + mappingIRI);
         Optional<JSONObject> optJson;
         try {
@@ -136,7 +149,13 @@ public class MappingRestImpl implements MappingRest {
 
     @Override
     public Response deleteMapping(String mappingIRI) {
-        Resource mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        Resource mappingId;
+        try {
+            mappingId = manager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, "Invalid mapping IRI", Response.Status.BAD_REQUEST);
+        }
+
         logger.info("Deleting mapping " + mappingId);
         try {
             manager.deleteMapping(mappingId);
@@ -145,37 +164,6 @@ public class MappingRestImpl implements MappingRest {
         }
 
         return Response.status(200).entity(true).build();
-    }
-
-    /**
-     * Uploads a mapping as either an InputStream or a JSON-LD String with the passed IRI.
-     *
-     * @param mappingIRI the IRI to upload the mapping with
-     * @param fileInputStream an InputStream of a mapping file passed as form data
-     * @param fileDetail information about the file being uploaded, including the name
-     * @param jsonld a mapping serialized as JSON-LD
-     */
-    private void uploadMapping(Resource mappingIRI, InputStream fileInputStream, FormDataContentDisposition fileDetail,
-                               String jsonld) {
-        if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
-            throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
-                    Response.Status.BAD_REQUEST);
-        }
-        Model mappingModel;
-        try {
-            if (fileInputStream != null) {
-                RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName())
-                        .orElseThrow(IllegalArgumentException::new);
-                mappingModel = manager.createMapping(fileInputStream, format);
-            } else {
-                mappingModel = manager.createMapping(jsonld);
-            }
-            manager.storeMapping(mappingModel, mappingIRI);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError("Error parsing mapping", Response.Status.BAD_REQUEST);
-        } catch (MatOntoException e) {
-            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
-        }
     }
 
     /**
@@ -188,10 +176,10 @@ public class MappingRestImpl implements MappingRest {
      */
     private Optional<JSONObject> getMappingAsJson(Resource mappingIRI) throws MatOntoException {
         JSONObject json;
-        Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
+        Optional<Mapping> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(Values.sesameModel(mappingModel.get()), out, RDFFormat.JSONLD);
+            Rio.write(Values.sesameModel(mappingModel.get().getModel()), out, RDFFormat.JSONLD);
             JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
             json = arr.getJSONObject(0);
         } else {

@@ -14,6 +14,7 @@ import org.junit.Assert;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
+import org.matonto.etl.api.delimited.Mapping;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.rdf.api.IRI;
@@ -49,6 +50,9 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     @Mock
     MappingManager manager;
 
+    @Mock
+    Mapping mapping;
+
     @Override
     protected Application configureApp() throws Exception {
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -58,10 +62,11 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         rest.setMappingManager(manager);
         rest.setFactory(factory);
 
+        when(mapping.getModel()).thenReturn(new LinkedHashModel());
         when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
         when(converter.convert(any(ExcelConfig.class))).thenReturn(new LinkedHashModel());
         when(manager.createMappingIRI(anyString())).thenReturn(factory.createIRI("http://test.org"));
-        when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(new LinkedHashModel()));
+        when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(mapping));
         when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override

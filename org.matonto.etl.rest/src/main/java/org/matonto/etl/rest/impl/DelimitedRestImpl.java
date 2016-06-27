@@ -13,6 +13,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
+import org.matonto.etl.api.delimited.Mapping;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.rest.DelimitedRest;
 import org.matonto.exception.MatOntoException;
@@ -167,9 +168,9 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Collect uploaded mapping model
         Model mappingModel;
         Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
-        Optional<org.matonto.rdf.api.Model> mappingOptional = mappingManager.retrieveMapping(mappingId);
+        Optional<Mapping> mappingOptional = mappingManager.retrieveMapping(mappingId);
         if (mappingOptional.isPresent()) {
-            mappingModel = Values.sesameModel(mappingOptional.get());
+            mappingModel = Values.sesameModel(mappingOptional.get().getModel());
         } else {
             throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist",
                     Response.Status.BAD_REQUEST);

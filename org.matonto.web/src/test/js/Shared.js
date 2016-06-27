@@ -117,11 +117,8 @@ function mockMappingManager() {
             this.mapping = undefined;
             this.sourceOntologies = [];
 
-            this.uploadPut = jasmine.createSpy('uploadPut').and.callFake(function(mapping, mappingName) {
-                return mapping ? $q.when(mappingName) : $q.reject('Something went wrong');
-            });
-            this.uploadPost = jasmine.createSpy('uploadPost').and.callFake(function(mapping) {
-                return mapping ? $q.when('mappingName') : $q.reject('Something went wrong');
+            this.upload = jasmine.createSpy('uploadPut').and.callFake(function(mapping) {
+                return mapping ? $q.when('') : $q.reject('Something went wrong');
             });
             this.getMapping = jasmine.createSpy('getMapping').and.callFake(function(mappingName) {
                 return mappingName ? $q.when([]) : $q.reject('Something went wrong');
@@ -285,7 +282,7 @@ function mockPrefixes() {
 
         module(function($provide) {
             $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = this.dc = '';
+                this.owl = this.rdfs = this.rdf = this.delim = this.data = this.mappings = this.catalog = this.dc = '';
             });
         });
     });

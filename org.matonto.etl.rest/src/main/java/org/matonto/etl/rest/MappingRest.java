@@ -47,26 +47,6 @@ public interface MappingRest {
                     @FormDataParam("jsonld") String jsonld);
 
     /**
-     * Uploads a mapping sent as form data or a JSON-LD string into a data store
-     * with the passed id. If the mapping already exists, replaces the existing mapping.
-     *
-     * @param mappingIRI the id for the mapping
-     * @param fileInputStream an InputStream of a mapping file passed as form data
-     * @param fileDetail information about the file being uploaded, including the name
-     * @param jsonld a mapping serialized as JSON-LD
-     * @return a response with the IRI for the mapping
-     */
-    @PUT
-    @Path("{mappingIRI}")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @RolesAllowed("user")
-    @ApiOperation("Replaces a mapping with a new mapping sent as form data")
-    Response upload(@PathParam("mappingIRI") String mappingIRI,
-                    @FormDataParam("file") InputStream fileInputStream,
-                    @FormDataParam("file") FormDataContentDisposition fileDetail,
-                    @FormDataParam("jsonld") String jsonld);
-
-    /**
      * Collects the JSON-LD from an uploaded mapping and returns it as JSON.
      *
      * @param mappingIRI the id of an uploaded mapping

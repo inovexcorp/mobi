@@ -29,7 +29,7 @@
              * @param {object} mapping - A JSON-LD object with a mapping
              * @return {promise} The response data with the name of the uploaded
              */
-            self.uploadPost = function(mapping) {
+            self.upload = function(mapping) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -53,36 +53,7 @@
                     });
                 return deferred.promise;
             }
-            /**
-             * HTTP PUT to mappings/{mappingIRI} which uploads a mapping to the repository.
-             * @param {object} mapping - A JSON-LD object with a mapping
-             * @param {string} mappingId - The IRI for the mapping 
-             * @return {promise} The response data with the name of the uploaded
-             */
-            self.uploadPut = function(mapping, mappingId) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
-                    config = {
-                        transformRequest: angular.identity,
-                        headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        }
-                    };
-                fd.append('jsonld', angular.toJson(mapping));
-
-                $rootScope.showSpinner = true;
-                $http.put(prefix + '/' + encodeURIComponent(mappingId), fd, config)
-                    .then(response => {
-                        self.previousMappingNames = _.union(self.previousMappingNames, [mappingId]);
-                        deferred.resolve(response.data);
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', ''));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
+            
             /**
              * HTTP GET to mappings/{mappingIRI} which returns the JSON-LD of an 
              * uploaded mapping file.
@@ -138,19 +109,19 @@
             }
 
             // Edit mapping methods 
-            self.createNewMapping = function() {
+            self.createNewMapping = function(iri) {
                 var jsonld = [];
-                var documentEntity = {
-                    '@id': prefixes.dataDelim + 'Document',
-                    '@type': [prefixes.delim + 'Document']
+                var mappingEntity = {
+                    '@id': iri,
+                    '@type': [prefixes.delim + 'Mapping']
                 };
-                jsonld.push(documentEntity);
+                jsonld.push(mappingEntity);
                 return jsonld;
             }
             self.setSourceOntology = function(mapping, ontologyId) {
                 var newMapping = angular.copy(mapping);
-                var documentEntity = getEntityById(newMapping, prefixes.dataDelim + 'Document');
-                documentEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
+                var mappingEntity = getMappingEntity(newMapping);
+                mappingEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
                 return newMapping;
             }
             self.addClass = function(mapping, ontology, classId) {
@@ -161,7 +132,7 @@
                     var splitIri = $filter('splitIRI')(classId);
                     var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontology, '@id', '')).toLowerCase();
                     var classEntity = {
-                        '@id': prefixes.dataDelim + uuid.v4(),
+                        '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
@@ -198,7 +169,7 @@
                     } else {
                         // Add new data mapping id to data properties of class mapping
                         var dataEntity = {
-                            '@id': prefixes.dataDelim + uuid.v4()
+                            '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
                         };
                         var classMapping = getEntityById(newMapping, classMappingId);
                         // Sets the dataProperty key if not already present
@@ -227,7 +198,7 @@
                         if (propObj) {
                             // Add new object mapping id to object properties of class mapping
                             var dataEntity = {
-                                '@id': prefixes.dataDelim + uuid.v4()
+                                '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
                             };
                             var classMapping = getEntityById(newMapping, classMappingId);
                             classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
@@ -310,7 +281,7 @@
             }
             self.getSourceOntologyId = function(mapping) {
                 return _.get(
-                    getEntityById(mapping, prefixes.dataDelim + 'Document'),
+                    getMappingEntity(mapping),
                     "['" + prefixes.delim + "sourceOntology'][0]['@id']"
                 );
             }
@@ -396,6 +367,9 @@
             }
             function isType(entity, type) {
                 return _.get(entity, "['@type'][0]") === prefixes.delim + type;
+            }
+            function getMappingEntity(mapping) {
+                return _.get(getEntitiesByType(mapping, 'Mapping'), 0);
             }
         }
 })();
