@@ -63,7 +63,7 @@
                         if (dvm.state.changeOntology) {
                             dvm.state.clearCachedSourceOntologies();
                             var ontologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
-                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(dvm.mm.mapping.name);
+                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping();
                             dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, ontologyId);
                             dvm.state.changeOntology = false;
                             dvm.state.changedMapping();

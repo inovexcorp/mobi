@@ -279,7 +279,7 @@ function mockPrefixes() {
 
         module(function($provide) {
             $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.delimData = this.data = this.mappings = this.catalog = this.dc = '';
+                this.owl = this.rdfs = this.rdf = this.delim = this.dataDelim = this.data = this.mappings = this.catalog = this.dc = '';
             });
         });
     });

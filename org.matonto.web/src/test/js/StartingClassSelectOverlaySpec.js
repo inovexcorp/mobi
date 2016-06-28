@@ -74,7 +74,7 @@ describe('Starting Class Select Overlay directive', function() {
             controller.continue();
             expect(mapperStateSvc.clearCachedSourceOntologies).toHaveBeenCalled();
             expect(mappingManagerSvc.getSourceOntologyId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
-            expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+            expect(mappingManagerSvc.createNewMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalled();
             expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
             expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalledWith(mappingManagerSvc.sourceOntologies, controller.selectedClass['@id']);

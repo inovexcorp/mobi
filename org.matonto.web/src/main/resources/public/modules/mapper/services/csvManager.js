@@ -37,6 +37,7 @@
              * @ngdoc property
              * @name csvManager.csvManagerService#fileObj
              * @propertyOf csvManager.service:csvManagerService
+             * @type {Object}
              * 
              * @description
              * `fileObj` holds the File object from a {@link file-input.directive:fileInput fileInput} 
@@ -47,6 +48,7 @@
              * @ngdoc property
              * @name csvManager.csvManagerService#filePreview
              * @propertyOf csvManager.service:csvManagerService
+             * @type {Object}
              * 
              * @description
              * `filePreview` holds an object which has the headers and rows set from a call to 
@@ -63,6 +65,7 @@
              * @ngdoc property
              * @name csvManager.csvManagerService#fileName
              * @propertyOf csvManager.service:csvManagerService
+             * @type {string}
              *
              * @description 
              * `fileName` holds a string with the name of the uploaded delimited file given 
@@ -74,6 +77,7 @@
              * @ngdoc property
              * @name csvManager.csvManagerService#separator
              * @propertyOf csvManager.service:csvManagerService
+             * @type {string}
              *
              * @description 
              * `separator` holds a string with the character separating columns in the uploaded 
@@ -86,6 +90,7 @@
              * @ngdoc property
              * @name csvManager.csvManagerService#containsHeaders
              * @propertyOf csvManager.service:csvManagerService
+             * @type {boolean}
              *
              * @description 
              * `separator` holds a boolean indicating whether the uploaded delimited file contains a

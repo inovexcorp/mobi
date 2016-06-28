@@ -47,6 +47,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#editMapping
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `editMapping` holds a boolean indicating whether or not the mapping page is
@@ -57,6 +58,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#newMapping
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `newMapping` holds a boolean indicating whether or not the mapping page is
@@ -67,6 +69,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#step
              * @propertyOf mapperState.service:mapperStateService
+             * @type {number}
              *
              * @description 
              * `step` holds a number indicating what step in the mapping process the mapping
@@ -77,6 +80,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#invalidProps
              * @propertyOf mapperState.service:mapperStateService
+             * @type {Object[]}
              *
              * @description 
              * `invalidProps` holds an array of property objects from 
@@ -89,6 +93,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#availableColumns
              * @propertyOf mapperState.service:mapperStateService
+             * @type {string[]}
              *
              * @description 
              * `availableColumns` holds an array of the header strings for all the columns
@@ -100,6 +105,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#availableProps
              * @propertyOf mapperState.service:mapperStateService
+             * @type {Object[]}
              *
              * @description 
              * `availableColumns` holds an array of property objects from 
@@ -112,6 +118,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#openedClasses
              * @propertyOf mapperState.service:mapperStateService
+             * @type {string[]}
              *
              * @description 
              * `openedClasses` holds an array of class mapping ids indicating which ones should be 
@@ -122,6 +129,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#invalidOntology
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `invalidOntology` holds a boolean indicating whether or not the source ontology for the 
@@ -133,6 +141,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#editMappingName
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `editMappingName` holds a boolean indicating whether or not the mapping page is
@@ -143,6 +152,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#displayCancelConfirm
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `displayCancelConfirm` holds a boolean indicating whether or not the cancel confirm 
@@ -153,6 +163,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#displayNewMappingConfirm
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `displayNewMappingConfirm` holds a boolean indicating whether or not the create new 
@@ -163,6 +174,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#changeOntology
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `changeOntology` holds a boolean indicating whether or not the mapping page is
@@ -174,6 +186,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#displayDeleteEntityConfirm
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `displayDeleteEntityConfirm` holds a boolean indicating whether or not the delete 
@@ -184,6 +197,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#displayDeleteMappingConfirm
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `displayDeleteMappingConfirm` holds a boolean indicating whether or not the delete 
@@ -194,6 +208,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#previewOntology
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `previewOntology` holds a boolean indicating whether or not the 
@@ -205,6 +220,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#editIriTemplate
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `editIriTemplate` holds a boolean indicating whether or not the
@@ -217,6 +233,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#selectedClassMappingId
              * @propertyOf mapperState.service:mapperStateService
+             * @type {string}
              *
              * @description 
              * `selectedClassMappingId` holds a string with the IRI of the currently selected
@@ -227,6 +244,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#selectedPropMappingId
              * @propertyOf mapperState.service:mapperStateService
+             * @type {string}
              *
              * @description 
              * `selectedPropMappingId` holds a string with the IRI of the currently selected
@@ -237,6 +255,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#selectedProp
              * @propertyOf mapperState.service:mapperStateService
+             * @type {Object}
              *
              * @description 
              * `selectedProp` holds the property object from {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
@@ -247,6 +266,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#selectedColumn
              * @propertyOf mapperState.service:mapperStateService
+             * @type {string}
              *
              * @description 
              * `selectedColumn` holds a string with the header of the currently selected column
@@ -256,6 +276,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#newProp
              * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
              *
              * @description 
              * `newProp` holds a boolean indicating whether or not the a new property is being mapped
@@ -265,6 +286,7 @@
              * @ngdoc property
              * @name mapperState.mapperStateService#deleteId
              * @propertyOf mapperState.service:mapperStateService
+             * @type {string}
              *
              * @description 
              * `deleteId` holds a string with the IRI of the mapping entity to be deleted.
