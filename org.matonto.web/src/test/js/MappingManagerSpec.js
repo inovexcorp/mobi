@@ -39,10 +39,11 @@ describe('Mapping Manager service', function() {
         });
     });
     describe('should upload a mapping with a generated name', function() {
-        it('unless an error occurs', function(done) {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless an error occurs', function(done) {
             $httpBackend.expectPOST('/matontorest/mappings', 
                 function(data) {
                     return data instanceof FormData;
@@ -61,9 +62,6 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-
             $httpBackend.expectPOST('/matontorest/mappings', 
                 function(data) {
                     return data instanceof FormData;
@@ -82,10 +80,11 @@ describe('Mapping Manager service', function() {
         });
     });
     describe('should upload a mapping with the specified name', function() {
-        it('unless an error occurs', function(done) {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless an error occurs', function(done) {
             var name = 'mappingname';
             $httpBackend.expectPUT('/matontorest/mappings/' + name, 
                 function(data) {
@@ -105,9 +104,6 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('creating a new one', function(done) {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-
             var name = 'mappingname';
             $httpBackend.expectPUT('/matontorest/mappings/' + name, 
                 function(data) {
@@ -126,9 +122,6 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('replacing an existing one', function(done) {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-
             var name = 'mappingname';
             mappingManagerSvc.previousMappingNames = [name];
             $httpBackend.expectPUT('/matontorest/mappings/' + name, 
@@ -149,10 +142,11 @@ describe('Mapping Manager service', function() {
         });
     });
     describe('should retrieve a mapping by name', function() {
-        it('unless an error occurs', function(done) {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless an error occurs', function(done) {
             var name = 'mappingname';
             $httpBackend.expectGET('/matontorest/mappings/' + name).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
@@ -167,9 +161,6 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-
             var name = 'mappingname';
             $httpBackend.expectGET('/matontorest/mappings/' + name).respond(200, {'@graph': []});
             mappingManagerSvc.getMapping(name).then(function(response) {
@@ -187,10 +178,11 @@ describe('Mapping Manager service', function() {
         expect(windowSvc.location).toBe('/matontorest/mappings/mapping');
     });
     describe('should delete a mapping by name', function() {
-        it('unless an error occurs', function(done) {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless an error occurs', function(done) {
             var name = 'mappingname';
             $httpBackend.expectDELETE('/matontorest/mappings/' + name).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
@@ -205,9 +197,6 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-
             var name = 'mappingname';
             mappingManagerSvc.previousMappingNames = [name];
             $httpBackend.expectDELETE('/matontorest/mappings/' + name).respond(200, '');

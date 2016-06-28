@@ -19,7 +19,7 @@
          * @requires $rootScope
          * @requires $http
          * @requires $q
-         * @requires prefixes
+         * @requires prefixes.service:prefixes
          *
          * @description 
          * `catalogManagerService` is a service that provides access to the MatOnto catalog REST 
@@ -39,6 +39,7 @@
              * @ngdoc property
              * @name currentPage
              * @propertyOf catalogManager.service:catalogManagerService
+             * @type {number}
              *
              * @description 
              * `currentPage` holds the index of the current page of results.
@@ -48,6 +49,7 @@
              * @ngdoc property
              * @name results
              * @propertyOf catalogManager.service:catalogManagerService
+             * @type {Object}
              *
              * @description 
              * `results` holds the results of the most recent call to `/matontorest/catalog/resources`.
@@ -80,6 +82,7 @@
              * @ngdoc property
              * @name selectedResource
              * @propertyOf catalogManager.service:catalogManagerService
+             * @type {Object}
              *
              * @description 
              * `selectedResource` holds the resource object of the most recently clicked result in the 
@@ -121,6 +124,7 @@
              * @ngdoc property
              * @name filters
              * @propertyOf catalogManager.service:catalogManagerService
+             * @type {Object}
              *
              * @description 
              * `filters` holds all the filters to apply to the next call to `matontorest/catalog/resources`.
@@ -133,6 +137,7 @@
              * @ngdoc property
              * @name sortBy
              * @propertyOf catalogManager.service:catalogManagerService
+             * @type {string}
              *
              * @description 
              * `sortBy` holds the IRI of the field to sort the resources by in the next call to 
@@ -143,6 +148,7 @@
              * @ngdoc property
              * @name asc
              * @propertyOf catalogManager.service:catalogManagerService
+             * @type {boolean}
              *
              * @description 
              * `asc` holds the direction of the sort applied to the next call to `matontorest/catalog/resources`.
@@ -152,6 +158,7 @@
              * @ngdoc property
              * @name errorMessage
              * @propertyOf catalogManager.service:catalogManagerService
+             * @type {string}
              *
              * @description 
              * `errorMessage` holds the latest error message returned by the other methods making HTTP calls.
@@ -359,7 +366,7 @@
                         } else if (response.status === 200) {
                             deferred.resolve(response.data);
                         } else {
-                            deferred.reject('An error has occured');
+                            deferred.reject('An error has occurred');
                         }
                     }, function(error) {
                         deferred.reject(error.statusText);
@@ -392,7 +399,7 @@
                         } else if (response.status === 200) {
                             deferred.resolve(response.data);
                         } else {
-                            deferred.reject('An error has occured');
+                            deferred.reject('An error has occurred');
                         }
                     }, function(error) {
                         deferred.reject(error.statusText);
@@ -529,24 +536,27 @@
              * and second from the resource or distribution's date object.
              */
             self.getDate = function(date) {
+                if (typeof date !== 'object' || date === null) {
+                    return undefined;
+                }
                 var dateObj = new Date(0);
                 if (_.has(date, 'year')) {
-                    dateObj.setFullYear(date.year);
+                    dateObj.setFullYear(_.get(date, 'year', 0));
                 }
                 if (_.has(date, 'month')) {
-                    dateObj.setMonth(date.month - 1);
+                    dateObj.setMonth(_.get(date, 'month', 1) - 1);
                 }
                 if (_.has(date, 'day')) {
-                    dateObj.setDate(date.day);
+                    dateObj.setDate(_.get(date, 'day', 1));
                 }
                 if (_.has(date, 'hour')) {
-                    dateObj.setHours(date.hour);
+                    dateObj.setHours(_.get(date, 'hour', 0));
                 }
                 if (_.has(date, 'minute')) {
-                    dateObj.setMinutes(date.minute);
+                    dateObj.setMinutes(_.get(date, 'minute', 0));
                 }
                 if (_.has(date, 'second')) {
-                    dateObj.setSeconds(date.second);
+                    dateObj.setSeconds(_.get(date, 'second', 0));
                 }
                 return dateObj;
             }

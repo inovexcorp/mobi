@@ -58,7 +58,6 @@ describe('Catalog Manager service', function() {
         it('with the set parameters', function() {
             $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, ['test1']);
             $httpBackend.flush();
-
             catalogManagerSvc.filters.Resources[0].applied = true;
             var params = createQueryString({
                 asc: catalogManagerSvc.asc,
@@ -75,10 +74,11 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should get a page of resources based on the passed URL', function() {
-        it('unless there is an error', function() {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless there is an error', function() {
             var url = 'matontorest/catalog/resources';
             $httpBackend.expectGET(url).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
@@ -88,9 +88,6 @@ describe('Catalog Manager service', function() {
             expect(catalogManagerSvc.errorMessage).toBe('Error Message');
         });
         it('successfully', function() {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var url = 'matontorest/catalog/resources';
             var results = {limit: 10, results: [], links: {}, size: 0, start: 0, totalSize: 0};
             $httpBackend.expectGET(url).respond(200, results);
@@ -100,10 +97,11 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a resource by id', function() {
-        it('unless it does not exist', function(done) {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless it does not exist', function(done) {
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id)).respond(204, '');
             catalogManagerSvc.getResource(id).then(function(response) {
@@ -116,24 +114,18 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('unless something went wrong', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id)).respond(206, '');
             catalogManagerSvc.getResource(id).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
-                expect(response).toBe('An error has occured');
+                expect(response).toBe('An error has occurred');
                 done();
             });
             $httpBackend.flush();
         });
         it('unless an error occured', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id)).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
@@ -148,9 +140,6 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id)).respond(200, {});
             catalogManagerSvc.getResource(id).then(function(response) {
@@ -164,10 +153,11 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve the distributions of a resource by id', function() {
-        it('unless it does not exist', function(done) {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless it does not exist', function(done) {
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id) + '/distributions').respond(204, '');
             catalogManagerSvc.getResourceDistributions(id).then(function(response) {
@@ -180,24 +170,18 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('unless something went wrong', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id) + '/distributions').respond(206, '');
             catalogManagerSvc.getResourceDistributions(id).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
-                expect(response).toBe('An error has occured');
+                expect(response).toBe('An error has occurred');
                 done();
             });
             $httpBackend.flush();
         });
         it('unless an error occured', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id) + '/distributions').respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
@@ -212,9 +196,6 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var id = 'http://matonto.org/resourceid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(id) + '/distributions').respond(200, []);
             catalogManagerSvc.getResourceDistributions(id).then(function(response) {
@@ -228,10 +209,11 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a distribution of a resource by ids', function() {
-        it('unless it does not exist', function(done) {
+        beforeEach(function() {
             $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
             $httpBackend.flush();
-
+        });
+        it('unless it does not exist', function(done) {
             var resourceId = 'http://matonto.org/resourceid';
             var distributionId = 'http://matonto.org/distributionid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(resourceId) 
@@ -246,9 +228,6 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('unless an error occured', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var resourceId = 'http://matonto.org/resourceid';
             var distributionId = 'http://matonto.org/distributionid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(resourceId) 
@@ -265,9 +244,6 @@ describe('Catalog Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalog/resource-types').respond(200, []);
-            $httpBackend.flush();
-
             var resourceId = 'http://matonto.org/resourceid';
             var distributionId = 'http://matonto.org/distributionid';
             $httpBackend.expectGET('/matontorest/catalog/resources/' + encodeURIComponent(resourceId) 
@@ -290,22 +266,31 @@ describe('Catalog Manager service', function() {
         expect(typeof result).toBe('string');
         expect(result).toBe('');
     });
-    it('should create a Date object for a resource or distribution date', function() {
-        var date = {
-            year: 2000,
-            month: 1,
-            day: 1,
-            hour: 1,
-            minute: 1,
-            second: 1
-        };
-        var result = catalogManagerSvc.getDate(date);
-        expect(result instanceof Date).toBe(true);
-        expect(result.getFullYear()).toBe(date.year);
-        expect(result.getMonth()).toBe(date.month - 1);
-        expect(result.getDate()).toBe(date.day);
-        expect(result.getHours()).toBe(date.hour);
-        expect(result.getMinutes()).toBe(date.minute);
-        expect(result.getSeconds()).toBe(date.second);
+    describe('should create a Date object for a resource or distribution date', function() {
+        it('unless passed something other than an object', function() {
+            var tests = ['', undefined, null, 0, false];
+            _.forEach(tests, function(test) {
+                expect(catalogManagerSvc.getDate(test)).toBe(undefined);
+            });
+        });
+        it('if passed a valid object', function() {
+            var date = {
+                year: 2000,
+                month: 1,
+                day: 1,
+                hour: 1,
+                minute: 1,
+                second: 1
+            };
+            var result = catalogManagerSvc.getDate(date);
+            expect(result instanceof Date).toBe(true);
+            expect(result.getFullYear()).toBe(date.year);
+            expect(result.getMonth()).toBe(date.month - 1);
+            expect(result.getDate()).toBe(date.day);
+            expect(result.getHours()).toBe(date.hour);
+            expect(result.getMinutes()).toBe(date.minute);
+            expect(result.getSeconds()).toBe(date.second);
+        });
+        
     });
 });
