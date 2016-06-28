@@ -13,7 +13,8 @@ public enum Delimited {
     CLASS_MAPPING_OBJ("http://matonto.org/ontologies/delimited/ClassMapping"),
     LOCAL_NAME("http://matonto.org/ontologies/delimited/localName"),
     MAPPING("http://matonto.org/ontologies/delimited/Mapping"),
-    VERSION("http://matonto.org/ontologies/delimited/versionIRI");
+    VERSION("http://matonto.org/ontologies/delimited/versionIRI"),
+    SOURCE_ONTOLOGY("http://matonto.org/ontologies/delimited/sourceOntology");
     private final String s;
 
     Delimited(String s) {

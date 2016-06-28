@@ -63,7 +63,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         rest.setFactory(factory);
 
         when(mappingId.getMappingIdentifier()).thenReturn(factory.createIRI("http://test.org"));
-        when(mapping.getModel()).thenReturn(fakeModel);
+        when(mapping.asModel()).thenReturn(fakeModel);
         when(mapping.getId()).thenReturn(mappingId);
         when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
         when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mapping);

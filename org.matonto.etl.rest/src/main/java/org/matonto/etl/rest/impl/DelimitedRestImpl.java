@@ -170,7 +170,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
         Optional<Mapping> mappingOptional = mappingManager.retrieveMapping(mappingId);
         if (mappingOptional.isPresent()) {
-            mappingModel = Values.sesameModel(mappingOptional.get().getModel());
+            mappingModel = Values.sesameModel(mappingOptional.get().asModel());
         } else {
             throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist",
                     Response.Status.BAD_REQUEST);

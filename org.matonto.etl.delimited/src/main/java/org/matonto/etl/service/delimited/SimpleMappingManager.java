@@ -126,17 +126,17 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public Mapping createMapping(File mapping) throws IOException, MatOntoException {
-        return new SimpleMapping(mapping, factory);
+        return new SimpleMapping(mapping, factory, modelFactory);
     }
 
     @Override
     public Mapping createMapping(String jsonld) throws IOException, MatOntoException {
-        return new SimpleMapping(jsonld, factory);
+        return new SimpleMapping(jsonld, factory, modelFactory);
     }
 
     @Override
     public Mapping createMapping(InputStream in, RDFFormat format) throws IOException, MatOntoException {
-        return new SimpleMapping(in, format, factory);
+        return new SimpleMapping(in, format, factory, modelFactory);
     }
 
     @Override
@@ -148,7 +148,7 @@ public class SimpleMappingManager implements MappingManager {
         RepositoryConnection conn = null;
         try {
             conn = repository.getConnection();
-            conn.add(mapping.getModel(), mapping.getId().getMappingIdentifier());
+            conn.add(mapping.asModel(), mapping.getId().getMappingIdentifier());
             conn.add(registrySubject, registryPredicate, mapping.getId().getMappingIdentifier(), registryContext);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
@@ -175,7 +175,7 @@ public class SimpleMappingManager implements MappingManager {
         } finally {
             closeConnection(conn);
         }
-        return Optional.of(new SimpleMapping(mappingModel, factory));
+        return Optional.of(new SimpleMapping(mappingModel, factory, modelFactory));
     }
 
     @Override

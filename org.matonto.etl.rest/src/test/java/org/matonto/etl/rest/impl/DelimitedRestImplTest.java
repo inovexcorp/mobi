@@ -62,7 +62,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         rest.setMappingManager(manager);
         rest.setFactory(factory);
 
-        when(mapping.getModel()).thenReturn(new LinkedHashModel());
+        when(mapping.asModel()).thenReturn(new LinkedHashModel());
         when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
         when(converter.convert(any(ExcelConfig.class))).thenReturn(new LinkedHashModel());
         when(manager.createMappingIRI(anyString())).thenReturn(factory.createIRI("http://test.org"));

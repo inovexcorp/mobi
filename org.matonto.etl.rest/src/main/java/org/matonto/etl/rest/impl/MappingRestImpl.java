@@ -179,7 +179,7 @@ public class MappingRestImpl implements MappingRest {
         Optional<Mapping> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(Values.sesameModel(mappingModel.get().getModel()), out, RDFFormat.JSONLD);
+            Rio.write(Values.sesameModel(mappingModel.get().asModel()), out, RDFFormat.JSONLD);
             JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
             json = arr.getJSONObject(0);
         } else {

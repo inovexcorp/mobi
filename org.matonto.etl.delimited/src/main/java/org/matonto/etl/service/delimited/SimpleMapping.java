@@ -13,10 +13,12 @@ import org.openrdf.rio.Rio;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Optional;
 
 public class SimpleMapping implements Mapping {
     private MappingId id;
+    private Model entities;
+    private Optional<Resource> sourceOntologyId;
     private Model model;
 
     public SimpleMapping(MappingId id, ModelFactory mf, ValueFactory vf) {
@@ -28,29 +30,30 @@ public class SimpleMapping implements Mapping {
             model.add(sub, vf.createIRI(Delimited.VERSION.stringValue()), id.getVersionIRI().get());
         }
         this.model = model;
+        this.entities = mf.createModel();
     }
 
-    public SimpleMapping(Model model, ValueFactory vf) throws MatOntoException {
-        set(model, vf);
+    public SimpleMapping(Model model, ValueFactory vf, ModelFactory mf) throws MatOntoException {
+        set(model, vf, mf);
     }
 
-    public SimpleMapping(File file, ValueFactory vf) throws IOException, MatOntoException {
+    public SimpleMapping(File file, ValueFactory vf, ModelFactory mf) throws IOException, MatOntoException {
         RDFFormat mapFormat;
         mapFormat = Rio.getParserFormatForFileName(file.getName()).orElseThrow(IllegalArgumentException::new);
         FileReader reader = new FileReader(file);
         Model model = Values.matontoModel(Rio.parse(reader, "", mapFormat));
-        set(model, vf);
+        set(model, vf, mf);
     }
 
-    public SimpleMapping(InputStream in, RDFFormat format, ValueFactory vf) throws IOException, MatOntoException {
+    public SimpleMapping(InputStream in, RDFFormat format, ValueFactory vf, ModelFactory mf) throws IOException, MatOntoException {
         Model model = Values.matontoModel(Rio.parse(in, "", format));
-        set(model, vf);
+        set(model, vf, mf);
     }
 
-    public SimpleMapping(String jsonld, ValueFactory vf) throws IOException, MatOntoException {
+    public SimpleMapping(String jsonld, ValueFactory vf, ModelFactory mf) throws IOException, MatOntoException {
         InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
         Model model = Values.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
-        set(model, vf);
+        set(model, vf, mf);
     }
 
     @Override
@@ -59,11 +62,21 @@ public class SimpleMapping implements Mapping {
     }
 
     @Override
-    public Model getModel() {
+    public Model getEntities() {
+        return entities;
+    }
+
+    @Override
+    public Optional<Resource> getSourceOntologyId() {
+        return sourceOntologyId;
+    }
+
+    @Override
+    public Model asModel() {
         return model;
     }
 
-    private void set(Model model, ValueFactory vf) throws MatOntoException {
+    private void set(Model model, ValueFactory vf, ModelFactory mf) throws MatOntoException {
         if (!model.contains(null, vf.createIRI(Delimited.TYPE.stringValue()),
                 vf.createIRI(Delimited.MAPPING.stringValue()))) {
             throw new MatOntoException("Mapping is not valid");
@@ -74,11 +87,20 @@ public class SimpleMapping implements Mapping {
         if (model.contains(mappingIRI, vf.createIRI(Delimited.VERSION.stringValue()), null)) {
             Resource versionIRI = vf.createIRI(model.filter(mappingIRI, vf.createIRI(Delimited.VERSION.stringValue()),
                     null).objects().toArray()[0].toString());
-            id = new SimpleMappingId.Builder(vf).mappingIRI(vf.createIRI(mappingIRI.stringValue()))
+            this.id = new SimpleMappingId.Builder(vf).mappingIRI(vf.createIRI(mappingIRI.stringValue()))
                     .versionIRI(vf.createIRI(versionIRI.stringValue())).build();
         } else {
-            id = new SimpleMappingId.Builder(vf).mappingIRI(vf.createIRI(mappingIRI.stringValue())).build();
+            this.id = new SimpleMappingId.Builder(vf).mappingIRI(vf.createIRI(mappingIRI.stringValue())).build();
         }
+        if (model.contains(mappingIRI, vf.createIRI(Delimited.SOURCE_ONTOLOGY.stringValue()), null)) {
+            this.sourceOntologyId = Optional.of(vf.createIRI(model.filter(mappingIRI,
+                    vf.createIRI(Delimited.SOURCE_ONTOLOGY.stringValue()), null).objects().toArray()[0].toString()));
+        } else {
+            this.sourceOntologyId = Optional.empty();
+        }
+        Model entities = mf.createModel(model);
+        entities.remove(mappingIRI, null, null);
+        this.entities = entities;
         this.model = model;
     }
 }
