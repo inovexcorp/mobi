@@ -67,11 +67,12 @@
                 },
                 controller: function() {
                     var dvm = this;
+                    dvm.om = ontologyManagerService;
                     dvm.numClassPreview = 5;
                     dvm.full = false;
 
                     dvm.createTitle = function() {
-                        return ontologyManagerService.getEntityName(dvm.ontology);
+                        return dvm.om.getEntityName(dvm.ontology);
                     }
                     dvm.createDescription = function() {
                         return _.get(dvm.ontology, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']", ''));
@@ -80,16 +81,14 @@
                         return _.map(_.get(dvm.ontology, "['" + prefixes.owl + "imports']", []), '@id');
                     }
                     dvm.getClasses = function() {
-                        return ontologyManagerService.getClasses(dvm.ontology);
+                        return dvm.om.getClasses(dvm.ontology);
                     }
                     dvm.getClassList = function() {
                         var classes = dvm.getClasses();
                         if (!dvm.full) {
                             classes = _.take(classes, dvm.numClassPreview);
                         }
-                        return _.map(classes, function(classObj) {
-                            return ontologyManagerService.getEntityName(classObj);
-                        });
+                        return _.map(classes, classObj => dvm.om.getEntityName(classObj));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/ontologyPreview/ontologyPreview.html'

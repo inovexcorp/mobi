@@ -32,6 +32,7 @@
         </div>
         <h4>Classes <a class="header-link" ng-if="dvm.getClasses().length > dvm.numClassPreview" ng-click="dvm.full = !dvm.full">See {{dvm.full ? 'Less' : 'More'}}</a></h4>
         <ul class="classes">
+            <li ng-if="!dvm.getClasses().length">None</li>
             <li ng-repeat="class in dvm.getClassList() track by $index">{{class}}</li>
         </ul>
     </div>
