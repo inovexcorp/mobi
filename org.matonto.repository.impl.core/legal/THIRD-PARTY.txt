@@ -1,4 +1,0 @@
-
-Lists of 2 third-party dependencies.
-     (Apache License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
-     (GNU General Public License, version 2, with the Classpath Exception) Checker framework (edu.washington.cs.types.checker:checker-framework:1.7.5 - http://types.cs.washington.edu/checker-framework)

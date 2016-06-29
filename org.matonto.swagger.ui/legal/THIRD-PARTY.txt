@@ -1,2 +1,0 @@
-
-The project has no dependencies.
