@@ -1,3 +1,25 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 describe('Ontology Preview directive', function() {
     var $compile,
         scope,
@@ -93,12 +115,15 @@ describe('Ontology Preview directive', function() {
         });
         it('depending on the length of the class list', function() {
             var controller = this.element.controller('ontologyPreview');
+            scope.ontology = {};
             scope.$digest();
             expect(this.element.querySelectorAll('a.header-link').length).toBe(0);
+            expect(this.element.querySelectorAll('.classes')[0].innerHTML).toContain('None');
 
             scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
             scope.$digest();
             expect(this.element.querySelectorAll('a.header-link').length).toBe(1);
+            expect(this.element.querySelectorAll('.classes')[0].innerHTML).not.toContain('None');
         });
         it('depending on how many classes are showing', function() {
             var controller = this.element.controller('ontologyPreview');
