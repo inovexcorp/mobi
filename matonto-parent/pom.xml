@@ -27,12 +27,20 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.0.60</version>
+    <version>1.0.61</version>
 
     <packaging>pom</packaging>
 
     <name>MatOnto Parent</name>
     <url>http://matonto.org</url>
+
+    <licenses>
+        <license>
+            <name>GNU Affero General Public License, Version 3</name>
+            <url>https://www.gnu.org/licenses/agpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -363,6 +371,7 @@
                 <configuration>
                     <verbose>false</verbose>
                     <addSvnKeyWords>true</addSvnKeyWords>
+                    <excludedGroups>org.matonto</excludedGroups>
                 </configuration>
                 <executions>
                     <execution>
