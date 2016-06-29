@@ -1,15 +1,41 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 describe('Range Class Description directive', function() {
     var $compile,
         scope,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        mappingManagerSvc;
 
     mockPrefixes();
-    mockOntologyManager();
     beforeEach(function() {
+        module('templates');
         module('rangeClassDescription');
+        mockOntologyManager();
+        mockMappingManager();
 
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        inject(function(_ontologyManagerService_, _mappingManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -18,24 +44,14 @@ describe('Range Class Description directive', function() {
         });
     });
 
-    injectDirectiveTemplate('modules/mapper/directives/rangeClassDescription/rangeClassDescription.html');
-
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.ontologies = [{}];
             scope.classId = '';
             scope.selectedProp = '';
-
-            this.element = $compile(angular.element('<range-class-description ontologies="ontologies" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
+            this.element = $compile(angular.element('<range-class-description class-id="{{classId}}" selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
             scope.$digest();
         });
 
-        it('ontologies should be two way bound', function() {
-            var controller = this.element.controller('rangeClassDescription');
-            controller.ontologies = [{'@id': ''}];
-            scope.$digest();
-            expect(scope.ontologies).toEqual([{'@id': ''}]);
-        });
         it('classId should be one way bound', function() {
             var controller = this.element.controller('rangeClassDescription');
             controller.classId = 'test';
@@ -51,11 +67,9 @@ describe('Range Class Description directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.ontologies = [{}];
             scope.classId = '';
             scope.selectedProp = '';
-
-            this.element = $compile(angular.element('<range-class-description ontologies="ontologies" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
+            this.element = $compile(angular.element('<range-class-description class-id="{{classId}}" selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
             scope.$digest();
         });
         it('should get the name of the range class', function() {
@@ -72,11 +86,9 @@ describe('Range Class Description directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            scope.ontologies = [{}];
             scope.classId = '';
             scope.selectedProp = '';
-
-            var element = $compile(angular.element('<range-class-description ontologies="ontologies" class-id="{{classId}}" selected-prop="selectedProp"></range-class-description>'))(scope);
+            var element = $compile(angular.element('<range-class-description class-id="{{classId}}" selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
             scope.$digest();
             expect(element.hasClass('class-description')).toBe(true);
         });

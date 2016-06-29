@@ -1,77 +1,108 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 (function() {
     'use strict';
 
     angular
-        .module('filePreviewTable', [])
+        /**
+         * @ngdoc overview
+         * @name filePreviewTable
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         * @requires  csvManager
+         *
+         * @description 
+         * The `filePreviewTable` module only provides the `filePreviewTable` directive which creates
+         * an expandable preview of an uploaded delimited file.
+         */
+        .module('filePreviewTable', ['csvManager', 'mapperState', 'mappingManager', 'ontologyManager'])
+        /**
+         * @ngdoc directive
+         * @name filePreviewTable.directive:filePreviewTable
+         * @scope
+         * @restrict E
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         * @requires  csvManager.service:csvManagerService
+         *
+         * @description 
+         * `filePreviewTable` is a directive that creates a div with a table of rows from an uploaded 
+         * delimited file and a button to toggle the number of rows shown. The rows are hidden using 
+         * ngIf. A passed in highlight index can be used to highlight a specific column. The table 
+         * can also be clickable and sets the selected column when a th or td is clicked. When a column
+         * is clicked, it also switches the highlighted column. The directive assumes that a CSS transition 
+         * has been set on the parent div and sets event listeners for transition ends to only show more 
+         * rows once the transition has completed. The directive is replaced by the contents of its template.
+         */
         .directive('filePreviewTable', filePreviewTable);
 
-        filePreviewTable.$inject = ['$timeout'];
+        filePreviewTable.$inject = ['csvManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function filePreviewTable($timeout) {
+        function filePreviewTable(csvManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    headers: '=',
-                    rows: '=',
-                    mappedColumns: '=',
-                    highlightIdx: '=',
-                    isClickable: '=',
-                    onClick: '&'
-                },
-                bindToController: {
-                    tableHeight: '='
-                },
+                scope: {},
                 link: function(scope, elem, attrs, ctrl) {
                     ["transitionend","webkitTransitionEnd","mozTransitionEnd"].forEach(function(transitionEnd) {
-                        elem[0].querySelector("#table-container").addEventListener(transitionEnd, function() {
+                        elem[0].addEventListener(transitionEnd, () => {
                             if (ctrl.big) {
-                                ctrl.small = false;
+                                ctrl.showNum = csvManagerService.filePreview.rows.length;
                                 scope.$digest();
                             }
                         });
                     });
                 },
-                controller: ['$scope', '$element', function($scope, $element) {
+                controller: function() {
                     var dvm = this;
-                    var buttonHeight = $element[0].querySelector("#toggle-table").offsetHeight;
-                    dvm.big = false;
-                    dvm.small = true;
-                    dvm.containerTop = '0px';
-                    dvm.rows = _.take($scope.rows, 5);
+                    dvm.cm = csvManagerService;
+                    dvm.state = mapperStateService;
+                    dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
-                    $scope.$watch('rows', function(newVal, oldVal) {
-                        if (!angular.equals(newVal, oldVal)) {
-                            setHeightDefaults();
-                            dvm.rows = _.take(newVal, 5);
-                        }
-                    });
+                    dvm.big = false;
+                    dvm.showNum = 5;
 
                     dvm.toggleTable = function() {
                         dvm.big = !dvm.big;
-                        if (dvm.big) {
-                            dvm.rows = $scope.rows;
-                            var top = -$element[0].offsetTop;
-                            var parentHeight = $element[0].parentNode.offsetHeight;
-                            dvm.containerTop = `${top}px`;
-                            dvm.containerHeight = `${parentHeight}px`;
-                        } else {
-                            dvm.rows = _.take($scope.rows, 5);
-                            dvm.containerTop = '0px';
-                            dvm.containerHeight = dvm.initialHeight + 'px';
-                            dvm.small = true;
+                        if (!dvm.big) {
+                            dvm.showNum = 5;
                         }
                     }
-                    function setHeightDefaults() {
-                        $timeout(function() {
-                            dvm.tableHeight = dvm.initialHeight = $element[0].querySelector("#file-preview").offsetHeight + buttonHeight;
-                            dvm.containerHeight = dvm.initialHeight + 'px';
-                        });
+                    dvm.getHighlightIdx = function() {
+                        return dvm.isClickable() ? dvm.cm.filePreview.headers.indexOf(dvm.state.selectedColumn) : -1;
                     }
-
-                    setHeightDefaults();
-                }],
+                    dvm.isClickable = function() {
+                        return dvm.mm.isDataMapping(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId})) 
+                            || (!!dvm.state.selectedProp && !dvm.om.isObjectProperty(_.get(dvm.state.selectedProp, '@type', [])));
+                    }
+                    dvm.clickColumn = function(index) {
+                        dvm.state.selectedColumn = dvm.cm.filePreview.headers[index];
+                    }
+                },
                 templateUrl: 'modules/mapper/directives/filePreviewTable/filePreviewTable.html'
             }
         }

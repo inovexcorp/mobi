@@ -1,6 +1,29 @@
 package org.matonto.etl.api.csv;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+/*-
+ * #%L
+ * org.matonto.etl.api
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 import org.openrdf.rio.RDFParseException;
 
@@ -20,11 +43,10 @@ public interface CSVConverter {
      * @param separator the column separator to use if a CSV
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
-     * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
-            throws IOException, RDFParseException, InvalidFormatException;
+            throws IOException, MatOntoException;
 
     /**
      * Converts a delimited file to RDF using a mapping Model. Optionally skip a header row. Column
@@ -36,10 +58,10 @@ public interface CSVConverter {
      * @param separator the column separator to use if a CSV
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(File delim, Model mappingModel, boolean containsHeaders, char separator)
-            throws IOException, InvalidFormatException;
+            throws IOException, MatOntoException;
 
     /**
      * Converts a delimited file to RDF using a mapping file. Optionally skip a header row. Column
@@ -53,10 +75,10 @@ public interface CSVConverter {
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
      * @throws RDFParseException Thrown if there is an issue parsing the RDF mapping file
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
-            throws IOException, InvalidFormatException;
+            throws IOException, MatOntoException;
 
     /**
      * Converts a delimited file to RDF using a mapping Model. Optionally skip a header row. Column
@@ -69,8 +91,8 @@ public interface CSVConverter {
      * @param separator the column separator to use if a CSV
      * @return A Model of RDF data converted from delimited data
      * @throws IOException Thrown if there is a problem reading the files given
-     * @throws InvalidFormatException Thrown if the file is not in a valid Excel format
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
      */
     Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension, char separator)
-            throws IOException, InvalidFormatException;
+            throws IOException, MatOntoException;
 }

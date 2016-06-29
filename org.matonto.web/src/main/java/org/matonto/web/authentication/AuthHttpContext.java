@@ -1,5 +1,29 @@
 package org.matonto.web.authentication;
 
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.log4j.Logger;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -10,9 +34,16 @@ import org.osgi.service.http.HttpContext;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.*;
+import javax.security.auth.login.AccountException;
+import javax.security.auth.login.FailedLoginException;
+import javax.security.auth.login.LoginContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -21,6 +52,15 @@ public abstract class AuthHttpContext implements HttpContext {
     private final Logger log = Logger.getLogger(this.getClass().getName());
 
     private final ConcurrentMap<String, URL> resourceCache = new ConcurrentHashMap<>();
+
+    protected JaasRealm realm;
+
+    private final static String REQUIRED_ROLE = "user";
+    private final static String ROLE_CLASS = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
+
+    public void setRealm(JaasRealm realm) {
+        this.realm = realm;
+    }
 
     /**
      * The bundle that registered the service.
@@ -69,14 +109,56 @@ public abstract class AuthHttpContext implements HttpContext {
     protected abstract void handleAuthDenied(HttpServletRequest req, HttpServletResponse res) throws IOException;
 
     protected boolean authenticated(HttpServletRequest req, String username, String password) {
-        // Here I will do lame hard coded credential check. HIGHLY NOT RECOMMENDED!
-        boolean success = ((username.equals("admin") && password.equals("M@tontoRox!")));
+        Optional<Subject> subjectOptional = doAuthenticate(username, password);
 
-        if (success) {
-            req.setAttribute(REMOTE_USER, "admin");
+        if (subjectOptional.isPresent()) {
+            req.setAttribute(REMOTE_USER, username);
+            return true;
+        } else {
+            return false;
         }
+    }
 
-        return success;
+    public Optional<Subject> doAuthenticate(final String username, final String password) {
+        try {
+            Subject subject = new Subject();
+            String realmName = realm.getName();
+
+            LoginContext loginContext = new LoginContext(realmName, subject, callbacks -> {
+                for (Callback callback : callbacks) {
+                    if (callback instanceof NameCallback) {
+                        ((NameCallback) callback).setName(username);
+                    } else if (callback instanceof PasswordCallback) {
+                        ((PasswordCallback) callback).setPassword(password.toCharArray());
+                    } else {
+                        throw new UnsupportedCallbackException(callback);
+                    }
+                }
+            });
+            loginContext.login();
+
+            boolean found = false;
+            for (Principal p : subject.getPrincipals()) {
+                if (p.getClass().getName().equals(ROLE_CLASS) && p.getName().equals(REQUIRED_ROLE)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log.debug("User does not have the required role " + REQUIRED_ROLE);
+                return Optional.empty();
+            }
+            return Optional.of(subject);
+        } catch (FailedLoginException e) {
+            log.debug("Login failed", e);
+            return Optional.empty();
+        } catch (AccountException e) {
+            log.warn("Account failure", e);
+            return Optional.empty();
+        } catch (GeneralSecurityException e) {
+            log.error("General Security Exception", e);
+            return Optional.empty();
+        }
     }
 
     @Override

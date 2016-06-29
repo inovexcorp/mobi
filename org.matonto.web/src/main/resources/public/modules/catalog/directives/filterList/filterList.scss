@@ -1,0 +1,58 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.filters {
+    .filter-header {
+        display: block;
+        font-weight: bold;
+        background-color: $gray;
+        padding: 10px;
+        color: #fff;
+    }
+    ul li {
+        display: block;
+        border-bottom: 1px solid $gray-lighter;
+        position: relative;
+
+        a {
+            display: block;
+            padding: 10px;
+
+            &:hover {
+                text-decoration: none;
+            }
+            .fa {
+                display: none;
+                position: absolute;
+                top: 25%;
+                right: 10px;
+                vertical-align: middle;
+            }
+        }
+        &.applied a {
+            background-color: $gray-light;
+            color: #fff;
+
+            &:hover .fa {
+                display: inline-block;
+            }
+        }
+        &.not-applied a {
+            color: #000;
+
+            &:hover {
+                background-color: $gray-lighter;
+
+                .fa {
+                    display: inline-block;
+                }
+            }
+        }
+    }
+    .triangle-right {
+        @include right-arrow(20px, $gray-light);
+        position: absolute;
+        top: 0;
+        right: -20px;
+    }
+}

@@ -1,0 +1,44 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="tree annotation-tree scroll-without-buttons">
+    <!-- annotation view -->
+    <strong>Annotations</strong>
+    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
+        <tree-item current-entity="ontology"
+                   current-ontology="ontology"
+                   is-active="vm.state.oi === $index && vm.state.pi === undefined"
+                   is-opened="opened"
+                   on-click="vm.selectItem('ontology-editor', $index)"
+                   has-children="ontology.matonto.jsAnnotations.length"></tree-item>
+
+        <li class="container" ng-show="opened">
+            <ul>
+                <tree-item ng-repeat="annotation in ontology.matonto.jsAnnotations"
+                           current-entity="annotation"
+                           current-ontology="ontology"
+                           is-active="vm.state.oi === oi && vm.state.pi === $index"
+                           on-click="vm.selectAnnotation(oi, $index)"></tree-item>
+            </ul>
+        </li>
+    </ul>
+</div>

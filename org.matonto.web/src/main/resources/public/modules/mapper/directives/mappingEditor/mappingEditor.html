@@ -1,0 +1,49 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="mapping-editor full-height" ng-show="dvm.state.step > 0">
+    <div class="mapping-header">
+        <div class="ontology-section">
+            <a ng-click="dvm.state.previewOntology = true">{{dvm.getSourceOntologyName()}}</a>
+            <button class="btn btn-primary" ng-click="dvm.changeOntology()">Change</button>
+        </div>
+        <form class="submit-mapping">
+            <button class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.state.invalidProps.length">Submit</button>
+            <a ng-click="dvm.state.displayCancelConfirm = true">Cancel</a>
+        </form>
+        <div class="mapping-title">
+            <h1>{{dvm.mm.mapping.name}} <button type="button" class="btn btn-link" ng-click="dvm.state.editMappingName = true"><i class="fa fa-pencil"></i></button></h1>
+        </div>
+    </div>
+    <div class="edit-mapping">
+        <rdf-preview></rdf-preview>
+        <class-list></class-list>
+        <div class="form-container col-xs-8 full-height"><div class="boxed">
+            <p ng-if="dvm.saveError" class="error-msg"><i class="fa fa-exclamation-triangle fa-fw">An error has occured when saving the mapping. Please try again later.</i></p>
+            <edit-class-form ng-if="dvm.state.selectedClassMappingId && !dvm.state.selectedPropMappingId && !dvm.state.newProp"></edit-class-form>
+            <edit-prop-form ng-if="dvm.state.selectedPropMappingId && !dvm.state.newProp"></edit-prop-form>
+            <new-prop-form ng-if="dvm.state.newProp"></new-prop-form>
+            <a class="edit-cancel" ng-if="dvm.state.selectedClassMappingId" ng-click="dvm.state.resetEdit()">Cancel</a>
+        </div></div>
+    </div>
+    <file-preview-table></file-preview-table>
+</div>

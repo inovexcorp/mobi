@@ -1,0 +1,79 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div ng-hide="showIriOverlay === true" class="overlay">
+    <div class="content">
+        <!-- section header -->
+        <h6>Create New OWL Property</h6>
+
+        <!-- error -->
+        <error-display ng-if="createPropertyError">{{createPropertyError}}</error-display>
+
+        <!-- static iri -->
+        <static-iri iri="dvm.iri"
+                    on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"
+                    ontology-iri-begin="dvm.iriBegin"
+                    ontology-iri-then="dvm.iriThen"></static-iri>
+
+        <form name="dvm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
+            <!-- name -->
+            <div class="form-group">
+                <custom-label muted-text="'*Required'">Name</custom-label>
+                <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
+            </div>
+
+            <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
+            <string-select ng-model="dvm.type"
+                           display-text="'Type'"
+                           muted-text="'*Required'"
+                           select-list="dvm.propertyTypes"
+                           change-event="dvm.setRange()">
+            </string-select>
+
+            <!-- description -->
+            <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
+
+            <!-- domain -->
+            <object-select ng-model="dvm.domain"
+                           display-text="'Domain'"
+                           select-list="dvm.subClasses"
+                           ontology-id="{{ontologyId}}"
+                           matonto="matonto"></object-select>
+
+            <!-- range -->
+            <object-select ng-model="dvm.range"
+                           display-text="'Range'"
+                           select-list="dvm.rangeList"
+                           is-disabled-when="!dvm.type.length"
+                           ontology-id="{{ontologyId}}"
+                           matonto="matonto"></object-select>
+
+            <!-- create property buttons -->
+            <div class="btn-container clearfix">
+                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length"
+                               on-click="onCreate({propertyIri: dvm.iri, label: dvm.name, type: dvm.type, range: dvm.range, domain: dvm.domain, description: dvm.description})">Create</custom-button>
+
+                <custom-button on-click="onCancel()" type="'secondary'">Cancel</custom-button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,34 +1,46 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <form name="vm.classForm" class="clearfix" novalidate autocomplete="off">
     <!-- tab buttons -->
-    <div class="btn-group btn-group-justified" role="group">
+    <tab-button-container>
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')">{{vm.state.ci !== -1 ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || ((vm.selected['@id'] | splitIRI).end | beautify)) : 'New Class'}}</tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
-
-        <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')">Annotations</tab-button>
-    </div>
+    </tab-button-container>
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <create-error></create-error>
+        <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- static iri -->
-        <static-iri display-type="class"></static-iri>
+        <static-iri iri="vm.selected['@id']"
+                    on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"
+                    ontology-iri-begin="vm.ontology.matonto.iriBegin"
+                    ontology-iri-then="vm.ontology.matonto.iriThen"></static-iri>
 
-        <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
-                    display-text="'Label'"
-                    muted-text="vm.rdfs + 'label'"
-                    change-event="vm.entityChanged()"></text-input>
-
-        <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
-                   display-text="'Comment'"
-                   muted-text="vm.rdfs + 'comment'"
-                   change-event="vm.entityChanged()"></text-area>
+        <annotation-tab></annotation-tab>
     </div>
 
     <!-- axioms tab -->
@@ -39,7 +51,9 @@
                        display-text="'Sub Class Of'"
                        muted-text="vm.rdfs + 'subClassOf'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"></object-select>
+                       select-list="vm.ontology.matonto.subClasses"
+                       ontology-id="{{vm.ontology['@id']}}"
+                       matonto="vm.ontology.matonto"></object-select>
 
         <!-- owl:disjointWith -->
         <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
@@ -47,11 +61,8 @@
                        display-text="'Disjoint With'"
                        muted-text="vm.owl + 'disjointWith'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"></object-select>
-    </div>
-
-    <!-- annotations tab -->
-    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
-        <annotation-tab></annotation-tab>
+                       select-list="vm.ontology.matonto.subClasses"
+                       ontology-id="{{vm.ontology['@id']}}"
+                       matonto="vm.ontology.matonto"></object-select>
     </div>
 </form>

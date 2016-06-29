@@ -1,0 +1,11 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sparql-editor {
+    padding: 0 15px 15px 15px;
+
+    .CodeMirror {
+        border: 1px solid #ccc;
+        height: 225px;
+    }
+}

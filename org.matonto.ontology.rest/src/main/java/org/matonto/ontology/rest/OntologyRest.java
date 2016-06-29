@@ -1,10 +1,34 @@
 package org.matonto.ontology.rest;
 
+/*-
+ * #%L
+ * org.matonto.ontology.rest
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -21,6 +45,7 @@ public interface OntologyRest {
     @GET
     @Path("ontologyids")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation(value = "Gets all Ontology Resource identifiers")
     Response getAllOntologyIds();
 
@@ -34,6 +59,7 @@ public interface OntologyRest {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getOntologies(@QueryParam("ontologyids") String ontologyIdList);
 
     /**
@@ -45,6 +71,7 @@ public interface OntologyRest {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response uploadFile(@FormDataParam("file") InputStream fileInputStream);
 
     /**
@@ -56,6 +83,7 @@ public interface OntologyRest {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response uploadOntologyJson(@QueryParam("ontologyjson") String ontologyJson);
 
     /**
@@ -69,6 +97,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getOntology(@PathParam("ontologyid") String ontologyIdStr,
                          @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
 
@@ -82,9 +111,11 @@ public interface OntologyRest {
      */
     @GET
     @Path("{ontologyid}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
+    @RolesAllowed("user")
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
-                                  @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
+                                  @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                                  @DefaultValue("ontology") @QueryParam("fileName") String fileName);
 
     /**
      * Replaces the ontology's resource with the new data
@@ -99,6 +130,7 @@ public interface OntologyRest {
     @POST
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response saveChangesToOntology(@PathParam("ontologyid") String ontologyIdStr,
                                    @QueryParam("resourceid") String resourceIdStr,
                                    @QueryParam("resourcejson") String resourceJson);
@@ -113,6 +145,7 @@ public interface OntologyRest {
     @DELETE
     @Path("{ontologyid}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response deleteOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -125,6 +158,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/iris")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getIRIsInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -137,7 +171,23 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getAnnotationsInOntology(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Create a new owl annotation property in the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param annotationJson the String representing the new annotation in JSON-LD.
+     * @return annotation properties in the ontology with requested ontology ID.
+     */
+    @POST
+    @Path("{ontologyid}/annotations")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response addAnnotationToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                     @QueryParam("annotationjson") String annotationJson);
 
     /**
      * Returns classes in the ontology with requested ontology ID.
@@ -149,10 +199,11 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/classes")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getClassesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
-     * Add resource with to ontology with requested ontology ID from the server.
+     * Add class to ontology with requested ontology ID from the server.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
@@ -162,6 +213,7 @@ public interface OntologyRest {
     @POST
     @Path("{ontologyid}/classes")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response addClassToOntology(@PathParam("ontologyid") String ontologyIdStr,
                                 @QueryParam("resourcejson") String resourceJson);
 
@@ -177,6 +229,7 @@ public interface OntologyRest {
     @DELETE
     @Path("{ontologyid}/classes/{classid}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response deleteClassFromOntology(@PathParam("ontologyid") String ontologyIdStr,
                                       @PathParam("classid") String classIdStr);
 
@@ -190,6 +243,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/datatypes")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getDatatypesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -202,6 +256,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getObjectPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -215,6 +270,7 @@ public interface OntologyRest {
     @POST
     @Path("{ontologyid}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response addObjectPropertyToOntology(@PathParam("ontologyid") String ontologyIdStr,
                                          @QueryParam("resourcejson") String resourceJson);
 
@@ -230,6 +286,7 @@ public interface OntologyRest {
     @DELETE
     @Path("{ontologyid}/object-properties/{propertyid}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response deleteObjectPropertyFromOntology(@PathParam("ontologyid") String ontologyIdStr,
                                       @PathParam("propertyid") String propertyIdStr);
 
@@ -243,6 +300,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getDataPropertiesInOntology(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -256,6 +314,7 @@ public interface OntologyRest {
     @POST
     @Path("{ontologyid}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response addDataPropertyToOntology(@PathParam("ontologyid") String ontologyIdStr,
                                        @QueryParam("resourcejson") String resourceJson);
 
@@ -271,6 +330,7 @@ public interface OntologyRest {
     @DELETE
     @Path("{ontologyid}/data-properties/{propertyid}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response deleteDataPropertyFromOntology(@PathParam("ontologyid") String ontologyIdStr,
                                               @PathParam("propertyid") String propertyIdStr);
 
@@ -284,6 +344,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getNamedIndividualsInOntology(@PathParam("ontologyid") String ontologyIdStr);
     
     /**
@@ -296,6 +357,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getIRIsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -310,6 +372,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-ontologies")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation(value = "Retrieves the JSON-LD of all directly imported ontologies")
     Response getImportsClosure(@PathParam("ontologyid") String ontologyIdStr,
                                      @DefaultValue("jsonld") @QueryParam("rdfformat") String rdfFormat);
@@ -324,6 +387,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-annotations")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getAnnotationsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -336,6 +400,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-classes")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getClassesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -348,6 +413,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-datatypes")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getDatatypesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -360,6 +426,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-object-properties")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getObjectPropertiesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -372,6 +439,7 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-data-properties")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getDataPropertiesInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
@@ -384,5 +452,6 @@ public interface OntologyRest {
     @GET
     @Path("{ontologyid}/imported-named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     Response getNamedIndividualsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
 }

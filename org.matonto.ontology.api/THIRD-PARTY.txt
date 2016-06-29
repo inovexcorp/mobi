@@ -1,0 +1,9 @@
+
+Lists of 7 third-party dependencies.
+     (Apache License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
+     (The Apache Software License, Version 2.0) Guava: Google Core Libraries for Java (com.google.guava:guava:18.0 - http://code.google.com/p/guava-libraries/guava)
+     (The Apache Software License, Version 2.0) Commons IO (commons-io:commons-io:2.4 - http://commons.apache.org/io/)
+     (GNU General Public License, version 2, with the Classpath Exception) Checker framework (edu.washington.cs.types.checker:checker-framework:1.7.5 - http://types.cs.washington.edu/checker-framework)
+     (Aduna BSD license) OpenRDF Sesame: Model (org.openrdf.sesame:sesame-model:4.0.1 - http://www.openrdf.org/sesame-core/sesame-model/)
+     (Aduna BSD license) OpenRDF Sesame: util (org.openrdf.sesame:sesame-util:4.0.1 - http://www.openrdf.org/sesame-core/sesame-util/)
+     (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.10 - http://www.slf4j.org)

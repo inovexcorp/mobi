@@ -1,5 +1,28 @@
 package org.matonto.catalog.api;
 
+/*-
+ * #%L
+ * org.matonto.catalog.api
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import org.matonto.rdf.api.Resource;
 
 import java.util.Optional;
@@ -7,33 +30,13 @@ import java.util.Set;
 
 public interface CatalogManager {
 
-//    <T extends PublishedResource> Set<T> findResource(String searchTerm);
-
     /**
-     * Searches the Catalog for resources that match a given String. Allows paging with the limit and offset
-     * parameters. Sorts by modified date descending.
+     * Searches the Catalog for resources that match the provided PaginatedSearchParams.
      *
-     * @param searchTerm The String providing the search criteria.
-     * @param limit The limit to the number of resources to find.
-     * @param offset The start index of search results to return.
+     * @param searchParams Search parameters.
      * @return The PaginatedSearchResults for a page matching the search criteria.
      */
-    PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset);
-
-    /**
-     * Searches the Catalog for resources that match a given String. Allows paging with the limit and offset
-     * parameters. Allows sorting with the sortBy and ascending parameters. Sorts by modified data descending if
-     * an inappropriate resource is passed in.
-     *
-     * @param searchTerm The String providing the search criteria.
-     * @param limit The limit to the number of resources to find.
-     * @param offset The start index of search results to return.
-     * @param sortBy The resource to sort by.
-     * @param ascending Sort ascending if true, else descending.
-     * @return The PaginatedSearchResults for a page matching the search criteria.
-     */
-    PaginatedSearchResults<PublishedResource> findResource(String searchTerm, int limit, int offset, Resource sortBy,
-                                                           boolean ascending);
+    PaginatedSearchResults<PublishedResource> findResource(PaginatedSearchParams searchParams);
 
     /**
      * Retrieves the PublishedResource with the given Resource identifier.
@@ -45,8 +48,6 @@ public interface CatalogManager {
     Optional<PublishedResource> getResource(Resource resource);
 
 //    <T extends PublishedResource> Optional<T> getResource(Resource resource, Class<T> clazz);
-
-//    <T extends PublishedResource> T removeResource(Resource resource);
 
     /**
      * Removes the PublishedResource with the given Resource identifier.

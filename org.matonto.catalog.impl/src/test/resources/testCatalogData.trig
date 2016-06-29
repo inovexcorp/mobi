@@ -29,7 +29,7 @@
     dc:modified "2016-02-02T00:00:00Z"^^xsd:dateTime .
 
 <http://matonto.org/test/PublishedResource/3> a matontocat:Mapping ;
-    dc:title "Test Resource 2" ;
+    dc:title "Test Resource 3" ;
     dc:description "Test Description" ;
     dc:issued "2016-01-30T00:00:00Z"^^xsd:dateTime ;
     dc:modified "2016-01-31T00:00:00Z"^^xsd:dateTime .

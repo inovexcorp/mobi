@@ -1,0 +1,66 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<mapping-name-overlay ng-if="dvm.state.editMappingName"></mapping-name-overlay>
+<file-upload-overlay ng-if="dvm.state.step === dvm.state.fileUploadStep"></file-upload-overlay>
+<ontology-select-overlay ng-if="dvm.state.step === dvm.state.ontologySelectStep"></ontology-select-overlay>
+<starting-class-select-overlay ng-if="dvm.state.step === dvm.state.startingClassSelectStep"></starting-class-select-overlay>
+<ontology-preview-overlay ng-if="dvm.state.previewOntology" ontology="dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld)"></ontology-preview-overlay>
+<iri-template-overlay ng-if="dvm.state.editIriTemplate"></iri-template-overlay>
+<invalid-ontology-overlay ng-if="dvm.state.invalidOntology"></invalid-ontology-overlay>
+<finish-overlay ng-if="dvm.state.step === dvm.state.finishStep"></finish-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayCancelConfirm"
+    class="cancel-confirm"
+    header-text="'Cancel Mapping'"
+    confirm-click="dvm.state.displayCancelConfirm = false; dvm.reset()"
+    cancel-click="dvm.state.displayCancelConfirm = false"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to cancel mapping? Any current progress will be lost.</confirmation-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayNewMappingConfirm"
+    class="create-new-mapping"
+    header-text="'Create New Mapping'"
+    confirm-click="dvm.state.displayNewMappingConfirm = false; dvm.state.createMapping(); dvm.cm.reset()"
+    cancel-click="dvm.state.displayNewMappingConfirm = false"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to create a new mapping? Any current progress will be lost.</confirmation-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayDeleteEntityConfirm"
+    class="delete-entity"
+    header-text="'Delete ' + dvm.getDeleteEntityName()"
+    confirm-click="dvm.state.displayDeleteEntityConfirm = false; dvm.deleteEntity()"
+    cancel-click="dvm.state.displayDeleteEntityConfirm = false; dvm.state.deleteId = ''"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to delete <strong>{{dvm.getDeleteEntityName()}}</strong>?
+        <p ng-if="dvm.isClassMapping(dvm.state.deleteId)" class="help-block">
+            Deleting a class will remove any properties that link to it.
+        </p>
+    </confirmation-overlay>
+
+<confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
+    class="delete-mapping"
+    header-text="'Delete ' + dvm.mm.mapping.name"
+    confirm-click="dvm.state.displayDeleteMappingConfirm = false; dvm.deleteMapping()"
+    cancel-click="dvm.state.displayDeleteMappingConfirm = false"
+    confirm-text="'Yes'"
+    cancel-text="'No'">Are you sure you want to delete <strong>{{dvm.mm.mapping.name}}</strong>?</confirmation-overlay>

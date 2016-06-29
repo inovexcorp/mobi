@@ -1,23 +1,46 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <div class="tree everything-tree scroll-without-buttons">
     <!-- tree view -->
     <strong>Everything</strong>
     <!-- start ontologies -->
-    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && vm.state.ci !== undefined)">
-        <tree-item-with-sub ng-class="{'invalid': !ontology.matonto.isValid}"
-                            current-entity="ontology"
-                            current-ontology="ontology"
-                            is-active="vm.state.oi === $index && (vm.state.ci === undefined || vm.state.ci === -1) && vm.state.pi === undefined"
-                            is-opened="opened"
-                            on-click="vm.selectItem('ontology-editor', $index)"></tree-item-with-sub>
+    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && (vm.state.ci !== undefined || vm.state.pi !== undefined))">
+        <tree-item current-entity="ontology"
+                   current-ontology="ontology"
+                   is-active="vm.state.oi === $index && vm.state.ci === undefined && vm.state.pi === undefined"
+                   is-opened="opened"
+                   on-click="vm.selectItem('ontology-editor', $index)"
+                   has-children="!!ontology.matonto.classes.length || !!ontology.matonto.noDomains.length"></tree-item>
 
         <li class="container" ng-show="opened">
             <!-- start classes -->
             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
-                <tree-item-with-sub current-entity="class"
-                                    current-ontology="ontology"
-                                    is-active="vm.state.oi === oi && vm.state.ci === $index && (vm.state.pi === undefined || vm.state.pi === -1)"
-                                    is-opened="subOpened"
-                                    on-click="vm.selectItem('class-editor', oi, $index)"></tree-item-with-sub>
+                <tree-item current-entity="class"
+                           current-ontology="ontology"
+                           is-active="vm.state.oi === oi && vm.state.ci === $index && vm.state.pi === undefined"
+                           is-opened="subOpened"
+                           on-click="vm.selectItem('class-editor', oi, $index)"
+                           has-children="class.matonto.properties.length"></tree-item>
 
                 <li class="container" ng-show="subOpened">
                     <!-- start properties -->
@@ -32,7 +55,7 @@
             </ul>
 
             <!-- start no domains (these will be handled differently later) -->
-            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = false;">
+            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = (vm.state.ci === undefined && vm.state.pi !== undefined)">
                 <li>
                     <a ng-click="opened = !opened; $event.stopPropagation();">
                         <i class="fa fa-fw"

@@ -1,0 +1,27 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.class-list {
+    overflow-y: auto;
+
+    .list {
+        li {
+            text-overflow: ellipsis;
+            width: auto;
+        }
+        .props li {
+            margin-left: 1em;
+            display: block;
+            position: relative;
+            text-overflow: ellipsis;
+
+            a.invalid {
+                color: $brand-danger;
+
+                &:hover {
+                    color: #fff;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,45 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sparql-results {
+    padding: 0 15px;
+    position: relative;
+
+    .table-container {
+        border: 1px solid #ccc;
+        overflow-y: auto;
+        height: 100%;
+    }
+    .table {
+        margin: 0;
+    }
+
+    .message {
+        margin: 10px;
+    }
+
+    .paging-details {
+        bottom: 15px;
+        left: 0;
+        min-height: 49px;
+        padding: 0 30px;
+        position: absolute;
+        width: 100%;
+
+        .page-count {
+            float: left;
+            font-size: 1.125em;
+            line-height: 34px;
+            margin: 15px 0 0 0;
+        }
+
+        .page-nav {
+            float: right;
+
+            .pagination {
+                margin: 15px 0 0 0;
+                vertical-align: bottom;
+            }
+        }
+    }
+}

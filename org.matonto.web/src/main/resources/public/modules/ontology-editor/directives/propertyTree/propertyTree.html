@@ -1,10 +1,35 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <div class="tree scroll-without-buttons">
     <!-- property view -->
     <strong>{{headerText}}</strong>
-    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
-        <tree-item-with-sub current-entity="ontology"
-                            current-ontology="ontology"
-                            is-opened="opened"></tree-item-with-sub>
+    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.state.oi === oi)">
+        <tree-item current-entity="ontology"
+                   current-ontology="ontology"
+                   is-active="dvm.state.oi === $index && dvm.state.pi === undefined"
+                   is-opened="opened"
+                   on-click="dvm.selectItem({editor: 'ontology-editor', oi: $index})"
+                   has-children="dvm.hasChildren(ontology)"></tree-item>
 
         <li class="container" ng-show="opened">
             <!-- properties associated with classes -->
@@ -12,9 +37,9 @@
                 <tree-item ng-repeat="property in class.matonto.properties"
                            current-entity="property"
                            current-ontology="ontology"
-                           is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
-                           on-click="vm.selectItem('property-editor', oi, ci, $index)"
-                           ng-if="vm.isThisType(property, propertyType)"></tree-item>
+                           is-active="dvm.state.oi === oi && dvm.state.ci === ci && dvm.state.pi === $index"
+                           on-click="dvm.selectItem({editor: 'property-editor', oi: oi, ci: ci, pi: $index})"
+                           ng-if="dvm.isThisType(property, dvm.propertyType)"></tree-item>
             </ul>
 
             <!-- properties not associated with classes -->
@@ -22,9 +47,9 @@
                 <tree-item ng-repeat="property in ontology.matonto.noDomains"
                            current-entity="property"
                            current-ontology="ontology"
-                           is-active="vm.state.oi === oi && vm.state.ci === undefined && vm.state.pi === $index"
-                           on-click="vm.selectItem('property-editor', oi, undefined, $index)"
-                           ng-if="vm.isThisType(property, propertyType)"></tree-item>
+                           is-active="dvm.state.oi === oi && dvm.state.ci === undefined && dvm.state.pi === $index"
+                           on-click="dvm.selectItem({editor: 'property-editor', oi: oi, ci: undefined, pi: $index})"
+                           ng-if="dvm.isThisType(property, dvm.propertyType)"></tree-item>
             </ul>
         </li>
     </ul>

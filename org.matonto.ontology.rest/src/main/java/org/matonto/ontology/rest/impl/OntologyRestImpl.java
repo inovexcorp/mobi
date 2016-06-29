@@ -1,5 +1,28 @@
 package org.matonto.ontology.rest.impl;
 
+/*-
+ * #%L
+ * org.matonto.ontology.rest
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
@@ -178,6 +201,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntology(String ontologyIdStr, String rdfFormat) {
+        logger.info("Getting ontology " + ontologyIdStr);
         JSONObject result = doWithOntology(ontologyIdStr,
                 ontology -> this.getOntologyAsJsonObject(ontology, rdfFormat));
 
@@ -191,14 +215,14 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    public Response downloadOntologyFile(String ontologyIdStr, String rdfFormat) {
+    public Response downloadOntologyFile(String ontologyIdStr, String rdfFormat, String fileName) {
+        logger.info("Downloading ontology " + ontologyIdStr);
         JSONObject result = doWithOntology(ontologyIdStr, ontology -> {
             final String content = getOntologyAsRdf(ontology, rdfFormat);
             JSONObject json = new JSONObject();
             json.put("ontology", content);
             return json;
         });
-
         StreamingOutput stream = os -> {
             Writer writer = new BufferedWriter(new OutputStreamWriter(os));
             writer.write(result.get("ontology").toString());
@@ -206,7 +230,9 @@ public class OntologyRestImpl implements OntologyRest {
             writer.close();
         };
 
-        return Response.ok(stream).build();
+        return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
+                + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type", "application/octet-stream")
+                .build();
     }
 
     @Override
@@ -337,6 +363,11 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response addDataPropertyToOntology(String ontologyIdStr, String propertyJson) {
         return addEntityToOntology(ontologyIdStr, propertyJson);
+    }
+
+    @Override
+    public Response addAnnotationToOntology(String ontologyIdStr, String annotationJson) {
+        return addEntityToOntology(ontologyIdStr, annotationJson);
     }
 
     @Override
@@ -658,7 +689,25 @@ public class OntologyRestImpl implements OntologyRest {
                 getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyArray(ontology),
                 getNamedIndividualArray(ontology));
     }
-    
+
+    private String getRDFFormatFileExtension(String format) {
+        RDFFormat rdfformat;
+        switch (format.toLowerCase()) {
+            case "turtle":
+                rdfformat = RDFFormat.TURTLE;
+                break;
+            case "rdf/xml":
+            case "owl/xml" :
+                rdfformat = RDFFormat.RDFXML;
+                break;
+            case "jsonld":
+            default:
+                rdfformat = RDFFormat.JSONLD;
+                break;
+        }
+
+        return rdfformat.getDefaultFileExtension();
+    }
     
     private JSONObject combineJsonObjects(JSONObject... objects) {
         if (objects.length == 0) {

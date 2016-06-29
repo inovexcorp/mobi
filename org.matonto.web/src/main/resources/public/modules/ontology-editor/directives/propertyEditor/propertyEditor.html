@@ -1,44 +1,54 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <form name="vm.propertyForm" class="clearfix" novalidate autocomplete="off">
     <!-- tab buttons -->
-    <div class="btn-group btn-group-justified" role="group">
+    <tab-button-container>
         <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')">{{vm.selected['@id'] ? (vm.selected[vm.rdfs + 'label'][0]['@value'] || vm.selected['@id']) : 'New Property'}}</tab-button>
+                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
 
         <tab-button is-active="vm.state.editorTab === 'axioms'"
                     on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
-
-        <tab-button is-active="vm.state.editorTab === 'annotations'"
-                    on-click="vm.setEditorTab('annotations')">Annotaions</tab-button>
-    </div>
+    </tab-button-container>
 
     <!-- basic tab -->
     <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <create-error></create-error>
+        <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- static iri -->
-        <static-iri display-type="property"></static-iri>
+        <static-iri iri="vm.selected['@id']"
+                    on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"
+                    ontology-iri-begin="vm.ontology.matonto.iriBegin"
+                    ontology-iri-then="vm.ontology.matonto.iriThen"></static-iri>
 
         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
         <string-select ng-model="vm.selected['@type']"
                        display-text="'Type'"
                        muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.propertyTypes"
-                       only-strings="'true'">
-            <small class="text-muted">Defaults to DatatypeProperty if nothing is provided.</small>
+                       select-list="vm.propertyTypes">
         </string-select>
 
-        <!-- rdfs:label -->
-        <text-input ng-model="vm.selected[vm.rdfs + 'label'][0]['@value']"
-                    display-text="'Label'"
-                    muted-text="vm.rdfs + 'label'"
-                    change-event="vm.entityChanged()"></text-input>
-
-        <!-- rdfs:comment -->
-        <text-area ng-model="vm.selected[vm.rdfs + 'comment'][0]['@value']"
-                   display-text="'Comment'"
-                   muted-text="vm.rdfs + 'comment'"
-                   change-event="vm.entityChanged()"></text-area>
+        <annotation-tab></annotation-tab>
     </div>
 
     <!-- axioms tab -->
@@ -49,7 +59,9 @@
                        display-text="'Domain'"
                        muted-text="vm.rdfs + 'domain'"
                        change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"></object-select>
+                       select-list="vm.ontology.matonto.subClasses"
+                       ontology-id="{{vm.ontology['@id']}}"
+                       matonto="vm.ontology.matonto"></object-select>
 
         <div ng-if="vm.selected['@type'].length">
             <!-- object property -->
@@ -60,7 +72,9 @@
                                display-text="'Range'"
                                muted-text="vm.rdfs + 'range'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.objectPropertyRange"></object-select>
+                               select-list="vm.ontology.matonto.subClasses"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:equivalentProperty -->
                 <object-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"
@@ -68,7 +82,9 @@
                                display-text="'Equivalent Property'"
                                muted-text="vm.owl + 'equivalentProperty'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.subObjectProperties"></object-select>
+                               select-list="vm.ontology.matonto.subObjectProperties"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
 
                 <!-- rdfs:subPropertyOf -->
                 <object-select ng-model="vm.selected[vm.rdfs + 'subPropertyOf']"
@@ -76,7 +92,9 @@
                                display-text="'Sub Property Of'"
                                muted-text="vm.rdfs + 'subPropertyOf'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.subObjectProperties"></object-select>
+                               select-list="vm.ontology.matonto.subObjectProperties"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:inverseOf -->
                 <object-select ng-model="vm.selected[vm.owl + 'inverseOf']"
@@ -84,7 +102,9 @@
                                display-text="'Inverse Of'"
                                muted-text="vm.owl + 'inverseOf'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.subObjectProperties"></object-select>
+                               select-list="vm.ontology.matonto.subObjectProperties"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:disjointWith -->
                 <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
@@ -92,7 +112,9 @@
                                display-text="'Disjoint With'"
                                muted-text="vm.owl + 'disjointWith'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.subObjectProperties"></object-select>
+                               select-list="vm.ontology.matonto.subObjectProperties"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
             </div>
 
             <!-- datatype property -->
@@ -103,7 +125,9 @@
                                display-text="'Range'"
                                muted-text="vm.rdfs + 'range'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.dataPropertyRange"></object-select>
+                               select-list="vm.ontology.matonto.dataPropertyRange"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:equivalentProperty -->
                 <object-select ng-model="vm.selected[vm.owl + 'equivalentProperty']"
@@ -111,7 +135,9 @@
                                display-text="'Equivalent Property'"
                                muted-text="vm.owl + 'equivalentProperty'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.subDataProperties"></object-select>
+                               select-list="vm.ontology.matonto.subDataProperties"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
 
                 <!-- rdfs:subPropertyOf -->
                 <object-select ng-model="vm.selected[vm.rdfs + 'subPropertyOf']"
@@ -119,7 +145,9 @@
                                display-text="'Sub Property Of'"
                                muted-text="vm.rdfs + 'subPropertyOf'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.subDataProperties"></object-select>
+                               select-list="vm.ontology.matonto.subDataProperties"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:disjointWith -->
                 <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
@@ -127,17 +155,14 @@
                                display-text="'Disjoint With'"
                                muted-text="vm.owl + 'disjointWith'"
                                change-event="vm.entityChanged()"
-                               select-list="vm.ontology.matonto.subDataProperties"></object-select>
+                               select-list="vm.ontology.matonto.subDataProperties"
+                               ontology-id="{{vm.ontology['@id']}}"
+                               matonto="vm.ontology.matonto"></object-select>
             </div>
         </div>
 
         <div ng-if="!vm.selected['@type'].length">
             <p class="text-warning">More axioms will become available when you select a type from the first tab.</p>
         </div>
-    </div>
-
-    <!-- annotations tab -->
-    <div ng-if="vm.state.editorTab === 'annotations'" class="tab clearfix">
-        <annotation-tab></annotation-tab>
     </div>
 </form>

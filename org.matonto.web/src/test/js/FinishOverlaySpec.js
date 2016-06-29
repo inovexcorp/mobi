@@ -1,9 +1,44 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 describe('Finish Overlay directive', function() {
     var $compile,
-        scope;
+        scope,
+        mappingManagerSvc,
+        mapperStateSvc,
+        csvManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('finishOverlay');
+        mockMappingManager();
+        mockMapperState();
+        mockCsvManager();
+
+        inject(function(_mappingManagerService_, _mapperStateService_, _csvManagerService_) {
+            mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
+            csvManagerSvc = _csvManagerService_;
+        });
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -11,33 +46,32 @@ describe('Finish Overlay directive', function() {
         });
     });
 
-    injectDirectiveTemplate('modules/mapper/directives/finishOverlay/finishOverlay.html');
-
-    describe('in isolated scope', function() {
+    describe('controller methods', function() {
         beforeEach(function() {
-            scope.save = jasmine.createSpy('save');
-            scope.finish = jasmine.createSpy('finish');
-
-            this.element = $compile(angular.element('<finish-overlay save="save()" finish="finish()"></finish-overlay>'))(scope);
+            mappingManagerSvc.mapping = {name: ''};
+            this.element = $compile(angular.element('<finish-overlay></finish-overlay>'))(scope);
             scope.$digest();
         });
-
-        it('save should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.save();
-
-            expect(scope.save).toHaveBeenCalled();
+        it('should set the correct state for finishing', function() {
+            var controller = this.element.controller('finishOverlay');
+            controller.finish();
+            expect(mapperStateSvc.initialize).toHaveBeenCalled();
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(csvManagerSvc.reset).toHaveBeenCalled();
+            expect(mappingManagerSvc.mapping).toEqual(undefined);
+            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         });
-        it('finish should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.finish();
-
-            expect(scope.finish).toHaveBeenCalled();
+        it('should set the correct state for saving and finishing', function() {
+            var controller = this.element.controller('finishOverlay');
+            spyOn(controller, 'finish');
+            controller.save();
+            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalled();
+            expect(controller.finish).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<finish-overlay save="save()" finish="finish()"></finish-overlay>'))(scope);
+            this.element = $compile(angular.element('<finish-overlay></finish-overlay>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

@@ -1,3 +1,38 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+$filters-width: 10%;
+$results-width: 45%;
+$preview-width: $results-width;
+
+.catalog {
+    > .row {
+        padding-left: 39px;
+        width: 100%;
+        margin: 0;
+    }
+
+    .filters, 
+    .results, 
+    .resource-preview {
+        float: left;
+        border: 1px solid $gray-lighter;
+        height: 100%;
+    }
+    .filters {
+        width: $filters-width;
+    }
+    .results {
+        width: $results-width;
+
+        .page-nav {
+            position: fixed;
+            left: $filters-width;
+            right: $preview-width;
+            bottom: 0;
+        }
+    }
+    .resource-preview {
+        width: $preview-width;
+    }
+}

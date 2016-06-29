@@ -1,15 +1,34 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <form name="dvm.form" class="sparql-editor">
-    <div class="btn-container clearfix top-action-container">
-        <custom-button on-click="dvm.sparqlManagerService.queryRdf()" is-disabled-when="!dvm.sparqlManagerService.queryString.length" pull="'left'">Execute</custom-button>
-    </div>
     <div class="form-group">
         <custom-label muted-text="mutedText">Prefixes:</custom-label>
-        <ui-select multiple ng-model="dvm.sparqlManagerService.prefixes">
+        <ui-select multiple ng-model="dvm.sparql.prefixes">
             <ui-select-match placeholder="Select prefix(es)">{{$item}}</ui-select-match>
             <ui-select-choices repeat="prefix in dvm.prefixList | filter:$select.search">
                 <div ng-bind-html="prefix | escapeHTML | highlight:$select.search | trusted"></div>
             </ui-select-choices>
         </ui-select>
     </div>
-    <ui-codemirror ng-model="dvm.sparqlManagerService.queryString" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
+    <ui-codemirror ng-model="dvm.sparql.queryString" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
 </form>

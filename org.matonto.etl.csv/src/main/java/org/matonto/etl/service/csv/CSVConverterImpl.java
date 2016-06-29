@@ -1,5 +1,28 @@
 package org.matonto.etl.service.csv;
 
+/*-
+ * #%L
+ * org.matonto.etl.csv
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
@@ -9,13 +32,14 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.matonto.etl.api.csv.CSVConverter;
 import org.matonto.etl.api.csv.MappingManager;
+import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Models;
 import org.matonto.rdf.api.*;
-import org.openrdf.rio.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component(provide = CSVConverter.class)
 public class CSVConverterImpl implements CSVConverter {
@@ -43,7 +67,7 @@ public class CSVConverterImpl implements CSVConverter {
 
     @Override
     public Model convert(File delim, File mappingFile, boolean containsHeaders, char separator)
-            throws IOException, RDFParseException, InvalidFormatException {
+            throws IOException, MatOntoException {
         Model converted = mappingManager.createMapping(mappingFile);
         return convert(new FileInputStream(delim), converted, containsHeaders,
                 FilenameUtils.getExtension(delim.getName()), separator);
@@ -51,49 +75,53 @@ public class CSVConverterImpl implements CSVConverter {
 
     @Override
     public Model convert(File delim, Model mappingModel, boolean containsHeaders, char separator)
-            throws IOException, InvalidFormatException {
+            throws IOException, MatOntoException {
         return convert(new FileInputStream(delim), mappingModel, containsHeaders,
                 FilenameUtils.getExtension(delim.getName()), separator);
     }
 
     @Override
     public Model convert(InputStream delim, File mappingFile, boolean containsHeaders, String extension, char separator)
-            throws IOException, InvalidFormatException {
+            throws IOException, MatOntoException {
         Model converted = mappingManager.createMapping(mappingFile);
         return convert(delim, converted, containsHeaders, extension, separator);
     }
 
     @Override
     public Model convert(InputStream delim, Model mappingModel, boolean containsHeaders, String extension,
-                         char separator) throws IOException, InvalidFormatException {
+                         char separator) throws IOException, MatOntoException {
         return (extension.equals("xls") || extension.equals("xlsx"))
                 ? convertExcel(delim, mappingModel, containsHeaders)
                 : convertCSV(new InputStreamReader(delim), mappingModel, containsHeaders, separator);
     }
 
     private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders)
-            throws IOException, InvalidFormatException {
+            throws IOException, MatOntoException {
         String[] nextRow;
         Model convertedRDF = modelFactory.createModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
 
-        Workbook wb = WorkbookFactory.create(excel);
-        Sheet sheet = wb.getSheetAt(0);
-        DataFormatter df = new DataFormatter();
+        try {
+            Workbook wb = WorkbookFactory.create(excel);
+            Sheet sheet = wb.getSheetAt(0);
+            DataFormatter df = new DataFormatter();
 
-        //Traverse each row and convert column into RDF
-        for (Row row : sheet) {
-            // If headers exist, skip them
-            if (containsHeaders && row.getRowNum() == 0) {
-                continue;
+            //Traverse each row and convert column into RDF
+            for (Row row : sheet) {
+                // If headers exist, skip them
+                if (containsHeaders && row.getRowNum() == 0) {
+                    continue;
+                }
+                nextRow = new String[row.getPhysicalNumberOfCells()];
+                int index = 0;
+                for (Cell cell : row) {
+                    nextRow[index] = df.formatCellValue(cell);
+                    index++;
+                }
+                writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
             }
-            nextRow = new String[row.getPhysicalNumberOfCells()];
-            int index = 0;
-            for (Cell cell : row) {
-                nextRow[index] = df.formatCellValue(cell);
-                index++;
-            }
-            writeClassMappingsToModel(convertedRDF, nextRow, classMappings);
+        } catch (InvalidFormatException e) {
+            throw new MatOntoException(e);
         }
 
         return convertedRDF;

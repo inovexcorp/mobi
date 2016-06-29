@@ -1,5 +1,28 @@
 package org.matonto.catalog.impl;
 
+/*-
+ * #%L
+ * org.matonto.catalog.impl
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.catalog.api.Distribution;
@@ -30,6 +53,7 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -98,14 +122,22 @@ public class SimpleCatalogManagerTest {
         MapBindingSet sesameBindingSet = new MapBindingSet();
         sesameBindingSet.addBinding("resource", valueFactory.createIRI("http://matonto.org/testCatalog"));
         sesameBindingSet.addBinding("title", valueFactory.createLiteral("Test Resource"));
-        sesameBindingSet.addBinding("type", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        sesameBindingSet.addBinding("types", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
         sesameBindingSet.addBinding("issued", valueFactory.createLiteral(issued.getTime()));
         sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
         BindingSet bindingSet = new SesameBindingSet(sesameBindingSet);
 
+        List<String> bindingNames = new ArrayList<>();
+        bindingNames.add("resource");
+        bindingNames.add("title");
+        bindingNames.add("types");
+        bindingNames.add("issued");
+        bindingNames.add("modified");
+
         // when
         when(result.hasNext()).thenReturn(true);
         when(result.next()).thenReturn(bindingSet);
+        when(result.getBindingNames()).thenReturn(bindingNames);
 
         Optional<PublishedResource> optional = manager.getResource(existingResource);
 
@@ -115,71 +147,18 @@ public class SimpleCatalogManagerTest {
         PublishedResource resource = optional.get();
 
         assertEquals("Test Resource", resource.getTitle());
-        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getType().stringValue());
+        assertTrue(resource.getTypes().contains(vf.createIRI("http://matonto.org/ontologies/catalog#Ontology")));
         assertEquals(issued.toZonedDateTime().toOffsetDateTime(), resource.getIssued());
         assertEquals(modified.toZonedDateTime().toOffsetDateTime(), resource.getModified());
     }
-
-//    @Test
-//    public void testGetExistingResourceWithOptionals() throws Exception {
-//        // given
-//        IRI existingResource = mock(IRI.class);
-//        GregorianCalendar issued = new GregorianCalendar(2016, 1, 1);
-//        GregorianCalendar modified = new GregorianCalendar(2016, 1, 2);
-//
-//        ValueFactory valueFactory = SimpleValueFactory.getInstance();
-//        MapBindingSet sesameBindingSet = new MapBindingSet();
-//        sesameBindingSet.addBinding("resource", valueFactory.createIRI("http://matonto.org/testCatalog"));
-//        sesameBindingSet.addBinding("title", valueFactory.createLiteral("Test Resource"));
-//        sesameBindingSet.addBinding("type", valueFactory.createIRI("http://matonto.org/ontologies/catalog#Ontology"));
-//        sesameBindingSet.addBinding("issued", valueFactory.createLiteral(issued.getTime()));
-//        sesameBindingSet.addBinding("modified", valueFactory.createLiteral(modified.getTime()));
-//        sesameBindingSet.addBinding("description", valueFactory.createLiteral("Test Description"));
-//        sesameBindingSet.addBinding("identifier", valueFactory.createLiteral("Test Identifier"));
-//        sesameBindingSet.addBinding("keywords", valueFactory.createLiteral("Test,Keywords"));
-//        sesameBindingSet.addBinding("distributions", valueFactory.createLiteral("http://matonto.org/test/Distribution/1,http://matonto.org/test/Distribution/2"));
-//        BindingSet bindingSet = new SesameBindingSet(sesameBindingSet);
-//
-////        List<org.openrdf.model.Statement> statements = new ArrayList<>();
-////        statements.add(valueFactory.createStatement(valueFactory.createIRI("http://matonto.org/test/Distribution/1"), valueFactory.createIRI(DC + "title"), valueFactory.createLiteral("Test Distribution 1")));
-//
-////        org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> sesRes = new org.openrdf.repository.RepositoryResult<>(new CollectionIteration<>(statements));
-////        RepositoryResult<Statement> repoResults = new SesameRepositoryResult<>(sesRes, new StatementValueFactory());
-//
-//        // when
-//        when(result.hasNext()).thenReturn(true);
-//        when(result.next()).thenReturn(bindingSet);
-//
-//        Optional<PublishedResource> optional = manager.getResource(existingResource);
-//
-//        // then
-//        assertTrue(optional.isPresent());
-//        PublishedResource resource = optional.get();
-//
-//        assertEquals("Test Resource", resource.getTitle());
-//        assertEquals("http://matonto.org/ontologies/catalog#Ontology", resource.getType().stringValue());
-//        assertEquals(issued.toZonedDateTime().toOffsetDateTime(), resource.getIssued());
-//        assertEquals(modified.toZonedDateTime().toOffsetDateTime(), resource.getModified());
-//        assertEquals("Test Description", resource.getDescription());
-//        assertEquals("Test Identifier", resource.getIdentifier());
-//
-//        Set<String> expectedKeywords = new HashSet<>();
-//        expectedKeywords.add("Test");
-//        expectedKeywords.add("Keywords");
-//
-//        assertEquals(expectedKeywords, resource.getKeywords());
-//
-////        Set<Distribution> expectedDistributions = new HashSet<>();
-//
-////        assertEquals(2, resource.getDistributions().size());
-////        assertEquals(expectedDistributions, resource.getDistributions());
-//    }
 
     @Test
     public void testCreateOntologyWithoutDistribution() throws Exception {
         // given
         IRI ontologyIri = new SimpleIRI("http://matonto.org/catalog/1");
         OffsetDateTime now = OffsetDateTime.now();
+        Set<Resource> types = new HashSet<>();
+        types.add(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
 
         Ontology ontology = mock(Ontology.class);
 
@@ -187,7 +166,7 @@ public class SimpleCatalogManagerTest {
         when(repositoryResult.hasNext()).thenReturn(false);
 
         when(ontology.getResource()).thenReturn(ontologyIri);
-        when(ontology.getType()).thenReturn(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        when(ontology.getTypes()).thenReturn(types);
         when(ontology.getTitle()).thenReturn("MatOnto Catalog");
         when(ontology.getDescription()).thenReturn("Catalog of MatOnto Resources");
         when(ontology.getIssued()).thenReturn(now);
@@ -214,6 +193,8 @@ public class SimpleCatalogManagerTest {
         IRI ontologyIri = new SimpleIRI("http://matonto.org/catalog/1");
         IRI distributionIri = new SimpleIRI("http://matonto.org/distribution/1");
         OffsetDateTime now = OffsetDateTime.now();
+        Set<Resource> types = new HashSet<>();
+        types.add(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
 
         Ontology ontology = mock(Ontology.class);
         Distribution distribution = mock(Distribution.class);
@@ -224,7 +205,7 @@ public class SimpleCatalogManagerTest {
         when(repositoryResult.hasNext()).thenReturn(false);
 
         when(ontology.getResource()).thenReturn(ontologyIri);
-        when(ontology.getType()).thenReturn(new SimpleIRI("http://matonto.org/ontologies/catalog#Ontology"));
+        when(ontology.getTypes()).thenReturn(types);
         when(ontology.getTitle()).thenReturn("MatOnto Catalog");
         when(ontology.getDescription()).thenReturn("Catalog of MatOnto Resources");
         when(ontology.getIssued()).thenReturn(now);
@@ -262,17 +243,18 @@ public class SimpleCatalogManagerTest {
         manager.createOntology(ontology);
     }
 
-    @Test
-    public void testRemoveResource() {
-        // given
-        Ontology ontology = mock(Ontology.class);
-
-        // when
-//        when(repositoryResult.hasNext()).thenReturn(true);
-//        when(ontology.getResource()).thenReturn(mock(IRI.class));
-
-        manager.removeResource(ontology);
-    }
+    // TODO: Test and Implement Remove
+//    @Test
+//    public void testRemoveResource() {
+//        // given
+//        Ontology ontology = mock(Ontology.class);
+//
+//        // when
+////        when(repositoryResult.hasNext()).thenReturn(true);
+////        when(ontology.getResource()).thenReturn(mock(IRI.class));
+//
+//        manager.removeResource(ontology);
+//    }
 
     private void checkNamedGraphs(NamedGraph expected, NamedGraph actual) throws Exception {
         try {

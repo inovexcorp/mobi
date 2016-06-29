@@ -1,12 +1,33 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <div class="overlay sm">
     <form name="vm.downloadForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Download Ontology</h6>
-        <p class="text-danger" ng-if="vm.downloadError">
-            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.downloadError}}
-        </p>
+        
         <!-- serialization -->
         <serialization-select ng-model="vm.downloadSerialization"></serialization-select>
+
         <!-- file name -->
         <div ng-class="{'has-error': vm.downloadForm.fileName.$error.pattern}" class="form-group">
             <label class="control-label" for="fileName">File Name</label>
@@ -15,6 +36,7 @@
                 <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
             </p>
         </div>
+
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="!vm.downloadSerialization || vm.downloadForm.$invalid" on-click="vm.downloadOntology()">Download</custom-button>

@@ -1,19 +1,43 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <div class="overlay sm">
     <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Upload Ontology</h6>
-        <p class="text-danger" ng-if="vm.uploadError">
-            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.uploadError}}
-        </p>
+
+        <!-- error display -->
+        <error-display ng-if="vm.uploadError">{{vm.uploadError}}</error-display>
+
         <!-- file to upload -->
         <div class="form-group">
-            <label for="file">Select a file</label>
+            <custom-label>Select a file</custom-label>
             <file-input id="file" name="file" ng-model="vm.upload.file" accept=".owl,.ttl,.xml"></file-input>
         </div>
+
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="!vm.upload.file"
-                           on-click="vm.uploadOntology(vm.uploadForm.$valid, vm.upload.file, vm.upload.namespace, vm.upload.localName);">Upload</custom-button>
+                           on-click="vm.uploadOntology(vm.upload.file, vm.upload.namespace, vm.upload.localName);">Upload</custom-button>
 
             <custom-button on-click="vm.showUploadOverlay = false; vm.uploadError = false;" type="'secondary'">Cancel</custom-button>
         </div>

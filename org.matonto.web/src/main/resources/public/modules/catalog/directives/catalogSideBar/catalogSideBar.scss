@@ -1,0 +1,8 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.catalog-side-bar {
+    li:first-child button {
+        cursor: auto;
+    }
+}

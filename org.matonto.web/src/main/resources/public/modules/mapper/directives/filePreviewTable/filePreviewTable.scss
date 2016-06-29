@@ -1,0 +1,70 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.file-preview-table {
+    position: absolute;
+    bottom: 0;
+    left: 5px;
+    right: 5px;
+    z-index: 10;
+
+    overflow-x: auto;
+    overflow-y: auto;
+    min-height: 10%;
+    -webkit-transition: all 0.4s ease-in-out;
+            transition: all 0.4s ease-in-out;
+    
+    &.big {
+        min-height: 100%;
+        max-height: 100%;
+        background-color: #fff;
+    }
+    .clickable {
+        cursor: pointer;
+    }
+    .disabled {
+        cursor: not-allowed;
+    }
+    .toggle-table {
+        position: absolute;
+        top: 1px;
+        right: 1px;
+        background-color: transparent;
+        border: 1px solid $gray-light;
+        color: $gray-light;
+
+        &:hover {
+            border-width: 2px;
+            background-color: $gray-lighter;
+        }
+        &.opposite {
+            border: 1px solid #fff;
+            color: #fff;
+        }
+    }
+    .table {
+        width: 100%;
+        margin-bottom: 0;
+
+        tr {
+            background-color: #fff;
+        }
+        th {
+            background-color: $gray-lighter;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            &.highlight {
+                background-color: $gray-light;
+            }
+        }
+        td {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            &.highlight {
+                background-color: $gray-lighter;
+            }
+        }
+    }
+}

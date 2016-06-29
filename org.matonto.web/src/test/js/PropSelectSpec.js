@@ -1,19 +1,42 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 describe('Prop Select directive', function() {
     var $compile,
         scope,
         ontologyManagerSvc;
 
-    mockOntologyManager();
     beforeEach(function() {
+        module('templates');
         module('propSelect');
+        mockOntologyManager();
 
         module(function($provide) {
             $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
 
-        inject(function(ontologyManagerService) {
-            ontologyManagerSvc = ontologyManagerService;
+        inject(function(_ontologyManagerService_) {
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -21,8 +44,6 @@ describe('Prop Select directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/propSelect/propSelect.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {
@@ -51,16 +72,6 @@ describe('Prop Select directive', function() {
             controller.selectedProp = 'test';
             scope.$digest();
             expect(scope.selectedProp).toEqual('test');
-        });
-    });
-    describe('controller methods', function() {
-        it('should get the name of the passed property object', function() {
-            var element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
-            var controller = element.controller('propSelect');
-            var result = controller.getName({});
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({});
-            expect(typeof result).toBe('string');
         });
     });
     describe('replaces the element with the correct html', function() {

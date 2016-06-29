@@ -1,5 +1,28 @@
 package org.matonto.etl.service.csv;
 
+/*-
+ * #%L
+ * org.matonto.etl.csv
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.*;
 import org.matonto.etl.api.csv.MappingManager;
 import org.matonto.exception.MatOntoException;
@@ -38,7 +61,7 @@ public class SimpleMappingManager implements MappingManager {
     public SimpleMappingManager() {}
 
     @Activate
-    public void activate(final Map<String, Object> properties) {
+    public void activate() {
         logger.info("Activating " + COMPONENT_NAME);
         initMappingRegistryResources();
     }
@@ -49,7 +72,7 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Modified
-    public void modified(final Map<String, Object> properties) {
+    public void modified() {
         logger.info("Modifying the " + COMPONENT_NAME);
         initMappingRegistryResources();
     }
@@ -175,19 +198,14 @@ public class SimpleMappingManager implements MappingManager {
         return true;
     }
 
-    /**
-     * Tests whether the passes mapping Resource IRI exists in the mapping registry.
-     *
-     * @param resource the mapping IRI to test for in the registry
-     * @return true if the registry contains the passed mapping IRI, false otherwise.
-     */
-    protected boolean mappingExists(@Nonnull Resource resource) {
+    @Override
+    public boolean mappingExists(@Nonnull Resource mappingIRI) {
         RepositoryConnection conn = null;
         boolean exists = false;
         try {
             conn = repository.getConnection();
             RepositoryResult<Statement> statements = conn.getStatements(registrySubject, registryPredicate,
-                    resource, registryContext);
+                    mappingIRI, registryContext);
             if (statements.hasNext()) {
                 exists = true;
             }
@@ -228,8 +246,8 @@ public class SimpleMappingManager implements MappingManager {
      * the repository.
      */
     private void initMappingRegistryResources() {
-        registryContext = factory.createIRI("https://matonto.org/registries/mappings");
-        registrySubject = factory.createIRI("https://matonto.org/registries/mappings");
-        registryPredicate = factory.createIRI("https://matonto.org/registries#hasItem");
+        registryContext = factory.createIRI("https://matonto.org/registry/mappings");
+        registrySubject = factory.createIRI("https://matonto.org/registry/mappings");
+        registryPredicate = factory.createIRI("https://matonto.org/registry#hasItem");
     }
 }

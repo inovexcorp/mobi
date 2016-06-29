@@ -1,12 +1,40 @@
-<!-- add annotation button -->
-<a class="btn btn-link btn-annotation" ng-click="vm.editingAnnotation = false; vm.showAnnotationOverlay = true;"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="annotation-container">
+    <!-- add annotation button -->
+    <div class="btn-container clearfix">
+        <a class="btn btn-link pull-left" ng-click="vm.openAddAnnotationOverlay()"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
+    </div>
 
-<!-- list of annotations -->
-<div class="annotation" ng-repeat="key in vm.selected | showAnnotations:vm.ontology.matonto.annotations | orderBy:vm.getAnnotationLocalNameLowercase">
-    <h5 title="{{vm.getItemIri(key)}}">{{key.localName | beautify}}</h5>
-    <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(key)]">
-        <p>{{value['@id'] || value['@value']}}</p>
-        <button ng-if="value['@value']" type="button" class="btn btn-link btn-edit" ng-click="vm.editClicked(vm.getItemIri(key), $index);" title="Edit"><i class="fa fa-pencil"></i></button>
-        <button type="button" class="btn btn-link btn-delete" ng-click="vm.removeAnnotation(vm.getItemIri(key), $index)" title="Delete"><i class="fa fa-times"></i></button>
+    <!-- list of annotations -->
+    <div class="annotation" ng-repeat="annotation in vm.selected | showAnnotations:vm.ontology.matonto.annotations | orderBy:'localName'">
+        <h5 ng-click="isClosed = !isClosed" class="clearfix">
+            {{annotation.localName | beautify}} <small>&lt;{{vm.getItemIri(annotation)}}&gt;</small><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+        </h5>
+        <div class="value-container" ng-repeat="value in vm.selected[vm.getItemIri(annotation)]" ng-hide="isClosed">
+            <span>{{value['@id'] || value['@value']}}</span>
+            <button type="button" class="btn btn-link pull-right" ng-click="vm.openRemoveAnnotationOverlay(vm.getItemIri(annotation), $index)" title="Delete"><i class="fa fa-times fa-fw"></i></button>
+            <button ng-if="value['@value']" type="button" class="btn btn-link pull-right" ng-click="vm.editClicked(annotation, $index);" title="Edit"><i class="fa fa-pencil fa-fw"></i></button>
+        </div>
     </div>
 </div>

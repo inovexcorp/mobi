@@ -1,10 +1,33 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <div class="overlay">
     <form name="vm.openForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Open Ontology</h6>
-        <p class="text-danger" ng-if="vm.openError">
-            <i class="fa fa-exclamation-triangle fa-fw"></i>{{vm.openError}}
-        </p>
+
+        <!-- error display -->
+        <error-display ng-if="vm.openError">{{vm.openError}}</error-display>
+
         <!-- list of ontologies -->
         <div class="form-group">
             <custom-label muted-text="mutedText">Ontology</custom-label>
@@ -23,12 +46,12 @@
                 </ui-select-choices>
             </ui-select>
         </div>
+
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!vm.ontologyIdToOpen"
-                           on-click="vm.openOntology()">Open</custom-button>
+            <custom-button is-disabled-when="!vm.ontologyIdToOpen" on-click="vm.openOntology()">Open</custom-button>
 
-            <custom-button on-click="vm.showOpenOverlay = false; vm.openError = '';" type="'secondary'">Cancel</custom-button>
+            <custom-button on-click="vm.showOpenOverlay = false; vm.openError = ''; vm.ontologyIdToOpen = undefined;" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

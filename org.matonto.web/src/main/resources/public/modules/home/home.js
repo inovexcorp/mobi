@@ -1,58 +1,28 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 (function() {
     'use strict';
 
     angular
-        .module('home', [])
-        .controller('HomeController', HomeController);
-
-    HomeController.$inject = ['$http'];
-
-    function HomeController($http) {
-        var vm = this;
-
-        activate();
-
-        function activate() {
-            // d3Test();
-        }
-
-        // Testing out the d3 library and feasibility of incorporating that in our provided widgets
-        function d3Test() {
-            var data = [4, 8, 15, 16, 23, 42],
-
-                width = 420,
-                barHeight = 20,
-
-                x = d3.scale.linear()
-                    .domain([0, d3.max(data)])
-                    .range([0, width]),
-
-                chart = d3.select('.chart')
-                    .attr('width', width)
-                    .attr('height', barHeight * data.length),
-
-                bar = chart.selectAll('g')
-                    .data(data)
-                    .enter().append('g')
-                    .attr('transform', function(d, i) { return 'translate(0,' + i * barHeight + ')'; });
-
-            bar.append('rect')
-                .attr('width', x)
-                .attr('height', barHeight - 1);
-
-            bar.append('text')
-                .attr('x', function(d) { return x(d) - 3; })
-                .attr('y', barHeight / 2)
-                .attr('dy', '.35em')
-                .text(function(d) { return d; });
-
-            // chart made with divs
-            /* d3.select('.chart')
-                .selectAll('div')
-                .data(data)
-                .enter().append('div')
-                .style('width', function(d) { return x(d) + 'px'; })
-                .text(function(d) { return d; }); */
-        }
-    }
+        .module('home', ['moduleBox']);
 })();

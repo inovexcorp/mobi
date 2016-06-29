@@ -1,3 +1,25 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 describe('Response Obj service', function() {
     var responseObjSvc;
 
@@ -75,54 +97,6 @@ describe('Response Obj service', function() {
         _.forEach(tests, function(test) {
             result = responseObjSvc.getItemIri(test.value);
             expect(result).toBe(test.result);
-        });
-    });
-    describe('stringifies a response', function() {
-        it('into an array of IRIs if the response is an array', function() {
-            var result,
-                tests = [
-                    {
-                        value: [undefined, {}, {namespace: ''}, {localName: ''}],
-                        result: []
-                    },
-                    {
-                        value: [{namespace: 'test/', localName: '1'}, {namespace: 'test/', localName: '2'}],
-                        result: ['test/1', 'test/2']
-                    }
-                ];
-            _.forEach(tests, function(test) {
-                result = responseObjSvc.stringify(test.value);
-                expect(result).toEqual(test.result);
-            });
-        });
-        it('into an empty array if the response is not an array', function() {
-            var result,
-                tests = [
-                    {
-                        value: null,
-                        result: []
-                    },
-                    {
-                        value: undefined,
-                        result: []
-                    },
-                    {
-                        value: 0,
-                        result: []
-                    },
-                    {
-                        value: '',
-                        result: []
-                    },
-                    {
-                        value: {},
-                        result: []
-                    }
-                ];
-            _.forEach(tests, function(test) {
-                result = responseObjSvc.stringify(test.value);
-                expect(result).toEqual(test.result);
-            });
         });
     });
 });

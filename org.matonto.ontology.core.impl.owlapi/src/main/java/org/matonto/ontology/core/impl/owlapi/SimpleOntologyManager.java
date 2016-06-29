@@ -1,6 +1,34 @@
 package org.matonto.ontology.core.impl.owlapi;
 
-import aQute.bnd.annotation.component.*;
+/*-
+ * #%L
+ * org.matonto.ontology.core.impl.owlapi
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+import aQute.bnd.annotation.component.Activate;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Deactivate;
+import aQute.bnd.annotation.component.Modified;
+import aQute.bnd.annotation.component.Reference;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -37,8 +65,9 @@ import javax.annotation.Nonnull;
             designateFactory = RepositoryConsumerConfig.class,
             configurationPolicy = ConfigurationPolicy.require)
 public class SimpleOntologyManager implements OntologyManager {
-	
-    protected static final String COMPONENT_NAME = "org.matonto.ontology.core.OntologyManager";
+
+    protected static final String COMPONENT_NAME =
+            "org.matonto.ontology.core.OntologyManager";
     private Resource registryContext;
     private Resource registrySubject;
     private IRI registryPredicate;
@@ -403,7 +432,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private void initOntologyRegistryResources() throws MatontoOntologyException {
         registryContext = factory.createIRI("https://matonto.org/registry/ontologies");
         registrySubject = factory.createIRI("https://matonto.org/registry/ontologies");
-        registryPredicate = factory.createIRI("https://matonto.org/Ontology/registry#hasItem");
+        registryPredicate = factory.createIRI("https://matonto.org/registry#hasItem");
     }
 
     @Override

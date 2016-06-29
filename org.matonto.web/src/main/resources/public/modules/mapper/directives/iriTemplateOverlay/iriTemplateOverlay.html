@@ -1,3 +1,25 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
 <div class="iri-template-overlay overlay lg">
     <form class="content" name="iriTemplateForm">
         <h6>Edit IRI Template</h6>
@@ -22,13 +44,13 @@
         </div>
         <div class="template-ends-with form-group">
             <label class="control-label" for="endsWith">Ends With</label>
-            <p class="help-block">Duplicate values will create a single individual with combined data.</p>
-            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions"></select>
+            <p id="ends-with-help-block" class="help-block">Duplicate values will create a single individual with combined data.</p>
+            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-help-block"></select>
         </div>
         
         <div class="btn-container clearfix">
-            <custom-button on-click="cancel()" pull="'left'">Cancel</custom-button>
-            <custom-button on-click="set({prefixEnd: dvm.beginsWith + dvm.then, localName: dvm.endsWith.value})" is-disabled-when="iriTemplateForm.$invalid">Set</custom-button>
+            <custom-button on-click="dvm.state.editIriTemplate = false" pull="'left'" type="'secondary'">Cancel</custom-button>
+            <custom-button on-click="dvm.state.editIriTemplate = false; dvm.set()" is-disabled-when="iriTemplateForm.$invalid">Set</custom-button>
         </div>
     </form>
 </div>

@@ -1,3 +1,25 @@
+/*-
+ * #%L
+ * org.matonto.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 (function() {
     'use strict';
 
@@ -29,6 +51,11 @@
                 },
                 datatype: {
                     tab: 'datatype',
+                    editor: 'default',
+                    editorTab: 'basic'
+                },
+                annotation: {
+                    tab: 'annotation',
                     editor: 'default',
                     editorTab: 'basic'
                 }
@@ -63,19 +90,26 @@
                 return self.states[self.states.current];
             }
 
-            self.setStateToNew = function(state, ontologies) {
+            self.setStateToNew = function(state, ontologies, type) {
                 var editor,
                     oi = state.oi,
                     ci = state.ci,
                     pi = state.pi;
-                if(oi === -1) {
+                if(type === 'ontology') {
                     oi = ontologies.length - 1;
+                    ci = undefined;
+                    pi = undefined;
                     editor = 'ontology-editor';
-                } else if(ci === -1) {
+                } else if(type === 'class') {
                     ci = ontologies[oi].matonto.classes.length - 1;
+                    pi = undefined;
                     editor = 'class-editor';
-                } else {
-                    pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
+                } else if(type === 'property') {
+                    if(ci !== undefined) {
+                        pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
+                    } else {
+                        pi = ontologies[oi].matonto.noDomains.length - 1;
+                    }
                     editor = 'property-editor';
                 }
                 self.setState(editor, oi, ci, pi);
