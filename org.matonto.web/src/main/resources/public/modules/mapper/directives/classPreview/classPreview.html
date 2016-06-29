@@ -21,10 +21,13 @@
   #L%
   -->
 <div class="class-preview">
-    <h3>{{dvm.createTitle()}}</h3>
-    <h4 ng-if="dvm.classObj">Properties</h4>
-    <ul>
-        <li ng-if="dvm.classObj && !dvm.createPropList().length">None</li>
-        <li ng-repeat="prop in dvm.createPropList()">{{prop}}</li>
-    </ul>
+    <div ng-if="dvm.classObj">
+        <h3>{{dvm.createTitle()}}</h3>
+        <p>{{dvm.createDescription()}}</p>
+        <h4>Properties <a class="header-link" ng-if="dvm.getProps().length > dvm.numPropPreview" ng-click="dvm.full = !dvm.full">See {{dvm.full ? 'Less' : 'More'}}</a></h4>
+        <ul class="props">
+            <li ng-if="!dvm.getProps().length">None</li>
+            <li ng-repeat="prop in dvm.getPropList() track by $index">{{prop}}</li>
+        </ul>
+    </div>
 </div>
