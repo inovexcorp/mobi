@@ -1,3 +1,0 @@
-
-Lists of 1 third-party dependencies.
-     (Apache License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
