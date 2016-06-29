@@ -36,6 +36,14 @@
     <name>MatOnto</name>
     <url>http://matonto.org</url>
 
+    <licenses>
+        <license>
+            <name>GNU Affero General Public License, Version 3</name>
+            <url>https://www.gnu.org/licenses/agpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <modules>
         <module>matonto-parent</module>
         <module>org.matonto.persistence.api</module>
@@ -110,6 +118,7 @@
                     <verbose>false</verbose>
                     <addSvnKeyWords>true</addSvnKeyWords>
                     <useMissingFile>true</useMissingFile>
+                    <missingFile>legal/THIRD-PARTY.properties</missingFile>
                     <excludedGroups>org.matonto</excludedGroups>
                 </configuration>
                 <inherited>false</inherited>
