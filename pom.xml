@@ -157,7 +157,20 @@
                                         Apache 2|
                                         Apache License 2.0|
                                         Apache 2.0 License|
-                                        ALv2
+                                        ALv2|
+                                        Apache License
+                                    </licenseMerge>
+                                    <licenseMerge>
+                                        Revised BSD License|
+                                        BSD|
+                                        BSD License|
+                                        Aduna BSD license|
+                                        BSD style|
+                                        New BSD License
+                                    </licenseMerge>
+                                    <licenseMerge>
+                                        Simplified BSD License|
+                                        The BSD License
                                     </licenseMerge>
                                 </licenseMerges>
                             </configuration>
