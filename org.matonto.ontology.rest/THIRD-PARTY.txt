@@ -13,7 +13,7 @@ Lists of 114 third-party dependencies.
      (Apache 2) opencsv (com.opencsv:opencsv:3.7 - http://opencsv.sf.net)
      (The Apache Software License, Version 2.0) Spatial4J (com.spatial4j:spatial4j:0.4.1 - https://github.com/spatial4j/spatial4j)
      (The Apache Software License, Version 2.0) Commons BeanUtils (commons-beanutils:commons-beanutils:1.8.0 - http://commons.apache.org/beanutils/)
-     (Apache License, Version 2.0) Apache Commons Codec (commons-codec:commons-codec:1.10 - http://commons.apache.org/proper/commons-codec/)
+     (The Apache Software License, Version 2.0) Apache Commons Codec (commons-codec:commons-codec:1.9 - http://commons.apache.org/proper/commons-codec/)
      (The Apache Software License, Version 2.0) Commons Collections (commons-collections:commons-collections:3.2.1 - http://commons.apache.org/collections/)
      (The Apache Software License, Version 2.0) Commons DBCP (commons-dbcp:commons-dbcp:1.4 - http://commons.apache.org/dbcp/)
      (The Apache Software License, Version 2.0) Commons IO (commons-io:commons-io:2.4 - http://commons.apache.org/io/)
