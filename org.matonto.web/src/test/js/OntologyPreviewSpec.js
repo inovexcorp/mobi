@@ -93,12 +93,15 @@ describe('Ontology Preview directive', function() {
         });
         it('depending on the length of the class list', function() {
             var controller = this.element.controller('ontologyPreview');
+            scope.ontology = {};
             scope.$digest();
             expect(this.element.querySelectorAll('a.header-link').length).toBe(0);
+            expect(this.element.querySelectorAll('.classes')[0].innerHTML).toContain('None');
 
             scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
             scope.$digest();
             expect(this.element.querySelectorAll('a.header-link').length).toBe(1);
+            expect(this.element.querySelectorAll('.classes')[0].innerHTML).not.toContain('None');
         });
         it('depending on how many classes are showing', function() {
             var controller = this.element.controller('ontologyPreview');
