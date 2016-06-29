@@ -1,3 +1,0 @@
-
-Lists of 1 third-party dependencies.
-     (GNU General Public License, version 2, with the Classpath Exception) Checker framework (edu.washington.cs.types.checker:checker-framework:1.7.5 - http://types.cs.washington.edu/checker-framework)
