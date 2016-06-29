@@ -18,7 +18,7 @@
     "gulp-ignore": "^2.0.1",
     "gulp-imagemin": "^2.3.0",
     "gulp-inject": "^3.0.0",
-    "gulp-jasmine-phantom": "^3.0.0",
+    "gulp-jasmine-phantom": "git://github.com/dflynn15/gulp-jasmine-phantom.git#2c872f2",
     "gulp-ng-annotate": "^2.0.0",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^2.0.4",
