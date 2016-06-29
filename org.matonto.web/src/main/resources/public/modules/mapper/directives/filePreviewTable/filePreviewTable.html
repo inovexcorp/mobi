@@ -21,26 +21,26 @@
   #L%
   -->
 <div class="file-preview-table" ng-class="{'big': dvm.big}">
-    <button type="button" class="toggle-table" ng-class="{'opposite': dvm.hoverIdx === headers.length - 1}" ng-click="dvm.toggleTable()">
+    <button type="button" class="toggle-table" ng-class="{'opposite': dvm.hoverIdx === dvm.cm.filePreview.headers.length - 1}" ng-click="dvm.toggleTable()">
         <i class="fa" ng-class="{'fa-expand': !dvm.big, 'fa-compress': dvm.big}"></i>
     </button>
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th ng-repeat="item in headers track by $index" 
+                <th ng-repeat="item in dvm.cm.filePreview.headers track by $index" 
                     ng-mouseover="dvm.hoverIdx = $index"
                     ng-mouseleave="dvm.hoverIdx = undefined"
-                    ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable && availableColumns.indexOf(item) >= 0, 'disabled': isClickable && availableColumns.indexOf(item) < 0}" 
-                    ng-click="(isClickable && availableColumns.indexOf(item) >= 0) ? onClick({colIndex: $index}) : undefined">{{item}}</th>
+                    ng-class="{'highlight': $index === dvm.getHighlightIdx() || $index === dvm.hoverIdx, 'clickable': dvm.isClickable() && dvm.state.availableColumns.indexOf(item) >= 0, 'disabled': dvm.isClickable() && dvm.state.availableColumns.indexOf(item) < 0}" 
+                    ng-click="(dvm.isClickable() && dvm.state.availableColumns.indexOf(item) >= 0) ? dvm.clickColumn($index) : undefined">{{item}}</th>
             </tr>
         </thead>
         <tbody>
-            <tr ng-repeat="row in rows track by $index" ng-class="{'hidden': $index > dvm.showNum - 1}">
+            <tr ng-repeat="row in dvm.cm.filePreview.rows track by $index" ng-class="{'hidden': $index > dvm.showNum - 1}">
                 <td ng-repeat="item in row track by $index" 
                     ng-mouseover="dvm.hoverIdx = $index"
                     ng-mouseleave="dvm.hoverIdx = undefined"
-                    ng-class="{'highlight': $index === highlightIdx || $index === dvm.hoverIdx, 'clickable': isClickable && availableColumns.indexOf(headers[$index]) >= 0, 'disabled': isClickable && availableColumns.indexOf(headers[$index]) < 0}"
-                    ng-click="(isClickable && availableColumns.indexOf(headers[$index]) >= 0) ? onClick({colIndex: $index}) : undefined">{{item}}</td>
+                    ng-class="{'highlight': $index === dvm.getHighlightIdx() || $index === dvm.hoverIdx, 'clickable': dvm.isClickable() && dvm.state.availableColumns.indexOf(dvm.cm.filePreview.headers[$index]) >= 0, 'disabled': dvm.isClickable() && dvm.state.availableColumns.indexOf(dvm.cm.filePreview.headers[$index]) < 0}"
+                    ng-click="(dvm.isClickable() && dvm.state.availableColumns.indexOf(dvm.cm.filePreview.headers[$index]) >= 0) ? dvm.clickColumn($index) : undefined">{{item}}</td>
             </tr>
         </tbody>
     </table>

@@ -26,7 +26,9 @@
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
         <tree-item current-entity="ontology"
                    current-ontology="ontology"
+                   is-active="vm.state.oi === $index && vm.state.pi === undefined"
                    is-opened="opened"
+                   on-click="vm.selectItem('ontology-editor', $index)"
                    has-children="ontology.matonto.jsAnnotations.length"></tree-item>
 
         <li class="container" ng-show="opened">

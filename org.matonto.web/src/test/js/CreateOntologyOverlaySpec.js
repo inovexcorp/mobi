@@ -30,6 +30,7 @@ describe('Create Ontology Overlay directive', function() {
     injectCamelCaseFilter();
 
     beforeEach(function() {
+        module('templates');
         module('createOntologyOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -37,8 +38,6 @@ describe('Create Ontology Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/createOntologyOverlay/createOntologyOverlay.html');
 
     beforeEach(function() {
         scope.onCreate = jasmine.createSpy('onCreate');

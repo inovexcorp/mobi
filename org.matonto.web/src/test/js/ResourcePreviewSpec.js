@@ -26,6 +26,7 @@ describe('Resource Preview directive', function() {
         catalogManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('resourcePreview');
         mockCatalogManager();
 
@@ -38,8 +39,6 @@ describe('Resource Preview directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/catalog/directives/resourcePreview/resourcePreview.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

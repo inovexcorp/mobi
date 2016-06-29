@@ -26,6 +26,7 @@ describe('Class Editor directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('classEditor');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -33,7 +34,6 @@ describe('Class Editor directive', function() {
             scope = _$rootScope_;
         });
     });
-    injectDirectiveTemplate('modules/ontology-editor/directives/classEditor/classEditor.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

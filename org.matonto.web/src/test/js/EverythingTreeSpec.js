@@ -26,6 +26,7 @@ describe('Everything Tree directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('everythingTree');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -51,8 +52,6 @@ describe('Everything Tree directive', function() {
         }
 
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/everythingTree/everythingTree.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

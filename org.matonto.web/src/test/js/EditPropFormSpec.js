@@ -26,14 +26,20 @@ describe('Edit Prop Form directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
+    mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('editPropForm');
         mockOntologyManager();
         mockMappingManager();
+        mockMapperState();
+        mockCsvManager();
         
-        inject(function(_mappingManagerService_, _ontologyManagerService_) {
+        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _csvManagerService_) {
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
+            csvManagerSvc = _csvManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -41,99 +47,25 @@ describe('Edit Prop Form directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/editPropForm/editPropForm.html');
-
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.columns = [];
-            scope.set = jasmine.createSpy('set');
-            scope.clickDelete = jasmine.createSpy('clickDelete');
-            scope.mapping = {};
-            scope.ontologies = [{}];
-            scope.classMappingId = '';
-            scope.selectedPropMapping = '';
-            scope.selectedColumn = '';
-
-            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
-            scope.$digest();
-        });
-
-        it('columns should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.columns = [''];
-            scope.$digest();
-            expect(scope.columns).toEqual(['']);
-        });
-        it('set should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.set();
-
-            expect(scope.set).toHaveBeenCalled();
-        });
-        it('clickDelete should be called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.clickDelete();
-
-            expect(scope.clickDelete).toHaveBeenCalled();
-        });
-        it('mapping should be two way bound', function() {
-            var controller = this.element.controller('editPropForm');
-            controller.mapping = {jsonld: []};
-            scope.$digest();
-            expect(scope.mapping).toEqual({jsonld: []});
-        });
-        it('ontologies should be two way bound', function() {
-            var controller = this.element.controller('editPropForm');
-            controller.ontologies = [{'@id': ''}];
-            scope.$digest();
-            expect(scope.ontologies).toEqual([{'@id': ''}]);
-        });
-        it('classMappingId should be two way bound', function() {
-            var controller = this.element.controller('editPropForm');
-            controller.classMappingId = 'test';
-            scope.$digest();
-            expect(scope.classMappingId).toEqual('test');
-        });
-        it('selectedPropMapping should be two way bound', function() {
-            var controller = this.element.controller('editPropForm');
-            controller.selectedPropMapping = 'test';
-            scope.$digest();
-            expect(scope.selectedPropMapping).toEqual('test');
-        });
-        it('selectedColumn should be two way bound', function() {
-            var controller = this.element.controller('editPropForm');
-            controller.selectedColumn = 'test';
-            scope.$digest();
-            expect(scope.selectedColumn).toEqual('test');
-        });
-    });
+    
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.columns = [];
-            scope.set = jasmine.createSpy('set');
-            scope.clickDelete = jasmine.createSpy('clickDelete');
-            scope.mapping = {jsonld: []};
-            scope.ontologies = [{'@id': ''}];
-            scope.classMappingId = '';
-            scope.selectedPropMapping = '';
-            scope.selectedColumn = '';
-
-            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
+            mappingManagerSvc.mapping = {jsonld: []};
+            this.element = $compile(angular.element('<edit-prop-form></edit-prop-form>'))(scope);
             scope.$digest();
         });
         it('should get the class id', function() {
             var controller = this.element.controller('editPropForm');
             var result = controller.getClassId();
 
-            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(controller.mapping.jsonld, controller.classMappingId);
+            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId);
             expect(typeof result).toBe('string')
         });
         it('should get the prop id', function() {
             var controller = this.element.controller('editPropForm');
             var result = controller.getPropId();
 
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(controller.mapping.jsonld, controller.selectedPropMapping);
+            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedPropMappingId);
             expect(typeof result).toBe('string')
         });
         it('should get the property title', function() {
@@ -142,6 +74,7 @@ describe('Edit Prop Form directive', function() {
 
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
+            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string')
         });
         it('should test whether property is an object property', function() {
@@ -150,19 +83,28 @@ describe('Edit Prop Form directive', function() {
             expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalled();
             expect(result).toBe(false);
         });
+        it('should set a new column index correctly', function() {
+            var controller = this.element.controller('editPropForm');
+            var prop = {'@id': 'test'};
+            csvManagerSvc.filePreview = {headers: []};
+            spyOn(controller, 'getPropId').and.returnValue(prop['@id']);
+            spyOn(controller, 'isObjectProperty').and.returnValue(false);
+            mappingManagerSvc.getDataMappingFromClass.and.returnValue(prop);
+            mapperStateSvc.invalidProps = [prop];
+            scope.$digest();
+            controller.set();
+            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalled();
+            expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
+            expect(mappingManagerSvc.getDataMappingFromClass).toHaveBeenCalled();
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+            expect(mapperStateSvc.invalidProps).not.toContain(prop);
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.columns = [];
-            scope.set = jasmine.createSpy('set');
-            scope.clickDelete = jasmine.createSpy('clickDelete');
-            scope.mapping = {};
-            scope.ontologies = [{'@id': ''}];
-            scope.classMappingId = '';
-            scope.selectedPropMapping = '';
-            scope.selectedColumn = '';
-
-            this.element = $compile(angular.element('<edit-prop-form columns="columns" set="set(column)" click-delete="clickDelete(classMappingId, propMappingId)" mapping="mapping" ontologies="ontologies" class-mapping-id="classMappingId" selected-prop-mapping="selectedPropMapping" selected-column="selectedColumn"></edit-prop-form>'))(scope);
+            mappingManagerSvc.mapping = {jsonld: []};
+            this.element = $compile(angular.element('<edit-prop-form></edit-prop-form>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -172,17 +114,15 @@ describe('Edit Prop Form directive', function() {
             var buttons = this.element.find('custom-button');
             expect(this.element.find('column-select').length).toBe(1);
             expect(this.element.find('range-class-description').length).toBe(0);
-            expect(buttons.length).toBe(2);
-            expect(['Set', 'Delete'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Set', 'Delete'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(buttons.length).toBe(1);
+            expect(angular.element(buttons[0]).text()).toBe('Set');
 
             spyOn(this.element.controller('editPropForm'), 'isObjectProperty').and.returnValue(true);
             scope.$digest();
             buttons = this.element.find('custom-button');
             expect(this.element.find('range-class-description').length).toBe(1);
             expect(this.element.find('column-select').length).toBe(0);
-            expect(buttons.length).toBe(1);
-            expect(angular.element(buttons[0]).text()).toBe('Delete');
+            expect(buttons.length).toBe(0);
         });
     });
 });

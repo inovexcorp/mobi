@@ -28,6 +28,7 @@ describe('Create Annotation Overlay directive', function() {
     injectRegexConstant();
 
     beforeEach(function() {
+        module('templates');
         module('createAnnotationOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -35,8 +36,6 @@ describe('Create Annotation Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/createAnnotationOverlay/createAnnotationOverlay.html');
 
     beforeEach(function() {
         element = $compile(angular.element('<create-annotation-overlay></create-annotation-overlay>'))(scope);

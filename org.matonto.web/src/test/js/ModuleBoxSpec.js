@@ -26,6 +26,7 @@ describe('Module Box directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('moduleBox');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -33,8 +34,6 @@ describe('Module Box directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/home/directives/moduleBox/moduleBox.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

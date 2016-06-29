@@ -30,6 +30,7 @@ describe('Create Property Overlay directive', function() {
     injectCamelCaseFilter();
 
     beforeEach(function() {
+        module('templates');
         module('createPropertyOverlay');
         mockOntologyManager();
 
@@ -38,8 +39,6 @@ describe('Create Property Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/createPropertyOverlay/createPropertyOverlay.html');
 
     beforeEach(function() {
         scope.onCreate = jasmine.createSpy('onCreate');

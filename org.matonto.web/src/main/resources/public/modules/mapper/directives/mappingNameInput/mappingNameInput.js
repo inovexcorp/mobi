@@ -24,8 +24,45 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name mappingNameInput
+         *
+         * @description 
+         * The `mappingNameInput` module provides the `mappingNameInput` directive, which creates
+         * a text input for a mapping name, and the `uniqueName` directive used for testing whether
+         * a mapping exists already with the entered mapping name.
+         */
         .module('mappingNameInput', ['mappingManager'])
+        /**
+         * @ngdoc directive
+         * @name mappingNameInput.directive:mappingNameInput
+         * @scope
+         * @restrict E
+         *
+         * @description 
+         * `mappingNameInput` is a directive which creates a text input with validation for a mapping's
+         * name and error messages for invalid inputs. The mapping name must be unique, can be required, 
+         * and can be optionally set to active. Validation messages will only appear if the 
+         * `mappingNameInput` is active. A event can optionally be called when the text input gains focus.
+         * The directive is replaced by the contents of its template.
+         *
+         * @param {string} name the currently entered mapping name
+         * @param {boolean} [required=true] whether or not the `mappingNameInput` should be required
+         * @param {boolean} [isActive=true] whether or not the `mappingNameInput` is active
+         * @param {function} [focusEvent=undefined] an event to call when the text input has focus
+         */
         .directive('mappingNameInput', mappingNameInput)
+        /**
+         * @ngdoc directive
+         * @name mappingNameInput.directive:uniqueName
+         *
+         * @description 
+         * `uniqueName` is a directive which tests whether the ngModel value is in the list of previous
+         * mapping names. It requires the parent element to have an ngModel. If the ngModel value
+         * is in the previous mapping names list, it sets the uniqueName validity of the parent element 
+         * to false.
+         */
         .directive('uniqueName', uniqueName);
 
         uniqueName.$inject = ['$parse', 'mappingManagerService'];

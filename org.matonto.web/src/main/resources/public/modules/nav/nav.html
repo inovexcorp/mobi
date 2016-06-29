@@ -37,7 +37,9 @@
         <li>
             <a ng-class="{'active': $state.is('root.settings')}"
                ui-sref-active="active"
-               ui-sref="root.settings"><i class="fa fa-cog fa-2x fa-fw"></i><span class="name">Settings</span></a>
+               ui-sref="root.settings"
+               ng-mouseenter="hover = true"
+               ng-mouseleave="hover = false"><i class="fa fa-cog fa-2x fa-fw" ng-class="{'fa-spin': hover}"></i><span class="name">Settings</span></a>
         </li>
         <!-- logout -->
         <li>

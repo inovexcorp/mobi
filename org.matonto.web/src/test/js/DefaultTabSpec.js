@@ -26,6 +26,7 @@ describe('Default Tab directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('defaultTab');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -33,8 +34,6 @@ describe('Default Tab directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/defaultTab/defaultTab.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

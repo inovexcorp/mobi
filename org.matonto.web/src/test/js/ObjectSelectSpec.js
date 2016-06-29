@@ -30,6 +30,7 @@ describe('Object Select directive', function() {
     injectHighlightFilter();
 
     beforeEach(function() {
+        module('templates');
         module('objectSelect');
         mockOntologyManager();
         mockSettingsManager();
@@ -48,8 +49,6 @@ describe('Object Select directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/objectSelect/objectSelect.html');
 
     beforeEach(function() {
         scope.changeEvent = jasmine.createSpy('changeEvent');
@@ -96,11 +95,6 @@ describe('Object Select directive', function() {
             scope.$digest();
             expect(scope.selectList).toEqual(['new']);
         });
-        it('bindModel should be two way bound', function() {
-            isolatedScope.bindModel = ['new'];
-            scope.$digest();
-            expect(scope.bindModel).toEqual(['new']);
-        });
     });
     describe('controller bound variables', function() {
         var controller;
@@ -117,6 +111,11 @@ describe('Object Select directive', function() {
             controller.ontologyId = 'new';
             scope.$digest();
             expect(scope.ontologyId).not.toEqual('new');
+        });
+        it('bindModel should be two way bound', function() {
+            controller.bindModel = ['new'];
+            scope.$digest();
+            expect(scope.bindModel).toEqual(['new']);
         });
     });
     describe('replaces the element with the correct html', function() {

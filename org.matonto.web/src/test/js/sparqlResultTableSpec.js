@@ -28,6 +28,7 @@ describe('SPARQL Result Table directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('sparqlResultTable');
         mockSparqlManager();
 
@@ -62,8 +63,6 @@ describe('SPARQL Result Table directive', function() {
         ];
     });
 
-    injectDirectiveTemplate('modules/sparql/directives/sparqlResultTable/sparqlResultTable.html');
-
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             scope.sparqlManagerService = sparqlManagerSvc;
@@ -72,6 +71,10 @@ describe('SPARQL Result Table directive', function() {
         });
         it('for a div', function() {
             expect(element.prop('tagName')).toBe('DIV');
+        });
+        it('based on table-container', function() {
+            var container = element.querySelectorAll('.table-container');
+            expect(container.length).toBe(1);
         });
         it('based on table', function() {
             var table = element.querySelectorAll('.table');
@@ -128,7 +131,8 @@ describe('SPARQL Result Table directive', function() {
 
             expect(element.attr('style')).toBe(undefined);
             angular.element($window).triggerHandler('resize');
-            expect(element.attr('style')).toBe('height: ' + (totalHeight - topHeight - paginationHeight) + 'px;');
+            expect(element.attr('style')).toContain('height: ' + (totalHeight - topHeight) + 'px;');
+            expect(element.attr('style')).toContain('padding-bottom: ' + (paginationHeight + 10) + 'px;');
         });
     });
 });

@@ -26,6 +26,7 @@ describe('Serialization Select directive', function() {
         element;
 
     beforeEach(function() {
+        module('templates');
         module('serializationSelect');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -33,8 +34,6 @@ describe('Serialization Select directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/serializationSelect/serializationSelect.html');
 
     beforeEach(function() {
         scope.bindModel = '';

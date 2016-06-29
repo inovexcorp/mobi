@@ -111,6 +111,7 @@
                         });
                 } else {
                     deferred.reject('This ontology already has an OWL Annotation declared with that IRI.');
+                    $rootScope.showSpinner = false;
                 }
 
                 return deferred.promise;

@@ -27,6 +27,7 @@ describe('Ontology Preview directive', function() {
 
     mockPrefixes();
     beforeEach(function() {
+        module('templates');
         module('ontologyPreview');
         mockOntologyManager();
         
@@ -39,8 +40,6 @@ describe('Ontology Preview directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/ontologyPreview/ontologyPreview.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

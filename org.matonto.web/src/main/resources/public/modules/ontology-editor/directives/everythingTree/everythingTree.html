@@ -27,7 +27,7 @@
     <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && (vm.state.ci !== undefined || vm.state.pi !== undefined))">
         <tree-item current-entity="ontology"
                    current-ontology="ontology"
-                   is-active="vm.state.oi === $index && (vm.state.ci === undefined || vm.state.ci === -1) && vm.state.pi === undefined"
+                   is-active="vm.state.oi === $index && vm.state.ci === undefined && vm.state.pi === undefined"
                    is-opened="opened"
                    on-click="vm.selectItem('ontology-editor', $index)"
                    has-children="!!ontology.matonto.classes.length || !!ontology.matonto.noDomains.length"></tree-item>
@@ -37,7 +37,7 @@
             <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
                 <tree-item current-entity="class"
                            current-ontology="ontology"
-                           is-active="vm.state.oi === oi && vm.state.ci === $index && (vm.state.pi === undefined || vm.state.pi === -1)"
+                           is-active="vm.state.oi === oi && vm.state.ci === $index && vm.state.pi === undefined"
                            is-opened="subOpened"
                            on-click="vm.selectItem('class-editor', oi, $index)"
                            has-children="class.matonto.properties.length"></tree-item>

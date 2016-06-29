@@ -26,6 +26,7 @@ describe('Prop Select directive', function() {
         ontologyManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('propSelect');
         mockOntologyManager();
 
@@ -43,8 +44,6 @@ describe('Prop Select directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/propSelect/propSelect.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {
@@ -73,16 +72,6 @@ describe('Prop Select directive', function() {
             controller.selectedProp = 'test';
             scope.$digest();
             expect(scope.selectedProp).toEqual('test');
-        });
-    });
-    describe('controller methods', function() {
-        it('should get the name of the passed property object', function() {
-            var element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
-            scope.$digest();
-            var controller = element.controller('propSelect');
-            var result = controller.getName({});
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({});
-            expect(typeof result).toBe('string');
         });
     });
     describe('replaces the element with the correct html', function() {

@@ -24,39 +24,83 @@
     'use strict';
 
     angular
-        .module('startingClassSelectOverlay', ['ontologyManager'])
+        /**
+         * @ngdoc overview
+         * @name startingClassSelectOverlay
+         * @requires  prefixes
+         * @requires  ontologyManager
+         * @requires  mappingManager
+         * @requires  mapperState
+         *
+         * @description 
+         * The `startingClassSelectOverlay` module only provides the `startingClassSelectOverlay` 
+         * directive which creates and overlay with a ui-select to select a class and a preview
+         * area for the selected class.
+         */
+        .module('startingClassSelectOverlay', ['prefixes', 'ontologyManager', 'mapperState', 'mappingManager'])
+        /**
+         * @ngdoc directive
+         * @name startingClassSelectOverlay.directive:startingClassSelectOverlay
+         * @scope
+         * @restrict E
+         * @requires  prefixes.prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         *
+         * @description 
+         * `startingClassSelectOverlay` is a directive that creates an overlay containing a ui-select 
+         * with all the classes defined within the select ontology and all the classes defined in its 
+         * imported ontology and a {@link classPreview.directive:classPreview classPreview} of the selected class. 
+         * The classes in the ui-select are sorted by the ontology they are defined in. The directive 
+         * is replaced by the contents of its template.
+         */
         .directive('startingClassSelectOverlay', startingClassSelectOverlay);
 
-        startingClassSelectOverlay.$inject = ['ontologyManagerService'];
+        startingClassSelectOverlay.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
 
-        function startingClassSelectOverlay(ontologyManagerService) {
+        function startingClassSelectOverlay(prefixes, ontologyManagerService, mapperStateService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    onClickBack: '&',
-                    onClickContinue: '&'
-                },
-                bindToController: {
-                    ontologies: '='
-                },
+                scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.om = ontologyManagerService;
+                    dvm.mm = mappingManagerService;
+                    dvm.state = mapperStateService;
 
                     dvm.getOntologyId = function(classObj) {
-                        return _.get(ontologyManagerService.findOntologyWithClass(dvm.ontologies, classObj['@id']), '@id', '');
+                        return _.get(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classObj['@id']), '@id', '');
                     }
                     dvm.getClasses = function() {
                         var classes = [];
-                        _.forEach(dvm.ontologies, function(ontology) {
-                            classes = _.concat(classes, ontologyManagerService.getClasses(ontology));
+                        _.forEach(dvm.mm.sourceOntologies, ontology => {
+                            classes = _.concat(classes, dvm.om.getClasses(ontology));
                         });
                         return classes;
                     }
-                    dvm.getName = function(classObj) {
-                        return ontologyManagerService.getEntityName(classObj)
+                    dvm.continue = function() {
+                        if (dvm.state.changeOntology) {
+                            dvm.state.clearCachedSourceOntologies();
+                            var ontologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
+                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping();
+                            dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, ontologyId);
+                            dvm.state.changeOntology = false;
+                            dvm.state.changedMapping();
+                        }
+                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, dvm.selectedClass['@id']);
+                        dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology, dvm.selectedClass['@id']);
+                        dvm.state.resetEdit();
+                        dvm.state.selectedClassMappingId = _.get(_.find(dvm.mm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']}), '@id');
+                        dvm.state.updateAvailableProps();
+                        dvm.state.step = dvm.state.editMappingStep;
                     }
+                    dvm.back = function() {
+                        dvm.state.step = dvm.state.ontologySelectStep;
+                    }
+
                 },
                 templateUrl: 'modules/mapper/directives/startingClassSelectOverlay/startingClassSelectOverlay.html'
             }

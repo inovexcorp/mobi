@@ -28,6 +28,7 @@ describe('Ontology Editor directive', function() {
     injectRegexConstant();
 
     beforeEach(function() {
+        module('templates');
         module('ontologyEditor');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -35,8 +36,6 @@ describe('Ontology Editor directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/ontologyEditor/ontologyEditor.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

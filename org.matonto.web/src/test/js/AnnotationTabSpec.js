@@ -29,6 +29,7 @@ describe('Annotation Tab directive', function() {
     injectBeautifyFilter();
 
     beforeEach(function() {
+        module('templates');
         module('annotationTab');
 
         module(function($provide) {
@@ -42,8 +43,6 @@ describe('Annotation Tab directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/annotationTab/annotationTab.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

@@ -25,6 +25,7 @@ describe('Confirmation Overlay directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('confirmationOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -32,8 +33,6 @@ describe('Confirmation Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/confirmationOverlay/confirmationOverlay.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {
@@ -93,30 +92,29 @@ describe('Confirmation Overlay directive', function() {
 
             this.element = $compile(angular.element('<confirmation-overlay cancel-text="cancelText" confirm-text="confirmText" cancel-click="cancelClick()" confirm-click="confirmClick()" header-text="headerText" size="size"></confirmation-overlay>'))(scope);
             scope.$digest();
-            this.firstChild = angular.element(this.element.children()[0]);
         });
         it('for wrapping containers', function() {
-            expect(this.firstChild.hasClass('overlay')).toBe(true);
-            expect(this.firstChild.querySelectorAll('.content').length).toBe(1);
-            expect(this.firstChild.querySelectorAll('.main').length).toBe(1);
-            expect(this.firstChild.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.hasClass('overlay')).toBe(true);
+            expect(this.element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.querySelectorAll('.main').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with the correct classes based on size', function() {
-            expect(this.firstChild.hasClass('lg')).toBe(false);
-            expect(this.firstChild.hasClass('sm')).toBe(false);
+            expect(this.element.hasClass('lg')).toBe(false);
+            expect(this.element.hasClass('sm')).toBe(false);
 
             scope.size = 'large';
             scope.$digest();
-            expect(this.firstChild.hasClass('lg')).toBe(true);
-            expect(this.firstChild.hasClass('sm')).toBe(false);
+            expect(this.element.hasClass('lg')).toBe(true);
+            expect(this.element.hasClass('sm')).toBe(false);
             
             scope.size = 'small';
             scope.$digest();
-            expect(this.firstChild.hasClass('lg')).toBe(false);
-            expect(this.firstChild.hasClass('sm')).toBe(true);
+            expect(this.element.hasClass('lg')).toBe(false);
+            expect(this.element.hasClass('sm')).toBe(true);
         });
         it('with custom buttons for canceling and confirming', function() {
-            var buttons = this.firstChild.find('custom-button');
+            var buttons = this.element.find('custom-button');
             expect(buttons.length).toBe(2);
             expect([scope.cancelText, scope.confirmText].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect([scope.cancelText, scope.confirmText].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);

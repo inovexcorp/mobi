@@ -69,23 +69,6 @@
                     dvm.catalog = catalogManagerService;
 
                     dvm.sortOptions = [];
-                    dvm.catalog.getSortOptions()
-                        .then(function(options) {
-                            _.forEach(options, function(option) {
-                                var label = ontologyManagerService.getBeautifulIRI(option);
-                                dvm.sortOptions.push({
-                                    field: option,
-                                    asc: true,
-                                    label: label + ' (asc)'
-                                });
-                                dvm.sortOptions.push({
-                                    field: option,
-                                    asc: false,
-                                    label: label + ' (desc)'
-                                });
-                            });
-                            dvm.sortOption = dvm.sortOptions[0];
-                        });
 
                     dvm.getEndingNumber = function() {
                         return _.min([dvm.catalog.results.totalSize, dvm.catalog.results.start + dvm.catalog.results.limit]);
@@ -108,6 +91,31 @@
                             dvm.catalog.getResultsPage(dvm.catalog.results.links.base + dvm.catalog.results.links.prev);
                         }
                     }
+                    function initialize() {
+                        dvm.catalog.getSortOptions()
+                        .then(function(options) {
+                            _.forEach(options, function(option) {
+                                var label = ontologyManagerService.getBeautifulIRI(option);
+                                dvm.sortOptions.push({
+                                    field: option,
+                                    asc: true,
+                                    label: label + ' (asc)'
+                                });
+                                dvm.sortOptions.push({
+                                    field: option,
+                                    asc: false,
+                                    label: label + ' (desc)'
+                                });
+                            });
+                            var index = dvm.catalog.sortBy ? _.findIndex(dvm.sortOptions, {field: dvm.catalog.sortBy, asc: dvm.catalog.asc}) : 0;
+                            dvm.sortOption = dvm.sortOptions[index];
+                            if (dvm.sortOption) {
+                                dvm.changeSort();
+                            }
+                        });
+                    }
+
+                    initialize();
                 },
                 templateUrl: 'modules/catalog/directives/resultList/resultList.html'
             }

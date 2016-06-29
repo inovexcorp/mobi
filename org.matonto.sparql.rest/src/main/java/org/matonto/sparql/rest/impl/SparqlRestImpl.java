@@ -130,7 +130,7 @@ public class SparqlRestImpl implements SparqlRest {
             paginatedResults.setStart(start);
             paginatedResults.setTotalSize(bindings.size());
             paginatedResults.setSize(size);
-            paginatedResults.setLinks(LinksUtils.buildLinks(uriInfo, size, limit, start));
+            paginatedResults.setLinks(LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, start));
 
             SparqlPaginatedResults<JSONObject> response = new SparqlPaginatedResults<>();
             response.setBindingNames(queryResults.getBindingNames());

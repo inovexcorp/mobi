@@ -39,10 +39,10 @@
                     displayText: '=',
                     selectList: '=',
                     mutedText: '=',
-                    bindModel: '=ngModel',
                     isDisabledWhen: '='
                 },
                 bindToController: {
+                    bindModel: '=ngModel',
                     selectedId: '=',
                     ontologyId: '@',
                     matonto: '='

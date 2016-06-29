@@ -418,7 +418,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private void initOntologyRegistryResources() throws MatontoOntologyException {
         registryContext = factory.createIRI("https://matonto.org/registry/ontologies");
         registrySubject = factory.createIRI("https://matonto.org/registry/ontologies");
-        registryPredicate = factory.createIRI("https://matonto.org/Ontology/registry#hasItem");
+        registryPredicate = factory.createIRI("https://matonto.org/registry#hasItem");
     }
 
     @Override

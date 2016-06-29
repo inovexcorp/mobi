@@ -25,6 +25,7 @@ describe('Text Area directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         angular.module('customLabel', []);
         module('textArea');
 
@@ -33,8 +34,6 @@ describe('Text Area directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/textArea/textArea.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

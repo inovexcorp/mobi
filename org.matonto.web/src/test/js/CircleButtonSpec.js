@@ -25,6 +25,7 @@ describe('Circle Button directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('circleButton');
 
         // To test out a directive, you need to inject $compile and $rootScope
@@ -34,10 +35,6 @@ describe('Circle Button directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    // Shared setup function for loading the directive's template into the
-    // $templateCache
-    injectDirectiveTemplate('directives/circleButton/circleButton.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

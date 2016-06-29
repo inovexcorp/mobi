@@ -31,6 +31,7 @@ describe('Ontology Open Overlay directive', function() {
     injectHighlightFilter();
 
     beforeEach(function() {
+        module('templates');
         module('ontologyOpenOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -39,8 +40,6 @@ describe('Ontology Open Overlay directive', function() {
         });
 
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/ontologyOpenOverlay/ontologyOpenOverlay.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

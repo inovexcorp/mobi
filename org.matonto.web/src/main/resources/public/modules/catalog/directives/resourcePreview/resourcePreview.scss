@@ -1,0 +1,21 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.resource-preview {
+    padding: 0.5em;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    h1 span {
+        font-size: 0.5em;
+        vertical-align: middle;
+    }
+    .keywords {
+        li {
+            margin: 0 5px;
+            float: left;
+            color: $gray-dark;
+            color: $gray-lighter;
+        }
+    }
+}

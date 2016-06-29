@@ -27,6 +27,7 @@ describe('Mapping Name Input directive', function() {
 
     injectRegexConstant();
     beforeEach(function() {
+        module('templates');
         module('mappingNameInput');
         mockMappingManager();
 
@@ -39,8 +40,6 @@ describe('Mapping Name Input directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/mappingNameInput/mappingNameInput.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

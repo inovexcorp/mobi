@@ -27,7 +27,7 @@
         .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'everythingTree', 'classTree',
         'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
-        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'leftNavItem', 'serializationSelect',
+        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect',
         'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
         'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
         .controller('OntologyEditorController', OntologyEditorController);
@@ -50,7 +50,7 @@
                 setVariables(vm.state.oi);
             }
         }
-
+        
         /* State Management */
         vm.setTreeTab = function(tab) {
             stateManagerService.setTreeTab(tab);
@@ -60,6 +60,7 @@
             } else {
                 vm.selected = _.get(vm.ontologies, '[' + vm.state.oi + '].matonto.jsAnnotations[' + vm.state.pi + ']');
             }
+            vm.ontology = ontologyManagerService.getOntology(vm.state.oi);
             vm.serialization = '';
         }
 
@@ -114,7 +115,7 @@
                         stateManagerService.setTreeTab('everything');
                         vm.selectItem('ontology-editor', vm.state.oi);
                     } else {
-                        vm.selectItem('default');
+                        stateManagerService.clearState(vm.state.oi);
                     }
                 });
         }

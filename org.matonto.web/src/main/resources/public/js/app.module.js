@@ -27,6 +27,7 @@
         .module('app', [
             'angular-uuid',
             'ngCookies',
+            'ngAnimate',
             'catalog',
             'home',
             'login',
@@ -47,6 +48,8 @@
             'stringSelect',
             'circleButton',
             'customButton',
+            'leftNav',
+            'leftNavItem',
             'confirmationOverlay',
             'pagination',
             'settings',

@@ -22,7 +22,7 @@
   -->
 <div class="form-group">
     <custom-label muted-text="mutedText">{{displayText}}</custom-label>
-    <ui-select multiple ng-model="bindModel" on-select="changeEvent()" on-remove="changeEvent()" ng-disabled="isDisabledWhen">
+    <ui-select multiple ng-model="dvm.bindModel" on-select="changeEvent()" on-remove="changeEvent()" ng-disabled="isDisabledWhen">
         <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.isBlankNode($item['@id'])">
             <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.getBlankNodeValue($item['@id']) || ($item['@id'] | splitIRI).end || $item.localName}}</span>
         </ui-select-match>

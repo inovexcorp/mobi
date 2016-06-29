@@ -16,7 +16,9 @@ var gulp = require('gulp'),
     sass = require('gulp-sass'),
     uglify = require('gulp-uglify'),
     ngAnnotate = require('gulp-ng-annotate'),
-    strip = require('gulp-strip-comments');
+    strip = require('gulp-strip-comments'),
+    jasmine = require('gulp-jasmine-phantom'),
+    templateCache = require('gulp-angular-templatecache');
 
 // Project specific path variables
 var src = './src/main/resources/public/',
@@ -48,6 +50,7 @@ var jsFiles = function(prefix) {
             prefix + 'codemirror/**/matchbrackets.js',
             prefix + 'angular/**/angular.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
+            prefix + 'angular-animate/**/angular-animate.js',
             prefix + 'angular-ui-router/**/angular-ui-router.min.js',
             prefix + 'angular-uuid/**/angular-uuid.js',
             prefix + 'angular-cookies/**/angular-cookies.min.js',
@@ -72,6 +75,17 @@ var jsFiles = function(prefix) {
         ]
     };
 
+//Method to run jasmine tests
+var runJasmine = function(vendorFiles) {
+    return gulp.src('./src/test/js/*Spec.js')
+        .pipe(jasmine({
+            integration: true,
+            abortOnFail: true,
+            vendor: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']),
+            jasmineVersion: '2.1'
+        }));
+}
+
 // Inject method for minified and unminified
 var injectFiles = function(files) {
     return gulp.src(dest + 'index.html')
@@ -81,6 +95,21 @@ var injectFiles = function(files) {
         ))
         .pipe(gulp.dest(dest));
 };
+
+gulp.task('cacheTemplates', function() {
+    return gulp.src(src + '**/*.html')
+        .pipe(strip.html())
+        .pipe(templateCache({standalone: true}))
+        .pipe(gulp.dest('./target/'));
+});
+
+gulp.task('jasmine-minified', ['cacheTemplates', 'minify-scripts'], function() {
+    return runJasmine([dest + '**/*.js']);
+});
+
+gulp.task('jasmine-unminified', ['cacheTemplates', 'move-custom-js'], function() {
+    return runJasmine(nodeJsFiles(nodeDir).concat(jsFiles(dest)));
+});
 
 // Concatenate and minifies JS Files
 gulp.task('minify-scripts', function() {
@@ -131,7 +160,7 @@ gulp.task('images', function() {
 // Moves all of the html files to build folder
 gulp.task('html', function() {
     return gulp.src(src + '**/*.html')
-        .pipe(strip.html())
+        .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
         .pipe(gulp.dest(dest));
 });
 
@@ -198,7 +227,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
+gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);

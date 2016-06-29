@@ -26,6 +26,7 @@ describe('Class Preview directive', function() {
         ontologyManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('classPreview');
         mockOntologyManager();
 
@@ -38,8 +39,6 @@ describe('Class Preview directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/mapper/directives/classPreview/classPreview.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

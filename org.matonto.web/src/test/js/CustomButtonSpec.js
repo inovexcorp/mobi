@@ -25,6 +25,7 @@ describe('Custom Button directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('customButton');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -32,8 +33,6 @@ describe('Custom Button directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('directives/customButton/customButton.html');
 
     describe('in isolated scope', function() {
         beforeEach(function() {

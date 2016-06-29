@@ -26,6 +26,7 @@ describe('Filter List directive', function() {
         catalogManagerSvc;
 
     beforeEach(function() {
+        module('templates');
         module('filterList');
         mockCatalogManager();
 
@@ -38,8 +39,6 @@ describe('Filter List directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/catalog/directives/filterList/filterList.html');
 
     describe('controller methods', function() {
         beforeEach(function() {

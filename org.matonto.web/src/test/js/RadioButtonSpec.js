@@ -26,6 +26,7 @@ describe('Radio Button directive', function() {
         scope;
 
     beforeEach(function() {
+        module('templates');
         module('radioButton');
 
         // To test out a directive, you need to inject $compile and $rootScope
@@ -37,11 +38,6 @@ describe('Radio Button directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    // Shared setup function for loading the directive's template into the
-    // $templateCache
-    injectDirectiveTemplate('directives/radioButton/radioButton.html');
-
 
     // To access the functions in a directive's controller to test them directly,
     // use element.controller('controllerName')

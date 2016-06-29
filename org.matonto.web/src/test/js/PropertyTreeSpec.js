@@ -28,6 +28,7 @@ describe('Property Tree directive', function() {
     mockPrefixes();
 
     beforeEach(function() {
+        module('templates');
         module('propertyTree');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -35,8 +36,6 @@ describe('Property Tree directive', function() {
             scope = _$rootScope_;
         });
     });
-
-    injectDirectiveTemplate('modules/ontology-editor/directives/propertyTree/propertyTree.html');
 
     beforeEach(function() {
         scope.ontologies = [

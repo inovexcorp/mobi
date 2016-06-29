@@ -30,6 +30,7 @@ describe('Annotation Overlay directive', function() {
     injectTrustedFilter();
 
     beforeEach(function() {
+        module('templates');
         module('annotationOverlay');
 
         inject(function(_$compile_, _$rootScope_) {
@@ -37,7 +38,6 @@ describe('Annotation Overlay directive', function() {
             scope = _$rootScope_;
         });
     });
-    injectDirectiveTemplate('modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html');
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

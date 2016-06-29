@@ -23,14 +23,12 @@
 <form class="edit-prop">
     <h4>{{dvm.getTitle()}}</h4>
     <div class="form-group" ng-if="!dvm.isObjectProperty()">
-        <column-select columns="columns" selected-column="dvm.selectedColumn"></column-select>
+        <column-select columns="dvm.state.availableColumns" selected-column="dvm.state.selectedColumn"></column-select>
     </div>
     <range-class-description ng-if="dvm.isObjectProperty()" 
-        ontologies="dvm.ontologies" 
         class-id="{{dvm.getClassId()}}" 
-        selected-prop="{{dvm.getPropId()}}"></range-class-description>
-    <div class="form-btns form-group btn-container">
-        <custom-button ng-if="!dvm.isObjectProperty()" type="'secondary'" on-click="set({column: dvm.selectedColumn})" pull="'left'" is-disabled-when="columns.length === 0">Set</custom-button>
-        <custom-button type="'secondary'" on-click="clickDelete({classMappingId: dvm.classMappingId, propMappingId: dvm.selectedPropMapping})" pull="'left'">Delete</custom-button>
+        selected-prop-id="{{dvm.getPropId()}}"></range-class-description>
+    <div class="form-btns form-group btn-container clearfix">
+        <custom-button ng-if="!dvm.isObjectProperty()" type="'secondary'" on-click="dvm.set()" pull="'left'">Set</custom-button>
     </div>
 </form>
