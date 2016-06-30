@@ -16,6 +16,7 @@ var gulp = require('gulp'),
     sass = require('gulp-sass'),
     uglify = require('gulp-uglify'),
     ngAnnotate = require('gulp-ng-annotate'),
+    strip = require('gulp-strip-comments'),
     jasmine = require('gulp-jasmine-phantom'),
     templateCache = require('gulp-angular-templatecache');
 
@@ -98,6 +99,7 @@ var injectFiles = function(files) {
 
 gulp.task('cacheTemplates', function() {
     return gulp.src(src + '**/*.html')
+        .pipe(strip.html())
         .pipe(templateCache({standalone: true}))
         .pipe(gulp.dest('./target/'));
 });
@@ -159,6 +161,7 @@ gulp.task('images', function() {
 // Moves all of the html files to build folder
 gulp.task('html', function() {
     return gulp.src(src + '**/*.html')
+        .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
         .pipe(gulp.dest(dest));
 });
 
@@ -189,10 +192,11 @@ gulp.task('move-custom-js', function() {
 });
 
 // Moves all custom non-js files to build folder
-gulp.task('move-custom-not-js', function() {
+gulp.task('move-custom-not-js', ['html'], function() {
     return gulp.src(src + '**/*')
         .pipe(ignore.exclude('**/*.scss'))
         .pipe(ignore.exclude('**/*.js'))
+        .pipe(ignore.exclude('**/*.html'))
         .pipe(gulp.dest(dest));
 });
 
