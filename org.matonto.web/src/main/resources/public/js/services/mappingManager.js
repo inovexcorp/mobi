@@ -140,7 +140,7 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(response => {
-                        self.previousMappingNames.push(response.data);
+                        self.previousMappingNames = _.union(self.previousMappingNames, [response.data]);
                         deferred.resolve(response.data);
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', ''));

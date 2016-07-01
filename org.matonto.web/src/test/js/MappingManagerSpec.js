@@ -60,7 +60,7 @@ describe('Mapping Manager service', function() {
             expect(typeof name).toBe('string');
         });
     });
-    describe('should upload a mapping with a generated name', function() {
+    describe('should upload a mapping', function() {
         beforeEach(function() {
             $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
             $httpBackend.flush();
@@ -74,7 +74,7 @@ describe('Mapping Manager service', function() {
                 }).respond(function(method, url, data, headers) {
                     return [400, '', {}, 'Error Message'];
                 });
-            mappingManagerSvc.uploadPost([]).then(function(response) {
+            mappingManagerSvc.upload([]).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -90,52 +90,9 @@ describe('Mapping Manager service', function() {
                 }, function(headers) {
                     return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
                 }).respond(200, 'mapping');
-            mappingManagerSvc.uploadPost([]).then(function(response) {
+            mappingManagerSvc.upload([]).then(function(response) {
                 expect(response).toBe('mapping');
                 expect(mappingManagerSvc.previousMappingNames).toContain('mapping');
-                done();
-            }, function(response) {
-                fail('Promise should have resolved');
-                done();
-            });
-            $httpBackend.flush();
-        });
-    });
-    describe('should upload a mapping with the specified name', function() {
-        beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-        });
-        it('unless an error occurs', function(done) {
-            var name = 'mappingname';
-            $httpBackend.expectPUT('/matontorest/mappings/' + name, 
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
-                }).respond(function(method, url, data, headers) {
-                    return [400, '', {}, 'Error Message'];
-                });
-            mappingManagerSvc.uploadPut([], name).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('creating a new one', function(done) {
-            var name = 'mappingname';
-            $httpBackend.expectPUT('/matontorest/mappings/' + name, 
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
-                }).respond(200, name);
-            mappingManagerSvc.uploadPut([], name).then(function(response) {
-                expect(response).toBe(name);
-                expect(mappingManagerSvc.previousMappingNames).toContain(name);
                 done();
             }, function(response) {
                 fail('Promise should have resolved');
@@ -146,13 +103,13 @@ describe('Mapping Manager service', function() {
         it('replacing an existing one', function(done) {
             var name = 'mappingname';
             mappingManagerSvc.previousMappingNames = [name];
-            $httpBackend.expectPUT('/matontorest/mappings/' + name, 
+            $httpBackend.expectPOST('/matontorest/mappings', 
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
                 }).respond(200, name);
-            mappingManagerSvc.uploadPut([], name).then(function(response) {
+            mappingManagerSvc.upload([]).then(function(response) {
                 expect(response).toBe(name);
                 expect(mappingManagerSvc.previousMappingNames).toEqual([name]);
                 done();
@@ -233,26 +190,29 @@ describe('Mapping Manager service', function() {
         });
     });
     it('should create a new mapping', function() {
-        var result = mappingManagerSvc.createNewMapping();
+        var result = mappingManagerSvc.createNewMapping('mappingname');
         expect(_.isArray(result)).toBe(true);
-        var obj = _.find(result, {'@id': 'Document'});
+        var obj = _.find(result, {'@id': 'mappingname'});
         expect(obj).toBeTruthy();
-        expect(obj['@type']).toEqual(['Document']);
+        expect(obj['@type']).toEqual(['Mapping']);
     });
     it('should set the source ontology of a mapping', function() {
-        var mapping = [{'@id': 'Document'}];
+        var mapping = [{'@id': 'mappingname', '@type': ['Mapping']}];
         var result = mappingManagerSvc.setSourceOntology(mapping, 'ontology');
-        var doc = _.find(result, {'@id': 'Document'});
+        var doc = _.find(result, {'@id': 'mappingname'});
         expect(doc.sourceOntology).toEqual([{'@id': 'ontology'}]);
     });
     describe('should add a class mapping to a mapping', function() {
+        beforeEach(function() {
+            this.mapping = [{'@id': 'mappingname', '@type': ['Mapping']}];
+        });
         it('unless the class does not exist in the passed ontology', function() {
             ontologyManagerSvc.getClass.and.returnValue(undefined);
-            var result = mappingManagerSvc.addClass([], {}, 'classid');
-            expect(result).toEqual([]);
+            var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
+            expect(result).toEqual(this.mapping);
         });
         it('if the class exists in the passed ontology', function() {
-            var result = mappingManagerSvc.addClass([], {}, 'classid');
+            var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
             var obj = _.find(result, {'@type': ['ClassMapping']});
             expect(obj).toBeTruthy();
             expect(uuidSvc.v4).toHaveBeenCalled();
@@ -262,34 +222,40 @@ describe('Mapping Manager service', function() {
     });
     describe('should set the IRI template of a class mapping', function() {
         it('unless it does not exist in the mapping', function() {
-            var result = mappingManagerSvc.editIriTemplate([], 'classId', 'test/', '${0}');
-            expect(result).toEqual([]);
+            beforeEach(function() {
+            this.mapping = [{'@id': 'mappingname', '@type': ['Mapping']}];
+        });
+            var result = mappingManagerSvc.editIriTemplate(this.mapping, 'classId', 'test/', '${0}');
+            expect(result).toEqual(this.mapping);
         });
         it('successfully', function() {
             spyOn(mappingManagerSvc, 'getSourceOntologyId').and.returnValue('ontology');
-            var mapping = [{'@id': 'classId'}];
-            var result = mappingManagerSvc.editIriTemplate(mapping, 'classId', 'test/', '${0}');
+            this.mapping.push({'@id': 'classId'});
+            var result = mappingManagerSvc.editIriTemplate(this.mapping, 'classId', 'test/', '${0}');
             var obj = _.find(result, {'@id': 'classId'});
-            expect(result.length).toBe(1);
             expect(obj.hasPrefix[0]['@value']).toContain('test/');
             expect(obj.localName[0]['@value']).toBe('${0}');
         });
     });
     describe('should add a data property mapping to a mapping', function() {
+        beforeEach(function() {
+            this.mapping = [{'@id': 'mappingname', '@type': ['Mapping']}];
+        });
         it('unless the property does not exist in the passed ontology', function() {
             ontologyManagerSvc.getClassProperty.and.returnValue(undefined);
-            var result = mappingManagerSvc.addDataProp([{'@id': 'classId'}], {}, 'classId', 'propId', 0);
-            expect(result).toEqual([{'@id': 'classId'}]);
+            this.mapping.push({'@id': 'classId'});
+            var result = mappingManagerSvc.addDataProp(this.mapping, {}, 'classId', 'propId', 0);
+            expect(result).toEqual(this.mapping);
         });
         it('unless the parent class mapping does not exist in the mapping', function() {
-            var result = mappingManagerSvc.addDataProp([], {}, 'classId', 'propId', 0);
-            expect(result).toEqual([]);
+            var result = mappingManagerSvc.addDataProp(this.mapping, {}, 'classId', 'propId', 0);
+            expect(result).toEqual(this.mapping);
         });
         it('if the property exists in the passed ontology', function() {
-            var result = mappingManagerSvc.addDataProp([{'@id': 'classId'}], {}, 'classId', 'propId', 0);
+            this.mapping.push({'@id': 'classId'});
+            var result = mappingManagerSvc.addDataProp(this.mapping, {}, 'classId', 'propId', 0);
             var classMapping = _.find(result, {'@id': 'classId'});
             var propMapping = _.find(result, {'@type': ['DataMapping']});
-            expect(result.length).toBe(2);
             expect(propMapping).toBeTruthy();
             expect(uuidSvc.v4).toHaveBeenCalled();
             expect(_.isArray(classMapping.dataProperty)).toBe(true);
@@ -300,38 +266,44 @@ describe('Mapping Manager service', function() {
         it('replacing an existing one', function() {
             uuidSvc.v4.calls.reset();
             var dataMapping = {'@id': 'dataMapping', '@type': ['DataMapping'], hasProperty: [{'@id': 'propId'}]};
+            this.mapping.push({'@id': 'classId'});
+            this.mapping.push(dataMapping);
             spyOn(mappingManagerSvc, 'getDataMappingFromClass').and.returnValue(dataMapping);
-            var result = mappingManagerSvc.addDataProp([{'@id': 'classId'}, dataMapping], {}, 'classId', 'propId', 0);
+            var result = mappingManagerSvc.addDataProp(this.mapping, {}, 'classId', 'propId', 0);
             var classMapping = _.find(result, {'@id': 'classId'});
             var propMapping = _.find(result, {'@type': ['DataMapping']});
-            expect(result.length).toBe(2);
             expect(uuidSvc.v4).not.toHaveBeenCalled();
             expect(propMapping.columnIndex[0]['@value']).toEqual('0');
             expect(propMapping.hasProperty[0]['@id']).toEqual('propId');
         });
     });
     describe('should add an object property mapping to a mapping', function() {
+        beforeEach(function() {
+            this.mapping = [{'@id': 'mappingname', '@type': ['Mapping']}];
+        });
         it('unless the parent class mapping does not exist in the mapping', function() {
-            var result = mappingManagerSvc.addObjectProp([], [], 'class1', 'propId');
-            expect(result).toEqual([]);
+            var result = mappingManagerSvc.addObjectProp(this.mapping, [], 'class1', 'propId');
+            expect(result).toEqual(this.mapping);
         });
         it('unless the parent class does not exist any of the passed ontologies', function() {
+            this.mapping.push({'@id': 'class1'});
             ontologyManagerSvc.findOntologyWithClass.and.returnValue(undefined);
-            var result = mappingManagerSvc.addObjectProp([{'@id': 'class1'}], [], 'class1', 'propId');
-            expect(result).toEqual([{'@id': 'class1'}]);
+            var result = mappingManagerSvc.addObjectProp(this.mapping, [], 'class1', 'propId');
+            expect(result).toEqual(this.mapping);
         });
         it('unless the property does not exist any of the passed ontologies', function() {
+            this.mapping.push({'@id': 'class1'});
             ontologyManagerSvc.getClassProperty.and.returnValue(undefined);
-            var result = mappingManagerSvc.addObjectProp([{'@id': 'class1'}], [], 'class1', 'propId');
-            expect(result).toEqual([{'@id': 'class1'}]);
+            var result = mappingManagerSvc.addObjectProp(this.mapping, [], 'class1', 'propId');
+            expect(result).toEqual(this.mapping);
         });
         it('if the property exists in the passed ontologies', function() {
+            this.mapping.push({'@id': 'class1'});
             ontologyManagerSvc.getClassProperty.and.returnValue({'range': [{'@id': 'class2'}]});
-            var result = mappingManagerSvc.addObjectProp([{'@id': 'class1'}], [{}], 'class1', 'propId');
+            var result = mappingManagerSvc.addObjectProp(this.mapping, [{}], 'class1', 'propId');
             var classMapping1 = _.find(result, {'@id': 'class1'});
             var classMapping2 = _.find(result, {'mapsTo': [{'@id': 'class2'}]});
             var propMapping = _.find(result, {'@type': ['ObjectMapping']});
-            expect(result.length).toBe(3);
             expect(propMapping).toBeTruthy();
             expect(classMapping2).toBeTruthy();
             expect(uuidSvc.v4).toHaveBeenCalled();
@@ -427,7 +399,7 @@ describe('Mapping Manager service', function() {
         expect(result).toBe('prop');
     });
     it('should get the id of the source ontology of a mapping', function() {
-        var result = mappingManagerSvc.getSourceOntologyId([{'@id': 'Document', 'sourceOntology': [{'@id': 'ontology'}]}]);
+        var result = mappingManagerSvc.getSourceOntologyId([{'@id': 'mappingname', '@type': ['Mapping'], 'sourceOntology': [{'@id': 'ontology'}]}]);
         expect(result).toBe('ontology');
     });
     it('should get the source ontology of a mapping', function() {
