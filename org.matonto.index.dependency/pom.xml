@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.64</version>
+        <version>1.0.65</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -130,9 +130,9 @@
             <version>18.0</version>
         </dependency>
         <dependency>
-            <groupId>net.sf.trove4j</groupId>
+            <groupId>org.matonto.bundles</groupId>
             <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
+            <version>3.0.3_1</version>
         </dependency>
         <dependency>
             <groupId>com.spatial4j</groupId>
