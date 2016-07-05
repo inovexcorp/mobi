@@ -426,11 +426,11 @@
 
     <repositories>
         <repository>
-            <id>matonto.releases</id>
+            <id>matonto.hanover.releases</id>
             <url>http://nexus.matonto.org/repository/matonto-releases/</url>
         </repository>
         <repository>
-            <id>matonto.snapshots</id>
+            <id>matonto.hanover.snapshots</id>
             <url>http://nexus.inovexcorp.com/nexus/content/repositories/matonto-snapshots/</url>
         </repository>
     </repositories>
