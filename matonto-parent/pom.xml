@@ -423,4 +423,12 @@
             <url>http://nexus.inovexcorp.com/nexus/content/repositories/matonto-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>inovex</id>
+            <name>iNovex Sonatype Nexus</name>
+            <url>http://nexus.matonto.org/repository/matonto-releases/</url>
+        </repository>
+    </repositories>
 </project>
