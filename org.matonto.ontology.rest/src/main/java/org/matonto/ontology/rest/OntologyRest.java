@@ -107,11 +107,11 @@ public interface OntologyRest {
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
      * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return the ontology with requested ontology ID as an OutputStream.
+     * @return the ontology with requested ontology ID to download.
      */
     @GET
     @Path("{ontologyid}")
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     Response downloadOntologyFile(@PathParam("ontologyid") String ontologyIdStr,
                                   @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
