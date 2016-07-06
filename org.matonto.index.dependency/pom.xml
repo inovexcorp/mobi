@@ -39,7 +39,17 @@
     <properties>
         <guice.version>4.0</guice.version>
         <logback.version>1.1.2</logback.version>
+        <local.url.policy>REQUIRED</local.url.policy>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>jenkins</id>
+            <properties>
+                <local.url.policy>FORBIDDEN</local.url.policy>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -212,7 +222,7 @@
                 <artifactId>bnd-indexer-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <localURLs>REQUIRED</localURLs>
+                    <localURLs>${local.url.policy}</localURLs>
                     <includeTransitive>false</includeTransitive>
                 </configuration>
                 <executions>
