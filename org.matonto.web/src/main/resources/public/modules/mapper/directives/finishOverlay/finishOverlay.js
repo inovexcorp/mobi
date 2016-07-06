@@ -68,7 +68,7 @@
                     dvm.cm = csvManagerService;
 
                     dvm.save = function() {
-                        dvm.mm.downloadMapping(dvm.mm.mapping.name);
+                        dvm.mm.downloadMapping(dvm.mm.mapping.name, 'jsonld');
                         dvm.finish();
                     }
                     dvm.finish = function() {

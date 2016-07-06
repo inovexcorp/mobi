@@ -108,14 +108,15 @@ public interface MappingRest {
      * Downloads an uploaded mapping.
      *
      * @param mappingName the local name of an uploaded mapping
-     * @return a response with an octet-stream to download the mapping
+     * @return a response with mapping to download
      */
     @GET
     @Path("{mappingName}")
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*"})
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @ApiOperation("Download an uploaded mapping")
-    Response downloadMapping(@PathParam("mappingName") String mappingName);
+    Response downloadMapping(@PathParam("mappingName") String mappingName,
+                             @DefaultValue("jsonld") @QueryParam("format") String format);
 
     /**
      * Deletes an uploaded maping from the data store.

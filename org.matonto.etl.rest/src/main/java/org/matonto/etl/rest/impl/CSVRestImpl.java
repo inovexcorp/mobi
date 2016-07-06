@@ -201,8 +201,9 @@ public class CSVRestImpl implements CSVRest {
                 writer.close();
             };
             String fileExtension = getRDFFormat(format).getDefaultFileExtension();
+            String mimeType = getRDFFormat(format).getDefaultMIMEType();
             Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                    +  "." + fileExtension).header("Content-Type", "application/octet-stream").build();
+                    +  "." + fileExtension).header("Content-Type", mimeType).build();
 
             // Remove temp file
             try {

@@ -65,7 +65,7 @@ describe('Finish Overlay directive', function() {
             var controller = this.element.controller('finishOverlay');
             spyOn(controller, 'finish');
             controller.save();
-            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalled();
+            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith('', 'jsonld');
             expect(controller.finish).toHaveBeenCalled();
         });
     });
