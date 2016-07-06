@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.0.65-SNAPSHOT</version>
+    <version>1.0.67-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -423,4 +423,11 @@
             <url>http://nexus.inovexcorp.com/nexus/content/repositories/matonto-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>matonto.hanover.releases</id>
+            <url>http://nexus.matonto.org/repository/matonto-public/</url>
+        </repository>
+    </repositories>
 </project>
