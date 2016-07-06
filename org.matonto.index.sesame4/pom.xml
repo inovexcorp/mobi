@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.65</version>
+        <version>1.0.66</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -38,7 +38,17 @@
 
     <properties>
         <jackson.version>2.6.3</jackson.version>
+        <local.url.policy>REQUIRED</local.url.policy>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>jenkins</id>
+            <properties>
+                <local.url.policy>FORBIDDEN</local.url.policy>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -70,7 +80,7 @@
                 <artifactId>bnd-indexer-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <localURLs>REQUIRED</localURLs>
+                    <localURLs>${local.url.policy}</localURLs>
                     <includeTransitive>false</includeTransitive>
                 </configuration>
                 <executions>
