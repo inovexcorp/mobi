@@ -695,8 +695,9 @@ public class OntologyRestImpl implements OntologyRest {
             case "turtle":
                 return RDFFormat.TURTLE.getDefaultFileExtension();
             case "rdf/xml":
+                return RDFFormat.RDFXML.getDefaultFileExtension();
             case "owl/xml" :
-                return "owl";
+                return "owx";
             case "jsonld":
             default:
                 return RDFFormat.JSONLD.getDefaultFileExtension();
