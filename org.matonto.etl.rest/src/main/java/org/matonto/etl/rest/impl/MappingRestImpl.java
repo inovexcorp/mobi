@@ -237,20 +237,14 @@ public class MappingRestImpl implements MappingRest {
      * @return a RDFFormat object with the requested format
      */
     private RDFFormat getRDFFormat(String format) {
-        RDFFormat rdfformat;
         switch (format.toLowerCase()) {
             case "turtle":
-                rdfformat = RDFFormat.TURTLE;
-                break;
+                return RDFFormat.TURTLE;
             case "rdf/xml":
-                rdfformat = RDFFormat.RDFXML;
-                break;
+                return RDFFormat.RDFXML;
             case "jsonld":
             default:
-                rdfformat = RDFFormat.JSONLD;
-                break;
+                return RDFFormat.JSONLD;
         }
-
-        return rdfformat;
     }
 }
