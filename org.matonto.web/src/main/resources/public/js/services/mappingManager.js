@@ -223,8 +223,8 @@
              * 
              * @param {string} mappingName The IRI for the mapping with the user-defined local name
              */
-            self.downloadMapping = function(mappingName) {
-                $window.location = prefix + '/' + mappingName;
+            self.downloadMapping = function(mappingName, format) {
+                $window.location = prefix + '/' + mappingName + '?format=' + format;
             }
             /**
              * @ngdoc method

@@ -124,12 +124,11 @@ public interface CSVRest {
      * @param format the RDF serialization to use if getting a preview
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
-     * @return a response with the converted data in the requested format as an octet-stream
-     *      to download
+     * @return a response with the converted data in the requested format to download
      */
     @GET
     @Path("{documentName}/map")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded mapping file")
     Response etlFile(@PathParam("documentName") String fileName,
