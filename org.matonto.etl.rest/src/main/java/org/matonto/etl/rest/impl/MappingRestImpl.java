@@ -95,9 +95,10 @@ public class MappingRestImpl implements MappingRest {
         } else {
             idList.stream()
                 .map(id -> manager.createMappingIRI(id))
-                .map(this::getMappingAsJson)
+                .map(id -> getFormattedMapping(id, getRDFFormat("jsonld")))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
+                .map(this::getJsonObject)
                 .forEach(mappings::add);
         }
 
@@ -108,42 +109,44 @@ public class MappingRestImpl implements MappingRest {
     public Response getMapping(String localName) {
         Resource mappingIRI = manager.createMappingIRI(localName);
         logger.info("Getting mapping " + mappingIRI);
-        Optional<JSONObject> optJson;
+        Optional<String> optMapping;
         try {
-            optJson = getMappingAsJson(mappingIRI);
+            optMapping = getFormattedMapping(mappingIRI, getRDFFormat("jsonld"));
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        if (optJson.isPresent()) {
-            return Response.status(200).entity(optJson.get().toString()).build();
+        if (optMapping.isPresent()) {
+            return Response.status(200).entity(getJsonObject(optMapping.get()).toString()).build();
         } else {
             throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
         }
     }
 
     @Override
-    public Response downloadMapping(String localName) {
+    public Response downloadMapping(String localName, String format) {
         Resource mappingIRI = manager.createMappingIRI(localName);
         logger.info("Downloading mapping " + mappingIRI);
-        Optional<JSONObject> optJson;
+        RDFFormat rdfFormat = getRDFFormat(format);
+        Optional<String> optMapping;
         try {
-            optJson = getMappingAsJson(mappingIRI);
+            optMapping = getFormattedMapping(mappingIRI, rdfFormat);
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
-        if (optJson.isPresent()) {
-            JSONObject json = optJson.get();
+        if (optMapping.isPresent()) {
+            String mapping = optMapping.get();
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(json.toString());
+                writer.write(format.equalsIgnoreCase("jsonld") ? getJsonObject(mapping).toString() : mapping);
                 writer.flush();
                 writer.close();
             };
 
             return Response.ok(stream).header("Content-Disposition", "attachment; filename=" + localName
-                    + ".jsonld").header("Content-Type", "application/octet-stream").build();
+                    + "." + rdfFormat.getDefaultFileExtension()).header("Content-Type", rdfFormat.getDefaultMIMEType())
+                    .build();
         } else {
             throw ErrorUtils.sendError("Mapping not found", Response.Status.BAD_REQUEST);
         }
@@ -195,23 +198,53 @@ public class MappingRestImpl implements MappingRest {
 
     /**
      * Attempts to retrieve a mapping from the mapping registry and convert it into
-     * JSON-LD and then into a JSONObject.
+     * the specified RDF serialization format.
      *
      * @param mappingIRI the IRI of a mapping in the mapping registry
-     * @return a JSONObject with the JSON-LD of a mapping if it exists
+     * @param format the RDF serialization format to retrieve the mapping in
+     * @return a String with the serialization of a mapping if it exists
      * @throws MatOntoException thrown if there is an error retrieving the mapping
      */
-    private Optional<JSONObject> getMappingAsJson(Resource mappingIRI) throws MatOntoException {
-        JSONObject json;
+    private Optional<String> getFormattedMapping(Resource mappingIRI, RDFFormat format) {
+        String mapping;
         Optional<Model> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Rio.write(Values.sesameModel(mappingModel.get()), out, RDFFormat.JSONLD);
-            JSONArray arr = JSONArray.fromObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
-            json = arr.getJSONObject(0);
+            mapping = new String(out.toByteArray(), StandardCharsets.UTF_8);
         } else {
             return Optional.empty();
         }
-        return Optional.of(json);
+        return Optional.of(mapping);
+    }
+
+    /**
+     * Retrieves the actual JSON-LD of a mapping. Removes the wrapping JSON array from
+     * around the result of using Rio to parsethe mapping model into JSON-LD
+     *
+     * @param jsonld a mapping serialized as JSON-LD with a wrapping JSON array
+     * @return a JSONObject with a mapping serialized as JSON-LD
+     */
+    private JSONObject getJsonObject(String jsonld) {
+        JSONArray arr = JSONArray.fromObject(jsonld);
+        return arr.getJSONObject(0);
+    }
+
+    /**
+     * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
+     *
+     * @param format the abbreviated name of a RDFFormat
+     * @return a RDFFormat object with the requested format
+     */
+    private RDFFormat getRDFFormat(String format) {
+        switch (format.toLowerCase()) {
+            case "turtle":
+                return RDFFormat.TURTLE;
+            case "rdf/xml":
+                return RDFFormat.RDFXML;
+            case "jsonld":
+            default:
+                return RDFFormat.JSONLD;
+        }
     }
 }

@@ -196,8 +196,8 @@ describe('Mapping Manager service', function() {
         });
     });
     it('should download a mapping by name', function() {
-        mappingManagerSvc.downloadMapping('mapping');
-        expect(windowSvc.location).toBe('/matontorest/mappings/mapping');
+        mappingManagerSvc.downloadMapping('mapping', 'jsonld');
+        expect(windowSvc.location).toBe('/matontorest/mappings/mapping?format=jsonld');
     });
     describe('should delete a mapping by name', function() {
         beforeEach(function() {

@@ -184,7 +184,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getMappingTest() {
-        Response response = target().path("mappings/test").request().get();
+        Response response = target().path("mappings/test").request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         Assert.assertEquals(200, response.getStatus());
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
@@ -192,7 +192,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }
 
-        response = target().path("mappings/error").request().get();
+        response = target().path("mappings/error").request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         Assert.assertEquals(400, response.getStatus());
     }
 
