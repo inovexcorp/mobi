@@ -1,6 +1,5 @@
 package org.matonto.etl.cli;
 
-import org.apache.commons.io.FilenameUtils;
 /*-
  * #%L
  * org.matonto.etl.cli
@@ -23,6 +22,7 @@ import org.apache.commons.io.FilenameUtils;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import org.apache.commons.io.FilenameUtils;
 
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
