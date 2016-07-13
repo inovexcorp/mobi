@@ -261,7 +261,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public boolean saveChangesToOntology(Resource ontologyResource, Resource originalResource,
+    public String saveChangesToOntology(Resource ontologyResource, Resource originalResource,
                                          String resourceJson) throws MatontoOntologyException {
         checkRepositoryAndOntology(ontologyResource);
 
@@ -324,14 +324,14 @@ public class SimpleOntologyManager implements OntologyManager {
 
                 conn.commit();
 
+                return context.stringValue();
+
             } finally {
                 closeConnection(conn);
             }
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
         }
-
-        return true;
     }
 
     @Override

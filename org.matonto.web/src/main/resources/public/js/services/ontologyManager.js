@@ -1022,7 +1022,7 @@
 
                     $q.all(promises)
                         .then(function(response) {
-                            if(!_.find(response.data, { updated: false })) {
+                            if(!_.find(response, {data: {updated: false}})) {
                                 self.clearChangedList(ontologyId);
                                 _.forEach(changedProperties, function(item) {
                                     var domains = _.get(item.property, prefixes.rdfs + 'domain', []);
@@ -1082,6 +1082,7 @@
                                     });
                                 });
                                 ontology.matonto.originalIri = angular.copy(ontology['@id']);
+                                ontology.matonto.id = response[0].data.id;
                                 console.log('Ontology successfully updated');
                                 deferred.resolve(currentState);
                             } else {
