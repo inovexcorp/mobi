@@ -108,7 +108,7 @@
         }
 
         vm.deleteEntity = function() {
-            ontologyManagerService.delete(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state)
+            ontologyManagerService.delete(vm.ontology.matonto.id, vm.selected.matonto.originalIri, vm.state)
                 .then(function(response) {
                     vm.showDeleteConfirmation = false;
                     if(response.selectOntology) {
@@ -134,11 +134,11 @@
         }
 
         vm.disableSave = function() {
-            return !_.get(vm.ontology, 'matonto.isValid', false) || !ontologyManagerService.getChangedListForOntology(_.get(vm.ontology, 'matonto.originalId')).length;
+            return !_.get(vm.ontology, 'matonto.isValid', false) || !ontologyManagerService.getChangedListForOntology(_.get(vm.ontology, 'matonto.id')).length;
         }
 
         vm.save = function() {
-            ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.state)
+            ontologyManagerService.edit(vm.ontology.matonto.id, vm.state)
                 .then(function(state) {
                     vm.showSaveOverlay = false;
                     vm.state = state;
@@ -157,11 +157,11 @@
 
         vm.entityChanged = function() {
             vm.selected.matonto.unsaved = true;
-            ontologyManagerService.addToChangedList(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state);
+            ontologyManagerService.addToChangedList(vm.ontology.matonto.id, vm.selected.matonto.originalIri, vm.state);
         }
 
         vm.getPreview = function() {
-            ontologyManagerService.getPreview(vm.ontology['@id'], vm.serialization)
+            ontologyManagerService.getPreview(vm.ontology.matonto.id, vm.serialization)
                 .then(function(response) {
                     vm.preview = response;
                 }, function(response) {
@@ -170,14 +170,14 @@
         }
 
         vm.downloadOntology = function() {
-            ontologyManagerService.download(vm.ontology['@id'], vm.downloadSerialization, vm.downloadFileName);
+            ontologyManagerService.download(vm.ontology.matonto.id, vm.downloadSerialization, vm.downloadFileName);
             vm.showDownloadOverlay = false;
             vm.downloadSerialization = '';
             vm.downloadFileName = '';
         }
 
         vm.openDownloadOverlay = function() {
-            vm.downloadFileName = ontologyManagerService.getBeautifulIRI(angular.copy(vm.ontology['@id'])).replace(' ', '_');
+            vm.downloadFileName = ontologyManagerService.getBeautifulIRI(angular.copy(vm.ontology.matonto.id)).replace(' ', '_');
             vm.downloadSerialization = '';
             vm.showDownloadOverlay = true;
         }
@@ -262,7 +262,7 @@
         }
 
         vm.closeOntology = function() {
-            ontologyManagerService.closeOntology(vm.state.oi, vm.ontology['@id']);
+            ontologyManagerService.closeOntology(vm.state.oi, vm.ontology.matonto.id);
             stateManagerService.clearState(vm.state.oi);
             vm.selected = {};
             vm.ontology = {};

@@ -98,7 +98,7 @@
 
             function initOntology(ontology, obj) {
                 obj.matonto = {
-                    originalId: obj['@id'],
+                    originalIri: obj['@id'],
                     blankNodes: [],
                     classExpressions: {},
                     propertyExpressions: {},
@@ -478,14 +478,14 @@
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
                             properties: [],
-                            originalId: obj['@id'],
+                            originalIri: obj['@id'],
                             isValid: true
                         };
                         classes.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
                         obj.matonto = {
                             icon: chooseIcon(obj, prefixes),
-                            originalId: obj['@id'],
+                            originalIri: obj['@id'],
                             isValid: true
                         };
                         properties.push(obj);
@@ -577,6 +577,7 @@
             function fullRestructure(flattened, ontologyId, context, prefixes) {
                 var deferred = $q.defer(),
                     ontology = restructure(flattened, context, prefixes);
+                ontology.matonto.id = ontologyId;
 
                 $q.all([
                         $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
@@ -648,7 +649,7 @@
                 var copy = angular.copy(entity);
 
                 copy['@id'] = iri;
-                copy.matonto.originalId = iri;
+                copy.matonto.originalIri = iri;
                 copy[prefixes.dc + 'title'] = [{'@value': label}];
                 copy[prefixes.rdfs + 'label'] = [{'@value': label}];
 
@@ -669,6 +670,7 @@
                 newOntology = initEntity(newOntology, ontologyIri, label, description);
                 newOntology.matonto.iriBegin = ontologyIri;
                 newOntology.matonto.iriThen = '#';
+                newOntology.matonto.id = ontologyIri;
 
                 var config = {
                         params: {
@@ -711,7 +713,7 @@
                         }
                     }
 
-                $http.post(prefix + '/' + encodeURIComponent(ontology['@id']) + '/classes', null, config)
+                $http.post(prefix + '/' + encodeURIComponent(ontology.matonto.id) + '/classes', null, config)
                     .then(function(response) {
                         if(response.data.added) {
                             console.log('Successfully added class');
@@ -759,7 +761,7 @@
                         }
                     }
 
-                $http.post(prefix + '/' + encodeURIComponent(ontology['@id']) + '/' + pathVariable, null, config)
+                $http.post(prefix + '/' + encodeURIComponent(ontology.matonto.id) + '/' + pathVariable, null, config)
                     .then(function(response) {
                         if(response.data.added) {
                             console.log('Successfully added property');
@@ -1079,7 +1081,7 @@
                                         }
                                     });
                                 });
-                                ontology.matonto.originalId = angular.copy(ontology['@id']);
+                                ontology.matonto.originalIri = angular.copy(ontology['@id']);
                                 console.log('Ontology successfully updated');
                                 deferred.resolve(currentState);
                             } else {

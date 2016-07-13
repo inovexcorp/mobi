@@ -431,10 +431,10 @@ describe('Mapping Manager service', function() {
         expect(result).toBe('ontology');
     });
     it('should get the source ontology of a mapping', function() {
-        mappingManagerSvc.sourceOntologies = [{'@id': 'ontology'}]
+        mappingManagerSvc.sourceOntologies = [{matonto: {id: 'ontology'}}]
         spyOn(mappingManagerSvc, 'getSourceOntologyId').and.returnValue('ontology')
         var result = mappingManagerSvc.getSourceOntology([]);
-        expect(result).toEqual({'@id': 'ontology'});
+        expect(result).toEqual({matonto: {id: 'ontology'}});
     });
     describe('should get a data mapping from a class mapping', function() {
         it('unless it does not exist', function() {
