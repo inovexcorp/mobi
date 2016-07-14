@@ -26,11 +26,26 @@ $result-header-top-margin: 20px;
 
             h3 {
                 margin-top: $result-header-top-margin;
+
+                a {
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    -webkit-hyphens: auto;
+                       -moz-hyphens: auto;
+                        -ms-hyphens: auto;
+                            hyphens: auto;
+                }
             }
             .download-btn {
                 float: right;
                 margin-top: $result-header-top-margin;
             }
         }
+    }
+    .results-pagination {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        padding-left: $sidebar-width + 15px; 
     }
 }

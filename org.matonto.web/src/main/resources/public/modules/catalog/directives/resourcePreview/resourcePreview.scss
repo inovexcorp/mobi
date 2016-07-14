@@ -6,9 +6,26 @@
     overflow-y: auto;
     overflow-x: hidden;
 
-    h1 span {
-        font-size: 0.5em;
-        vertical-align: middle;
+    h1 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        -webkit-hyphens: auto;
+           -moz-hyphens: auto;
+            -ms-hyphens: auto;
+                hyphens: auto;
+
+        span {
+            font-size: 0.5em;
+            vertical-align: middle;
+        }
+    }
+    .description {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        -webkit-hyphens: auto;
+           -moz-hyphens: auto;
+            -ms-hyphens: auto;
+                hyphens: auto;
     }
     .keywords {
         li {

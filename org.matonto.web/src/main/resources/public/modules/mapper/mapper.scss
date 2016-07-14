@@ -14,7 +14,7 @@ $list-padding-neg: -10px;
 .mapper {
 
     > .row {
-        padding-left: 39px;
+        padding-left: $sidebar-width;
     }
     .boxed {
         padding: $list-padding;
