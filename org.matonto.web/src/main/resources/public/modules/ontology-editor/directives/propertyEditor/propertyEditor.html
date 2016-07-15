@@ -60,7 +60,7 @@
                        muted-text="vm.rdfs + 'domain'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"
-                       ontology-id="{{vm.ontology['@id']}}"
+                       ontology-id="{{vm.ontology.matonto.id}}"
                        matonto="vm.ontology.matonto"></object-select>
 
         <div ng-if="vm.selected['@type'].length">
@@ -73,7 +73,7 @@
                                muted-text="vm.rdfs + 'range'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subClasses"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:equivalentProperty -->
@@ -83,7 +83,7 @@
                                muted-text="vm.owl + 'equivalentProperty'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subObjectProperties"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
 
                 <!-- rdfs:subPropertyOf -->
@@ -93,7 +93,7 @@
                                muted-text="vm.rdfs + 'subPropertyOf'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subObjectProperties"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:inverseOf -->
@@ -103,7 +103,7 @@
                                muted-text="vm.owl + 'inverseOf'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subObjectProperties"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:disjointWith -->
@@ -113,7 +113,7 @@
                                muted-text="vm.owl + 'disjointWith'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subObjectProperties"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
             </div>
 
@@ -126,7 +126,7 @@
                                muted-text="vm.rdfs + 'range'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.dataPropertyRange"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:equivalentProperty -->
@@ -136,7 +136,7 @@
                                muted-text="vm.owl + 'equivalentProperty'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subDataProperties"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
 
                 <!-- rdfs:subPropertyOf -->
@@ -146,7 +146,7 @@
                                muted-text="vm.rdfs + 'subPropertyOf'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subDataProperties"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
 
                 <!-- owl:disjointWith -->
@@ -156,7 +156,7 @@
                                muted-text="vm.owl + 'disjointWith'"
                                change-event="vm.entityChanged()"
                                select-list="vm.ontology.matonto.subDataProperties"
-                               ontology-id="{{vm.ontology['@id']}}"
+                               ontology-id="{{vm.ontology.matonto.id}}"
                                matonto="vm.ontology.matonto"></object-select>
             </div>
         </div>

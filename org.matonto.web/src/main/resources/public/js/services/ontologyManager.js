@@ -97,18 +97,11 @@
             }
 
             function initOntology(ontology, obj) {
+                var iri = _.get(obj, '@id', ontology.matonto.id);
                 obj.matonto = {
-                    originalIri: obj['@id'],
-                    blankNodes: [],
-                    classExpressions: {},
-                    propertyExpressions: {},
-                    unionOfs: {},
-                    intersectionOfs: {},
-                    isValid: true,
-                    iriBegin: obj['@id'],
-                    iriThen: '#'
+                    originalIri: iri,
+                    iriBegin: iri
                 }
-
                 angular.merge(ontology, obj);
             }
 
@@ -199,7 +192,7 @@
 
             function fullRestructureOntology(ontology, ontologyId) {
                 var context = ontology['@context'] || {};
-                ontology = ontology['@graph'] || ontology;
+                    ontology = ontology['@graph'] || ontology;
 
                 return fullRestructure(ontology, ontologyId, context, getPrefixes(context));
             }
@@ -444,15 +437,25 @@
                 }
             }
 
-            function restructure(flattened, context, prefixes) {
+            function restructure(flattened, context, prefixes, ontologyId) {
                 var j, obj, types, domain, annotations,
                     ontology = {
                         matonto: {
+                            id: ontologyId,
                             noDomains: [],
                             owl: prefixes.owl,
                             rdfs: prefixes.rdfs,
                             annotations: [],
-                            currentAnnotationSelect: null
+                            currentAnnotationSelect: null,
+                            originalIri: ontologyId,
+                            blankNodes: [],
+                            classExpressions: {},
+                            propertyExpressions: {},
+                            unionOfs: {},
+                            intersectionOfs: {},
+                            isValid: true,
+                            iriBegin: 'http://matonto.org/ontologies/' + self.getBeautifulIRI(ontologyId),
+                            iriThen: '#'
                         }
                     },
                     classes = [],
@@ -576,8 +579,7 @@
 
             function fullRestructure(flattened, ontologyId, context, prefixes) {
                 var deferred = $q.defer(),
-                    ontology = restructure(flattened, context, prefixes);
-                ontology.matonto.id = ontologyId;
+                    ontology = restructure(flattened, context, prefixes, ontologyId);
 
                 $q.all([
                         $http.get(prefix + '/' + encodeURIComponent(ontologyId) + '/iris'),
@@ -1243,7 +1245,11 @@
             self.getEntityName = function(entity) {
                 var result = _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || _.get(entity, "['" + prefixes.dc + "title'][0]['@value']");
                 if (!result) {
-                    result = self.getBeautifulIRI(_.get(entity, '@id', ''));
+                    if(_.has(entity, '@id')) {
+                        result = self.getBeautifulIRI(entity['@id']);
+                    } else {
+                        result = _.get(entity, 'matonto.id', '') + ' (Anonymous Ontology)';
+                    }
                 }
                 return result;
             }

@@ -265,11 +265,17 @@ public class SimpleOntologyManager implements OntologyManager {
                                          String resourceJson) throws MatontoOntologyException {
         checkRepositoryAndOntology(ontologyResource);
 
+        LOG.info("ontologyResource -> " + ontologyResource.stringValue());
+        LOG.info("originalResource -> " + originalResource.stringValue());
+        LOG.info("resourceJson -> " + resourceJson);
+
         try {
             final RepositoryConnection conn = repository.getConnection();
 
             try {
                 Model changedModel = getModelFromJson(resourceJson);
+                LOG.info("changedModel statements -> ");
+                changedModel.forEach(s -> LOG.info(s.toString()));
 
                 Resource newSubject = Models.subject(changedModel).orElseThrow(() ->
                         new MatontoOntologyException("No subject was available in the resourceJson"));
