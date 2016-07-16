@@ -9,7 +9,7 @@ To build the MatOnto source code, you must have the following software and tools
 | Technology  | Version  | Download Link  |
 | ----------- | -------- | -------------- |
 | Java        | 8        | http://www.oracle.com/technetwork/java/javase/downloads/index.html  |
-| Maven       | 3.*      | https://maven.apache.org/download.cgi  |
+| Maven       | 3.1+      | https://maven.apache.org/download.cgi  |
 | Node.js     | 4.*      | https://nodejs.org/en/download/  |
 
 Clone the MatOnto project from git and navigate to that directory on your machine. Run the following command to build the source:
