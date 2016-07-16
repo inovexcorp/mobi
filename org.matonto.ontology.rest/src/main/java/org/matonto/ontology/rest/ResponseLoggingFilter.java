@@ -27,12 +27,11 @@ import aQute.bnd.annotation.component.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.ext.Provider;
+import java.io.IOException;
 
 @Provider
 @Component(immediate = true)
@@ -43,7 +42,7 @@ public class ResponseLoggingFilter implements ContainerResponseFilter {
     @Override
     public void filter(ContainerRequestContext containerRequestContext, ContainerResponseContext
             containerResponseContext) throws IOException {
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled() && containerRequestContext != null && containerResponseContext != null) {
             long start = (long) containerRequestContext.getProperty(Filters.REQ_START_TIME);
             long responseTime = System.currentTimeMillis() - start;
 
