@@ -7,12 +7,7 @@
     overflow-x: hidden;
 
     h1 {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        -webkit-hyphens: auto;
-           -moz-hyphens: auto;
-            -ms-hyphens: auto;
-                hyphens: auto;
+        @include breakword();
 
         span {
             font-size: 0.5em;
@@ -20,12 +15,7 @@
         }
     }
     .description {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        -webkit-hyphens: auto;
-           -moz-hyphens: auto;
-            -ms-hyphens: auto;
-                hyphens: auto;
+        @include breakword();
     }
     .keywords {
         li {

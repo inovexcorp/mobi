@@ -28,12 +28,7 @@ $result-header-top-margin: 20px;
                 margin-top: $result-header-top-margin;
 
                 a {
-                    word-wrap: break-word;
-                    overflow-wrap: break-word;
-                    -webkit-hyphens: auto;
-                       -moz-hyphens: auto;
-                        -ms-hyphens: auto;
-                            hyphens: auto;
+                    @include breakword();
                 }
             }
             .download-btn {
