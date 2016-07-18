@@ -2,6 +2,8 @@
 @import "./src/main/resources/public/css/variables";
 
 .filters {
+    padding: 0;
+
     .filter-header {
         display: block;
         font-weight: bold;
@@ -17,6 +19,9 @@
         a {
             display: block;
             padding: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
 
             &:hover {
                 text-decoration: none;

@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="results">
+<div class="results col-md-5">
     <div class="results-header">
         <span ng-if="dvm.catalog.results.size === 0">No results found</span>
         <div ng-if="dvm.catalog.results.size > 0" class="contents">
@@ -43,5 +43,7 @@
             <div><resource-type ng-repeat="type in resource.types" type="type"></resource-type></div>
         </div>
     </div>
-    <pagination links="dvm.catalog.results.links" current-page="dvm.catalog.currentPage" get-page="dvm.getPage(direction)"></pagination>
+    <div class="results-pagination col-md-5 col-md-offset-1">
+      <pagination links="dvm.catalog.results.links" current-page="dvm.catalog.currentPage" get-page="dvm.getPage(direction)"></pagination>
+    </div>
 </div>
