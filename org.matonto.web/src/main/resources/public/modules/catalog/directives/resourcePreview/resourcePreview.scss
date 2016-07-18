@@ -6,9 +6,16 @@
     overflow-y: auto;
     overflow-x: hidden;
 
-    h1 span {
-        font-size: 0.5em;
-        vertical-align: middle;
+    h1 {
+        @include breakword();
+
+        span {
+            font-size: 0.5em;
+            vertical-align: middle;
+        }
+    }
+    .description {
+        @include breakword();
     }
     .keywords {
         li {
