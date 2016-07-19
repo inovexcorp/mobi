@@ -24,14 +24,45 @@
     'use strict';
 
     angular
-        .module('annotationTab', [])
+        .module('annotationTab', ['stateManager', 'responseObj'])
         .directive('annotationTab', annotationTab);
 
-        function annotationTab() {
+        annotationTab.$inject = ['stateManagerService', 'responseObj'];
+
+        function annotationTab(stateManagerService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/annotationTab/annotationTab.html'
+                templateUrl: 'modules/ontology-editor/directives/annotationTab/annotationTab.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.ro = responseObj;
+                    dvm.sm = stateManagerService;
+
+                    dvm.openAddOverlay = function() {
+                        dvm.sm.editingAnnotation = false;
+                        dvm.sm.annotationSelect = undefined;
+                        dvm.sm.annotationValue = '';
+                        dvm.sm.annotationIndex = 0;
+                        dvm.sm.showAnnotationOverlay = true;
+                    }
+
+                    dvm.openRemoveOverlay = function(key, index) {
+                        dvm.sm.key = key;
+                        dvm.sm.index = index;
+                        dvm.sm.showRemoveAnnotationOverlay = true;
+                    }
+
+                    dvm.editClicked = function(annotation, index) {
+                        dvm.sm.editingAnnotation = true;
+                        dvm.sm.annotationSelect = annotation;
+                        dvm.sm.annotationValue = dvm.sm.selected[dvm.ro.getItemIri(annotation)][index]['@value'];
+                        dvm.sm.annotationIndex = index;
+                        dvm.sm.showAnnotationOverlay = true;
+                    }
+                }
             }
         }
 })();

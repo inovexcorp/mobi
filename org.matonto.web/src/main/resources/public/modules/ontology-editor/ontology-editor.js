@@ -290,26 +290,6 @@
         }
 
         /* Annotation Management */
-        function resetAnnotationVariables() {
-            vm.sm.annotationSelect = undefined;
-            vm.sm.annotationValue = '';
-            vm.sm.annotationIndex = 0;
-        }
-
-        vm.editClicked = function(annotation, index) {
-            stateManagerService.editingAnnotation = true;
-            vm.sm.annotationSelect = annotation;
-            vm.sm.annotationValue = vm.selected[vm.getItemIri(annotation)][index]['@value'];
-            vm.sm.annotationIndex = index;
-            stateManagerService.showAnnotationOverlay = true;
-        }
-
-        vm.openRemoveAnnotationOverlay = function(key, index) {
-            vm.key = key;
-            vm.index = index;
-            vm.showRemoveAnnotationOverlay = true;
-        }
-
         vm.removeAnnotation = function() {
             annotationManagerService.remove(vm.selected, vm.key, vm.index);
             vm.entityChanged();
@@ -318,12 +298,6 @@
 
         vm.getItemNamespace = function(item) {
             return ontologyManagerService.getItemNamespace(item);
-        }
-
-        vm.openAddAnnotationOverlay = function() {
-            resetAnnotationVariables();
-            stateManagerService.editingAnnotation = false;
-            stateManagerService.showAnnotationOverlay = true;
         }
 
         vm.createAnnotation = function(iri) {

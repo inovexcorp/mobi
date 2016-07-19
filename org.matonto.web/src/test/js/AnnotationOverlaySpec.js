@@ -24,7 +24,10 @@ describe('Annotation Overlay directive', function() {
     var $compile,
         scope,
         element,
-        controller;
+        controller,
+        stateManagerSvc,
+        ontologyManagerSvc,
+        annotationManagerSvc;
 
     injectRegexConstant();
     injectHighlightFilter();

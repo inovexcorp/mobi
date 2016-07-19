@@ -97,6 +97,17 @@ function injectCamelCaseFilter() {
     });
 }
 
+function injectShowAnnotationsFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            var annotations = [{ localName: 'prop1' }, { localName: 'prop2' }];
+            $provide.value('showAnnotationsFilter', jasmine.createSpy('showAnnotationsFilter').and.callFake(function(entity, arr) {
+                return entity ? annotations : [];
+            }));
+        });
+    });
+}
+
 function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
@@ -362,8 +373,10 @@ function mockStateManager() {
 function mockResponseObj() {
     module(function($provide) {
         $provide.service('responseObj', function() {
-            this.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('');
-            this.validateItem = jasmine.createSpy('validateItm').and.returnValue(true);
+            this.getItemIri = jasmine.createSpy('getItemIri').and.callFake(function(obj) {
+                return (obj && obj.localName) ? obj.localName : obj;
+            });
+            this.validateItem = jasmine.createSpy('validateItem').and.returnValue(true);
         });
     });
 }

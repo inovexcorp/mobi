@@ -190,7 +190,7 @@
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
 
-                <confirmation-overlay ng-if="vm.showRemoveAnnotationOverlay"
+                <confirmation-overlay ng-if="vm.sm.showRemoveAnnotationOverlay"
                                       header-text="'Remove Annotation'"
                                       confirm-click="vm.removeAnnotation()"
                                       cancel-click="vm.showRemoveAnnotationOverlay = false"
