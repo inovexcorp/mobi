@@ -23,7 +23,8 @@
 describe('Annotation Overlay directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        controller;
 
     injectRegexConstant();
     injectHighlightFilter();
@@ -32,10 +33,17 @@ describe('Annotation Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('annotationOverlay');
+        mockOntologyManager();
+        mockStateManager();
+        mockResponseObj();
+        mockAnnotationManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _annotationManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            stateManagerSvc = _stateManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            annotationManagerSvc = _annotationManagerService_;
         });
     });
 
@@ -63,10 +71,9 @@ describe('Annotation Overlay directive', function() {
                 }
             ];
             _.forEach(tests, function(test) {
-                scope.vm = {
-                    editingAnnotation: test.value
-                }
+                stateManagerSvc.editingAnnotation = test.value;
                 scope.$digest();
+
                 var header = element.querySelectorAll('h6');
                 expect(header.length).toBe(1);
                 expect(header[0].innerHTML).toBe(test.result);
@@ -84,14 +91,32 @@ describe('Annotation Overlay directive', function() {
                 }
             ];
             _.forEach(tests, function(test) {
-                scope.vm = {
-                    editingAnnotation: test.value
-                }
+                stateManagerSvc.editingAnnotation = test.value;
                 scope.$digest();
+
                 var buttons = element.querySelectorAll('custom-button:not([type])');
                 expect(buttons.length).toBe(1);
                 expect(buttons[0].innerHTML).toBe(test.result);
             });
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
+            scope.$digest();
+            controller = element.controller('annotationOverlay');
+        });
+        it('addAnnotation should call the appropriate manager functions', function() {
+            controller.addAnnotation({}, 'value');
+            expect(annotationManagerSvc.add).toHaveBeenCalled();
+            expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
+            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
+        });
+        it('editAnnotation should call the appropriate manager functions', function() {
+            controller.editAnnotation({}, 'value');
+            expect(annotationManagerSvc.edit).toHaveBeenCalled();
+            expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
+            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
         });
     });
 });

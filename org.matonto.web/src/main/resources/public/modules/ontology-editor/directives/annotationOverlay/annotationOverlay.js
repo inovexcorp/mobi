@@ -24,14 +24,37 @@
     'use strict';
 
     angular
-        .module('annotationOverlay', [])
+        .module('annotationOverlay', ['responseObj', 'ontologyManager', 'annotationManager', 'stateManager'])
         .directive('annotationOverlay', annotationOverlay);
 
-        function annotationOverlay() {
+        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'annotationManagerService', 'stateManagerService'];
+
+        function annotationOverlay(responseObj, ontologyManagerService, annotationManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html'
+                templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.am = annotationManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.ro = responseObj;
+                    dvm.sm = stateManagerService;
+
+                    dvm.addAnnotation = function(select, value) {
+                        dvm.am.add(dvm.sm.selected, dvm.ro.getItemIri(select), value);
+                        dvm.sm.showAnnotationOverlay = false;
+                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.originalId, dvm.sm.getState());
+                    }
+
+                    dvm.editAnnotation = function(select, value) {
+                        dvm.am.edit(dvm.sm.selected, dvm.ro.getItemIri(select), value, dvm.sm.annotationIndex);
+                        dvm.sm.showAnnotationOverlay = false;
+                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.originalId, dvm.sm.getState());
+                    }
+                }
             }
         }
 })();

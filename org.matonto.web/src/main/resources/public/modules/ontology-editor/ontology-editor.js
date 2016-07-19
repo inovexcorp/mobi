@@ -37,11 +37,13 @@
     function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
         var vm = this;
 
+        vm.sm = stateManagerService;
         vm.ontologies = ontologyManagerService.getList();
         vm.ontologyIds = ontologyManagerService.getOntologyIds();
         vm.propertyTypes = ontologyManagerService.getPropertyTypes();
         vm.state = stateManagerService.getState();
         vm.selected = ontologyManagerService.getObject(vm.state);
+        vm.sm.selected = vm.selected;
         vm.rdfs = prefixes.rdfs;
         vm.owl = prefixes.owl;
 
@@ -57,10 +59,13 @@
             vm.state = stateManagerService.getState();
             if(tab !== 'annotation') {
                 vm.selected = ontologyManagerService.getObject(vm.state);
+                vm.sm.selected = vm.selected;
             } else {
                 vm.selected = _.get(vm.ontologies, '[' + vm.state.oi + '].matonto.jsAnnotations[' + vm.state.pi + ']');
+                vm.sm.selected = vm.selected;
             }
             vm.ontology = ontologyManagerService.getOntology(vm.state.oi);
+            vm.sm.ontology = vm.ontology;
             vm.serialization = '';
         }
 
@@ -73,9 +78,13 @@
         function setVariables(oi) {
             if(oi === undefined) {
                 vm.selected = vm.ontology = undefined;
+                vm.sm.selected = vm.selected;
+                vm.sm.ontology = vm.ontology;
             } else {
                 vm.selected = ontologyManagerService.getObject(vm.state);
+                vm.sm.selected = vm.selected;
                 vm.ontology = ontologyManagerService.getOntology(oi);
+                vm.sm.ontology = vm.ontology;
             }
             vm.preview = 'Please select a serialization and hit refresh.';
             vm.serialization = '';
@@ -130,7 +139,9 @@
             stateManagerService.setState('annotation-display', oi, undefined, index);
             vm.state = stateManagerService.getState();
             vm.ontology = ontologyManagerService.getOntology(oi);
+            vm.sm.ontology = vm.ontology;
             vm.selected = vm.ontology.matonto.jsAnnotations[index];
+            vm.sm.selected = vm.selected;
         }
 
         vm.disableSave = function() {
@@ -265,7 +276,9 @@
             ontologyManagerService.closeOntology(vm.state.oi, vm.ontology['@id']);
             stateManagerService.clearState(vm.state.oi);
             vm.selected = {};
+            vm.sm.selected = vm.selected;
             vm.ontology = {};
+            vm.sm.ontology = vm.ontology;
             vm.showCloseOverlay = false;
         }
 
@@ -278,31 +291,17 @@
 
         /* Annotation Management */
         function resetAnnotationVariables() {
-            vm.annotationSelect = undefined;
-            vm.annotationValue = '';
-            vm.annotationIndex = 0;
-        }
-
-        vm.addAnnotation = function(select, value) {
-            annotationManagerService.add(vm.selected, vm.getItemIri(select), value);
-            resetAnnotationVariables();
-            vm.showAnnotationOverlay = false;
-            vm.entityChanged();
+            vm.sm.annotationSelect = undefined;
+            vm.sm.annotationValue = '';
+            vm.sm.annotationIndex = 0;
         }
 
         vm.editClicked = function(annotation, index) {
-            vm.editingAnnotation = true;
-            vm.annotationSelect = annotation;
-            vm.annotationValue = vm.selected[vm.getItemIri(annotation)][index]['@value'];
-            vm.annotationIndex = index;
-            vm.showAnnotationOverlay = true;
-        }
-
-        vm.editAnnotation = function(select, value) {
-            annotationManagerService.edit(vm.selected, vm.getItemIri(select), value, vm.annotationIndex);
-            resetAnnotationVariables();
-            vm.showAnnotationOverlay = false;
-            vm.entityChanged();
+            stateManagerService.editingAnnotation = true;
+            vm.sm.annotationSelect = annotation;
+            vm.sm.annotationValue = vm.selected[vm.getItemIri(annotation)][index]['@value'];
+            vm.sm.annotationIndex = index;
+            stateManagerService.showAnnotationOverlay = true;
         }
 
         vm.openRemoveAnnotationOverlay = function(key, index) {
@@ -323,8 +322,8 @@
 
         vm.openAddAnnotationOverlay = function() {
             resetAnnotationVariables();
-            vm.editingAnnotation = false;
-            vm.showAnnotationOverlay = true;
+            stateManagerService.editingAnnotation = false;
+            stateManagerService.showAnnotationOverlay = true;
         }
 
         vm.createAnnotation = function(iri) {

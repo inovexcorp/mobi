@@ -128,6 +128,7 @@ function mockOntologyManager() {
                 return ontologyId ? $q.when([]) : $q.reject('Something went wrong');
             });
             this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
+            this.entityChanged = jasmine.createSpy('entityChanged');
         });
     });
 }
@@ -344,6 +345,9 @@ function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function() {
             this.states = {};
+            this.ontology = {
+                matonto: {}
+            };
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
@@ -360,6 +364,18 @@ function mockResponseObj() {
         $provide.service('responseObj', function() {
             this.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('');
             this.validateItem = jasmine.createSpy('validateItm').and.returnValue(true);
+        });
+    });
+}
+
+function mockAnnotationManager() {
+    module(function($provide) {
+        $provide.service('annotationManagerService', function() {
+            this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
+            this.remove = jasmine.createSpy('remove');
+            this.add = jasmine.createSpy('add');
+            this.edit = jasmine.createSpy('edit');
+            this.create = jasmine.createSpy('create');
         });
     });
 }
