@@ -23,31 +23,31 @@
 describe('Class Tree directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('classTree');
+        mockStateManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
+    });
 
-        scope.vm = {
-            ontologies: [
+    describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
                 {
                     matonto: {
                         classes: ['class1', 'class2']
                     }
                 }
-            ]
-        }
-
-    });
-
-    describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
+            ])
             element = $compile(angular.element('<class-tree></class-tree>'))(scope);
             scope.$digest();
         });
@@ -67,7 +67,7 @@ describe('Class Tree directive', function() {
         });
         it('based on container tree-items', function() {
             var lis = element.querySelectorAll('.container tree-item');
-            expect(lis.length).toBe(scope.vm.ontologies[0].matonto.classes.length);
+            expect(lis.length).toBe(2);
         });
     });
 });
