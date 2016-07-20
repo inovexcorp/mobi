@@ -140,6 +140,12 @@ function mockOntologyManager() {
             });
             this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
             this.entityChanged = jasmine.createSpy('entityChanged');
+            this.getOntology = jasmine.createSpy('getOntology').and.returnValue({
+                matonto: {
+                    originalId: '',
+                    jsAnnotations: [{}]
+                }
+            });
         });
     });
 }
@@ -357,7 +363,9 @@ function mockStateManager() {
         $provide.service('stateManagerService', function() {
             this.states = {};
             this.ontology = {
-                matonto: {}
+                matonto: {
+                    jsAnnotations: [{}]
+                }
             };
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');

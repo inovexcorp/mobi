@@ -41,37 +41,34 @@
         vm.ontologies = ontologyManagerService.getList();
         vm.ontologyIds = ontologyManagerService.getOntologyIds();
         vm.propertyTypes = ontologyManagerService.getPropertyTypes();
-        vm.state = stateManagerService.getState();
-        vm.selected = ontologyManagerService.getObject(vm.state);
+        vm.selected = ontologyManagerService.getObject(vm.sm.currentState);
         vm.sm.selected = vm.selected;
         vm.rdfs = prefixes.rdfs;
         vm.owl = prefixes.owl;
 
         function initialize() {
-            if(vm.state) {
-                setVariables(vm.state.oi);
+            if(vm.sm.currentState) {
+                setVariables(vm.sm.currentState.oi);
             }
         }
         
         /* State Management */
         vm.setTreeTab = function(tab) {
             stateManagerService.setTreeTab(tab);
-            vm.state = stateManagerService.getState();
             if(tab !== 'annotation') {
-                vm.selected = ontologyManagerService.getObject(vm.state);
+                vm.selected = ontologyManagerService.getObject(vm.sm.currentState);
                 vm.sm.selected = vm.selected;
             } else {
-                vm.selected = _.get(vm.ontologies, '[' + vm.state.oi + '].matonto.jsAnnotations[' + vm.state.pi + ']');
+                vm.selected = _.get(vm.ontologies, '[' + vm.sm.currentState.oi + '].matonto.jsAnnotations[' + vm.sm.currentState.pi + ']');
                 vm.sm.selected = vm.selected;
             }
-            vm.ontology = ontologyManagerService.getOntology(vm.state.oi);
+            vm.ontology = ontologyManagerService.getOntology(vm.sm.currentState.oi);
             vm.sm.ontology = vm.ontology;
             vm.serialization = '';
         }
 
         vm.setEditorTab = function(tab) {
             stateManagerService.setEditorTab(tab);
-            vm.state = stateManagerService.getState();
         }
 
         /* Ontology Management */
@@ -81,7 +78,7 @@
                 vm.sm.selected = vm.selected;
                 vm.sm.ontology = vm.ontology;
             } else {
-                vm.selected = ontologyManagerService.getObject(vm.state);
+                vm.selected = ontologyManagerService.getObject(vm.sm.currentState);
                 vm.sm.selected = vm.selected;
                 vm.ontology = ontologyManagerService.getOntology(oi);
                 vm.sm.ontology = vm.ontology;
@@ -91,8 +88,7 @@
         }
 
         function onCreateSuccess(type) {
-            var oi = stateManagerService.setStateToNew(vm.state, vm.ontologies, type);
-            vm.state = stateManagerService.getState();
+            var oi = stateManagerService.setStateToNew(vm.sm.currentState, vm.ontologies, type);
             setVariables(oi);
         }
 
@@ -117,27 +113,25 @@
         }
 
         vm.deleteEntity = function() {
-            ontologyManagerService.delete(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state)
+            ontologyManagerService.delete(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.sm.currentState)
                 .then(function(response) {
                     vm.showDeleteConfirmation = false;
                     if(response.selectOntology) {
                         stateManagerService.setTreeTab('everything');
-                        vm.selectItem('ontology-editor', vm.state.oi);
+                        vm.selectItem('ontology-editor', vm.sm.currentState.oi);
                     } else {
-                        stateManagerService.clearState(vm.state.oi);
+                        stateManagerService.clearState(vm.sm.currentState.oi);
                     }
                 });
         }
 
         vm.selectItem = function(editor, oi, ci, pi) {
             stateManagerService.setState(editor, oi, ci, pi);
-            vm.state = stateManagerService.getState();
             setVariables(oi);
         }
 
         vm.selectAnnotation = function(oi, index) {
             stateManagerService.setState('annotation-display', oi, undefined, index);
-            vm.state = stateManagerService.getState();
             vm.ontology = ontologyManagerService.getOntology(oi);
             vm.sm.ontology = vm.ontology;
             vm.selected = vm.ontology.matonto.jsAnnotations[index];
@@ -149,16 +143,16 @@
         }
 
         vm.save = function() {
-            ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.state)
+            ontologyManagerService.edit(vm.ontology.matonto.originalId, vm.sm.currentState)
                 .then(function(state) {
                     vm.showSaveOverlay = false;
-                    vm.state = state;
+                    vm.sm.currentState = state;
                 });
         }
 
         vm.editIRI = function(iriBegin, iriThen, iriEnd) {
             vm.entityChanged();
-            ontologyManagerService.editIRI(iriBegin, iriThen, iriEnd, vm.selected, vm.ontologies[vm.state.oi]);
+            ontologyManagerService.editIRI(iriBegin, iriThen, iriEnd, vm.selected, vm.ontologies[vm.sm.currentState.oi]);
             vm.showIriOverlay = false;
         }
 
@@ -168,7 +162,7 @@
 
         vm.entityChanged = function() {
             vm.selected.matonto.unsaved = true;
-            ontologyManagerService.addToChangedList(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.state);
+            ontologyManagerService.addToChangedList(vm.ontology.matonto.originalId, vm.selected.matonto.originalId, vm.sm.currentState);
         }
 
         vm.getPreview = function() {
@@ -218,7 +212,7 @@
         vm.createProperty = function(propertyIri, label, type, range, domain, description) {
             ontologyManagerService.createProperty(vm.ontology, propertyIri, label, type, range, domain, description)
                 .then(function(classIndex) {
-                    vm.state.ci = classIndex;
+                    vm.sm.currentState.ci = classIndex;
                     vm.createPropertyError = '';
                     vm.showCreatePropertyOverlay = false;
                     onCreateSuccess('property');
@@ -241,7 +235,7 @@
         vm.addPrefix = function(key, value) {
             prefixManagerService.add(key, value, vm.selected)
                 .then(function(response) {
-                    setVariables(vm.state.oi);
+                    setVariables(vm.sm.currentState.oi);
                     vm.key = '';
                     vm.value = '';
                     vm.entityChanged();
@@ -273,8 +267,8 @@
         }
 
         vm.closeOntology = function() {
-            ontologyManagerService.closeOntology(vm.state.oi, vm.ontology['@id']);
-            stateManagerService.clearState(vm.state.oi);
+            ontologyManagerService.closeOntology(vm.sm.currentState.oi, vm.ontology['@id']);
+            stateManagerService.clearState(vm.sm.currentState.oi);
             vm.selected = {};
             vm.sm.selected = vm.selected;
             vm.ontology = {};

@@ -23,15 +23,15 @@
 <form name="vm.ontologyForm" class="clearfix" novalidate autocomplete="off">
     <!-- tab buttons -->
     <tab-button-container>
-        <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
+        <tab-button is-active="vm.sm.currentState.editorTab === 'basic'"
+                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.sm.selected)}}</tab-button>
 
-        <tab-button is-active="vm.state.editorTab === 'preview'"
+        <tab-button is-active="vm.sm.currentState.editorTab === 'preview'"
                     on-click="vm.setEditorTab('preview');">Preview</tab-button>
     </tab-button-container>
 
     <!-- basic tab -->
-    <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
+    <div ng-if="vm.sm.currentState.editorTab === 'basic'" class="tab clearfix">
         <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
 
         <!-- ontology iri -->
@@ -47,7 +47,7 @@
     </div>
 
     <!-- preview tab -->
-    <div ng-if="vm.state.editorTab === 'preview'" class="tab clearfix">
+    <div ng-if="vm.sm.currentState.editorTab === 'preview'" class="tab clearfix">
         <div class="form-inline">
             <serialization-select ng-model="vm.serialization"></serialization-select>
             <custom-button is-disabled-when="!vm.serialization" pull="'none'" on-click="vm.getPreview()">Refresh</custom-button>

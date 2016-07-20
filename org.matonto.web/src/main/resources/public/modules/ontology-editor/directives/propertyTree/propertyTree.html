@@ -23,10 +23,10 @@
 <div class="tree scroll-without-buttons">
     <!-- property view -->
     <strong>{{headerText}}</strong>
-    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.state.oi === oi)">
+    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.sm.currentState.oi === oi)">
         <tree-item current-entity="ontology"
                    current-ontology="ontology"
-                   is-active="dvm.state.oi === $index && dvm.state.pi === undefined"
+                   is-active="dvm.sm.currentState.oi === $index && dvm.sm.currentState.pi === undefined"
                    is-opened="opened"
                    on-click="dvm.selectItem({editor: 'ontology-editor', oi: $index})"
                    has-children="dvm.hasChildren(ontology)"></tree-item>
@@ -37,7 +37,7 @@
                 <tree-item ng-repeat="property in class.matonto.properties"
                            current-entity="property"
                            current-ontology="ontology"
-                           is-active="dvm.state.oi === oi && dvm.state.ci === ci && dvm.state.pi === $index"
+                           is-active="dvm.sm.currentState.oi === oi && dvm.sm.currentState.ci === ci && dvm.sm.currentState.pi === $index"
                            on-click="dvm.selectItem({editor: 'property-editor', oi: oi, ci: ci, pi: $index})"
                            ng-if="dvm.isThisType(property, dvm.propertyType)"></tree-item>
             </ul>
@@ -47,7 +47,7 @@
                 <tree-item ng-repeat="property in ontology.matonto.noDomains"
                            current-entity="property"
                            current-ontology="ontology"
-                           is-active="dvm.state.oi === oi && dvm.state.ci === undefined && dvm.state.pi === $index"
+                           is-active="dvm.sm.currentState.oi === oi && dvm.sm.currentState.ci === undefined && dvm.sm.currentState.pi === $index"
                            on-click="dvm.selectItem({editor: 'property-editor', oi: oi, ci: undefined, pi: $index})"
                            ng-if="dvm.isThisType(property, dvm.propertyType)"></tree-item>
             </ul>

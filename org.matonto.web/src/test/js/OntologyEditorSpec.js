@@ -19,7 +19,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+ *//*
+
 describe('Ontology Editor directive', function() {
     var $compile,
         scope,
@@ -173,4 +174,4 @@ describe('Ontology Editor directive', function() {
             expect(scope.vm.entityChanged).toHaveBeenCalled();
         });
     });
-});
+});*/

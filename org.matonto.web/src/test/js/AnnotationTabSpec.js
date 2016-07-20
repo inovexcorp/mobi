@@ -54,7 +54,8 @@ describe('Annotation Tab directive', function() {
             stateManagerSvc.ontology = {
                 matonto: {
                     annotations: [
-                        'prop1'
+                        'prop1',
+                        'prop2'
                     ]
                 }
             };
@@ -69,13 +70,13 @@ describe('Annotation Tab directive', function() {
             expect(icon.length).toBe(1);
         });
         it('based on listed annotations', function() {
-            var formList = element.querySelectorAll('.annotation');
-            expect(formList.length).toBe(2);
+            var annotations = element.querySelectorAll('.annotation');
+            expect(annotations.length).toBe(2);
 
             stateManagerSvc.selected = undefined;
             scope.$digest();
-            formList = element.querySelectorAll('.annotation');
-            expect(formList.length).toBe(0);
+            annotations = element.querySelectorAll('.annotation');
+            expect(annotations.length).toBe(0);
         });
         it('based on values', function() {
             var values = element.querySelectorAll('.value-container');

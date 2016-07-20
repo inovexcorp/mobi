@@ -24,13 +24,23 @@
     'use strict';
 
     angular
-        .module('stateManager', [])
+        .module('stateManager', ['ontologyManager'])
         .service('stateManagerService', stateManagerService);
 
-        stateManagerService.$inject = [];
+        stateManagerService.$inject = ['ontologyManagerService'];
 
-        function stateManagerService() {
+        function stateManagerService(ontologyManagerService) {
             var self = this;
+
+            function setVariables(oi) {
+                if(oi === undefined) {
+                    self.selected = undefined;
+                    self.ontology = undefined;
+                } else {
+                    self.selected = ontologyManagerService.getObject(self.getState());
+                    self.ontology = ontologyManagerService.getOntology(oi);
+                }
+            }
 
             self.states = {
                 current: 'everything',
@@ -61,12 +71,16 @@
                 }
             }
 
+            self.currentState = self.states[self.states.current];
+
             self.setTreeTab = function(tab) {
                 self.states.current = tab;
+                self.currentState = self.getState();
             }
 
             self.setEditorTab = function(tab) {
                 self.states[self.states.current].editorTab = tab;
+                self.currentState = self.getState();
             }
 
             self.getEditorTab = function() {
@@ -79,11 +93,11 @@
                 if(editor !== state.editor) {
                     state.editorTab = 'basic';
                 }
-
                 state.oi = oi;
                 state.ci = ci;
                 state.pi = pi;
                 state.editor = editor;
+                self.currentState = self.getState();
             }
 
             self.getState = function() {
@@ -113,7 +127,6 @@
                     editor = 'property-editor';
                 }
                 self.setState(editor, oi, ci, pi);
-
                 return oi;
             }
 
@@ -128,6 +141,12 @@
                         state.editor = 'default';
                     }
                 }
+                self.currentState = self.getState();
+            }
+
+            self.selectItem = function(editor, oi, ci, pi) {
+                self.setState(editor, oi, ci, pi);
+                setVariables(oi);
             }
         }
 })();

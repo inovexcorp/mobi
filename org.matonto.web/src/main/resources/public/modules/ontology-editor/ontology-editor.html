@@ -58,7 +58,7 @@
 
       <left-nav-item on-click="vm.showCreateClassOverlay = true"
                      nav-title="Create Class"
-                     is-disabled-when="vm.state.oi === undefined || !(vm.state.tab === 'everything' || vm.state.tab === 'class')"
+                     is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'class')"
                      is-active-when="vm.showCreateClassOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">C</span>
@@ -68,7 +68,7 @@
 
       <left-nav-item on-click="vm.showCreatePropertyOverlay = true"
                      nav-title="Create Property"
-                     is-disabled-when="vm.state.oi === undefined || !(vm.state.tab === 'everything' || vm.state.tab === 'object' || vm.state.tab === 'datatype')"
+                     is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'object' || vm.sm.currentState.tab === 'datatype')"
                      is-active-when="vm.showCreatePropertyOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">P</span>
@@ -78,7 +78,7 @@
 
       <left-nav-item on-click="vm.showCreateAnnotationOverlay = true"
                      nav-title="Create Annotation"
-                     is-disabled-when="vm.state.oi === undefined || !(vm.state.tab === 'everything' || vm.state.tab === 'annotation')"
+                     is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'annotation')"
                      is-active-when="vm.showCreateAnnotationOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">A</span>
@@ -88,14 +88,14 @@
 
       <left-nav-item on-click="vm.openDownloadOverlay()"
                      nav-title="Download Ontology"
-                     is-disabled-when="vm.state.oi === undefined"
+                     is-disabled-when="vm.sm.currentState.oi === undefined"
                      is-active-when="vm.showDeleteConfirmation">
           <i class="fa fa-download fa-fw"></i>
       </left-nav-item>
 
       <left-nav-item on-click="vm.showCloseOverlay = true"
                      nav-title="Close Ontology"
-                     is-disabled-when="vm.state.oi === undefined"
+                     is-disabled-when="vm.sm.currentState.oi === undefined"
                      is-active-when="vm.showCloseOverlay">
           <i class="fa fa-folder fa-fw"></i>
       </left-nav-item>
@@ -104,7 +104,7 @@
 
       <left-nav-item on-click="vm.showDeleteConfirmation = true"
                      nav-title="Delete Entity"
-                     is-disabled-when="vm.state.oi === undefined || vm.state.tab === 'annotation'"
+                     is-disabled-when="vm.sm.currentState.oi === undefined || vm.sm.currentState.tab === 'annotation'"
                      is-active-when="vm.showDeleteConfirmation">
           <i class="fa fa-trash-o fa-fw"></i>
       </left-nav-item>
@@ -116,58 +116,58 @@
             <div class="tree-container full-height">
                 <!-- tab buttons -->
                 <tab-button-container>
-                    <tab-button is-active="vm.state.tab === 'everything'"
+                    <tab-button is-active="vm.sm.currentState.tab === 'everything'"
                                 on-click="vm.setTreeTab('everything')">Tree</tab-button>
 
-                    <tab-button is-active="vm.state.tab === 'class'"
+                    <tab-button is-active="vm.sm.currentState.tab === 'class'"
                                 on-click="vm.setTreeTab('class')">Class</tab-button>
 
-                    <tab-button is-active="vm.state.tab === 'object'"
+                    <tab-button is-active="vm.sm.currentState.tab === 'object'"
                                 on-click="vm.setTreeTab('object')">Object</tab-button>
 
-                    <tab-button is-active="vm.state.tab === 'datatype'"
+                    <tab-button is-active="vm.sm.currentState.tab === 'datatype'"
                                 on-click="vm.setTreeTab('datatype')">Data</tab-button>
 
-                    <tab-button is-active="vm.state.tab === 'annotation'"
+                    <tab-button is-active="vm.sm.currentState.tab === 'annotation'"
                                 on-click="vm.setTreeTab('annotation')">Annotation</tab-button>
                 </tab-button-container>
 
-                <everything-tree ng-if="vm.state.tab === 'everything'"></everything-tree>
+                <everything-tree ng-if="vm.sm.currentState.tab === 'everything'"></everything-tree>
 
-                <class-tree ng-if="vm.state.tab === 'class'"></class-tree>
+                <class-tree ng-if="vm.sm.currentState.tab === 'class'"></class-tree>
 
-                <property-tree ng-if="vm.state.tab === 'object'"
+                <property-tree ng-if="vm.sm.currentState.tab === 'object'"
                                header-text="Object Properties"
                                property-type="objectproperty"
                                select-item="vm.selectItem(editor, oi, ci, pi)"
-                               state="vm.state"
+                               state="vm.sm.currentState"
                                ontologies="vm.ontologies"></property-tree>
 
-                <property-tree ng-if="vm.state.tab === 'datatype'"
+                <property-tree ng-if="vm.sm.currentState.tab === 'datatype'"
                                header-text="Data Properties"
                                property-type="datatypeproperty"
                                select-item="vm.selectItem(editor, oi, ci, pi)"
-                               state="vm.state"
+                               state="vm.sm.currentState"
                                ontologies="vm.ontologies"></property-tree>
 
-                <annotation-tree ng-if="vm.state.tab === 'annotation'"></annotation-tree>
+                <annotation-tree ng-if="vm.sm.currentState.tab === 'annotation'"></annotation-tree>
             </div>
         </section>
 
         <!-- edit/create form section -->
         <section class="col-xs-8 full-height">
             <div class="editor">
-                <default-tab ng-if="vm.state.editor === 'default'"></default-tab>
+                <default-tab ng-if="vm.sm.currentState.editor === 'default'"></default-tab>
 
-                <ontology-editor ng-if="vm.state.editor === 'ontology-editor'"></ontology-editor>
+                <ontology-editor ng-if="vm.sm.currentState.editor === 'ontology-editor'"></ontology-editor>
 
-                <class-editor ng-if="vm.state.editor === 'class-editor'"></class-editor>
+                <class-editor ng-if="vm.sm.currentState.editor === 'class-editor'"></class-editor>
 
-                <property-editor ng-if="vm.state.editor === 'property-editor'"></property-editor>
+                <property-editor ng-if="vm.sm.currentState.editor === 'property-editor'"></property-editor>
 
-                <div ng-if="vm.state.editor === 'annotation-display'" class="annotation-preview">
+                <div ng-if="vm.sm.currentState.editor === 'annotation-display'" class="annotation-preview">
                     <h3>Annotation Preview (JSON-LD)</h3>
-                    <pre class="tab">{{vm.selected | json}}</pre>
+                    <pre class="tab">{{vm.sm.selected | json}}</pre>
                 </div>
 
                 <ontology-upload-overlay ng-if="vm.showUploadOverlay"></ontology-upload-overlay>
