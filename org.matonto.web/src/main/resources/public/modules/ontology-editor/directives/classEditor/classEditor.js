@@ -24,14 +24,24 @@
     'use strict';
 
     angular
-        .module('classEditor', [])
+        .module('classEditor', ['stateManager', 'ontologyManager', 'prefixes'])
         .directive('classEditor', classEditor);
 
-        function classEditor() {
+        classEditor.$inject = ['stateManagerService', 'ontologyManagerService', 'prefixes'];
+
+        function classEditor(stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/classEditor/classEditor.html'
+                templateUrl: 'modules/ontology-editor/directives/classEditor/classEditor.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.prefixes = prefixes;
+                }
             }
         }
 })();

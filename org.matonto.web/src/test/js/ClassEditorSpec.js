@@ -19,20 +19,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- *//*
+ */
 
 describe('Class Editor directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        stateManagerSvc;
 
+    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('classEditor');
+        mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            stateManagerSvc = _stateManagerService_;
         });
     });
 
@@ -50,16 +55,8 @@ describe('Class Editor directive', function() {
         });
         describe('based on vm.state.editorTab', function() {
             it('for basic', function() {
-                scope.vm = {
-                    state: {
-                        editorTab: 'basic'
-                    },
-                    selected: {
-                        matonto: {
-                            createError: 'error'
-                        }
-                    }
-                }
+                stateManagerSvc.currentState = {editorTab: 'basic'};
+                stateManagerSvc.selected = {matonto: {createError: 'error'}};
                 scope.$digest();
 
                 var tabs = element.querySelectorAll('.tab');
@@ -75,11 +72,7 @@ describe('Class Editor directive', function() {
                 expect(annotationTab.length).toBe(1);
             });
             it('for axioms', function() {
-                scope.vm = {
-                    state: {
-                        editorTab: 'axioms'
-                    }
-                }
+                stateManagerSvc.currentState = {editorTab: 'axioms'};
                 scope.$digest();
 
                 var objectSelects = element.querySelectorAll('object-select');
@@ -88,35 +81,19 @@ describe('Class Editor directive', function() {
         });
         describe('and error-display', function() {
             it('is visible when createError is true', function() {
-                scope.vm = {
-                    selected: {
-                        matonto: {
-                            createError: true
-                        }
-                    },
-                    state: {
-                        editorTab: 'basic'
-                    }
-                }
+                stateManagerSvc.currentState = {editorTab: 'basic'};
+                stateManagerSvc.selected = {matonto: {createError: true}};
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when createError is false', function() {
-                scope.vm = {
-                    selected: {
-                        matonto: {
-                            createError: false
-                        }
-                    },
-                    state: {
-                        editorTab: 'basic'
-                    }
-                }
+                stateManagerSvc.currentState = {editorTab: 'basic'};
+                stateManagerSvc.selected = {matonto: {createError: false}};
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(0);
             });
         });
     });
-});*/
+});

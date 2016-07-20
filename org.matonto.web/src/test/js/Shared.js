@@ -362,6 +362,7 @@ function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function() {
             this.states = {};
+            this.currentState = {};
             this.ontology = {
                 matonto: {
                     jsAnnotations: [{}]
