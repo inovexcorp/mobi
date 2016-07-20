@@ -76,10 +76,10 @@
           </span>
       </left-nav-item>
 
-      <left-nav-item on-click="vm.showCreateAnnotationOverlay = true"
+      <left-nav-item on-click="vm.sm.showCreateAnnotationOverlay = true"
                      nav-title="Create Annotation"
                      is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'annotation')"
-                     is-active-when="vm.showCreateAnnotationOverlay">
+                     is-active-when="vm.sm.showCreateAnnotationOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">A</span>
               <i class="fa fa-plus"></i>

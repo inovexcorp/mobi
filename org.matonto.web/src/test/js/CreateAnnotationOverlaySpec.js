@@ -26,10 +26,11 @@ describe('Create Annotation Overlay directive', function() {
         element;
 
     injectRegexConstant();
-
     beforeEach(function() {
         module('templates');
         module('createAnnotationOverlay');
+        mockAnnotationManager();
+        mockStateManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -72,8 +73,8 @@ describe('Create Annotation Overlay directive', function() {
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
             });
             it('is there when form.iri is invalid', function() {
-                scope.vm = {
-                    createAnnotationForm: {
+                scope.dvm = {
+                    form: {
                         iri: {
                             '$error': {
                                 pattern: true
@@ -89,8 +90,8 @@ describe('Create Annotation Overlay directive', function() {
         });
         describe('and error-display', function() {
             it('is visible when createAnnotationError is true', function() {
-                scope.vm = {
-                    createAnnotationError: true
+                scope.dvm = {
+                    error: true
                 }
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
