@@ -58,13 +58,13 @@ describe('RDF Preview directive', function() {
             controller.generatePreview();
             scope.$apply();
             expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
-            expect(typeof controller.preview).toBe('object');
+            expect(typeof delimitedManagerSvc.preview).toBe('object');
 
             controller.serializeOption = 'turtle';
             controller.generatePreview();
             scope.$apply();
             expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
-            expect(typeof controller.preview).toBe('string');
+            expect(typeof delimitedManagerSvc.preview).toBe('string');
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -94,12 +94,11 @@ describe('RDF Preview directive', function() {
         });
         it('with the correctly formatted preview', function() {
             jsonFilter.calls.reset();
-            var controller = this.element.controller('rdfPreview');
-            controller.preview = '';
+            delimitedManagerSvc.preview = '';
             scope.$digest();
             expect(jsonFilter).not.toHaveBeenCalled();
 
-            controller.preview = {};
+            delimitedManagerSvc.preview = {};
             scope.$digest();
             expect(jsonFilter).toHaveBeenCalledWith({}, 4);
         });

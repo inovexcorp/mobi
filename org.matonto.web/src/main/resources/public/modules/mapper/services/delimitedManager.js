@@ -121,6 +121,17 @@
              * endpoints calls.
              */
             self.containsHeaders = true;
+            /**
+             * @ngdoc property
+             * @name csvManager.csvManagerService#preview
+             * @propertyOf csvManager.service:csvManagerService
+             * @type {string/Object}
+             *
+             * @description 
+             * `preview` holds a string or Object containing a preview of mapped data to be used in the
+             * {@link rdfPreview.directive:rdfPreview RDF Preview} directive.
+             */
+            self.preview = '';
 
             /**
              * @ngdoc method
@@ -300,6 +311,7 @@
                 self.fileName = '';
                 self.separator = ',';
                 self.containsHeaders = true;
+                self.preview = '';
             }
         }
 })();

@@ -86,7 +86,7 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.visible = false;
                     dvm.preview = '';
@@ -105,8 +105,8 @@
                         }
                     ];
                     dvm.generatePreview = function() {
-                        dvm.cm.previewMap(dvm.mm.mapping.jsonld, dvm.serializeOption).then(preview => {
-                            dvm.preview = preview;
+                        dvm.dm.previewMap(dvm.mm.mapping.jsonld, dvm.serializeOption).then(preview => {
+                            dvm.dm.preview = preview;
                         }, errorMessage => {
                             console.log(errorMessage);
                         });

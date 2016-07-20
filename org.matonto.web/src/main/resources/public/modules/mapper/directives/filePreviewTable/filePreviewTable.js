@@ -78,7 +78,7 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
@@ -93,14 +93,14 @@
                         }
                     }
                     dvm.getHighlightIdx = function() {
-                        return dvm.isClickable() ? dvm.cm.filePreview.headers.indexOf(dvm.state.selectedColumn) : -1;
+                        return dvm.isClickable() ? dvm.dm.filePreview.headers.indexOf(dvm.state.selectedColumn) : -1;
                     }
                     dvm.isClickable = function() {
                         return dvm.mm.isDataMapping(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId})) 
                             || (!!dvm.state.selectedProp && !dvm.om.isObjectProperty(_.get(dvm.state.selectedProp, '@type', [])));
                     }
                     dvm.clickColumn = function(index) {
-                        dvm.state.selectedColumn = dvm.cm.filePreview.headers[index];
+                        dvm.state.selectedColumn = dvm.dm.filePreview.headers[index];
                     }
                 },
                 templateUrl: 'modules/mapper/directives/filePreviewTable/filePreviewTable.html'

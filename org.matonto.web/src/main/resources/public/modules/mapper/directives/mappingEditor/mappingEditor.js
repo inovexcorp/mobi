@@ -72,7 +72,7 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     dvm.getSourceOntologyName = function() {
                         return dvm.om.getEntityName(dvm.mm.getSourceOntology(_.get(dvm.mm.mapping, 'jsonld')));
@@ -91,7 +91,7 @@
                                 .then(() => deferred.resolve(), errorMessage => deferred.reject(errorMessage));
                         }
                         deferred.promise.then(() => {
-                            dvm.cm.map(dvm.mm.mapping.name);
+                            dvm.dm.map(dvm.mm.mapping.name);
                             dvm.state.resetEdit();
                             dvm.state.step = dvm.state.finishStep;
                             dvm.saveError = false;

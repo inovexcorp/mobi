@@ -71,7 +71,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
                     dvm.om = ontologyManagerService;
 
                     dvm.reset = function() {
@@ -79,7 +79,7 @@
                         dvm.state.resetEdit();
                         dvm.mm.mapping = undefined;
                         dvm.mm.sourceOntologies = [];
-                        dvm.cm.reset();
+                        dvm.dm.reset();
                     }
                     dvm.getDeleteEntityName = function() {
                         var ontology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);

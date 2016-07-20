@@ -71,7 +71,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     dvm.hasProps = function(classMapping) {
                         return dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']).length > 0;
@@ -96,7 +96,7 @@
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.selectedPropMappingId = propMapping['@id'];
                         dvm.state.updateAvailableColumns();
-                        dvm.state.selectedColumn = dvm.cm.filePreview.headers[parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']"), 10)];
+                        dvm.state.selectedColumn = dvm.dm.filePreview.headers[parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']"), 10)];
                     }
                     dvm.clickAddProp = function(classMapping) {
                         dvm.state.resetEdit();
@@ -124,7 +124,7 @@
                             mappingName = getClassName(wrapperClassMapping);
                         } else if (dvm.mm.isDataMapping(propMapping)) {
                             var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                            mappingName = dvm.cm.filePreview.headers[index];
+                            mappingName = dvm.dm.filePreview.headers[index];
                         }
                         return propName + ': ' + mappingName;
                     }

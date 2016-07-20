@@ -68,7 +68,7 @@
                     var dvm = this;
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                     var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
@@ -78,7 +78,7 @@
                     dvm.beginsWith = prefixEnd.slice(0, -1);
                     dvm.then = prefixEnd[prefixEnd.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
-                    _.forEach(dvm.cm.filePreview.headers, (column, idx) => {
+                    _.forEach(dvm.dm.filePreview.headers, (column, idx) => {
                         dvm.localNameOptions.push({text: column, value: '${' + idx + '}'});
                     });
                     var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']")});
