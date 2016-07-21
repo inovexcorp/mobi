@@ -24,14 +24,25 @@
     'use strict';
 
     angular
-        .module('propertyEditor', [])
+        .module('propertyEditor', ['stateManager', 'ontologyManager', 'prefixes'])
         .directive('propertyEditor', propertyEditor);
 
-        function propertyEditor() {
+        propertyEditor.$inject = ['stateManagerService', 'ontologyManagerService', 'prefixes'];
+
+        function propertyEditor(stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/propertyEditor/propertyEditor.html'
+                templateUrl: 'modules/ontology-editor/directives/propertyEditor/propertyEditor.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.prefixes = prefixes;
+                    dvm.propertyTypes = dvm.om.getPropertyTypes();
+                }
             }
         }
 })();
