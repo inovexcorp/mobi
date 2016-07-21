@@ -23,19 +23,25 @@
 describe('Everything Tree directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('everythingTree');
+        mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
+    });
 
-        scope.vm = {
-            ontologies: [
+    describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
                 {
                     matonto: {
                         classes: [
@@ -48,13 +54,7 @@ describe('Everything Tree directive', function() {
                         noDomains: ['property1']
                     }
                 }
-            ]
-        }
-
-    });
-
-    describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
+            ]);
             element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
             scope.$digest();
         });
@@ -78,21 +78,57 @@ describe('Everything Tree directive', function() {
         });
         describe('based on tree-item length', function() {
             it('when ontology.noDomains is empty', function() {
-                scope.vm.ontologies[0].matonto.noDomains = [];
+                ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+                    {
+                        matonto: {
+                            classes: [
+                                {
+                                    matonto: {
+                                        properties: ['property1']
+                                    }
+                                }
+                            ],
+                            noDomains: []
+                        }
+                    }
+                ]);
+                element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
                 var treeItems = element.querySelectorAll('.container tree-item');
                 expect(treeItems.length).toBe(2);
             });
             it('when class.matonto.properties is empty', function() {
-                scope.vm.ontologies[0].matonto.classes[0].matonto.properties = [];
+                ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+                    {
+                        matonto: {
+                            classes: [
+                                {
+                                    matonto: {
+                                        properties: []
+                                    }
+                                }
+                            ],
+                            noDomains: ['property1']
+                        }
+                    }
+                ]);
+                element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
                 var treeItems = element.querySelectorAll('.container tree-item');
                 expect(treeItems.length).toBe(2);
             });
             it('when ontology.matonto.classes is empty', function() {
-                scope.vm.ontologies[0].matonto.classes = [];
+                ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+                    {
+                        matonto: {
+                            classes: [],
+                            noDomains: ['property1']
+                        }
+                    }
+                ]);
+                element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
                 var treeItems = element.querySelectorAll('.container tree-item');
