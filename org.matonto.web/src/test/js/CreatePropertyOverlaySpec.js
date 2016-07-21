@@ -25,104 +25,27 @@ describe('Create Property Overlay directive', function() {
         scope,
         element;
 
-    mockPrefixes();
     injectRegexConstant();
     injectCamelCaseFilter();
-
     beforeEach(function() {
         module('templates');
         module('createPropertyOverlay');
         mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
     });
 
     beforeEach(function() {
-        scope.onCreate = jasmine.createSpy('onCreate');
-        scope.onCancel = jasmine.createSpy('onCancel');
-        scope.createPropertyError = 'test';
-        scope.ontologyId = 'test';
-        scope.showIriOverlay = false;
-        scope.iriBegin = 'begin';
-        scope.iriThen = 'then';
-        scope.propertyTypes = ['type1'];
-        scope.subClasses = ['subClass1'];
-        scope.propertyRange = ['range1'];
-        scope.matonto = {};
-
-        element = $compile(angular.element('<create-property-overlay matonto="matonto" ontology-id="ontologyId" on-create="onCreate()" on-cancel="onCancel()" create-property-error="createPropertyError" show-iri-overlay="showIriOverlay" iri-begin="iriBegin" iri-then="iriThen" property-types="propertyTypes" sub-classes="subClasses" property-range="propertyRange"></create-property-overlay>'))(scope);
+        element = $compile(angular.element('<create-property-overlay></create-property-overlay>'))(scope);
         scope.$digest();
     });
 
-    describe('in isolated scope', function() {
-        var isolatedScope;
-
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
-        it('createPropertyError should be two way bound', function() {
-            isolatedScope.createPropertyError = 'new';
-            scope.$digest();
-            expect(scope.createPropertyError).toEqual('new');
-        });
-        it('showIriOverlay should be two way bound', function() {
-            isolatedScope.showIriOverlay = true;
-            scope.$digest();
-            expect(scope.showIriOverlay).toEqual(true);
-        });
-        it('matonto should be two way bound', function() {
-            isolatedScope.matonto = {prop: 'new'};
-            scope.$digest();
-            expect(scope.matonto).toEqual({prop: 'new'});
-        });
-        it('onCreate should be called in parent scope', function() {
-            isolatedScope.onCreate();
-            expect(scope.onCreate).toHaveBeenCalled();
-        });
-        it('onCancel should be called in parent scope', function() {
-            isolatedScope.onCancel();
-            expect(scope.onCancel).toHaveBeenCalled();
-        });
-        it('ontologyId should be one way bound', function() {
-            isolatedScope.ontologyId = 'new';
-            expect(scope.ontologyId).toEqual('test');
-        });
-    });
-    describe('controller bound variables', function() {
-        var controller;
-
-        beforeEach(function() {
-            controller = element.controller('createPropertyOverlay');
-        });
-        it('iriBegin should be two way bound', function() {
-            controller.iriBegin = 'new';
-            scope.$digest();
-            expect(scope.iriBegin).toBe('new');
-        });
-        it('iriThen should be two way bound', function() {
-            controller.iriThen = 'new';
-            scope.$digest();
-            expect(scope.iriThen).toBe('new');
-        });
-        it('propertyTypes should be two way bound', function() {
-            controller.propertyTypes = [];
-            scope.$digest();
-            expect(scope.propertyTypes).toEqual([]);
-        });
-        it('subClasses should be two way bound', function() {
-            controller.subClasses = [];
-            scope.$digest();
-            expect(scope.subClasses).toEqual([]);
-        });
-        it('propertyRange should be two way bound', function() {
-            controller.propertyRange = [];
-            scope.$digest();
-            expect(scope.propertyRange).toEqual([]);
-        });
-    });
     describe('replaces the element with the correct html', function() {
         it('for a DIV', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -172,14 +95,28 @@ describe('Create Property Overlay directive', function() {
         describe('setRange', function() {
             it('changes rangeList to subClasses when type is ObjectProperty', function() {
                 controller.type = ['ObjectProperty'];
+                stateManagerSvc.ontology = {
+                    matonto: {
+                        subClasses: ['subClass1']
+                    }
+                }
                 controller.setRange();
                 expect(controller.rangeList.indexOf('subClass1') !== -1).toBe(true);
             });
             it('changes rangeList to propertyRange when type is not ObjectProperty', function() {
                 controller.type = ['DatatypeProperty'];
+                stateManagerSvc.ontology = {
+                    matonto: {
+                        dataPropertyRange: ['range1']
+                    }
+                }
                 controller.setRange();
                 expect(controller.rangeList.indexOf('range1') !== -1).toBe(true);
             });
+        });
+        it('create calls the correct manager function', function() {
+            controller.create('property-iri', 'label', 'type', [], [], 'description');
+            expect(ontologyManagerSvc.createProperty).toHaveBeenCalledWith(stateManagerSvc.ontology, 'property-iri', 'label', 'type', [], [], 'description')
         });
     });
 });

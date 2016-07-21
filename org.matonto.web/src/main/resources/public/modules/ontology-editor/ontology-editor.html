@@ -66,10 +66,10 @@
           </span>
       </left-nav-item>
 
-      <left-nav-item on-click="vm.showCreatePropertyOverlay = true"
+      <left-nav-item on-click="vm.sm.showCreatePropertyOverlay = true"
                      nav-title="Create Property"
                      is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'object' || vm.sm.currentState.tab === 'datatype')"
-                     is-active-when="vm.showCreatePropertyOverlay">
+                     is-active-when="vm.sm.showCreatePropertyOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">P</span>
               <i class="fa fa-plus"></i>
@@ -216,17 +216,7 @@
 
                 <create-class-overlay ng-if="vm.sm.showCreateClassOverlay"></create-class-overlay>
 
-                <create-property-overlay ng-if="vm.showCreatePropertyOverlay"
-                                         on-create="vm.createProperty(propertyIri, label, type, range, domain, description)"
-                                         on-cancel="vm.showCreatePropertyOverlay = false; vm.createPropertyError = ''"
-                                         create-property-error="vm.createPropertyError"
-                                         show-iri-overlay="vm.showIriOverlay"
-                                         iri-begin="vm.ontology.matonto.iriBegin"
-                                         iri-then="vm.ontology.matonto.iriThen"
-                                         property-types="vm.propertyTypes"
-                                         sub-classes="vm.ontology.matonto.subClasses"
-                                         property-range="vm.ontology.matonto.dataPropertyRange"
-                                         ontology-id="{{vm.ontology['@id']}}"></create-property-overlay>
+                <create-property-overlay ng-if="vm.sm.showCreatePropertyOverlay"></create-property-overlay>
             </div>
         </section>
     </div>

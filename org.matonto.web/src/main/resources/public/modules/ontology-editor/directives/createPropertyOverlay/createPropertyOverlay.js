@@ -24,44 +24,34 @@
     'use strict';
 
     angular
-        .module('createPropertyOverlay', ['camelCase', 'ontologyManager'])
+        .module('createPropertyOverlay', ['camelCase', 'ontologyManager', 'stateManager'])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        function createPropertyOverlay() {
+        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService'];
+
+        function createPropertyOverlay($filter, REGEX, ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createPropertyOverlay/createPropertyOverlay.html',
-                scope: {
-                    onCreate: '&',
-                    onCancel: '&',
-                    createPropertyError: '=',
-                    showIriOverlay: '=',
-                    ontologyId: '@',
-                    matonto: '='
-                },
-                bindToController: {
-                    iriBegin: '=',
-                    iriThen: '=',
-                    propertyTypes: '=',
-                    subClasses: '=',
-                    propertyRange: '='
-                },
                 controllerAs: 'dvm',
-                controller: ['$filter', 'REGEX', 'ontologyManagerService', function($filter, REGEX, ontologyManagerService) {
+                controller: function() {
                     var dvm = this;
-                    var prefix = dvm.iriBegin + dvm.iriThen;
                     var setAsObject = false;
                     var setAsDatatype = false;
 
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.iri = prefix;
                     dvm.range = [];
                     dvm.domain = [];
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.prefix = dvm.sm.ontology.matonto.iriBegin + dvm.sm.ontology.matonto.iriThen;
+                    dvm.iri = dvm.prefix;
+                    dvm.propertyTypes = dvm.om.getPropertyTypes();
 
                     dvm.nameChanged = function() {
                         if(!dvm.iriHasChanged) {
-                            dvm.iri = prefix + $filter('camelCase')(dvm.name, 'property');
+                            dvm.iri = dvm.prefix + $filter('camelCase')(dvm.name, 'property');
                         }
                     }
 
@@ -73,18 +63,30 @@
                     dvm.setRange = function() {
                         var isObjectProperty = ontologyManagerService.isObjectProperty(dvm.type);
                         if(isObjectProperty && !setAsObject) {
-                            dvm.rangeList = dvm.subClasses;
+                            dvm.rangeList = dvm.sm.ontology.matonto.subClasses;
                             dvm.range = [];
                             setAsObject = true;
                             setAsDatatype = false;
                         } else if(!isObjectProperty && !setAsDatatype) {
-                            dvm.rangeList = dvm.propertyRange;
+                            dvm.rangeList = dvm.sm.ontology.matonto.dataPropertyRange;
                             dvm.range = [];
                             setAsObject = false;
                             setAsDatatype = true;
                         }
                     }
-                }]
+
+                    dvm.create = function(iri, label, type, range, domain, description) {
+                        dvm.om.createProperty(dvm.sm.ontology, iri, label, type, range, domain, description)
+                            .then(function(classIndex) {
+                                dvm.sm.currentState.ci = classIndex;
+                                dvm.error = '';
+                                dvm.sm.showCreatePropertyOverlay = false;
+                                dvm.sm.setStateToNew(dvm.sm.currentState, dvm.om.getList(), 'property');
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
+                            });
+                    }
+                }
             }
         }
 })();

@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div ng-hide="showIriOverlay === true" class="overlay">
+<div class="overlay">
     <div class="content">
         <!-- section header -->
         <h6>Create New OWL Property</h6>
 
         <!-- error -->
-        <error-display ng-if="createPropertyError">{{createPropertyError}}</error-display>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
 
         <!-- static iri -->
         <static-iri iri="dvm.iri"
@@ -55,24 +55,24 @@
             <!-- domain -->
             <object-select ng-model="dvm.domain"
                            display-text="'Domain'"
-                           select-list="dvm.subClasses"
-                           ontology-id="{{ontologyId}}"
-                           matonto="matonto"></object-select>
+                           select-list="dvm.sm.ontology.matonto.subClasses"
+                           ontology-id="{{dvm.sm.ontology['@id']}}"
+                           matonto="dvm.sm.ontology.matonto"></object-select>
 
             <!-- range -->
             <object-select ng-model="dvm.range"
                            display-text="'Range'"
                            select-list="dvm.rangeList"
                            is-disabled-when="!dvm.type.length"
-                           ontology-id="{{ontologyId}}"
-                           matonto="matonto"></object-select>
+                           ontology-id="{{dvm.sm.ontology['@id']}}"
+                           matonto="dvm.sm.ontology.matonto"></object-select>
 
             <!-- create property buttons -->
             <div class="btn-container clearfix">
                 <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length"
-                               on-click="onCreate({propertyIri: dvm.iri, label: dvm.name, type: dvm.type, range: dvm.range, domain: dvm.domain, description: dvm.description})">Create</custom-button>
+                               on-click="dvm.create(dvm.iri, dvm.name, dvm.type, dvm.range, dvm.domain, dvm.description)">Create</custom-button>
 
-                <custom-button on-click="onCancel()" type="'secondary'">Cancel</custom-button>
+                <custom-button on-click="dvm.sm.showCreatePropertyOverlay = false" type="'secondary'">Cancel</custom-button>
             </div>
         </form>
     </div>

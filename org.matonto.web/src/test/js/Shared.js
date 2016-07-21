@@ -152,9 +152,10 @@ function mockOntologyManager() {
             this.createOntology = jasmine.createSpy('createOntology').and.callFake(function(ontologyIri, label, description) {
                 return $q.when({});
             });
-            this.createProperty = jasmine.createSpy('createProperty').and.callFake(function(ontology, propertyIri, label, description) {
+            this.createProperty = jasmine.createSpy('createProperty').and.callFake(function(ontology, propertyIri, label, type, range, domain, description) {
                 return $q.when({});
             });
+            this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
         });
     });
 }

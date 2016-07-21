@@ -87,11 +87,6 @@
             vm.serialization = '';
         }
 
-        function onCreateSuccess(type) {
-            var oi = stateManagerService.setStateToNew(vm.sm.currentState, vm.ontologies, type);
-            setVariables(oi);
-        }
-
         vm.prettyPrint = function(entity) {
             return ontologyManagerService.getEntityName(entity);
         }
@@ -185,40 +180,6 @@
             vm.downloadFileName = ontologyManagerService.getBeautifulIRI(angular.copy(vm.ontology['@id'])).replace(' ', '_');
             vm.downloadSerialization = '';
             vm.showDownloadOverlay = true;
-        }
-
-        vm.createOntology = function(ontologyIri, label, description) {
-            ontologyManagerService.createOntology(ontologyIri, label, description)
-                .then(function(response) {
-                    vm.createOntologyError = '';
-                    vm.showCreateOntologyOverlay = false;
-                    onCreateSuccess('ontology');
-                }, function(errorMessage) {
-                    vm.createOntologyError = errorMessage;
-                });
-        }
-
-        vm.createClass = function(classIri, label, description) {
-            ontologyManagerService.createClass(vm.ontology, classIri, label, description)
-                .then(function(response) {
-                    vm.createClassError = '';
-                    vm.showCreateClassOverlay = false;
-                    onCreateSuccess('class');
-                }, function(errorMessage) {
-                    vm.createClassError = errorMessage;
-                });
-        }
-
-        vm.createProperty = function(propertyIri, label, type, range, domain, description) {
-            ontologyManagerService.createProperty(vm.ontology, propertyIri, label, type, range, domain, description)
-                .then(function(classIndex) {
-                    vm.sm.currentState.ci = classIndex;
-                    vm.createPropertyError = '';
-                    vm.showCreatePropertyOverlay = false;
-                    onCreateSuccess('property');
-                }, function(errorMessage) {
-                    vm.createPropertyError = errorMessage;
-                });
         }
 
         /* Prefix (Context) Management */
