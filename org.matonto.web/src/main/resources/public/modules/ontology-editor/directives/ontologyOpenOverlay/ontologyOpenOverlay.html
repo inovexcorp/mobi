@@ -21,24 +21,24 @@
   #L%
   -->
 <div class="overlay">
-    <form name="vm.openForm" class="content clearfix" novalidate autocomplete="off">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Open Ontology</h6>
 
         <!-- error display -->
-        <error-display ng-if="vm.openError">{{vm.openError}}</error-display>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
 
         <!-- list of ontologies -->
         <div class="form-group">
             <custom-label muted-text="mutedText">Ontology</custom-label>
-            <ui-select class="ontology-select" ng-model="vm.ontologyIdToOpen">
+            <ui-select class="ontology-select" ng-model="dvm.ontologyId">
                 <ui-select-match placeholder="Select Ontology">
                     <div title="{{$select.selected}}">
                         <div>{{($select.selected | splitIRI).end | beautify}}</div>
                         <small class="text-muted">{{$select.selected}}</small>
                     </div>
                 </ui-select-match>
-                <ui-select-choices repeat="id in vm.ontologyIds | orderBy:(id | splitIRI).end:true | filter:$select.search">
+                <ui-select-choices repeat="id in dvm.ontologyIds | orderBy:(id | splitIRI).end:true | filter:$select.search">
                     <div title="{{id}}">
                         <div ng-bind-html="(id | splitIRI).end | beautify | trusted"></div>
                         <small class="text-muted" ng-bind-html="id | highlight:$select.search | trusted"></small>
@@ -49,9 +49,9 @@
 
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!vm.ontologyIdToOpen" on-click="vm.openOntology()">Open</custom-button>
+            <custom-button is-disabled-when="!dvm.ontologyId" on-click="dvm.open(dvm.ontologyId)">Open</custom-button>
 
-            <custom-button on-click="vm.showOpenOverlay = false; vm.openError = ''; vm.ontologyIdToOpen = undefined;" type="'secondary'">Cancel</custom-button>
+            <custom-button on-click="dvm.sm.showOpenOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

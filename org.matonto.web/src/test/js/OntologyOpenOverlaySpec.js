@@ -23,7 +23,8 @@
 describe('Ontology Open Overlay directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        controller;
 
     injectBeautifyFilter();
     injectSplitIRIFilter();
@@ -33,10 +34,13 @@ describe('Ontology Open Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('ontologyOpenOverlay');
+        mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
     });
@@ -67,21 +71,32 @@ describe('Ontology Open Overlay directive', function() {
         });
         describe('and error-display', function() {
             it('is visible when openError is true', function() {
-                scope.vm = {
-                    openError: true
+                scope.dvm = {
+                    error: true
                 }
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when openError is false', function() {
-                scope.vm = {
-                    openError: false
+                scope.dvm = {
+                    error: false
                 }
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(0);
             });
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            element = $compile(angular.element('<ontology-open-overlay></ontology-open-overlay>'))(scope);
+            scope.$digest();
+            controller = element.controller('ontologyOpenOverlay');
+        });
+        it('open calls the correct manager function', function() {
+            controller.open('id');
+            expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith('id');
         });
     });
 });

@@ -157,6 +157,7 @@ function mockOntologyManager() {
             });
             this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
             this.download = jasmine.createSpy('download');
+            this.openOntology = jasmine.createSpy('openOntology').and.returnValue($q.resolve({}));
         });
     });
 }
