@@ -55,17 +55,13 @@
             <!-- domain -->
             <object-select ng-model="dvm.domain"
                            display-text="'Domain'"
-                           select-list="dvm.sm.ontology.matonto.subClasses"
-                           ontology-id="{{dvm.sm.ontology['@id']}}"
-                           matonto="dvm.sm.ontology.matonto"></object-select>
+                           select-list="dvm.sm.ontology.matonto.subClasses"></object-select>
 
             <!-- range -->
             <object-select ng-model="dvm.range"
                            display-text="'Range'"
                            select-list="dvm.rangeList"
-                           is-disabled-when="!dvm.type.length"
-                           ontology-id="{{dvm.sm.ontology['@id']}}"
-                           matonto="dvm.sm.ontology.matonto"></object-select>
+                           is-disabled-when="!dvm.type.length"></object-select>
 
             <!-- create property buttons -->
             <div class="btn-container clearfix">

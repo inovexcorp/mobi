@@ -27,34 +27,32 @@
         .module('objectSelect', ['ontologyManager', 'responseObj', 'settingsManager', 'stateManager'])
         .directive('objectSelect', objectSelect);
 
-        objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService', 'stateManagerService'];
+        objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService', 'stateManagerService', 'prefixes'];
 
-        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, stateManagerService) {
+        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, stateManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 scope: {
-                    changeEvent: '&',
                     displayText: '=',
                     selectList: '=',
                     mutedText: '=',
                     isDisabledWhen: '='
                 },
                 bindToController: {
-                    bindModel: '=ngModel',
-                    selectedId: '=',
-                    ontologyId: '@',
-                    matonto: '='
+                    bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: ['prefixes', function(prefixes) {
+                controller: function() {
                     var dvm = this;
 
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyIri', dvm.ontologyId);
+                        return _.get(item, 'ontologyIri', dvm.sm.ontology['@id']);
                     }
 
                     dvm.getItemIri = function(item) {
@@ -86,17 +84,17 @@
                         var result;
 
                         if(dvm.isBlankNode(id)) {
-                            var propertyIRI = _.get(dvm.matonto.propertyExpressions, id);
-                            var classIRI = _.get(dvm.matonto.classExpressions, id);
-                            var unionOfIRI = _.get(dvm.matonto.unionOfs, id);
-                            var intersectionOfIRI = _.get(dvm.matonto.intersectionOfs, id);
+                            var propertyIRI = _.get(dvm.sm.ontology.matonto.propertyExpressions, id);
+                            var classIRI = _.get(dvm.sm.ontology.matonto.classExpressions, id);
+                            var unionOfIRI = _.get(dvm.sm.ontology.matonto.unionOfs, id);
+                            var intersectionOfIRI = _.get(dvm.sm.ontology.matonto.intersectionOfs, id);
 
                             result = propertyIRI || classIRI || unionOfIRI || intersectionOfIRI || id;
                         }
 
                         return result;
                     }
-                }]
+                }
             }
         }
 })();
