@@ -45,9 +45,9 @@
           <i class="fa fa-upload fa-fw"></i>
       </left-nav-item>
 
-      <left-nav-item on-click="vm.showCreateOntologyOverlay = true"
+      <left-nav-item on-click="vm.sm.showCreateOntologyOverlay = true"
                      nav-title="Create Ontology"
-                     is-active-when="vm.showCreateOntologyOverlay">
+                     is-active-when="vm.sm.showCreateOntologyOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">O</span>
               <i class="fa fa-plus"></i>
@@ -212,10 +212,7 @@
 
                 <create-annotation-overlay ng-if="vm.sm.showCreateAnnotationOverlay"></create-annotation-overlay>
 
-                <create-ontology-overlay ng-if="vm.showCreateOntologyOverlay"
-                                         on-create="vm.createOntology(ontologyIri, label, description)"
-                                         on-cancel="vm.showCreateOntologyOverlay = false; vm.createOntologyError = ''"
-                                         create-ontology-error="vm.createOntologyError"></create-ontology-overlay>
+                <create-ontology-overlay ng-if="vm.sm.showCreateOntologyOverlay"></create-ontology-overlay>
 
                 <create-class-overlay ng-if="vm.sm.showCreateClassOverlay"></create-class-overlay>
 

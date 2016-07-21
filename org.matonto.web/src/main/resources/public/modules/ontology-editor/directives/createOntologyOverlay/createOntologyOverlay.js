@@ -24,22 +24,20 @@
     'use strict';
 
     angular
-        .module('createOntologyOverlay', ['camelCase'])
+        .module('createOntologyOverlay', ['camelCase', 'ontologyManager', 'stateManager'])
         .directive('createOntologyOverlay', createOntologyOverlay);
 
-        function createOntologyOverlay() {
+        createOntologyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService']
+
+        function createOntologyOverlay($filter, REGEX, ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createOntologyOverlay/createOntologyOverlay.html',
-                scope: {
-                    onCreate: '&',
-                    onCancel: '&',
-                    createOntologyError: '='
-                },
                 controllerAs: 'dvm',
-                controller: ['$filter', 'REGEX', function($filter, REGEX) {
+                controller: function() {
                     var dvm = this;
+
                     var date = new Date();
                     var prefix = 'https://matonto.org/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear() + '/';
 
@@ -47,12 +45,26 @@
                     dvm.iriHasChanged = false;
                     dvm.iri = prefix;
 
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+
                     dvm.nameChanged = function() {
                         if(!dvm.iriHasChanged) {
                             dvm.iri = prefix + $filter('camelCase')(dvm.name, 'class');
                         }
                     }
-                }]
+
+                    dvm.create = function(iri, label, description) {
+                        dvm.om.createOntology(iri, label, description)
+                            .then(function(response) {
+                                dvm.error = '';
+                                dvm.sm.showCreateOntologyOverlay = false;
+                                dvm.sm.setStateToNew(dvm.sm.currentState, dvm.om.getList(), 'ontology');
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
+                            });
+                    }
+                }
             }
         }
 })();
