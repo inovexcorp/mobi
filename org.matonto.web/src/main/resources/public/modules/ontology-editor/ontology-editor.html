@@ -39,9 +39,9 @@
           <i class="fa fa-folder-open fa-fw"></i>
       </left-nav-item>
 
-      <left-nav-item on-click="vm.showUploadOverlay = true"
+      <left-nav-item on-click="vm.sm.showUploadOverlay = true"
                      nav-title="Upload Ontology"
-                     is-active-when="vm.showUploadOverlay">
+                     is-active-when="vm.sm.showUploadOverlay">
           <i class="fa fa-upload fa-fw"></i>
       </left-nav-item>
 
@@ -170,7 +170,7 @@
                     <pre class="tab">{{vm.sm.selected | json}}</pre>
                 </div>
 
-                <ontology-upload-overlay ng-if="vm.showUploadOverlay"></ontology-upload-overlay>
+                <ontology-upload-overlay ng-if="vm.sm.showUploadOverlay"></ontology-upload-overlay>
 
                 <annotation-overlay ng-if="vm.sm.showAnnotationOverlay"></annotation-overlay>
 

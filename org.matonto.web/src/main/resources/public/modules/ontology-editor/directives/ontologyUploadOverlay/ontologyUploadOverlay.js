@@ -24,14 +24,34 @@
     'use strict';
 
     angular
-        .module('ontologyUploadOverlay', [])
+        .module('ontologyUploadOverlay', ['ontologyManager', 'stateManager'])
         .directive('ontologyUploadOverlay', ontologyUploadOverlay);
 
-        function ontologyUploadOverlay() {
+        ontologyUploadOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];
+
+        function ontologyUploadOverlay(ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/ontologyUploadOverlay/ontologyUploadOverlay.html'
+                templateUrl: 'modules/ontology-editor/directives/ontologyUploadOverlay/ontologyUploadOverlay.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
+
+                    dvm.upload = function(file) {
+                        dvm.om.uploadThenGet(file)
+                            .then(function(response) {
+                                dvm.sm.setTreeTab('everything');
+                                dvm.sm.selectItem('ontology-editor', dvm.om.getList().length - 1);
+                                dvm.sm.showUploadOverlay = false;
+                            }, function(response) {
+                                dvm.error = response.statusText;
+                            });
+                    }
+                }
             }
         }
 })();
