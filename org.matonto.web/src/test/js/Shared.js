@@ -156,6 +156,7 @@ function mockOntologyManager() {
                 return $q.when({});
             });
             this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
+            this.download = jasmine.createSpy('download');
         });
     });
 }
@@ -374,6 +375,7 @@ function mockStateManager() {
             this.states = {};
             this.currentState = {};
             this.ontology = {
+                '@id': 'id',
                 matonto: {
                     jsAnnotations: [{}]
                 }

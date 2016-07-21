@@ -176,12 +176,6 @@
             vm.downloadFileName = '';
         }
 
-        vm.openDownloadOverlay = function() {
-            vm.downloadFileName = ontologyManagerService.getBeautifulIRI(angular.copy(vm.ontology['@id'])).replace(' ', '_');
-            vm.downloadSerialization = '';
-            vm.showDownloadOverlay = true;
-        }
-
         /* Prefix (Context) Management */
         vm.editPrefix = function(edit, old, index) {
             prefixManagerService.editPrefix(edit, old, index, vm.selected);

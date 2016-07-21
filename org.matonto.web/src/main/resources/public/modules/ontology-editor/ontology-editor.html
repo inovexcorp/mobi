@@ -86,10 +86,10 @@
           </span>
       </left-nav-item>
 
-      <left-nav-item on-click="vm.openDownloadOverlay()"
+      <left-nav-item on-click="vm.sm.showDownloadOverlay = true"
                      nav-title="Download Ontology"
                      is-disabled-when="vm.sm.currentState.oi === undefined"
-                     is-active-when="vm.showDeleteConfirmation">
+                     is-active-when="vm.sm.showDownloadOverlay">
           <i class="fa fa-download fa-fw"></i>
       </left-nav-item>
 
@@ -174,7 +174,7 @@
 
                 <annotation-overlay ng-if="vm.sm.showAnnotationOverlay"></annotation-overlay>
 
-                <ontology-download-overlay ng-if="vm.showDownloadOverlay"></ontology-download-overlay>
+                <ontology-download-overlay ng-if="vm.sm.showDownloadOverlay"></ontology-download-overlay>
 
                 <confirmation-overlay ng-if="vm.showDeleteConfirmation"
                                       header-text="'Delete Ontology'"
