@@ -42,6 +42,9 @@
                 }
             }
 
+            self.ontology = {};
+            self.selected = {};
+
             self.states = {
                 current: 'everything',
                 everything: {
@@ -127,6 +130,7 @@
                     editor = 'property-editor';
                 }
                 self.setState(editor, oi, ci, pi);
+                setVariables(oi);
                 return oi;
             }
 

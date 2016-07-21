@@ -56,10 +56,10 @@
 
       <li class="separator"></li>
 
-      <left-nav-item on-click="vm.showCreateClassOverlay = true"
+      <left-nav-item on-click="vm.sm.showCreateClassOverlay = true"
                      nav-title="Create Class"
                      is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'class')"
-                     is-active-when="vm.showCreateClassOverlay">
+                     is-active-when="vm.sm.showCreateClassOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">C</span>
               <i class="fa fa-plus"></i>
@@ -217,13 +217,7 @@
                                          on-cancel="vm.showCreateOntologyOverlay = false; vm.createOntologyError = ''"
                                          create-ontology-error="vm.createOntologyError"></create-ontology-overlay>
 
-                <create-class-overlay ng-if="vm.showCreateClassOverlay"
-                                      on-create="vm.createClass(classIri, label, description)"
-                                      on-cancel="vm.showCreateClassOverlay = false; vm.createClassError = ''"
-                                      create-class-error="vm.createClassError"
-                                      show-iri-overlay="vm.showIriOverlay"
-                                      iri-begin="vm.ontology.matonto.iriBegin"
-                                      iri-then="vm.ontology.matonto.iriThen"></create-class-overlay>
+                <create-class-overlay ng-if="vm.sm.showCreateClassOverlay"></create-class-overlay>
 
                 <create-property-overlay ng-if="vm.showCreatePropertyOverlay"
                                          on-create="vm.createProperty(propertyIri, label, type, range, domain, description)"

@@ -146,6 +146,9 @@ function mockOntologyManager() {
                     jsAnnotations: [{}]
                 }
             });
+            this.createClass = jasmine.createSpy('createClass').and.callFake(function(ontology, classIri, label, description) {
+                return classIri ? $q.when({}) : $q.reject('It all went wrong');
+            });
         });
     });
 }
@@ -368,6 +371,7 @@ function mockStateManager() {
                     jsAnnotations: [{}]
                 }
             };
+            this.selected = {};
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');

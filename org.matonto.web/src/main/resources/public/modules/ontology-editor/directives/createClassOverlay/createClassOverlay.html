@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div ng-hide="showIriOverlay" class="overlay">
+<div class="overlay">
     <div class="content">
         <!-- section header -->
         <h6>Create New OWL Class</h6>
 
         <!-- error -->
-        <error-display ng-if="createClassError">{{createClassError}}</error-display>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
 
         <!-- static iri -->
         <static-iri iri="dvm.iri"
@@ -34,7 +34,7 @@
                     ontology-iri-begin="dvm.iriBegin"
                     ontology-iri-then="dvm.iriThen"></static-iri>
 
-        <form name="dvm.createClassForm" class="clearfix" novalidate autocomplete="off">
+        <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
             <!-- name -->
             <div class="form-group">
                 <custom-label muted-text="'*Required'">Name</custom-label>
@@ -46,10 +46,10 @@
 
             <!-- create class buttons -->
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="dvm.createClassForm.$invalid"
-                               on-click="onCreate({classIri: dvm.iri, label: dvm.name, description: dvm.description})">Create</custom-button>
+                <custom-button is-disabled-when="dvm.form.$invalid"
+                               on-click="dvm.create(dvm.iri, dvm.name, dvm.description)">Create</custom-button>
 
-                <custom-button on-click="onCancel()" type="'secondary'">Cancel</custom-button>
+                <custom-button on-click="dvm.sm.showCreateClassOverlay = false;" type="'secondary'">Cancel</custom-button>
             </div>
         </form>
     </div>

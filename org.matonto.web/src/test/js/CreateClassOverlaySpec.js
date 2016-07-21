@@ -23,7 +23,8 @@
 describe('Create Class Overlay directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        ontologyManagerSvc;
 
     mockPrefixes();
     injectRegexConstant();
@@ -32,66 +33,20 @@ describe('Create Class Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('createClassOverlay');
+        mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
     });
 
     beforeEach(function() {
-        scope.onCreate = jasmine.createSpy('onCreate');
-        scope.onCancel = jasmine.createSpy('onCancel');
-        scope.createClassError = 'test';
-        scope.showIriOverlay = false;
-        scope.iriBegin = 'begin';
-        scope.iriThen = 'then';
-
-        element = $compile(angular.element('<create-class-overlay on-create="onCreate()" on-cancel="onCancel()" create-class-error="createClassError" show-iri-overlay="showIriOverlay" iri-begin="iriBegin" iri-then="iriThen"></create-class-overlay>'))(scope);
+        element = $compile(angular.element('<create-class-overlay></create-class-overlay>'))(scope);
         scope.$digest();
-    });
-
-    describe('in isolated scope', function() {
-        var isolatedScope;
-
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
-        it('createClassError should be two way bound', function() {
-            isolatedScope.createClassError = 'new';
-            scope.$digest();
-            expect(scope.createClassError).toEqual('new');
-        });
-        it('showIriOverlay should be two way bound', function() {
-            isolatedScope.showIriOverlay = true;
-            scope.$digest();
-            expect(scope.showIriOverlay).toEqual(true);
-        });
-        it('onCreate should be called in parent scope', function() {
-            isolatedScope.onCreate();
-            expect(scope.onCreate).toHaveBeenCalled();
-        });
-        it('onCancel should be called in parent scope', function() {
-            isolatedScope.onCancel();
-            expect(scope.onCancel).toHaveBeenCalled();
-        });
-    });
-    describe('controller bound variables', function() {
-        var controller;
-
-        beforeEach(function() {
-            controller = element.controller('createClassOverlay');
-        });
-        it('iriBegin should be two way bound', function() {
-            controller.iriBegin = 'new';
-            scope.$digest();
-            expect(scope.iriBegin).toBe('new');
-        });
-        it('iriThen should be two way bound', function() {
-            controller.iriThen = 'new';
-            scope.$digest();
-            expect(scope.iriThen).toBe('new');
-        });
     });
     describe('replaces the element with the correct html', function() {
         it('for a DIV', function() {
@@ -119,14 +74,15 @@ describe('Create Class Overlay directive', function() {
         beforeEach(function() {
             controller = element.controller('createClassOverlay');
         });
-        describe('nameChanged',function() {
+        describe('nameChanged', function() {
             beforeEach(function() {
                 controller.name = 'Name';
+                controller.prefix = 'start';
             });
             it('changes iri if iriHasChanged is false', function() {
                 controller.iriHasChanged = false;
                 controller.nameChanged();
-                expect(controller.iri).toEqual(controller.iriBegin + controller.iriThen + controller.name);
+                expect(controller.iri).toEqual(controller.prefix + controller.name);
             });
             it('does not change iri if iriHasChanged is true', function() {
                 controller.iriHasChanged = true;
@@ -138,6 +94,10 @@ describe('Create Class Overlay directive', function() {
         it('onEdit changes iri based on the params', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.iri).toBe('begin' + 'then' + 'end');
+        });
+        it('create calls the correct manager function', function() {
+            controller.create('class-iri', 'label', 'description');
+            expect(ontologyManagerSvc.createClass).toHaveBeenCalledWith(stateManagerSvc.ontology, 'class-iri', 'label', 'description');
         });
     });
 });
