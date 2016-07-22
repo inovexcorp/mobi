@@ -53,7 +53,7 @@ describe('Ontology Select Overlay directive', function() {
 
     describe('should intialize with the correct values', function() {
         it('using opened and closed ontologies', function() {
-            ontologyManagerSvc.getList.and.returnValue([{'@id': 'open'}]);
+            ontologyManagerSvc.getList.and.returnValue([{matonto: {id: 'open'}}]);
             ontologyManagerSvc.getOntologyIds.and.returnValue(['closed']);
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
@@ -73,7 +73,7 @@ describe('Ontology Select Overlay directive', function() {
         });
         it('if a mapping has already been set', function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            var sourceOntology = {'@id': ''};
+            var sourceOntology = {matonto: {id: ''}};
             mappingManagerSvc.sourceOntologies = [sourceOntology];
             mappingManagerSvc.getSourceOntology.and.returnValue(sourceOntology);
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
@@ -81,13 +81,13 @@ describe('Ontology Select Overlay directive', function() {
             var controller = element.controller('ontologySelectOverlay');
             expect(controller.ontologyIds.length).toBe(1);
             expect(controller.selectedOntology).toEqual(sourceOntology);
-            expect(controller.selectedOntologyId).toBe(sourceOntology['@id']);
+            expect(controller.selectedOntologyId).toBe(sourceOntology.matonto.id);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            this.sourceOntology = {'@id': ''};
+            this.sourceOntology = {matonto: {id: ''}};
             mappingManagerSvc.sourceOntologies = [this.sourceOntology];
             mappingManagerSvc.getSourceOntology.and.returnValue(this.sourceOntology);
             this.element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
@@ -106,14 +106,14 @@ describe('Ontology Select Overlay directive', function() {
             scope.$digest();
             expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith('test');
             expect(typeof controller.selectedOntology).toBe('object');
-            expect(controller.selectedOntology['@id']).toBe('test');
+            expect(controller.selectedOntology.matonto.id).toBe('test');
 
             ontologyManagerSvc.getThenRestructure.calls.reset();
             controller.getOntology('test');
             scope.$digest();
             expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
             expect(typeof controller.selectedOntology).toBe('object');
-            expect(controller.selectedOntology['@id']).toBe('test');
+            expect(controller.selectedOntology.matonto.id).toBe('test');
         });
         it('should get the name of the passed ontology', function() {
             var controller = this.element.controller('ontologySelectOverlay');
@@ -150,8 +150,8 @@ describe('Ontology Select Overlay directive', function() {
             expect(mappingManagerSvc.sourceOntologies).toEqual(sourceOntologies);
             expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
 
-            controller.selectedOntology = {'@id': 'test'};
-            controller.selectedOntologyId = controller.selectedOntology['@id'];
+            controller.selectedOntology = {matonto: {id: 'test'}};
+            controller.selectedOntologyId = controller.selectedOntology.matonto.id;
             controller.continue();
             expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
             expect(mapperStateSvc.getCachedSourceOntologyId).toHaveBeenCalled();

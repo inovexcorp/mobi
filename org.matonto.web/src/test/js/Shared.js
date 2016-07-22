@@ -121,7 +121,7 @@ function mockOntologyManager() {
             });
             this.getOntologyIds = jasmine.createSpy('getOntologyIds').and.returnValue([]);
             this.getThenRestructure = jasmine.createSpy('getThenRestructure').and.callFake(function(ontologyId) {
-                return ontologyId ? $q.when({'@id': ontologyId}) : $q.reject('Something went wrong');
+                return ontologyId ? $q.when({matonto: {id: ontologyId}}) : $q.reject('Something went wrong');
             });
             this.findOntologyWithClass = jasmine.createSpy('findOntologyWithClass').and.returnValue({});
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.callFake(function(ontologyId) {

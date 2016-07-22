@@ -52,7 +52,7 @@
                        muted-text="vm.rdfs + 'subClassOf'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"
-                       ontology-id="{{vm.ontology['@id']}}"
+                       ontology-id="{{vm.ontology.matonto.id}}"
                        matonto="vm.ontology.matonto"></object-select>
 
         <!-- owl:disjointWith -->
@@ -62,7 +62,7 @@
                        muted-text="vm.owl + 'disjointWith'"
                        change-event="vm.entityChanged()"
                        select-list="vm.ontology.matonto.subClasses"
-                       ontology-id="{{vm.ontology['@id']}}"
+                       ontology-id="{{vm.ontology.matonto.id}}"
                        matonto="vm.ontology.matonto"></object-select>
     </div>
 </form>

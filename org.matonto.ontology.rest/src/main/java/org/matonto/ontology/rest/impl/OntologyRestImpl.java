@@ -241,18 +241,19 @@ public class OntologyRestImpl implements OntologyRest {
         throwErrorIfMissingParam(resourceIdStr, "resourceIdStr is missing");
         throwErrorIfMissingParam(resourceJson, "resourceJson is missing");
 
-        boolean updated;
+        String ontologyId;
         try {
             Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
             Resource changedResource = values.getIriOrBnode(resourceIdStr);
-            updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
+            ontologyId = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         JSONObject json = new JSONObject();
-        json.put("updated", updated);
+        json.put("updated", true);
+        json.put("id", ontologyId);
 
         return Response.status(200).entity(json.toString()).build();
     }

@@ -181,14 +181,14 @@
                                       confirm-click="vm.deleteEntity()"
                                       cancel-click="vm.showDeleteConfirmation = false"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong>?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id'] || vm.selected.matonto.id}}</strong>?</confirmation-overlay>
 
                 <confirmation-overlay ng-if="vm.showCloseOverlay"
                                       header-text="'Close Overlay'"
                                       confirm-click="vm.closeOntology()"
                                       cancel-click="vm.showCloseOverlay = false"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology.matonto.id}}</strong> from your workspace?</confirmation-overlay>
 
                 <confirmation-overlay ng-if="vm.showRemoveAnnotationOverlay"
                                       header-text="'Remove Annotation'"
@@ -206,7 +206,7 @@
                                       confirm-click="vm.save()"
                                       cancel-click="vm.showSaveOverlay = false"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.ontology['@id']}}</strong>?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.ontology.matonto.id}}</strong>?</confirmation-overlay>
 
                 <ontology-open-overlay ng-if="vm.showOpenOverlay"></ontology-open-overlay>
 
@@ -235,7 +235,7 @@
                                          property-types="vm.propertyTypes"
                                          sub-classes="vm.ontology.matonto.subClasses"
                                          property-range="vm.ontology.matonto.dataPropertyRange"
-                                         ontology-id="{{vm.ontology['@id']}}"></create-property-overlay>
+                                         ontology-id="{{vm.ontology.matonto.id}}"></create-property-overlay>
             </div>
         </section>
     </div>
