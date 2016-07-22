@@ -66,15 +66,6 @@
                 });
         }
 
-        vm.getPreview = function() {
-            ontologyManagerService.getPreview(vm.sm.ontology['@id'], vm.serialization)
-                .then(function(response) {
-                    vm.preview = response;
-                }, function(response) {
-                    vm.preview = response;
-                });
-        }
-
         vm.closeOntology = function() {
             ontologyManagerService.closeOntology(vm.sm.currentState.oi, vm.sm.ontology['@id']);
             stateManagerService.clearState(vm.sm.currentState.oi);
@@ -85,9 +76,9 @@
 
         /* Annotation Management */
         vm.removeAnnotation = function() {
-            annotationManagerService.remove(vm.sm.selected, vm.key, vm.index);
+            annotationManagerService.remove(vm.sm.selected, vm.sm.key, vm.sm.index);
             vm.entityChanged();
-            vm.showRemoveAnnotationOverlay = false;
+            vm.sm.showRemoveAnnotationOverlay = false;
         }
     }
 })();

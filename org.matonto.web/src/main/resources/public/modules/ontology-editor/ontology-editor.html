@@ -193,18 +193,18 @@
                 <confirmation-overlay ng-if="vm.sm.showRemoveAnnotationOverlay"
                                       header-text="'Remove Annotation'"
                                       confirm-click="vm.removeAnnotation()"
-                                      cancel-click="vm.showRemoveAnnotationOverlay = false"
+                                      cancel-click="vm.sm.showRemoveAnnotationOverlay = false"
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">
-                    <p>Are you sure you want to remove annotation:<br><strong>{{vm.key}}</strong></p>
-                    <p>with value:<br><strong>{{vm.sm.selected[vm.key][vm.index]['@value'] || vm.sm.selected[vm.key][0]['@id']}}</strong></p>
+                    <p>Are you sure you want to remove annotation:<br><strong>{{vm.sm.key}}</strong></p>
+                    <p>with value:<br><strong>{{vm.sm.selected[vm.sm.key][vm.sm.index]['@value'] || vm.sm.selected[vm.sm.key][0]['@id']}}</strong></p>
                     <p>from:<br><strong>{{vm.sm.selected['@id']}}</strong>?</p>
                 </confirmation-overlay>
 
-                <confirmation-overlay ng-if="vm.showSaveOverlay"
+                <confirmation-overlay ng-if="vm.sm.showSaveOverlay"
                                       header-text="'Save Ontology Changes'"
                                       confirm-click="vm.save()"
-                                      cancel-click="vm.showSaveOverlay = false"
+                                      cancel-click="vm.sm.showSaveOverlay = false"
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.sm.ontology['@id']}}</strong>?</confirmation-overlay>
 
@@ -220,6 +220,4 @@
             </div>
         </section>
     </div>
-    <pre>{{vm.sm.ontology.matonto.subClasses | json}}</pre>
-    <pre>{{vm.sm.ontology | removeMatonto | json}}</pre>
 </div>

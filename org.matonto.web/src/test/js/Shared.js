@@ -147,18 +147,19 @@ function mockOntologyManager() {
                 }
             });
             this.createClass = jasmine.createSpy('createClass').and.callFake(function(ontology, classIri, label, description) {
-                return $q.when({});
+                return $q.resolve({});
             });
             this.createOntology = jasmine.createSpy('createOntology').and.callFake(function(ontologyIri, label, description) {
-                return $q.when({});
+                return $q.resolve({});
             });
             this.createProperty = jasmine.createSpy('createProperty').and.callFake(function(ontology, propertyIri, label, type, range, domain, description) {
-                return $q.when({});
+                return $q.resolve({});
             });
             this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
             this.download = jasmine.createSpy('download');
             this.openOntology = jasmine.createSpy('openOntology').and.returnValue($q.resolve({}));
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve({}));
+            this.getPreview = jasmine.createSpy('getPreview').and.returnValue($q.resolve({}));
         });
     });
 }
@@ -382,7 +383,9 @@ function mockStateManager() {
                     jsAnnotations: [{}]
                 }
             };
-            this.selected = {};
+            this.selected = {
+                '@id': 'id'
+            };
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
