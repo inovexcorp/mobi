@@ -28,7 +28,7 @@
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'everythingTree', 'classTree',
         'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
         'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect',
-        'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
+        'ontologyOpenOverlay', 'ngMessages', 'createAnnotationOverlay', 'createOntologyOverlay',
         'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
         .controller('OntologyEditorController', OntologyEditorController);
 
