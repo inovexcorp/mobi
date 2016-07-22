@@ -24,10 +24,12 @@
     'use strict';
 
     angular
-        .module('staticIri', [])
+        .module('staticIri', ['stateManager'])
         .directive('staticIri', staticIri);
 
-        function staticIri() {
+        staticIri.$inject = ['$filter', 'REGEX', 'stateManagerService'];
+
+        function staticIri($filter, REGEX, stateManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/staticIri/staticIri.html',
@@ -35,14 +37,13 @@
                     onEdit: '&'
                 },
                 bindToController: {
-                    iri: '=',
-                    ontologyIriBegin: '=',
-                    ontologyIriThen: '='
+                    iri: '='
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', '$filter', 'REGEX', function($scope, $filter, REGEX) {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
 
+                    dvm.sm = stateManagerService;
                     dvm.refresh = {};
                     dvm.namespacePattern = REGEX.IRI;
                     dvm.localNamePattern = REGEX.LOCALNAME;
@@ -61,9 +62,9 @@
                     }
 
                     dvm.afterEdit = function() {
-                        dvm.ontologyIriBegin = angular.copy(dvm.iriBegin);
-                        dvm.ontologyIriThen = angular.copy(dvm.iriThen);
-                        dvm.showIriOverlay = false;
+                        dvm.sm.ontology.matonto.iriBegin = angular.copy(dvm.iriBegin);
+                        dvm.sm.ontology.matonto.iriThen = angular.copy(dvm.iriThen);
+                        dvm.sm.showIriOverlay = false;
                     }
 
                     $scope.$watch('dvm.iri', function() {

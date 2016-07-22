@@ -41,6 +41,10 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.prefixes = prefixes;
+
+                    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
+                        dvm.om.editIRI(iriBegin, iriThen, iriEnd, dvm.sm.selected, dvm.sm.ontology);
+                    }
                 }
             }
         }

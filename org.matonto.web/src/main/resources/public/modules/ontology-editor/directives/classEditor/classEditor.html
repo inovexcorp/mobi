@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<form name="dvm.classForm" class="clearfix" novalidate autocomplete="off">
+<div class="clearfix">
     <!-- tab buttons -->
     <tab-button-container>
         <tab-button is-active="dvm.sm.currentState.editorTab === 'basic'"
@@ -36,9 +36,7 @@
 
         <!-- static iri -->
         <static-iri iri="dvm.sm.selected['@id']"
-                    on-edit="dvm.om.editIRI(iriBegin, iriThen, iriEnd, selected, ontology)"
-                    ontology-iri-begin="dvm.sm.ontology.matonto.iriBegin"
-                    ontology-iri-then="dvm.sm.ontology.matonto.iriThen"></static-iri>
+                    on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
 
         <annotation-tab></annotation-tab>
     </div>
@@ -57,4 +55,4 @@
                        muted-text="dvm.prefixes.owl + 'disjointWith'"
                        select-list="dvm.sm.ontology.matonto.subClasses"></object-select>
     </div>
-</form>
+</div>

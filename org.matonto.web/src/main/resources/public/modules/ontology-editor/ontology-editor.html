@@ -34,7 +34,7 @@
 
       <left-nav-item on-click="vm.sm.showOpenOverlay = true"
                      nav-title="Open Ontology"
-                     is-disabled-when="!vm.ontologyIds.length"
+                     is-disabled-when="!vm.sm.ontologyIds.length"
                      is-active-when="vm.sm.showOpenOverlay">
           <i class="fa fa-folder-open fa-fw"></i>
       </left-nav-item>
@@ -102,10 +102,10 @@
 
       <li class="separator"></li>
 
-      <left-nav-item on-click="vm.showDeleteConfirmation = true"
+      <left-nav-item on-click="vm.sm.showDeleteConfirmation = true"
                      nav-title="Delete Entity"
                      is-disabled-when="vm.sm.currentState.oi === undefined || vm.sm.currentState.tab === 'annotation'"
-                     is-active-when="vm.showDeleteConfirmation">
+                     is-active-when="vm.sm.showDeleteConfirmation">
           <i class="fa fa-trash-o fa-fw"></i>
       </left-nav-item>
     </left-nav>
@@ -176,19 +176,19 @@
 
                 <ontology-download-overlay ng-if="vm.sm.showDownloadOverlay"></ontology-download-overlay>
 
-                <confirmation-overlay ng-if="vm.showDeleteConfirmation"
+                <confirmation-overlay ng-if="vm.sm.showDeleteConfirmation"
                                       header-text="'Delete Ontology'"
                                       confirm-click="vm.deleteEntity()"
-                                      cancel-click="vm.showDeleteConfirmation = false"
+                                      cancel-click="vm.sm.showDeleteConfirmation = false"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.selected['@id']}}</strong>?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.sm.selected['@id']}}</strong>?</confirmation-overlay>
 
                 <confirmation-overlay ng-if="vm.showCloseOverlay"
                                       header-text="'Close Overlay'"
                                       confirm-click="vm.closeOntology()"
                                       cancel-click="vm.showCloseOverlay = false"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.sm.ontology['@id']}}</strong> from your workspace?</confirmation-overlay>
 
                 <confirmation-overlay ng-if="vm.sm.showRemoveAnnotationOverlay"
                                       header-text="'Remove Annotation'"
@@ -197,8 +197,8 @@
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">
                     <p>Are you sure you want to remove annotation:<br><strong>{{vm.key}}</strong></p>
-                    <p>with value:<br><strong>{{vm.selected[vm.key][vm.index]['@value'] || vm.selected[vm.key][0]['@id']}}</strong></p>
-                    <p>from:<br><strong>{{vm.selected['@id']}}</strong>?</p>
+                    <p>with value:<br><strong>{{vm.sm.selected[vm.key][vm.index]['@value'] || vm.sm.selected[vm.key][0]['@id']}}</strong></p>
+                    <p>from:<br><strong>{{vm.sm.selected['@id']}}</strong>?</p>
                 </confirmation-overlay>
 
                 <confirmation-overlay ng-if="vm.showSaveOverlay"
@@ -206,7 +206,7 @@
                                       confirm-click="vm.save()"
                                       cancel-click="vm.showSaveOverlay = false"
                                       confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.ontology['@id']}}</strong>?</confirmation-overlay>
+                                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.sm.ontology['@id']}}</strong>?</confirmation-overlay>
 
                 <ontology-open-overlay ng-if="vm.sm.showOpenOverlay"></ontology-open-overlay>
 

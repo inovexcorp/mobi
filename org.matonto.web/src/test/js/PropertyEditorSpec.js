@@ -45,8 +45,8 @@ describe('Property Editor directive', function() {
             element = $compile(angular.element('<property-editor></property-editor>'))(scope);
             scope.$digest();
         });
-        it('for a form', function() {
-            expect(element.prop('tagName')).toBe('FORM');
+        it('for a div', function() {
+            expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on tab button container', function() {
             var tabContainer = element.querySelectorAll('tab-button-container');

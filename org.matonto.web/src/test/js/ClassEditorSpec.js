@@ -46,8 +46,8 @@ describe('Class Editor directive', function() {
             element = $compile(angular.element('<class-editor></class-editor>'))(scope);
             scope.$digest();
         });
-        it('for a form', function() {
-            expect(element.prop('tagName')).toBe('FORM');
+        it('for a div', function() {
+            expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on tab button container', function() {
             var tabContainer = element.querySelectorAll('tab-button-container');

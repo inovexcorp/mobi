@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<form name="dvm.form" class="clearfix" novalidate autocomplete="off">
+<div class="clearfix">
     <!-- tab buttons -->
     <tab-button-container>
         <tab-button is-active="dvm.sm.currentState.editorTab === 'basic'"
@@ -36,9 +36,7 @@
 
         <!-- static iri -->
         <static-iri iri="dvm.sm.selected['@id']"
-                    on-edit="dvm.om.editIRI(iriBegin, iriThen, iriEnd, selected, ontology)"
-                    ontology-iri-begin="dvm.sm.ontology.matonto.iriBegin"
-                    ontology-iri-then="dvm.sm.ontology.matonto.iriThen"></static-iri>
+                    on-edit="dvm.editIRI(iriBegin, iriThen, iriEnd)"></static-iri>
 
         <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
         <string-select ng-model="dvm.sm.selected['@type']"
@@ -125,4 +123,4 @@
             <p class="text-warning">More axioms will become available when you select a type from the first tab.</p>
         </div>
     </div>
-</form>
+</div>

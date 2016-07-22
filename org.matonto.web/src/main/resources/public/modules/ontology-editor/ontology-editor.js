@@ -39,7 +39,7 @@
 
         vm.sm = stateManagerService;
         vm.ontologies = ontologyManagerService.getList();
-        vm.ontologyIds = ontologyManagerService.getOntologyIds();
+        vm.sm.ontologyIds = ontologyManagerService.getOntologyIds();
         vm.propertyTypes = ontologyManagerService.getPropertyTypes();
         vm.selected = ontologyManagerService.getObject(vm.sm.currentState);
         vm.sm.selected = vm.selected;
@@ -148,7 +148,7 @@
         vm.editIRI = function(iriBegin, iriThen, iriEnd) {
             vm.entityChanged();
             ontologyManagerService.editIRI(iriBegin, iriThen, iriEnd, vm.selected, vm.ontologies[vm.sm.currentState.oi]);
-            vm.showIriOverlay = false;
+            vm.sm.showIriOverlay = false;
         }
 
         vm.isObjectProperty = function() {
