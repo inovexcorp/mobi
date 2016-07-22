@@ -407,12 +407,12 @@ function mockResponseObj() {
 
 function mockAnnotationManager() {
     module(function($provide) {
-        $provide.service('annotationManagerService', function() {
+        $provide.service('annotationManagerService', function($q) {
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
             this.add = jasmine.createSpy('add');
             this.edit = jasmine.createSpy('edit');
-            this.create = jasmine.createSpy('create');
+            this.create = jasmine.createSpy('create').and.returnValue($q.resolve({}));
         });
     });
 }

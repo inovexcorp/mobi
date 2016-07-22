@@ -33,6 +33,7 @@ describe('String Select directive', function() {
     beforeEach(function() {
         module('templates');
         module('stringSelect');
+        mockOntologyManager();
 
         module(function($provide) {
             $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
@@ -101,12 +102,5 @@ describe('String Select directive', function() {
             var items = element.querySelectorAll('ui-select');
             expect(items.length).toBe(1);
         });
-    });
-    it('makes sure getItemNamespace calls splitIRI', function() {
-        scope.getItemNamespace = jasmine.createSpy('getItemNamespace');
-        scope.$digest();
-
-        var namespace = element.controller('stringSelect').getItemNamespace('test');
-        expect(namespace).toBe($filter('splitIRI')('test').begin);
     });
 });

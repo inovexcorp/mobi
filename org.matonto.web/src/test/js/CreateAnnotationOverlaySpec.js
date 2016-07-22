@@ -23,7 +23,10 @@
 describe('Create Annotation Overlay directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        controller,
+        stateManagerSvc,
+        annotationManagerSvc;
 
     injectRegexConstant();
     beforeEach(function() {
@@ -32,9 +35,11 @@ describe('Create Annotation Overlay directive', function() {
         mockAnnotationManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _annotationManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            annotationManagerSvc = _annotationManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
     });
 
@@ -89,7 +94,7 @@ describe('Create Annotation Overlay directive', function() {
             });
         });
         describe('and error-display', function() {
-            it('is visible when createAnnotationError is true', function() {
+            it('is visible when error is true', function() {
                 scope.dvm = {
                     error: true
                 }
@@ -97,7 +102,7 @@ describe('Create Annotation Overlay directive', function() {
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(1);
             });
-            it('is not visible when createAnnotationError is false', function() {
+            it('is not visible when error is false', function() {
                 scope.vm = {
                     createAnnotationError: false
                 }
@@ -105,6 +110,15 @@ describe('Create Annotation Overlay directive', function() {
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(0);
             });
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            controller = element.controller('createAnnotationOverlay');
+        });
+        it('create calls the correct manager function', function() {
+            controller.create('iri');
+            expect(annotationManagerSvc.create).toHaveBeenCalledWith(stateManagerSvc.ontology, 'iri');
         });
     });
 });

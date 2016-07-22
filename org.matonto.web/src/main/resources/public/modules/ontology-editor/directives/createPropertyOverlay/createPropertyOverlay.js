@@ -61,7 +61,7 @@
                     }
 
                     dvm.setRange = function() {
-                        var isObjectProperty = ontologyManagerService.isObjectProperty(dvm.type);
+                        var isObjectProperty = dvm.om.isObjectProperty(dvm.type);
                         if(isObjectProperty && !setAsObject) {
                             dvm.rangeList = dvm.sm.ontology.matonto.subClasses;
                             dvm.range = [];

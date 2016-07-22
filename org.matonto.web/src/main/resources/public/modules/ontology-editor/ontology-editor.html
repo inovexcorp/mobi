@@ -117,19 +117,19 @@
                 <!-- tab buttons -->
                 <tab-button-container>
                     <tab-button is-active="vm.sm.currentState.tab === 'everything'"
-                                on-click="vm.setTreeTab('everything')">Tree</tab-button>
+                                on-click="vm.sm.setTreeTab('everything')">Tree</tab-button>
 
                     <tab-button is-active="vm.sm.currentState.tab === 'class'"
-                                on-click="vm.setTreeTab('class')">Class</tab-button>
+                                on-click="vm.sm.setTreeTab('class')">Class</tab-button>
 
                     <tab-button is-active="vm.sm.currentState.tab === 'object'"
-                                on-click="vm.setTreeTab('object')">Object</tab-button>
+                                on-click="vm.sm.setTreeTab('object')">Object</tab-button>
 
                     <tab-button is-active="vm.sm.currentState.tab === 'datatype'"
-                                on-click="vm.setTreeTab('datatype')">Data</tab-button>
+                                on-click="vm.sm.setTreeTab('datatype')">Data</tab-button>
 
                     <tab-button is-active="vm.sm.currentState.tab === 'annotation'"
-                                on-click="vm.setTreeTab('annotation')">Annotation</tab-button>
+                                on-click="vm.sm.setTreeTab('annotation')">Annotation</tab-button>
                 </tab-button-container>
 
                 <everything-tree ng-if="vm.sm.currentState.tab === 'everything'"></everything-tree>
@@ -139,14 +139,14 @@
                 <property-tree ng-if="vm.sm.currentState.tab === 'object'"
                                header-text="Object Properties"
                                property-type="objectproperty"
-                               select-item="vm.selectItem(editor, oi, ci, pi)"
+                               select-item="vm.sm.selectItem(editor, oi, ci, pi)"
                                state="vm.sm.currentState"
                                ontologies="vm.ontologies"></property-tree>
 
                 <property-tree ng-if="vm.sm.currentState.tab === 'datatype'"
                                header-text="Data Properties"
                                property-type="datatypeproperty"
-                               select-item="vm.selectItem(editor, oi, ci, pi)"
+                               select-item="vm.sm.selectItem(editor, oi, ci, pi)"
                                state="vm.sm.currentState"
                                ontologies="vm.ontologies"></property-tree>
 
@@ -220,4 +220,6 @@
             </div>
         </section>
     </div>
+    <pre>{{vm.sm.ontology.matonto.subClasses | json}}</pre>
+    <pre>{{vm.sm.ontology | removeMatonto | json}}</pre>
 </div>

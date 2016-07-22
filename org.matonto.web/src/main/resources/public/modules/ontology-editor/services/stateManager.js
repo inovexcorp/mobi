@@ -79,6 +79,12 @@
             self.setTreeTab = function(tab) {
                 self.states.current = tab;
                 self.currentState = self.getState();
+                if(tab !== 'annotation') {
+                    self.selected = ontologyManagerService.getObject(self.currentState);
+                } else {
+                    self.selected = _.get(ontologyManagerService.getList(), '[' + self.currentState.oi + '].matonto.jsAnnotations[' + self.currentState.pi + ']');
+                }
+                self.ontology = ontologyManagerService.getOntology(self.currentState.oi);
             }
 
             self.setEditorTab = function(tab) {
@@ -152,5 +158,7 @@
                 self.setState(editor, oi, ci, pi);
                 setVariables(oi);
             }
+
+            setVariables(self.currentState.oi);
         }
 })();
