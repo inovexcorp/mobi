@@ -72,7 +72,7 @@
                     dvm.state = mapperStateService;
 
                     dvm.getOntologyId = function(classObj) {
-                        return _.get(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classObj['@id']), '@id', '');
+                        return _.get(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classObj['@id']), 'matonto.id', '');
                     }
                     dvm.getClasses = function() {
                         var classes = [];
