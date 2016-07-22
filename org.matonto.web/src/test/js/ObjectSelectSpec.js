@@ -115,7 +115,7 @@ describe('Object Select directive', function() {
         var controller;
 
         beforeEach(function() {
-            stateManagerSvc.ontology = {'@id': 'ontologyId'};
+            stateManagerSvc.ontology = {matonto:{id: 'ontologyId'}};
             controller = element.controller('objectSelect');
         });
         describe('getItemOntologyIri', function() {

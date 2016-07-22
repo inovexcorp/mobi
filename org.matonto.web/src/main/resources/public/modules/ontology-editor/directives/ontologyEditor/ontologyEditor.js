@@ -43,7 +43,7 @@
                     dvm.sm = stateManagerService;
 
                     dvm.getPreview = function(serialization) {
-                        dvm.om.getPreview(dvm.sm.ontology['@id'], serialization)
+                        dvm.om.getPreview(dvm.sm.ontology.matonto.id, serialization)
                             .then(function(response) {
                                 dvm.preview = response;
                             }, function(response) {

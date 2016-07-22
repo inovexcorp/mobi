@@ -32,19 +32,6 @@
         function stateManagerService(ontologyManagerService) {
             var self = this;
 
-            function setVariables(oi) {
-                if(oi === undefined) {
-                    self.selected = undefined;
-                    self.ontology = undefined;
-                } else {
-                    self.selected = ontologyManagerService.getObject(self.getState());
-                    self.ontology = ontologyManagerService.getOntology(oi);
-                }
-            }
-
-            self.ontology = {};
-            self.selected = {};
-
             self.states = {
                 current: 'everything',
                 everything: {
@@ -74,17 +61,32 @@
                 }
             }
 
+            self.om = ontologyManagerService;
+            self.ontology = {};
+            self.selected = {};
+            self.ontologyIds = self.om.getOntologyIds();
             self.currentState = self.states[self.states.current];
+
+
+            function setVariables(oi) {
+                if(oi === undefined) {
+                    self.selected = undefined;
+                    self.ontology = undefined;
+                } else {
+                    self.selected = self.om.getObject(self.getState());
+                    self.ontology = self.om.getOntology(oi);
+                }
+            }
 
             self.setTreeTab = function(tab) {
                 self.states.current = tab;
                 self.currentState = self.getState();
                 if(tab !== 'annotation') {
-                    self.selected = ontologyManagerService.getObject(self.currentState);
+                    self.selected = self.om.getObject(self.currentState);
                 } else {
-                    self.selected = _.get(ontologyManagerService.getList(), '[' + self.currentState.oi + '].matonto.jsAnnotations[' + self.currentState.pi + ']');
+                    self.selected = _.get(self.om.getList(), '[' + self.currentState.oi + '].matonto.jsAnnotations[' + self.currentState.pi + ']');
                 }
-                self.ontology = ontologyManagerService.getOntology(self.currentState.oi);
+                self.ontology = self.om.getOntology(self.currentState.oi);
             }
 
             self.setEditorTab = function(tab) {
@@ -98,7 +100,6 @@
 
             self.setState = function(editor, oi, ci, pi) {
                 var state = self.states[self.states.current];
-
                 if(editor !== state.editor) {
                     state.editorTab = 'basic';
                 }

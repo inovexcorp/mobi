@@ -620,7 +620,7 @@
              * @returns {Object} The source ontology of a mapping
              */
             self.getSourceOntology = function(mapping) {
-                return _.find(self.sourceOntologies, {'@id': self.getSourceOntologyId(mapping)});
+                return _.find(self.sourceOntologies, {matonto: {id: self.getSourceOntologyId(mapping)}});
             }
             /**
              * @ngdoc method

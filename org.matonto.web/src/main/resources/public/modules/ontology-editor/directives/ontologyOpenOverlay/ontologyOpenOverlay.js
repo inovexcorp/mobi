@@ -46,6 +46,7 @@
                         dvm.om.openOntology(ontologyId)
                             .then(function(response) {
                                 dvm.sm.setTreeTab('everything');
+                                dvm.sm.setEditorTab('basic');
                                 dvm.sm.selectItem('ontology-editor', dvm.om.getList().length - 1);
                                 dvm.sm.showOpenOverlay = false;
                             }, function(errorMessage) {

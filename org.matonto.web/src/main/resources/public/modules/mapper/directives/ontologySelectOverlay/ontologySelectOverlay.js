@@ -75,10 +75,10 @@
                         sourceOntology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
                         ontologyObjs = _.union(ontologyObjs, [sourceOntology]);
                     }
-                    dvm.ontologyIds = _.union(dvm.om.getOntologyIds(), _.map(ontologyObjs, '@id'));
+                    dvm.ontologyIds = _.union(dvm.om.getOntologyIds(), _.map(ontologyObjs, 'matonto.id'));
                     if (sourceOntology) {
                         dvm.selectedOntology = angular.copy(sourceOntology);
-                        dvm.selectedOntologyId = dvm.ontologyIds[dvm.ontologyIds.indexOf(dvm.selectedOntology['@id'])];
+                        dvm.selectedOntologyId = dvm.ontologyIds[dvm.ontologyIds.indexOf(dvm.selectedOntology.matonto.id)];
                     } else {
                         dvm.selectedOntology = undefined;
                         dvm.selectedOntologyId = '';
@@ -86,11 +86,11 @@
 
                     
                     dvm.isOpen = function(ontologyId) {
-                        return _.findIndex(ontologyObjs, {'@id': ontologyId}) >= 0;
+                        return _.findIndex(ontologyObjs, {matonto: {id: ontologyId}}) >= 0;
                     }
                     dvm.getOntology = function(ontologyId) {
                         var deferred = $q.defer();
-                        var ontology = _.find(ontologyObjs, {'@id': ontologyId});
+                        var ontology = _.find(ontologyObjs, {matonto: {id: ontologyId}});
                         if (!ontology) {
                             dvm.om.getThenRestructure(ontologyId).then(response => {
                                 ontologyObjs.push(response);
@@ -104,7 +104,7 @@
                         });
                     }
                     dvm.getName = function(ontologyId) {
-                        var ontology = _.find(ontologyObjs, {'@id': ontologyId});
+                        var ontology = _.find(ontologyObjs, {matonto: {id: ontologyId}});
                         if (ontology) {
                             return dvm.om.getEntityName(ontology);                            
                         } else {

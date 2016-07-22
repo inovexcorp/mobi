@@ -62,17 +62,37 @@ describe('Ontology Editor directive', function() {
                 stateManagerSvc.selected = {matonto: {createError: 'error'}};
                 scope.$digest();
 
-                var tabs = element.querySelectorAll('.tab');
-                expect(tabs.length).toBe(1);
+                    var tabs = element.querySelectorAll('.tab');
+                    expect(tabs.length).toBe(1);
 
-                var errorDisplay = element.querySelectorAll('error-display');
-                expect(errorDisplay.length).toBe(1);
+                    var errorDisplay = element.querySelectorAll('error-display');
+                    expect(errorDisplay.length).toBe(1);
 
-                var formGroup = element.querySelectorAll('.form-group');
-                expect(formGroup.length).toBe(1);
+                    var formGroup = element.querySelectorAll('.form-group');
+                    expect(formGroup.length).toBe(1);
 
-                var annotationTab = element.querySelectorAll('annotation-tab');
-                expect(annotationTab.length).toBe(1);
+                    var annotationTab = element.querySelectorAll('annotation-tab');
+                    expect(annotationTab.length).toBe(1);
+
+                    var typeMissing = element.querySelectorAll('.type-missing');
+                    expect(typeMissing.length).toBe(0);
+                });
+                it('when @type is missing', function() {
+                    var tabs = element.querySelectorAll('.tab');
+                    expect(tabs.length).toBe(1);
+
+                    var errorDisplay = element.querySelectorAll('error-display');
+                    expect(errorDisplay.length).toBe(0);
+
+                    var formGroup = element.querySelectorAll('.form-group');
+                    expect(formGroup.length).toBe(0);
+
+                    var annotationTab = element.querySelectorAll('annotation-tab');
+                    expect(annotationTab.length).toBe(0);
+
+                    var typeMissing = element.querySelectorAll('.type-missing');
+                    expect(typeMissing.length).toBe(1);
+                });
             });
             it('for preview', function() {
                 stateManagerSvc.currentState = {editorTab: 'preview'};
@@ -88,6 +108,7 @@ describe('Ontology Editor directive', function() {
         describe('and has-error class', function() {
             beforeEach(function() {
                 stateManagerSvc.currentState = {editorTab: 'basic'};
+                stateManagerSvc.selected = {'@type': ['type']};
                 scope.$digest();
             });
             it('is not there when selected["@id"] is valid', function() {
@@ -109,27 +130,15 @@ describe('Ontology Editor directive', function() {
         });
         describe('and error-display', function() {
             it('is visible when createError is true', function() {
-                stateManagerSvc.selected = {
-                    matonto: {
-                        createError: true
-                    }
-                };
-                stateManagerSvc.currentState = {
-                    editorTab: 'basic'
-                };
+                stateManagerSvc.selected = {matonto: {createError: true}};
+                stateManagerSvc.currentState = {editorTab: 'basic'};
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when createError is false', function() {
-                stateManagerSvc.selected = {
-                    matonto: {
-                        createError: false
-                    }
-                };
-                stateManagerSvc.currentState = {
-                    editorTab: 'basic'
-                };
+                stateManagerSvc.selected = {matonto: {createError: false}};
+                stateManagerSvc.currentState = {editorTab: 'basic'};
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(0);

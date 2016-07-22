@@ -42,7 +42,7 @@
 
         /* Ontology Management */
         vm.deleteEntity = function() {
-            ontologyManagerService.delete(vm.sm.ontology.matonto.originalId, vm.sm.selected.matonto.originalId, vm.sm.currentState)
+            ontologyManagerService.delete(vm.sm.ontology.matonto.id, vm.sm.selected.matonto.originalIri, vm.sm.currentState)
                 .then(function(response) {
                     vm.sm.showDeleteConfirmation = false;
                     if(response.selectOntology) {
@@ -67,11 +67,11 @@
         }
 
         vm.closeOntology = function() {
-            ontologyManagerService.closeOntology(vm.sm.currentState.oi, vm.sm.ontology['@id']);
+            ontologyManagerService.closeOntology(vm.sm.currentState.oi, vm.sm.ontology.matonto.id);
             stateManagerService.clearState(vm.sm.currentState.oi);
             vm.sm.selected = {};
             vm.sm.ontology = {};
-            vm.showCloseOverlay = false;
+            vm.sm.showCloseOverlay = false;
         }
 
         /* Annotation Management */

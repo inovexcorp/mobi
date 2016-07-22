@@ -52,7 +52,7 @@
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyIri', dvm.sm.ontology['@id']);
+                        return _.get(item, 'ontologyIri', _.get(dvm.sm.ontology, '@id', dvm.sm.ontology.matonto.id));
                     }
 
                     dvm.getItemIri = function(item) {

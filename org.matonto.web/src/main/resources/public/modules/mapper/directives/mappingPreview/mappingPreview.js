@@ -73,7 +73,7 @@
                         dvm.state.editMapping = true;
                         dvm.state.newMapping = false;
                         var ontologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
-                        var ontology = _.find(dvm.om.getList(), {'@id': ontologyId});
+                        var ontology = _.find(dvm.om.getList(), {matonto: {id: ontologyId}});
                         if (ontology) {
                             deferred.resolve(ontology);
                         } else {
@@ -83,7 +83,7 @@
                         }
                         deferred.promise.then(ontology => {
                             if (isValid(ontology)) {
-                                dvm.om.getImportedOntologies(ontology['@id']).then(imported => {
+                                dvm.om.getImportedOntologies(ontology.matonto.id).then(imported => {
                                     dvm.mm.sourceOntologies = _.concat(ontology, imported);
                                     dvm.state.step = dvm.state.fileUploadStep;
                                 });
@@ -94,7 +94,7 @@
                     }
                     dvm.ontologyExists = function() {
                         var objs = angular.copy(dvm.om.getList());
-                        var ids = _.union(dvm.om.getOntologyIds(), _.map(objs, '@id'));
+                        var ids = _.union(dvm.om.getOntologyIds(), _.map(objs, 'matonto.id'));
                         return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld));
                     }
                     dvm.getClassName = function(classMapping) {
