@@ -37,9 +37,9 @@ describe('Login controller', function() {
             $provide.service('loginManagerService', ['$q', function($q) {
                 this.login = jasmine.createSpy('login').and.callFake(function(isValid, username, password) {
                     if (isValid) {
-                        return $q.when(true);
+                        return $q.when();
                     } else {
-                        return $q.reject(false);
+                        return $q.reject('An error has occured');
                     }
                 });
             }]);
@@ -51,17 +51,31 @@ describe('Login controller', function() {
             $controller = _$controller_;
         });
     });
-    it('correctly validates a login combination', function() {
-        // Usually pass in $scope in the object in the second parameter, but since the
-        // controller uses the controllerAs syntax, we can access it directly
-        var controller = $controller('LoginController', {});
-        controller.form = {
-            username: '',
-            password: ''
-        };
-        controller.login(true);
-        scope.$digest();
-        expect(controller.showError).toBe(false);
+    describe('correctly validates a login combination', function() {
+        it('if valid', function() {
+            // Usually pass in $scope in the object in the second parameter, but since the
+            // controller uses the controllerAs syntax, we can access it directly
+            var controller = $controller('LoginController', {});
+            controller.form = {
+                username: '',
+                password: ''
+            };
+            controller.login(true);
+            scope.$digest();
+            expect(controller.errorMessage).toBeFalsy();
+        });
+        it('if invalid', function() {
+            // Usually pass in $scope in the object in the second parameter, but since the
+            // controller uses the controllerAs syntax, we can access it directly
+            var controller = $controller('LoginController', {});
+            controller.form = {
+                username: '',
+                password: ''
+            };
+            controller.login(false);
+            scope.$digest();
+            expect(controller.errorMessage).toBeTruthy();
+        });
     });
 
 });
