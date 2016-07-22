@@ -155,9 +155,10 @@ describe('Ontology Editor directive', function() {
             controller.getPreview('serialization');
             expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], 'serialization');
         });
-        it('setValidity calls the correct manager function', function() {
+        it('iriChanged calls the correct manager function and sets correct variable', function() {
             controller.setValidity(false);
             expect(stateManagerSvc.ontology.matonto.isValid).toBe(false);
+            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.ontology.matonto.id, stateManagerSvc.currentState);
         });
     });
 });

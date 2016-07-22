@@ -51,8 +51,9 @@
                             });
                     }
 
-                    dvm.setValidity = function(isValid) {
+                    dvm.iriChanged = function(isValid) {
                         dvm.sm.ontology.matonto.isValid = isValid;
+                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState);
                     }
                 }
             }
