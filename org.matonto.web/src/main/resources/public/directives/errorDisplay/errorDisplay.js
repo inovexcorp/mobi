@@ -32,7 +32,7 @@
                 restrict: 'E',
                 replace: true,
                 transclude: true,
-                templateUrl: 'modules/ontology-editor/directives/errorDisplay/errorDisplay.html'
+                templateUrl: 'directives/errorDisplay/errorDisplay.html'
             }
         }
 })();

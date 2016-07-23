@@ -52,6 +52,7 @@
             'leftNavItem',
             'confirmationOverlay',
             'pagination',
+            'errorDisplay',
             'settings',
             'ui.codemirror',
             'sparql'
