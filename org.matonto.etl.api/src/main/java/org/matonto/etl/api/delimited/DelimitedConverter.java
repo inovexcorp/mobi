@@ -31,7 +31,25 @@ import org.matonto.rdf.api.Model;
 import java.io.IOException;
 
 public interface DelimitedConverter {
+    /**
+     * Converts a delimited SV file to RDF using a mapping file. Column indexes for data
+     * mappings are zero-based. Returns the RDF data as a Model.
+     *
+     * @param config Conversion configuration for the SV file
+     * @return A Model of RDF data converted from delimited data
+     * @throws IOException Thrown if there is a problem reading the file given
+     * @throws MatOntoException Thrown if the file is not in a valid character set
+     */
     Model convert(SVConfig config) throws IOException, MatOntoException;
 
+    /**
+     * Converts a delimited Excel file to RDF using a mapping file. Column indexes for data
+     * mappings are zero-based. Returns the RDF data as a Model.
+     *
+     * @param config Conversion configuration for the Excel file
+     * @return A Model of RDF data converted from delimited data
+     * @throws IOException Thrown if there is a problem reading the file given
+     * @throws MatOntoException Thrown if the file is not in a valid Excel format
+     */
     Model convert(ExcelConfig config) throws IOException, MatOntoException;
 }

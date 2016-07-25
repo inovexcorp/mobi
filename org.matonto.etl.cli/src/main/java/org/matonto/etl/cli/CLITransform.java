@@ -43,6 +43,7 @@ import org.openrdf.rio.Rio;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Optional;
 
 @Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
@@ -57,12 +58,20 @@ public class CLITransform implements Action {
     String mappingFileLocation = null;
 
     @Option(name = "-o", aliases = "--outputFile",
-            description = "The output file to use. (Required if no repository given")
+            description = "The output file to use. (Required if no repository given)")
     String outputFile = null;
 
     @Option(name = "-r", aliases = "--repositoryID",
             description = "The repository to store the resulting triples. (Required if no output file given)")
     String repositoryID = null;
+
+    @Option(name = "-h", aliases = "--headers",
+            description = "Whether or not the file contains headers.")
+    boolean containsHeaders = false;
+
+    @Option(name = "-s", aliases = "--separator",
+            description = "The separator character for the delimited file if it is an SV.")
+    String separator = ",";
 
     private static final Logger LOGGER = Logger.getLogger(CLITransform.class);
 
@@ -106,15 +115,20 @@ public class CLITransform implements Action {
 
         try {
             String extension = FilenameUtils.getExtension(newFile.getName());
-            Model mapping = Values.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", RDFFormat.TURTLE));
+            Optional<RDFFormat> format = Rio.getParserFormatForFileName(mappingFile.getName());
+            if (!format.isPresent()) {
+                throw new Exception("Mapping file is not in a correct RDF format.");
+            }
+            Model mapping = Values.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
+            System.out.println("Converted mapping");
             Model model;
             if (extension.equals("xls") || extension.equals("xlsx")) {
                 ExcelConfig config = new ExcelConfig.Builder(new FileInputStream(newFile), mapping)
-                        .containsHeaders(true).build();
+                        .containsHeaders(containsHeaders).build();
                 model = converter.convert(config);
             } else {
                 SVConfig config = new SVConfig.Builder(new FileInputStream(newFile), mapping)
-                        .containsHeaders(true).separator((char) ',').build();
+                        .containsHeaders(containsHeaders).separator(separator.charAt(0)).build();
                 model = converter.convert(config);
             }
 
