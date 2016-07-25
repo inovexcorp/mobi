@@ -60,43 +60,8 @@
                     <h3>Annotation Preview (JSON-LD)</h3>
                     <pre class="tab">{{vm.sm.selected | json}}</pre>
                 </div>
-                <ontology-upload-overlay ng-if="vm.sm.showUploadOverlay"></ontology-upload-overlay>
-                <annotation-overlay ng-if="vm.sm.showAnnotationOverlay"></annotation-overlay>
-                <ontology-download-overlay ng-if="vm.sm.showDownloadOverlay"></ontology-download-overlay>
-                <confirmation-overlay ng-if="vm.sm.showDeleteConfirmation"
-                                      header-text="'Delete Ontology'"
-                                      confirm-click="vm.deleteEntity()"
-                                      cancel-click="vm.sm.showDeleteConfirmation = false"
-                                      confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.sm.selected['@id'] || vm.sm.selected.matonto.id}}</strong>?</confirmation-overlay>
-                <confirmation-overlay ng-if="vm.sm.showCloseOverlay"
-                                      header-text="'Close Overlay'"
-                                      confirm-click="vm.closeOntology()"
-                                      cancel-click="vm.sm.showCloseOverlay = false"
-                                      confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to close <strong>{{vm.sm.ontology['@id'] || vm.sm.ontology.matonto.id}}</strong> from your workspace?</confirmation-overlay>
-                <confirmation-overlay ng-if="vm.sm.showRemoveAnnotationOverlay"
-                                      header-text="'Remove Annotation'"
-                                      confirm-click="vm.removeAnnotation()"
-                                      cancel-click="vm.sm.showRemoveAnnotationOverlay = false"
-                                      confirm-text="'Yes'"
-                                      cancel-text="'No'">
-                    <p>Are you sure you want to remove annotation:<br><strong>{{vm.sm.key}}</strong></p>
-                    <p>with value:<br><strong>{{vm.sm.selected[vm.sm.key][vm.sm.index]['@value'] || vm.sm.selected[vm.sm.key][0]['@id']}}</strong></p>
-                    <p>from:<br><strong>{{vm.sm.selected['@id']}}</strong>?</p>
-                </confirmation-overlay>
-                <confirmation-overlay ng-if="vm.sm.showSaveOverlay"
-                                      header-text="'Save Ontology Changes'"
-                                      confirm-click="vm.save()"
-                                      cancel-click="vm.sm.showSaveOverlay = false"
-                                      confirm-text="'Yes'"
-                                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.sm.ontology['@id'] || vm.sm.ontology.matonto.id}}</strong>?</confirmation-overlay>
-                <ontology-open-overlay ng-if="vm.sm.showOpenOverlay"></ontology-open-overlay>
-                <create-annotation-overlay ng-if="vm.sm.showCreateAnnotationOverlay"></create-annotation-overlay>
-                <create-ontology-overlay ng-if="vm.sm.showCreateOntologyOverlay"></create-ontology-overlay>
-                <create-class-overlay ng-if="vm.sm.showCreateClassOverlay"></create-class-overlay>
-                <create-property-overlay ng-if="vm.sm.showCreatePropertyOverlay"></create-property-overlay>
             </div>
         </section>
     </div>
+    <ontology-overlays></ontology-overlays>
 </div>

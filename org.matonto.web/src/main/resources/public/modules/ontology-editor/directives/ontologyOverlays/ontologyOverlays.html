@@ -1,0 +1,58 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<ontology-upload-overlay ng-if="dvm.sm.showUploadOverlay"></ontology-upload-overlay>
+<annotation-overlay ng-if="dvm.sm.showAnnotationOverlay"></annotation-overlay>
+<ontology-download-overlay ng-if="dvm.sm.showDownloadOverlay"></ontology-download-overlay>
+<ontology-open-overlay ng-if="dvm.sm.showOpenOverlay"></ontology-open-overlay>
+<create-annotation-overlay ng-if="dvm.sm.showCreateAnnotationOverlay"></create-annotation-overlay>
+<create-ontology-overlay ng-if="dvm.sm.showCreateOntologyOverlay"></create-ontology-overlay>
+<create-class-overlay ng-if="dvm.sm.showCreateClassOverlay"></create-class-overlay>
+<create-property-overlay ng-if="dvm.sm.showCreatePropertyOverlay"></create-property-overlay>
+<confirmation-overlay ng-if="dvm.sm.showDeleteConfirmation"
+                      header-text="'Delete Ontology'"
+                      confirm-click="dvm.deleteEntity()"
+                      cancel-click="dvm.sm.showDeleteConfirmation = false"
+                      confirm-text="'Yes'"
+                      cancel-text="'No'">Are you sure that you want to delete <strong>{{dvm.sm.selected['@id'] || dvm.sm.selected.matonto.id}}</strong>?</confirmation-overlay>
+<confirmation-overlay ng-if="dvm.sm.showCloseOverlay"
+                      header-text="'Close Overlay'"
+                      confirm-click="dvm.closeOntology()"
+                      cancel-click="dvm.sm.showCloseOverlay = false"
+                      confirm-text="'Yes'"
+                      cancel-text="'No'">Are you sure that you want to close <strong>{{dvm.sm.ontology['@id'] || dvm.sm.ontology.matonto.id}}</strong> from your workspace?</confirmation-overlay>
+<confirmation-overlay ng-if="dvm.sm.showRemoveAnnotationOverlay"
+                      header-text="'Remove Annotation'"
+                      confirm-click="dvm.removeAnnotation()"
+                      cancel-click="dvm.sm.showRemoveAnnotationOverlay = false"
+                      confirm-text="'Yes'"
+                      cancel-text="'No'">
+    <p>Are you sure you want to remove annotation:<br><strong>{{dvm.sm.key}}</strong></p>
+    <p>with value:<br><strong>{{dvm.sm.selected[dvm.sm.key][dvm.sm.index]['@value'] || dvm.sm.selected[dvm.sm.key][0]['@id']}}</strong></p>
+    <p>from:<br><strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+</confirmation-overlay>
+<confirmation-overlay ng-if="dvm.sm.showSaveOverlay"
+                      header-text="'Save Ontology Changes'"
+                      confirm-click="dvm.save()"
+                      cancel-click="dvm.sm.showSaveOverlay = false"
+                      confirm-text="'Yes'"
+                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{dvm.sm.ontology['@id'] || dvm.sm.ontology.matonto.id}}</strong>?</confirmation-overlay>

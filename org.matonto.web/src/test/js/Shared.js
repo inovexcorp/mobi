@@ -162,6 +162,9 @@ function mockOntologyManager() {
             this.getPreview = jasmine.createSpy('getPreview').and.returnValue($q.resolve({}));
             this.getChangedListForOntology = jasmine.createSpy('getChangedListForOntology').and.returnValue([]);
             this.editIRI = jasmine.createSpy('editIRI');
+            this.edit = jasmine.createSpy('edit').and.returnValue($q.resolve({}));
+            this.closeOntology = jasmine.createSpy('closeOntology');
+            this.delete = jasmine.createSpy('delete').and.returnValue($q.resolve({}));
         });
     });
 }
@@ -378,7 +381,11 @@ function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function() {
             this.states = {};
-            this.currentState = {};
+            this.currentState = {
+                oi: 0,
+                ci: 0,
+                pi: 0
+            };
             this.ontology = {
                 '@id': 'id',
                 matonto: {
@@ -387,8 +394,13 @@ function mockStateManager() {
                 }
             };
             this.selected = {
-                '@id': 'id'
+                '@id': 'id',
+                matonto: {
+                    originalIri: 'iri'
+                }
             };
+            this.key = '';
+            this.index = 0;
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');

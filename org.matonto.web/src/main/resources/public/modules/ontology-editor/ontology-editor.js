@@ -29,7 +29,7 @@
         'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
         'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect', 'ontologySideBar',
         'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
-        'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
+        'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer', 'ontologyOverlays'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
@@ -38,43 +38,5 @@
         var vm = this;
 
         vm.sm = stateManagerService;
-        vm.sm.ontologyIds = ontologyManagerService.getOntologyIds();
-
-        /* Ontology Management */
-        vm.deleteEntity = function() {
-            ontologyManagerService.delete(vm.sm.ontology.matonto.id, vm.sm.selected.matonto.originalIri, vm.sm.currentState)
-                .then(function(response) {
-                    vm.sm.showDeleteConfirmation = false;
-                    if(response.selectOntology) {
-                        stateManagerService.setTreeTab('everything');
-                        vm.sm.selectItem('ontology-editor', vm.sm.currentState.oi);
-                    } else {
-                        stateManagerService.clearState(vm.sm.currentState.oi);
-                    }
-                });
-        }
-
-        vm.save = function() {
-            ontologyManagerService.edit(vm.sm.ontology.matonto.id, vm.sm.currentState)
-                .then(function(state) {
-                    vm.showSaveOverlay = false;
-                    vm.sm.currentState = state;
-                });
-        }
-
-        vm.closeOntology = function() {
-            ontologyManagerService.closeOntology(vm.sm.currentState.oi, vm.sm.ontology.matonto.id);
-            stateManagerService.clearState(vm.sm.currentState.oi);
-            vm.sm.selected = {};
-            vm.sm.ontology = {};
-            vm.sm.showCloseOverlay = false;
-        }
-
-        /* Annotation Management */
-        vm.removeAnnotation = function() {
-            annotationManagerService.remove(vm.sm.selected, vm.sm.key, vm.sm.index);
-            vm.entityChanged();
-            vm.sm.showRemoveAnnotationOverlay = false;
-        }
     }
 })();

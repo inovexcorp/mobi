@@ -86,7 +86,7 @@ describe('Annotation Tab directive', function() {
             var editButtons = element.querySelectorAll('[title=Edit]');
             expect(editButtons.length).toBe(1);
             var deleteButtons = element.querySelectorAll('[title=Delete]');
-            expect(deleteButtons.length).toBe(2);
+            expect(deleteButtons.length).toBe(1);
         });
     });
     describe('controller methods', function() {
