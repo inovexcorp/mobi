@@ -24,34 +24,37 @@
     'use strict';
 
     angular
-        .module('ontologySideBar', ['stateManager', 'ontologyManager'])
-        .directive('ontologySideBar', ontologySideBar);
+        .module('ontologyCloseOverlay', ['ontologyManager', 'stateManager'])
+        .directive('ontologyCloseOverlay', ontologyCloseOverlay);
 
-        ontologySideBar.$inject = ['stateManagerService', 'ontologyManagerService'];
+        ontologyCloseOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];
 
-        function ontologySideBar(stateManagerService, ontologyManagerService) {
+        function ontologyCloseOverlay(ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/ontologySideBar/ontologySideBar.html',
+                replace: true,
+                templateUrl: 'modules/ontology-editor/directives/ontologyCloseOverlay/ontologyCloseOverlay.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
 
-                    dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
 
-                    dvm.disableSave = function() {
-                        return !_.get(dvm.sm.ontology, 'matonto.isValid', false) || !dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length;
+                    dvm.saveThenClose = function() {
+                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.currentState)
+                            .then(function(state) {
+                                dvm.close();
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
+                            });
                     }
 
-                    dvm.closeOntology = function() {
-                        if(dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length) {
-                            dvm.sm.showCloseOverlay = true;
-                        } else {
-                            dvm.om.closeOntology(dvm.sm.currentState.oi, dvm.sm.ontology.matonto.id);
-                            dvm.sm.clearState(dvm.sm.currentState.oi);
-                        }
+                    dvm.close = function() {
+                        dvm.om.closeOntology(dvm.sm.currentState.oi, dvm.sm.ontology.matonto.id);
+                        dvm.sm.clearState(dvm.sm.currentState.oi);
+                        dvm.sm.showCloseOverlay = false;
                     }
                 }
             }

@@ -63,12 +63,6 @@
                             });
                     }
 
-                    dvm.closeOntology = function() {
-                        dvm.om.closeOntology(dvm.sm.currentState.oi, dvm.sm.ontology.matonto.id);
-                        dvm.sm.clearState(dvm.sm.currentState.oi);
-                        dvm.sm.showCloseOverlay = false;
-                    }
-
                     dvm.removeAnnotation = function() {
                         dvm.am.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
                         dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState);
