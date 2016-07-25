@@ -79,6 +79,7 @@
         <module>org.matonto.index.sesame4</module>
         <module>org.matonto.jaas</module>
         <module>org.matonto.web.security</module>
+        <module>org.matonto.jaas.rest</module>
     </modules>
 
     <properties>
