@@ -24,20 +24,47 @@
     'use strict';
 
     angular
-        .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
-        'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'everythingTree', 'classTree',
-        'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
-        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect', 'ontologySideBar',
-        'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
-        'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer', 'ontologyOverlays',
-        'annotationEditor', 'ontologyEntityEditors'])
-        .controller('OntologyEditorController', OntologyEditorController);
+        .module('ontology-editor', [
+            /* Ontology Editor Specific Modules */
+            'annotationEditor',
+            'annotationOverlay',
+            'annotationTab',
+            'annotationTree',
+            'classEditor',
+            'classTree',
+            'createAnnotationOverlay',
+            'createClassOverlay',
+            'createOntologyOverlay',
+            'createPropertyOverlay',
+            'defaultTab',
+            'errorDisplay',
+            'everythingTree',
+            'objectSelect',
+            'ontologyDownloadOverlay',
+            'ontologyEditor',
+            'ontologyEntityEditors',
+            'ontologyOpenOverlay',
+            'ontologyOverlays',
+            'ontologySideBar',
+            'ontologyTrees',
+            'ontologyUploadOverlay',
+            'propertyEditor',
+            'propertyTree',
+            'serializationSelect',
+            'staticIri',
+            'stringSelect',
+            'treeItem',
 
-    OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
-
-    function OntologyEditorController(ontologyManagerService, stateManagerService, prefixManagerService, annotationManagerService, responseObj, prefixes) {
-        var vm = this;
-
-        vm.sm = stateManagerService;
-    }
+            /* Common Modules */
+            'annotationManager',
+            'file-input',
+            'ngMessages',
+            'ontologyManager',
+            'prefixManager',
+            'removeIriFromArray',
+            'responseObj',
+            'stateManager',
+            'tabButton',
+            'tabButtonContainer'
+        ]);
 })();

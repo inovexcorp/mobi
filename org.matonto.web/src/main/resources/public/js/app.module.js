@@ -44,8 +44,6 @@
             'textArea',
             'radioButton',
             'customButton',
-            'objectSelect',
-            'stringSelect',
             'circleButton',
             'customButton',
             'leftNav',

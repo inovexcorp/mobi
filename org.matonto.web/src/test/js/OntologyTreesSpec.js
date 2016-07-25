@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Entity Editors directive', function() {
+describe('Ontology Trees directive', function() {
     var $compile,
         scope,
         element,
@@ -29,7 +29,7 @@ describe('Ontology Entity Editors directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('ontologyEntityEditors');
+        module('ontologyTrees');
         mockStateManager();
 
         inject(function(_$compile_, _$rootScope_, _stateManagerService_) {
@@ -41,17 +41,31 @@ describe('Ontology Entity Editors directive', function() {
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<ontology-entity-editors></ontology-entity-editors>'))(scope);
+            element = $compile(angular.element('<ontology-trees></ontology-trees>'))(scope);
             scope.$digest();
         });
-        it('for an ontology-entity-editors', function() {
-            expect(element.prop('tagName')).toBe('ONTOLOGY-ENTITY-EDITORS');
+        it('for an ontology-trees', function() {
+            expect(element.prop('tagName')).toBe('ONTOLOGY-TREES');
         });
-        _.forEach(['default-tab', 'ontology-editor', 'class-editor', 'property-editor', 'annotation-editor'], function(item) {
-            it('based on ' + item, function() {
-                stateManagerSvc.currentState.editor = item;
+        it('based on tab-button-container', function() {
+            var container = element.querySelectorAll('tab-button-container');
+            expect(container.length).toBe(1);
+        });
+        it('based on tab-buttons', function() {
+            var buttons = element.querySelectorAll('tab-button');
+            expect(buttons.length).toBe(5);
+        });
+        _.forEach([
+                {tag: 'everything-tree', text: 'everything'},
+                {tag: 'class-tree', text: 'class'},
+                {tag: 'property-tree', text: 'object'},
+                {tag: 'property-tree', text: 'datatype'},
+                {tag: 'annotation-tree', text: 'annotation'}
+            ], function(item) {
+            it('based on ' + item.tag, function() {
+                stateManagerSvc.currentState.tab = item.text;
                 scope.$digest();
-                var items = element.querySelectorAll(item);
+                var items = element.querySelectorAll(item.tag);
                 expect(items.length).toBe(1);
             });
         });
