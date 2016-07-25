@@ -142,7 +142,7 @@ function mockOntologyManager() {
             this.entityChanged = jasmine.createSpy('entityChanged');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue({
                 matonto: {
-                    originalId: '',
+                    id: '',
                     jsAnnotations: [{}]
                 }
             });
@@ -160,6 +160,7 @@ function mockOntologyManager() {
             this.openOntology = jasmine.createSpy('openOntology').and.returnValue($q.resolve({}));
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve({}));
             this.getPreview = jasmine.createSpy('getPreview').and.returnValue($q.resolve({}));
+            this.getChangedListForOntology = jasmine.createSpy('getChangedListForOntology').and.returnValue([]);
         });
     });
 }

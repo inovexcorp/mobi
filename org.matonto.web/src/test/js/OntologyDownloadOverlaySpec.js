@@ -78,12 +78,11 @@ describe('Ontology Download Overlay directive', function() {
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
             });
             it('is there when variable is true', function() {
-                scope.dvm = {
-                    form: {
-                        fileName: {
-                            '$error': {
-                                pattern: true
-                            }
+                controller = element.controller('ontologyDownloadOverlay');
+                controller.form = {
+                    fileName: {
+                        '$error': {
+                            pattern: true
                         }
                     }
                 }

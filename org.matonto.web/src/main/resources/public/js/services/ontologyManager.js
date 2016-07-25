@@ -1319,7 +1319,7 @@
 
             self.entityChanged = function(selected, ontologyId, state) {
                 selected.matonto.unsaved = true;
-                self.addToChangedList(ontologyId, selected.matonto.originalId, state);
+                self.addToChangedList(ontologyId, selected.matonto.originalIri, state);
             }
         }
 })();

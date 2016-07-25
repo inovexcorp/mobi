@@ -34,6 +34,7 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html',
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
@@ -46,13 +47,13 @@
                     dvm.addAnnotation = function(select, value) {
                         dvm.am.add(dvm.sm.selected, dvm.ro.getItemIri(select), value);
                         dvm.sm.showAnnotationOverlay = false;
-                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.originalId, dvm.sm.getState());
+                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.getState());
                     }
 
                     dvm.editAnnotation = function(select, value) {
                         dvm.am.edit(dvm.sm.selected, dvm.ro.getItemIri(select), value, dvm.sm.annotationIndex);
                         dvm.sm.showAnnotationOverlay = false;
-                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.originalId, dvm.sm.getState());
+                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.getState());
                     }
                 }
             }

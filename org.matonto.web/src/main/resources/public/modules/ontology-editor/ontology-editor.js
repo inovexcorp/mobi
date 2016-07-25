@@ -27,7 +27,7 @@
         .module('ontology-editor', ['file-input', 'staticIri', 'annotationTab', 'annotationOverlay', 'annotationTree',
         'ontologyUploadOverlay', 'ontologyDownloadOverlay', 'tabButton', 'treeItem', 'everythingTree', 'classTree',
         'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
-        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect',
+        'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect', 'ontologySideBar',
         'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
         'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer'])
         .controller('OntologyEditorController', OntologyEditorController);
@@ -54,12 +54,8 @@
                 });
         }
 
-        vm.disableSave = function() {
-            return !_.get(vm.sm.ontology, 'matonto.isValid', false) || !ontologyManagerService.getChangedListForOntology(_.get(vm.sm.ontology, 'matonto.originalId')).length;
-        }
-
         vm.save = function() {
-            ontologyManagerService.edit(vm.sm.ontology.matonto.originalId, vm.sm.currentState)
+            ontologyManagerService.edit(vm.sm.ontology.matonto.id, vm.sm.currentState)
                 .then(function(state) {
                     vm.showSaveOverlay = false;
                     vm.sm.currentState = state;

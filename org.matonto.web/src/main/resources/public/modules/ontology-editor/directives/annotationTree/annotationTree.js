@@ -34,6 +34,7 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/annotationTree/annotationTree.html',
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;

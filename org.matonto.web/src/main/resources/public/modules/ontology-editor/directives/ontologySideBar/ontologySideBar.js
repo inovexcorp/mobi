@@ -24,16 +24,27 @@
     'use strict';
 
     angular
-        .module('errorDisplay', [])
-        .directive('errorDisplay', errorDisplay);
+        .module('ontologySideBar', ['stateManager', 'ontologyManager'])
+        .directive('ontologySideBar', ontologySideBar);
 
-        function errorDisplay() {
+        ontologySideBar.$inject = ['stateManagerService', 'ontologyManagerService'];
+
+        function ontologySideBar(stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
-                transclude: true,
-                templateUrl: 'modules/ontology-editor/directives/errorDisplay/errorDisplay.html',
-                scope: {}
+                templateUrl: 'modules/ontology-editor/directives/ontologySideBar/ontologySideBar.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+
+                    dvm.disableSave = function() {
+                        return !_.get(dvm.sm.ontology, 'matonto.isValid', false) || !dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length;
+                    }
+                }
             }
         }
 })();

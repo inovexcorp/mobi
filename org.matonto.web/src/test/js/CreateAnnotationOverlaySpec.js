@@ -78,12 +78,11 @@ describe('Create Annotation Overlay directive', function() {
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
             });
             it('is there when form.iri is invalid', function() {
-                scope.dvm = {
-                    form: {
-                        iri: {
-                            '$error': {
-                                pattern: true
-                            }
+                controller = element.controller('createAnnotationOverlay');
+                controller.form = {
+                    iri: {
+                        '$error': {
+                            pattern: true
                         }
                     }
                 }
@@ -94,18 +93,17 @@ describe('Create Annotation Overlay directive', function() {
             });
         });
         describe('and error-display', function() {
+            beforeEach(function() {
+                controller = element.controller('createAnnotationOverlay');
+            });
             it('is visible when error is true', function() {
-                scope.dvm = {
-                    error: true
-                }
+                controller.error = true;
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when error is false', function() {
-                scope.vm = {
-                    createAnnotationError: false
-                }
+                controller.error = false;
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(0);

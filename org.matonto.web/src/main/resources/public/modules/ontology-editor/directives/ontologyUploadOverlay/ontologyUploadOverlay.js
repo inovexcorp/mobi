@@ -34,6 +34,7 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyUploadOverlay/ontologyUploadOverlay.html',
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;

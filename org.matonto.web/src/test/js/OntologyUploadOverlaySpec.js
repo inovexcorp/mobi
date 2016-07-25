@@ -67,18 +67,17 @@ describe('Ontology Upload Overlay directive', function() {
             expect(items.length).toBe(1);
         });
         describe('and error-display', function() {
+            beforeEach(function() {
+                controller = element.controller('ontologyUploadOverlay');
+            });
             it('is visible when uploadError is true', function() {
-                scope.dvm = {
-                    error: true
-                }
+                controller.error = true;
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when uploadError is false', function() {
-                scope.dvm = {
-                    error: false
-                }
+                controller.error = false;
                 scope.$digest();
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(0);

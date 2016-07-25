@@ -22,174 +22,59 @@
   -->
 <!-- ontology-editor.html -->
 <div class="ontology-editor clearfix full-height" ng-controller="OntologyEditorController as vm">
-    <left-nav module-name="Ontology Editor" doc-url="http://docs.matonto.org/#ontology_editor">
-      <left-nav-item on-click="vm.showSaveOverlay = true"
-                     nav-title="Save All Changes"
-                     is-disabled-when="vm.disableSave()"
-                     is-active-when="vm.showSaveOverlay">
-          <i class="fa fa-floppy-o fa-fw"></i>
-      </left-nav-item>
-
-      <li class="separator"></li>
-
-      <left-nav-item on-click="vm.sm.showOpenOverlay = true"
-                     nav-title="Open Ontology"
-                     is-disabled-when="!vm.sm.ontologyIds.length"
-                     is-active-when="vm.sm.showOpenOverlay">
-          <i class="fa fa-folder-open fa-fw"></i>
-      </left-nav-item>
-
-      <left-nav-item on-click="vm.sm.showUploadOverlay = true"
-                     nav-title="Upload Ontology"
-                     is-active-when="vm.sm.showUploadOverlay">
-          <i class="fa fa-upload fa-fw"></i>
-      </left-nav-item>
-
-      <left-nav-item on-click="vm.sm.showCreateOntologyOverlay = true"
-                     nav-title="Create Ontology"
-                     is-active-when="vm.sm.showCreateOntologyOverlay">
-          <span class="create-icon">
-              <span class="fa-fw identifier">O</span>
-              <i class="fa fa-plus"></i>
-          </span>
-      </left-nav-item>
-
-      <li class="separator"></li>
-
-      <left-nav-item on-click="vm.sm.showCreateClassOverlay = true"
-                     nav-title="Create Class"
-                     is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'class')"
-                     is-active-when="vm.sm.showCreateClassOverlay">
-          <span class="create-icon">
-              <span class="fa-fw identifier">C</span>
-              <i class="fa fa-plus"></i>
-          </span>
-      </left-nav-item>
-
-      <left-nav-item on-click="vm.sm.showCreatePropertyOverlay = true"
-                     nav-title="Create Property"
-                     is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'object' || vm.sm.currentState.tab === 'datatype')"
-                     is-active-when="vm.sm.showCreatePropertyOverlay">
-          <span class="create-icon">
-              <span class="fa-fw identifier">P</span>
-              <i class="fa fa-plus"></i>
-          </span>
-      </left-nav-item>
-
-      <left-nav-item on-click="vm.sm.showCreateAnnotationOverlay = true"
-                     nav-title="Create Annotation"
-                     is-disabled-when="vm.sm.currentState.oi === undefined || !(vm.sm.currentState.tab === 'everything' || vm.sm.currentState.tab === 'annotation')"
-                     is-active-when="vm.sm.showCreateAnnotationOverlay">
-          <span class="create-icon">
-              <span class="fa-fw identifier">A</span>
-              <i class="fa fa-plus"></i>
-          </span>
-      </left-nav-item>
-
-      <left-nav-item on-click="vm.sm.showDownloadOverlay = true"
-                     nav-title="Download Ontology"
-                     is-disabled-when="vm.sm.currentState.oi === undefined"
-                     is-active-when="vm.sm.showDownloadOverlay">
-          <i class="fa fa-download fa-fw"></i>
-      </left-nav-item>
-
-      <left-nav-item on-click="vm.sm.showCloseOverlay = true"
-                     nav-title="Close Ontology"
-                     is-disabled-when="vm.sm.currentState.oi === undefined"
-                     is-active-when="vm.sm.showCloseOverlay">
-          <i class="fa fa-folder fa-fw"></i>
-      </left-nav-item>
-
-      <li class="separator"></li>
-
-      <left-nav-item on-click="vm.sm.showDeleteConfirmation = true"
-                     nav-title="Delete Entity"
-                     is-disabled-when="vm.sm.currentState.oi === undefined || vm.sm.currentState.tab === 'annotation'"
-                     is-active-when="vm.sm.showDeleteConfirmation">
-          <i class="fa fa-trash-o fa-fw"></i>
-      </left-nav-item>
-    </left-nav>
-
+    <ontology-side-bar></ontology-side-bar>
     <div class="row full-height">
-        <!-- navigation structure -->
         <section class="col-xs-4 full-height">
             <div class="tree-container full-height">
-                <!-- tab buttons -->
                 <tab-button-container>
-                    <tab-button is-active="vm.sm.currentState.tab === 'everything'"
-                                on-click="vm.sm.setTreeTab('everything')">Tree</tab-button>
-
-                    <tab-button is-active="vm.sm.currentState.tab === 'class'"
-                                on-click="vm.sm.setTreeTab('class')">Class</tab-button>
-
-                    <tab-button is-active="vm.sm.currentState.tab === 'object'"
-                                on-click="vm.sm.setTreeTab('object')">Object</tab-button>
-
-                    <tab-button is-active="vm.sm.currentState.tab === 'datatype'"
-                                on-click="vm.sm.setTreeTab('datatype')">Data</tab-button>
-
-                    <tab-button is-active="vm.sm.currentState.tab === 'annotation'"
-                                on-click="vm.sm.setTreeTab('annotation')">Annotation</tab-button>
+                    <tab-button is-active="vm.sm.currentState.tab === 'everything'" on-click="vm.sm.setTreeTab('everything')">Tree</tab-button>
+                    <tab-button is-active="vm.sm.currentState.tab === 'class'" on-click="vm.sm.setTreeTab('class')">Class</tab-button>
+                    <tab-button is-active="vm.sm.currentState.tab === 'object'" on-click="vm.sm.setTreeTab('object')">Object</tab-button>
+                    <tab-button is-active="vm.sm.currentState.tab === 'datatype'" on-click="vm.sm.setTreeTab('datatype')">Data</tab-button>
+                    <tab-button is-active="vm.sm.currentState.tab === 'annotation'" on-click="vm.sm.setTreeTab('annotation')">Annotation</tab-button>
                 </tab-button-container>
-
                 <everything-tree ng-if="vm.sm.currentState.tab === 'everything'"></everything-tree>
-
                 <class-tree ng-if="vm.sm.currentState.tab === 'class'"></class-tree>
-
                 <property-tree ng-if="vm.sm.currentState.tab === 'object'"
                                header-text="Object Properties"
                                property-type="objectproperty"
                                select-item="vm.sm.selectItem(editor, oi, ci, pi)"
                                state="vm.sm.currentState"
                                ontologies="vm.ontologies"></property-tree>
-
                 <property-tree ng-if="vm.sm.currentState.tab === 'datatype'"
                                header-text="Data Properties"
                                property-type="datatypeproperty"
                                select-item="vm.sm.selectItem(editor, oi, ci, pi)"
                                state="vm.sm.currentState"
                                ontologies="vm.ontologies"></property-tree>
-
                 <annotation-tree ng-if="vm.sm.currentState.tab === 'annotation'"></annotation-tree>
             </div>
         </section>
-
-        <!-- edit/create form section -->
         <section class="col-xs-8 full-height">
             <div class="editor">
                 <default-tab ng-if="vm.sm.currentState.editor === 'default'"></default-tab>
-
                 <ontology-editor ng-if="vm.sm.currentState.editor === 'ontology-editor'"></ontology-editor>
-
                 <class-editor ng-if="vm.sm.currentState.editor === 'class-editor'"></class-editor>
-
                 <property-editor ng-if="vm.sm.currentState.editor === 'property-editor'"></property-editor>
-
                 <div ng-if="vm.sm.currentState.editor === 'annotation-display'" class="annotation-preview">
                     <h3>Annotation Preview (JSON-LD)</h3>
                     <pre class="tab">{{vm.sm.selected | json}}</pre>
                 </div>
-
                 <ontology-upload-overlay ng-if="vm.sm.showUploadOverlay"></ontology-upload-overlay>
-
                 <annotation-overlay ng-if="vm.sm.showAnnotationOverlay"></annotation-overlay>
-
                 <ontology-download-overlay ng-if="vm.sm.showDownloadOverlay"></ontology-download-overlay>
-
                 <confirmation-overlay ng-if="vm.sm.showDeleteConfirmation"
                                       header-text="'Delete Ontology'"
                                       confirm-click="vm.deleteEntity()"
                                       cancel-click="vm.sm.showDeleteConfirmation = false"
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">Are you sure that you want to delete <strong>{{vm.sm.selected['@id'] || vm.sm.selected.matonto.id}}</strong>?</confirmation-overlay>
-
                 <confirmation-overlay ng-if="vm.sm.showCloseOverlay"
                                       header-text="'Close Overlay'"
                                       confirm-click="vm.closeOntology()"
                                       cancel-click="vm.sm.showCloseOverlay = false"
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">Are you sure that you want to close <strong>{{vm.sm.ontology['@id'] || vm.sm.ontology.matonto.id}}</strong> from your workspace?</confirmation-overlay>
-
                 <confirmation-overlay ng-if="vm.sm.showRemoveAnnotationOverlay"
                                       header-text="'Remove Annotation'"
                                       confirm-click="vm.removeAnnotation()"
@@ -200,22 +85,16 @@
                     <p>with value:<br><strong>{{vm.sm.selected[vm.sm.key][vm.sm.index]['@value'] || vm.sm.selected[vm.sm.key][0]['@id']}}</strong></p>
                     <p>from:<br><strong>{{vm.sm.selected['@id']}}</strong>?</p>
                 </confirmation-overlay>
-
                 <confirmation-overlay ng-if="vm.sm.showSaveOverlay"
                                       header-text="'Save Ontology Changes'"
                                       confirm-click="vm.save()"
                                       cancel-click="vm.sm.showSaveOverlay = false"
                                       confirm-text="'Yes'"
                                       cancel-text="'No'">Are you sure that you want to save changes to <strong>{{vm.sm.ontology['@id'] || vm.sm.ontology.matonto.id}}</strong>?</confirmation-overlay>
-
                 <ontology-open-overlay ng-if="vm.sm.showOpenOverlay"></ontology-open-overlay>
-
                 <create-annotation-overlay ng-if="vm.sm.showCreateAnnotationOverlay"></create-annotation-overlay>
-
                 <create-ontology-overlay ng-if="vm.sm.showCreateOntologyOverlay"></create-ontology-overlay>
-
                 <create-class-overlay ng-if="vm.sm.showCreateClassOverlay"></create-class-overlay>
-
                 <create-property-overlay ng-if="vm.sm.showCreatePropertyOverlay"></create-property-overlay>
             </div>
         </section>
