@@ -36,27 +36,27 @@
                 current: 'everything',
                 everything: {
                     tab: 'everything',
-                    editor: 'default',
+                    editor: 'default-tab',
                     editorTab: 'basic'
                 },
                 class: {
                     tab: 'class',
-                    editor: 'default',
+                    editor: 'default-tab',
                     editorTab: 'basic'
                 },
                 object: {
                     tab: 'object',
-                    editor: 'default',
+                    editor: 'default-tab',
                     editorTab: 'basic'
                 },
                 datatype: {
                     tab: 'datatype',
-                    editor: 'default',
+                    editor: 'default-tab',
                     editorTab: 'basic'
                 },
                 annotation: {
                     tab: 'annotation',
-                    editor: 'default',
+                    editor: 'default-tab',
                     editorTab: 'basic'
                 }
             }
@@ -149,7 +149,7 @@
                         state.oi = undefined;
                         state.ci = undefined;
                         state.pi = undefined;
-                        state.editor = 'default';
+                        state.editor = 'default-tab';
                     }
                 }
                 self.currentState = self.getState();

@@ -24,31 +24,21 @@
     'use strict';
 
     angular
-        .module('annotationTree', ['ontologyManager', 'stateManager'])
-        .directive('annotationTree', annotationTree);
+        .module('ontologyEntityEditors', ['stateManager'])
+        .directive('ontologyEntityEditors', ontologyEntityEditors);
 
-        annotationTree.$inject = ['ontologyManagerService', 'stateManagerService']
+        ontologyEntityEditors.$inject = ['stateManagerService'];
 
-        function annotationTree(ontologyManagerService, stateManagerService) {
+        function ontologyEntityEditors(stateManagerService, ontologyManagerService, annotationManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
-                templateUrl: 'modules/ontology-editor/directives/annotationTree/annotationTree.html',
+                templateUrl: 'modules/ontology-editor/directives/ontologyEntityEditors/ontologyEntityEditors.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
 
-                    dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-
-                    dvm.ontologies = dvm.om.getList();
-
-                    dvm.selectAnnotation = function(oi, index) {
-                        dvm.sm.setState('annotation-editor', oi, undefined, index);
-                        dvm.sm.ontology = ontologyManagerService.getOntology(oi);
-                        dvm.sm.selected = dvm.sm.ontology.matonto.jsAnnotations[index];
-                    }
                 }
             }
         }

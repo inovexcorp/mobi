@@ -77,7 +77,7 @@ describe('Annotation Tree directive', function() {
         });
         it('select annotation calls correct functions and sets correct variables', function() {
             controller.selectAnnotation(0, 0);
-            expect(stateManagerSvc.setState).toHaveBeenCalledWith('annotation-display', 0, undefined, 0);
+            expect(stateManagerSvc.setState).toHaveBeenCalledWith('annotation-editor', 0, undefined, 0);
             expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(0);
             expect(stateManagerSvc.selected).toEqual({});
         });

@@ -30,7 +30,7 @@
         'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect', 'ontologySideBar',
         'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
         'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer', 'ontologyOverlays',
-        'annotationEditor'])
+        'annotationEditor', 'ontologyEntityEditors'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
