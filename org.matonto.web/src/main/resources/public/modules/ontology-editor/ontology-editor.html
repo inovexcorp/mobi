@@ -35,31 +35,19 @@
                 </tab-button-container>
                 <everything-tree ng-if="vm.sm.currentState.tab === 'everything'"></everything-tree>
                 <class-tree ng-if="vm.sm.currentState.tab === 'class'"></class-tree>
-                <property-tree ng-if="vm.sm.currentState.tab === 'object'"
-                               header-text="Object Properties"
-                               property-type="objectproperty"
-                               select-item="vm.sm.selectItem(editor, oi, ci, pi)"
-                               state="vm.sm.currentState"
-                               ontologies="vm.ontologies"></property-tree>
-                <property-tree ng-if="vm.sm.currentState.tab === 'datatype'"
-                               header-text="Data Properties"
-                               property-type="datatypeproperty"
-                               select-item="vm.sm.selectItem(editor, oi, ci, pi)"
-                               state="vm.sm.currentState"
-                               ontologies="vm.ontologies"></property-tree>
+                <property-tree ng-if="vm.sm.currentState.tab === 'object'" header-text="Object Properties" property-type="objectproperty"></property-tree>
+                <property-tree ng-if="vm.sm.currentState.tab === 'datatype'" header-text="Data Properties" property-type="datatypeproperty"></property-tree>
                 <annotation-tree ng-if="vm.sm.currentState.tab === 'annotation'"></annotation-tree>
             </div>
         </section>
         <section class="col-xs-8 full-height">
-            <div class="editor">
+            <div class="editor full-height">
+                <ontology-entity-editors></ontology-entity-editors>
                 <default-tab ng-if="vm.sm.currentState.editor === 'default'"></default-tab>
                 <ontology-editor ng-if="vm.sm.currentState.editor === 'ontology-editor'"></ontology-editor>
                 <class-editor ng-if="vm.sm.currentState.editor === 'class-editor'"></class-editor>
                 <property-editor ng-if="vm.sm.currentState.editor === 'property-editor'"></property-editor>
-                <div ng-if="vm.sm.currentState.editor === 'annotation-display'" class="annotation-preview">
-                    <h3>Annotation Preview (JSON-LD)</h3>
-                    <pre class="tab">{{vm.sm.selected | json}}</pre>
-                </div>
+                <annotation-editor ng-if="vm.sm.currentState.editor === 'annotation-display'"></annotation-editor>
             </div>
         </section>
     </div>

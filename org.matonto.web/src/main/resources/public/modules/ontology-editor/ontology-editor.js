@@ -29,7 +29,8 @@
         'propertyTree', 'ontologyEditor', 'classEditor', 'propertyEditor', 'removeIriFromArray', 'ontologyManager',
         'stateManager', 'prefixManager', 'annotationManager', 'responseObj', 'serializationSelect', 'ontologySideBar',
         'ontologyOpenOverlay', 'ngMessages', 'errorDisplay', 'createAnnotationOverlay', 'createOntologyOverlay',
-        'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer', 'ontologyOverlays'])
+        'createClassOverlay', 'createPropertyOverlay', 'defaultTab', 'tabButtonContainer', 'ontologyOverlays',
+        'annotationEditor'])
         .controller('OntologyEditorController', OntologyEditorController);
 
     OntologyEditorController.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixManagerService', 'annotationManagerService', 'responseObj', 'prefixes'];
