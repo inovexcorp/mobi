@@ -161,6 +161,7 @@ function mockOntologyManager() {
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve({}));
             this.getPreview = jasmine.createSpy('getPreview').and.returnValue($q.resolve({}));
             this.getChangedListForOntology = jasmine.createSpy('getChangedListForOntology').and.returnValue([]);
+            this.editIRI = jasmine.createSpy('editIRI');
         });
     });
 }

@@ -24,7 +24,10 @@
 describe('Property Editor directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        controller,
+        stateManagerSvc,
+        ontologyManagerSvc;
 
     mockPrefixes();
     beforeEach(function() {
@@ -33,10 +36,11 @@ describe('Property Editor directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -118,6 +122,18 @@ describe('Property Editor directive', function() {
                 var errors = element.querySelectorAll('error-display');
                 expect(errors.length).toBe(0);
             });
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            element = $compile(angular.element('<property-editor></property-editor>'))(scope);
+            scope.$digest();
+            controller = element.controller('propertyEditor');
+        });
+        it('onEdit calls the correct manager functions', function() {
+            controller.onEdit('begin', 'then', 'end');
+            expect(ontologyManagerSvc.editIRI).toHaveBeenCalledWith('begin', 'then', 'end', stateManagerSvc.selected, stateManagerSvc.ontology);
+            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
         });
     });
 });

@@ -429,10 +429,8 @@
                             readableText += ' ' + joiningWord + ' ';
                         }
                     });
-                    console.log('Properly handled\n', blankNode);
                     return createResult(id, readableText);
                 } else {
-                    console.warn('Improperly handled\n', blankNode);
                     return {};
                 }
             }
@@ -511,8 +509,6 @@
                     } else if(_.has(blankNode, prefixes.owl + 'intersectionOf')) {
                         var intersectionOf = _.get(blankNode, prefixes.owl + 'intersectionOf');
                         _.assign(ontology.matonto.intersectionOfs, getBlankNodeObject(intersectionOf, 'or', blankNode));
-                    } else {
-                        console.warn('Improperly handled\n', blankNode);
                     }
                 });
 
@@ -535,9 +531,6 @@
                         if(onClassObj && _.isArray(onClassObj) && onClassObj.length === 1) {
                             _.assign(ontology.matonto.classExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
-                        console.log('Properly handled\n', restriction);
-                    } else {
-                        console.warn('Improperly handled\n', restriction);
                     }
                     ontology.matonto.blankNodes.push(restriction);
                     i++;

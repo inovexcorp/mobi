@@ -36,7 +36,7 @@
             <error-display ng-if="dvm.sm.selected.matonto.createError">{{dvm.sm.selected.matonto.createError}}</error-display>
 
             <!-- ontology iri -->
-            <div ng-class="{'has-error': dvm.form.iri.$error}" class="form-group">
+            <div ng-class="{'has-error': dvm.form.iri.$invalid}" class="form-group">
                 <custom-label muted-text="'*Required'">Ontology IRI</custom-label>
                 <input class="form-control" id="iri" name="iri" ng-model="dvm.sm.selected['@id']" ng-pattern="dvm.iriPattern" ng-change="dvm.iriChanged(dvm.form.$valid)" required />
                 <p ng-messages="dvm.form.iri.$error" class="error-msg">

@@ -51,13 +51,14 @@ describe('Object Select directive', function() {
     });
 
     beforeEach(function() {
+        scope.onChange = jasmine.createSpy('onChange');
         scope.displayText = 'test';
         scope.selectList = [];
         scope.mutedText = 'test';
         scope.bindModel = [];
         scope.isDisabledWhen = false;
 
-        element = $compile(angular.element('<object-select change-event="changeEvent()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen"></object-select>'))(scope);
+        element = $compile(angular.element('<object-select on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen"></object-select>'))(scope);
         scope.$digest();
     });
 
@@ -81,6 +82,10 @@ describe('Object Select directive', function() {
             isolatedScope.selectList = ['new'];
             scope.$digest();
             expect(scope.selectList).toEqual(['new']);
+        });
+        it('onChange should be called in parent scope', function() {
+            isolatedScope.onChange();
+            expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variables', function() {

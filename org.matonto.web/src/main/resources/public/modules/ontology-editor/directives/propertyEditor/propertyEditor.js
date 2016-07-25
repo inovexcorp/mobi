@@ -44,8 +44,9 @@
                     dvm.prefixes = prefixes;
                     dvm.propertyTypes = dvm.om.getPropertyTypes();
 
-                    dvm.editIRI = function(iriBegin, iriThen, iriEnd) {
+                    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.om.editIRI(iriBegin, iriThen, iriEnd, dvm.sm.selected, dvm.sm.ontology);
+                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState);
                     }
                 }
             }

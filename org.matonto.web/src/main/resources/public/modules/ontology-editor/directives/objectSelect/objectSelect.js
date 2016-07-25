@@ -38,7 +38,8 @@
                     displayText: '=',
                     selectList: '=',
                     mutedText: '=',
-                    isDisabledWhen: '='
+                    isDisabledWhen: '=',
+                    onChange: '&'
                 },
                 bindToController: {
                     bindModel: '=ngModel'

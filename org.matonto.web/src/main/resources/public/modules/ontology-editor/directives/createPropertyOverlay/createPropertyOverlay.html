@@ -29,8 +29,7 @@
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
 
         <!-- static iri -->
-        <static-iri iri="dvm.iri"
-                    on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="dvm.iri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
 
         <form name="dvm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
             <!-- name -->
@@ -39,33 +38,21 @@
                 <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
             </div>
 
-            <!-- http://www.w3.org/1999/02/22-rdf-syntax-ns#type(s) -->
-            <string-select ng-model="dvm.type"
-                           display-text="'Type'"
-                           muted-text="'*Required'"
-                           select-list="dvm.propertyTypes"
-                           change-event="dvm.setRange()">
-            </string-select>
+            <string-select ng-model="dvm.type" display-text="'Type'" muted-text="'*Required'" select-list="dvm.propertyTypes" change-event="dvm.setRange()"></string-select>
 
-            <!-- description -->
             <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
 
-            <!-- domain -->
             <object-select ng-model="dvm.domain"
                            display-text="'Domain'"
                            select-list="dvm.sm.ontology.matonto.subClasses"></object-select>
 
-            <!-- range -->
             <object-select ng-model="dvm.range"
                            display-text="'Range'"
                            select-list="dvm.rangeList"
                            is-disabled-when="!dvm.type.length"></object-select>
 
-            <!-- create property buttons -->
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length"
-                               on-click="dvm.create(dvm.iri, dvm.name, dvm.type, dvm.range, dvm.domain, dvm.description)">Create</custom-button>
-
+                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length" on-click="dvm.create(dvm.iri, dvm.name, dvm.type, dvm.range, dvm.domain, dvm.description)">Create</custom-button>
                 <custom-button on-click="dvm.sm.showCreatePropertyOverlay = false" type="'secondary'">Cancel</custom-button>
             </div>
         </form>
