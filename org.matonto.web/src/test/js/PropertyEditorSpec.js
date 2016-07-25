@@ -30,6 +30,7 @@ describe('Property Editor directive', function() {
         ontologyManagerSvc;
 
     mockPrefixes();
+    injectRemoveIriFromArrayFilter();
     beforeEach(function() {
         module('templates');
         module('propertyEditor');

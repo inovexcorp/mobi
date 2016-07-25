@@ -46,14 +46,14 @@
         <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'subClassOf']"
                        display-text="'Sub Class Of'"
                        muted-text="dvm.prefixes.rdfs + 'subClassOf'"
-                       select-list="dvm.sm.ontology.matonto.subClasses"
+                       select-list="dvm.subClasses"
                        on-change="dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState)"></object-select>
 
         <!-- owl:disjointWith -->
         <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'disjointWith']"
                        display-text="'Disjoint With'"
                        muted-text="dvm.prefixes.owl + 'disjointWith'"
-                       select-list="dvm.sm.ontology.matonto.subClasses"
+                       select-list="dvm.subClasses"
                        on-change="dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState)"></object-select>
     </div>
 </div>

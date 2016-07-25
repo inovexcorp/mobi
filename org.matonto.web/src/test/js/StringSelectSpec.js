@@ -29,17 +29,12 @@ describe('String Select directive', function() {
     injectHighlightFilter();
     injectTrustedFilter();
     injectSplitIRIFilter();
+    injectRemoveIriFromArrayFilter();
 
     beforeEach(function() {
         module('templates');
         module('stringSelect');
         mockOntologyManager();
-
-        module(function($provide) {
-            $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
-                return arr;
-            }));
-        });
 
         inject(function(_$compile_, _$rootScope_, _$filter_) {
             $compile = _$compile_;
@@ -55,7 +50,7 @@ describe('String Select directive', function() {
         scope.selectList = [];
         scope.mutedText = '';
 
-        element = $compile(angular.element('<string-select ng-model="bindModel" change-event="changeEvent" display-text="displayText" exclude-self="excludeSelf" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
+        element = $compile(angular.element('<string-select ng-model="bindModel" change-event="changeEvent" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
         scope.$digest();
     });
 

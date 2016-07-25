@@ -27,9 +27,9 @@
         .module('classEditor', ['stateManager', 'ontologyManager', 'prefixes'])
         .directive('classEditor', classEditor);
 
-        classEditor.$inject = ['stateManagerService', 'ontologyManagerService', 'prefixes'];
+        classEditor.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
 
-        function classEditor(stateManagerService, ontologyManagerService, prefixes) {
+        function classEditor($filter, stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,6 +42,7 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.prefixes = prefixes;
+                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.om.editIRI(iriBegin, iriThen, iriEnd, dvm.sm.selected, dvm.sm.ontology);

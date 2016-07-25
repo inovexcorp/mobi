@@ -27,9 +27,9 @@
         .module('propertyEditor', ['stateManager', 'ontologyManager', 'prefixes'])
         .directive('propertyEditor', propertyEditor);
 
-        propertyEditor.$inject = ['stateManagerService', 'ontologyManagerService', 'prefixes'];
+        propertyEditor.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
 
-        function propertyEditor(stateManagerService, ontologyManagerService, prefixes) {
+        function propertyEditor($filter, stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,6 +43,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.prefixes = prefixes;
                     dvm.propertyTypes = dvm.om.getPropertyTypes();
+                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
+                    dvm.subObjectProperties = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subObjectProperties, dvm.sm.selected.matonto.originalIri);
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.om.editIRI(iriBegin, iriThen, iriEnd, dvm.sm.selected, dvm.sm.ontology);

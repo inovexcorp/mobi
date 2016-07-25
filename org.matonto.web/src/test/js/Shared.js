@@ -108,6 +108,16 @@ function injectShowAnnotationsFilter() {
     });
 }
 
+function injectRemoveIriFromArrayFilter() {
+    beforeEach(function() {
+        module(function($provide) {
+            $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
+                return arr;
+            }));
+        });
+    });
+}
+
 function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {

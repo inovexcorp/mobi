@@ -30,6 +30,7 @@ describe('Class Editor directive', function() {
         controller;
 
     mockPrefixes();
+    injectRemoveIriFromArrayFilter();
     beforeEach(function() {
         module('templates');
         module('classEditor');
