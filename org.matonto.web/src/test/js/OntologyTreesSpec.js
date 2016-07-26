@@ -65,7 +65,7 @@ describe('Ontology Trees directive', function() {
             it('based on ' + item.tag, function() {
                 stateManagerSvc.state.tab = item.text;
                 scope.$digest();
-                var items = element.querySelectorAll(item.tag);
+                var items = element.find(item.tag);
                 expect(items.length).toBe(1);
             });
         });

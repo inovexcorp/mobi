@@ -51,7 +51,7 @@ describe('Ontology Entity Editors directive', function() {
             it('based on ' + item, function() {
                 stateManagerSvc.state.editor = item;
                 scope.$digest();
-                var items = element.querySelectorAll(item);
+                var items = element.find(item);
                 expect(items.length).toBe(1);
             });
         });

@@ -41,7 +41,7 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-                    dvm.ontologyIds = dvm.om.getOntologyIds();
+                    dvm.ontologyIds = dvm.sm.ontologyIds;
 
                     dvm.open = function() {
                         dvm.om.openOntology(dvm.ontologyId)
