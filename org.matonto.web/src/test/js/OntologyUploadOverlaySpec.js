@@ -23,17 +23,26 @@
 describe('Ontology Upload Overlay directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        controller,
+        ontologyManagerSvc,
+        stateManagerSvc,
+        deferred;
 
     beforeEach(function() {
         module('templates');
         module('ontologyUploadOverlay');
+        mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
-
     });
 
     describe('replaces the element with the correct html', function() {
@@ -49,7 +58,7 @@ describe('Ontology Upload Overlay directive', function() {
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('h6');
+            var items = element.find('h6');
             expect(items.length).toBe(1);
         });
         it('based on .form-group', function() {
@@ -61,21 +70,50 @@ describe('Ontology Upload Overlay directive', function() {
             expect(items.length).toBe(1);
         });
         describe('and error-display', function() {
+            beforeEach(function() {
+                controller = element.controller('ontologyUploadOverlay');
+            });
             it('is visible when uploadError is true', function() {
-                scope.vm = {
-                    uploadError: true
-                }
+                controller.error = true;
                 scope.$digest();
-                var errors = element.querySelectorAll('error-display');
+                var errors = element.find('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when uploadError is false', function() {
-                scope.vm = {
-                    uploadError: false
-                }
+                controller.error = false;
                 scope.$digest();
-                var errors = element.querySelectorAll('error-display');
+                var errors = element.find('error-display');
                 expect(errors.length).toBe(0);
+            });
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            element = $compile(angular.element('<ontology-upload-overlay></ontology-upload-overlay>'))(scope);
+            scope.$digest();
+            controller = element.controller('ontologyUploadOverlay');
+        });
+        describe('upload', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.uploadThenGet.and.returnValue(deferred.promise);
+                controller.file = 'file';
+                controller.upload();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.uploadThenGet).toHaveBeenCalledWith(controller.file);
+            });
+            it('when resolved, sets the correct variables', function() {
+                deferred.resolve({});
+                scope.$apply();
+                expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
+                expect(stateManagerSvc.setEditorTab).toHaveBeenCalledWith('basic');
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getList() - 1);
+                expect(stateManagerSvc.showUploadOverlay).toBe(false);
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject({statusText: 'error'});
+                scope.$apply();
+                expect(controller.error).toBe('error');
             });
         });
     });

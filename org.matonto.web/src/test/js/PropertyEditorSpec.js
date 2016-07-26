@@ -20,20 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 describe('Property Editor directive', function() {
     var $compile,
         scope,
-        element;
-
-    injectRegexConstant();
+        element,
+        controller,
+        stateManagerSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('propertyEditor');
+        mockPrefixes();
+        injectRemoveIriFromArrayFilter();
+        mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            stateManagerSvc = _stateManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -42,116 +50,58 @@ describe('Property Editor directive', function() {
             element = $compile(angular.element('<property-editor></property-editor>'))(scope);
             scope.$digest();
         });
-        it('for a form', function() {
-            expect(element.prop('tagName')).toBe('FORM');
+        it('for a div', function() {
+            expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on tab button container', function() {
-            var tabContainer = element.querySelectorAll('tab-button-container');
+            var tabContainer = element.find('tab-button-container');
             expect(tabContainer.length).toBe(1);
         });
         describe('based on vm.state.editorTab', function() {
             it('for basic', function() {
-                scope.vm = {
-                    state: {
-                        editorTab: 'basic'
-                    },
-                    selected: {
-                        matonto: {
-                            createError: 'error'
-                        }
-                    }
-                }
+                stateManagerSvc.state = {editorTab: 'basic'};
                 scope.$digest();
 
                 var tabs = element.querySelectorAll('.tab');
                 expect(tabs.length).toBe(1);
 
-                var errorDisplay = element.querySelectorAll('error-display');
-                expect(errorDisplay.length).toBe(1);
-
-                var staticIri = element.querySelectorAll('static-iri');
+                var staticIri = element.find('static-iri');
                 expect(staticIri.length).toBe(1);
 
-                var stringSelects = element.querySelectorAll('string-select');
+                var stringSelects = element.find('string-select');
                 expect(stringSelects.length).toBe(1);
 
-                var annotationTab = element.querySelectorAll('annotation-tab');
+                var annotationTab = element.find('annotation-tab');
                 expect(annotationTab.length).toBe(1);
             });
             describe('for axioms', function() {
                 beforeEach(function() {
-                    scope.vm = {
-                        state: {
-                            editorTab: 'axioms'
-                        }
-                    }
+                    stateManagerSvc.state = {editorTab: 'axioms'};
                 });
                 it('with empty @type', function() {
-                    scope.vm.selected = {
-                        '@type': []
-                    }
+                    stateManagerSvc.selected = {'@type': []};
                     scope.$digest();
 
-                    var objectSelects = element.querySelectorAll('object-select');
+                    var objectSelects = element.find('object-select');
                     expect(objectSelects.length).toBe(1);
 
                     var warnings = element.querySelectorAll('.text-warning');
                     expect(warnings.length).toBe(1);
                 });
                 describe('with @type', function() {
-                    beforeEach(function() {
-                        scope.vm.selected = {
-                            '@type': ['temp']
-                        }
-                        scope.$digest();
-                    });
                     it('and isObjectProperty returns true', function() {
-                        scope.vm.isObjectProperty = jasmine.createSpy('isObjectProperty').and.returnValue(true);
+                        stateManagerSvc.selected = {'@type': ['ObjectProperty']};
                         scope.$digest();
-
                         var objectSelects = element.querySelectorAll('object-select');
                         expect(objectSelects.length).toBe(6);
                     });
                     it('and isObjectProperty returns false', function() {
-                        scope.vm.isObjectProperty = jasmine.createSpy('isObjectProperty').and.returnValue(false);
+                        stateManagerSvc.selected = {'@type': ['DatatypeProperty']};
                         scope.$digest();
-
                         var objectSelects = element.querySelectorAll('object-select');
                         expect(objectSelects.length).toBe(5);
                     });
                 });
-            });
-        });
-        describe('and error-display', function() {
-            it('is visible when createError is true', function() {
-                scope.vm = {
-                    selected: {
-                        matonto: {
-                            createError: true
-                        }
-                    },
-                    state: {
-                        editorTab: 'basic'
-                    }
-                }
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when createError is false', function() {
-                scope.vm = {
-                    selected: {
-                        matonto: {
-                            createError: false
-                        }
-                    },
-                    state: {
-                        editorTab: 'basic'
-                    }
-                }
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(0);
             });
         });
     });

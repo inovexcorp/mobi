@@ -26,10 +26,10 @@ describe('Edit Prop Form directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('editPropForm');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

@@ -21,26 +21,26 @@
   #L%
   -->
 <div class="overlay sm">
-    <form name="vm.downloadForm" class="content clearfix" novalidate autocomplete="off">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Download Ontology</h6>
         
         <!-- serialization -->
-        <serialization-select ng-model="vm.downloadSerialization"></serialization-select>
+        <serialization-select ng-model="dvm.serialization"></serialization-select>
 
         <!-- file name -->
-        <div ng-class="{'has-error': vm.downloadForm.fileName.$error.pattern}" class="form-group">
-            <label class="control-label" for="fileName">File Name</label>
-            <input class="form-control" id="fileName" name="fileName" ng-model="vm.downloadFileName" ng-pattern="dvm.fileNamePattern" required />
-            <p ng-messages="vm.downloadForm.fileName.$error" class="error-msg">
+        <div ng-class="{'has-error': dvm.form.fileName.$error.pattern}" class="form-group">
+            <label class="control-label">File Name</label>
+            <input class="form-control" name="fileName" ng-model="dvm.fileName" ng-pattern="dvm.fileNamePattern" required />
+            <p ng-messages="dvm.form.fileName.$error" class="error-msg">
                 <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
             </p>
         </div>
 
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!vm.downloadSerialization || vm.downloadForm.$invalid" on-click="vm.downloadOntology()">Download</custom-button>
-            <custom-button on-click="vm.showDownloadOverlay = false" type="'secondary'">Cancel</custom-button>
+            <custom-button is-disabled-when="!dvm.serialization || dvm.form.$invalid" on-click="dvm.download()">Download</custom-button>
+            <custom-button on-click="dvm.sm.showDownloadOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

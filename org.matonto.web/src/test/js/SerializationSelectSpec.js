@@ -55,11 +55,11 @@ describe('Serialization Select directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on select', function() {
-            var selects = element.querySelectorAll('select');
+            var selects = element.find('select');
             expect(selects.length).toBe(1);
         });
         it('based on options', function() {
-            var options = element.querySelectorAll('option');
+            var options = element.find('option');
             expect(options.length).toBe(5);
         });
     });

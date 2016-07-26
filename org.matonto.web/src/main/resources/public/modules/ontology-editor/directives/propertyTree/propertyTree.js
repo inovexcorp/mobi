@@ -24,10 +24,12 @@
     'use strict';
 
     angular
-        .module('propertyTree', [])
+        .module('propertyTree', ['ontologyManager', 'stateManager', 'prefixes'])
         .directive('propertyTree', propertyTree);
 
-        function propertyTree() {
+        propertyTree.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixes'];
+
+        function propertyTree(ontologyManagerService, stateManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -36,14 +38,15 @@
                     headerText: '@'
                 },
                 bindToController: {
-                    propertyType: '@',
-                    selectItem: '&',
-                    state: '=',
-                    ontologies: '='
+                    propertyType: '@'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', 'prefixes', function($scope, prefixes) {
+                controller: function() {
                     var dvm = this;
+
+                    dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
+                    dvm.ontologies = dvm.om.getList();
 
                     dvm.isThisType = function(property, propertyType) {
                         var lowerCasePropertyTypeIRI = (prefixes.owl + propertyType).toLowerCase();
@@ -67,7 +70,7 @@
 
                         return result;
                     }
-                }]
+                }
             }
         }
 })();

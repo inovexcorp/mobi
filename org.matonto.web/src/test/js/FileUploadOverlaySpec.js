@@ -28,10 +28,10 @@ describe('File Upload Overlay directive', function() {
         csvManagerSvc,
         ontologyManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('fileUploadOverlay');
+        mockPrefixes();
         mockMappingManager();
         mockMapperState();
         mockCsvManager();

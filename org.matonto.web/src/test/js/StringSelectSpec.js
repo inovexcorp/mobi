@@ -26,19 +26,14 @@ describe('String Select directive', function() {
         element,
         $filter;
 
-    injectHighlightFilter();
-    injectTrustedFilter();
-    injectSplitIRIFilter();
-
     beforeEach(function() {
         module('templates');
         module('stringSelect');
-
-        module(function($provide) {
-            $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
-                return arr;
-            }));
-        });
+        injectHighlightFilter();
+        injectTrustedFilter();
+        injectSplitIRIFilter();
+        injectRemoveIriFromArrayFilter();
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_, _$filter_) {
             $compile = _$compile_;
@@ -54,7 +49,7 @@ describe('String Select directive', function() {
         scope.selectList = [];
         scope.mutedText = '';
 
-        element = $compile(angular.element('<string-select ng-model="bindModel" change-event="changeEvent" display-text="displayText" exclude-self="excludeSelf" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
+        element = $compile(angular.element('<string-select ng-model="bindModel" change-event="changeEvent" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
         scope.$digest();
     });
 
@@ -94,19 +89,12 @@ describe('String Select directive', function() {
             expect(element.hasClass('form-group')).toBe(true);
         });
         it('based on custom-label', function() {
-            var items = element.querySelectorAll('custom-label');
+            var items = element.find('custom-label');
             expect(items.length).toBe(1);
         });
         it('based on ui-select', function() {
-            var items = element.querySelectorAll('ui-select');
+            var items = element.find('ui-select');
             expect(items.length).toBe(1);
         });
-    });
-    it('makes sure getItemNamespace calls splitIRI', function() {
-        scope.getItemNamespace = jasmine.createSpy('getItemNamespace');
-        scope.$digest();
-
-        var namespace = element.controller('stringSelect').getItemNamespace('test');
-        expect(namespace).toBe($filter('splitIRI')('test').begin);
     });
 });
