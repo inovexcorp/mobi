@@ -43,29 +43,32 @@
                     dvm.am = annotationManagerService;
 
                     dvm.deleteEntity = function() {
-                        dvm.om.delete(dvm.sm.ontology.matonto.id, dvm.sm.selected.matonto.originalIri, dvm.sm.currentState)
+                        dvm.om.delete(dvm.sm.ontology.matonto.id, dvm.sm.selected.matonto.originalIri, dvm.sm.state)
                             .then(function(response) {
+                                dvm.error = '';
                                 dvm.sm.showDeleteConfirmation = false;
                                 if(response.selectOntology) {
                                     dvm.sm.setTreeTab('everything');
-                                    dvm.sm.selectItem('ontology-editor', dvm.sm.currentState.oi);
+                                    dvm.sm.selectItem('ontology-editor', dvm.sm.state.oi);
                                 } else {
-                                    dvm.sm.clearState(dvm.sm.currentState.oi);
+                                    dvm.sm.clearState(dvm.sm.state.oi);
                                 }
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
                             });
                     }
 
                     dvm.save = function() {
-                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.currentState)
+                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.state)
                             .then(function(state) {
                                 dvm.sm.showSaveOverlay = false;
-                                dvm.sm.currentState = state;
+                                dvm.sm.state = state;
                             });
                     }
 
                     dvm.removeAnnotation = function() {
                         dvm.am.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
-                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState);
+                        dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state);
                         dvm.sm.showRemoveAnnotationOverlay = false;
                     }
                 }

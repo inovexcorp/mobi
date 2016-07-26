@@ -29,11 +29,12 @@ describe('Class Editor directive', function() {
         ontologyManagerSvc,
         controller;
 
-    mockPrefixes();
-    injectRemoveIriFromArrayFilter();
+
     beforeEach(function() {
         module('templates');
         module('classEditor');
+        mockPrefixes();
+        injectRemoveIriFromArrayFilter();
         mockOntologyManager();
         mockStateManager();
 
@@ -59,57 +60,25 @@ describe('Class Editor directive', function() {
         });
         describe('based on vm.state.editorTab', function() {
             it('for basic', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: 'error'}};
+                stateManagerSvc.state = {editorTab: 'basic'};
                 scope.$digest();
 
                 var tabs = element.querySelectorAll('.tab');
                 expect(tabs.length).toBe(1);
 
-                var errorDisplay = element.querySelectorAll('error-display');
-                expect(errorDisplay.length).toBe(1);
-
-                var staticIri = element.querySelectorAll('static-iri');
+                var staticIri = element.find('static-iri');
                 expect(staticIri.length).toBe(1);
 
-                var annotationTab = element.querySelectorAll('annotation-tab');
+                var annotationTab = element.find('annotation-tab');
                 expect(annotationTab.length).toBe(1);
             });
             it('for axioms', function() {
-                stateManagerSvc.currentState = {editorTab: 'axioms'};
+                stateManagerSvc.state = {editorTab: 'axioms'};
                 scope.$digest();
 
                 var objectSelects = element.querySelectorAll('object-select');
                 expect(objectSelects.length).toBe(2);
             });
-        });
-        describe('and error-display', function() {
-            it('is visible when createError is true', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: true}};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when createError is false', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: false}};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(0);
-            });
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<class-editor></class-editor>'))(scope);
-            scope.$digest();
-            controller = element.controller('classEditor');
-        });
-        it('onEdit calls the correct manager functions', function() {
-            controller.onEdit('begin', 'then', 'end');
-            expect(ontologyManagerSvc.editIRI).toHaveBeenCalledWith('begin', 'then', 'end', stateManagerSvc.selected, stateManagerSvc.ontology);
-            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
         });
     });
 });

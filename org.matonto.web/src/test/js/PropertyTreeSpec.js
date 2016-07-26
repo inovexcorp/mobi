@@ -26,10 +26,10 @@ describe('Property Tree directive', function() {
         element,
         ontologyManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('propertyTree');
+        mockPrefixes();
         mockOntologyManager();
         mockStateManager();
 
@@ -41,7 +41,7 @@ describe('Property Tree directive', function() {
     });
 
     beforeEach(function() {
-        ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+        ontologyManagerSvc.getList.and.returnValue([
             {
                 matonto: {
                     classes: [

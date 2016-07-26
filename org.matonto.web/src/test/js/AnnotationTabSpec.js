@@ -25,15 +25,14 @@ describe('Annotation Tab directive', function() {
         scope,
         element,
         stateManagerSvc,
-        resObj,
         controller;
 
-    injectBeautifyFilter();
-    injectShowAnnotationsFilter();
 
     beforeEach(function() {
         module('templates');
         module('annotationTab');
+        injectBeautifyFilter();
+        injectShowAnnotationsFilter();
         mockStateManager();
         mockResponseObj();
 
@@ -41,7 +40,6 @@ describe('Annotation Tab directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
-            resObj = _responseObj_;
         });
     });
 

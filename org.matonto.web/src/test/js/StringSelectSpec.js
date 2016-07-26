@@ -26,14 +26,13 @@ describe('String Select directive', function() {
         element,
         $filter;
 
-    injectHighlightFilter();
-    injectTrustedFilter();
-    injectSplitIRIFilter();
-    injectRemoveIriFromArrayFilter();
-
     beforeEach(function() {
         module('templates');
         module('stringSelect');
+        injectHighlightFilter();
+        injectTrustedFilter();
+        injectSplitIRIFilter();
+        injectRemoveIriFromArrayFilter();
         mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_, _$filter_) {
@@ -90,11 +89,11 @@ describe('String Select directive', function() {
             expect(element.hasClass('form-group')).toBe(true);
         });
         it('based on custom-label', function() {
-            var items = element.querySelectorAll('custom-label');
+            var items = element.find('custom-label');
             expect(items.length).toBe(1);
         });
         it('based on ui-select', function() {
-            var items = element.querySelectorAll('ui-select');
+            var items = element.find('ui-select');
             expect(items.length).toBe(1);
         });
     });

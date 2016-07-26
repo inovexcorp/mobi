@@ -24,21 +24,24 @@ describe('Create Ontology Overlay directive', function() {
     var $compile,
         scope,
         element,
-        ontologyManagerSvc;
-
-    injectRegexConstant();
-    injectCamelCaseFilter();
+        ontologyManagerSvc,
+        deferred,
+        stateManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('createOntologyOverlay');
+        injectRegexConstant();
+        injectCamelCaseFilter();
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
     });
 
@@ -59,7 +62,7 @@ describe('Create Ontology Overlay directive', function() {
             expect(contents.length).toBe(1);
         });
         it('based on form', function() {
-            var forms = element.querySelectorAll('form');
+            var forms = element.find('form');
             expect(forms.length).toBe(1);
         });
         it('based on btn-container class', function() {
@@ -91,9 +94,29 @@ describe('Create Ontology Overlay directive', function() {
                 expect(controller.iri).toEqual('iri');
             });
         });
-        it('create calls the correct manager function', function() {
-            controller.create('ontology-iri', 'label', 'description');
-            expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith('ontology-iri', 'label', 'description');
+        describe('create', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.createOntology.and.returnValue(deferred.promise);
+                controller.iri = 'ontology-iri';
+                controller.name = 'label';
+                controller.description = 'description';
+                controller.create();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.iri, controller.name, controller.description);
+            });
+            it('when resolved, sets the correct variables', function() {
+                deferred.resolve({});
+                scope.$apply();
+                expect(controller.error).toBe('');
+                expect(stateManagerSvc.showCreateOntologyOverlay).toBe(false);
+                expect(stateManagerSvc.setStateToNew).toHaveBeenCalledWith(stateManagerSvc.state, ontologyManagerSvc.getList(), 'ontology');
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject('error');
+                scope.$apply();
+                expect(controller.error).toBe('error');
+            });
         });
     });
 });

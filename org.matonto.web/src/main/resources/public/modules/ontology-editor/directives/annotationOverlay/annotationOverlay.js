@@ -44,16 +44,19 @@
                     dvm.ro = responseObj;
                     dvm.sm = stateManagerService;
 
+                    function closeAndMark() {
+                        dvm.sm.showAnnotationOverlay = false;
+                        dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.getState());
+                    }
+
                     dvm.addAnnotation = function(select, value) {
                         dvm.am.add(dvm.sm.selected, dvm.ro.getItemIri(select), value);
-                        dvm.sm.showAnnotationOverlay = false;
-                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.getState());
+                        closeAndMark();
                     }
 
                     dvm.editAnnotation = function(select, value) {
                         dvm.am.edit(dvm.sm.selected, dvm.ro.getItemIri(select), value, dvm.sm.annotationIndex);
-                        dvm.sm.showAnnotationOverlay = false;
-                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.getState());
+                        closeAndMark();
                     }
                 }
             }

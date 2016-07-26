@@ -29,11 +29,11 @@ describe('Property Editor directive', function() {
         stateManagerSvc,
         ontologyManagerSvc;
 
-    mockPrefixes();
-    injectRemoveIriFromArrayFilter();
     beforeEach(function() {
         module('templates');
         module('propertyEditor');
+        mockPrefixes();
+        injectRemoveIriFromArrayFilter();
         mockOntologyManager();
         mockStateManager();
 
@@ -54,39 +54,35 @@ describe('Property Editor directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on tab button container', function() {
-            var tabContainer = element.querySelectorAll('tab-button-container');
+            var tabContainer = element.find('tab-button-container');
             expect(tabContainer.length).toBe(1);
         });
         describe('based on vm.state.editorTab', function() {
             it('for basic', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: 'error'}};
+                stateManagerSvc.state = {editorTab: 'basic'};
                 scope.$digest();
 
                 var tabs = element.querySelectorAll('.tab');
                 expect(tabs.length).toBe(1);
 
-                var errorDisplay = element.querySelectorAll('error-display');
-                expect(errorDisplay.length).toBe(1);
-
-                var staticIri = element.querySelectorAll('static-iri');
+                var staticIri = element.find('static-iri');
                 expect(staticIri.length).toBe(1);
 
-                var stringSelects = element.querySelectorAll('string-select');
+                var stringSelects = element.find('string-select');
                 expect(stringSelects.length).toBe(1);
 
-                var annotationTab = element.querySelectorAll('annotation-tab');
+                var annotationTab = element.find('annotation-tab');
                 expect(annotationTab.length).toBe(1);
             });
             describe('for axioms', function() {
                 beforeEach(function() {
-                    stateManagerSvc.currentState = {editorTab: 'axioms'};
+                    stateManagerSvc.state = {editorTab: 'axioms'};
                 });
                 it('with empty @type', function() {
                     stateManagerSvc.selected = {'@type': []};
                     scope.$digest();
 
-                    var objectSelects = element.querySelectorAll('object-select');
+                    var objectSelects = element.find('object-select');
                     expect(objectSelects.length).toBe(1);
 
                     var warnings = element.querySelectorAll('.text-warning');
@@ -107,34 +103,6 @@ describe('Property Editor directive', function() {
                     });
                 });
             });
-        });
-        describe('and error-display', function() {
-            it('is visible when createError is true', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: true}};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when createError is false', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: false}};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(0);
-            });
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<property-editor></property-editor>'))(scope);
-            scope.$digest();
-            controller = element.controller('propertyEditor');
-        });
-        it('onEdit calls the correct manager functions', function() {
-            controller.onEdit('begin', 'then', 'end');
-            expect(ontologyManagerSvc.editIRI).toHaveBeenCalledWith('begin', 'then', 'end', stateManagerSvc.selected, stateManagerSvc.ontology);
-            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
         });
     });
 });

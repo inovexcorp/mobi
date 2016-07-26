@@ -49,8 +49,7 @@
 
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!dvm.ontologyId" on-click="dvm.open(dvm.ontologyId)">Open</custom-button>
-
+            <custom-button is-disabled-when="!dvm.ontologyId" on-click="dvm.open()">Open</custom-button>
             <custom-button on-click="dvm.sm.showOpenOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>

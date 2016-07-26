@@ -41,7 +41,7 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
 
-                    dvm.disableSave = function() {
+                    dvm.shouldSaveBeDisabled = function() {
                         return !_.get(dvm.sm.ontology, 'matonto.isValid', false) || !dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length;
                     }
 
@@ -49,8 +49,8 @@
                         if(dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length) {
                             dvm.sm.showCloseOverlay = true;
                         } else {
-                            dvm.om.closeOntology(dvm.sm.currentState.oi, dvm.sm.ontology.matonto.id);
-                            dvm.sm.clearState(dvm.sm.currentState.oi);
+                            dvm.om.closeOntology(dvm.sm.state.oi, dvm.sm.ontology.matonto.id);
+                            dvm.sm.clearState(dvm.sm.state.oi);
                         }
                     }
                 }

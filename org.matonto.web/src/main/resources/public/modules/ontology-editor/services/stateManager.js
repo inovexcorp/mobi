@@ -65,7 +65,7 @@
             self.ontology = {};
             self.selected = {};
             self.ontologyIds = self.om.getOntologyIds();
-            self.currentState = self.states[self.states.current];
+            self.state = self.states[self.states.current];
 
 
             function setVariables(oi) {
@@ -80,18 +80,18 @@
 
             self.setTreeTab = function(tab) {
                 self.states.current = tab;
-                self.currentState = self.getState();
+                self.state = self.getState();
                 if(tab !== 'annotation') {
-                    self.selected = self.om.getObject(self.currentState);
+                    self.selected = self.om.getObject(self.state);
                 } else {
-                    self.selected = _.get(self.om.getList(), '[' + self.currentState.oi + '].matonto.jsAnnotations[' + self.currentState.pi + ']');
+                    self.selected = _.get(self.om.getList(), '[' + self.state.oi + '].matonto.jsAnnotations[' + self.state.pi + ']');
                 }
-                self.ontology = self.om.getOntology(self.currentState.oi);
+                self.ontology = self.om.getOntology(self.state.oi);
             }
 
             self.setEditorTab = function(tab) {
                 self.states[self.states.current].editorTab = tab;
-                self.currentState = self.getState();
+                self.state = self.getState();
             }
 
             self.getEditorTab = function() {
@@ -107,7 +107,7 @@
                 state.ci = ci;
                 state.pi = pi;
                 state.editor = editor;
-                self.currentState = self.getState();
+                self.state = self.getState();
             }
 
             self.getState = function() {
@@ -152,7 +152,7 @@
                         state.editor = 'default-tab';
                     }
                 }
-                self.currentState = self.getState();
+                self.state = self.getState();
             }
 
             self.selectItem = function(editor, oi, ci, pi) {
@@ -160,6 +160,16 @@
                 setVariables(oi);
             }
 
-            setVariables(self.currentState.oi);
+            self.entityChanged = function() {
+                self.selected.matonto.unsaved = true;
+                self.om.addToChangedList(self.ontology.matonto.id, self.selected.matonto.originalIri, self.state);
+            }
+
+            self.onEdit = function(iriBegin, iriThen, iriEnd) {
+                self.om.editIRI(iriBegin, iriThen, iriEnd, self.selected, self.ontology);
+                self.entityChanged(self.selected, self.ontology.matonto.id, self.state);
+            }
+
+            setVariables(self.state.oi);
         }
 })();

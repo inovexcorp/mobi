@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('createClassOverlay', ['camelCase', 'ontologyManager', 'stateManager'])
+        .module('createClassOverlay', ['ontologyManager', 'stateManager'])
         .directive('createClassOverlay', createClassOverlay);
 
         createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService'];
@@ -57,12 +57,12 @@
                         dvm.iri = iriBegin + iriThen + iriEnd;
                     }
 
-                    dvm.create = function(classIri, label, description) {
-                        dvm.om.createClass(dvm.sm.ontology, classIri, label, description)
+                    dvm.create = function() {
+                        dvm.om.createClass(dvm.sm.ontology, dvm.iri, dvm.name, dvm.description)
                             .then(function(response) {
                                 dvm.error = '';
                                 dvm.sm.showCreateClassOverlay = false;
-                                dvm.sm.setStateToNew(dvm.sm.currentState, dvm.om.getList(), 'class');
+                                dvm.sm.setStateToNew(dvm.sm.state, dvm.om.getList(), 'class');
                             }, function(errorMessage) {
                                 dvm.error = errorMessage;
                             });

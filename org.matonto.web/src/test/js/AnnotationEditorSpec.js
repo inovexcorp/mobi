@@ -48,12 +48,16 @@ describe('Annotation Editor directive', function() {
             expect(element.hasClass('annotation-preview')).toBe(true);
         });
         it('based on h3', function() {
-            var headers = element.querySelectorAll('h3');
+            var headers = element.find('h3');
             expect(headers.length).toBe(1);
         });
         it('based on pre', function() {
-            var pres = element.querySelectorAll('pre');
+            var pres = element.find('pre');
             expect(pres.length).toBe(1);
+        });
+        it('based on .tab', function() {
+            var tabs = element.querySelectorAll('.tab');
+            expect(tabs.length).toBe(1);
         });
     });
 });

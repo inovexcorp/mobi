@@ -34,7 +34,10 @@
                       confirm-click="dvm.deleteEntity()"
                       cancel-click="dvm.sm.showDeleteConfirmation = false"
                       confirm-text="'Yes'"
-                      cancel-text="'No'">Are you sure that you want to delete <strong>{{dvm.sm.selected['@id'] || dvm.sm.selected.matonto.id}}</strong>?</confirmation-overlay>
+                      cancel-text="'No'">
+    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id'] || dvm.sm.selected.matonto.id}}</strong>?</p>
+</confirmation-overlay>
 <confirmation-overlay ng-if="dvm.sm.showRemoveAnnotationOverlay"
                       header-text="'Remove Annotation'"
                       confirm-click="dvm.removeAnnotation()"

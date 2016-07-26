@@ -26,20 +26,23 @@ describe('Create Annotation Overlay directive', function() {
         element,
         controller,
         stateManagerSvc,
-        annotationManagerSvc;
+        annotationManagerSvc,
+        deferred;
 
-    injectRegexConstant();
     beforeEach(function() {
         module('templates');
         module('createAnnotationOverlay');
+        injectRegexConstant();
         mockAnnotationManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _annotationManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _annotationManagerService_, _stateManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             annotationManagerSvc = _annotationManagerService_;
             stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
     });
 
@@ -57,7 +60,7 @@ describe('Create Annotation Overlay directive', function() {
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('h6');
+            var items = element.find('h6');
             expect(items.length).toBe(1);
         });
         it('based on .form-group', function() {
@@ -114,9 +117,28 @@ describe('Create Annotation Overlay directive', function() {
         beforeEach(function() {
             controller = element.controller('createAnnotationOverlay');
         });
-        it('create calls the correct manager function', function() {
-            controller.create('iri');
-            expect(annotationManagerSvc.create).toHaveBeenCalledWith(stateManagerSvc.ontology, 'iri');
+        describe('create', function() {
+            beforeEach(function() {
+                annotationManagerSvc.create.and.returnValue(deferred.promise);
+                controller.iri = 'iri';
+                controller.create();
+            });
+            it('calls the correct manager function', function() {
+                expect(annotationManagerSvc.create).toHaveBeenCalledWith(stateManagerSvc.ontology, controller.iri);
+            });
+            it('when resolved, sets the correct variables', function() {
+                deferred.resolve({});
+                scope.$apply();
+                expect(controller.error).toBe('');
+                expect(controller.iri).toBe('');
+                expect(stateManagerSvc.showCreateAnnotationOverlay).toBe(false);
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject('error');
+                scope.$apply();
+                expect(controller.error).toBe('error');
+            });
         });
+
     });
 });

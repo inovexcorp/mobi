@@ -41,13 +41,13 @@ describe('Class Tree directive', function() {
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+            ontologyManagerSvc.getList.and.returnValue([
                 {
                     matonto: {
                         classes: ['class1', 'class2']
                     }
                 }
-            ])
+            ]);
             element = $compile(angular.element('<class-tree></class-tree>'))(scope);
             scope.$digest();
         });
@@ -62,7 +62,7 @@ describe('Class Tree directive', function() {
             expect(container.length).toBe(1);
         });
         it('based on ul', function() {
-            var uls = element.querySelectorAll('ul');
+            var uls = element.find('ul');
             expect(uls.length).toBe(2);
         });
         it('based on container tree-items', function() {

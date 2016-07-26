@@ -43,8 +43,8 @@
                     dvm.am = annotationManagerService;
                     dvm.sm = stateManagerService;
 
-                    dvm.create = function(iri) {
-                        dvm.am.create(dvm.sm.ontology, iri)
+                    dvm.create = function() {
+                        dvm.am.create(dvm.sm.ontology, dvm.iri)
                             .then(function(response) {
                                 dvm.error = '';
                                 dvm.iri = '';

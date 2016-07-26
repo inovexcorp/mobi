@@ -29,10 +29,10 @@
          * @name file-input
          *
          * @description 
-         * The `file-input` module only provides the `fileInput` directive which
+         * The `fileInput` module only provides the `fileInput` directive which
          * adds ngModel functionality to the standard input element for files. 
          */
-        .module('file-input', [])
+        .module('fileInput', [])
         /**
          * @ngdoc directive
          * @name file-input.directive:fileInput

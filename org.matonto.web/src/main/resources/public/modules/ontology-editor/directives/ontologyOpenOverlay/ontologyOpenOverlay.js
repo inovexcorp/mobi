@@ -41,10 +41,10 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-                    dvm.ontologyIds = dvm.om.getOntologyIds();
+                    dvm.ontologyIds = dvm.sm.ontologyIds;
 
-                    dvm.open = function(ontologyId) {
-                        dvm.om.openOntology(ontologyId)
+                    dvm.open = function() {
+                        dvm.om.openOntology(dvm.ontologyId)
                             .then(function(response) {
                                 dvm.sm.setTreeTab('everything');
                                 dvm.sm.setEditorTab('basic');

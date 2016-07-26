@@ -24,23 +24,28 @@ describe('Ontology Open Overlay directive', function() {
     var $compile,
         scope,
         element,
-        controller;
-
-    injectBeautifyFilter();
-    injectSplitIRIFilter();
-    injectTrustedFilter();
-    injectHighlightFilter();
+        controller,
+        ontologyManagerSvc,
+        stateManagerSvc,
+        deferred;
 
     beforeEach(function() {
         module('templates');
         module('ontologyOpenOverlay');
+        injectBeautifyFilter();
+        injectSplitIRIFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
 
     });
@@ -58,7 +63,7 @@ describe('Ontology Open Overlay directive', function() {
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('h6');
+            var items = element.find('h6');
             expect(items.length).toBe(1);
         });
         it('based on .form-group', function() {
@@ -76,13 +81,13 @@ describe('Ontology Open Overlay directive', function() {
             it('is visible when openError is true', function() {
                 controller.error = true;
                 scope.$digest();
-                var errors = element.querySelectorAll('error-display');
+                var errors = element.find('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when openError is false', function() {
                 controller.error = false;
                 scope.$digest();
-                var errors = element.querySelectorAll('error-display');
+                var errors = element.find('error-display');
                 expect(errors.length).toBe(0);
             });
         });
@@ -93,9 +98,28 @@ describe('Ontology Open Overlay directive', function() {
             scope.$digest();
             controller = element.controller('ontologyOpenOverlay');
         });
-        it('open calls the correct manager function', function() {
-            controller.open('id');
-            expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith('id');
+        describe('open', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.openOntology.and.returnValue(deferred.promise);
+                controller.ontologyId = 'id';
+                controller.open();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.ontologyId);
+            });
+            it('when resolved, sets the correct variables', function() {
+                deferred.resolve({});
+                scope.$apply();
+                expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
+                expect(stateManagerSvc.setEditorTab).toHaveBeenCalledWith('basic');
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getList().length - 1);
+                expect(stateManagerSvc.showOpenOverlay).toBe(false);
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject('error');
+                scope.$apply();
+                expect(controller.error).toBe('error');
+            });
         });
     });
 });

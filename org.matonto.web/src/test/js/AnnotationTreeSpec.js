@@ -44,7 +44,7 @@ describe('Annotation Tree directive', function() {
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            ontologyManagerSvc.getList = jasmine.createSpy('getList').and.callFake(function() {
+            ontologyManagerSvc.getList.and.callFake(function() {
                 return [{matonto: {jsAnnotations: ['annotation1', 'annotation2']}}];
             });
             element = $compile(angular.element('<annotation-tree></annotation-tree>'))(scope);
@@ -61,7 +61,7 @@ describe('Annotation Tree directive', function() {
             expect(container.length).toBe(1);
         });
         it('based on ul', function() {
-            var uls = element.querySelectorAll('ul');
+            var uls = element.find('ul');
             expect(uls.length).toBe(2);
         });
         it('based on container tree-items', function() {
@@ -79,7 +79,7 @@ describe('Annotation Tree directive', function() {
             controller.selectAnnotation(0, 0);
             expect(stateManagerSvc.setState).toHaveBeenCalledWith('annotation-editor', 0, undefined, 0);
             expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(0);
-            expect(stateManagerSvc.selected).toEqual({});
+            expect(stateManagerSvc.selected).toEqual(stateManagerSvc.ontology.matonto.jsAnnotations[0]);
         });
     });
 });

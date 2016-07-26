@@ -332,7 +332,7 @@
                         }
                     }, function(response) {
                         console.error('Error in deleteClass() function');
-                        deferred.reject(response);
+                        deferred.reject(response.data.error);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -383,7 +383,7 @@
                         }
                     }, function(response) {
                         console.error('Error in deleteClass() function');
-                        deferred.reject(response);
+                        deferred.reject(response.data.error);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -479,14 +479,14 @@
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
                             properties: [],
-                            originalIri: obj['@id'],
+                            originalIri: angular.copy(obj['@id']),
                             isValid: true
                         };
                         classes.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
                         obj.matonto = {
                             icon: chooseIcon(obj, prefixes),
-                            originalIri: obj['@id'],
+                            originalIri: angular.copy(obj['@id']),
                             isValid: true
                         };
                         properties.push(obj);
@@ -643,8 +643,8 @@
             function initEntity(entity, iri, label, description) {
                 var copy = angular.copy(entity);
 
-                copy['@id'] = iri;
-                copy.matonto.originalIri = iri;
+                copy['@id'] = angular.copy(iri);
+                copy.matonto.originalIri = angular.copy(iri);
                 copy[prefixes.dc + 'title'] = [{'@value': label}];
                 copy[prefixes.rdfs + 'label'] = [{'@value': label}];
 
@@ -1075,6 +1075,8 @@
                                             ontology.matonto.classes[index].matonto.properties.splice(propertyIndex, 1);
                                         }
                                     });
+                                    // updates the entity's originalIri
+                                    item.matonto.originalIri = angular.copy(item['@id']);
                                 });
                                 ontology.matonto.originalIri = angular.copy(ontology['@id']);
                                 ontology.matonto.id = response[0].data.id;
@@ -1308,11 +1310,6 @@
                     });
 
                 return deferred.promise;
-            }
-
-            self.entityChanged = function(selected, ontologyId, state) {
-                selected.matonto.unsaved = true;
-                self.addToChangedList(ontologyId, selected.matonto.originalIri, state);
             }
         }
 })();

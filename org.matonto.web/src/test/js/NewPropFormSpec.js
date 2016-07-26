@@ -28,10 +28,10 @@ describe('New Prop Form directive', function() {
         mapperStateSvc,
         csvManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('newPropForm');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

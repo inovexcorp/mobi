@@ -36,9 +36,7 @@
 
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!dvm.file"
-                           on-click="dvm.upload(dvm.file);">Upload</custom-button>
-
+            <custom-button is-disabled-when="!dvm.file" on-click="dvm.upload()">Upload</custom-button>
             <custom-button on-click="dvm.sm.showUploadOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>

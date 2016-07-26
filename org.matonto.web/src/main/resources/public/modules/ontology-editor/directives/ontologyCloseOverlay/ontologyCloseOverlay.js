@@ -43,7 +43,7 @@
                     dvm.sm = stateManagerService;
 
                     dvm.saveThenClose = function() {
-                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.currentState)
+                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.state)
                             .then(function(state) {
                                 dvm.close();
                             }, function(errorMessage) {
@@ -52,8 +52,8 @@
                     }
 
                     dvm.close = function() {
-                        dvm.om.closeOntology(dvm.sm.currentState.oi, dvm.sm.ontology.matonto.id);
-                        dvm.sm.clearState(dvm.sm.currentState.oi);
+                        dvm.om.closeOntology(dvm.sm.state.oi, dvm.sm.ontology.matonto.id);
+                        dvm.sm.clearState(dvm.sm.state.oi);
                         dvm.sm.showCloseOverlay = false;
                     }
                 }

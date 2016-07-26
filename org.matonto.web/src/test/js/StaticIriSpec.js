@@ -25,19 +25,21 @@ describe('Static IRI directive', function() {
         $filter,
         scope,
         element,
-        stateManagerSvc;
+        stateManagerSvc,
+        controller;
 
-    injectRegexConstant();
-    injectSplitIRIFilter();
     beforeEach(function() {
         module('templates');
         module('staticIri');
         mockStateManager();
+        injectSplitIRIFilter();
+        injectRegexConstant();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _$filter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
+            $filter = _$filter_;
         });
     });
 
@@ -61,8 +63,6 @@ describe('Static IRI directive', function() {
         });
     });
     describe('controller bound variables', function() {
-        var controller;
-
         beforeEach(function() {
             controller = element.controller('staticIri');
         });
@@ -85,11 +85,11 @@ describe('Static IRI directive', function() {
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('h6');
+            var items = element.find('h6');
             expect(items.length).toBe(1);
         });
         it('based on form', function() {
-            var items = element.querySelectorAll('form');
+            var items = element.find('form');
             expect(items.length).toBe(1);
         });
         it('based on .btn-container', function() {
@@ -98,14 +98,12 @@ describe('Static IRI directive', function() {
         });
     });
     describe('controller methods', function() {
-        var controller;
-
         beforeEach(function() {
             stateManagerSvc.ontology.matonto.iriBegin = 'begin';
             stateManagerSvc.ontology.matonto.iriThen = 'then';
             controller = element.controller('staticIri');
         });
-        /*it('setVariables changes the passed in variable', function() {
+        it('setVariables changes the passed in variable', function() {
             var obj = {
                 iriBegin: 'begin',
                 iriThen: 'then',
@@ -115,7 +113,7 @@ describe('Static IRI directive', function() {
             expect(obj.iriBegin).toBe('');
             expect(obj.iriThen).toBe('');
             expect(obj.iriEnd).toBe('');
-        });*/
+        });
         it('resetVariables updates iriBegin, iriThen, and iriEnd', function() {
             controller.refresh = {
                 iriBegin: 'new',

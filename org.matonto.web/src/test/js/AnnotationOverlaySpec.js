@@ -26,27 +26,25 @@ describe('Annotation Overlay directive', function() {
         element,
         controller,
         stateManagerSvc,
-        ontologyManagerSvc,
         annotationManagerSvc;
-
-    injectRegexConstant();
-    injectHighlightFilter();
-    injectTrustedFilter();
 
     beforeEach(function() {
         module('templates');
         module('annotationOverlay');
+        injectRegexConstant();
+        injectHighlightFilter();
+        injectTrustedFilter();
         mockOntologyManager();
         mockStateManager();
         mockResponseObj();
         mockAnnotationManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _annotationManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _annotationManagerService_, _responseObj_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             annotationManagerSvc = _annotationManagerService_;
+            resObj = _responseObj_;
         });
     });
 
@@ -77,7 +75,7 @@ describe('Annotation Overlay directive', function() {
                 stateManagerSvc.editingAnnotation = test.value;
                 scope.$digest();
 
-                var header = element.querySelectorAll('h6');
+                var header = element.find('h6');
                 expect(header.length).toBe(1);
                 expect(header[0].innerHTML).toBe(test.result);
             });
@@ -111,15 +109,15 @@ describe('Annotation Overlay directive', function() {
         });
         it('addAnnotation should call the appropriate manager functions', function() {
             controller.addAnnotation({}, 'value');
-            expect(annotationManagerSvc.add).toHaveBeenCalled();
+            expect(annotationManagerSvc.add).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}), 'value');
             expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
+            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
         });
         it('editAnnotation should call the appropriate manager functions', function() {
             controller.editAnnotation({}, 'value');
-            expect(annotationManagerSvc.edit).toHaveBeenCalled();
+            expect(annotationManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}), 'value', stateManagerSvc.annotationIndex);
             expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
+            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
         });
     });
 });

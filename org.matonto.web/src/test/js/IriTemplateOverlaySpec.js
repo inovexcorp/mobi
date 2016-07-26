@@ -28,10 +28,10 @@ describe('IRI Template Overlay directive', function() {
         mapperStateSvc,
         csvManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('iriTemplateOverlay');
+        mockPrefixes();
         mockMapperState();
         mockMappingManager();
         mockCsvManager();

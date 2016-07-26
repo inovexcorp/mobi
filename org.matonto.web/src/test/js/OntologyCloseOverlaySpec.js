@@ -26,7 +26,8 @@ describe('Ontology Open Overlay directive', function() {
         element,
         controller,
         stateManagerSvc,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        deferred;
 
     beforeEach(function() {
         module('templates');
@@ -34,11 +35,13 @@ describe('Ontology Open Overlay directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
 
     });
@@ -91,14 +94,30 @@ describe('Ontology Open Overlay directive', function() {
             scope.$digest();
             controller = element.controller('ontologyCloseOverlay');
         });
-        it('saveThenClose calls the correct manager functions', function() {
-            controller.saveThenClose();
-            expect(ontologyManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id, stateManagerSvc.currentState);
+        describe('saveThenClose', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.edit.and.returnValue(deferred.promise);
+                controller.saveThenClose();
+            });
+            it('calls the correct manager functions', function() {
+                expect(ontologyManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
+            });
+            it('when resolved, calls the correct controller function', function() {
+                controller.close = jasmine.createSpy('close');
+                deferred.resolve({});
+                scope.$apply();
+                expect(controller.close).toHaveBeenCalled();
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject('error');
+                scope.$apply();
+                expect(controller.error).toBe('error');
+            });
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.currentState.oi, stateManagerSvc.ontology.matonto.id);
-            expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.currentState.oi);
+            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.oi, stateManagerSvc.ontology.matonto.id);
+            expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.oi);
             expect(stateManagerSvc.showCloseOverlay).toBe(false);
         });
     });

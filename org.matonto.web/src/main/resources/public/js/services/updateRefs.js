@@ -54,6 +54,7 @@
         var exclude = [
                 '$$hashKey',
                 'context',
+                'originalIri',
                 'unsaved'
             ];
 

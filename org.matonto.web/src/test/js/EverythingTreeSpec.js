@@ -41,7 +41,7 @@ describe('Everything Tree directive', function() {
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+            ontologyManagerSvc.getList.and.returnValue([
                 {
                     matonto: {
                         classes: [
@@ -69,7 +69,7 @@ describe('Everything Tree directive', function() {
             expect(container.length).toBe(3);
         });
         it('based on <ul>s', function() {
-            var uls = element.querySelectorAll('ul');
+            var uls = element.find('ul');
             expect(uls.length).toBe(5);
         });
         it('based on container tree-items', function() {
@@ -78,7 +78,7 @@ describe('Everything Tree directive', function() {
         });
         describe('based on tree-item length', function() {
             it('when ontology.noDomains is empty', function() {
-                ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+                ontologyManagerSvc.getList.and.returnValue([
                     {
                         matonto: {
                             classes: [
@@ -99,7 +99,7 @@ describe('Everything Tree directive', function() {
                 expect(treeItems.length).toBe(2);
             });
             it('when class.matonto.properties is empty', function() {
-                ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+                ontologyManagerSvc.getList.and.returnValue([
                     {
                         matonto: {
                             classes: [
@@ -120,7 +120,7 @@ describe('Everything Tree directive', function() {
                 expect(treeItems.length).toBe(2);
             });
             it('when ontology.matonto.classes is empty', function() {
-                ontologyManagerSvc.getList = jasmine.createSpy('getList').and.returnValue([
+                ontologyManagerSvc.getList.and.returnValue([
                     {
                         matonto: {
                             classes: [],

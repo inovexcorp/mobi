@@ -45,11 +45,6 @@
                     dvm.propertyTypes = dvm.om.getPropertyTypes();
                     dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
                     dvm.subObjectProperties = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subObjectProperties, dvm.sm.selected.matonto.originalIri);
-
-                    dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
-                        dvm.om.editIRI(iriBegin, iriThen, iriEnd, dvm.sm.selected, dvm.sm.ontology);
-                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState);
-                    }
                 }
             }
         }

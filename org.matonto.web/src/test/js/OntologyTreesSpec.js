@@ -48,11 +48,11 @@ describe('Ontology Trees directive', function() {
             expect(element.prop('tagName')).toBe('ONTOLOGY-TREES');
         });
         it('based on tab-button-container', function() {
-            var container = element.querySelectorAll('tab-button-container');
+            var container = element.find('tab-button-container');
             expect(container.length).toBe(1);
         });
         it('based on tab-buttons', function() {
-            var buttons = element.querySelectorAll('tab-button');
+            var buttons = element.find('tab-button');
             expect(buttons.length).toBe(5);
         });
         _.forEach([
@@ -63,9 +63,9 @@ describe('Ontology Trees directive', function() {
                 {tag: 'annotation-tree', text: 'annotation'}
             ], function(item) {
             it('based on ' + item.tag, function() {
-                stateManagerSvc.currentState.tab = item.text;
+                stateManagerSvc.state.tab = item.text;
                 scope.$digest();
-                var items = element.querySelectorAll(item.tag);
+                var items = element.find(item.tag);
                 expect(items.length).toBe(1);
             });
         });
