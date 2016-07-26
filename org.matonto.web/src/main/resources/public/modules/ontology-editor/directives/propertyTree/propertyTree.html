@@ -23,12 +23,12 @@
 <div class="tree scroll-without-buttons">
     <!-- property view -->
     <strong>{{headerText}}</strong>
-    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.state.oi === oi)">
+    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.sm.state.oi === oi)">
         <tree-item current-entity="ontology"
                    current-ontology="ontology"
-                   is-active="dvm.state.oi === $index && dvm.state.pi === undefined"
+                   is-active="dvm.sm.state.oi === $index && dvm.sm.state.pi === undefined"
                    is-opened="opened"
-                   on-click="dvm.selectItem({editor: 'ontology-editor', oi: $index})"
+                   on-click="dvm.sm.selectItem('ontology-editor', $index)"
                    has-children="dvm.hasChildren(ontology)"></tree-item>
 
         <li class="container" ng-show="opened">
@@ -37,8 +37,8 @@
                 <tree-item ng-repeat="property in class.matonto.properties"
                            current-entity="property"
                            current-ontology="ontology"
-                           is-active="dvm.state.oi === oi && dvm.state.ci === ci && dvm.state.pi === $index"
-                           on-click="dvm.selectItem({editor: 'property-editor', oi: oi, ci: ci, pi: $index})"
+                           is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === ci && dvm.sm.state.pi === $index"
+                           on-click="dvm.sm.selectItem('property-editor', oi, ci, $index)"
                            ng-if="dvm.isThisType(property, dvm.propertyType)"></tree-item>
             </ul>
 
@@ -47,8 +47,8 @@
                 <tree-item ng-repeat="property in ontology.matonto.noDomains"
                            current-entity="property"
                            current-ontology="ontology"
-                           is-active="dvm.state.oi === oi && dvm.state.ci === undefined && dvm.state.pi === $index"
-                           on-click="dvm.selectItem({editor: 'property-editor', oi: oi, ci: undefined, pi: $index})"
+                           is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === undefined && dvm.sm.state.pi === $index"
+                           on-click="dvm.sm.selectItem('property-editor', oi, undefined, $index)"
                            ng-if="dvm.isThisType(property, dvm.propertyType)"></tree-item>
             </ul>
         </li>

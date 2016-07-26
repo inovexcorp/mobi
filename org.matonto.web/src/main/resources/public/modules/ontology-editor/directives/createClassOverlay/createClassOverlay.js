@@ -24,35 +24,31 @@
     'use strict';
 
     angular
-        .module('createClassOverlay', ['camelCase'])
+        .module('createClassOverlay', ['ontologyManager', 'stateManager'])
         .directive('createClassOverlay', createClassOverlay);
 
-        function createClassOverlay() {
+        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService'];
+
+        function createClassOverlay($filter, REGEX, ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createClassOverlay/createClassOverlay.html',
-                scope: {
-                    onCreate: '&',
-                    onCancel: '&',
-                    createClassError: '=',
-                    showIriOverlay: '='
-                },
-                bindToController: {
-                    iriBegin: '=',
-                    iriThen: '='
-                },
+                scope: {},
                 controllerAs: 'dvm',
-                controller: ['$filter', 'REGEX', function($filter, REGEX) {
+                controller: function() {
                     var dvm = this;
-                    var prefix = dvm.iriBegin + dvm.iriThen;
 
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.iri = prefix;
+                    dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
+
+                    dvm.prefix = _.get(dvm.sm.ontology, 'matonto.iriBegin', '') + _.get(dvm.sm.ontology, 'matonto.iriThen', '');
+                    dvm.iri = dvm.prefix;
 
                     dvm.nameChanged = function() {
                         if(!dvm.iriHasChanged) {
-                            dvm.iri = prefix + $filter('camelCase')(dvm.name, 'class');
+                            dvm.iri = dvm.prefix + $filter('camelCase')(dvm.name, 'class');
                         }
                     }
 
@@ -60,7 +56,18 @@
                         dvm.iriHasChanged = true;
                         dvm.iri = iriBegin + iriThen + iriEnd;
                     }
-                }]
+
+                    dvm.create = function() {
+                        dvm.om.createClass(dvm.sm.ontology, dvm.iri, dvm.name, dvm.description)
+                            .then(function(response) {
+                                dvm.error = '';
+                                dvm.sm.showCreateClassOverlay = false;
+                                dvm.sm.setStateToNew(dvm.sm.state, dvm.om.getList(), 'class');
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
+                            });
+                    }
+                }
             }
         }
 })();

@@ -24,14 +24,37 @@
     'use strict';
 
     angular
-        .module('ontologyOpenOverlay', [])
+        .module('ontologyOpenOverlay', ['ontologyManager', 'stateManager'])
         .directive('ontologyOpenOverlay', ontologyOpenOverlay);
 
-        function ontologyOpenOverlay() {
+        ontologyOpenOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];
+
+        function ontologyOpenOverlay(ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/ontologyOpenOverlay/ontologyOpenOverlay.html'
+                templateUrl: 'modules/ontology-editor/directives/ontologyOpenOverlay/ontologyOpenOverlay.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
+                    dvm.ontologyIds = dvm.sm.ontologyIds;
+
+                    dvm.open = function() {
+                        dvm.om.openOntology(dvm.ontologyId)
+                            .then(function(response) {
+                                dvm.sm.setTreeTab('everything');
+                                dvm.sm.setEditorTab('basic');
+                                dvm.sm.selectItem('ontology-editor', dvm.om.getList().length - 1);
+                                dvm.sm.showOpenOverlay = false;
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
+                            });
+                    }
+                }
             }
         }
 })();

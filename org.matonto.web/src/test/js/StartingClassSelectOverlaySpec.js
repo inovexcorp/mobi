@@ -27,10 +27,10 @@ describe('Starting Class Select Overlay directive', function() {
         mappingManagerSvc,
         mapperStateSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('startingClassSelectOverlay');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

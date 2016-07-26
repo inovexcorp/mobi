@@ -32,7 +32,8 @@
                 restrict: 'E',
                 replace: true,
                 transclude: true,
-                templateUrl: 'directives/errorDisplay/errorDisplay.html'
+                templateUrl: 'directives/errorDisplay/errorDisplay.html',
+                scope: {}
             }
         }
 })();

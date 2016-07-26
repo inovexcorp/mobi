@@ -31,10 +31,10 @@
             return {
                 restrict: 'E',
                 replace: true,
+                templateUrl: 'modules/ontology-editor/directives/serializationSelect/serializationSelect.html',
                 scope: {
                     bindModel: '=ngModel'
-                },
-                templateUrl: 'modules/ontology-editor/directives/serializationSelect/serializationSelect.html'
+                }
             }
         }
 })();

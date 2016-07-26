@@ -24,13 +24,16 @@
     'use strict';
 
     angular
-        .module('stringSelect', [])
+        .module('stringSelect', ['ontologyManager'])
         .directive('stringSelect', stringSelect);
 
-        function stringSelect() {
+        stringSelect.$inject = ['ontologyManagerService'];
+
+        function stringSelect(ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
+                templateUrl: 'modules/ontology-editor/directives/stringSelect/stringSelect.html',
                 scope: {
                     changeEvent: '&',
                     displayText: '=',
@@ -41,14 +44,11 @@
                     bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: ['$filter', function($filter) {
+                controller: function() {
                     var dvm = this;
 
-                    dvm.getItemNamespace = function(item) {
-                        return $filter('splitIRI')(item).begin;
-                    }
-                }],
-                templateUrl: 'modules/ontology-editor/directives/stringSelect/stringSelect.html'
+                    dvm.om = ontologyManagerService;
+                }
             }
         }
 })();

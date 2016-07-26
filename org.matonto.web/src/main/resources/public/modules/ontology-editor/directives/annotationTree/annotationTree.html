@@ -23,12 +23,12 @@
 <div class="tree annotation-tree scroll-without-buttons">
     <!-- annotation view -->
     <strong>Annotations</strong>
-    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi)">
+    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.sm.state.oi === oi)">
         <tree-item current-entity="ontology"
                    current-ontology="ontology"
-                   is-active="vm.state.oi === $index && vm.state.pi === undefined"
+                   is-active="dvm.sm.state.oi === $index && dvm.sm.state.pi === undefined"
                    is-opened="opened"
-                   on-click="vm.selectItem('ontology-editor', $index)"
+                   on-click="dvm.sm.selectItem('ontology-editor', $index)"
                    has-children="ontology.matonto.jsAnnotations.length"></tree-item>
 
         <li class="container" ng-show="opened">
@@ -36,8 +36,8 @@
                 <tree-item ng-repeat="annotation in ontology.matonto.jsAnnotations"
                            current-entity="annotation"
                            current-ontology="ontology"
-                           is-active="vm.state.oi === oi && vm.state.pi === $index"
-                           on-click="vm.selectAnnotation(oi, $index)"></tree-item>
+                           is-active="dvm.sm.state.oi === oi && dvm.sm.state.pi === $index"
+                           on-click="dvm.selectAnnotation(oi, $index)"></tree-item>
             </ul>
         </li>
     </ul>
