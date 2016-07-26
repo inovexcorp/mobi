@@ -23,7 +23,7 @@
 <left-nav module-name="Ontology Editor" doc-url="http://docs.matonto.org/#ontology_editor">
     <left-nav-item on-click="dvm.sm.showSaveOverlay = true"
                    nav-title="Save All Changes"
-                   is-disabled-when="dvm.disableSave()"
+                   is-disabled-when="dvm.shouldSaveBeDisabled()"
                    is-active-when="dvm.sm.showSaveOverlay">
         <i class="fa fa-floppy-o fa-fw"></i>
     </left-nav-item>

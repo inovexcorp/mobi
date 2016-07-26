@@ -165,6 +165,11 @@
                 self.om.addToChangedList(self.ontology.matonto.id, self.selected.matonto.originalIri, self.state);
             }
 
+            self.onEdit = function(iriBegin, iriThen, iriEnd) {
+                self.om.editIRI(iriBegin, iriThen, iriEnd, self.selected, self.ontology);
+                self.entityChanged(self.selected, self.ontology.matonto.id, self.state);
+            }
+
             setVariables(self.state.oi);
         }
 })();

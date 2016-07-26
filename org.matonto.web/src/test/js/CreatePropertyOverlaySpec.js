@@ -63,7 +63,7 @@ describe('Create Property Overlay directive', function() {
             expect(contents.length).toBe(1);
         });
         it('based on form', function() {
-            var forms = element.querySelectorAll('form');
+            var forms = element.find('form');
             expect(forms.length).toBe(1);
         });
         it('based on btn-container class', function() {
@@ -131,7 +131,7 @@ describe('Create Property Overlay directive', function() {
                 controller.create();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.createProperty).toHaveBeenCalledWith(stateManagerSvc.ontology, 'property-iri', 'label', 'type', [], [], 'description')
+                expect(ontologyManagerSvc.createProperty).toHaveBeenCalledWith(stateManagerSvc.ontology, controller.iri, controller.name, controller.type, controller.range, controller.domain, controller.description);
             });
             it('when resolved, sets the correct variables', function() {
                 deferred.resolve(1);

@@ -61,7 +61,7 @@ describe('Annotation Tree directive', function() {
             expect(container.length).toBe(1);
         });
         it('based on ul', function() {
-            var uls = element.querySelectorAll('ul');
+            var uls = element.find('ul');
             expect(uls.length).toBe(2);
         });
         it('based on container tree-items', function() {

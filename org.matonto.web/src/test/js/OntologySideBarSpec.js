@@ -51,11 +51,11 @@ describe('Ontology Side Bar directive', function() {
             expect(element.prop('tagName')).toBe('ONTOLOGY-SIDE-BAR');
         });
         it('based on left-nav', function() {
-            var leftNav = element.querySelectorAll('LEFT-NAV');
+            var leftNav = element.find('left-nav');
             expect(leftNav.length).toBe(1);
         });
         it('based on left-nav-items', function() {
-            var leftNavItems = element.querySelectorAll('LEFT-NAV-ITEM');
+            var leftNavItems = element.find('left-nav-item');
             expect(leftNavItems.length).toBe(10);
         });
         it('based on .separators', function() {
@@ -69,11 +69,11 @@ describe('Ontology Side Bar directive', function() {
             scope.$digest();
             controller = element.controller('ontologySideBar');
         });
-        it('disableSave should call the appropriate manager functions', function() {
-            controller.disableSave();
+        it('shouldSaveBeDisabled should call the appropriate manager functions', function() {
+            controller.shouldSaveBeDisabled();
             expect(ontologyManagerSvc.getChangedListForOntology).not.toHaveBeenCalled();
             stateManagerSvc.ontology.matonto.isValid = true;
-            controller.disableSave();
+            controller.shouldSaveBeDisabled();
             expect(ontologyManagerSvc.getChangedListForOntology).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id);
         });
     });

@@ -74,7 +74,7 @@ describe('Ontology Editor directive', function() {
                     var formGroup = element.querySelectorAll('.form-group');
                     expect(formGroup.length).toBe(1);
 
-                    var annotationTab = element.querySelectorAll('annotation-tab');
+                    var annotationTab = element.find('annotation-tab');
                     expect(annotationTab.length).toBe(1);
 
                     var typeMissing = element.querySelectorAll('.type-missing');
@@ -89,7 +89,7 @@ describe('Ontology Editor directive', function() {
                     var formGroup = element.querySelectorAll('.form-group');
                     expect(formGroup.length).toBe(0);
 
-                    var annotationTab = element.querySelectorAll('annotation-tab');
+                    var annotationTab = element.find('annotation-tab');
                     expect(annotationTab.length).toBe(0);
 
                     var typeMissing = element.querySelectorAll('.type-missing');
@@ -149,7 +149,7 @@ describe('Ontology Editor directive', function() {
                 controller.getPreview();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], 'serialization');
+                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], controller.serialization);
             });
             it('when resolved, sets the correct variable', function() {
                 deferred.resolve('success');

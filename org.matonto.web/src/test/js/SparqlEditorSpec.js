@@ -59,7 +59,7 @@ describe('SPARQL Editor directive', function() {
             var element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
             scope.$digest();
 
-            var codeMirrors = element.querySelectorAll('ui-codemirror');
+            var codeMirrors = element.find('ui-codemirror');
             expect(codeMirrors.length).toBe(1);
         });
     });

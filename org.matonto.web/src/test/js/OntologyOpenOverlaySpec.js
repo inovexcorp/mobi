@@ -63,7 +63,7 @@ describe('Ontology Open Overlay directive', function() {
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('h6');
+            var items = element.find('h6');
             expect(items.length).toBe(1);
         });
         it('based on .form-group', function() {
@@ -81,13 +81,13 @@ describe('Ontology Open Overlay directive', function() {
             it('is visible when openError is true', function() {
                 controller.error = true;
                 scope.$digest();
-                var errors = element.querySelectorAll('error-display');
+                var errors = element.find('error-display');
                 expect(errors.length).toBe(1);
             });
             it('is not visible when openError is false', function() {
                 controller.error = false;
                 scope.$digest();
-                var errors = element.querySelectorAll('error-display');
+                var errors = element.find('error-display');
                 expect(errors.length).toBe(0);
             });
         });
@@ -105,7 +105,7 @@ describe('Ontology Open Overlay directive', function() {
                 controller.open();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith('id');
+                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.ontologyId);
             });
             it('when resolved, sets the correct variables', function() {
                 deferred.resolve({});

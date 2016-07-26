@@ -62,7 +62,7 @@ describe('Create Ontology Overlay directive', function() {
             expect(contents.length).toBe(1);
         });
         it('based on form', function() {
-            var forms = element.querySelectorAll('form');
+            var forms = element.find('form');
             expect(forms.length).toBe(1);
         });
         it('based on btn-container class', function() {
@@ -103,7 +103,7 @@ describe('Create Ontology Overlay directive', function() {
                 controller.create();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith('ontology-iri', 'label', 'description');
+                expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.iri, controller.name, controller.description);
             });
             it('when resolved, sets the correct variables', function() {
                 deferred.resolve({});

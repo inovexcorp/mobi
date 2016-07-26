@@ -41,7 +41,7 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
 
-                    dvm.disableSave = function() {
+                    dvm.shouldSaveBeDisabled = function() {
                         return !_.get(dvm.sm.ontology, 'matonto.isValid', false) || !dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length;
                     }
                 }

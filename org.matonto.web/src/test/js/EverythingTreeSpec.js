@@ -69,7 +69,7 @@ describe('Everything Tree directive', function() {
             expect(container.length).toBe(3);
         });
         it('based on <ul>s', function() {
-            var uls = element.querySelectorAll('ul');
+            var uls = element.find('ul');
             expect(uls.length).toBe(5);
         });
         it('based on container tree-items', function() {

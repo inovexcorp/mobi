@@ -32,7 +32,7 @@
 
     <!-- basic tab -->
     <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
-        <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <annotation-tab></annotation-tab>
     </div>
 

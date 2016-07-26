@@ -30,8 +30,8 @@
 
         <!-- file name -->
         <div ng-class="{'has-error': dvm.form.fileName.$error.pattern}" class="form-group">
-            <label class="control-label" for="fileName">File Name</label>
-            <input class="form-control" id="fileName" name="fileName" ng-model="dvm.fileName" ng-pattern="dvm.fileNamePattern" required />
+            <label class="control-label">File Name</label>
+            <input class="form-control" name="fileName" ng-model="dvm.fileName" ng-pattern="dvm.fileNamePattern" required />
             <p ng-messages="dvm.form.fileName.$error" class="error-msg">
                 <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
             </p>

@@ -57,7 +57,7 @@ describe('Ontology Download Overlay directive', function() {
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('h6');
+            var items = element.find('h6');
             expect(items.length).toBe(1);
         });
         it('based on .form-group', function() {

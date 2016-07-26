@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('createOntologyOverlay', ['camelCase', 'ontologyManager', 'stateManager'])
+        .module('createOntologyOverlay', ['ontologyManager', 'stateManager'])
         .directive('createOntologyOverlay', createOntologyOverlay);
 
         createOntologyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService']

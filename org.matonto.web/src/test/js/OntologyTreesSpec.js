@@ -48,11 +48,11 @@ describe('Ontology Trees directive', function() {
             expect(element.prop('tagName')).toBe('ONTOLOGY-TREES');
         });
         it('based on tab-button-container', function() {
-            var container = element.querySelectorAll('tab-button-container');
+            var container = element.find('tab-button-container');
             expect(container.length).toBe(1);
         });
         it('based on tab-buttons', function() {
-            var buttons = element.querySelectorAll('tab-button');
+            var buttons = element.find('tab-button');
             expect(buttons.length).toBe(5);
         });
         _.forEach([

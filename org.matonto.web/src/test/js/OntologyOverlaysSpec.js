@@ -69,14 +69,14 @@ describe('Ontology Overlays directive', function() {
             expect(element.prop('tagName')).toBe('ONTOLOGY-OVERLAYS');
         });
         it('based on confirmation-overlays', function() {
-            var confirmations = element.querySelectorAll('confirmation-overlay');
+            var confirmations = element.find('confirmation-overlay');
             expect(confirmations.length).toBe(4);
         });
         _.forEach(['ontology-upload-overlay', 'annotation-overlay', 'ontology-download-overlay',
         'ontology-open-overlay', 'create-annotation-overlay', 'create-class-overlay',
         'create-property-overlay'], function(item) {
             it('based on ' + item, function() {
-                var items = element.querySelectorAll(item);
+                var items = element.find(item);
                 expect(items.length).toBe(1);
             });
         });

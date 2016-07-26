@@ -105,11 +105,11 @@ describe('Tree Item directive', function() {
                     scope.$digest();
                 });
                 it('and it has an anchor', function() {
-                    var anchors = element.querySelectorAll('a');
+                    var anchors = element.find('a');
                     expect(anchors.length).toBe(1);
                 });
                 it('and it has two icons', function() {
-                    var icons = element.querySelectorAll('i');
+                    var icons = element.find('i');
                     expect(icons.length).toBe(2);
                 });
             });
@@ -119,11 +119,11 @@ describe('Tree Item directive', function() {
                     scope.$digest();
                 });
                 it('and it has an anchor', function() {
-                    var anchors = element.querySelectorAll('a');
+                    var anchors = element.find('a');
                     expect(anchors.length).toBe(1);
                 });
                 it('and it has two icons', function() {
-                    var icons = element.querySelectorAll('i');
+                    var icons = element.find('i');
                     expect(icons.length).toBe(2);
                 });
                 it('and it has an anchor with a double click attribute', function() {

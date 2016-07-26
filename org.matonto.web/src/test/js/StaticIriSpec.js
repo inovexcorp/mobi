@@ -85,11 +85,11 @@ describe('Static IRI directive', function() {
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('h6');
+            var items = element.find('h6');
             expect(items.length).toBe(1);
         });
         it('based on form', function() {
-            var items = element.querySelectorAll('form');
+            var items = element.find('form');
             expect(items.length).toBe(1);
         });
         it('based on .btn-container', function() {

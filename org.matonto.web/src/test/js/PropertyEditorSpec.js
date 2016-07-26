@@ -54,7 +54,7 @@ describe('Property Editor directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on tab button container', function() {
-            var tabContainer = element.querySelectorAll('tab-button-container');
+            var tabContainer = element.find('tab-button-container');
             expect(tabContainer.length).toBe(1);
         });
         describe('based on vm.state.editorTab', function() {
@@ -65,13 +65,13 @@ describe('Property Editor directive', function() {
                 var tabs = element.querySelectorAll('.tab');
                 expect(tabs.length).toBe(1);
 
-                var staticIri = element.querySelectorAll('static-iri');
+                var staticIri = element.find('static-iri');
                 expect(staticIri.length).toBe(1);
 
-                var stringSelects = element.querySelectorAll('string-select');
+                var stringSelects = element.find('string-select');
                 expect(stringSelects.length).toBe(1);
 
-                var annotationTab = element.querySelectorAll('annotation-tab');
+                var annotationTab = element.find('annotation-tab');
                 expect(annotationTab.length).toBe(1);
             });
             describe('for axioms', function() {
@@ -82,7 +82,7 @@ describe('Property Editor directive', function() {
                     stateManagerSvc.selected = {'@type': []};
                     scope.$digest();
 
-                    var objectSelects = element.querySelectorAll('object-select');
+                    var objectSelects = element.find('object-select');
                     expect(objectSelects.length).toBe(1);
 
                     var warnings = element.querySelectorAll('.text-warning');
@@ -103,18 +103,6 @@ describe('Property Editor directive', function() {
                     });
                 });
             });
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<property-editor></property-editor>'))(scope);
-            scope.$digest();
-            controller = element.controller('propertyEditor');
-        });
-        it('onEdit calls the correct manager functions', function() {
-            controller.onEdit('begin', 'then', 'end');
-            expect(ontologyManagerSvc.editIRI).toHaveBeenCalledWith('begin', 'then', 'end', stateManagerSvc.selected, stateManagerSvc.ontology);
-            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
         });
     });
 });

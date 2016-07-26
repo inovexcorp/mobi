@@ -27,7 +27,7 @@
     </tab-button-container>
 
     <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
-        <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <string-select ng-model="dvm.sm.selected['@type']"
                        display-text="'Type'"
                        muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"

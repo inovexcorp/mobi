@@ -39,7 +39,7 @@ describe('Annotation Overlay directive', function() {
         mockResponseObj();
         mockAnnotationManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _annotationManagerService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _annotationManagerService_, _responseObj_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
@@ -75,7 +75,7 @@ describe('Annotation Overlay directive', function() {
                 stateManagerSvc.editingAnnotation = test.value;
                 scope.$digest();
 
-                var header = element.querySelectorAll('h6');
+                var header = element.find('h6');
                 expect(header.length).toBe(1);
                 expect(header[0].innerHTML).toBe(test.result);
             });

@@ -30,8 +30,6 @@ describe('Ontology Select Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('ontologySelectOverlay');
-        injectBeautifyFilter();
-        injectSplitIRIFilter();
         injectTrustedFilter();
         injectHighlightFilter();
         mockOntologyManager();
