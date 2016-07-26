@@ -27,10 +27,10 @@ describe('Edit Class Form directive', function() {
         mappingManagerSvc,
         mapperStateSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('editClassForm');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

@@ -24,43 +24,39 @@ describe('Annotation Tab directive', function() {
     var $compile,
         scope,
         element,
-        annotations = [{ localName: 'prop1' }, { localName: 'prop2' }];
+        stateManagerSvc,
+        controller;
 
-    injectBeautifyFilter();
 
     beforeEach(function() {
         module('templates');
         module('annotationTab');
+        injectBeautifyFilter();
+        injectShowAnnotationsFilter();
+        mockStateManager();
+        mockResponseObj();
 
-        module(function($provide) {
-            $provide.value('showAnnotationsFilter', jasmine.createSpy('showAnnotationsFilter').and.callFake(function(obj, arr) {
-                return obj ? annotations : [];
-            }));
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _responseObj_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            stateManagerSvc = _stateManagerService_;
         });
     });
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.vm = {
-                getItemIri: jasmine.createSpy('getItemIri').and.callFake(function(key) { return key.localName; }),
-                getAnnotationLocalNameLowercase: jasmine.createSpy('getAnnotationLocalNameLowercase').and.callFake(function(key) { return key.localName; }),
-                selected: {
-                    'prop1': [{'@id': 'value1'}],
-                    'prop2': [{'@value': 'value2'}]
-                },
-                ontology: {
-                    matonto: {
-                        annotations: [
-                            'prop1'
-                        ]
-                    }
+            stateManagerSvc.selected = {
+                'prop1': [{'@id': 'value1'}],
+                'prop2': [{'@value': 'value2'}]
+            };
+            stateManagerSvc.ontology = {
+                matonto: {
+                    annotations: [
+                        'prop1',
+                        'prop2'
+                    ]
                 }
-            }
+            };
             element = $compile(angular.element('<annotation-tab></annotation-tab>'))(scope);
             scope.$digest();
         });
@@ -72,13 +68,13 @@ describe('Annotation Tab directive', function() {
             expect(icon.length).toBe(1);
         });
         it('based on listed annotations', function() {
-            var formList = element.querySelectorAll('.annotation');
-            expect(formList.length).toBe(2);
+            var annotations = element.querySelectorAll('.annotation');
+            expect(annotations.length).toBe(2);
 
-            scope.vm = {};
+            stateManagerSvc.selected = undefined;
             scope.$digest();
-            formList = element.querySelectorAll('.annotation');
-            expect(formList.length).toBe(0);
+            annotations = element.querySelectorAll('.annotation');
+            expect(annotations.length).toBe(0);
         });
         it('based on values', function() {
             var values = element.querySelectorAll('.value-container');
@@ -88,47 +84,40 @@ describe('Annotation Tab directive', function() {
             var editButtons = element.querySelectorAll('[title=Edit]');
             expect(editButtons.length).toBe(1);
             var deleteButtons = element.querySelectorAll('[title=Delete]');
-            expect(deleteButtons.length).toBe(2);
+            expect(deleteButtons.length).toBe(1);
         });
     });
-    describe('user interactions', function() {
+    describe('controller methods', function() {
         beforeEach(function() {
-            scope.vm = {
-                editClicked: jasmine.createSpy('editClicked'),
-                openRemoveAnnotationOverlay: jasmine.createSpy('openRemoveAnnotationOverlay'),
-                openAddAnnotationOverlay: jasmine.createSpy('openAddAnnotationOverlay'),
-                getItemIri: jasmine.createSpy('getItemIri').and.callFake(function(key) { return key.localName; }),
-                getAnnotationLocalNameLowercase: jasmine.createSpy('getAnnotationLocalNameLowercase').and.callFake(function(key) { return key.localName; }),
-                selected: {
-                    'prop1': [{'@value': 'value1'}]
-                },
-                ontology: {
-                    matonto: {
-                        annotations: ['prop1']
-                    }
-                }
-            }
             element = $compile(angular.element('<annotation-tab></annotation-tab>'))(scope);
             scope.$digest();
+            controller = element.controller('annotationTab');
         });
-        it('should call vm.openAddAnnotationOverlay when add button is clicked', function() {
-            var buttonContainer = element.querySelectorAll('.btn-container');
-            var addButtons = buttonContainer.querySelectorAll('.btn-link');
-            expect(addButtons.length).toBe(1);
-            angular.element(addButtons[0]).triggerHandler('click');
-            expect(scope.vm.openAddAnnotationOverlay).toHaveBeenCalled();
+        it('openAddOverlay sets the correct manager values', function() {
+            controller.openAddOverlay();
+            expect(stateManagerSvc.editingAnnotation).toBe(false);
+            expect(stateManagerSvc.annotationSelect).toEqual(undefined);
+            expect(stateManagerSvc.annotationValue).toBe('');
+            expect(stateManagerSvc.annotationIndex).toBe(0);
+            expect(stateManagerSvc.showAnnotationOverlay).toBe(true);
         });
-        it('should call vm.editClicked when edit button is clicked', function() {
-            var editButtons = element.querySelectorAll('[title=Edit]');
-            expect(editButtons.length).toBe(1);
-            angular.element(editButtons[0]).triggerHandler('click');
-            expect(scope.vm.editClicked).toHaveBeenCalled();
+        it('openRemoveOverlay sets the correct manager values', function() {
+            controller.openRemoveOverlay('key', 1);
+            expect(stateManagerSvc.key).toBe('key');
+            expect(stateManagerSvc.index).toBe(1);
+            expect(stateManagerSvc.showRemoveAnnotationOverlay).toBe(true);
         });
-        it('should call vm.openRemoveAnnotationOverlay when remove button is clicked', function() {
-            var deleteButtons = element.querySelectorAll('[title=Delete]');
-            expect(deleteButtons.length).toBe(1);
-            angular.element(deleteButtons[0]).triggerHandler('click');
-            expect(scope.vm.openRemoveAnnotationOverlay).toHaveBeenCalled();
+        it('editClicked sets the correct manager values', function() {
+            var annotation = {localName: 'prop1'};
+            stateManagerSvc.selected = {
+                'prop1': [{'@value': 'value'}]
+            };
+            controller.editClicked(annotation, 0);
+            expect(stateManagerSvc.editingAnnotation).toBe(true);
+            expect(stateManagerSvc.annotationSelect).toEqual(annotation);
+            expect(stateManagerSvc.annotationValue).toBe('value');
+            expect(stateManagerSvc.annotationIndex).toBe(0);
+            expect(stateManagerSvc.showAnnotationOverlay).toBe(true);
         });
     });
 });

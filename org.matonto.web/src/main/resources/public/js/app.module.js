@@ -25,37 +25,50 @@
 
     angular
         .module('app', [
+            /* Third Party */
             'angular-uuid',
-            'ngCookies',
             'ngAnimate',
+            'ngCookies',
+            'ngMessages',
+            'ui.codemirror',
+            'ui.router',
+            'ui.select',
+
+            /* Custom Filters */
+            'beautify',
+            'camelCase',
+            'escapeHTML',
+            'removeIriFromArray',
+            'removeMatonto',
+            'splitIRI',
+            'trusted',
+
+            /* Custom Directives */
+            'circleButton',
+            'confirmationOverlay',
+            'customButton',
+            'customLabel',
+            'errorDisplay',
+            'fileInput',
+            'leftNav',
+            'leftNavItem',
+            'pagination',
+            'radioButton',
+            'tabButton',
+            'tabButtonContainer',
+            'textArea',
+            'textInput',
+
+            /* Custom Modules */
             'catalog',
             'home',
             'login',
             'mapper',
             'nav',
             'ontology-editor',
-            'webtop',
-            'trusted',
-            'escapeHTML',
-            'removeMatonto',
-            'ui.router',
-            'ui.select',
-            'textInput',
-            'textArea',
-            'radioButton',
-            'customButton',
-            'objectSelect',
-            'stringSelect',
-            'circleButton',
-            'customButton',
-            'leftNav',
-            'leftNavItem',
-            'confirmationOverlay',
-            'pagination',
-            'errorDisplay',
             'settings',
-            'ui.codemirror',
-            'sparql'
+            'sparql',
+            'webtop'
         ])
         .constant('_', window._)
         .constant('REGEX', {

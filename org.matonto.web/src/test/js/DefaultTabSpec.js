@@ -51,7 +51,7 @@ describe('Default Tab directive', function() {
             expect(leads.length).toBe(1);
         });
         it('based on <p>s', function() {
-            var ps = element.querySelectorAll('p');
+            var ps = element.find('p');
             expect(ps.length).toBe(2);
         });
     });

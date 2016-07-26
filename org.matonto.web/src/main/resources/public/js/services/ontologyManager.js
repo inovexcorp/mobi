@@ -332,7 +332,7 @@
                         }
                     }, function(response) {
                         console.error('Error in deleteClass() function');
-                        deferred.reject(response);
+                        deferred.reject(response.data.error);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -383,7 +383,7 @@
                         }
                     }, function(response) {
                         console.error('Error in deleteClass() function');
-                        deferred.reject(response);
+                        deferred.reject(response.data.error);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -429,10 +429,8 @@
                             readableText += ' ' + joiningWord + ' ';
                         }
                     });
-                    console.log('Properly handled\n', blankNode);
                     return createResult(id, readableText);
                 } else {
-                    console.warn('Improperly handled\n', blankNode);
                     return {};
                 }
             }
@@ -481,14 +479,14 @@
                     } else if(_.indexOf(types, prefixes.owl + 'Class') !== -1) {
                         obj.matonto = {
                             properties: [],
-                            originalIri: obj['@id'],
+                            originalIri: angular.copy(obj['@id']),
                             isValid: true
                         };
                         classes.push(obj);
                     } else if(_.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1 || _.indexOf(types, prefixes.owl + 'ObjectProperty') !== -1 || _.indexOf(types, prefixes.rdf + 'Property') !== -1) {
                         obj.matonto = {
                             icon: chooseIcon(obj, prefixes),
-                            originalIri: obj['@id'],
+                            originalIri: angular.copy(obj['@id']),
                             isValid: true
                         };
                         properties.push(obj);
@@ -511,8 +509,6 @@
                     } else if(_.has(blankNode, prefixes.owl + 'intersectionOf')) {
                         var intersectionOf = _.get(blankNode, prefixes.owl + 'intersectionOf');
                         _.assign(ontology.matonto.intersectionOfs, getBlankNodeObject(intersectionOf, 'or', blankNode));
-                    } else {
-                        console.warn('Improperly handled\n', blankNode);
                     }
                 });
 
@@ -535,9 +531,6 @@
                         if(onClassObj && _.isArray(onClassObj) && onClassObj.length === 1) {
                             _.assign(ontology.matonto.classExpressions, getRestrictionObject(onPropertyObj, detailedProp, detailedObj, id));
                         }
-                        console.log('Properly handled\n', restriction);
-                    } else {
-                        console.warn('Improperly handled\n', restriction);
                     }
                     ontology.matonto.blankNodes.push(restriction);
                     i++;
@@ -650,8 +643,8 @@
             function initEntity(entity, iri, label, description) {
                 var copy = angular.copy(entity);
 
-                copy['@id'] = iri;
-                copy.matonto.originalIri = iri;
+                copy['@id'] = angular.copy(iri);
+                copy.matonto.originalIri = angular.copy(iri);
                 copy[prefixes.dc + 'title'] = [{'@value': label}];
                 copy[prefixes.rdfs + 'label'] = [{'@value': label}];
 
@@ -1082,6 +1075,8 @@
                                             ontology.matonto.classes[index].matonto.properties.splice(propertyIndex, 1);
                                         }
                                     });
+                                    // updates the entity's originalIri
+                                    item.matonto.originalIri = angular.copy(item['@id']);
                                 });
                                 ontology.matonto.originalIri = angular.copy(ontology['@id']);
                                 ontology.matonto.id = response[0].data.id;

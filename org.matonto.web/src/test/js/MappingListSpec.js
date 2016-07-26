@@ -26,10 +26,10 @@ describe('Mapping List directive', function() {
         mappingManagerSvc,
         mapperStateSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('mappingList');
+        mockPrefixes();
         mockMappingManager();
         mockMapperState();
 

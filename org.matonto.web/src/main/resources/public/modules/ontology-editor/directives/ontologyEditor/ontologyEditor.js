@@ -24,19 +24,39 @@
     'use strict';
 
     angular
-        .module('ontologyEditor', [])
+        .module('ontologyEditor', ['stateManager', 'ontologyManager'])
         .directive('ontologyEditor', ontologyEditor);
 
-        function ontologyEditor() {
+        ontologyEditor.$inject = ['REGEX', 'stateManagerService', 'ontologyManagerService'];
+
+        function ontologyEditor(REGEX, stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyEditor/ontologyEditor.html',
+                scope: {},
                 controllerAs: 'dvm',
-                controller: ['REGEX', function(REGEX) {
+                controller: function() {
                     var dvm = this;
+
                     dvm.iriPattern = REGEX.IRI;
-                }]
+                    dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
+
+                    dvm.getPreview = function() {
+                        dvm.om.getPreview(dvm.sm.ontology.matonto.id, dvm.serialization)
+                            .then(function(response) {
+                                dvm.preview = response;
+                            }, function(response) {
+                                dvm.preview = response;
+                            });
+                    }
+
+                    dvm.iriChanged = function() {
+                        dvm.sm.ontology.matonto.isValid = dvm.form.$valid;
+                        dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state);
+                    }
+                }
             }
         }
 })();

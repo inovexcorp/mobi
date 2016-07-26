@@ -23,31 +23,30 @@
 describe('Annotation Tree directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        ontologyManagerSvc,
+        stateManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
         module('annotationTree');
+        mockOntologyManager();
+        mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
-
-        scope.vm = {
-            ontologies: [
-                {
-                    matonto: {
-                        jsAnnotations: ['annotation1', 'annotation2']
-                    }
-                }
-            ]
-        }
-
     });
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
+            ontologyManagerSvc.getList.and.callFake(function() {
+                return [{matonto: {jsAnnotations: ['annotation1', 'annotation2']}}];
+            });
             element = $compile(angular.element('<annotation-tree></annotation-tree>'))(scope);
             scope.$digest();
         });
@@ -62,12 +61,25 @@ describe('Annotation Tree directive', function() {
             expect(container.length).toBe(1);
         });
         it('based on ul', function() {
-            var uls = element.querySelectorAll('ul');
+            var uls = element.find('ul');
             expect(uls.length).toBe(2);
         });
         it('based on container tree-items', function() {
             var lis = element.querySelectorAll('.container tree-item');
-            expect(lis.length).toBe(scope.vm.ontologies[0].matonto.jsAnnotations.length);
+            expect(lis.length).toBe(2);
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            element = $compile(angular.element('<annotation-tree></annotation-tree>'))(scope);
+            scope.$digest();
+            controller = element.controller('annotationTree');
+        });
+        it('select annotation calls correct functions and sets correct variables', function() {
+            controller.selectAnnotation(0, 0);
+            expect(stateManagerSvc.setState).toHaveBeenCalledWith('annotation-editor', 0, undefined, 0);
+            expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(0);
+            expect(stateManagerSvc.selected).toEqual(stateManagerSvc.ontology.matonto.jsAnnotations[0]);
         });
     });
 });

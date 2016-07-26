@@ -27,10 +27,10 @@ describe('Mapper Side Bar directive', function() {
         mapperStateSvc,
         ontologyManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('mapperSideBar');
+        mockPrefixes();
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();

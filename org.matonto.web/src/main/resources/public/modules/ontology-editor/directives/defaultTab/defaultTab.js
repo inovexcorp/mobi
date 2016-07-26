@@ -31,7 +31,8 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/defaultTab/defaultTab.html'
+                templateUrl: 'modules/ontology-editor/directives/defaultTab/defaultTab.html',
+                scope: {}
             }
         }
 })();

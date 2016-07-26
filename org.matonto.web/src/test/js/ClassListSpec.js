@@ -28,10 +28,10 @@ describe('Class List directive', function() {
         mapperStateSvc,
         csvManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('classList');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

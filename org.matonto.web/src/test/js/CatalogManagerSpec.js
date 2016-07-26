@@ -24,9 +24,9 @@ describe('Catalog Manager service', function() {
     var $httpBackend,
         catalogManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('catalogManager');
+        mockPrefixes();
 
         inject(function(catalogManagerService, _$httpBackend_) {
             catalogManagerSvc = catalogManagerService;

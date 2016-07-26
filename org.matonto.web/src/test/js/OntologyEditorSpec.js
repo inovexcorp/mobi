@@ -20,20 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 describe('Ontology Editor directive', function() {
     var $compile,
         scope,
-        element;
-
-    injectRegexConstant();
+        element,
+        stateManagerSvc,
+        ontologyManagerSvc,
+        controller,
+        deferred;
 
     beforeEach(function() {
         module('templates');
         module('ontologyEditor');
+        injectRegexConstant();
+        mockStateManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
+            stateManagerSvc = _stateManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            deferred = _$q_.defer();
         });
     });
 
@@ -49,51 +59,37 @@ describe('Ontology Editor directive', function() {
             var tabContainer = element.querySelectorAll('tab-button-container');
             expect(tabContainer.length).toBe(1);
         });
-        describe('based on vm.state.editorTab', function() {
+        describe('based on editorTab', function() {
             describe('for basic', function() {
                 beforeEach(function() {
-                    scope.vm = {
-                        state: {
-                            editorTab: 'basic'
-                        },
-                        selected: {
-                            matonto: {
-                                createError: 'error'
-                            }
-                        }
-                    }
-                    scope.$digest();
+                    stateManagerSvc.state = {editorTab: 'basic'};
                 });
                 it('when @type is present', function() {
-                    scope.vm.selected['@type'] = ['test'];
+                    stateManagerSvc.selected['@type'] = [];
                     scope.$digest();
 
                     var tabs = element.querySelectorAll('.tab');
                     expect(tabs.length).toBe(1);
 
-                    var errorDisplay = element.querySelectorAll('error-display');
-                    expect(errorDisplay.length).toBe(1);
-
                     var formGroup = element.querySelectorAll('.form-group');
                     expect(formGroup.length).toBe(1);
 
-                    var annotationTab = element.querySelectorAll('annotation-tab');
+                    var annotationTab = element.find('annotation-tab');
                     expect(annotationTab.length).toBe(1);
 
                     var typeMissing = element.querySelectorAll('.type-missing');
                     expect(typeMissing.length).toBe(0);
                 });
                 it('when @type is missing', function() {
+                    scope.$digest();
+
                     var tabs = element.querySelectorAll('.tab');
                     expect(tabs.length).toBe(1);
-
-                    var errorDisplay = element.querySelectorAll('error-display');
-                    expect(errorDisplay.length).toBe(0);
 
                     var formGroup = element.querySelectorAll('.form-group');
                     expect(formGroup.length).toBe(0);
 
-                    var annotationTab = element.querySelectorAll('annotation-tab');
+                    var annotationTab = element.find('annotation-tab');
                     expect(annotationTab.length).toBe(0);
 
                     var typeMissing = element.querySelectorAll('.type-missing');
@@ -101,11 +97,7 @@ describe('Ontology Editor directive', function() {
                 });
             });
             it('for preview', function() {
-                scope.vm = {
-                    state: {
-                        editorTab: 'preview'
-                    }
-                }
+                stateManagerSvc.state = {editorTab: 'preview'};
                 scope.$digest();
 
                 var formsInline = element.querySelectorAll('.form-inline');
@@ -117,26 +109,25 @@ describe('Ontology Editor directive', function() {
         });
         describe('and has-error class', function() {
             beforeEach(function() {
-                scope.vm = {
-                    state: {
-                        editorTab: 'basic'
-                    },
-                    selected: {
-                        '@type': ['type']
+                stateManagerSvc.state = {editorTab: 'basic'};
+                stateManagerSvc.selected = {'@type': ['type']};
+                scope.$digest();
+                controller = element.controller('ontologyEditor');
+            });
+            it("is not there when selected['@id'] is valid", function() {
+                controller.form = {
+                    iri: {
+                        '$invalid': false
                     }
                 }
                 scope.$digest();
-            });
-            it('is not there when vm.selected["@id"] is valid', function() {
                 var formGroup = element.querySelectorAll('.form-group');
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
             });
-            it('is not there when vm.selected["@id"] is invalid', function() {
-                scope.vm.ontologyForm = {
-                    ontologyIri: {
-                        '$error': {
-                            pattern: true
-                        }
+            it("is not there when selected['@id'] is invalid", function() {
+                controller.form = {
+                    iri: {
+                        '$invalid': true
                     }
                 }
                 scope.$digest();
@@ -144,66 +135,38 @@ describe('Ontology Editor directive', function() {
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
             });
         });
-        describe('and error-display', function() {
-            it('is visible when createError is true', function() {
-                scope.vm = {
-                    selected: {
-                        '@type': ['type'],
-                        matonto: {
-                            createError: true
-                        }
-                    },
-                    state: {
-                        editorTab: 'basic'
-                    }
-                }
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when createError is false', function() {
-                scope.vm = {
-                    selected: {
-                        '@type': ['type'],
-                        matonto: {
-                            createError: false
-                        }
-                    },
-                    state: {
-                        editorTab: 'basic'
-                    }
-                }
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(0);
-            });
-        });
     });
-    describe('calls function when input is changed', function() {
-        var formControls;
+    describe('controller methods', function() {
         beforeEach(function() {
-            scope.vm = {
-                selected: {
-                    '@type': ['type'],
-                },
-                state: {
-                    editorTab: 'basic'
-                },
-                setValidity: jasmine.createSpy('setValidity'),
-                entityChanged: jasmine.createSpy('entityChanged')
-            }
             element = $compile(angular.element('<ontology-editor></ontology-editor>'))(scope);
             scope.$digest();
-
-            formControls = element.querySelectorAll('.form-control');
-            expect(formControls.length).toBe(1);
-            angular.element(formControls[0]).val('new text').triggerHandler('input');
+            controller = element.controller('ontologyEditor');
         });
-        it('setValidity', function() {
-            expect(scope.vm.setValidity).toHaveBeenCalled();
+        describe('getPreview', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.getPreview.and.returnValue(deferred.promise);
+                controller.serialization = 'serialization';
+                controller.getPreview();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], controller.serialization);
+            });
+            it('when resolved, sets the correct variable', function() {
+                deferred.resolve('success');
+                scope.$apply();
+                expect(controller.preview).toBe('success');
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.resolve('error');
+                scope.$apply();
+                expect(controller.preview).toBe('error');
+            });
         });
-        it('entityChanged', function() {
-            expect(scope.vm.entityChanged).toHaveBeenCalled();
+        it('iriChanged calls the correct manager function and sets correct variable', function() {
+            controller.form = {'$valid': false};
+            controller.iriChanged();
+            expect(stateManagerSvc.ontology.matonto.isValid).toBe(false);
+            expect(stateManagerSvc.entityChanged).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
         });
     });
 });

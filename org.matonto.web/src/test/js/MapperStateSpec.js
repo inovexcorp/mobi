@@ -24,9 +24,9 @@ describe('Mapper State service', function() {
     var $httpBackend,
         mapperStateSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('mapperState');
+        mockPrefixes();
         mockMappingManager();
         mockOntologyManager();
         mockCsvManager();

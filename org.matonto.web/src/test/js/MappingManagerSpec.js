@@ -27,10 +27,10 @@ describe('Mapping Manager service', function() {
         uuidSvc,
         windowSvc;
 
-    mockPrefixes();
-    injectSplitIRIFilter();
     beforeEach(function() {
         module('mappingManager');
+        mockPrefixes();
+        injectSplitIRIFilter();
         mockOntologyManager();
 
         module(function($provide) {

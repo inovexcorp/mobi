@@ -25,13 +25,12 @@ describe('Object Select directive', function() {
         scope,
         element;
 
-    mockPrefixes();
-    injectTrustedFilter();
-    injectHighlightFilter();
-
     beforeEach(function() {
         module('templates');
         module('objectSelect');
+        mockPrefixes();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
         mockSettingsManager();
         mockStateManager();
@@ -41,7 +40,7 @@ describe('Object Select directive', function() {
             ontologyManagerService = _ontologyManagerService_;
             settingsManagerService = _settingsManagerService_;
             responseObj = _responseObj_;
-            stateManagerService = _stateManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -51,22 +50,14 @@ describe('Object Select directive', function() {
     });
 
     beforeEach(function() {
-        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.onChange = jasmine.createSpy('onChange');
         scope.displayText = 'test';
         scope.selectList = [];
         scope.mutedText = 'test';
         scope.bindModel = [];
         scope.isDisabledWhen = false;
-        scope.selectedId = 'selectedId';
-        scope.ontologyId = 'ontologyId';
-        scope.matonto = {
-            propertyExpressions: {},
-            classExpressions: {},
-            unionOfs: {},
-            intersectionOfs: {}
-        }
 
-        element = $compile(angular.element('<object-select change-event="changeEvent()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" selected-id="selectedId" ontology-id="ontologyId" matonto="matonto"></object-select>'))(scope);
+        element = $compile(angular.element('<object-select on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen"></object-select>'))(scope);
         scope.$digest();
     });
 
@@ -86,14 +77,14 @@ describe('Object Select directive', function() {
             scope.$digest();
             expect(scope.mutedText).toEqual('new');
         });
-        it('changeEvent should be called in parent scope', function() {
-            isolatedScope.changeEvent();
-            expect(scope.changeEvent).toHaveBeenCalled();
-        });
         it('selectList should be two way bound', function() {
             isolatedScope.selectList = ['new'];
             scope.$digest();
             expect(scope.selectList).toEqual(['new']);
+        });
+        it('onChange should be called in parent scope', function() {
+            isolatedScope.onChange();
+            expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variables', function() {
@@ -101,16 +92,6 @@ describe('Object Select directive', function() {
 
         beforeEach(function() {
             controller = element.controller('objectSelect');
-        });
-        it('selectedId should be two way bound', function() {
-            controller.selectedId = 'new';
-            scope.$digest();
-            expect(scope.selectedId).toBe('new');
-        });
-        it('ontologyId should be one way bound', function() {
-            controller.ontologyId = 'new';
-            scope.$digest();
-            expect(scope.ontologyId).not.toEqual('new');
         });
         it('bindModel should be two way bound', function() {
             controller.bindModel = ['new'];
@@ -138,6 +119,7 @@ describe('Object Select directive', function() {
         var controller;
 
         beforeEach(function() {
+            stateManagerSvc.ontology = {matonto:{id: 'ontologyId'}};
             controller = element.controller('objectSelect');
         });
         describe('getItemOntologyIri', function() {
@@ -256,11 +238,13 @@ describe('Object Select directive', function() {
         });
         describe('getBlankNodeValue should return', function() {
             beforeEach(function() {
-                scope.matonto = {
-                    propertyExpressions: {'_:b1': 'prop'},
-                    classExpressions: {'_:b2': 'class'},
-                    unionOfs: {'_:b3': 'union'},
-                    intersectionOfs: {'_:b4': 'intersection'}
+                stateManagerSvc.ontology = {
+                    matonto: {
+                        propertyExpressions: {'_:b1': 'prop'},
+                        classExpressions: {'_:b2': 'class'},
+                        unionOfs: {'_:b3': 'union'},
+                        intersectionOfs: {'_:b4': 'intersection'}
+                    }
                 }
                 scope.$digest();
             });
