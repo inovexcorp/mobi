@@ -27,7 +27,8 @@ describe('Ontology Editor directive', function() {
         element,
         stateManagerSvc,
         ontologyManagerSvc,
-        controller;
+        controller,
+        deferred;
 
     injectRegexConstant();
     beforeEach(function() {
@@ -36,11 +37,13 @@ describe('Ontology Editor directive', function() {
         mockStateManager();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            deferred = _$q_.defer();
         });
     });
 
@@ -57,16 +60,16 @@ describe('Ontology Editor directive', function() {
             expect(tabContainer.length).toBe(1);
         });
         describe('based on editorTab', function() {
-            it('for basic', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: 'error'}};
-                scope.$digest();
+            describe('for basic', function() {
+                beforeEach(function() {
+                    stateManagerSvc.state = {editorTab: 'basic'};
+                });
+                it('when @type is present', function() {
+                    stateManagerSvc.selected['@type'] = [];
+                    scope.$digest();
 
                     var tabs = element.querySelectorAll('.tab');
                     expect(tabs.length).toBe(1);
-
-                    var errorDisplay = element.querySelectorAll('error-display');
-                    expect(errorDisplay.length).toBe(1);
 
                     var formGroup = element.querySelectorAll('.form-group');
                     expect(formGroup.length).toBe(1);
@@ -78,11 +81,10 @@ describe('Ontology Editor directive', function() {
                     expect(typeMissing.length).toBe(0);
                 });
                 it('when @type is missing', function() {
+                    scope.$digest();
+
                     var tabs = element.querySelectorAll('.tab');
                     expect(tabs.length).toBe(1);
-
-                    var errorDisplay = element.querySelectorAll('error-display');
-                    expect(errorDisplay.length).toBe(0);
 
                     var formGroup = element.querySelectorAll('.form-group');
                     expect(formGroup.length).toBe(0);
@@ -95,7 +97,7 @@ describe('Ontology Editor directive', function() {
                 });
             });
             it('for preview', function() {
-                stateManagerSvc.currentState = {editorTab: 'preview'};
+                stateManagerSvc.state = {editorTab: 'preview'};
                 scope.$digest();
 
                 var formsInline = element.querySelectorAll('.form-inline');
@@ -107,41 +109,30 @@ describe('Ontology Editor directive', function() {
         });
         describe('and has-error class', function() {
             beforeEach(function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
+                stateManagerSvc.state = {editorTab: 'basic'};
                 stateManagerSvc.selected = {'@type': ['type']};
                 scope.$digest();
+                controller = element.controller('ontologyEditor');
             });
-            it('is not there when selected["@id"] is valid', function() {
+            it("is not there when selected['@id'] is valid", function() {
+                controller.form = {
+                    iri: {
+                        '$invalid': false
+                    }
+                }
+                scope.$digest();
                 var formGroup = element.querySelectorAll('.form-group');
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(false);
             });
-            it('is not there when selected["@id"] is invalid', function() {
-                scope.dvm.form = {
+            it("is not there when selected['@id'] is invalid", function() {
+                controller.form = {
                     iri: {
-                        '$error': {
-                            pattern: true
-                        }
+                        '$invalid': true
                     }
                 }
                 scope.$digest();
                 var formGroup = element.querySelectorAll('.form-group');
                 expect(angular.element(formGroup[0]).hasClass('has-error')).toBe(true);
-            });
-        });
-        describe('and error-display', function() {
-            it('is visible when createError is true', function() {
-                stateManagerSvc.selected = {matonto: {createError: true}};
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when createError is false', function() {
-                stateManagerSvc.selected = {matonto: {createError: false}};
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(0);
             });
         });
     });
@@ -151,14 +142,31 @@ describe('Ontology Editor directive', function() {
             scope.$digest();
             controller = element.controller('ontologyEditor');
         });
-        it('getPreview calls the correct manager function', function() {
-            controller.getPreview('serialization');
-            expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], 'serialization');
+        describe('getPreview', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.getPreview.and.returnValue(deferred.promise);
+                controller.serialization = 'serialization';
+                controller.getPreview();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], 'serialization');
+            });
+            it('when resolved, sets the correct variable', function() {
+                deferred.resolve('success');
+                scope.$apply();
+                expect(controller.preview).toBe('success');
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.resolve('error');
+                scope.$apply();
+                expect(controller.preview).toBe('error');
+            });
         });
         it('iriChanged calls the correct manager function and sets correct variable', function() {
-            controller.setValidity(false);
+            controller.form = {'$valid': false};
+            controller.iriChanged();
             expect(stateManagerSvc.ontology.matonto.isValid).toBe(false);
-            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.ontology.matonto.id, stateManagerSvc.currentState);
+            expect(stateManagerSvc.entityChanged).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
         });
     });
 });

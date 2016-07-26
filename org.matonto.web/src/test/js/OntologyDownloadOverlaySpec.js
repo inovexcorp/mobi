@@ -98,7 +98,9 @@ describe('Ontology Download Overlay directive', function() {
             controller = element.controller('ontologyDownloadOverlay');
         });
         it('download calls the correct manager function', function() {
-            controller.download('serialization', 'fileName');
+            controller.serialization = 'serialization';
+            controller.fileName = 'fileName';
+            controller.download();
             expect(ontologyManagerSvc.download).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], 'serialization', 'fileName')
             expect(stateManagerSvc.showDownloadOverlay).toBe(false);
         });

@@ -34,10 +34,11 @@ describe('Static IRI directive', function() {
         module('staticIri');
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _$filter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
+            $filter = _$filter_;
         });
     });
 
@@ -105,7 +106,7 @@ describe('Static IRI directive', function() {
             stateManagerSvc.ontology.matonto.iriThen = 'then';
             controller = element.controller('staticIri');
         });
-        /*it('setVariables changes the passed in variable', function() {
+        it('setVariables changes the passed in variable', function() {
             var obj = {
                 iriBegin: 'begin',
                 iriThen: 'then',
@@ -115,7 +116,7 @@ describe('Static IRI directive', function() {
             expect(obj.iriBegin).toBe('');
             expect(obj.iriThen).toBe('');
             expect(obj.iriEnd).toBe('');
-        });*/
+        });
         it('resetVariables updates iriBegin, iriThen, and iriEnd', function() {
             controller.refresh = {
                 iriBegin: 'new',

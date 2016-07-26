@@ -43,8 +43,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
 
-                    dvm.getPreview = function(serialization) {
-                        dvm.om.getPreview(dvm.sm.ontology.matonto.id, serialization)
+                    dvm.getPreview = function() {
+                        dvm.om.getPreview(dvm.sm.ontology.matonto.id, dvm.serialization)
                             .then(function(response) {
                                 dvm.preview = response;
                             }, function(response) {
@@ -52,9 +52,9 @@
                             });
                     }
 
-                    dvm.iriChanged = function(isValid) {
-                        dvm.sm.ontology.matonto.isValid = isValid;
-                        dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState);
+                    dvm.iriChanged = function() {
+                        dvm.sm.ontology.matonto.isValid = dvm.form.$valid;
+                        dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state);
                     }
                 }
             }

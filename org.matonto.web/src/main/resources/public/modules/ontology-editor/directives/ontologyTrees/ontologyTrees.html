@@ -21,14 +21,14 @@
   #L%
   -->
 <tab-button-container>
-    <tab-button is-active="dvm.sm.currentState.tab === 'everything'" on-click="dvm.sm.setTreeTab('everything')">Tree</tab-button>
-    <tab-button is-active="dvm.sm.currentState.tab === 'class'" on-click="dvm.sm.setTreeTab('class')">Class</tab-button>
-    <tab-button is-active="dvm.sm.currentState.tab === 'object'" on-click="dvm.sm.setTreeTab('object')">Object</tab-button>
-    <tab-button is-active="dvm.sm.currentState.tab === 'datatype'" on-click="dvm.sm.setTreeTab('datatype')">Data</tab-button>
-    <tab-button is-active="dvm.sm.currentState.tab === 'annotation'" on-click="dvm.sm.setTreeTab('annotation')">Annotation</tab-button>
+    <tab-button is-active="dvm.sm.state.tab === 'everything'" on-click="dvm.sm.setTreeTab('everything')">Tree</tab-button>
+    <tab-button is-active="dvm.sm.state.tab === 'class'" on-click="dvm.sm.setTreeTab('class')">Class</tab-button>
+    <tab-button is-active="dvm.sm.state.tab === 'object'" on-click="dvm.sm.setTreeTab('object')">Object</tab-button>
+    <tab-button is-active="dvm.sm.state.tab === 'datatype'" on-click="dvm.sm.setTreeTab('datatype')">Data</tab-button>
+    <tab-button is-active="dvm.sm.state.tab === 'annotation'" on-click="dvm.sm.setTreeTab('annotation')">Annotation</tab-button>
 </tab-button-container>
-<everything-tree ng-if="dvm.sm.currentState.tab === 'everything'"></everything-tree>
-<class-tree ng-if="dvm.sm.currentState.tab === 'class'"></class-tree>
-<property-tree ng-if="dvm.sm.currentState.tab === 'object'" header-text="Object Properties" property-type="objectproperty"></property-tree>
-<property-tree ng-if="dvm.sm.currentState.tab === 'datatype'" header-text="Data Properties" property-type="datatypeproperty"></property-tree>
-<annotation-tree ng-if="dvm.sm.currentState.tab === 'annotation'"></annotation-tree>
+<everything-tree ng-if="dvm.sm.state.tab === 'everything'"></everything-tree>
+<class-tree ng-if="dvm.sm.state.tab === 'class'"></class-tree>
+<property-tree ng-if="dvm.sm.state.tab === 'object'" header-text="Object Properties" property-type="objectproperty"></property-tree>
+<property-tree ng-if="dvm.sm.state.tab === 'datatype'" header-text="Data Properties" property-type="datatypeproperty"></property-tree>
+<annotation-tree ng-if="dvm.sm.state.tab === 'annotation'"></annotation-tree>

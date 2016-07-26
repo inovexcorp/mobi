@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('objectSelect', ['ontologyManager', 'responseObj', 'settingsManager', 'stateManager'])
+        .module('objectSelect', ['ontologyManager', 'responseObj', 'settingsManager', 'stateManager', 'prefixes'])
         .directive('objectSelect', objectSelect);
 
         objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService', 'stateManagerService', 'prefixes'];

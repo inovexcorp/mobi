@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('createPropertyOverlay', ['camelCase', 'ontologyManager', 'stateManager'])
+        .module('createPropertyOverlay', ['ontologyManager', 'stateManager'])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
         createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService'];
@@ -76,13 +76,13 @@
                         }
                     }
 
-                    dvm.create = function(iri, label, type, range, domain, description) {
-                        dvm.om.createProperty(dvm.sm.ontology, iri, label, type, range, domain, description)
+                    dvm.create = function() {
+                        dvm.om.createProperty(dvm.sm.ontology, dvm.iri, dvm.name, dvm.type, dvm.range, dvm.domain, dvm.description)
                             .then(function(classIndex) {
-                                dvm.sm.currentState.ci = classIndex;
+                                dvm.sm.state.ci = classIndex;
                                 dvm.error = '';
                                 dvm.sm.showCreatePropertyOverlay = false;
-                                dvm.sm.setStateToNew(dvm.sm.currentState, dvm.om.getList(), 'property');
+                                dvm.sm.setStateToNew(dvm.sm.state, dvm.om.getList(), 'property');
                             }, function(errorMessage) {
                                 dvm.error = errorMessage;
                             });

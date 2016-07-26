@@ -39,7 +39,7 @@
 
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!dvm.serialization || dvm.form.$invalid" on-click="dvm.download(dvm.serialization, dvm.fileName)">Download</custom-button>
+            <custom-button is-disabled-when="!dvm.serialization || dvm.form.$invalid" on-click="dvm.download()">Download</custom-button>
             <custom-button on-click="dvm.sm.showDownloadOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>

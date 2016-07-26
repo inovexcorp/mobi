@@ -26,7 +26,8 @@ describe('Ontology Upload Overlay directive', function() {
         element,
         controller,
         ontologyManagerSvc,
-        stateManagerSvc;
+        stateManagerSvc,
+        deferred;
 
     beforeEach(function() {
         module('templates');
@@ -34,11 +35,13 @@ describe('Ontology Upload Overlay directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
     });
 
@@ -90,9 +93,28 @@ describe('Ontology Upload Overlay directive', function() {
             scope.$digest();
             controller = element.controller('ontologyUploadOverlay');
         });
-        it('upload calls the correct manager function', function() {
-            controller.upload('file');
-            expect(ontologyManagerSvc.uploadThenGet).toHaveBeenCalledWith('file');
+        describe('upload', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.uploadThenGet.and.returnValue(deferred.promise);
+                controller.file = 'file';
+                controller.upload();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.uploadThenGet).toHaveBeenCalledWith('file');
+            });
+            it('when resolved, sets the correct variables', function() {
+                deferred.resolve({});
+                scope.$apply();
+                expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
+                expect(stateManagerSvc.setEditorTab).toHaveBeenCalledWith('basic');
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getList() - 1);
+                expect(stateManagerSvc.showUploadOverlay).toBe(false);
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject({statusText: 'error'});
+                scope.$apply();
+                expect(controller.error).toBe('error');
+            });
         });
     });
 });

@@ -23,28 +23,24 @@
 <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
     <!-- tab buttons -->
     <tab-button-container>
-        <tab-button is-active="dvm.sm.currentState.editorTab === 'basic'"
+        <tab-button is-active="dvm.sm.state.editorTab === 'basic'"
                     on-click="dvm.sm.setEditorTab('basic')">{{dvm.om.getEntityName(dvm.sm.selected)}}</tab-button>
 
-        <tab-button is-active="dvm.sm.currentState.editorTab === 'preview'"
+        <tab-button is-active="dvm.sm.state.editorTab === 'preview'"
                     on-click="dvm.sm.setEditorTab('preview'); dvm.serialization = ''; dvm.preview = '';">Preview</tab-button>
     </tab-button-container>
 
     <!-- basic tab -->
-    <div ng-if="dvm.sm.currentState.editorTab === 'basic'" class="tab clearfix">
+    <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
         <div ng-if="dvm.sm.selected['@type']">
-            <error-display ng-if="dvm.sm.selected.matonto.createError">{{dvm.sm.selected.matonto.createError}}</error-display>
-
-            <!-- ontology iri -->
             <div ng-class="{'has-error': dvm.form.iri.$invalid}" class="form-group">
                 <custom-label muted-text="'*Required'">Ontology IRI</custom-label>
-                <input class="form-control" id="iri" name="iri" ng-model="dvm.sm.selected['@id']" ng-pattern="dvm.iriPattern" ng-change="dvm.iriChanged(dvm.form.$valid)" required />
+                <input class="form-control" id="iri" name="iri" ng-model="dvm.sm.selected['@id']" ng-pattern="dvm.iriPattern" ng-change="dvm.iriChanged()" required />
                 <p ng-messages="dvm.form.iri.$error" class="error-msg">
                     <ng-message when="pattern">The value provided is not a valid IRI. Ontology will not be saved.</ng-message>
                     <ng-message when="required">This field cannot be left empty. Ontology will not be saved.</ng-message>
                 </p>
             </div>
-
             <annotation-tab></annotation-tab>
         </div>
         <div ng-if="!dvm.sm.selected['@type']" class="type-missing">
@@ -59,10 +55,10 @@
     </div>
 
     <!-- preview tab -->
-    <div ng-if="dvm.sm.currentState.editorTab === 'preview'" class="tab clearfix">
+    <div ng-if="dvm.sm.state.editorTab === 'preview'" class="tab clearfix">
         <div class="form-inline">
             <serialization-select ng-model="dvm.serialization"></serialization-select>
-            <custom-button is-disabled-when="!dvm.serialization" pull="'none'" on-click="dvm.getPreview(dvm.serialization)">Refresh</custom-button>
+            <custom-button is-disabled-when="!dvm.serialization" pull="'none'" on-click="dvm.getPreview()">Refresh</custom-button>
         </div>
         <div class="textarea-wrapper">
             <textarea class="preview-display" readonly>{{dvm.preview}}</textarea>

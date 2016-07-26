@@ -44,8 +44,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.fileName = dvm.om.getBeautifulIRI(_.get(dvm.sm.ontology, '@id', dvm.sm.ontology.matonto.id)).replace(' ', '_');
 
-                    dvm.download = function(serialization, fileName) {
-                        dvm.om.download(dvm.sm.ontology.matonto.id, serialization, fileName);
+                    dvm.download = function() {
+                        dvm.om.download(dvm.sm.ontology.matonto.id, dvm.serialization, dvm.fileName);
                         dvm.sm.showDownloadOverlay = false;
                     }
                 }

@@ -59,15 +59,11 @@ describe('Property Editor directive', function() {
         });
         describe('based on vm.state.editorTab', function() {
             it('for basic', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: 'error'}};
+                stateManagerSvc.state = {editorTab: 'basic'};
                 scope.$digest();
 
                 var tabs = element.querySelectorAll('.tab');
                 expect(tabs.length).toBe(1);
-
-                var errorDisplay = element.querySelectorAll('error-display');
-                expect(errorDisplay.length).toBe(1);
 
                 var staticIri = element.querySelectorAll('static-iri');
                 expect(staticIri.length).toBe(1);
@@ -80,7 +76,7 @@ describe('Property Editor directive', function() {
             });
             describe('for axioms', function() {
                 beforeEach(function() {
-                    stateManagerSvc.currentState = {editorTab: 'axioms'};
+                    stateManagerSvc.state = {editorTab: 'axioms'};
                 });
                 it('with empty @type', function() {
                     stateManagerSvc.selected = {'@type': []};
@@ -108,22 +104,6 @@ describe('Property Editor directive', function() {
                 });
             });
         });
-        describe('and error-display', function() {
-            it('is visible when createError is true', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: true}};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(1);
-            });
-            it('is not visible when createError is false', function() {
-                stateManagerSvc.currentState = {editorTab: 'basic'};
-                stateManagerSvc.selected = {matonto: {createError: false}};
-                scope.$digest();
-                var errors = element.querySelectorAll('error-display');
-                expect(errors.length).toBe(0);
-            });
-        });
     });
     describe('controller methods', function() {
         beforeEach(function() {
@@ -134,7 +114,7 @@ describe('Property Editor directive', function() {
         it('onEdit calls the correct manager functions', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(ontologyManagerSvc.editIRI).toHaveBeenCalledWith('begin', 'then', 'end', stateManagerSvc.selected, stateManagerSvc.ontology);
-            expect(ontologyManagerSvc.entityChanged).toHaveBeenCalled();
+            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
         });
     });
 });

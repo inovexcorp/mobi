@@ -56,7 +56,7 @@
 
     <left-nav-item on-click="dvm.sm.showCreateClassOverlay = true"
                    nav-title="Create Class"
-                   is-disabled-when="dvm.sm.currentState.oi === undefined || !(dvm.sm.currentState.tab === 'everything' || dvm.sm.currentState.tab === 'class')"
+                   is-disabled-when="dvm.sm.state.oi === undefined || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'class')"
                    is-active-when="dvm.sm.showCreateClassOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">C</span>
@@ -66,7 +66,7 @@
 
     <left-nav-item on-click="dvm.sm.showCreatePropertyOverlay = true"
                    nav-title="Create Property"
-                   is-disabled-when="dvm.sm.currentState.oi === undefined || !(dvm.sm.currentState.tab === 'everything' || dvm.sm.currentState.tab === 'object' || dvm.sm.currentState.tab === 'datatype')"
+                   is-disabled-when="dvm.sm.state.oi === undefined || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'object' || dvm.sm.state.tab === 'datatype')"
                    is-active-when="dvm.sm.showCreatePropertyOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">P</span>
@@ -76,7 +76,7 @@
 
     <left-nav-item on-click="dvm.sm.showCreateAnnotationOverlay = true"
                    nav-title="Create Annotation"
-                   is-disabled-when="dvm.sm.currentState.oi === undefined || !(dvm.sm.currentState.tab === 'everything' || dvm.sm.currentState.tab === 'annotation')"
+                   is-disabled-when="dvm.sm.state.oi === undefined || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'annotation')"
                    is-active-when="dvm.sm.showCreateAnnotationOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">A</span>
@@ -86,14 +86,14 @@
 
     <left-nav-item on-click="dvm.sm.showDownloadOverlay = true"
                    nav-title="Download Ontology"
-                   is-disabled-when="dvm.sm.currentState.oi === undefined"
+                   is-disabled-when="dvm.sm.state.oi === undefined"
                    is-active-when="dvm.sm.showDownloadOverlay">
         <i class="fa fa-download fa-fw"></i>
     </left-nav-item>
 
     <left-nav-item on-click="dvm.sm.showCloseOverlay = true"
                    nav-title="Close Ontology"
-                   is-disabled-when="dvm.sm.currentState.oi === undefined"
+                   is-disabled-when="dvm.sm.state.oi === undefined"
                    is-active-when="dvm.sm.showCloseOverlay">
         <i class="fa fa-folder fa-fw"></i>
     </left-nav-item>
@@ -102,7 +102,7 @@
 
     <left-nav-item on-click="dvm.sm.showDeleteConfirmation = true"
                    nav-title="Delete Entity"
-                   is-disabled-when="dvm.sm.currentState.oi === undefined || dvm.sm.currentState.tab === 'annotation'"
+                   is-disabled-when="dvm.sm.state.oi === undefined || dvm.sm.state.tab === 'annotation'"
                    is-active-when="dvm.sm.showDeleteConfirmation">
         <i class="fa fa-trash-o fa-fw"></i>
     </left-nav-item>

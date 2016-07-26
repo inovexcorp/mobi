@@ -49,7 +49,7 @@ describe('Ontology Entity Editors directive', function() {
         });
         _.forEach(['default-tab', 'ontology-editor', 'class-editor', 'property-editor', 'annotation-editor'], function(item) {
             it('based on ' + item, function() {
-                stateManagerSvc.currentState.editor = item;
+                stateManagerSvc.state.editor = item;
                 scope.$digest();
                 var items = element.querySelectorAll(item);
                 expect(items.length).toBe(1);

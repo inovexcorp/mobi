@@ -48,9 +48,7 @@
 
         <!-- create ontology buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="dvm.form.$invalid"
-                           on-click="dvm.create(dvm.iri, dvm.name, dvm.description)">Create</custom-button>
-
+            <custom-button is-disabled-when="dvm.form.$invalid" on-click="dvm.create()">Create</custom-button>
             <custom-button on-click="dvm.sm.showCreateOntologyOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>

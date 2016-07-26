@@ -52,7 +52,7 @@
                            is-disabled-when="!dvm.type.length"></object-select>
 
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length" on-click="dvm.create(dvm.iri, dvm.name, dvm.type, dvm.range, dvm.domain, dvm.description)">Create</custom-button>
+                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length" on-click="dvm.create()">Create</custom-button>
                 <custom-button on-click="dvm.sm.showCreatePropertyOverlay = false" type="'secondary'">Cancel</custom-button>
             </div>
         </form>

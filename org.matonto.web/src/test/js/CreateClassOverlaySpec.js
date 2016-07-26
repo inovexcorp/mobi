@@ -24,7 +24,8 @@ describe('Create Class Overlay directive', function() {
     var $compile,
         scope,
         element,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        deferred;
 
     mockPrefixes();
     injectRegexConstant();
@@ -36,11 +37,13 @@ describe('Create Class Overlay directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
     });
 
@@ -95,9 +98,29 @@ describe('Create Class Overlay directive', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.iri).toBe('begin' + 'then' + 'end');
         });
-        it('create calls the correct manager function', function() {
-            controller.create('class-iri', 'label', 'description');
-            expect(ontologyManagerSvc.createClass).toHaveBeenCalledWith(stateManagerSvc.ontology, 'class-iri', 'label', 'description');
+        describe('create', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.createClass.and.returnValue(deferred.promise);
+                controller.iri = 'class-iri';
+                controller.name = 'label';
+                controller.description = 'description';
+                controller.create();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.createClass).toHaveBeenCalledWith(stateManagerSvc.ontology, 'class-iri', 'label', 'description');
+            });
+            it('when resolved, sets the correct variables', function() {
+                deferred.resolve({});
+                scope.$apply();
+                expect(controller.error).toBe('');
+                expect(stateManagerSvc.showCreateClassOverlay).toBe(false);
+                expect(stateManagerSvc.setStateToNew).toHaveBeenCalledWith(stateManagerSvc.state, ontologyManagerSvc.getList(), 'class');
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject('error');
+                scope.$apply();
+                expect(controller.error).toBe('error');
+            });
         });
     });
 });

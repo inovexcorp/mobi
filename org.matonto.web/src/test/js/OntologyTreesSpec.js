@@ -63,7 +63,7 @@ describe('Ontology Trees directive', function() {
                 {tag: 'annotation-tree', text: 'annotation'}
             ], function(item) {
             it('based on ' + item.tag, function() {
-                stateManagerSvc.currentState.tab = item.text;
+                stateManagerSvc.state.tab = item.text;
                 scope.$digest();
                 var items = element.querySelectorAll(item.tag);
                 expect(items.length).toBe(1);

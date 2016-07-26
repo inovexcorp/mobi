@@ -29,7 +29,7 @@
 
         ontologyEntityEditors.$inject = ['stateManagerService'];
 
-        function ontologyEntityEditors(stateManagerService, ontologyManagerService, annotationManagerService) {
+        function ontologyEntityEditors(stateManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/ontologyEntityEditors/ontologyEntityEditors.html',

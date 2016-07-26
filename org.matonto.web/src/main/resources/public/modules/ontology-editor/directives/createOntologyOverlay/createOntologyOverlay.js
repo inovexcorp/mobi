@@ -55,12 +55,12 @@
                         }
                     }
 
-                    dvm.create = function(iri, label, description) {
-                        dvm.om.createOntology(iri, label, description)
+                    dvm.create = function() {
+                        dvm.om.createOntology(dvm.iri, dvm.name, dvm.description)
                             .then(function(response) {
                                 dvm.error = '';
                                 dvm.sm.showCreateOntologyOverlay = false;
-                                dvm.sm.setStateToNew(dvm.sm.currentState, dvm.om.getList(), 'ontology');
+                                dvm.sm.setStateToNew(dvm.sm.state, dvm.om.getList(), 'ontology');
                             }, function(errorMessage) {
                                 dvm.error = errorMessage;
                             });

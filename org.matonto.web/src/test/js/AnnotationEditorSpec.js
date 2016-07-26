@@ -55,5 +55,9 @@ describe('Annotation Editor directive', function() {
             var pres = element.querySelectorAll('pre');
             expect(pres.length).toBe(1);
         });
+        it('based on .tab', function() {
+            var tabs = element.querySelectorAll('.tab');
+            expect(tabs.length).toBe(1);
+        });
     });
 });

@@ -27,9 +27,9 @@
         .module('staticIri', ['stateManager'])
         .directive('staticIri', staticIri);
 
-        staticIri.$inject = ['$filter', 'REGEX', 'stateManagerService'];
+        staticIri.$inject = ['REGEX', 'stateManagerService'];
 
-        function staticIri($filter, REGEX, stateManagerService) {
+        function staticIri(REGEX, stateManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/staticIri/staticIri.html',
@@ -40,7 +40,7 @@
                     iri: '='
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: ['$scope', '$filter', function($scope, $filter) {
                     var dvm = this;
 
                     dvm.sm = stateManagerService;

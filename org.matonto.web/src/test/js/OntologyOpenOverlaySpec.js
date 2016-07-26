@@ -24,7 +24,10 @@ describe('Ontology Open Overlay directive', function() {
     var $compile,
         scope,
         element,
-        controller;
+        controller,
+        ontologyManagerSvc,
+        stateManagerSvc,
+        deferred;
 
     injectBeautifyFilter();
     injectSplitIRIFilter();
@@ -37,10 +40,13 @@ describe('Ontology Open Overlay directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
+            deferred = _$q_.defer();
         });
 
     });
@@ -93,9 +99,28 @@ describe('Ontology Open Overlay directive', function() {
             scope.$digest();
             controller = element.controller('ontologyOpenOverlay');
         });
-        it('open calls the correct manager function', function() {
-            controller.open('id');
-            expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith('id');
+        describe('open', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.openOntology.and.returnValue(deferred.promise);
+                controller.ontologyId = 'id';
+                controller.open();
+            });
+            it('calls the correct manager function', function() {
+                expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith('id');
+            });
+            it('when resolved, sets the correct variables', function() {
+                deferred.resolve({});
+                scope.$apply();
+                expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
+                expect(stateManagerSvc.setEditorTab).toHaveBeenCalledWith('basic');
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getList().length - 1);
+                expect(stateManagerSvc.showOpenOverlay).toBe(false);
+            });
+            it('when rejected, sets the correct variable', function() {
+                deferred.reject('error');
+                scope.$apply();
+                expect(controller.error).toBe('error');
+            });
         });
     });
 });

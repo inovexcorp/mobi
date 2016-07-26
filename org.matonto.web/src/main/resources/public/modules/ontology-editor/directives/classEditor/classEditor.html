@@ -23,37 +23,33 @@
 <div class="clearfix">
     <!-- tab buttons -->
     <tab-button-container>
-        <tab-button is-active="dvm.sm.currentState.editorTab === 'basic'"
+        <tab-button is-active="dvm.sm.state.editorTab === 'basic'"
                     on-click="dvm.sm.setEditorTab('basic')">{{dvm.om.getEntityName(dvm.sm.selected)}}</tab-button>
 
-        <tab-button is-active="dvm.sm.currentState.editorTab === 'axioms'"
+        <tab-button is-active="dvm.sm.state.editorTab === 'axioms'"
                     on-click="dvm.sm.setEditorTab('axioms')">Axioms</tab-button>
     </tab-button-container>
 
     <!-- basic tab -->
-    <div ng-if="dvm.sm.currentState.editorTab === 'basic'" class="tab clearfix">
-        <error-display ng-if="dvm.sm.selected.matonto.createError">{{dvm.sm.selected.matonto.createError}}</error-display>
-
-        <!-- static iri -->
+    <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
         <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
-
         <annotation-tab></annotation-tab>
     </div>
 
     <!-- axioms tab -->
-    <div ng-if="dvm.sm.currentState.editorTab === 'axioms'" class="tab clearfix">
+    <div ng-if="dvm.sm.state.editorTab === 'axioms'" class="tab clearfix">
         <!-- rdfs:subClassOf -->
         <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'subClassOf']"
                        display-text="'Sub Class Of'"
                        muted-text="dvm.prefixes.rdfs + 'subClassOf'"
                        select-list="dvm.subClasses"
-                       on-change="dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState)"></object-select>
+                       on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
 
         <!-- owl:disjointWith -->
         <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'disjointWith']"
                        display-text="'Disjoint With'"
                        muted-text="dvm.prefixes.owl + 'disjointWith'"
                        select-list="dvm.subClasses"
-                       on-change="dvm.om.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.currentState)"></object-select>
+                       on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
     </div>
 </div>

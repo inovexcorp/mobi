@@ -149,22 +149,15 @@ function mockOntologyManager() {
                 return ontologyId ? $q.when([]) : $q.reject('Something went wrong');
             });
             this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
-            this.entityChanged = jasmine.createSpy('entityChanged');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue({
                 matonto: {
                     id: '',
                     jsAnnotations: [{}]
                 }
             });
-            this.createClass = jasmine.createSpy('createClass').and.callFake(function(ontology, classIri, label, description) {
-                return $q.resolve({});
-            });
-            this.createOntology = jasmine.createSpy('createOntology').and.callFake(function(ontologyIri, label, description) {
-                return $q.resolve({});
-            });
-            this.createProperty = jasmine.createSpy('createProperty').and.callFake(function(ontology, propertyIri, label, type, range, domain, description) {
-                return $q.resolve({});
-            });
+            this.createClass = jasmine.createSpy('createClass').and.returnValue($q.resolve({}));
+            this.createOntology = jasmine.createSpy('createOntology').and.returnValue($q.resolve({}));
+            this.createProperty = jasmine.createSpy('createProperty').and.returnValue($q.resolve({}));
             this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
             this.download = jasmine.createSpy('download');
             this.openOntology = jasmine.createSpy('openOntology').and.returnValue($q.resolve({}));
@@ -391,7 +384,7 @@ function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function() {
             this.states = {};
-            this.currentState = {
+            this.state = {
                 oi: 0,
                 ci: 0,
                 pi: 0
@@ -411,6 +404,7 @@ function mockStateManager() {
             };
             this.key = '';
             this.index = 0;
+            this.annotationIndex = 0;
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
@@ -418,6 +412,8 @@ function mockStateManager() {
             this.getState = jasmine.createSpy('getState').and.returnValue({oi: 0, ci: 0, pi: 0});
             this.setStateToNew = jasmine.createSpy('setStateToNew').and.returnValue(0);
             this.clearState = jasmine.createSpy('clearState');
+            this.entityChanged = jasmine.createSpy('entityChanged');
+            this.selectItem = jasmine.createSpy('selectItem');
         });
     });
 }

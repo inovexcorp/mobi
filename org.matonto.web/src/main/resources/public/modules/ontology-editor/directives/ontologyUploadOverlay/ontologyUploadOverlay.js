@@ -42,8 +42,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
 
-                    dvm.upload = function(file) {
-                        dvm.om.uploadThenGet(file)
+                    dvm.upload = function() {
+                        dvm.om.uploadThenGet(dvm.file)
                             .then(function(response) {
                                 dvm.sm.setTreeTab('everything');
                                 dvm.sm.setEditorTab('basic');

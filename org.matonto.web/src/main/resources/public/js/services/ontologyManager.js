@@ -332,7 +332,7 @@
                         }
                     }, function(response) {
                         console.error('Error in deleteClass() function');
-                        deferred.reject(response);
+                        deferred.reject(response.data.error);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -383,7 +383,7 @@
                         }
                     }, function(response) {
                         console.error('Error in deleteClass() function');
-                        deferred.reject(response);
+                        deferred.reject(response.data.error);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
@@ -1308,11 +1308,6 @@
                     });
 
                 return deferred.promise;
-            }
-
-            self.entityChanged = function(selected, ontologyId, state) {
-                selected.matonto.unsaved = true;
-                self.addToChangedList(ontologyId, selected.matonto.originalIri, state);
             }
         }
 })();
