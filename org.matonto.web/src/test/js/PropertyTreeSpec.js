@@ -26,10 +26,10 @@ describe('Property Tree directive', function() {
         element,
         ontologyManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('propertyTree');
+        mockPrefixes();
         mockOntologyManager();
         mockStateManager();
 

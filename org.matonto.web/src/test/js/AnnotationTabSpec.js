@@ -27,12 +27,12 @@ describe('Annotation Tab directive', function() {
         stateManagerSvc,
         controller;
 
-    injectBeautifyFilter();
-    injectShowAnnotationsFilter();
 
     beforeEach(function() {
         module('templates');
         module('annotationTab');
+        injectBeautifyFilter();
+        injectShowAnnotationsFilter();
         mockStateManager();
         mockResponseObj();
 

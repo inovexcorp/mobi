@@ -28,11 +28,11 @@ describe('Create Property Overlay directive', function() {
         stateManagerSvc,
         deferred;
 
-    injectRegexConstant();
-    injectCamelCaseFilter();
     beforeEach(function() {
         module('templates');
         module('createPropertyOverlay');
+        injectRegexConstant();
+        injectCamelCaseFilter();
         mockOntologyManager();
         mockStateManager();
 

@@ -24,9 +24,31 @@
     'use strict';
 
     angular
-        .module('mapper', ['file-input', 'filePreviewTable', 'ontologySelectOverlay', 'ontologyPreview', 'startingClassSelectOverlay', 
-            'classPreview', 'classList', 'newPropForm', 'propSelect', 'columnSelect', 'rangeClassDescription', 'editPropForm', 
-            'editClassForm', 'finishOverlay', 'ontologyPreviewOverlay', 'rdfPreview', 'iriTemplateOverlay','mappingNameOverlay', 
-            'mappingNameInput', 'mappingList', 'mappingPreview', 'mapperSideBar', 'mappingOverlays', 'fileUploadOverlay', 'mappingEditor',
-            'invalidOntologyOverlay']);
+        .module('mapper', [
+            'classList',
+            'classPreview',
+            'columnSelect',
+            'editClassForm',
+            'editPropForm',
+            'filePreviewTable',
+            'fileUploadOverlay',
+            'finishOverlay',
+            'invalidOntologyOverlay',
+            'iriTemplateOverlay',
+            'mapperSideBar',
+            'mappingEditor',
+            'mappingList',
+            'mappingNameInput',
+            'mappingNameOverlay',
+            'mappingOverlays',
+            'newPropForm',
+            'mappingPreview',
+            'ontologyPreview',
+            'ontologyPreviewOverlay',
+            'ontologySelectOverlay',
+            'propSelect',
+            'rangeClassDescription',
+            'rdfPreview',
+            'startingClassSelectOverlay'
+        ]);
 })();

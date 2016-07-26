@@ -25,11 +25,10 @@ describe('Tree Item directive', function() {
         scope,
         element;
 
-    injectRegexConstant();
-
     beforeEach(function() {
         module('templates');
         module('treeItem');
+        injectRegexConstant();
         mockSettingsManager();
         mockOntologyManager();
 

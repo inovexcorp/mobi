@@ -26,14 +26,13 @@ describe('String Select directive', function() {
         element,
         $filter;
 
-    injectHighlightFilter();
-    injectTrustedFilter();
-    injectSplitIRIFilter();
-    injectRemoveIriFromArrayFilter();
-
     beforeEach(function() {
         module('templates');
         module('stringSelect');
+        injectHighlightFilter();
+        injectTrustedFilter();
+        injectSplitIRIFilter();
+        injectRemoveIriFromArrayFilter();
         mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_, _$filter_) {

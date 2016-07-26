@@ -28,13 +28,12 @@ describe('Annotation Overlay directive', function() {
         stateManagerSvc,
         annotationManagerSvc;
 
-    injectRegexConstant();
-    injectHighlightFilter();
-    injectTrustedFilter();
-
     beforeEach(function() {
         module('templates');
         module('annotationOverlay');
+        injectRegexConstant();
+        injectHighlightFilter();
+        injectTrustedFilter();
         mockOntologyManager();
         mockStateManager();
         mockResponseObj();

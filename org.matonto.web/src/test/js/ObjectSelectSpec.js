@@ -25,13 +25,12 @@ describe('Object Select directive', function() {
         scope,
         element;
 
-    mockPrefixes();
-    injectTrustedFilter();
-    injectHighlightFilter();
-
     beforeEach(function() {
         module('templates');
         module('objectSelect');
+        mockPrefixes();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
         mockSettingsManager();
         mockStateManager();

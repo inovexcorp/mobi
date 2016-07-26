@@ -25,7 +25,7 @@ describe('File Input directive', function() {
         scope;
 
     beforeEach(function() {
-        module('file-input');
+        module('fileInput');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

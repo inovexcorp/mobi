@@ -29,10 +29,10 @@ describe('Create Annotation Overlay directive', function() {
         annotationManagerSvc,
         deferred;
 
-    injectRegexConstant();
     beforeEach(function() {
         module('templates');
         module('createAnnotationOverlay');
+        injectRegexConstant();
         mockAnnotationManager();
         mockStateManager();
 

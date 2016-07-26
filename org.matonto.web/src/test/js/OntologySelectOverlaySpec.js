@@ -27,14 +27,13 @@ describe('Ontology Select Overlay directive', function() {
         mappingManagerSvc,
         mapperStateSvc;
 
-    injectBeautifyFilter();
-    injectSplitIRIFilter();
-    injectTrustedFilter();
-    injectHighlightFilter();
-
     beforeEach(function() {
         module('templates');
         module('ontologySelectOverlay');
+        injectBeautifyFilter();
+        injectSplitIRIFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

@@ -28,12 +28,11 @@ describe('Create Ontology Overlay directive', function() {
         deferred,
         stateManagerSvc;
 
-    injectRegexConstant();
-    injectCamelCaseFilter();
-
     beforeEach(function() {
         module('templates');
         module('createOntologyOverlay');
+        injectRegexConstant();
+        injectCamelCaseFilter();
         mockOntologyManager();
         mockStateManager();
 

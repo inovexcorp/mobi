@@ -25,7 +25,6 @@
 
     angular
         .module('ontology-editor', [
-            /* Ontology Editor Specific Modules */
             'annotationEditor',
             'annotationOverlay',
             'annotationTab',
@@ -37,7 +36,6 @@
             'createOntologyOverlay',
             'createPropertyOverlay',
             'defaultTab',
-            'errorDisplay',
             'everythingTree',
             'objectSelect',
             'ontologyDownloadOverlay',
@@ -53,18 +51,6 @@
             'serializationSelect',
             'staticIri',
             'stringSelect',
-            'treeItem',
-
-            /* Common Modules */
-            'annotationManager',
-            'file-input',
-            'ngMessages',
-            'ontologyManager',
-            'prefixManager',
-            'removeIriFromArray',
-            'responseObj',
-            'stateManager',
-            'tabButton',
-            'tabButtonContainer'
+            'treeItem'
         ]);
 })();

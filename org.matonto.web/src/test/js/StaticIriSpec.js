@@ -25,14 +25,15 @@ describe('Static IRI directive', function() {
         $filter,
         scope,
         element,
-        stateManagerSvc;
+        stateManagerSvc,
+        controller;
 
-    injectRegexConstant();
-    injectSplitIRIFilter();
     beforeEach(function() {
         module('templates');
         module('staticIri');
         mockStateManager();
+        injectSplitIRIFilter();
+        injectRegexConstant();
 
         inject(function(_$compile_, _$rootScope_, _stateManagerService_, _$filter_) {
             $compile = _$compile_;
@@ -62,8 +63,6 @@ describe('Static IRI directive', function() {
         });
     });
     describe('controller bound variables', function() {
-        var controller;
-
         beforeEach(function() {
             controller = element.controller('staticIri');
         });
@@ -99,8 +98,6 @@ describe('Static IRI directive', function() {
         });
     });
     describe('controller methods', function() {
-        var controller;
-
         beforeEach(function() {
             stateManagerSvc.ontology.matonto.iriBegin = 'begin';
             stateManagerSvc.ontology.matonto.iriThen = 'then';

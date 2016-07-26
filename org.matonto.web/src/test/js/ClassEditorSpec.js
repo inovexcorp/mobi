@@ -29,11 +29,12 @@ describe('Class Editor directive', function() {
         ontologyManagerSvc,
         controller;
 
-    mockPrefixes();
-    injectRemoveIriFromArrayFilter();
+
     beforeEach(function() {
         module('templates');
         module('classEditor');
+        mockPrefixes();
+        injectRemoveIriFromArrayFilter();
         mockOntologyManager();
         mockStateManager();
 

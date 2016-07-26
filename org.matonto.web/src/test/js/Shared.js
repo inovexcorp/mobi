@@ -36,85 +36,69 @@ function createQueryString(obj) {
 }
 
 function injectRegexConstant() {
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.constant('REGEX', {
-                'IRI': new RegExp('[a-zA-Z]'),
-                'LOCALNAME': new RegExp('[a-zA-Z]'),
-                'FILENAME': new RegExp('[a-zA-Z]')
-            });
+    module(function($provide) {
+        $provide.constant('REGEX', {
+            'IRI': new RegExp('[a-zA-Z]'),
+            'LOCALNAME': new RegExp('[a-zA-Z]'),
+            'FILENAME': new RegExp('[a-zA-Z]')
         });
     });
 }
 
 function injectBeautifyFilter() {
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
-                return '';
-            }));
-        });
+    module(function($provide) {
+        $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(function(str) {
+            return '';
+        }));
     });
 }
 
 function injectSplitIRIFilter() {
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
-                return {
-                    begin: '',
-                    then: '',
-                    end: ''
-                }
-            }));
-        });
+    module(function($provide) {
+        $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
+            return {
+                begin: '',
+                then: '',
+                end: ''
+            }
+        }));
     });
 }
 
 function injectTrustedFilter() {
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
+    module(function($provide) {
+        $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
     });
 }
 
 function injectHighlightFilter() {
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-        });
+    module(function($provide) {
+        $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
     });
 }
 
 function injectCamelCaseFilter() {
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.value('camelCaseFilter', jasmine.createSpy('camelCaseFilter').and.callFake(function(str) {
-                return str;
-            }));
-        });
+    module(function($provide) {
+        $provide.value('camelCaseFilter', jasmine.createSpy('camelCaseFilter').and.callFake(function(str) {
+            return str;
+        }));
     });
 }
 
 function injectShowAnnotationsFilter() {
-    beforeEach(function() {
-        module(function($provide) {
-            var annotations = [{ localName: 'prop1' }, { localName: 'prop2' }];
-            $provide.value('showAnnotationsFilter', jasmine.createSpy('showAnnotationsFilter').and.callFake(function(entity, arr) {
-                return entity ? annotations : [];
-            }));
-        });
+    module(function($provide) {
+        var annotations = [{ localName: 'prop1' }, { localName: 'prop2' }];
+        $provide.value('showAnnotationsFilter', jasmine.createSpy('showAnnotationsFilter').and.callFake(function(entity, arr) {
+            return entity ? annotations : [];
+        }));
     });
 }
 
 function injectRemoveIriFromArrayFilter() {
-    beforeEach(function() {
-        module(function($provide) {
-            $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
-                return arr;
-            }));
-        });
+    module(function($provide) {
+        $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(function(arr) {
+            return arr;
+        }));
     });
 }
 
@@ -336,13 +320,9 @@ function mockCatalogManager() {
 }
 
 function mockPrefixes() {
-    beforeEach(function() {
-        angular.module('prefixes', []);
-
-        module(function($provide) {
-            $provide.service('prefixes', function() {
-                this.owl = this.rdfs = this.rdf = this.delim = this.dataDelim = this.data = this.mappings = this.catalog = this.dc = '';
-            });
+    module(function($provide) {
+        $provide.service('prefixes', function() {
+            this.owl = this.rdfs = this.rdf = this.delim = this.dataDelim = this.data = this.mappings = this.catalog = this.dc = '';
         });
     });
 }

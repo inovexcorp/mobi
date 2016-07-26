@@ -30,10 +30,10 @@ describe('Ontology Editor directive', function() {
         controller,
         deferred;
 
-    injectRegexConstant();
     beforeEach(function() {
         module('templates');
         module('ontologyEditor');
+        injectRegexConstant();
         mockStateManager();
         mockOntologyManager();
 

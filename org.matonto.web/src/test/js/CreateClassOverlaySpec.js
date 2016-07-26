@@ -27,13 +27,13 @@ describe('Create Class Overlay directive', function() {
         ontologyManagerSvc,
         deferred;
 
-    mockPrefixes();
-    injectRegexConstant();
-    injectCamelCaseFilter();
 
     beforeEach(function() {
         module('templates');
         module('createClassOverlay');
+        mockPrefixes();
+        injectRegexConstant();
+        injectCamelCaseFilter();
         mockOntologyManager();
         mockStateManager();
 

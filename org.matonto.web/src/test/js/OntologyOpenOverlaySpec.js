@@ -29,14 +29,13 @@ describe('Ontology Open Overlay directive', function() {
         stateManagerSvc,
         deferred;
 
-    injectBeautifyFilter();
-    injectSplitIRIFilter();
-    injectTrustedFilter();
-    injectHighlightFilter();
-
     beforeEach(function() {
         module('templates');
         module('ontologyOpenOverlay');
+        injectBeautifyFilter();
+        injectSplitIRIFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
         mockStateManager();
 

@@ -29,11 +29,11 @@ describe('Property Editor directive', function() {
         stateManagerSvc,
         ontologyManagerSvc;
 
-    mockPrefixes();
-    injectRemoveIriFromArrayFilter();
     beforeEach(function() {
         module('templates');
         module('propertyEditor');
+        mockPrefixes();
+        injectRemoveIriFromArrayFilter();
         mockOntologyManager();
         mockStateManager();
 

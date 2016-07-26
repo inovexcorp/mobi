@@ -28,10 +28,10 @@ describe('Ontology Download Overlay directive', function() {
         ontologyManagerSvc,
         stateManagerSvc;
 
-    injectRegexConstant();
     beforeEach(function() {
         module('templates');
         module('ontologyDownloadOverlay');
+        injectRegexConstant();
         mockStateManager();
         mockOntologyManager();
 

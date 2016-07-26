@@ -55,9 +55,7 @@
         <!-- buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="dvm.iriForm.$invalid" on-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.afterEdit();">Edit</custom-button>
-
             <custom-button on-click="dvm.sm.showIriOverlay = false" type="'secondary'">Cancel</custom-button>
-
             <custom-button on-click="dvm.resetVariables()" pull="'left'"><i class="fa fa-refresh"></i></custom-button>
         </div>
     </form>
