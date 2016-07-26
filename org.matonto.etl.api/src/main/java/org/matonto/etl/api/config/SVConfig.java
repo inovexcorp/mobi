@@ -70,8 +70,8 @@ public class SVConfig {
     }
 
     public static class Builder {
-        private InputStream data;
-        private Model mapping;
+        private final InputStream data;
+        private final Model mapping;
         private boolean containsHeaders = true;
         private char separator = ',';
         private Long limit;

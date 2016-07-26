@@ -136,11 +136,8 @@ public class DelimitedRestImpl implements DelimitedRest {
             throw ErrorUtils.sendError("Must provide a JSON-LD string", Response.Status.BAD_REQUEST);
         }
 
-        Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        if (!optDelimitedFile.isPresent()) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
-        }
-        File delimitedFile = optDelimitedFile.get();
+        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
+                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
         // Parse JSON-LD mapping into a model
@@ -173,11 +170,8 @@ public class DelimitedRestImpl implements DelimitedRest {
             throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
         }
 
-        Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        if (!optDelimitedFile.isPresent()) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
-        }
-        File delimitedFile = optDelimitedFile.get();
+        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
+                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
         // Collect uploaded mapping model

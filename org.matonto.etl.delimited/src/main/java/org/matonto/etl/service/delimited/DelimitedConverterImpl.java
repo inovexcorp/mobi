@@ -29,7 +29,6 @@ import com.opencsv.CSVReader;
 import org.apache.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.util.IOUtils;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -63,20 +62,14 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
     @Override
     public Model convert(SVConfig config) throws IOException, MatOntoException {
-        ByteArrayOutputStream out = toByteArrayOutputStream(config.getData());
-        Optional<Charset> charsetOpt = CharsetUtils.getEncoding(IOUtils.toByteArray(
-                new ByteArrayInputStream(out.toByteArray())));
-        if (!charsetOpt.isPresent()) {
-            throw new MatOntoException("Unsupported character set");
-        }
-        CSVReader reader = new CSVReader(new InputStreamReader(
-                new ByteArrayInputStream(out.toByteArray()), charsetOpt.get()), config.getSeparator());
-        String[] nextLine;
+        byte[] data = toByteArrayOutputStream(config.getData()).toByteArray();
+        Charset charset = CharsetUtils.getEncoding(new ByteArrayInputStream(data)).orElseThrow(() ->
+                new MatOntoException("Unsupported character set"));
+        CSVReader reader = new CSVReader(new InputStreamReader(new ByteArrayInputStream(data), charset),
+                config.getSeparator());
         Model convertedRDF = modelFactory.createModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
         long offset = config.getOffset();
-        long index = config.getOffset();
-        Optional<Long> limit = config.getLimit();
         boolean containsHeaders = config.getContainsHeaders();
 
         // If headers exist, skip them
@@ -86,10 +79,14 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         // Skip to offset point
         while (reader.getLinesRead() - (containsHeaders ? 1 : 0) < offset) {
+            System.out.println(reader.getLinesRead() - (containsHeaders ? 1 : 0));
             reader.readNext();
         }
 
         //Traverse each row and convert column into RDF
+        String[] nextLine;
+        long index = config.getOffset();
+        Optional<Long> limit = config.getLimit();
         while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
             writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
             index++;

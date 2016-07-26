@@ -34,16 +34,15 @@ public enum Delimited {
     OBJECT_PROPERTY("http://matonto.org/ontologies/delimited/objectProperty"),
     CLASS_MAPPING_PROP("http://matonto.org/ontologies/delimited/classMapping"),
     CLASS_MAPPING_OBJ("http://matonto.org/ontologies/delimited/ClassMapping"),
-    LOCAL_NAME("http://matonto.org/ontologies/delimited/localName"),
-    DOCUMENT("http://matonto.org/ontologies/delimited/Document");
-    private final String s;
+    LOCAL_NAME("http://matonto.org/ontologies/delimited/localName");
+    private final String str;
 
-    Delimited(String s) {
-        this.s = s;
+    Delimited(String str) {
+        this.str = str;
     }
 
-    public String stringValue(){
-        return s;
+    public String stringValue() {
+        return str;
     }
 
 }

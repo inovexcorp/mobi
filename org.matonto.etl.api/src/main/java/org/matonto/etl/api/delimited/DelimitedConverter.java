@@ -32,7 +32,7 @@ import java.io.IOException;
 
 public interface DelimitedConverter {
     /**
-     * Converts a delimited SV file to RDF using a mapping file. Column indexes for data
+     * Converts a delimited SV file to RDF using a mapping. Column indexes for data
      * mappings are zero-based. Returns the RDF data as a Model.
      *
      * @param config Conversion configuration for the SV file
@@ -43,8 +43,8 @@ public interface DelimitedConverter {
     Model convert(SVConfig config) throws IOException, MatOntoException;
 
     /**
-     * Converts a delimited Excel file to RDF using a mapping file. Column indexes for data
-     * mappings are zero-based. Returns the RDF data as a Model.
+     * Converts a Excel file to RDF using a mapping. Column indexes for data mappings
+     * are zero-based. Returns the RDF data as a Model.
      *
      * @param config Conversion configuration for the Excel file
      * @return A Model of RDF data converted from delimited data

@@ -69,6 +69,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-name>MatOnto ETL Service - CLI</Bundle-name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package />
                         <Service-Component>*</Service-Component>

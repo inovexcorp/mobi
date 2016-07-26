@@ -64,8 +64,8 @@ public class ExcelConfig {
     }
 
     public static class Builder {
-        private InputStream data;
-        private Model mapping;
+        private final InputStream data;
+        private final Model mapping;
         private boolean containsHeaders = true;
         private Long limit;
         private long offset = 0;
