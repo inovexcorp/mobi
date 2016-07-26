@@ -69,7 +69,7 @@ describe('Ontology Overlays directive', function() {
             expect(element.prop('tagName')).toBe('ONTOLOGY-OVERLAYS');
         });
         it('based on confirmation-overlays', function() {
-            var confirmations = element.querySelectorAll('confirmation-overlay');
+            var confirmations = element.find('confirmation-overlay');
             expect(confirmations.length).toBe(3);
         });
         _.forEach(['ontology-upload-overlay', 'annotation-overlay', 'ontology-download-overlay',
