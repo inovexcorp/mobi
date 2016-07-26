@@ -89,7 +89,6 @@
                     dvm.dm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.visible = false;
-                    dvm.preview = '';
                     dvm.options = [
                         {
                             name: 'JSON-LD',
