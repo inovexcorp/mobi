@@ -54,6 +54,6 @@
 
             /* Custom Services */
             'delimitedManager',
-            'mapperStateService'
+            'mapperState'
         ]);
 })();
