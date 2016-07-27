@@ -26,6 +26,7 @@ package org.matonto.jaas.rest.impl;
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
@@ -33,19 +34,21 @@ import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.karaf.jaas.modules.BackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
 import org.matonto.jaas.rest.GroupsRest;
+import org.matonto.rest.util.ErrorUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class GroupsRestImpl implements GroupsRest {
     protected JaasRealm realm;
     protected BackingEngine engine;
+    private final Logger logger = LoggerFactory.getLogger(GroupsRestImpl.class);
 
     @Reference(target = "(realmId=matonto)")
     protected void setRealm(JaasRealm realm) {
@@ -67,46 +70,89 @@ public class GroupsRestImpl implements GroupsRest {
 
     @Override
     public Response createGroup(String groupName) {
-        return null;
+        engine.createGroup(groupName);
+        logger.info("Created group " + groupName);
+        return Response.ok().build();
     }
 
     @Override
     public Response getGroup(String groupName) {
-        return null;
+        Map.Entry<GroupPrincipal, String> group = findGroup(groupName)
+                .orElseThrow(() -> ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+        JSONObject obj = new JSONObject();
+        obj.put("name", group.getKey().getName());
+        obj.put("roles", group.getValue());
+        return Response.status(200).entity(obj.toString()).build();
     }
 
     @Override
     public Response updateGroup(String groupName) {
-        return null;
+        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
     public Response deleteGroup(String groupName) {
-        return null;
+        if (!findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
+        }
+
+        engine.listUsers().stream()
+                .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
+                .map(UserPrincipal::getName)
+                .forEach(user -> engine.deleteGroup(user, groupName));
+        logger.info("Deleted group " + groupName);
+
+        return Response.ok().build();
     }
 
     @Override
     public Response getGroupRoles(String groupName) {
-        return null;
+        Map.Entry<GroupPrincipal, String> group = findGroup(groupName)
+                .orElseThrow(() -> ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+        JSONArray roles = JSONArray.fromObject(group.getValue().split(","));
+
+        return Response.status(200).entity(roles.toString()).build();
     }
 
     @Override
-    public Response addGroupRole(String groupName, @QueryParam("role") String role) {
-        return null;
+    public Response addGroupRole(String groupName, String role) {
+        if (!findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
+        }
+
+        engine.addGroupRole(groupName, role);
+        return Response.ok().build();
     }
 
     @Override
-    public Response removeGroupRole(String groupName, @QueryParam("role") String role) {
-        return null;
+    public Response removeGroupRole(String groupName, String role) {
+        if (!findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
+        }
+
+        engine.deleteGroupRole(groupName, role);
+        return Response.ok().build();
     }
 
-    /*private Optional<GroupPrincipal> findGroup(String groupName) {
-        List<GroupPrincipal> groups = engine.listGroups();
-        for (GroupPrincipal prin : groups) {
-            if (prin.getName().equals(groupName)) {
-                return Optional.of(prin);
+    private Optional<Map.Entry<GroupPrincipal, String>> findGroup(String groupName) {
+        Map<GroupPrincipal, String> groups = engine.listGroups();
+        for (Map.Entry<GroupPrincipal, String> group : groups.entrySet()) {
+            if (group.getKey().getName().equals(groupName)) {
+                return Optional.of(group);
             }
         }
         return Optional.empty();
-    }*/
+    }
+
+    private boolean isInGroup(UserPrincipal user, String groupName) {
+        List<GroupPrincipal> groups = engine.listGroups(user);
+        for (GroupPrincipal group : groups) {
+            if (group.getName().equals(groupName)) {
+                logger.info("User " + user.getName() + " is in group " + groupName);
+                return true;
+            }
+        }
+        logger.info("User " + user.getName() + " is not in group " + groupName);
+        return false;
+    }
 }

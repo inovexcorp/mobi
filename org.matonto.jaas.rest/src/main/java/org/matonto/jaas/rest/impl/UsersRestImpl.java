@@ -32,25 +32,24 @@ import org.apache.karaf.jaas.boot.principal.RolePrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.karaf.jaas.modules.BackingEngine;
-import org.matonto.jaas.modules.token.TokenBackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
 import org.matonto.jaas.rest.UsersRest;
 import org.matonto.rest.util.ErrorUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class UsersRestImpl implements UsersRest {
     protected JaasRealm realm;
     protected BackingEngine engine;
+    private final Logger logger = LoggerFactory.getLogger(UsersRestImpl.class);
 
     @Reference(target = "(realmId=matonto)")
     protected void setRealm(JaasRealm realm) {
@@ -76,7 +75,7 @@ public class UsersRestImpl implements UsersRest {
     @Override
     public Response createUser(String username, String password) {
         engine.addUser(username, password);
-
+        logger.info("Created user " + username);
         return Response.ok().build();
     }
 
@@ -122,7 +121,7 @@ public class UsersRestImpl implements UsersRest {
             throw ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST);
         }
         engine.deleteUser(username);
-
+        logger.info("Deleted user " + username);
         return Response.ok().build();
     }
 
