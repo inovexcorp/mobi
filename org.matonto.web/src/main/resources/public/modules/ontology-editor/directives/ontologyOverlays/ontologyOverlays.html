@@ -28,6 +28,7 @@
 <create-ontology-overlay ng-if="dvm.sm.showCreateOntologyOverlay"></create-ontology-overlay>
 <create-class-overlay ng-if="dvm.sm.showCreateClassOverlay"></create-class-overlay>
 <create-property-overlay ng-if="dvm.sm.showCreatePropertyOverlay"></create-property-overlay>
+<ontology-close-overlay ng-if="dvm.sm.showCloseOverlay"></ontology-close-overlay>
 <confirmation-overlay ng-if="dvm.sm.showDeleteConfirmation"
                       header-text="'Delete Ontology'"
                       confirm-click="dvm.deleteEntity()"
@@ -37,12 +38,6 @@
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
     <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id'] || dvm.sm.selected.matonto.id}}</strong>?</p>
 </confirmation-overlay>
-<confirmation-overlay ng-if="dvm.sm.showCloseOverlay"
-                      header-text="'Close Overlay'"
-                      confirm-click="dvm.closeOntology()"
-                      cancel-click="dvm.sm.showCloseOverlay = false"
-                      confirm-text="'Yes'"
-                      cancel-text="'No'">Are you sure that you want to close <strong>{{dvm.sm.ontology['@id'] || dvm.sm.ontology.matonto.id}}</strong> from your workspace?</confirmation-overlay>
 <confirmation-overlay ng-if="dvm.sm.showRemoveAnnotationOverlay"
                       header-text="'Remove Annotation'"
                       confirm-click="dvm.removeAnnotation()"
