@@ -49,6 +49,7 @@
         self.rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
         self.owl = 'http://www.w3.org/2002/07/owl#';
         self.dc = 'http://purl.org/dc/elements/1.1/';
+        self.dcterms = 'http://purl.org/dc/terms/';
         self.xsd = 'http://www.w3.org/2001/XMLSchema#';
         self.data = 'http://matonto.org/data/';
         self.dataDelim = self.data + 'delimited#';
