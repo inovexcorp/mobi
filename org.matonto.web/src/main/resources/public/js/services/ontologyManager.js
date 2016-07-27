@@ -293,6 +293,7 @@
                         if(response.data.deleted) {
                             console.log('Successfully deleted ontology');
                             ontologies.splice(state.oi, 1);
+                            self.clearOntologyFromChangedList(ontologyId);
                             deferred.resolve({ selectOntology: false });
                         } else {
                             console.warn('Ontology not deleted');
@@ -319,12 +320,11 @@
                         if(response.data.deleted) {
                             var ontology = ontologies[state.oi];
                             var classObj = ontology.matonto.classes[state.ci];
-
                             console.log('Successfully deleted class');
                             updateModels(response, ontology, classObj);
                             ontology.matonto.classes.splice(state.ci, 1);
+                            self.clearEntityFromChangedList(ontologyId, classId);
                             removeIdFromArray(classId, ontology.matonto.subClasses);
-
                             deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Class not deleted');
@@ -363,19 +363,17 @@
                         if(response.data.deleted) {
                             console.log('Successfully deleted property');
                             updateModels(response, ontology, null);
-
                             if(classObj) {
                                 classObj.matonto.properties.splice(state.pi, 1);
                             } else {
                                 ontology.matonto.noDomains.splice(state.pi, 1);
                             }
-
                             if(type === 'object-properties') {
                                 removeIdFromArray(propertyId, ontology.matonto.subObjectProperties);
                             } else {
                                 removeIdFromArray(propertyId, ontology.matonto.subDataProperties);
                             }
-
+                            self.clearEntityFromChangedList(ontologyId, propertyId);
                             deferred.resolve({ selectOntology: true });
                         } else {
                             console.warn('Property not deleted');
@@ -1018,7 +1016,7 @@
                     $q.all(promises)
                         .then(function(response) {
                             if(!_.find(response, {data: {updated: false}})) {
-                                self.clearChangedList(ontologyId);
+                                self.clearOntologyFromChangedList(ontologyId);
                                 _.forEach(changedProperties, function(item) {
                                     var domains = _.get(item.property, prefixes.rdfs + 'domain', []);
                                     var classId = _.get(ontology, 'matonto.classes[' + item.state.ci + "]['@id']");
@@ -1202,12 +1200,20 @@
                 }
             }
 
-            self.clearChangedList = function(ontologyId) {
+            self.clearOntologyFromChangedList = function(ontologyId) {
                 changedEntries = _.reject(changedEntries, { ontologyId: ontologyId });
+            }
+
+            self.clearEntityFromChangedList = function(ontologyId, entityId) {
+                changedEntries = _.reject(changedEntries, { ontologyId: ontologyId, entityId: entityId });
             }
 
             self.getChangedListForOntology = function(ontologyId) {
                 return _.filter(changedEntries, { ontologyId: ontologyId });
+            }
+
+            self.getChangedEntries = function() {
+                return changedEntries;
             }
 
             self.getClasses = function(ontology) {
