@@ -323,7 +323,10 @@ function mockCatalogManager() {
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.rdfs = this.rdf = this.delim = this.dataDelim = this.data = this.mappings = this.catalog = this.dc = '';
+            this.owl = this.rdf = this.delim = this.dataDelim = this.data = this.mappings = this.catalog = '';
+            this.rdfs = 'rdfs:';
+            this.dc = 'dc:';
+            this.dcterms = 'dcterms:';
         });
     });
 }

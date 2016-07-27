@@ -131,7 +131,7 @@ describe('Mapper Side Bar directive', function() {
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element..prop('tagName')).toBe('MAPPER-SIDE-BAR');
+            expect(this.element.prop('tagName')).toBe('MAPPER-SIDE-BAR');
             var leftNav = this.element.find('left-nav');
             expect(leftNav.length).toBe(1);
             expect(leftNav.hasClass('mapper-side-bar')).toBe(true);
