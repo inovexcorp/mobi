@@ -76,5 +76,17 @@ describe('Ontology Side Bar directive', function() {
             controller.shouldSaveBeDisabled();
             expect(ontologyManagerSvc.getChangedListForOntology).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id);
         });
+        describe('closeOntology', function() {
+            it('for no changes, sets the correct variable', function() {
+                ontologyManagerSvc.getChangedListForOntology.and.returnValue(['']);
+                controller.closeOntology();
+                expect(stateManagerSvc.showCloseOverlay).toBe(true);
+            });
+            it('for changes, calls the correct functions', function() {
+                controller.closeOntology();
+                expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.oi, stateManagerSvc.ontology.matonto.id);
+                expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.oi);
+            });
+        });
     });
 });

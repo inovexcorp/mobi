@@ -44,6 +44,15 @@
                     dvm.shouldSaveBeDisabled = function() {
                         return !_.get(dvm.sm.ontology, 'matonto.isValid', false) || !dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length;
                     }
+
+                    dvm.closeOntology = function() {
+                        if(dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length) {
+                            dvm.sm.showCloseOverlay = true;
+                        } else {
+                            dvm.om.closeOntology(dvm.sm.state.oi, _.get(dvm.sm.ontology, 'matonto.id'));
+                            dvm.sm.clearState(dvm.sm.state.oi);
+                        }
+                    }
                 }
             }
         }

@@ -14,7 +14,7 @@ matonto-deploy-bundles = {
         org.matonto.repository.impl.core \
         org.matonto.etl.api \
         org.matonto.etl.cli \
-        org.matonto.etl.csv \
+        org.matonto.etl.delimited \
         org.matonto.etl.rdf \
         org.matonto.etl.rest \
         org.matonto.ontology.api \

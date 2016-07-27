@@ -39,6 +39,7 @@
             'defaultTab',
             'everythingTree',
             'objectSelect',
+            'ontologyCloseOverlay',
             'ontologyDownloadOverlay',
             'ontologyEditor',
             'ontologyEntityEditors',
