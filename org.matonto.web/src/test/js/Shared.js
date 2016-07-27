@@ -210,14 +210,15 @@ function mockMappingManager() {
     });
 }
 
-function mockCsvManager() {
+function mockDelimitedManager() {
     module(function($provide) {
-        $provide.service('csvManagerService', function($q) {
+        $provide.service('delimitedManagerService', function($q) {
             this.fileObj = undefined;
             this.filePreview = undefined;
             this.fileName = '';
             this.separator = ',';
             this.containsHeaders = true;
+            this.preview = '';
 
             this.upload = jasmine.createSpy('upload').and.callFake(function(file) {
                 return file ? $q.when('fileName') : $q.reject('Something went wrong');

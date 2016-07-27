@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('ontologyEditor', ['stateManager', 'ontologyManager'])
+        .module('ontologyEditor', [])
         .directive('ontologyEditor', ontologyEditor);
 
         ontologyEditor.$inject = ['REGEX', 'stateManagerService', 'ontologyManagerService'];

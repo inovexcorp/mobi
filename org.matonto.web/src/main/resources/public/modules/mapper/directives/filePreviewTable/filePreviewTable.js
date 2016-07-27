@@ -27,16 +27,12 @@
         /**
          * @ngdoc overview
          * @name filePreviewTable
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  csvManager
          *
          * @description 
          * The `filePreviewTable` module only provides the `filePreviewTable` directive which creates
          * an expandable preview of an uploaded delimited file.
          */
-        .module('filePreviewTable', ['csvManager', 'mapperState', 'mappingManager', 'ontologyManager'])
+        .module('filePreviewTable', [])
         /**
          * @ngdoc directive
          * @name filePreviewTable.directive:filePreviewTable
@@ -45,7 +41,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `filePreviewTable` is a directive that creates a div with a table of rows from an uploaded 
@@ -58,9 +54,9 @@
          */
         .directive('filePreviewTable', filePreviewTable);
 
-        filePreviewTable.$inject = ['csvManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        filePreviewTable.$inject = ['delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function filePreviewTable(csvManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
+        function filePreviewTable(delimitedManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -70,7 +66,7 @@
                     ["transitionend","webkitTransitionEnd","mozTransitionEnd"].forEach(function(transitionEnd) {
                         elem[0].addEventListener(transitionEnd, () => {
                             if (ctrl.big) {
-                                ctrl.showNum = csvManagerService.filePreview.rows.length;
+                                ctrl.showNum = delimitedManagerService.filePreview.rows.length;
                                 scope.$digest();
                             }
                         });
@@ -78,7 +74,7 @@
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.cm = csvManagerService;
+                    dvm.dm = delimitedManagerService;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
@@ -93,14 +89,14 @@
                         }
                     }
                     dvm.getHighlightIdx = function() {
-                        return dvm.isClickable() ? dvm.cm.filePreview.headers.indexOf(dvm.state.selectedColumn) : -1;
+                        return dvm.isClickable() ? dvm.dm.filePreview.headers.indexOf(dvm.state.selectedColumn) : -1;
                     }
                     dvm.isClickable = function() {
                         return dvm.mm.isDataMapping(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId})) 
                             || (!!dvm.state.selectedProp && !dvm.om.isObjectProperty(_.get(dvm.state.selectedProp, '@type', [])));
                     }
                     dvm.clickColumn = function(index) {
-                        dvm.state.selectedColumn = dvm.cm.filePreview.headers[index];
+                        dvm.state.selectedColumn = dvm.dm.filePreview.headers[index];
                     }
                 },
                 templateUrl: 'modules/mapper/directives/filePreviewTable/filePreviewTable.html'
