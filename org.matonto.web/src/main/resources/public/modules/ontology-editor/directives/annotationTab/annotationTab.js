@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('annotationTab', ['stateManager', 'responseObj'])
+        .module('annotationTab', [])
         .directive('annotationTab', annotationTab);
 
         annotationTab.$inject = ['stateManagerService', 'responseObj'];

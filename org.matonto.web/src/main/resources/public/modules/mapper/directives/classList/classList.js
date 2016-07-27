@@ -27,18 +27,13 @@
         /**
          * @ngdoc overview
          * @name classList
-         * @requires  prefixes
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `classList` module only provides the `classList` directive which creates
          * a "boxed" area with a list of all the class and property mappings in the selected
          * mapping.
          */
-        .module('classList', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'delimitedManager'])
+        .module('classList', [])
         /**
          * @ngdoc directive
          * @name classList.directive:classList

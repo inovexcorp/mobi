@@ -27,15 +27,12 @@
         /**
          * @ngdoc overview
          * @name ontologySelectOverlay
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
          *
          * @description 
          * The `ontologySelectOverlay` module only provides the `ontologySelectOverlay` directive 
          * which creates an overlay with functionality to select an ontology.
          */
-        .module('ontologySelectOverlay', ['ontologyManager', 'mapperState', 'mappingManager'])
+        .module('ontologySelectOverlay', [])
         /**
          * @ngdoc directive
          * @name ontologySelectOverlay.directive:ontologySelectOverlay

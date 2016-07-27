@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('propertyEditor', ['stateManager', 'ontologyManager', 'prefixes'])
+        .module('propertyEditor', [])
         .directive('propertyEditor', propertyEditor);
 
         propertyEditor.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService', 'prefixes'];

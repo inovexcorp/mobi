@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('staticIri', ['stateManager'])
+        .module('staticIri', [])
         .directive('staticIri', staticIri);
 
         staticIri.$inject = ['$filter', 'REGEX', 'stateManagerService'];

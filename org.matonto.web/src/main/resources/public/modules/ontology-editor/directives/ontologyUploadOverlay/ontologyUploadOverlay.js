@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('ontologyUploadOverlay', ['ontologyManager', 'stateManager'])
+        .module('ontologyUploadOverlay', [])
         .directive('ontologyUploadOverlay', ontologyUploadOverlay);
 
         ontologyUploadOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];

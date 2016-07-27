@@ -33,7 +33,7 @@
          * a ui-select with the passed property list, a selected property, and an optional
          * function to be called when the selected property changes.
          */
-        .module('propSelect', ['ontologyManager'])
+        .module('propSelect', [])
         /**
          * @ngdoc directive
          * @name propSelect.directive:propSelect

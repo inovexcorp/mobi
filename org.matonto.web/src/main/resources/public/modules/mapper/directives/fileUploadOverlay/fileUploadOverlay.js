@@ -27,17 +27,12 @@
         /**
          * @ngdoc overview
          * @name fileUploadOverlay
-         * @requires  prefixes
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `fileUploadOverlay` module only provides the `fileUploadOverlay` directive which creates
          * an overlay with functionality to upload a delimited file to use for mapping.
          */
-        .module('fileUploadOverlay', ['prefixes', 'delimitedManager', 'mapperState', 'mappingManager', 'ontologyManager'])
+        .module('fileUploadOverlay', [])
         /**
          * @ngdoc directive
          * @name fileUploadOverlay.directive:fileUploadOverlay

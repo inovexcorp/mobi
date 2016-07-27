@@ -27,15 +27,12 @@
         /**
          * @ngdoc overview
          * @name mappingPreview
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
          *
          * @description 
          * The `mappingPreview` module only provides the `mappingPreview` directive which creates
          * a "boxed" area with a preview of a mapping and a button to select it.
          */
-        .module('mappingPreview', ['prefixes', 'mappingManager', 'mapperState', 'ontologyManager'])
+        .module('mappingPreview', [])
         /**
          * @ngdoc directive
          * @name mappingPreview.directive:mappingPreview

@@ -31,6 +31,7 @@ describe('Object Select directive', function() {
         mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
+        injectSplitIRIFilter();
         mockOntologyManager();
         mockSettingsManager();
         mockStateManager();
