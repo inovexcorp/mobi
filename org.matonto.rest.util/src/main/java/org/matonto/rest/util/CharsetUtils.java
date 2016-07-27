@@ -26,6 +26,8 @@ package org.matonto.rest.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -35,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 public class CharsetUtils {
+    private static final int DEFAULT_SAMPLE_SIZE = 4096;
     private static Charset[] supportedCharsets = new Charset[] {StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1};
     private static final Logger logger = LoggerFactory.getLogger(CharsetUtils.class);
 
@@ -56,5 +59,19 @@ public class CharsetUtils {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Determines the encoding for the supplied InputStream from the supported charsets.
+     * Samples the first 4096 bytes of the InputStream for analysis.
+     *
+     * @param inputStream The InputStream to determine the encoding of
+     * @return the supported charset the bytes are encoded with if there is one. Optional.empty() otherwise.
+     * @throws IOException if there is a problem reading the InputStream
+     */
+    public static Optional<Charset> getEncoding(InputStream inputStream) throws IOException {
+        byte[] buffer = new byte[DEFAULT_SAMPLE_SIZE];
+        inputStream.read(buffer);
+        return getEncoding(buffer);
     }
 }

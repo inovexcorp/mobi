@@ -33,7 +33,7 @@
          * a container for generating a preview of delimited data mapped into RDF, and 
          * the `formatRdf` directive used for formatting the mapped data preview string.
          */
-        .module('rdfPreview', ['csvManager', 'mappingManager'])
+        .module('rdfPreview', ['delimitedManager', 'mappingManager'])
         /**
          * @ngdoc directive
          * @name rdfPreview.directive:rdfPreview
@@ -61,7 +61,7 @@
         .directive('formatRdf', formatRdf);
 
         formatRdf.$inject = ['$filter'];
-        rdfPreview.$inject = ['$window', 'csvManagerService', 'mappingManagerService'];
+        rdfPreview.$inject = ['$window', 'delimitedManagerService', 'mappingManagerService'];
 
         function formatRdf($filter) {
             return {
@@ -78,7 +78,7 @@
                };
         }
 
-        function rdfPreview($window, csvManagerService, mappingManagerService) {
+        function rdfPreview($window, delimitedManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -86,10 +86,9 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.cm = csvManagerService;
+                    dvm.dm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.visible = false;
-                    dvm.preview = '';
                     dvm.options = [
                         {
                             name: 'JSON-LD',
@@ -105,8 +104,8 @@
                         }
                     ];
                     dvm.generatePreview = function() {
-                        dvm.cm.previewMap(dvm.mm.mapping.jsonld, dvm.serializeOption).then(preview => {
-                            dvm.preview = preview;
+                        dvm.dm.previewMap(dvm.mm.mapping.jsonld, dvm.serializeOption).then(preview => {
+                            dvm.dm.preview = preview;
                         }, errorMessage => {
                             console.log(errorMessage);
                         });

@@ -29,13 +29,13 @@ describe('Mapper State service', function() {
         mockPrefixes();
         mockMappingManager();
         mockOntologyManager();
-        mockCsvManager();
+        mockDelimitedManager();
 
-        inject(function(mapperStateService, _ontologyManagerService_, _mappingManagerService_, _csvManagerService_) {
+        inject(function(mapperStateService, _ontologyManagerService_, _mappingManagerService_, _delimitedManagerService_) {
             mapperStateSvc = mapperStateService;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
         });
 
         mappingManagerSvc.mapping = {jsonld: [], name: 'mapping'};
@@ -100,17 +100,17 @@ describe('Mapper State service', function() {
     it('should return a list of all the mapped column headers', function() {
         var dataMappings = [{'columnIndex': [{'@value': '0'}], index: 0}];
         mappingManagerSvc.getAllDataMappings.and.returnValue(dataMappings);
-        csvManagerSvc.filePreview = {headers: ['test']};
+        delimitedManagerSvc.filePreview = {headers: ['test']};
         var results = mapperStateSvc.getMappedColumns();
         expect(_.isArray(results)).toBe(true);
         expect(results.length).toBe(dataMappings.length);
         _.forEach(results, function(result, idx) {
-            expect(result).toBe(csvManagerSvc.filePreview.headers[dataMappings[idx].index]);
+            expect(result).toBe(delimitedManagerSvc.filePreview.headers[dataMappings[idx].index]);
         });
     });
     it('should update availableColumns depending on whether a property mapping has been selected', function() {
         spyOn(mapperStateSvc, 'getMappedColumns').and.returnValue(['test1'])
-        csvManagerSvc.filePreview = {headers: ['test1', 'test2']};
+        delimitedManagerSvc.filePreview = {headers: ['test1', 'test2']};
         mapperStateSvc.updateAvailableColumns();
         expect(mapperStateSvc.availableColumns).not.toContain('test1');
         expect(mapperStateSvc.availableColumns).toContain('test2');

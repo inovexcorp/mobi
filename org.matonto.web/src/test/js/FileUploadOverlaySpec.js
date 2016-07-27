@@ -25,7 +25,7 @@ describe('File Upload Overlay directive', function() {
         scope,
         mappingManagerSvc,
         mapperStateSvc,
-        csvManagerSvc,
+        delimitedManagerSvc,
         ontologyManagerSvc;
 
     beforeEach(function() {
@@ -34,13 +34,13 @@ describe('File Upload Overlay directive', function() {
         mockPrefixes();
         mockMappingManager();
         mockMapperState();
-        mockCsvManager();
+        mockDelimitedManager();
         mockOntologyManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _csvManagerService_, _ontologyManagerService_) {
+        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_) {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
@@ -53,7 +53,7 @@ describe('File Upload Overlay directive', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            csvManagerSvc.fileObj = {};
+            delimitedManagerSvc.fileObj = {};
             this.element = $compile(angular.element('<file-upload-overlay></file-upload-overlay>'))(scope);
             scope.$digest();
         });
@@ -62,12 +62,12 @@ describe('File Upload Overlay directive', function() {
             var result = controller.isExcel();
             expect(result).toBe(false);
 
-            csvManagerSvc.fileObj = {name: 'test.xls'};
+            delimitedManagerSvc.fileObj = {name: 'test.xls'};
             scope.$digest();
             result = controller.isExcel();
             expect(result).toBe(true);
 
-            csvManagerSvc.fileObj = {name: 'test.xlsx'};
+            delimitedManagerSvc.fileObj = {name: 'test.xlsx'};
             scope.$digest();
             result = controller.isExcel();
             expect(result).toBe(true);
@@ -91,25 +91,25 @@ describe('File Upload Overlay directive', function() {
             mapperStateSvc.newMapping = false;
             controller.upload();
             scope.$apply();
-            expect(csvManagerSvc.upload).toHaveBeenCalledWith(csvManagerSvc.fileObj);
-            expect(csvManagerSvc.fileName).not.toBe('');
-            expect(csvManagerSvc.previewFile).toHaveBeenCalledWith(100);
+            expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(delimitedManagerSvc.fileObj);
+            expect(delimitedManagerSvc.fileName).not.toBe('');
+            expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(100);
             expect(mapperStateSvc.invalidProps).not.toBe(invalidProps);
 
             invalidProps = mapperStateSvc.invalidProps;
             mapperStateSvc.newMapping = true;
             controller.upload();
             scope.$apply();
-            expect(csvManagerSvc.upload).toHaveBeenCalledWith(csvManagerSvc.fileObj);
-            expect(csvManagerSvc.fileName).not.toBe('');
-            expect(csvManagerSvc.previewFile).toHaveBeenCalledWith(100);
+            expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(delimitedManagerSvc.fileObj);
+            expect(delimitedManagerSvc.fileName).not.toBe('');
+            expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(100);
             expect(mapperStateSvc.invalidProps).toBe(invalidProps);
         });
         it('should set the correct state for canceling', function() {
             var controller = this.element.controller('fileUploadOverlay');
             mapperStateSvc.newMapping = true;
             controller.cancel();
-            expect(csvManagerSvc.reset).toHaveBeenCalled();
+            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
             expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(0);
             expect(mapperStateSvc.editMappingName).toBe(true);
@@ -118,7 +118,7 @@ describe('File Upload Overlay directive', function() {
             mapperStateSvc.editMappingName = false;
             mapperStateSvc.step = 1;
             controller.cancel();
-            expect(csvManagerSvc.reset).toHaveBeenCalled();
+            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(1);
             expect(mapperStateSvc.editMappingName).toBe(false);
@@ -155,7 +155,7 @@ describe('File Upload Overlay directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            csvManagerSvc.fileObj = {};
+            delimitedManagerSvc.fileObj = {};
             this.element = $compile(angular.element('<file-upload-overlay></file-upload-overlay>'))(scope);
             scope.$digest();
         });
@@ -167,11 +167,11 @@ describe('File Upload Overlay directive', function() {
             expect(this.element.find('file-input').length).toBe(1);
         });
         it('depending on the type of file', function() {
-            csvManagerSvc.fileObj = {name: 'test.csv'};
+            delimitedManagerSvc.fileObj = {name: 'test.csv'};
             scope.$digest();
             expect(this.element.find('radio-button').length).toBe(3);
 
-            csvManagerSvc.fileObj = {name: 'test.xls'};
+            delimitedManagerSvc.fileObj = {name: 'test.xls'};
             scope.$digest();
             expect(this.element.find('radio-button').length).toBe(0);
         });

@@ -26,21 +26,21 @@ describe('File Preview Table directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        csvManagerSvc;
+        delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('filePreviewTable');
-        mockCsvManager();
+        mockDelimitedManager();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _csvManagerService_) {
+        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            csvManagerSvc = _csvManagerService_;
+            delimitedManagerSvc = _delimitedManagerService_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -54,7 +54,7 @@ describe('File Preview Table directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [{'@id': ''}]
             };
-            csvManagerSvc.filePreview = {
+            delimitedManagerSvc.filePreview = {
                 headers: [''],
                 rows: [[''], [''], [''], [''], ['']]
             };
@@ -115,7 +115,7 @@ describe('File Preview Table directive', function() {
         it('should set the correct state for clicking a column', function() {
             var controller = this.element.controller('filePreviewTable');
             controller.clickColumn(0);
-            expect(mapperStateSvc.selectedColumn).toBe(csvManagerSvc.filePreview.headers[0]);
+            expect(mapperStateSvc.selectedColumn).toBe(delimitedManagerSvc.filePreview.headers[0]);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -123,7 +123,7 @@ describe('File Preview Table directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [{'@id': ''}]
             };
-            csvManagerSvc.filePreview = {
+            delimitedManagerSvc.filePreview = {
                 headers: [''],
                 rows: [[''], [''], [''], [''], ['']]
             };
@@ -149,12 +149,12 @@ describe('File Preview Table directive', function() {
         });
         it('with the correct number of rows depending on the number to show', function() {
             var controller = this.element.controller('filePreviewTable');
-            csvManagerSvc.filePreview.rows = [[''], [''], [''], [''], [''], ['']];
+            delimitedManagerSvc.filePreview.rows = [[''], [''], [''], [''], [''], ['']];
             expect(this.element.querySelectorAll('tbody tr:not(.hidden)').length).toBe(5);
 
-            controller.showNum = csvManagerSvc.filePreview.rows.length;
+            controller.showNum = delimitedManagerSvc.filePreview.rows.length;
             scope.$digest();
-            expect(this.element.querySelectorAll('tbody tr:not(.hidden)').length).toBe(csvManagerSvc.filePreview.rows.length);
+            expect(this.element.querySelectorAll('tbody tr:not(.hidden)').length).toBe(delimitedManagerSvc.filePreview.rows.length);
         });
         it('with the correct classes if clickable', function() {
             var controller = this.element.controller('filePreviewTable');
@@ -178,10 +178,10 @@ describe('File Preview Table directive', function() {
             }
         });
         it('with the correct table data', function() {
-            expect(this.element.find('th').length).toBe(csvManagerSvc.filePreview.headers.length);
+            expect(this.element.find('th').length).toBe(delimitedManagerSvc.filePreview.headers.length);
             var rows = this.element.querySelectorAll('tbody tr');
-            expect(rows.length).toBe(csvManagerSvc.filePreview.rows.length);
-            expect(rows[0].querySelectorAll('td').length).toBe(csvManagerSvc.filePreview.rows[0].length);
+            expect(rows.length).toBe(delimitedManagerSvc.filePreview.rows.length);
+            expect(rows[0].querySelectorAll('td').length).toBe(delimitedManagerSvc.filePreview.rows[0].length);
         });
         it('with the correct column highlighted', function() {
             var controller = this.element.controller('filePreviewTable');
@@ -208,7 +208,7 @@ describe('File Preview Table directive', function() {
         mappingManagerSvc.mapping = {
             jsonld: [{'@id': ''}]
         };
-        csvManagerSvc.filePreview = {
+        delimitedManagerSvc.filePreview = {
             headers: [''],
             rows: [[''], [''], [''], [''], ['']]
         };
@@ -225,7 +225,7 @@ describe('File Preview Table directive', function() {
         mappingManagerSvc.mapping = {
             jsonld: [{'@id': ''}]
         };
-        csvManagerSvc.filePreview = {
+        delimitedManagerSvc.filePreview = {
             headers: [''],
             rows: [[''], [''], [''], [''], ['']]
         };
@@ -256,7 +256,7 @@ describe('File Preview Table directive', function() {
         mappingManagerSvc.mapping = {
             jsonld: [{'@id': ''}]
         };
-        csvManagerSvc.filePreview = {
+        delimitedManagerSvc.filePreview = {
             headers: [''],
             rows: [[''], [''], [''], [''], ['']]
         };
@@ -287,7 +287,7 @@ describe('File Preview Table directive', function() {
         mappingManagerSvc.mapping = {
             jsonld: [{'@id': ''}]
         };
-        csvManagerSvc.filePreview = {
+        delimitedManagerSvc.filePreview = {
             headers: [''],
             rows: [[''], [''], [''], [''], ['']]
         };
