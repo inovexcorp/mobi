@@ -23,7 +23,10 @@
 describe('Object Select directive', function() {
     var $compile,
         scope,
-        element;
+        element,
+        prefixes,
+        stateManagerSvc,
+        responseObj;
 
     beforeEach(function() {
         module('templates');
@@ -31,16 +34,18 @@ describe('Object Select directive', function() {
         mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
+        injectSplitIRIFilter();
         mockOntologyManager();
         mockSettingsManager();
         mockStateManager();
         mockResponseObj();
 
-        inject(function(_ontologyManagerService_, _settingsManagerService_, _responseObj_, _stateManagerService_) {
+        inject(function(_ontologyManagerService_, _settingsManagerService_, _responseObj_, _stateManagerService_, _prefixes_) {
             ontologyManagerService = _ontologyManagerService_;
             settingsManagerService = _settingsManagerService_;
             responseObj = _responseObj_;
             stateManagerSvc = _stateManagerService_;
+            prefixes = _prefixes_;
         });
 
         inject(function(_$compile_, _$rootScope_) {
@@ -163,64 +168,76 @@ describe('Object Select directive', function() {
                 beforeEach(function() {
                     controller.tooltipDisplay = 'comment';
                 });
-                it('should return rdfs:comment before dc:description', function() {
-                    var selectedObject = {
-                        'comment': [
-                            {'@value': 'comment'}
-                        ],
-                        'description': [
-                            {'@value': 'description'}
-                        ]
-                    }
+                it('should return rdfs:comment before dcterms:description and dc:description', function() {
+                    var selectedObject = {'@id': 'id'};
+                    selectedObject[prefixes.rdfs + 'comment'] = [{'@value': 'comment'}];
+                    selectedObject[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+                    selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
+
                     ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe('comment');
+                    expect(result).toBe(selectedObject[prefixes.rdfs + 'comment'][0]['@value']);
                 });
-                it('should return dc:description if no rdfs:comment', function() {
-                    var selectedObject = {
-                        'description': [
-                            {'@value': 'description'}
-                        ]
-                    }
+                it('should return dcterms:description before dc:description if no rdfs:comment', function() {
+                    var selectedObject = {'@id': 'id'};
+                    selectedObject[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+                    selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
+
                     ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe('description');
+                    expect(result).toBe(selectedObject[prefixes.dcterms + 'description'][0]['@value']);
                 });
-                it('should return test if no dc:description or rdfs:comment', function() {
+                it('should return dc:description if no rdfs:comment or dcterms:description', function() {
+                    var selectedObject = {'@id': 'id'};
+                    selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
+
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe('test');
+                    expect(result).toBe(selectedObject[prefixes.dc + 'description'][0]['@value']);
+                });
+                it('should return controller.getItemIri if no dc:description or dcterms:description or rdfs:comment', function() {
+                    controller.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('iri');
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue({});
+                    var result = controller.getTooltipDisplay();
+                    expect(result).toBe('iri');
                 });
             });
             describe('for label', function() {
                 beforeEach(function() {
                     controller.tooltipDisplay = 'label';
                 });
-                it('should return rdfs:label before dc:title', function() {
-                    var selectedObject = {
-                        'label': [
-                            {'@value': 'label'}
-                        ],
-                        'title': [
-                            {'@value': 'title'}
-                        ]
-                    }
+                it('should return rdfs:label before dcterms:title or dc:title', function() {
+                    var selectedObject = {'@id': 'id'};
+                    selectedObject[prefixes.rdfs + 'label'] = [{'@value': 'label'}];
+                    selectedObject[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
+                    selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
+
                     ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe('label');
+                    expect(result).toBe(selectedObject[prefixes.rdfs + 'label'][0]['@value']);
                 });
-                it('should return dc:title if no rdfs:label', function() {
-                    var selectedObject = {
-                        'title': [
-                            {'@value': 'title'}
-                        ]
-                    }
+                it('should return dcterms:title before dc:title if no rdfs:label', function() {
+                    var selectedObject = {'@id': 'id'};
+                    selectedObject[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
+                    selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
+
                     ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe('title');
+                    expect(result).toBe(selectedObject[prefixes.dcterms + 'title'][0]['@value']);
                 });
-                it('should return test if no dc:description or rdfs:comment', function() {
+                it('should return dc:title if no rdfs:label or dcterms:title', function() {
+                    var selectedObject = {'@id': 'id'};
+                    selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
+
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe('test');
+                    expect(result).toBe(selectedObject[prefixes.dc + 'title'][0]['@value']);
+                });
+                it('should return controller.getItemIri if no dc:title or dcterms:title or rdfs:label', function() {
+                    controller.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('iri');
+                    ontologyManagerService.getObjectCopyByIri.and.returnValue({});
+                    var result = controller.getTooltipDisplay();
+                    expect(result).toBe('iri');
                 });
             });
         });

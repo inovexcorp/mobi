@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('propertyTree', ['ontologyManager', 'stateManager', 'prefixes'])
+        .module('propertyTree', [])
         .directive('propertyTree', propertyTree);
 
         propertyTree.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixes'];

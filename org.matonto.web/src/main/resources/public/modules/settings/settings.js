@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('settings', ['settingsManager', 'customSetting', 'settingsContainer'])
+        .module('settings', ['customSetting', 'settingsContainer'])
         .controller('SettingsController', SettingsController);
 
     SettingsController.$inject = ['settingsManagerService', 'prefixes'];

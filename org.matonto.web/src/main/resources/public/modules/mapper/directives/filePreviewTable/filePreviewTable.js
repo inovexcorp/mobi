@@ -27,16 +27,12 @@
         /**
          * @ngdoc overview
          * @name filePreviewTable
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `filePreviewTable` module only provides the `filePreviewTable` directive which creates
          * an expandable preview of an uploaded delimited file.
          */
-        .module('filePreviewTable', ['delimitedManager', 'mapperState', 'mappingManager', 'ontologyManager'])
+        .module('filePreviewTable', [])
         /**
          * @ngdoc directive
          * @name filePreviewTable.directive:filePreviewTable

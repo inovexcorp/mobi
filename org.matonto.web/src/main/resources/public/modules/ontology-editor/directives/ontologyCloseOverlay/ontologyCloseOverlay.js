@@ -24,16 +24,16 @@
     'use strict';
 
     angular
-        .module('ontologyUploadOverlay', [])
-        .directive('ontologyUploadOverlay', ontologyUploadOverlay);
+        .module('ontologyCloseOverlay', ['ontologyManager', 'stateManager'])
+        .directive('ontologyCloseOverlay', ontologyCloseOverlay);
 
-        ontologyUploadOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];
+        ontologyCloseOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];
 
-        function ontologyUploadOverlay(ontologyManagerService, stateManagerService) {
+        function ontologyCloseOverlay(ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/ontologyUploadOverlay/ontologyUploadOverlay.html',
+                templateUrl: 'modules/ontology-editor/directives/ontologyCloseOverlay/ontologyCloseOverlay.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
@@ -42,16 +42,19 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
 
-                    dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file)
-                            .then(function(response) {
-                                dvm.sm.setTreeTab('everything');
-                                dvm.sm.setEditorTab('basic');
-                                dvm.sm.selectItem('ontology-editor', dvm.om.getList().length - 1);
-                                dvm.sm.showUploadOverlay = false;
-                            }, function(response) {
-                                dvm.error = response.statusText;
+                    dvm.saveThenClose = function() {
+                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.state)
+                            .then(function(state) {
+                                dvm.close();
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
                             });
+                    }
+
+                    dvm.close = function() {
+                        dvm.om.closeOntology(dvm.sm.state.oi, dvm.sm.ontology.matonto.id);
+                        dvm.sm.clearState(dvm.sm.state.oi);
+                        dvm.sm.showCloseOverlay = false;
                     }
                 }
             }

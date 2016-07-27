@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('createPropertyOverlay', ['ontologyManager', 'stateManager'])
+        .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
         createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService'];

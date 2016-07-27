@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('ontologyDownloadOverlay', ['stateManager', 'ontologyManager'])
+        .module('ontologyDownloadOverlay', [])
         .directive('ontologyDownloadOverlay', ontologyDownloadOverlay);
 
         ontologyDownloadOverlay.$inject = ['REGEX', 'stateManagerService', 'ontologyManagerService'];

@@ -70,11 +70,11 @@ describe('Ontology Overlays directive', function() {
         });
         it('based on confirmation-overlays', function() {
             var confirmations = element.find('confirmation-overlay');
-            expect(confirmations.length).toBe(4);
+            expect(confirmations.length).toBe(3);
         });
         _.forEach(['ontology-upload-overlay', 'annotation-overlay', 'ontology-download-overlay',
         'ontology-open-overlay', 'create-annotation-overlay', 'create-class-overlay',
-        'create-property-overlay'], function(item) {
+        'create-property-overlay', 'ontology-close-overlay'], function(item) {
             it('based on ' + item, function() {
                 var items = element.find(item);
                 expect(items.length).toBe(1);
@@ -134,12 +134,6 @@ describe('Ontology Overlays directive', function() {
                 expect(stateManagerSvc.showSaveOverlay).toBe(false);
                 expect(stateManagerSvc.state).toEqual({});
             });
-        });
-        it('closeOntology calls the correct manager functions and sets the correct manager variable', function() {
-            controller.closeOntology();
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.oi, stateManagerSvc.ontology.matonto.id);
-            expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.oi);
-            expect(stateManagerSvc.showCloseOverlay).toBe(false);
         });
         it('removeAnnotation calls the correct manager functions and sets the correct manager variable', function() {
             controller.removeAnnotation();

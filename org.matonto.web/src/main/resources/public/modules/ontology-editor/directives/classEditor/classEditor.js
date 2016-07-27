@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('classEditor', ['stateManager', 'ontologyManager', 'prefixes'])
+        .module('classEditor', [])
         .directive('classEditor', classEditor);
 
         classEditor.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
