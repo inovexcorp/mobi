@@ -49,7 +49,7 @@
                         if(dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length) {
                             dvm.sm.showCloseOverlay = true;
                         } else {
-                            dvm.om.closeOntology(dvm.sm.state.oi, dvm.sm.ontology.matonto.id);
+                            dvm.om.closeOntology(dvm.sm.state.oi, _.get(dvm.sm.ontology, 'matonto.id'));
                             dvm.sm.clearState(dvm.sm.state.oi);
                         }
                     }
