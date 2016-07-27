@@ -22,6 +22,7 @@ package org.matonto.etl.cli;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import org.apache.commons.io.FilenameUtils;
 
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
@@ -30,12 +31,19 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.log4j.Logger;
-import org.matonto.etl.api.csv.CSVConverter;
+import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.rdf.api.Model;
+import org.matonto.rdf.core.utils.Values;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.util.Optional;
 
 @Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
@@ -50,20 +58,28 @@ public class CLITransform implements Action {
     String mappingFileLocation = null;
 
     @Option(name = "-o", aliases = "--outputFile",
-            description = "The output file to use. (Required if no repository given")
+            description = "The output file to use. (Required if no repository given)")
     String outputFile = null;
 
     @Option(name = "-r", aliases = "--repositoryID",
             description = "The repository to store the resulting triples. (Required if no output file given)")
     String repositoryID = null;
 
+    @Option(name = "-h", aliases = "--headers",
+            description = "Whether or not the file contains headers.")
+    boolean containsHeaders = false;
+
+    @Option(name = "-s", aliases = "--separator",
+            description = "The separator character for the delimited file if it is an SV.")
+    String separator = ",";
+
     private static final Logger LOGGER = Logger.getLogger(CLITransform.class);
 
     @Reference
-    private CSVConverter csvConverter;
+    private DelimitedConverter converter;
 
-    public void setCSVConverter(CSVConverter csvConverter) {
-        this.csvConverter = csvConverter;
+    public void setDelimitedConverter(DelimitedConverter delimitedConverter) {
+        this.converter = delimitedConverter;
     }
 
     @Reference
@@ -98,7 +114,22 @@ public class CLITransform implements Action {
         }
 
         try {
-            Model model = csvConverter.convert(newFile, mappingFile, true, (char) ',');
+            String extension = FilenameUtils.getExtension(newFile.getName());
+            Optional<RDFFormat> format = Rio.getParserFormatForFileName(mappingFile.getName());
+            if (!format.isPresent()) {
+                throw new Exception("Mapping file is not in a correct RDF format.");
+            }
+            Model mapping = Values.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
+            Model model;
+            if (extension.equals("xls") || extension.equals("xlsx")) {
+                ExcelConfig config = new ExcelConfig.Builder(new FileInputStream(newFile), mapping)
+                        .containsHeaders(containsHeaders).build();
+                model = converter.convert(config);
+            } else {
+                SVConfig config = new SVConfig.Builder(new FileInputStream(newFile), mapping)
+                        .containsHeaders(containsHeaders).separator(separator.charAt(0)).build();
+                model = converter.convert(config);
+            }
 
             if (repositoryID != null) {
                 rdfImportService.importModel(repositoryID, model);
