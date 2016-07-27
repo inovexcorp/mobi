@@ -38,14 +38,14 @@ public enum Delimited {
     MAPPING("http://matonto.org/ontologies/delimited/Mapping"),
     VERSION("http://matonto.org/ontologies/delimited/versionIRI"),
     SOURCE_ONTOLOGY("http://matonto.org/ontologies/delimited/sourceOntology");
-    private final String s;
+    private final String str;
 
-    Delimited(String s) {
-        this.s = s;
+    Delimited(String str) {
+        this.str = str;
     }
 
-    public String stringValue(){
-        return s;
+    public String stringValue() {
+        return str;
     }
 
 }

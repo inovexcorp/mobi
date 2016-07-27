@@ -27,10 +27,10 @@ describe('Mapping Manager service', function() {
         uuidSvc,
         windowSvc;
 
-    mockPrefixes();
-    injectSplitIRIFilter();
     beforeEach(function() {
         module('mappingManager');
+        mockPrefixes();
+        injectSplitIRIFilter();
         mockOntologyManager();
 
         module(function($provide) {
@@ -153,8 +153,8 @@ describe('Mapping Manager service', function() {
         });
     });
     it('should download a mapping by name', function() {
-        mappingManagerSvc.downloadMapping('mapping');
-        expect(windowSvc.location).toBe('/matontorest/mappings/mapping');
+        mappingManagerSvc.downloadMapping('mapping', 'jsonld');
+        expect(windowSvc.location).toBe('/matontorest/mappings/mapping?format=jsonld');
     });
     describe('should delete a mapping by name', function() {
         beforeEach(function() {
@@ -403,10 +403,10 @@ describe('Mapping Manager service', function() {
         expect(result).toBe('ontology');
     });
     it('should get the source ontology of a mapping', function() {
-        mappingManagerSvc.sourceOntologies = [{'@id': 'ontology'}]
+        mappingManagerSvc.sourceOntologies = [{matonto: {id: 'ontology'}}]
         spyOn(mappingManagerSvc, 'getSourceOntologyId').and.returnValue('ontology')
         var result = mappingManagerSvc.getSourceOntology([]);
-        expect(result).toEqual({'@id': 'ontology'});
+        expect(result).toEqual({matonto: {id: 'ontology'}});
     });
     describe('should get a data mapping from a class mapping', function() {
         it('unless it does not exist', function() {

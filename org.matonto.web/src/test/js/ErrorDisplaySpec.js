@@ -47,11 +47,11 @@ describe('Error Display directive', function() {
             expect(element.hasClass('error-msg')).toBe(true);
         });
         it('based on i', function() {
-            var items = element.querySelectorAll('i');
+            var items = element.find('i');
             expect(items.length).toBe(1);
         });
         it('based on h6', function() {
-            var items = element.querySelectorAll('span');
+            var items = element.find('span');
             expect(items.length).toBe(1);
         });
     });

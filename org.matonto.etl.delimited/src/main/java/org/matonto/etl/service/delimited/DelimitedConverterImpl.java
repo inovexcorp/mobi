@@ -29,9 +29,8 @@ import com.opencsv.CSVReader;
 import org.apache.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.util.IOUtils;
-import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Models;
@@ -63,30 +62,15 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
     @Override
     public Model convert(SVConfig config) throws IOException, MatOntoException {
-        return convertSV(config.getData(), config.getMapping(), config.getContainsHeaders(),
-                config.getSeparator(), config.getLimit(), config.getOffset());
-    }
-
-    @Override
-    public Model convert(ExcelConfig config) throws IOException, MatOntoException {
-        return convertExcel(config.getData(), config.getMapping(), config.getContainsHeaders(), config.getLimit(),
-                config.getOffset());
-    }
-
-    private Model convertSV(InputStream sv, Model mappingModel, boolean containsHeaders, char separator,
-                            Optional<Long> limit, long offset) throws IOException, MatOntoException {
-        ByteArrayOutputStream out = toByteArrayOutputStream(sv);
-        Optional<Charset> charsetOpt = CharsetUtils.getEncoding(IOUtils.toByteArray(
-                new ByteArrayInputStream(out.toByteArray())));
-        if (!charsetOpt.isPresent()) {
-            throw new MatOntoException("Unsupported character set");
-        }
-        CSVReader reader = new CSVReader(new InputStreamReader(
-                new ByteArrayInputStream(out.toByteArray()), charsetOpt.get()), separator);
-        String[] nextLine;
+        byte[] data = toByteArrayOutputStream(config.getData()).toByteArray();
+        Charset charset = CharsetUtils.getEncoding(new ByteArrayInputStream(data)).orElseThrow(() ->
+                new MatOntoException("Unsupported character set"));
+        CSVReader reader = new CSVReader(new InputStreamReader(new ByteArrayInputStream(data), charset),
+                config.getSeparator());
         Model convertedRDF = modelFactory.createModel();
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
-        long index = offset;
+        ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
+        long offset = config.getOffset();
+        boolean containsHeaders = config.getContainsHeaders();
 
         // If headers exist, skip them
         if (containsHeaders) {
@@ -95,10 +79,14 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         // Skip to offset point
         while (reader.getLinesRead() - (containsHeaders ? 1 : 0) < offset) {
+            System.out.println(reader.getLinesRead() - (containsHeaders ? 1 : 0));
             reader.readNext();
         }
 
         //Traverse each row and convert column into RDF
+        String[] nextLine;
+        long index = config.getOffset();
+        Optional<Long> limit = config.getLimit();
         while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
             writeClassMappingsToModel(convertedRDF, nextLine, classMappings);
             index++;
@@ -106,16 +94,19 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         return convertedRDF;
     }
 
-    private Model convertExcel(InputStream excel, Model mappingModel, boolean containsHeaders, Optional<Long> limit,
-                               long offset) throws IOException, MatOntoException {
+    @Override
+    public Model convert(ExcelConfig config) throws IOException, MatOntoException {
         String[] nextRow;
         Model convertedRDF = modelFactory.createModel();
-        ArrayList<ClassMapping> classMappings = parseClassMappings(mappingModel);
+        ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
 
         try {
-            Workbook wb = WorkbookFactory.create(excel);
+            Workbook wb = WorkbookFactory.create(config.getData());
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
+            boolean containsHeaders = config.getContainsHeaders();
+            long offset = config.getOffset();
+            Optional<Long> limit = config.getLimit();
 
             //Traverse each row and convert column into RDF
             for (Row row : sheet) {
@@ -371,7 +362,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     private ByteArrayOutputStream toByteArrayOutputStream(InputStream in) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
-        int read = 0;
+        int read;
         while ((read = in.read(buffer, 0, buffer.length)) != -1) {
             baos.write(buffer, 0, read);
             baos.flush();

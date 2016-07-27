@@ -72,7 +72,7 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     dvm.update = function() {
                         if (!dvm.isObjectProperty()) {
@@ -92,7 +92,7 @@
                             dvm.mm.mapping.jsonld = dvm.mm.addObjectProp(dvm.mm.mapping.jsonld, dvm.mm.sourceOntologies, 
                                 dvm.state.selectedClassMappingId, dvm.state.selectedProp['@id']);
                         } else {
-                            var columnIdx = dvm.cm.filePreview.headers.indexOf(dvm.state.selectedColumn);
+                            var columnIdx = dvm.dm.filePreview.headers.indexOf(dvm.state.selectedColumn);
                             var propId = dvm.state.selectedProp['@id'];
                             var classId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId)
                             var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);

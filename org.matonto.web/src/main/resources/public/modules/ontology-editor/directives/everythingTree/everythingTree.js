@@ -24,14 +24,25 @@
     'use strict';
 
     angular
-        .module('everythingTree', [])
+        .module('everythingTree', ['ontologyManager', 'stateManager'])
         .directive('everythingTree', everythingTree);
 
-        function everythingTree() {
+        everythingTree.$inject = ['ontologyManagerService', 'stateManagerService'];
+
+        function everythingTree(ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/everythingTree/everythingTree.html'
+                templateUrl: 'modules/ontology-editor/directives/everythingTree/everythingTree.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
+                    dvm.ontologies = dvm.om.getList();
+                }
             }
         }
 })();

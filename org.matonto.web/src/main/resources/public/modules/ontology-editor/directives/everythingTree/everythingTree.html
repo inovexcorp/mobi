@@ -24,22 +24,22 @@
     <!-- tree view -->
     <strong>Everything</strong>
     <!-- start ontologies -->
-    <ul ng-repeat="(oi, ontology) in vm.ontologies" ng-init="opened = (vm.state.oi === oi && (vm.state.ci !== undefined || vm.state.pi !== undefined))">
+    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.sm.state.oi === oi && (dvm.sm.state.ci !== undefined || dvm.sm.state.pi !== undefined))">
         <tree-item current-entity="ontology"
                    current-ontology="ontology"
-                   is-active="vm.state.oi === $index && vm.state.ci === undefined && vm.state.pi === undefined"
+                   is-active="dvm.sm.state.oi === $index && dvm.sm.state.ci === undefined && dvm.sm.state.pi === undefined"
                    is-opened="opened"
-                   on-click="vm.selectItem('ontology-editor', $index)"
+                   on-click="dvm.sm.selectItem('ontology-editor', $index)"
                    has-children="!!ontology.matonto.classes.length || !!ontology.matonto.noDomains.length"></tree-item>
 
         <li class="container" ng-show="opened">
             <!-- start classes -->
-            <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (vm.state.ci === ci && vm.state.pi !== undefined)">
+            <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (dvm.sm.state.ci === ci && dvm.sm.state.pi !== undefined)">
                 <tree-item current-entity="class"
                            current-ontology="ontology"
-                           is-active="vm.state.oi === oi && vm.state.ci === $index && vm.state.pi === undefined"
+                           is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === $index && dvm.sm.state.pi === undefined"
                            is-opened="subOpened"
-                           on-click="vm.selectItem('class-editor', oi, $index)"
+                           on-click="dvm.sm.selectItem('class-editor', oi, $index)"
                            has-children="class.matonto.properties.length"></tree-item>
 
                 <li class="container" ng-show="subOpened">
@@ -48,14 +48,14 @@
                         <tree-item ng-repeat="property in class.matonto.properties"
                                    current-entity="property"
                                    current-ontology="ontology"
-                                   is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
-                                   on-click="vm.selectItem('property-editor', oi, ci, $index)"></tree-item>
+                                   is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === ci && dvm.sm.state.pi === $index"
+                                   on-click="dvm.sm.selectItem('property-editor', oi, ci, $index)"></tree-item>
                     </ul>
                 </li>
             </ul>
 
             <!-- start no domains (these will be handled differently later) -->
-            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = (vm.state.ci === undefined && vm.state.pi !== undefined)">
+            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = (dvm.sm.state.ci === undefined && dvm.sm.state.pi !== undefined)">
                 <li>
                     <a ng-click="opened = !opened; $event.stopPropagation();">
                         <i class="fa fa-fw"
@@ -68,8 +68,8 @@
                         <tree-item ng-repeat="property in ontology.matonto.noDomains"
                                    current-entity="property"
                                    current-ontology="ontology"
-                                   is-active="vm.state.oi === oi && vm.state.ci === ci && vm.state.pi === $index"
-                                   on-click="vm.selectItem('property-editor', oi, undefined, $index)"></tree-item>
+                                   is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === ci && dvm.sm.state.pi === $index"
+                                   on-click="dvm.sm.selectItem('property-editor', oi, undefined, $index)"></tree-item>
                     </ul>
                 </li>
             </ul>

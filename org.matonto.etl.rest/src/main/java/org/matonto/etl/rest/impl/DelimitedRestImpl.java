@@ -144,11 +144,8 @@ public class DelimitedRestImpl implements DelimitedRest {
             throw ErrorUtils.sendError("Must provide a JSON-LD string", Response.Status.BAD_REQUEST);
         }
 
-        Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        if (!optDelimitedFile.isPresent()) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
-        }
-        File delimitedFile = optDelimitedFile.get();
+        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
+                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
         // Parse JSON-LD mapping into a model
@@ -161,12 +158,20 @@ public class DelimitedRestImpl implements DelimitedRest {
         }
 
         String result;
+        InputStream data = getDocumentInputStream(delimitedFile);
         if (extension.equals("xls") || extension.equals("xlsx")) {
-            result = etlFile(createExcelConfig(delimitedFile, mappingModel, containsHeaders, NUM_LINE_PREVIEW),
-                    format);
+            ExcelConfig config = new ExcelConfig.Builder(data, Values.matontoModel(mappingModel))
+                    .containsHeaders(containsHeaders)
+                    .limit(NUM_LINE_PREVIEW)
+                    .build();
+            result = etlFile(format, () -> converter.convert(config));
         } else {
-            result = etlFile(createSVConfig(delimitedFile, mappingModel, containsHeaders, separator,
-                    NUM_LINE_PREVIEW), format);
+            SVConfig config = new SVConfig.Builder(data, Values.matontoModel(mappingModel))
+                    .containsHeaders(containsHeaders)
+                    .separator(separator.charAt(0))
+                    .limit(NUM_LINE_PREVIEW)
+                    .build();
+            result = etlFile(format, () -> converter.convert(config));
         }
 
         // Write data back to Response
@@ -181,11 +186,8 @@ public class DelimitedRestImpl implements DelimitedRest {
             throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
         }
 
-        Optional<File> optDelimitedFile = getUploadedFile(fileName);
-        if (!optDelimitedFile.isPresent()) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
-        }
-        File delimitedFile = optDelimitedFile.get();
+        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
+                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
         // Collect uploaded mapping model
@@ -200,10 +202,18 @@ public class DelimitedRestImpl implements DelimitedRest {
         }
 
         String result;
+        InputStream data = getDocumentInputStream(delimitedFile);
         if (extension.equals("xls") || extension.equals("xlsx")) {
-            result = etlFile(createExcelConfig(delimitedFile, mappingModel, containsHeaders), format);
+            ExcelConfig config = new ExcelConfig.Builder(data, Values.matontoModel(mappingModel))
+                    .containsHeaders(containsHeaders)
+                    .build();
+            result = etlFile(format, () -> converter.convert(config));
         } else {
-            result = etlFile(createSVConfig(delimitedFile, mappingModel, containsHeaders, separator), format);
+            SVConfig config = new SVConfig.Builder(data, Values.matontoModel(mappingModel))
+                    .containsHeaders(containsHeaders)
+                    .separator(separator.charAt(0))
+                    .build();
+            result = etlFile(format, () -> converter.convert(config));
         }
         logger.info("File mapped: " + delimitedFile.getPath());
 
@@ -215,8 +225,9 @@ public class DelimitedRestImpl implements DelimitedRest {
             writer.close();
         };
         String fileExtension = getRDFFormat(format).getDefaultFileExtension();
+        String mimeType = getRDFFormat(format).getDefaultMIMEType();
         Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                +  "." + fileExtension).header("Content-Type", "application/octet-stream").build();
+                +  "." + fileExtension).header("Content-Type", mimeType).build();
 
         // Remove temp file
         try {
@@ -229,38 +240,26 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     /**
-     * Converts delimited SV data in an InputStream into RDF and then writes the result into a string.
+     * A supplier for the result of running a conversion using a ExcelConfig or a SVConfig.
      *
-     * @param config separated value configuration for the conversion
-     * @param format the RDF serialization to return the data as
-     * @return a string with the delimited data converted into RDF
-     */
-    private String etlFile(SVConfig config, String format) {
-        // Convert InputStream to RDF
-        Model model;
-        try {
-            model = Values.sesameModel(converter.convert(config));
-        } catch (IOException | MatOntoException e) {
-            throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
-        }
-        StringWriter sw = new StringWriter();
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
-        Rio.write(model, rdfWriter);
-        return sw.toString();
+     * @param <T> The type of the result of the conversion
+    */
+    private interface SupplierWithException<T> {
+        T get() throws IOException;
     }
 
     /**
-     * Converts delimited Excel data in an InputStream into RDF and then writes the result into a string.
+     * Converts delimited SV data in an InputStream into RDF and then writes the result into a string.
      *
-     * @param config excel configuration for the conversion
      * @param format the RDF serialization to return the data as
+     * @param supplier the supplier for getting the result of running a conversion using a Config
      * @return a string with the delimited data converted into RDF
      */
-    private String etlFile(ExcelConfig config, String format) {
+    private String etlFile(String format, SupplierWithException<org.matonto.rdf.api.Model> supplier) {
         // Convert InputStream to RDF
         Model model;
         try {
-            model = Values.sesameModel(converter.convert(config));
+            model = Values.sesameModel(supplier.get());
         } catch (IOException | MatOntoException e) {
             throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
         }
@@ -268,30 +267,6 @@ public class DelimitedRestImpl implements DelimitedRest {
         RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(getRDFFormat(format), sw));
         Rio.write(model, rdfWriter);
         return sw.toString();
-    }
-
-    private SVConfig createSVConfig(File csvFile, Model mapping, boolean containsHeaders, String separator) {
-        char separatorChar = separator.charAt(0);
-        return new SVConfig.Builder(getDocumentInputStream(csvFile), Values.matontoModel(mapping))
-                .containsHeaders(containsHeaders).separator(separatorChar).build();
-    }
-
-    private SVConfig createSVConfig(File csvFile, Model mapping, boolean containsHeaders, String separator,
-                                    long limit) {
-        char separatorChar = separator.charAt(0);
-        return new SVConfig.Builder(getDocumentInputStream(csvFile), Values.matontoModel(mapping))
-                .containsHeaders(containsHeaders).separator(separatorChar).limit(limit).build();
-    }
-
-    private ExcelConfig createExcelConfig(File excelFile, Model mapping, boolean containsHeaders) {
-        return new ExcelConfig.Builder(getDocumentInputStream(excelFile), Values.matontoModel(mapping))
-                .containsHeaders(containsHeaders).build();
-    }
-
-    private ExcelConfig createExcelConfig(File excelFile, Model mapping, boolean containsHeaders,
-                                          long limit) {
-        return new ExcelConfig.Builder(getDocumentInputStream(excelFile), Values.matontoModel(mapping))
-                .containsHeaders(containsHeaders).limit(limit).build();
     }
 
     @Override

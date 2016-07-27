@@ -24,14 +24,25 @@
     'use strict';
 
     angular
-        .module('classTree', [])
+        .module('classTree', ['stateManager', 'ontologyManager'])
         .directive('classTree', classTree);
 
-        function classTree() {
+        classTree.$inject = ['stateManagerService', 'ontologyManagerService'];
+
+        function classTree(stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/classTree/classTree.html'
+                templateUrl: 'modules/ontology-editor/directives/classTree/classTree.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.ontologies = dvm.om.getList();
+                }
             }
         }
 })();

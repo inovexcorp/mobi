@@ -28,10 +28,10 @@ describe('Mapping Overlays directive', function() {
         mapperStateSvc,
         delimitedManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('mappingOverlays');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

@@ -24,14 +24,26 @@
     'use strict';
 
     angular
-        .module('classEditor', [])
+        .module('classEditor', ['stateManager', 'ontologyManager', 'prefixes'])
         .directive('classEditor', classEditor);
 
-        function classEditor() {
+        classEditor.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
+
+        function classEditor($filter, stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/classEditor/classEditor.html'
+                templateUrl: 'modules/ontology-editor/directives/classEditor/classEditor.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.prefixes = prefixes;
+                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
+                }
             }
         }
 })();

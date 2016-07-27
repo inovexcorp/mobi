@@ -93,7 +93,7 @@
                             annotationjson: annotationjson
                         }
                     }
-                    $http.post(prefix + encodeURIComponent(ontology['@id']) + '/annotations', null, config)
+                    $http.post(prefix + encodeURIComponent(ontology.matonto.id) + '/annotations', null, config)
                         .then(function(response) {
                             if(_.get(response, 'status') === 200) {
                                 var split = $filter('splitIRI')(iri);

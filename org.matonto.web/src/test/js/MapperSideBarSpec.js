@@ -27,10 +27,10 @@ describe('Mapper Side Bar directive', function() {
         mapperStateSvc,
         ontologyManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('mapperSideBar');
+        mockPrefixes();
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();
@@ -95,7 +95,7 @@ describe('Mapper Side Bar directive', function() {
             var controller = this.element.controller('mapperSideBar');
             controller.downloadMapping();
             scope.$digest();
-            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.name, 'jsonld');
         });
         it('should set the correct state for adding a property mapping', function() {
             var controller = this.element.controller('mapperSideBar');

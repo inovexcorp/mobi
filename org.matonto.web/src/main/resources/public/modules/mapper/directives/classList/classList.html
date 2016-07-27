@@ -22,7 +22,7 @@
   -->
 <div class="class-list col-xs-4 full-height">
     <div class="tree boxed">
-        <ul class="list" ng-if="dvm.cm.filePreview">
+        <ul class="list" ng-if="dvm.dm.filePreview">
             <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld)">
                 <a ng-click="dvm.clickClass(classMapping)" ng-dblclick="dvm.toggleOpen(classMapping['@id'])" ng-class="{'active': classMapping['@id'] === dvm.state.selectedClassMappingId && !dvm.state.selectedPropMappingId && !dvm.state.newProp}">
                     <i class="fa fa-fw"

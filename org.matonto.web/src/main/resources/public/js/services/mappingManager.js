@@ -185,9 +185,10 @@
              * which will start a download of the JSON-LD of a saved mapping.
              * 
              * @param {string} mappingName The IRI for the mapping with the user-defined local name
+             * @param {string} format the RDF serialization to retrieve the mapping in
              */
-            self.downloadMapping = function(mappingId) {
-                $window.location = prefix + '/' + encodeURIComponent(mappingId);
+            self.downloadMapping = function(mappingId, format) {
+                $window.location = prefix + '/' + encodeURIComponent(mappingId) + '?format=' + format;
             }
             /**
              * @ngdoc method
@@ -589,7 +590,7 @@
              * @returns {Object} The source ontology of a mapping
              */
             self.getSourceOntology = function(mapping) {
-                return _.find(self.sourceOntologies, {'@id': self.getSourceOntologyId(mapping)});
+                return _.find(self.sourceOntologies, {matonto: {id: self.getSourceOntologyId(mapping)}});
             }
             /**
              * @ngdoc method

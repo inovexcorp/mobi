@@ -27,10 +27,10 @@ describe('Mapping Preview directive', function() {
         mappingManagerSvc,
         mapperStateSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('mappingPreview');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
@@ -82,15 +82,15 @@ describe('Mapping Preview directive', function() {
         describe('should set the correct state for using a mapping', function() {
             it('if the ontology is valid', function() {
                 var controller = this.element.controller('mappingPreview');
-                var ontology = {'@id': 'test'};
+                var ontology = {matonto: {id: 'test'}};
                 ontologyManagerSvc.getList.and.returnValue([ontology]);
-                mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology['@id']);
+                mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology.matonto.id);
                 controller.useMapping();
                 scope.$apply();
                 expect(mapperStateSvc.editMapping).toBe(true);
                 expect(mapperStateSvc.newMapping).toBe(false);
                 expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
-                expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(ontology['@id']);
+                expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(ontology.matonto.id);
                 expect(mappingManagerSvc.sourceOntologies).toContain(ontology);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
 
@@ -99,15 +99,15 @@ describe('Mapping Preview directive', function() {
                 scope.$apply();
                 expect(mapperStateSvc.editMapping).toBe(true);
                 expect(mapperStateSvc.newMapping).toBe(false);
-                expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith(ontology['@id']);
+                expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith(ontology.matonto.id);
                 expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalled();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
             });
             it('if the ontology is invalid', function() {
                 var controller = this.element.controller('mappingPreview');
-                var ontology = {'@id': 'test'};
+                var ontology = {matonto: {id: 'test'}};
                 ontologyManagerSvc.getList.and.returnValue([ontology]);
-                mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology['@id']);
+                mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology.matonto.id);
                 mappingManagerSvc.getAllClassMappings.and.returnValue([{'mapsTo': 'test'}]);
                 ontologyManagerSvc.getClass.and.returnValue(undefined);
                 controller.useMapping();

@@ -65,10 +65,10 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     dvm.save = function() {
-                        dvm.mm.downloadMapping(dvm.mm.mapping.name);
+                        dvm.mm.downloadMapping(dvm.mm.mapping.name, 'jsonld');
                         dvm.finish();
                     }
                     dvm.finish = function() {
@@ -76,7 +76,7 @@
                         dvm.state.resetEdit();
                         dvm.mm.mapping = undefined;
                         dvm.mm.sourceOntologies = [];
-                        dvm.cm.reset();
+                        dvm.dm.reset();
                     }
                 },
                 templateUrl: 'modules/mapper/directives/finishOverlay/finishOverlay.html'

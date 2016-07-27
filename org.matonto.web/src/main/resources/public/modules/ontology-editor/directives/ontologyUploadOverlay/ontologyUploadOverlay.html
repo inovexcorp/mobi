@@ -21,25 +21,23 @@
   #L%
   -->
 <div class="overlay sm">
-    <form name="vm.uploadForm" class="content clearfix" novalidate autocomplete="off">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Upload Ontology</h6>
 
         <!-- error display -->
-        <error-display ng-if="vm.uploadError">{{vm.uploadError}}</error-display>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
 
         <!-- file to upload -->
         <div class="form-group">
             <custom-label>Select a file</custom-label>
-            <file-input id="file" name="file" ng-model="vm.upload.file" accept=".owl,.ttl,.xml"></file-input>
+            <file-input id="file" name="file" ng-model="dvm.file" accept=".owl,.ttl,.xml,.jsonld,.owx,.rdf"></file-input>
         </div>
 
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!vm.upload.file"
-                           on-click="vm.uploadOntology(vm.upload.file, vm.upload.namespace, vm.upload.localName);">Upload</custom-button>
-
-            <custom-button on-click="vm.showUploadOverlay = false; vm.uploadError = false;" type="'secondary'">Cancel</custom-button>
+            <custom-button is-disabled-when="!dvm.file" on-click="dvm.upload()">Upload</custom-button>
+            <custom-button on-click="dvm.sm.showUploadOverlay = false" type="'secondary'">Cancel</custom-button>
         </div>
     </form>
 </div>

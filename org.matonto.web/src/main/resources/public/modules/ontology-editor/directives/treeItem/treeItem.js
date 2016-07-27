@@ -50,7 +50,7 @@
                     var treeDisplay = settingsManagerService.getTreeDisplay();
 
                     dvm.getTreeDisplay = function(entity) {
-                        var result = entity['@id'];
+                        var result = _.get(entity, '@id', _.get(entity, 'matonto.id', ''));
                         if(treeDisplay === 'pretty') {
                             result = ontologyManagerService.getEntityName(entity);
                         }

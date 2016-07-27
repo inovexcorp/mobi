@@ -77,13 +77,13 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.cm = delimitedManagerService;
+                    dvm.dm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.errorMessage = '';
 
                     dvm.isExcel = function() {
-                        var fileName = _.get(dvm.cm.fileObj, 'name');
+                        var fileName = _.get(dvm.dm.fileObj, 'name');
                         return _.includes(fileName, 'xls');
                     }
                     dvm.getDataMappingName = function(dataMappingId) {
@@ -97,10 +97,10 @@
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.upload = function() {
-                        dvm.cm.upload(dvm.cm.fileObj).then(data => {
-                            dvm.cm.fileName = data;
+                        dvm.dm.upload(dvm.dm.fileObj).then(data => {
+                            dvm.dm.fileName = data;
                             dvm.setUploadValidity(true);
-                            return dvm.cm.previewFile(100);
+                            return dvm.dm.previewFile(100);
                         }, onError).then(() => {
                             if (!dvm.state.newMapping) {
                                 testColumns();
@@ -108,7 +108,7 @@
                         }, onError);
                     }
                     dvm.cancel = function() {
-                        dvm.cm.reset();
+                        dvm.dm.reset();
                         if (dvm.state.newMapping) {
                             dvm.state.step = 0;
                             dvm.state.editMappingName = true;
@@ -133,13 +133,13 @@
                         dvm.state.invalidProps = _.chain(dvm.mm.getAllDataMappings(dvm.mm.mapping.jsonld))
                             .map(dataMapping => _.pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
                             .forEach(obj => _.set(obj, 'index', parseInt(obj['@id', prefixes.delim + 'columnIndex'][0]['@value'], 10)))
-                            .filter(obj => obj.index > dvm.cm.filePreview.headers.length - 1)
+                            .filter(obj => obj.index > dvm.dm.filePreview.headers.length - 1)
                             .sortBy('index')
                             .value();
                     }
                     function onError(errorMessage) {
                         dvm.errorMessage = errorMessage;
-                        dvm.cm.filePreview = undefined;
+                        dvm.dm.filePreview = undefined;
                         dvm.setUploadValidity(false);
                         dvm.state.invalidProps = [];
                     }

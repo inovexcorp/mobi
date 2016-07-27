@@ -7,7 +7,7 @@ $preview-width: $results-width;
 
 .catalog {
     > .row {
-        padding-left: 39px;
+        padding-left: $sidebar-width;
         width: 100%;
         margin: 0;
     }
@@ -18,21 +18,5 @@ $preview-width: $results-width;
         float: left;
         border: 1px solid $gray-lighter;
         height: 100%;
-    }
-    .filters {
-        width: $filters-width;
-    }
-    .results {
-        width: $results-width;
-
-        .page-nav {
-            position: fixed;
-            left: $filters-width;
-            right: $preview-width;
-            bottom: 0;
-        }
-    }
-    .resource-preview {
-        width: $preview-width;
     }
 }

@@ -33,7 +33,7 @@ public class SVConfig {
     private Model mapping;
     private boolean containsHeaders = true;
     private char separator = ',';
-    private Optional<Long> limit;
+    private Long limit;
     private long offset = 0;
 
     private SVConfig(Builder builder) {
@@ -62,7 +62,7 @@ public class SVConfig {
     }
 
     public Optional<Long> getLimit() {
-        return limit;
+        return Optional.ofNullable(limit);
     }
 
     public long getOffset() {
@@ -70,11 +70,11 @@ public class SVConfig {
     }
 
     public static class Builder {
-        private InputStream data;
-        private Model mapping;
+        private final InputStream data;
+        private final Model mapping;
         private boolean containsHeaders = true;
         private char separator = ',';
-        private Optional<Long> limit = Optional.empty();
+        private Long limit;
         private long offset = 0;
 
         public Builder(InputStream data, Model mapping) {
@@ -92,8 +92,8 @@ public class SVConfig {
             return this;
         }
 
-        public Builder limit(long limit) {
-            this.limit = Optional.of(limit);
+        public Builder limit(Long limit) {
+            this.limit = limit;
             return this;
         }
 

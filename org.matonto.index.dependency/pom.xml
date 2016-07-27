@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.0.64-SNAPSHOT</version>
+        <version>1.1.7-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -39,7 +39,17 @@
     <properties>
         <guice.version>4.0</guice.version>
         <logback.version>1.1.2</logback.version>
+        <local.url.policy>REQUIRED</local.url.policy>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>jenkins</id>
+            <properties>
+                <local.url.policy>FORBIDDEN</local.url.policy>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -130,9 +140,9 @@
             <version>18.0</version>
         </dependency>
         <dependency>
-            <groupId>net.sf.trove4j</groupId>
+            <groupId>org.matonto.bundles</groupId>
             <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
+            <version>3.0.3_1</version>
         </dependency>
         <dependency>
             <groupId>com.spatial4j</groupId>
@@ -212,7 +222,7 @@
                 <artifactId>bnd-indexer-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <localURLs>REQUIRED</localURLs>
+                    <localURLs>${local.url.policy}</localURLs>
                     <includeTransitive>false</includeTransitive>
                 </configuration>
                 <executions>

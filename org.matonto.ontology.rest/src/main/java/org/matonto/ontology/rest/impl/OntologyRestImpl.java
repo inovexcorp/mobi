@@ -231,7 +231,7 @@ public class OntologyRestImpl implements OntologyRest {
         };
 
         return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type", "application/octet-stream")
+                + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type", getRDFFormatMimeType(rdfFormat))
                 .build();
     }
 
@@ -241,18 +241,19 @@ public class OntologyRestImpl implements OntologyRest {
         throwErrorIfMissingParam(resourceIdStr, "resourceIdStr is missing");
         throwErrorIfMissingParam(resourceJson, "resourceJson is missing");
 
-        boolean updated;
+        String ontologyId;
         try {
             Resource ontologyResource = values.getIriOrBnode(ontologyIdStr);
             Resource changedResource = values.getIriOrBnode(resourceIdStr);
-            updated = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
+            ontologyId = manager.saveChangesToOntology(ontologyResource, changedResource, resourceJson);
         } catch (MatontoOntologyException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(),
                     Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         JSONObject json = new JSONObject();
-        json.put("updated", updated);
+        json.put("updated", true);
+        json.put("id", ontologyId);
 
         return Response.status(200).entity(json.toString()).build();
     }
@@ -691,22 +692,31 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private String getRDFFormatFileExtension(String format) {
-        RDFFormat rdfformat;
         switch (format.toLowerCase()) {
             case "turtle":
-                rdfformat = RDFFormat.TURTLE;
-                break;
+                return RDFFormat.TURTLE.getDefaultFileExtension();
             case "rdf/xml":
+                return RDFFormat.RDFXML.getDefaultFileExtension();
             case "owl/xml" :
-                rdfformat = RDFFormat.RDFXML;
-                break;
+                return "owx";
             case "jsonld":
             default:
-                rdfformat = RDFFormat.JSONLD;
-                break;
+                return RDFFormat.JSONLD.getDefaultFileExtension();
         }
+    }
 
-        return rdfformat.getDefaultFileExtension();
+    private String getRDFFormatMimeType(String format) {
+        switch (format.toLowerCase()) {
+            case "turtle":
+                return RDFFormat.TURTLE.getDefaultMIMEType();
+            case "rdf/xml":
+                return RDFFormat.RDFXML.getDefaultMIMEType();
+            case "owl/xml" :
+                return "application/owl+xml";
+            case "jsonld":
+            default:
+                return RDFFormat.JSONLD.getDefaultMIMEType();
+        }
     }
     
     private JSONObject combineJsonObjects(JSONObject... objects) {

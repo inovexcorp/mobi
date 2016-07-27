@@ -26,14 +26,14 @@
         <h1 class="text-center">Sign In Here</h1>
         <form name="vm.form" ng-submit="vm.login(vm.form.$valid)" class="clearfix" novalidate>
             <!-- error messages -->
-            <p class="error-msg" ng-show="vm.showError">This email/password combination is not correct.</p>
+            <error-display ng-show="vm.errorMessage">{{vm.errorMessage}}</error-display>
 
             <!-- email/username -->
             <div class="form-group">
                 <label for="username" class="sr-only">Username</label>
                 <div class="input-group">
                     <span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
-                    <input type="text" class="form-control" id="username" placeholder="Username" ng-model="vm.form.username" ng-change="vm.showError = false;" required autofocus>
+                    <input type="text" class="form-control" id="username" placeholder="Username" ng-model="vm.form.username" ng-change="vm.errorMessage = '';" required autofocus>
                 </div>
             </div>
 
@@ -42,7 +42,7 @@
                 <label for="password" class="sr-only">Password</label>
                 <div class="input-group">
                     <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-                    <input type="password" class="form-control" id="password" placeholder="Password" ng-model="vm.form.password" ng-change="vm.showError = false;" required>
+                    <input type="password" class="form-control" id="password" placeholder="Password" ng-model="vm.form.password" ng-change="vm.errorMessage = '';" required>
                 </div>
             </div>
 

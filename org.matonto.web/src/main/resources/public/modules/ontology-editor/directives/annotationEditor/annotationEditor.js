@@ -24,15 +24,23 @@
     'use strict';
 
     angular
-        .module('errorDisplay', [])
-        .directive('errorDisplay', errorDisplay);
+        .module('annotationEditor', ['stateManager'])
+        .directive('annotationEditor', annotationEditor);
 
-        function errorDisplay() {
+        annotationEditor.$inject = ['stateManagerService'];
+
+        function annotationEditor(stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                transclude: true,
-                templateUrl: 'modules/ontology-editor/directives/errorDisplay/errorDisplay.html'
+                templateUrl: 'modules/ontology-editor/directives/annotationEditor/annotationEditor.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.sm = stateManagerService;
+                }
             }
         }
 })();
