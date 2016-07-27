@@ -25,13 +25,15 @@ describe('Mapping Manager service', function() {
         mappingManagerSvc,
         ontologyManagerSvc,
         uuidSvc,
-        windowSvc;
+        windowSvc,
+        prefixes;
 
     beforeEach(function() {
         module('mappingManager');
         mockPrefixes();
         injectSplitIRIFilter();
         mockOntologyManager();
+        mockPrefixes();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -42,12 +44,13 @@ describe('Mapping Manager service', function() {
             });
         });
 
-        inject(function(mappingManagerService, ontologyManagerService, uuid, _$httpBackend_, _$window_) {
+        inject(function(mappingManagerService, ontologyManagerService, uuid, _$httpBackend_, _$window_, _prefixes_) {
             mappingManagerSvc = mappingManagerService;
             ontologyManagerSvc = ontologyManagerService;
             uuidSvc = uuid;
             $httpBackend = _$httpBackend_;
             windowSvc = _$window_;
+            prefixes = _prefixes_;
         });
     });
 
@@ -326,7 +329,9 @@ describe('Mapping Manager service', function() {
             expect(result).toEqual([{'@id': 'class1'}]);
         });
         it('if the property exists in the passed ontologies', function() {
-            ontologyManagerSvc.getClassProperty.and.returnValue({[prefixes.rdfs + 'range']: [{'@id': 'class2'}]});
+            var obj = {};
+            obj[prefixes.rdfs + 'range'] = [{'@id': 'class2'}];
+            ontologyManagerSvc.getClassProperty.and.returnValue(obj);
             var result = mappingManagerSvc.addObjectProp([{'@id': 'class1'}], [{}], 'class1', 'propId');
             var classMapping1 = _.find(result, {'@id': 'class1'});
             var classMapping2 = _.find(result, {'mapsTo': [{'@id': 'class2'}]});
