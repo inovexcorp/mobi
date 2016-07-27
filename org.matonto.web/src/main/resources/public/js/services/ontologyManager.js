@@ -1084,11 +1084,11 @@
                                 deferred.resolve(currentState);
                             } else {
                                 console.warn("Something wasn't updated properly in the ontology");
-                                deferred.reject();
+                                deferred.reject("Something wasn't updated properly in the ontology");
                             }
                         }, function(response) {
-                            console.error('Error during edit');
-                            deferred.reject();
+                            console.error('An error has occurred when saving these changes. Please try again later.');
+                            deferred.reject('An error has occurred when saving these changes. Please try again later.');
                         })
                         .then(function() {
                             $rootScope.showSpinner = false;
