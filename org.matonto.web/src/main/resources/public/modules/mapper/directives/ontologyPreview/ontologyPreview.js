@@ -27,15 +27,13 @@
         /**
          * @ngdoc overview
          * @name ontologyPreview
-         * @requires prefixes
-         * @requires ontologyManager
          *
          * @description 
          * The `ontologyPreview` module only provides the `ontologyPreview` directive which creates
          * a preview of the pass in ontology with lists of the imported ontologies and classes 
          * defined within the ontology.
          */
-        .module('ontologyPreview', ['prefixes', 'ontologyManager'])
+        .module('ontologyPreview', [])
         /**
          * @ngdoc directive
          * @name ontologyPreview.directive:ontologyPreview

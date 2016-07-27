@@ -27,16 +27,12 @@
         /**
          * @ngdoc overview
          * @name mappingOverlays
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `mappingOverlays` module only provides the `mappingOverlays` directive which creates
          * all the overlays used in the mapping tool.
          */
-        .module('mappingOverlays', ['mappingManager', 'mapperState', 'delimitedManager', 'ontologyManager'])
+        .module('mappingOverlays', [])
         /**
          * @ngdoc directive
          * @name mappingOverlays.directive:mappingOverlays

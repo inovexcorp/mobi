@@ -27,17 +27,13 @@
         /**
          * @ngdoc overview
          * @name startingClassSelectOverlay
-         * @requires  prefixes
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
          *
          * @description 
          * The `startingClassSelectOverlay` module only provides the `startingClassSelectOverlay` 
          * directive which creates and overlay with a ui-select to select a class and a preview
          * area for the selected class.
          */
-        .module('startingClassSelectOverlay', ['prefixes', 'ontologyManager', 'mapperState', 'mappingManager'])
+        .module('startingClassSelectOverlay', [])
         /**
          * @ngdoc directive
          * @name startingClassSelectOverlay.directive:startingClassSelectOverlay

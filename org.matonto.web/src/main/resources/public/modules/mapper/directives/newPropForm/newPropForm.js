@@ -27,16 +27,12 @@
         /**
          * @ngdoc overview
          * @name newPropForm
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `newPropForm` module only provides the `newPropForm` directive which creates
          * a form to add a new property mapping to the selected mapping.
          */
-        .module('newPropForm', ['ontologyManager', 'mappingManager', 'mapperState', 'delimitedManager'])
+        .module('newPropForm', [])
         /**
          * @ngdoc directive
          * @name newPropForm.directive:newPropForm

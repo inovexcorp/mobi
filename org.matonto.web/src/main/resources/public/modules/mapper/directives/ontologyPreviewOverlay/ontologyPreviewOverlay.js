@@ -27,15 +27,13 @@
         /**
          * @ngdoc overview
          * @name ontologyPreviewOverlay
-         * @requires prefixes
-         * @requires ontologyManager
          *
          * @description 
          * The `ontologyPreviewOverlay` module only provides the `ontologyPreviewOverlay` directive 
          * which creates an overlay containing an {@link ontologyPreview.directive:ontologyPreview ontologyPreview}
          * of the passed ontology.
          */
-        .module('ontologyPreviewOverlay', ['ontologyManager', 'mapperState'])
+        .module('ontologyPreviewOverlay', [])
         /**
          * @ngdoc directive
          * @name ontologyPreviewOverlay.directive:ontologyPreviewOverlay

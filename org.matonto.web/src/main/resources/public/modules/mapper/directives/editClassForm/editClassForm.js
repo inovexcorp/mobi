@@ -27,16 +27,12 @@
         /**
          * @ngdoc overview
          * @name editClassForm
-         * @requires  prefixes
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
          *
          * @description 
          * The `editClassForm` module only provides the `editClassForm` directive which creates
          * a form with functionality to change the selected class' IRI template.
          */
-        .module('editClassForm', ['prefixes', 'mapperState', 'mappingManager', 'ontologyManager'])
+        .module('editClassForm', [])
         /**
          * @ngdoc directive
          * @name editClassForm.directive:editClassForm

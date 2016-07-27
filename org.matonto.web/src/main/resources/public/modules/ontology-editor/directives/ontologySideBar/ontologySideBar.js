@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('ontologySideBar', ['stateManager', 'ontologyManager'])
+        .module('ontologySideBar', [])
         .directive('ontologySideBar', ontologySideBar);
 
         ontologySideBar.$inject = ['stateManagerService', 'ontologyManagerService'];

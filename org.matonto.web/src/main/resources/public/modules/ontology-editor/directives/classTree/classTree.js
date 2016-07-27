@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('classTree', ['stateManager', 'ontologyManager'])
+        .module('classTree', [])
         .directive('classTree', classTree);
 
         classTree.$inject = ['stateManagerService', 'ontologyManagerService'];

@@ -27,14 +27,12 @@
         /**
          * @ngdoc overview
          * @name invalidOntologyOverlay
-         * @requires  mappingManager
-         * @requires  mapperState
          *
          * @description 
          * The `invalidOntologyOverlay` module only provides the `invalidOntologyOverlay` directive which creates
          * an overlay telling the user that the source ontology for a mapping is incompatible.
          */
-        .module('invalidOntologyOverlay', ['mapperState', 'mappingManager'])
+        .module('invalidOntologyOverlay', [])
         /**
          * @ngdoc directive
          * @name invalidOntologyOverlay.directive:invalidOntologyOverlay

@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('annotationEditor', ['stateManager'])
+        .module('annotationEditor', [])
         .directive('annotationEditor', annotationEditor);
 
         annotationEditor.$inject = ['stateManagerService'];

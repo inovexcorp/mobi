@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('ontologyEntityEditors', ['stateManager'])
+        .module('ontologyEntityEditors', [])
         .directive('ontologyEntityEditors', ontologyEntityEditors);
 
         ontologyEntityEditors.$inject = ['stateManagerService'];

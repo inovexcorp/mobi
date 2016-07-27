@@ -27,14 +27,12 @@
         /**
          * @ngdoc overview
          * @name mappingList
-         * @requires  mappingManager
-         * @requires  mapperState
          *
          * @description 
          * The `mappingList` module only provides the `mappingList` directive which creates
          * a "boxed" area with a list of saved mappings in the repository.
          */
-        .module('mappingList', ['mappingManager', 'mapperState'])
+        .module('mappingList', [])
         /**
          * @ngdoc directive
          * @name mappingList.directive:mappingList

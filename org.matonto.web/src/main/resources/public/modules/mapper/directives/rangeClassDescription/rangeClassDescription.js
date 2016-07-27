@@ -27,15 +27,12 @@
         /**
          * @ngdoc overview
          * @name rangeClassDescription
-         * @requires  prefixes
-         * @requires  ontologyManager
-         * @requires  mappingManager
          *
          * @description 
          * The `rangeClassDescription` module only provides the `rangeClassDescription` directive 
          * which creates a brief description of the class an object property links to.
          */
-        .module('rangeClassDescription', ['prefixes', 'ontologyManager', 'mappingManager'])
+        .module('rangeClassDescription', [])
         /**
          * @ngdoc directive
          * @name rangeClassDescription.directive:rangeClassDescription
