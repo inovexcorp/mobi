@@ -71,7 +71,14 @@
             'webtop',
 
             /* Custom Services */
-            'ontologyManager'
+            'annotationManager',
+            'catalogManager',
+            'mappingManager',
+            'ontologyManager',
+            'prefixes',
+            'responseObj',
+            'settingsManager',
+            'updateRefs'
         ])
         .constant('_', window._)
         .constant('REGEX', {

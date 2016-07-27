@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('treeItem', ['settingsManager', 'ontologyManager'])
+        .module('treeItem', [])
         .directive('treeItem', treeItem);
 
         treeItem.$inject = ['settingsManagerService', 'ontologyManagerService'];
