@@ -27,14 +27,12 @@
         /**
          * @ngdoc overview
          * @name classPreview
-         * @requires ontologyManager
-         * @requires prefixes
          *
          * @description 
          * The `classPreview` module only provides the `classPreview` directive which creates
          * a brief description of the passed class and its properties.
          */
-        .module('classPreview', ['prefixes', 'ontologyManager'])
+        .module('classPreview', [])
         /**
          * @ngdoc directive
          * @name classPreview.directive:classPreview

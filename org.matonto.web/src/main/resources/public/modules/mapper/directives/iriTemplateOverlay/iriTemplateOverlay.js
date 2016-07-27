@@ -27,16 +27,12 @@
         /**
          * @ngdoc overview
          * @name iriTemplateOverlay
-         * @requires  prefixes
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `iriTemplateOverlay` module only provides the `iriTemplateOverlay` directive which creates
          * an overlay with functionality to change the IRI template of the selected class mapping.
          */
-        .module('iriTemplateOverlay', ['prefixes', 'mapperState', 'mappingManager', 'delimitedManager'])
+        .module('iriTemplateOverlay', [])
         /**
          * @ngdoc directive
          * @name iriTemplateOverlay.directive:iriTemplateOverlay

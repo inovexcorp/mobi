@@ -27,16 +27,13 @@
         /**
          * @ngdoc overview
          * @name finishOverlay
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `finishOverlay` module only provides the `finishOverlay` directive which creates
          * an overlay with button to finish the mapping process and optionally save the mapping 
          * locally.
          */
-        .module('finishOverlay', ['mapperState', 'mappingManager', 'delimitedManager'])
+        .module('finishOverlay', [])
         /**
          * @ngdoc directive
          * @name finishOverlay.directive:finishOverlay

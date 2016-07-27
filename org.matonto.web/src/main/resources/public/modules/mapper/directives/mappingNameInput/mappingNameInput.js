@@ -33,7 +33,7 @@
          * a text input for a mapping name, and the `uniqueName` directive used for testing whether
          * a mapping exists already with the entered mapping name.
          */
-        .module('mappingNameInput', ['mappingManager'])
+        .module('mappingNameInput', [])
         /**
          * @ngdoc directive
          * @name mappingNameInput.directive:mappingNameInput

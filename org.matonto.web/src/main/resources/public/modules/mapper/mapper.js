@@ -25,6 +25,7 @@
 
     angular
         .module('mapper', [
+            /* Custom Directives */
             'classList',
             'classPreview',
             'columnSelect',
@@ -49,6 +50,10 @@
             'propSelect',
             'rangeClassDescription',
             'rdfPreview',
-            'startingClassSelectOverlay'
+            'startingClassSelectOverlay',
+
+            /* Custom Services */
+            'delimitedManager',
+            'mapperStateService'
         ]);
 })();
