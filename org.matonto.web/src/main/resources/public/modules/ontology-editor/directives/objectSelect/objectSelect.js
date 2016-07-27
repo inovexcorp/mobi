@@ -62,14 +62,14 @@
 
                     dvm.getTooltipDisplay = function(item) {
                         var itemIri = dvm.getItemIri(item);
-                        var ontologyIndex = _.get(stateManagerService.getState(), 'oi');
-                        var selectedObject = ontologyManagerService.getObjectCopyByIri(itemIri, ontologyIndex);
+                        var ontologyIndex = dvm.sm.state.oi;
+                        var selectedObject = dvm.om.getObjectCopyByIri(itemIri, ontologyIndex);
                         var result = itemIri;
 
                         if(dvm.tooltipDisplay === 'comment') {
-                            result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri));
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(selectedObject, "['" + prefixes.dcterms + "description'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri)));
                         } else if(dvm.tooltipDisplay === 'label') {
-                            result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri));
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']", _.get(selectedObject, "['" + prefixes.dcterms + "title'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri)));
                         } else if(_.has(selectedObject, '@id')) {
                             result = selectedObject['@id'];
                         }

@@ -48,7 +48,7 @@
             });
             var dcAnnotations = _.map(['description', 'title'], function(item) {
                 return {
-                    'namespace': prefixes.dc,
+                    'namespace': prefixes.dcterms,
                     'localName': item
                 }
             });

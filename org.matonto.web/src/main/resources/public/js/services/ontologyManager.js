@@ -1238,7 +1238,7 @@
             }
 
             self.getEntityName = function(entity) {
-                var result = _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || _.get(entity, "['" + prefixes.dc + "title'][0]['@value']");
+                var result = _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || _.get(entity, "['" + prefixes.dcterms + "title'][0]['@value']") || _.get(entity, "['" + prefixes.dc + "title'][0]['@value']");
                 if (!result) {
                     if(_.has(entity, '@id')) {
                         result = self.getBeautifulIRI(entity['@id']);
