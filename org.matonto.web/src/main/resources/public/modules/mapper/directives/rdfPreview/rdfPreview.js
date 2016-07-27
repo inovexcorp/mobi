@@ -33,7 +33,7 @@
          * a container for generating a preview of delimited data mapped into RDF, and 
          * the `formatRdf` directive used for formatting the mapped data preview string.
          */
-        .module('rdfPreview', ['delimitedManager', 'mappingManager'])
+        .module('rdfPreview', [])
         /**
          * @ngdoc directive
          * @name rdfPreview.directive:rdfPreview

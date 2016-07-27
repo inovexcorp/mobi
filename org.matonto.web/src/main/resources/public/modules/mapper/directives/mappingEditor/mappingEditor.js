@@ -27,16 +27,12 @@
         /**
          * @ngdoc overview
          * @name mappingEditor
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `mappingEditor` module only provides the `mappingEditor` directive which creates
          * the main editor for mappings and mapping data.
          */
-        .module('mappingEditor', ['mappingManager', 'mapperState', 'ontologyManager', 'delimitedManager'])
+        .module('mappingEditor', [])
         /**
          * @ngdoc directive
          * @name mappingEditor.directive:mappingEditor

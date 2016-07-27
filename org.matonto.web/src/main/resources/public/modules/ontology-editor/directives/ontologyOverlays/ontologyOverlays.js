@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('ontologyOverlays', ['stateManager', 'ontologyManager', 'annotationManager'])
+        .module('ontologyOverlays', [])
         .directive('ontologyOverlays', ontologyOverlays);
 
         ontologyOverlays.$inject = ['stateManagerService', 'ontologyManagerService', 'annotationManagerService'];
@@ -64,12 +64,6 @@
                                 dvm.sm.showSaveOverlay = false;
                                 dvm.sm.state = state;
                             });
-                    }
-
-                    dvm.closeOntology = function() {
-                        dvm.om.closeOntology(dvm.sm.state.oi, dvm.sm.ontology.matonto.id);
-                        dvm.sm.clearState(dvm.sm.state.oi);
-                        dvm.sm.showCloseOverlay = false;
                     }
 
                     dvm.removeAnnotation = function() {

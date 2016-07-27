@@ -27,18 +27,13 @@
         /**
          * @ngdoc overview
          * @name editPropForm
-         * @requires  prefixes
-         * @requires  ontologyManager
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires  delimitedManager
          *
          * @description 
          * The `editPropForm` module only provides the `editPropForm` directive which creates
          * a form with functionality to change the column for a datatype property mapping or simply 
          * preview an object property mapping.
          */
-        .module('editPropForm', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'delimitedManager'])
+        .module('editPropForm', [])
         /**
          * @ngdoc directive
          * @name editPropForm.directive:editPropForm

@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('annotationOverlay', ['responseObj', 'ontologyManager', 'annotationManager', 'stateManager'])
+        .module('annotationOverlay', [])
         .directive('annotationOverlay', annotationOverlay);
 
         annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'annotationManagerService', 'stateManagerService'];

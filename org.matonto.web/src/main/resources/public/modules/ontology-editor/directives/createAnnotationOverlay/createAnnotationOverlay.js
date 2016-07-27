@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('createAnnotationOverlay', ['annotationManager', 'stateManager'])
+        .module('createAnnotationOverlay', [])
         .directive('createAnnotationOverlay', createAnnotationOverlay);
 
         createAnnotationOverlay.$inject = ['REGEX', 'annotationManagerService', 'stateManagerService'];

@@ -27,15 +27,12 @@
         /**
          * @ngdoc overview
          * @name mapperSideBar
-         * @requires  mappingManager
-         * @requires  mapperState
-         * @requires ontologyManager
          *
          * @description 
          * The `mapperSideBar` module only provides the `mapperSideBar` directive which creates
          * a left navigation of action buttons for the mapping tool.
          */
-        .module('mapperSideBar', ['mapperState', 'mappingManager', 'ontologyManager'])
+        .module('mapperSideBar', [])
         /**
          * @ngdoc directive
          * @name mapperSideBar.directive:mapperSideBar

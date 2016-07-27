@@ -27,14 +27,12 @@
         /**
          * @ngdoc overview
          * @name mappingNameOverlay
-         * @requires  mappingManager
-         * @requires  mapperState
          *
          * @description 
          * The `mappingNameOverlay` module only provides the `mappingNameOverlay` directive which creates
          * an overlay with a {@link mappingNameInput.directive:mappingNameInput mappingNameInput} to edit a mapping name.
          */
-        .module('mappingNameOverlay', ['mappingManager', 'mapperState'])
+        .module('mappingNameOverlay', [])
         /**
          * @ngdoc directive
          * @name mappingNameOverlay.directive:mappingNameOverlay

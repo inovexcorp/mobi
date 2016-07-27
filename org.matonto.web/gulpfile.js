@@ -78,6 +78,9 @@ var jsFiles = function(prefix) {
 //Method to run jasmine tests
 var runJasmine = function(vendorFiles) {
     return gulp.src('./src/test/js/*Spec.js')
+        .pipe(babel({
+            presets: ['es2015']
+        }))
         .pipe(jasmine({
             integration: true,
             abortOnFail: true,

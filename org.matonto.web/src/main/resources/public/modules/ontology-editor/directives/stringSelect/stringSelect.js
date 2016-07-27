@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('stringSelect', ['ontologyManager'])
+        .module('stringSelect', [])
         .directive('stringSelect', stringSelect);
 
         stringSelect.$inject = ['ontologyManagerService'];

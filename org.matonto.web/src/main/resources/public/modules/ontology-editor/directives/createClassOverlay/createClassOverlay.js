@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('createClassOverlay', ['ontologyManager', 'stateManager'])
+        .module('createClassOverlay', [])
         .directive('createClassOverlay', createClassOverlay);
 
         createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService'];

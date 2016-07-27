@@ -25,6 +25,7 @@
 
     angular
         .module('ontology-editor', [
+            /* Custom Directives */
             'annotationEditor',
             'annotationOverlay',
             'annotationTab',
@@ -38,6 +39,7 @@
             'defaultTab',
             'everythingTree',
             'objectSelect',
+            'ontologyCloseOverlay',
             'ontologyDownloadOverlay',
             'ontologyEditor',
             'ontologyEntityEditors',
@@ -51,6 +53,9 @@
             'serializationSelect',
             'staticIri',
             'stringSelect',
-            'treeItem'
+            'treeItem',
+
+            /* Custom Services */
+            'stateManager'
         ]);
 })();
