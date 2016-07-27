@@ -24,19 +24,19 @@
     <form class="content" name="dvm.fileForm">
         <h6>Choose Delimited File</h6>
         <div class="form-group">
-            <file-input ng-model="dvm.cm.fileObj" accept=".csv,.xls,.xlsx,.tsv" required></file-input>
+            <file-input ng-model="dvm.dm.fileObj" accept=".csv,.xls,.xlsx,.tsv" required></file-input>
         </div>
         <div class="form-group">
-            <input type="checkbox" ng-model="dvm.cm.containsHeaders">Contains headers</input>
+            <input type="checkbox" ng-model="dvm.dm.containsHeaders">Contains headers</input>
         </div>
-        <div ng-if="dvm.cm.fileObj && !dvm.isExcel()" class="form-group form-inline">
+        <div ng-if="dvm.dm.fileObj && !dvm.isExcel()" class="form-group form-inline">
             <h4>Separator</h4>
-            <radio-button value="','" ng-model="dvm.cm.separator" display-text="'Comma'"></radio-button>
-            <radio-button value="'\t'" ng-model="dvm.cm.separator" display-text="'Tab'"></radio-button>
-            <radio-button value="':'" ng-model="dvm.cm.separator" display-text="'Colon'"></radio-button>
+            <radio-button value="','" ng-model="dvm.dm.separator" display-text="'Comma'"></radio-button>
+            <radio-button value="'\t'" ng-model="dvm.dm.separator" display-text="'Tab'"></radio-button>
+            <radio-button value="':'" ng-model="dvm.dm.separator" display-text="'Colon'"></radio-button>
         </div>
         <div class="upload-btn form-group btn-container float-container">
-            <custom-button on-click="dvm.upload()" pull="'left'" is-disabled-when="!dvm.cm.fileObj" aria-describedby="form-help-block">{{!dvm.fileForm.$error.fileUploaded ? 'Update' : 'Upload'}}</custom-button>
+            <custom-button on-click="dvm.upload()" pull="'left'" is-disabled-when="!dvm.dm.fileObj" aria-describedby="form-help-block">{{!dvm.fileForm.$error.fileUploaded ? 'Update' : 'Upload'}}</custom-button>
             <span id="form-help-block" class="help-block" ng-if="!dvm.fileForm.$error.fileUploaded">Click update with desired changes or click continue.</span>
         </div>
         <h3 ng-if="dvm.fileForm.$error.fileUploaded" class="error-msg">{{dvm.errorMessage}}</h3>

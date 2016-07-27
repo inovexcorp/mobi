@@ -30,13 +30,13 @@
          * @requires  ontologyManager
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `mappingEditor` module only provides the `mappingEditor` directive which creates
          * the main editor for mappings and mapping data.
          */
-        .module('mappingEditor', ['mappingManager', 'mapperState', 'ontologyManager', 'csvManager'])
+        .module('mappingEditor', ['mappingManager', 'mapperState', 'ontologyManager', 'delimitedManager'])
         /**
          * @ngdoc directive
          * @name mappingEditor.directive:mappingEditor
@@ -45,7 +45,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `mappingEditor` is a directive that creates a div with three main sections: the header area
@@ -59,9 +59,9 @@
          */
         .directive('mappingEditor', mappingEditor);
 
-        mappingEditor.$inject = ['$q', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'csvManagerService'];
+        mappingEditor.$inject = ['$q', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
 
-        function mappingEditor($q, mappingManagerService, mapperStateService, ontologyManagerService, csvManagerService) {
+        function mappingEditor($q, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -72,7 +72,7 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.cm = csvManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     dvm.getSourceOntologyName = function() {
                         return dvm.om.getEntityName(dvm.mm.getSourceOntology(_.get(dvm.mm.mapping, 'jsonld')));
@@ -91,7 +91,7 @@
                                 .then(() => deferred.resolve(), errorMessage => deferred.reject(errorMessage));
                         }
                         deferred.promise.then(() => {
-                            dvm.cm.map(dvm.mm.mapping.name);
+                            dvm.dm.map(dvm.mm.mapping.name);
                             dvm.state.resetEdit();
                             dvm.state.step = dvm.state.finishStep;
                             dvm.saveError = false;

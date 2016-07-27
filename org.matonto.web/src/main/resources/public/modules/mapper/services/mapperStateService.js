@@ -33,7 +33,7 @@
          * contains various variables to hold the state of the mapping tool page and 
          * utility functions to update those variables.
          */
-        .module('mapperState', ['prefixes', 'mappingManager', 'ontologyManager', 'csvManager'])
+        .module('mapperState', ['prefixes', 'mappingManager', 'ontologyManager', 'delimitedManager'])
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService
@@ -47,16 +47,16 @@
          */
         .service('mapperStateService', mapperStateService);
 
-        mapperStateService.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService', 'csvManagerService'];
+        mapperStateService.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService', 'delimitedManagerService'];
 
-        function mapperStateService(prefixes, mappingManagerService, ontologyManagerService, csvManagerService) {
+        function mapperStateService(prefixes, mappingManagerService, ontologyManagerService, delimitedManagerService) {
             var self = this;
             var cachedOntologyId = '';
             var cachedSourceOntologies = undefined;
             var originalMappingName = '';
             var manager = mappingManagerService,
                 ontology = ontologyManagerService,
-                csv = csvManagerService;
+                csv = delimitedManagerService;
 
             // Static step indexes
             self.fileUploadStep = 1;

@@ -30,13 +30,13 @@
          * @requires  ontologyManager
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `mappingOverlays` module only provides the `mappingOverlays` directive which creates
          * all the overlays used in the mapping tool.
          */
-        .module('mappingOverlays', ['mappingManager', 'mapperState', 'csvManager', 'ontologyManager'])
+        .module('mappingOverlays', ['mappingManager', 'mapperState', 'delimitedManager', 'ontologyManager'])
         /**
          * @ngdoc directive
          * @name mappingOverlays.directive:mappingOverlays
@@ -45,7 +45,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `mappingOverlays` is a directive that creates all of the overlay used in the mapping tool. 
@@ -60,9 +60,9 @@
          */
         .directive('mappingOverlays', mappingOverlays);
 
-        mappingOverlays.$inject = ['mappingManagerService', 'mapperStateService', 'csvManagerService', 'ontologyManagerService']
+        mappingOverlays.$inject = ['mappingManagerService', 'mapperStateService', 'delimitedManagerService', 'ontologyManagerService']
 
-        function mappingOverlays(mappingManagerService, mapperStateService, csvManagerService, ontologyManagerService) {
+        function mappingOverlays(mappingManagerService, mapperStateService, delimitedManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -71,7 +71,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.cm = csvManagerService;
+                    dvm.dm = delimitedManagerService;
                     dvm.om = ontologyManagerService;
 
                     dvm.reset = function() {
@@ -79,7 +79,7 @@
                         dvm.state.resetEdit();
                         dvm.mm.mapping = undefined;
                         dvm.mm.sourceOntologies = [];
-                        dvm.cm.reset();
+                        dvm.dm.reset();
                     }
                     dvm.getDeleteEntityName = function() {
                         var ontology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
