@@ -27,10 +27,10 @@ describe('Mapping Preview directive', function() {
         mappingManagerSvc,
         mapperStateSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('mappingPreview');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();

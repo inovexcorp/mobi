@@ -24,19 +24,31 @@
     'use strict';
 
     angular
-        .module('ontologyDownloadOverlay', [])
+        .module('ontologyDownloadOverlay', ['stateManager', 'ontologyManager'])
         .directive('ontologyDownloadOverlay', ontologyDownloadOverlay);
 
-        function ontologyDownloadOverlay() {
+        ontologyDownloadOverlay.$inject = ['REGEX', 'stateManagerService', 'ontologyManagerService'];
+
+        function ontologyDownloadOverlay(REGEX, stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyDownloadOverlay/ontologyDownloadOverlay.html',
+                scope: {},
                 controllerAs: 'dvm',
-                controller: ['REGEX', function(REGEX) {
+                controller: function() {
                     var dvm = this;
+
                     dvm.fileNamePattern = REGEX.FILENAME;
-                }]
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.fileName = dvm.om.getBeautifulIRI(_.get(dvm.sm.ontology, '@id', dvm.sm.ontology.matonto.id)).replace(' ', '_');
+
+                    dvm.download = function() {
+                        dvm.om.download(dvm.sm.ontology.matonto.id, dvm.serialization, dvm.fileName);
+                        dvm.sm.showDownloadOverlay = false;
+                    }
+                }
             }
         }
 })();

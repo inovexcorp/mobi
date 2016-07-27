@@ -28,7 +28,7 @@ import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.matonto.etl.api.csv.MappingManager;
+import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;

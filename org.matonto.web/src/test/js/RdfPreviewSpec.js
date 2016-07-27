@@ -24,21 +24,21 @@ describe('RDF Preview directive', function() {
     var $compile,
         scope,
         jsonFilter = jasmine.createSpy('jsonFilter'),
-        csvManagerSvc,
+        delimitedManagerSvc,
         mappingManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('rdfPreview');
         mockMappingManager();
-        mockCsvManager();
+        mockDelimitedManager();
 
         module(function($provide) {
             $provide.value('jsonFilter', jsonFilter);
         });
 
-        inject(function(_csvManagerService_, _mappingManagerService_) {
-            csvManagerSvc = _csvManagerService_;
+        inject(function(_delimitedManagerService_, _mappingManagerService_) {
+            delimitedManagerSvc = _delimitedManagerService_;
             mappingManagerSvc = _mappingManagerService_;
         });
 
@@ -57,14 +57,14 @@ describe('RDF Preview directive', function() {
             controller.serializeOption = 'jsonld';
             controller.generatePreview();
             scope.$apply();
-            expect(csvManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
-            expect(typeof controller.preview).toBe('object');
+            expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
+            expect(typeof delimitedManagerSvc.preview).toBe('object');
 
             controller.serializeOption = 'turtle';
             controller.generatePreview();
             scope.$apply();
-            expect(csvManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
-            expect(typeof controller.preview).toBe('string');
+            expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
+            expect(typeof delimitedManagerSvc.preview).toBe('string');
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -94,12 +94,11 @@ describe('RDF Preview directive', function() {
         });
         it('with the correctly formatted preview', function() {
             jsonFilter.calls.reset();
-            var controller = this.element.controller('rdfPreview');
-            controller.preview = '';
+            delimitedManagerSvc.preview = '';
             scope.$digest();
             expect(jsonFilter).not.toHaveBeenCalled();
 
-            controller.preview = {};
+            delimitedManagerSvc.preview = {};
             scope.$digest();
             expect(jsonFilter).toHaveBeenCalledWith({}, 4);
         });

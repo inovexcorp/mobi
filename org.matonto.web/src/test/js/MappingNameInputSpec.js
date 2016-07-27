@@ -25,10 +25,10 @@ describe('Mapping Name Input directive', function() {
         scope,
         mappingManagerSvc;
 
-    injectRegexConstant();
     beforeEach(function() {
         module('templates');
         module('mappingNameInput');
+        injectRegexConstant();
         mockMappingManager();
 
         inject(function(_mappingManagerService_) {

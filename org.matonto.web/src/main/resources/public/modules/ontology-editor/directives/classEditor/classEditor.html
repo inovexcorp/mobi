@@ -20,49 +20,36 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<form name="vm.classForm" class="clearfix" novalidate autocomplete="off">
+<div class="clearfix">
     <!-- tab buttons -->
     <tab-button-container>
-        <tab-button is-active="vm.state.editorTab === 'basic'"
-                    on-click="vm.setEditorTab('basic')">{{vm.prettyPrint(vm.selected)}}</tab-button>
+        <tab-button is-active="dvm.sm.state.editorTab === 'basic'"
+                    on-click="dvm.sm.setEditorTab('basic')">{{dvm.om.getEntityName(dvm.sm.selected)}}</tab-button>
 
-        <tab-button is-active="vm.state.editorTab === 'axioms'"
-                    on-click="vm.setEditorTab('axioms')">Axioms</tab-button>
+        <tab-button is-active="dvm.sm.state.editorTab === 'axioms'"
+                    on-click="dvm.sm.setEditorTab('axioms')">Axioms</tab-button>
     </tab-button-container>
 
     <!-- basic tab -->
-    <div ng-if="vm.state.editorTab === 'basic'" class="tab clearfix">
-        <error-display ng-if="vm.selected.matonto.createError">{{vm.selected.matonto.createError}}</error-display>
-
-        <!-- static iri -->
-        <static-iri iri="vm.selected['@id']"
-                    on-edit="vm.editIRI(iriBegin, iriThen, iriEnd)"
-                    ontology-iri-begin="vm.ontology.matonto.iriBegin"
-                    ontology-iri-then="vm.ontology.matonto.iriThen"></static-iri>
-
+    <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
+        <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <annotation-tab></annotation-tab>
     </div>
 
     <!-- axioms tab -->
-    <div ng-if="vm.state.editorTab === 'axioms'" class="tab clearfix">
+    <div ng-if="dvm.sm.state.editorTab === 'axioms'" class="tab clearfix">
         <!-- rdfs:subClassOf -->
-        <object-select ng-model="vm.selected[vm.rdfs + 'subClassOf']"
-                       selected-id="vm.selected['@id']"
+        <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'subClassOf']"
                        display-text="'Sub Class Of'"
-                       muted-text="vm.rdfs + 'subClassOf'"
-                       change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"
-                       ontology-id="{{vm.ontology.matonto.id}}"
-                       matonto="vm.ontology.matonto"></object-select>
+                       muted-text="dvm.prefixes.rdfs + 'subClassOf'"
+                       select-list="dvm.subClasses"
+                       on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
 
         <!-- owl:disjointWith -->
-        <object-select ng-model="vm.selected[vm.owl + 'disjointWith']"
-                       selected-id="vm.selected['@id']"
+        <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'disjointWith']"
                        display-text="'Disjoint With'"
-                       muted-text="vm.owl + 'disjointWith'"
-                       change-event="vm.entityChanged()"
-                       select-list="vm.ontology.matonto.subClasses"
-                       ontology-id="{{vm.ontology.matonto.id}}"
-                       matonto="vm.ontology.matonto"></object-select>
+                       muted-text="dvm.prefixes.owl + 'disjointWith'"
+                       select-list="dvm.subClasses"
+                       on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
     </div>
-</form>
+</div>

@@ -26,10 +26,10 @@ describe('Range Class Description directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('rangeClassDescription');
+        mockPrefixes();
         mockOntologyManager();
         mockMappingManager();
 

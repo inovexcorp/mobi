@@ -81,7 +81,7 @@ describe('SPARQL Result Table directive', function() {
             expect(table.length).toBe(1);
         });
         it('based on pagination directive', function() {
-            var pagination = element.querySelectorAll('pagination');
+            var pagination = element.find('pagination');
             expect(pagination.length).toBe(1);
         });
         it('<th>s should match bindingNames length', function() {

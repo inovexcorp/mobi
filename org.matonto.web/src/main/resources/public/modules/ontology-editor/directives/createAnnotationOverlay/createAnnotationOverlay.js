@@ -24,19 +24,36 @@
     'use strict';
 
     angular
-        .module('createAnnotationOverlay', [])
+        .module('createAnnotationOverlay', ['annotationManager', 'stateManager'])
         .directive('createAnnotationOverlay', createAnnotationOverlay);
 
-        function createAnnotationOverlay() {
+        createAnnotationOverlay.$inject = ['REGEX', 'annotationManagerService', 'stateManagerService'];
+
+        function createAnnotationOverlay(REGEX, annotationManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createAnnotationOverlay/createAnnotationOverlay.html',
+                scope: {},
                 controllerAs: 'dvm',
-                controller: ['REGEX', function(REGEX) {
+                controller: function() {
                     var dvm = this;
+
                     dvm.iriPattern = REGEX.IRI;
-                }]
+                    dvm.am = annotationManagerService;
+                    dvm.sm = stateManagerService;
+
+                    dvm.create = function() {
+                        dvm.am.create(dvm.sm.ontology, dvm.iri)
+                            .then(function(response) {
+                                dvm.error = '';
+                                dvm.iri = '';
+                                dvm.sm.showCreateAnnotationOverlay = false;
+                            }, function(errorMessage) {
+                                dvm.error = errorMessage;
+                            });
+                    }
+                }
             }
         }
 })();

@@ -31,14 +31,14 @@
          * @requires  ontologyManager
          * @requires  mappingManager
          * @requires  mapperState
-         * @requires  csvManager
+         * @requires  delimitedManager
          *
          * @description 
          * The `classList` module only provides the `classList` directive which creates
          * a "boxed" area with a list of all the class and property mappings in the selected
          * mapping.
          */
-        .module('classList', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'csvManager'])
+        .module('classList', ['prefixes', 'ontologyManager', 'mappingManager', 'mapperState', 'delimitedManager'])
         /**
          * @ngdoc directive
          * @name classList.directive:classList
@@ -48,7 +48,7 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
-         * @requires  csvManager.service:csvManagerService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `classList` is a directive that creates a "boxed" div with an unordered list of the 
@@ -58,9 +58,9 @@
          */
         .directive('classList', classList);
 
-        classList.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'csvManagerService'];
+        classList.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
 
-        function classList(prefixes, ontologyManagerService, mappingManagerService, mapperStateService, csvManagerService) {
+        function classList(prefixes, ontologyManagerService, mappingManagerService, mapperStateService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -71,7 +71,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.cm = csvManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     dvm.hasProps = function(classMapping) {
                         return dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']).length > 0;
@@ -96,7 +96,7 @@
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.selectedPropMappingId = propMapping['@id'];
                         dvm.state.updateAvailableColumns();
-                        dvm.state.selectedColumn = dvm.cm.filePreview.headers[parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']"), 10)];
+                        dvm.state.selectedColumn = dvm.dm.filePreview.headers[parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']"), 10)];
                     }
                     dvm.clickAddProp = function(classMapping) {
                         dvm.state.resetEdit();
@@ -124,7 +124,7 @@
                             mappingName = getClassName(wrapperClassMapping);
                         } else if (dvm.mm.isDataMapping(propMapping)) {
                             var index = parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                            mappingName = dvm.cm.filePreview.headers[index];
+                            mappingName = dvm.dm.filePreview.headers[index];
                         }
                         return propName + ': ' + mappingName;
                     }

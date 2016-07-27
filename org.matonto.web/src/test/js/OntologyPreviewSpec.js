@@ -25,10 +25,10 @@ describe('Ontology Preview directive', function() {
         scope,
         ontologyManagerSvc;
 
-    mockPrefixes();
     beforeEach(function() {
         module('templates');
         module('ontologyPreview');
+        mockPrefixes();
         mockOntologyManager();
         
         inject(function(_ontologyManagerService_) {

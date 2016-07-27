@@ -24,14 +24,28 @@
     'use strict';
 
     angular
-        .module('propertyEditor', [])
+        .module('propertyEditor', ['stateManager', 'ontologyManager', 'prefixes'])
         .directive('propertyEditor', propertyEditor);
 
-        function propertyEditor() {
+        propertyEditor.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
+
+        function propertyEditor($filter, stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/propertyEditor/propertyEditor.html'
+                templateUrl: 'modules/ontology-editor/directives/propertyEditor/propertyEditor.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
+                    dvm.prefixes = prefixes;
+                    dvm.propertyTypes = dvm.om.getPropertyTypes();
+                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
+                    dvm.subObjectProperties = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subObjectProperties, dvm.sm.selected.matonto.originalIri);
+                }
             }
         }
 })();
