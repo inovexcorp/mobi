@@ -326,7 +326,7 @@ describe('Mapping Manager service', function() {
             expect(result).toEqual([{'@id': 'class1'}]);
         });
         it('if the property exists in the passed ontologies', function() {
-            ontologyManagerSvc.getClassProperty.and.returnValue({'range': [{'@id': 'class2'}]});
+            ontologyManagerSvc.getClassProperty.and.returnValue({[prefixes.rdfs + 'range']: [{'@id': 'class2'}]});
             var result = mappingManagerSvc.addObjectProp([{'@id': 'class1'}], [{}], 'class1', 'propId');
             var classMapping1 = _.find(result, {'@id': 'class1'});
             var classMapping2 = _.find(result, {'mapsTo': [{'@id': 'class2'}]});
