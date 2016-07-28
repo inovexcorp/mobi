@@ -33,23 +33,22 @@ import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.karaf.jaas.modules.BackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
-import org.matonto.jaas.rest.UsersRest;
+import org.matonto.jaas.rest.UserRest;
 import org.matonto.rest.util.ErrorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
-public class UsersRestImpl implements UsersRest {
+public class UserRestImpl implements UserRest {
     protected JaasRealm realm;
     protected BackingEngine engine;
-    private final Logger logger = LoggerFactory.getLogger(UsersRestImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(UserRestImpl.class);
 
     @Reference(target = "(realmId=matonto)")
     protected void setRealm(JaasRealm realm) {
@@ -57,9 +56,13 @@ public class UsersRestImpl implements UsersRest {
     }
 
     @Activate
-    protected void start(Map<String, Object> props) {
+    protected void start() {
         AppConfigurationEntry[] entries = realm.getEntries();
-        engine = new TokenBackingEngineFactory().build(entries[1].getOptions());
+        engine = getFactory().build(entries[1].getOptions());
+    }
+
+    protected TokenBackingEngineFactory getFactory() {
+        return new TokenBackingEngineFactory();
     }
 
     @Override
@@ -74,6 +77,14 @@ public class UsersRestImpl implements UsersRest {
 
     @Override
     public Response createUser(String username, String password) {
+        if (findUser(username).isPresent()) {
+            throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
+        }
+
+        if (username == null || password == null) {
+            throw ErrorUtils.sendError("Both a username and password must be provided", Response.Status.BAD_REQUEST);
+        }
+
         engine.addUser(username, password);
         logger.info("Created user " + username);
         return Response.ok().build();
@@ -159,6 +170,8 @@ public class UsersRestImpl implements UsersRest {
     public Response listUserGroups(String username) {
         UserPrincipal user = findUser(username)
                 .orElseThrow(() -> ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST));
+
+        logger.info("Listing groups for " + username);
         JSONArray groups = new JSONArray();
         engine.listGroups(user).stream()
                 .map(GroupPrincipal::getName)

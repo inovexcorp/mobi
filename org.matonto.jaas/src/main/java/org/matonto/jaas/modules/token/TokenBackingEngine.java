@@ -44,26 +44,17 @@ public class TokenBackingEngine implements BackingEngine {
     private static final Logger LOG = Logger.getLogger(TokenBackingEngine.class.getName());
 
     private String usersFileString;
-    private Properties users = new Properties();
     private EncryptionSupport encryptionSupport;
 
     public TokenBackingEngine(String usersFileString) {
         this.usersFileString = usersFileString;
-        try {
-            users.load(new FileInputStream(usersFileString));
-        } catch (IOException e) {
-            LOG.warn("Cannot open users file: " + usersFileString);
-        }
+        loadProperties();
     }
 
     public TokenBackingEngine(String usersFileString, EncryptionSupport encryptionSupport) {
         this.usersFileString = usersFileString;
         this.encryptionSupport = encryptionSupport;
-        try {
-            users.load(new FileInputStream(usersFileString));
-        } catch (IOException e) {
-            LOG.warn("Cannot open users file: " + usersFileString);
-        }
+        loadProperties();
     }
 
     @Override
@@ -76,6 +67,7 @@ public class TokenBackingEngine implements BackingEngine {
     }
 
     private void addUserInternal(String username, String password) {
+        Properties users = loadProperties();
         String[] infos;
         StringBuilder userInfoBuffer = new StringBuilder();
 
@@ -109,31 +101,24 @@ public class TokenBackingEngine implements BackingEngine {
             users.put(username, newPassword);
         }
 
-        try {
-            users.store(new FileOutputStream(usersFileString), "");
-        } catch (IOException ex) {
-            LOG.error("Cannot update users file,", ex);
-        }
+        writeProperties(users);
     }
 
     @Override
     public void deleteUser(String username) {
+        Properties users = loadProperties();
         // delete all its groups first, for garbage collection of the groups
         for (GroupPrincipal gp : listGroups(username)) {
             deleteGroup(username, gp.getName());
         }
 
         users.remove(username);
-
-        try {
-            users.store(new FileOutputStream(usersFileString), "");
-        } catch (IOException ex) {
-            LOG.error("Cannot update users file,", ex);
-        }
+        writeProperties(users);
     }
 
     @Override
     public List<UserPrincipal> listUsers() {
+        Properties users = loadProperties();
         List<UserPrincipal> result = new ArrayList<>();
 
         for (Object user : users.keySet()) {
@@ -158,6 +143,7 @@ public class TokenBackingEngine implements BackingEngine {
     }
 
     private List<RolePrincipal> listRoles(String name) {
+        Properties users = loadProperties();
 
         List<RolePrincipal> result = new ArrayList<>();
         String userInfo = users.getProperty(name);
@@ -180,6 +166,7 @@ public class TokenBackingEngine implements BackingEngine {
 
     @Override
     public void addRole(String username, String role) {
+        Properties users = loadProperties();
         String userInfos = users.getProperty(username);
         if (userInfos != null) {
             for (RolePrincipal rp : listRoles(username)) {
@@ -195,15 +182,12 @@ public class TokenBackingEngine implements BackingEngine {
             String newUserInfos = userInfos + "," + role;
             users.put(username, newUserInfos);
         }
-        try {
-            users.store(new FileOutputStream(usersFileString), "");
-        } catch (IOException ex) {
-            LOG.error("Cannot update users file,", ex);
-        }
+        writeProperties(users);
     }
 
     @Override
     public void deleteRole(String username, String role) {
+        Properties users = loadProperties();
         String[] infos;
         StringBuilder userInfoBuffer = new StringBuilder();
 
@@ -227,11 +211,7 @@ public class TokenBackingEngine implements BackingEngine {
             LOG.warn("Attempted to delete role from non-existent user, " + username);
         }
 
-        try {
-            users.store(new FileOutputStream(usersFileString), "");
-        } catch (Exception ex) {
-            LOG.error("Cannot update users file,", ex);
-        }
+        writeProperties(users);
     }
 
     @Override
@@ -242,6 +222,7 @@ public class TokenBackingEngine implements BackingEngine {
 
     @Override
     public Map<GroupPrincipal, String> listGroups() {
+        Properties users = loadProperties();
         Map<GroupPrincipal, String> result = new HashMap<>();
         users.stringPropertyNames().stream()
                 .filter(name -> name.startsWith(GROUP_PREFIX))
@@ -251,6 +232,7 @@ public class TokenBackingEngine implements BackingEngine {
     }
 
     private List<GroupPrincipal> listGroups(String userName) {
+        Properties users = loadProperties();
         List<GroupPrincipal> result = new ArrayList<>();
         String userInfo = users.getProperty(userName);
         if (userInfo != null) {
@@ -267,6 +249,7 @@ public class TokenBackingEngine implements BackingEngine {
 
     @Override
     public void addGroup(String username, String group) {
+        Properties users = loadProperties();
         String groupName = GROUP_PREFIX + group;
         if (users.getProperty(groupName) == null) {
             addUserInternal(groupName, "group");
@@ -304,11 +287,30 @@ public class TokenBackingEngine implements BackingEngine {
 
     @Override
     public void createGroup(String group) {
+        Properties users = loadProperties();
         String groupName = GROUP_PREFIX + group;
         if (users.getProperty(groupName) == null) {
             addUserInternal(groupName, "group");
         } else {
             throw new IllegalArgumentException("Group: " + group + " already exists");
+        }
+    }
+
+    private Properties loadProperties() {
+        Properties users = new Properties();
+        try {
+            users.load(new FileInputStream(usersFileString));
+        } catch (IOException e) {
+            LOG.warn("Cannot open users file: " + usersFileString);
+        }
+        return users;
+    }
+
+    private void writeProperties(Properties users) {
+        try {
+            users.store(new FileOutputStream(usersFileString), "");
+        } catch (Exception ex) {
+            LOG.error("Cannot update users file,", ex);
         }
     }
 }

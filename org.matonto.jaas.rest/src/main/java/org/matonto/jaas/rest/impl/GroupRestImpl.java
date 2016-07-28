@@ -33,7 +33,7 @@ import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.karaf.jaas.modules.BackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
-import org.matonto.jaas.rest.GroupsRest;
+import org.matonto.jaas.rest.GroupRest;
 import org.matonto.rest.util.ErrorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +45,10 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
-public class GroupsRestImpl implements GroupsRest {
+public class GroupRestImpl implements GroupRest {
     protected JaasRealm realm;
     protected BackingEngine engine;
-    private final Logger logger = LoggerFactory.getLogger(GroupsRestImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(GroupRestImpl.class);
 
     @Reference(target = "(realmId=matonto)")
     protected void setRealm(JaasRealm realm) {
@@ -56,9 +56,13 @@ public class GroupsRestImpl implements GroupsRest {
     }
 
     @Activate
-    protected void start(Map<String, Object> props) {
+    protected void start() {
         AppConfigurationEntry[] entries = realm.getEntries();
-        engine = new TokenBackingEngineFactory().build(entries[1].getOptions());
+        engine = getFactory().build(entries[1].getOptions());
+    }
+
+    protected TokenBackingEngineFactory getFactory() {
+        return new TokenBackingEngineFactory();
     }
 
     @Override
@@ -70,6 +74,14 @@ public class GroupsRestImpl implements GroupsRest {
 
     @Override
     public Response createGroup(String groupName) {
+        if (findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group already exists", Response.Status.BAD_REQUEST);
+        }
+
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
         engine.createGroup(groupName);
         logger.info("Created group " + groupName);
         return Response.ok().build();
@@ -81,7 +93,7 @@ public class GroupsRestImpl implements GroupsRest {
                 .orElseThrow(() -> ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
         JSONObject obj = new JSONObject();
         obj.put("name", group.getKey().getName());
-        obj.put("roles", group.getValue());
+        obj.put("roles", JSONArray.fromObject(group.getValue().split(",")));
         return Response.status(200).entity(obj.toString()).build();
     }
 
@@ -96,10 +108,14 @@ public class GroupsRestImpl implements GroupsRest {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
 
+        List<UserPrincipal> users = engine.listUsers();
         engine.listUsers().stream()
                 .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
                 .map(UserPrincipal::getName)
-                .forEach(user -> engine.deleteGroup(user, groupName));
+                .forEach(user -> {
+                    engine.deleteGroup(user, groupName);
+                    logger.info("Deleting " + groupName + " from " + user);
+                });
         logger.info("Deleted group " + groupName);
 
         return Response.ok().build();
@@ -148,11 +164,11 @@ public class GroupsRestImpl implements GroupsRest {
         List<GroupPrincipal> groups = engine.listGroups(user);
         for (GroupPrincipal group : groups) {
             if (group.getName().equals(groupName)) {
-                logger.info("User " + user.getName() + " is in group " + groupName);
+                logger.info("User " + user.getName() + " is in " + groupName);
                 return true;
             }
         }
-        logger.info("User " + user.getName() + " is not in group " + groupName);
+        logger.info("User " + user.getName() + " is not in " + groupName);
         return false;
     }
 }
