@@ -1,4 +1,0 @@
-build = ${tstamp}
-Bundle-SymbolicName: org.matonto.api
-Bundle-Name: MatOnto Core API
-Export-Package: org.matonto.exception
