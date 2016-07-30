@@ -66,6 +66,16 @@ This command uses OBR to deploy the MatOnto bundles and their dependencies.
 
 The MatOnto web application should now be accessible at `https://localhost:8443/matonto/index.html`.
 
+### Release Build
+
+To prepare MatOnto for a release (non-snapshot) build, run the build using the `release-build` profile, i.e:
+
+```
+mvn clean install -P release-build
+```
+
+The `release-build` profile will minify the web resources and prepare karaf scripts to use release versions.
+
 ## License
 
 MatOnto is made available under the terms of the GNU Affero General Public License (AGPL).  See LICENSE.TXT for details.
