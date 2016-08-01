@@ -152,6 +152,24 @@ describe('Class List directive', function() {
             expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
+        it('should test whether a class mapping is linked to the selected property mapping', function() {
+            mappingManagerSvc.mapping.jsonld.push({'@id': 'prop', '@type': ['ObjectMapping'], 'classMapping': [{'@id': ''}]})
+            mapperStateSvc.selectedPropMappingId = 'prop';
+            var controller = this.element.controller('classList');
+            var result = controller.isLinkedToSelectedProp('');
+            expect(result).toBe(true);
+
+            result = controller.isLinkedToSelectedProp('class');
+            expect(result).toBe(false);
+
+            mappingManagerSvc.mapping.jsonld = [{'@id': 'prop', '@type': ['DataMapping']}];
+            result = controller.isLinkedToSelectedProp('');
+            expect(result).toBe(false);
+
+            mappingManagerSvc.mapping.jsonld = [];
+            result = controller.isLinkedToSelectedProp('class');
+            expect(result).toBe(false);
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
@@ -279,6 +297,27 @@ describe('Class List directive', function() {
 
             var propItem = this.element.querySelectorAll('ul.list ul.props li')[0];
             expect(angular.element(propItem.querySelectorAll('a')[0]).hasClass('invalid')).toBe(true);
+        });
+        it('depending on whether a new property is being added', function() {
+            var classMappings = [{'@id': ''}];
+            var propMappings = [{'@id': ''}];
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
+            mapperStateSvc.newProp = true;
+            scope.$digest();
+
+            var addPropLink = this.element.querySelectorAll('ul.list ul.props li a:last-child')[0];
+            expect(angular.element(addPropLink).hasClass('active')).toBe(true);
+        });
+        it('depending on whether a class mapping is linked to the selected property mapping', function() {
+            var controller = this.element.controller('classList');
+            var classMappings = [{'@id': ''}];
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
+            spyOn(controller, 'isLinkedToSelectedProp').and.returnValue(true);
+            scope.$digest();
+
+            var classLink = this.element.querySelectorAll('ul.list li > a')[0];
+            expect(angular.element(classLink).hasClass('linked')).toBe(true);
         });
     });
     it('should call clickClass when a class title is clicked', function() {
