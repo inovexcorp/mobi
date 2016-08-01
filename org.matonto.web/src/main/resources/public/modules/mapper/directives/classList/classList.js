@@ -146,6 +146,10 @@
                             ', '
                         );
                     }
+                    dvm.isLinkedToSelectedProp = function(classMappingId) {
+                        var propMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId});
+                        return !!(propMapping && dvm.mm.isObjectMapping(propMapping) && _.get(propMapping, "['" + prefixes.delim + "classMapping'][0]['@id']") === classMappingId);
+                    }
                     function getClassName(classMapping) {
                         var classId = getClassId(classMapping);
                         var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
