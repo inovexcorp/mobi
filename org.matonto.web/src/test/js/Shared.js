@@ -185,13 +185,13 @@ function mockMappingManager() {
             this.removeProp = jasmine.createSpy('removeProp').and.returnValue([]);
             this.removeClass = jasmine.createSpy('removeClass').and.returnValue([]);
             this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.callFake(function(entity) {
-                return entity && entity.hasOwnProperty('@type') && entity['@type'] === 'ObjectMapping' ? true : false;
+                return entity && entity.hasOwnProperty('@type') && _.includes(entity['@type'], 'ObjectMapping') ? true : false;
             });
             this.isDataMapping = jasmine.createSpy('isDataMapping').and.callFake(function(entity) {
-                return entity && entity.hasOwnProperty('@type') && entity['@type'] === 'DataMapping' ? true : false;
+                return entity && entity.hasOwnProperty('@type') && _.includes(entity['@type'], 'DataMapping') ? true : false;
             });
             this.isClassMapping = jasmine.createSpy('isClassMapping').and.callFake(function(entity) {
-                return entity && entity.hasOwnProperty('@type') && entity['@type'] === 'ClassMapping' ? true : false;
+                return entity && entity.hasOwnProperty('@type') && _.includes(entity['@type'], 'ClassMapping') ? true : false;
             });
             this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.returnValue([]);
             this.getSourceOntologyId = jasmine.createSpy('getSourceOntologyId').and.returnValue('');
