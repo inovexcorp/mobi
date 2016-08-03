@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  org.matonto.matonto-feature
+  karaf.feature
   $Id:$
   $HeadURL:$
   %%
@@ -33,56 +33,33 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>matonto-feature</artifactId>
-
-    <name>${project.groupId}.${project.artifactId}</name>
-    <description>MatOnto Feature</description>
-
+    <artifactId>karaf.feature</artifactId>
     <packaging>feature</packaging>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>api</artifactId>
-            <version>1.0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>persistence.api</artifactId>
-            <version>1.0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>persistence.cli</artifactId>
-            <version>1.0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>repository.impl.sesame</artifactId>
-            <version>1.0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>repository.impl.core</artifactId>
-            <version>1.0.6</version>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.karaf.tooling</groupId>
                 <artifactId>karaf-maven-plugin</artifactId>
+                <version>${karaf.version}</version>
                 <extensions>true</extensions>
-                <configuration>
-                    <includeTransitiveDependency>false</includeTransitiveDependency>
-                </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/feature</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/feature.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/feature</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/feature.xml</exclude>
+                </excludes>
+            </resource>
+        </resources>
     </build>
 </project>
