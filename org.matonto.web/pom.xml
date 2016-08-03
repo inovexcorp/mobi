@@ -176,7 +176,7 @@
 
     <profiles>
         <profile>
-            <id>prod</id>
+            <id>release-build</id>
             <properties>
                 <build.env>prod</build.env>
             </properties>

@@ -47,6 +47,7 @@
             mvn:org.matonto/index.dependency/${project.version}/xml \
             mvn:org.matonto/index.sesame4/${project.version}/xml
         </obr.urls>
+        <deploy.bundles.version></deploy.bundles.version>
     </properties>
 
     <dependencies>
@@ -186,4 +187,13 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release-build</id>
+            <properties>
+                <deploy.bundles.version>,${project.version}</deploy.bundles.version>
+            </properties>
+        </profile>
+    </profiles>
 </project>
