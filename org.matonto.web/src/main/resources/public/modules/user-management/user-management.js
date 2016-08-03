@@ -24,21 +24,21 @@
     'use strict';
 
     angular
-        .module('login', [])
-        .controller('LoginController', LoginController);
+        .module('user-management', [
+            /* Custom directives */
+            'addGroupOverlay',
+            'addMembersOverlay',
+            'addUserOverlay',
+            'groupEditor',
+            'groupsList',
+            'userEditor',
+            'userManagementEditors',
+            'userManagementOverlays',
+            'userManagementSideBar',
+            'userSelect',
+            'usersList',
 
-    LoginController.$inject = ['loginManagerService'];
-
-    function LoginController(loginManagerService) {
-        var vm = this;
-
-        vm.login = function(isValid) {
-            loginManagerService.login(isValid, vm.form.username, vm.form.password)
-                .then(function() {
-                    vm.errorMessage = '';
-                }, function(errorMessage) {
-                    vm.errorMessage = errorMessage;
-                });
-        }
-    }
+            /* Custom services */
+            'userState'
+        ]);
 })();

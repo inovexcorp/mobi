@@ -24,21 +24,16 @@
     'use strict';
 
     angular
-        .module('login', [])
-        .controller('LoginController', LoginController);
+        .module('user-account', [])
+        .controller('UserAccountController', UserAccountController);
 
-    LoginController.$inject = ['loginManagerService'];
+    UserAccountController.$inject = ['userManagerService', 'loginManagerService'];
 
-    function LoginController(loginManagerService) {
+    function UserAccountController(userManagerService, loginManagerService) {
         var vm = this;
+            vm.um = userManagerService;
+            vm.lm = loginManagerService;
 
-        vm.login = function(isValid) {
-            loginManagerService.login(isValid, vm.form.username, vm.form.password)
-                .then(function() {
-                    vm.errorMessage = '';
-                }, function(errorMessage) {
-                    vm.errorMessage = errorMessage;
-                });
-        }
+        vm.currentUser = _.find(vm.um.users, {username: vm.lm.currentUser});
     }
 })();

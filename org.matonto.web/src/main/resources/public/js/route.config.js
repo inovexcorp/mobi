@@ -140,6 +140,26 @@
                 data: {
                     title: 'SPARQL'
                 }
+            }).state('root.user-management', {
+                url: '/user-management',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/user-management/user-management.html'
+                    }
+                },
+                data: {
+                    title: 'User Management'
+                }
+            }).state('root.user-account', {
+                url: '/my-account',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/user-account/user-account.html'
+                    }
+                },
+                data: {
+                    title: 'My Account'
+                }
             });
 
         authenticate.$inject = ['loginManagerService'];

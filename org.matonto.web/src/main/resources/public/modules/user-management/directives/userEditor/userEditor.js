@@ -20,25 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     angular
-        .module('login', [])
-        .controller('LoginController', LoginController);
+        .module('userEditor', [])
+        .directive('userEditor', userEditor);
 
-    LoginController.$inject = ['loginManagerService'];
+    userEditor.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
 
-    function LoginController(loginManagerService) {
-        var vm = this;
-
-        vm.login = function(isValid) {
-            loginManagerService.login(isValid, vm.form.username, vm.form.password)
-                .then(function() {
-                    vm.errorMessage = '';
-                }, function(errorMessage) {
-                    vm.errorMessage = errorMessage;
-                });
-        }
+    function userEditor(userStateService, userManagerService, loginManagerService) {
+        return {
+            restrict: 'E',
+            controllerAs: 'dvm',
+            replace: true,
+            scope: {},
+            controller: function() {
+                var dvm = this;
+                dvm.state = userStateService;
+                dvm.um = userManagerService;
+                dvm.lm = loginManagerService;
+            },
+            templateUrl: 'modules/user-management/directives/userEditor/userEditor.html'
+        };
     }
 })();

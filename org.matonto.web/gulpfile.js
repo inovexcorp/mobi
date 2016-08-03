@@ -56,6 +56,7 @@ var jsFiles = function(prefix) {
             prefix + 'angular-cookies/**/angular-cookies.min.js',
             prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
             prefix + 'angular-messages/**/angular-messages.min.js',
+            prefix + 'angular-ui-bootstrap/**/ui-bootstrap.js',
             prefix + 'ui-select/**/select.min.js'
         ]
     },

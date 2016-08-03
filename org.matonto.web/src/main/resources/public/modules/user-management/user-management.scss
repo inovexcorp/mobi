@@ -1,0 +1,26 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.user-management {
+    &>.row {
+      padding-left: 39px; 
+    }
+
+    .table {
+        tr {
+            &:first-child td {
+                border-top: none;
+            }
+
+            td {
+                .icons {
+                    float: right;
+
+                    span {
+                        margin-left: 10px;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -41,6 +41,7 @@
     "angular-cookies": "^1.5.0",
     "angular-messages": "^1.5.3",
     "angular-mocks": "1.4.8",
+    "angular-ui-bootstrap": "^2.0.1",
     "angular-ui-codemirror": "^0.3.0",
     "angular-ui-router": "^0.2.18",
     "angular-uuid": "^0.0.2",

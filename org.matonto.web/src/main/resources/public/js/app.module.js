@@ -30,6 +30,7 @@
             'ngAnimate',
             'ngCookies',
             'ngMessages',
+            'ui.bootstrap',
             'ui.codemirror',
             'ui.router',
             'ui.select',
@@ -68,17 +69,21 @@
             'ontology-editor',
             'settings',
             'sparql',
+            'user-account',
+            'user-management',
             'webtop',
 
             /* Custom Services */
             'annotationManager',
             'catalogManager',
+            'loginManager',
             'mappingManager',
             'ontologyManager',
             'prefixes',
             'responseObj',
             'settingsManager',
-            'updateRefs'
+            'updateRefs',
+            'userManager'
         ])
         .constant('_', window._)
         .constant('REGEX', {

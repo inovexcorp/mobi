@@ -53,6 +53,8 @@
             var self = this,
                 anon = 'self anon';
 
+            self.currentUser = '';
+
             /**
              * @ngdoc method
              * @name loginManager.loginManagerService#login
@@ -82,6 +84,7 @@
                     $http.get('/matontorest/user/login', config)
                         .then(function(response) {
                             if(response.status === 200 && response.data.scope !== anon) {
+                                self.currentUser = response.data.sub;
                                 $state.go('root.home');
                                 deferred.resolve(true);
                             } else {
@@ -111,6 +114,7 @@
             self.logout = function() {
                 $http.get('/matontorest/user/logout')
                     .then(function(response) {
+                        self.currentUser = '';
                         $state.go('login');
                     });
                 $state.go('login');
@@ -129,23 +133,40 @@
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
              * response data if no user is logged in.
              */
-            self.isAuthenticated = function() {
-                var handleError = function(data) {
-                    $timeout(function() {
+            self.isAuthenticated = function () {
+                var handleError = function handleError(data) {
+                    self.currentUser = '';            
+                    $timeout(function () {
                         $state.go('login');
                     });
                     return $q.reject(data);
-                }
-                return $http.get('/matontorest/user/current')
-                    .then(function(response) {
-                        if(response.status === 200 && response.data.scope !== anon) {
-                            return $q.when();
-                        } else {
-                            return handleError(response.data);
-                        }
-                    }, function(response) {
-                        return handleError(response.data);
-                    });
-            }
+                };
+                return self.getCurrentLogin().then(data => {
+                    if (data.scope !== anon) {
+                        self.currentUser = data.sub;
+                        return $q.when();
+                    } else {
+                        return handleError(data);
+                    }
+                }, data => {
+                    return handleError(data);
+                });
+            };
+
+            self.getCurrentLogin = function () {
+                var deferred = $q.defer();
+
+                $http.get('/matontorest/user/current').then(response => {
+                    if (response.status === 200) {
+                        deferred.resolve(response.data);
+                    } else {
+                        deferred.reject(response.data);
+                    }
+                }, error => {
+                    deferred.reject(error.data);
+                });
+
+                return deferred.promise;
+            };
         }
 })();
