@@ -296,6 +296,32 @@ public class TokenBackingEngine implements BackingEngine {
         }
     }
 
+    /**
+     * Checks the passed password against the saved password of the user specified by the
+     * passed username.
+     *
+     * @param username the username of the user to check the password of
+     * @param password the password to test
+     * @return a boolean that is true if the password match; false otherwise
+     */
+    public boolean checkPassword(String username, String password) {
+        Properties users = loadProperties();
+        String userInfos = users.getProperty(username);
+
+        if (userInfos != null && userInfos.length() > 0) {
+            String[] infos = userInfos.split(",");
+            if (encryptionSupport != null && encryptionSupport.getEncryption() != null) {
+                return encryptionSupport.getEncryption().checkPassword(infos[0], password);
+            } else {
+                return infos[0].equals(password);
+            }
+        } else {
+            LOG.warn("Attempted to check password of non-existent user, " + username);
+        }
+
+        return false;
+    }
+
     private Properties loadProperties() {
         Properties users = new Properties();
         try {

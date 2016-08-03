@@ -28,14 +28,15 @@ import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.RolePrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
-import org.apache.karaf.jaas.modules.BackingEngine;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
+import org.matonto.jaas.modules.token.TokenBackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.Test;
 
@@ -61,7 +62,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
     JaasRealm realm;
 
     @Mock
-    BackingEngine engine;
+    TokenBackingEngine engine;
 
     @Mock
     TokenBackingEngineFactory factory;
@@ -85,6 +86,8 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engine.listUsers()).thenReturn(users);
         when(engine.listGroups(any(UserPrincipal.class))).thenReturn(groups);
         when(engine.listRoles(any(Principal.class))).thenReturn(roles);
+        when(engine.checkPassword(anyString(), anyString())).thenReturn(true);
+        when(engine.checkPassword(anyString(), contains("error"))).thenReturn(false);
         doNothing().when(engine).addUser(anyString(), anyString());
         doNothing().when(engine).addGroup(anyString(), anyString());
         doNothing().when(engine).addRole(anyString(), anyString());
@@ -261,6 +264,23 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
         response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().delete();
+        Assert.assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void checkPasswordTest() {
+        Response response = target().path("users/testUser/password").queryParam("password", "123")
+                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        Assert.assertTrue(response.readEntity(Boolean.class));
+
+        response = target().path("users/testUser/password").queryParam("password", "error")
+                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        Assert.assertTrue(!response.readEntity(Boolean.class));
+
+        response = target().path("users/error/password").queryParam("password", "123")
+                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 }

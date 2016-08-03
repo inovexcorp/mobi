@@ -29,11 +29,11 @@ import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.RolePrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
-import org.apache.karaf.jaas.modules.BackingEngine;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
+import org.matonto.jaas.modules.token.TokenBackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
@@ -63,7 +63,7 @@ public class GroupRestImplTest extends MatontoRestTestNg {
     JaasRealm realm;
 
     @Mock
-    BackingEngine engine;
+    TokenBackingEngine engine;
 
     @Mock
     TokenBackingEngineFactory factory;

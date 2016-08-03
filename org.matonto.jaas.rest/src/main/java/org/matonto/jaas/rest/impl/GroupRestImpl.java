@@ -32,6 +32,7 @@ import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.karaf.jaas.modules.BackingEngine;
+import org.matonto.jaas.modules.token.TokenBackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
 import org.matonto.jaas.rest.GroupRest;
 import org.matonto.rest.util.ErrorUtils;
@@ -47,7 +48,7 @@ import javax.ws.rs.core.Response;
 @Component(immediate = true)
 public class GroupRestImpl implements GroupRest {
     protected JaasRealm realm;
-    protected BackingEngine engine;
+    protected TokenBackingEngine engine;
     private final Logger logger = LoggerFactory.getLogger(GroupRestImpl.class);
 
     @Reference(target = "(realmId=matonto)")
@@ -58,7 +59,10 @@ public class GroupRestImpl implements GroupRest {
     @Activate
     protected void start() {
         AppConfigurationEntry[] entries = realm.getEntries();
-        engine = getFactory().build(entries[1].getOptions());
+        BackingEngine be = getFactory().build(entries[1].getOptions());
+        if (be instanceof TokenBackingEngine) {
+            engine = (TokenBackingEngine) be;
+        }
     }
 
     protected TokenBackingEngineFactory getFactory() {
@@ -68,7 +72,8 @@ public class GroupRestImpl implements GroupRest {
     @Override
     public Response listGroups() {
         JSONObject obj = new JSONObject();
-        engine.listGroups().forEach((groupPrincipal, string) -> obj.put(groupPrincipal.getName(), string));
+        engine.listGroups().forEach((groupPrincipal, string) ->
+                obj.put(groupPrincipal.getName(), JSONArray.fromObject(string.split(","))));
         return Response.status(200).entity(obj.toString()).build();
     }
 
@@ -135,7 +140,7 @@ public class GroupRestImpl implements GroupRest {
         if (!findGroup(groupName).isPresent()) {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
-
+        logger.info("Adding role " + role + " to group " + groupName);
         engine.addGroupRole(groupName, role);
         return Response.ok().build();
     }
@@ -146,6 +151,7 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
 
+        logger.info("Removing role " + role + " from group " + groupName);
         engine.deleteGroupRole(groupName, role);
         return Response.ok().build();
     }
