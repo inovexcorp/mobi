@@ -26,14 +26,18 @@ package org.matonto.jaas.rest.impl;
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.nimbusds.jwt.SignedJWT;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.RolePrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.karaf.jaas.modules.BackingEngine;
+import org.matonto.jaas.modules.token.TokenBackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
 import org.matonto.jaas.rest.UserRest;
+import org.matonto.jaas.utils.TokenUtils;
 import org.matonto.rest.util.ErrorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +46,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.security.auth.login.AppConfigurationEntry;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class UserRestImpl implements UserRest {
     protected JaasRealm realm;
-    protected BackingEngine engine;
+    protected TokenBackingEngine engine;
     private final Logger logger = LoggerFactory.getLogger(UserRestImpl.class);
 
     @Reference(target = "(realmId=matonto)")
@@ -58,7 +63,10 @@ public class UserRestImpl implements UserRest {
     @Activate
     protected void start() {
         AppConfigurationEntry[] entries = realm.getEntries();
-        engine = getFactory().build(entries[1].getOptions());
+        BackingEngine be = getFactory().build(entries[1].getOptions());
+        if (be instanceof TokenBackingEngine) {
+            engine = (TokenBackingEngine) be;
+        }
     }
 
     protected TokenBackingEngineFactory getFactory() {
@@ -94,15 +102,18 @@ public class UserRestImpl implements UserRest {
     public Response getUser(String username) {
         Optional<UserPrincipal> optUser = findUser(username);
         if (!optUser.isPresent()) {
-            throw ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
         return Response.status(200).entity(optUser.get().getName()).build();
     }
 
     @Override
-    public Response updateUser(String username, String newUsername, String newPassword) {
+    public Response updateUser(ContainerRequestContext context, String username, String newUsername, String newPassword) {
+        if (!isAuthorizedUser(context, username)) {
+            throw ErrorUtils.sendError("Not authorized", Response.Status.UNAUTHORIZED);
+        }
         UserPrincipal user = findUser(username)
-                .orElseThrow(() -> ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST));
+                .orElseThrow(() -> ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
 
         List<GroupPrincipal> groups = new ArrayList<>();
         List<RolePrincipal> roles = new ArrayList<>();
@@ -127,9 +138,12 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response deleteUser(String username) {
+    public Response deleteUser(ContainerRequestContext context, String username) {
+        if (!isAuthorizedUser(context, username)) {
+            throw ErrorUtils.sendError("Not authorized", Response.Status.UNAUTHORIZED);
+        }
         if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
         engine.deleteUser(username);
         logger.info("Deleted user " + username);
@@ -139,7 +153,7 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response getUserRoles(String username) {
         UserPrincipal user = findUser(username)
-                .orElseThrow(() -> ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST));
+                .orElseThrow(() -> ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         JSONArray roles = new JSONArray();
         engine.listRoles(user).stream()
                 .map(RolePrincipal::getName)
@@ -151,8 +165,9 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response addUserRole(String username, String role) {
         if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+        logger.info("Adding role " + role + " to user " + username);
         engine.addRole(username, role);
         return Response.ok().build();
     }
@@ -160,8 +175,9 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response removeUserRole(String username, String role) {
         if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+        logger.info("Removing role " + role + " from user " + username);
         engine.deleteRole(username, role);
         return Response.ok().build();
     }
@@ -169,7 +185,7 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response listUserGroups(String username) {
         UserPrincipal user = findUser(username)
-                .orElseThrow(() -> ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST));
+                .orElseThrow(() -> ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
 
         logger.info("Listing groups for " + username);
         JSONArray groups = new JSONArray();
@@ -183,8 +199,9 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response addUserGroup(String username, String group) {
         if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+        logger.info("Adding user " + username + " to group " + group);
         engine.addGroup(username, group);
         return Response.ok().build();
     }
@@ -192,10 +209,40 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response removeUserGroup(String username, String group) {
         if (!findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+        logger.info("Removing user " + username + " from group " + group);
         engine.deleteGroup(username, group);
         return Response.ok().build();
+    }
+
+    @Override
+    public Response checkPassword(ContainerRequestContext context, String username, String password) {
+        if (!isAuthorizedUser(context, username)) {
+            throw ErrorUtils.sendError("Not authorized", Response.Status.UNAUTHORIZED);
+        }
+        if (!findUser(username).isPresent()) {
+            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
+        }
+        boolean result = engine.checkPassword(username, password);
+        return Response.status(200).entity(result).build();
+    }
+
+    private boolean isAuthorizedUser(ContainerRequestContext context, String username) {
+        try {
+            Optional<SignedJWT> optional = TokenUtils.verifyToken(TokenUtils.getTokenString(context));
+            if (optional.isPresent()) {
+                JSONObject payload = JSONObject.fromObject(optional.get().getPayload().toString());
+                logger.info("Payload " + payload);
+                if (!payload.get("sub").equals(username) && !context.getSecurityContext().isUserInRole("admin")) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        return true;
     }
 
     private Optional<UserPrincipal> findUser(String username) {
