@@ -21,50 +21,25 @@ mvn clean install
 The build creates the MatOnto distribution as both a `.tar.gz` file and a `.zip` file in the
 `org.matonto.distribution/target` directory. Extract one of the files and navigate into that directory.
 
-Inside the extracted distribution directory, start up the MatOnto Karaf instance and open the command line
-interface. For Unix/Linux:
+Inside the extracted distribution directory, start up the MatOnto Karaf instance. The distribution is configured to
+automatically deploy the required bundles and services to the runtime using Karaf features. To start the runtime,
+simply open the command line interface and run the start script.
+
+For Unix/Linux:
 
 ```
 bin/start
-bin/client -u karaf
 ```
 
 or for Windows:
 
 ```
 bin\start.bat
-bin\client.bat -u karaf -h 127.0.0.1
 ```
-
-You should see the following information on the command line console:
-
-```
-
- ,--.   ,--.          ,--.   ,-----.           ,--.
- |   `.'   | ,--,--.,-'  '-.'  .-.  ',--,--, ,-'  '-. ,---.
- |  |'.'|  |' ,-.  |'-.  .-'|  | |  ||      |'-.  .-'| .-. |
- |  |   |  |` '-'  |  |  |  '  '-'  '|  ||  |  |  |  ' '-' '
- `--'   `--' `--`--'  `--'   `-----' `--''--'  `--'   `---'
-
-
-  Apache Karaf (4.0.2)
-
-Hit '<tab>' for a list of available commands
-and '[cmd] --help' for help on a specific command.
-Hit '<ctrl-d>' or 'osgi:shutdown' to shutdown MatOnto.
-
-karaf@matonto-framework>
-```
-
-To deploy all the MatOnto bundles and services use the following command:
-
-```
-matonto-deploy-bundles
-```
-
-This command uses OBR to deploy the MatOnto bundles and their dependencies.
 
 The MatOnto web application should now be accessible at `https://localhost:8443/matonto/index.html`.
+
+To stop the server, use the respective stop scripts.
 
 ### Release Build
 
