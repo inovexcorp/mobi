@@ -35,8 +35,8 @@ describe('Login controller', function() {
         module(function($provide) {
             // Use $q to mock out methods that return promises
             $provide.service('loginManagerService', ['$q', function($q) {
-                this.login = jasmine.createSpy('login').and.callFake(function(isValid, username, password) {
-                    if (isValid) {
+                this.login = jasmine.createSpy('login').and.callFake(function(username, password) {
+                    if (username !== '') {
                         return $q.when();
                     } else {
                         return $q.reject('An error has occured');
@@ -57,10 +57,10 @@ describe('Login controller', function() {
             // controller uses the controllerAs syntax, we can access it directly
             var controller = $controller('LoginController', {});
             controller.form = {
-                username: '',
+                username: 'user',
                 password: ''
             };
-            controller.login(true);
+            controller.login();
             scope.$digest();
             expect(controller.errorMessage).toBeFalsy();
         });
@@ -72,7 +72,7 @@ describe('Login controller', function() {
                 username: '',
                 password: ''
             };
-            controller.login(false);
+            controller.login();
             scope.$digest();
             expect(controller.errorMessage).toBeTruthy();
         });

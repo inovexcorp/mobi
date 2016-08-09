@@ -424,3 +424,59 @@ function mockAnnotationManager() {
         });
     });
 }
+
+function mockLoginManager() {
+    module(function($provide) {
+        $provide.service('loginManagerService', function($q) {
+            this.currentUser = '';
+            this.login = jasmine.createSpy('login').and.returnValue($q.when());
+            this.logout = jasmine.createSpy('logout');
+            this.isAuthenticated = jasmine.createSpy('isAuthenticated').and.returnValue($q.when());
+            this.getCurrentLogin = jasmine.createSpy('getCurrentLogin').and.returnValue($q.when());
+        });
+    });
+}
+
+function mockUserManager() {
+    module(function($provide) {
+        $provide.service('userManagerService', function($q) {
+            this.user = [];
+            this.groups = [];
+            this.setUsers = jasmine.createSpy('setUsers').and.returnValue($q.when());
+            this.setGroups = jasmine.createSpy('setGroups').and.returnValue($q.when());
+            this.addUser = jasmine.createSpy('addUser').and.returnValue($q.when());
+            this.getUser = jasmine.createSpy('getUser').and.returnValue($q.when());
+            this.updateUser = jasmine.createSpy('updateUser').and.returnValue($q.when());
+            this.deleteUser = jasmine.createSpy('deleteUser').and.returnValue($q.when());
+            this.addUserRole = jasmine.createSpy('addUserRole').and.returnValue($q.when());
+            this.deleteUserRole = jasmine.createSpy('deleteUserRole').and.returnValue($q.when());
+            this.addUserGroup = jasmine.createSpy('addUserGroup').and.returnValue($q.when());
+            this.deleteUserGroup = jasmine.createSpy('deleteUserGroup').and.returnValue($q.when());
+            this.addGroup = jasmine.createSpy('addGroup').and.returnValue($q.when());
+            this.deleteGroup = jasmine.createSpy('deleteGroup').and.returnValue($q.when());
+            this.addGroupRole = jasmine.createSpy('addGroupRole').and.returnValue($q.when());
+            this.deleteGroupRole = jasmine.createSpy('deleteGroupRole').and.returnValue($q.when());
+            this.isAdmin = jasmine.createSpy('isAdmin');
+        });
+    })
+}
+
+function mockUserState() {
+    module(function($provide) {
+        $provide.service('userStateService', function($q) {
+            this.showGroupsList = false;
+            this.showUsersList = false;
+            this.editGroup = false;
+            this.editUser = false;
+            this.selectedGroup = undefined;
+            this.selectedUser = undefined;
+            this.showDeleteConfirm = false;
+            this.showAddUser = false;
+            this.showAddGroup = false;
+            this.showAddMembers = false;
+            this.showRemoveMemberConfirm = false;
+            this.memberName = '';
+            this.reset = jasmine.createSpy('reset');
+        });
+    })
+}

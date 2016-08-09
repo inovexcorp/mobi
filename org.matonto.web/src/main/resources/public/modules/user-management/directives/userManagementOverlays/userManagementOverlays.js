@@ -43,6 +43,7 @@
                 dvm.delete = function() {
                     if (dvm.state.selectedGroup) {
                         dvm.um.deleteGroup(dvm.state.selectedGroup.name).then(response => {
+                            dvm.errorMessage = '';
                             dvm.state.selectedGroup = undefined;
                             dvm.state.showDeleteConfirm = false;
                         }, error => {
@@ -50,6 +51,7 @@
                         });
                     } else if (dvm.state.selectedUser) {
                         dvm.um.deleteUser(dvm.state.selectedUser.username).then(response => {
+                            dvm.errorMessage = '';
                             dvm.state.selectedUser = undefined;
                             dvm.state.showDeleteConfirm = false;
                         }, error => {
@@ -60,6 +62,7 @@
 
                 dvm.removeMember = function() {
                     dvm.um.deleteUserGroup(dvm.state.memberName, dvm.state.selectedGroup.name).then(response => {
+                        dvm.errorMessage = '';
                         dvm.state.memberName = '';
                         dvm.state.showRemoveMemberConfirm = false;
                     }, error => {

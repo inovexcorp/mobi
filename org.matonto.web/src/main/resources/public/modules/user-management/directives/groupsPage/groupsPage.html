@@ -20,16 +20,5 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="add-members-overlay overlay">
-  <form class="content" name="dvm.form">
-    <h6>Add Members</h6>
-    <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-
-    <user-select ng-model="dvm.members" users="dvm.users"></user-select>
-
-    <div class="btn-container clearfix">
-      <custom-button on-click="dvm.state.showAddGroup = false" type="'secondary'" pull="'left'">Cancel</custom-button>
-      <custom-button on-click="dvm.add()" is-disabled-when="dvm.form.$invalid">Add</custom-button>
-    </div>
-  </form>
-</div>
+<group-editor ng-if="dvm.state.editGroup"></group-editor>
+<groups-list ng-if="dvm.state.showGroupsList"></groups-list>

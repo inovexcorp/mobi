@@ -20,14 +20,5 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="form-group">
-  <label class="control-label">Members</label>
-  <ui-select multiple ng-model="dvm.bindModel">
-    <ui-select-match ui-lock-choice="$item.username === dvm.lm.currentUser" placeholder="Select Members">
-      <span title="{{$item.username}}">{{$item.username}}</span>
-    </ui-select-match>
-    <ui-select-choices repeat="user in users | filter:$select.search">
-      <div ng-bind-html="user.username | highlight:$select.search | trusted"></div>
-    </ui-select-choices>
-  </ui-select>
-</div>
+<user-editor ng-if="dvm.state.editUser"></user-editor>
+<users-list ng-if="dvm.state.showUsersList"></users-list>

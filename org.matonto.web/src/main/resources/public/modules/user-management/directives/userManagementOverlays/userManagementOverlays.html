@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<add-user-overlay ng-if="dvm.state.showAddUser"></add-user-overlay>
+<add-user-overlays ng-if="dvm.state.showAddUser"></add-user-overlays>
 <add-group-overlay ng-if="dvm.state.showAddGroup"></add-group-overlay>
 <add-members-overlay ng-if="dvm.state.showAddMembers"></add-members-overlay>
 
@@ -36,7 +36,7 @@
 </confirmation-overlay>
 
 <confirmation-overlay ng-if="dvm.state.showRemoveMemberConfirm"
-  class="delete-confirm"
+  class="remove-member-confirm"
   header-text="'Remove ' + dvm.state.memberName"
   confirm-click="dvm.removeMember()"
   cancel-click="dvm.state.showRemoveMemberConfirm = false; dvm.state.memberName = ''"

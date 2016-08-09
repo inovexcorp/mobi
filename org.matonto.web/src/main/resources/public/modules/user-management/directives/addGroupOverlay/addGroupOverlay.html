@@ -25,7 +25,7 @@
     <h6>Add Group</h6>
     <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 
-    <div class="form-group" ng-class="{'has-error': dvm.form.name.$touched && dvm.form.name.$invalid}">
+    <div class="form-group name" ng-class="{'has-error': dvm.form.name.$touched && dvm.form.name.$invalid}">
       <label class="control-label">Group Name *</label>
       <input class="form-control" type="text" name="name" ng-model="dvm.name" ng-change="dvm.testUniqueness()" required/>
     </div>
@@ -33,7 +33,7 @@
       <ng-message when="uniqueName">This group name has already been taken.</ng-message>
     </p>
 
-    <user-select ng-model="dvm.members" users="dvm.um.users"></user-select>
+    <member-table members="dvm.members" remove-member="dvm.removeMember()" add-member="dvm.addMember()"></member-table>
 
     <div class="btn-container clearfix">
       <custom-button on-click="dvm.state.showAddGroup = false" type="'secondary'" pull="'left'">Cancel</custom-button>

@@ -40,16 +40,18 @@
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
+                dvm.errorMessage = '';
 
-                dvm.getUsers = function() {
-                    return _.filter(dvm.um.users, user => _.includes(dvm.state.selectedGroup.members, user.username));
-                };
-                dvm.removeMember = function(user) {
-                    dvm.state.memberName = user.username;
+                dvm.removeMember = function() {
                     dvm.state.showRemoveMemberConfirm = true;
-                };
-                dvm.addMembers = function() {
-                    dvm.state.showAddMembers = true;
+                }
+                dvm.addMember = function() {
+                    dvm.um.addUserGroup(dvm.state.memberName, dvm.state.selectedGroup.name).then(response => {
+                        dvm.errorMessage = '';
+                        dvm.state.memberName = '';
+                    }, error => {
+                        dvm.errorMessage = error;
+                    });
                 }
             },
             templateUrl: 'modules/user-management/directives/groupEditor/groupEditor.html'

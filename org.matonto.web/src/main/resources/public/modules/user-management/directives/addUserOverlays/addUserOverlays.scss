@@ -1,0 +1,13 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.add-user-info-overlay,
+.add-user-perms-overlay {
+    .btn-container {
+        text-align: center;
+        .step-number {
+            display: inline-block;
+            font-weight: bold;
+        }
+    }
+}

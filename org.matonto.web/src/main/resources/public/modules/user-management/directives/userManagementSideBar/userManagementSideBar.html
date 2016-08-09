@@ -37,13 +37,13 @@
 
   <left-nav-item on-click="dvm.state.showUsersList || dvm.state.editUser ? dvm.addUser() : dvm.state.showGroupsList || dvm.state.editGroup ? dvm.addGroup() : undefined"
                  nav-title="{{dvm.getButtonTitle('Add')}}"
-                 is-disabled-when="!dvm.um.isAdmin() || dvm.state.editUser || dvm.state.editGroup">
+                 is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.editUser || dvm.state.editGroup">
       <i class="fa fa-plus fa-fw"></i>
   </left-nav-item>
 
   <left-nav-item on-click="dvm.delete()"
                  nav-title="{{dvm.getButtonTitle('Delete')}}"
-                 is-disabled-when="!dvm.um.isAdmin() || (!dvm.state.selectedGroup && !dvm.state.selectedUser) || (dvm.state.selectedGroup.name === 'admingroup') || (dvm.state.selectedUser.username === dvm.lm.currentUser)">
+                 is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser) || (!dvm.state.selectedGroup && !dvm.state.selectedUser) || (dvm.state.selectedGroup.name === 'admingroup') || (dvm.state.selectedUser.username === dvm.lm.currentUser)">
       <i class="fa fa-trash-o fa-fw"></i>
   </left-nav-item>
 </left-nav>

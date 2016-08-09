@@ -13,11 +13,11 @@
             }
 
             td {
-                .icons {
-                    float: right;
-
+                &:last-child {
                     span {
-                        margin-left: 10px;
+                        &:last-child {                        
+                            margin-left: 10px;
+                        }
                     }
                 }
             }

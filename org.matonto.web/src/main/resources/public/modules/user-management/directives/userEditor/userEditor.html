@@ -21,8 +21,19 @@
   #L%
   -->
 <div class="user-editor">
-  <div class="col-xs-6">
-    <h1>{{dvm.state.selectedUser.username}}</h1>
-  </div>
-  <div class="col-xs-6"></div>
+  <form name="dvm.form">
+    <div class="col-xs-6">
+      <h1>{{dvm.state.selectedUser.username}}</h1>
+      <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+      <p ng-if="dvm.success" class="text-success">
+        <i class="fa fa-check fa-fw"></i><span>User information successfully saved</span>
+      </p>
+      <password-confirm-input password="dvm.password" to-confirm="dvm.toConfirm" label="'New Password'"></password-confirm-input>
+      <button class="btn btn-primary save-btn" ng-click="dvm.save()" ng-disabled="dvm.form.$invalid">Save</button>
+    </div>
+    <div class="col-xs-6">
+      <h2>Permissions</h2>
+      <user-permissions-input role="dvm.roles"></user-permissions-input>
+    </div>
+  </form>
 </div>

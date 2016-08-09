@@ -27,9 +27,9 @@
         .module('userEditor', [])
         .directive('userEditor', userEditor);
 
-    userEditor.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
+    userEditor.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];
 
-    function userEditor(userStateService, userManagerService, loginManagerService) {
+    function userEditor($q, userStateService, userManagerService, loginManagerService) {
         return {
             restrict: 'E',
             controllerAs: 'dvm',
@@ -40,6 +40,40 @@
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
+
+                dvm.success = false;
+                dvm.changed = false;
+                dvm.roles = {
+                    admin: dvm.um.isAdmin(dvm.state.selectedUser.username)
+                };
+
+                dvm.save = function() {
+                    var requests = [];
+                    if (dvm.password) {
+                        requests.push(dvm.um.updateUser(dvm.state.selectedUser.username, undefined, dvm.password));
+                    }
+                    if (dvm.roles.admin !== dvm.um.isAdmin(dvm.state.selectedUser.username)) {
+                        if (dvm.roles.admin) {
+                            requests.push(dvm.um.addUserGroup(dvm.state.selectedUser.username, 'admingroup'));
+                        } else {
+                            requests.push(dvm.um.deleteUserGroup(dvm.state.selectedUser.username, 'admingroup'));
+                            requests.push(dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin'));
+                        }
+                    }
+                    if (requests.length) {
+                        $q.all(requests).then(responses => {
+                            dvm.errorMessage = '';
+                            dvm.password = '';
+                            dvm.toConfirm = '';
+                            dvm.success = true;
+                            dvm.form.$setPristine();
+                            dvm.form.$setUntouched();
+                        }, error => {
+                            dvm.errorMessage = error;
+                            dvm.success = false;
+                        });
+                    }
+                }
             },
             templateUrl: 'modules/user-management/directives/userEditor/userEditor.html'
         };

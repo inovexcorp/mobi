@@ -20,25 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     angular
-        .module('login', [])
-        .controller('LoginController', LoginController);
+        .module('groupsPage', [])
+        .directive('groupsPage', groupsPage);
 
-    LoginController.$inject = ['loginManagerService'];
+    groupsPage.$inject = ['userStateService'];
 
-    function LoginController(loginManagerService) {
-        var vm = this;
-
-        vm.login = function() {
-            loginManagerService.login(vm.form.username, vm.form.password)
-                .then(function() {
-                    vm.errorMessage = '';
-                }, function(errorMessage) {
-                    vm.errorMessage = errorMessage;
-                });
-        }
+    function groupsPage(userStateService) {
+        return {
+            restrict: 'E',
+            controllerAs: 'dvm',
+            scope: {},
+            controller: function() {
+                var dvm = this;
+                dvm.state = userStateService;
+            },
+            templateUrl: 'modules/user-management/directives/groupsPage/groupsPage.html'
+        };
     }
 })();

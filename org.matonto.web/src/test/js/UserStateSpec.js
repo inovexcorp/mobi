@@ -20,25 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+describe('User State service', function() {
+    var $httpBackend,
+        userStateSvc;
 
-    angular
-        .module('login', [])
-        .controller('LoginController', LoginController);
+    beforeEach(function() {
+        module('userState');
 
-    LoginController.$inject = ['loginManagerService'];
+        inject(function(userStateService) {
+            userStateSvc = userStateService;
+        });
+    });
 
-    function LoginController(loginManagerService) {
-        var vm = this;
-
-        vm.login = function() {
-            loginManagerService.login(vm.form.username, vm.form.password)
-                .then(function() {
-                    vm.errorMessage = '';
-                }, function(errorMessage) {
-                    vm.errorMessage = errorMessage;
-                });
-        }
-    }
-})();
+    it('should reset variables', function() {
+        userStateSvc.reset();
+        expect(userStateSvc.showGroupsList).toBe(false);
+        expect(userStateSvc.showUsersList).toBe(false);
+        expect(userStateSvc.editGroup).toBe(false);
+        expect(userStateSvc.editUser).toBe(false);
+        expect(userStateSvc.selectedGroup).toEqual(undefined);
+        expect(userStateSvc.selectedUser).toEqual(undefined);
+    });
+});

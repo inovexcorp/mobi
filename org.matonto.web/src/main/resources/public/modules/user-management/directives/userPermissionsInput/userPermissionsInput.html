@@ -20,5 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<group-editor ng-if="dvm.state.editGroup"></group-editor>
-<user-editor ng-if="dvm.state.editUser"></user-editor>
+<div class="user-permissions-input">
+    <h3>Role</h3>
+    <checkbox ng-model="roles.admin" display-text="'Admin'"></checkbox>
+</div>

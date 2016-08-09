@@ -27,16 +27,17 @@
         .module('user-management', [
             /* Custom directives */
             'addGroupOverlay',
-            'addMembersOverlay',
-            'addUserOverlay',
+            'addUserOverlays',
             'groupEditor',
             'groupsList',
+            'groupsPage',
+            'memberTable',
             'userEditor',
-            'userManagementEditors',
             'userManagementOverlays',
             'userManagementSideBar',
-            'userSelect',
+            'userPermissionsInput',
             'usersList',
+            'usersPage',
 
             /* Custom services */
             'userState'

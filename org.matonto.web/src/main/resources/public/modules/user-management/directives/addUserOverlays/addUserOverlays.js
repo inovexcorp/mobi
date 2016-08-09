@@ -24,43 +24,50 @@
     'use strict';
 
     angular
-        .module('addUserOverlay', [])
-        .directive('addUserOverlay', addUserOverlay);
+        .module('addUserOverlays', [])
+        .directive('addUserOverlays', addUserOverlays);
 
-    addUserOverlay.$inject = ['$q', 'userStateService', 'userManagerService'];
+    addUserOverlays.$inject = ['$q', '$timeout', 'userStateService', 'userManagerService'];
 
-    function addUserOverlay($q, userStateService, userManagerService) {
+    function addUserOverlays($q, $timeout, userStateService, userManagerService) {
         return {
             restrict: 'E',
             controllerAs: 'dvm',
-            replace: true,
             scope: {},
             controller: function() {
                 var dvm = this;
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.errorMessage = '';
+                $timeout(function() {
+                    dvm.step = 0;                
+                });
+                dvm.roles = {
+                    admin: false
+                };
 
                 dvm.add = function () {
                     dvm.um.addUser(dvm.username, dvm.password).then(response => {
-                        return dvm.um.addUserRole(dvm.username, 'user');
+                        var requests = [dvm.um.addUserRole(dvm.username, 'user')];
+                        if (dvm.roles.admin) {
+                            requests.push(dvm.um.addUserGroup(dvm.username, 'admingroup'));
+                        }
+                        return $q.all(requests);
                     }, error => {
                         return $q.reject(error);
                     }).then(response => {
                         dvm.errorMessage = '';
+                        dvm.step = 2;
                         dvm.state.showAddUser = false;
                     }, error => {
                         dvm.errorMessage = error;
                     });
                 };
                 dvm.testUniqueness = function () {
-                    dvm.form.username.$setValidity('uniqueUsername', !_.includes(_.map(dvm.um.users, 'username'), dvm.username));
-                };
-                dvm.confirmPassword = function (toConfirm) {
-                    dvm.form.confirmPassword.$setValidity('samePassword', toConfirm === dvm.password);
+                    dvm.infoForm.username.$setValidity('uniqueUsername', !_.includes(_.map(dvm.um.users, 'username'), dvm.username));
                 };
             },
-            templateUrl: 'modules/user-management/directives/addUserOverlay/addUserOverlay.html'
+            templateUrl: 'modules/user-management/directives/addUserOverlays/addUserOverlays.html'
         };
     }
 })();

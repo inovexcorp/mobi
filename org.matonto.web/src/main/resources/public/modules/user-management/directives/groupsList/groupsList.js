@@ -41,9 +41,6 @@
                     dvm.um = userManagerService;
                     dvm.lm = loginManagerService;
 
-                    dvm.setSelectedGroup = function(group) {                     
-                        dvm.state.selectedGroup = group;
-                    }
                     dvm.editGroup = function(group) {
                         dvm.state.selectedGroup = group;
                         dvm.state.showGroupsList = false;

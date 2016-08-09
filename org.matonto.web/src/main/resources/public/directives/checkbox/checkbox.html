@@ -20,17 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="users-list col-xs-12 full-height">
-    <h1>Users</h1>
-
-    <table class="table table-hover table-condensed users">
-      <tr ng-repeat="user in dvm.um.users" ng-click="dvm.state.selectedUser = user" ng-class="{'active': dvm.state.selectedUser === user}">
-        <td>
-          {{user.username}} <small class="admin" ng-if="dvm.um.isAdmin(user.username)">(Admin)</small>
-        </td>
-        <td>
-          <span><button class="btn btn-default" ng-click="dvm.editUser(user)" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)"><i class="fa fa-pencil"></i></button></span>
-        </td>
-      </tr>
-    </table>
+<div class="checkbox" ng-class="{'disabled': isDisabledWhen}">
+    <label class="control-label">
+        <input type="checkbox" ng-model="bindModel" ng-change="dvm.onChange()" ng-disabled="isDisabledWhen"/>
+        {{displayText}}
+    </label>
 </div>

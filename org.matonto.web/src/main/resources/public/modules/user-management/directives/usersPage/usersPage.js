@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('userManagementEditors', [])
-        .directive('userManagementEditors', userManagementEditors);
+        .module('usersPage', [])
+        .directive('usersPage', usersPage);
 
-    userManagementEditors.$inject = ['userStateService', 'userManagerService'];
+    usersPage.$inject = ['userStateService'];
 
-    function userManagementEditors(userStateService, userManagerService) {
+    function usersPage(userStateService) {
         return {
             restrict: 'E',
             controllerAs: 'dvm',
@@ -37,9 +37,8 @@
             controller: function() {
                 var dvm = this;
                 dvm.state = userStateService;
-                dvm.um = userManagerService;
             },
-            templateUrl: 'modules/user-management/directives/userManagementEditors/userManagementEditors.html'
+            templateUrl: 'modules/user-management/directives/usersPage/usersPage.html'
         };
     }
 })();

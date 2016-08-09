@@ -27,9 +27,9 @@
         .module('userManager', [])
         .service('userManagerService', userManagerService);
 
-        userManagerService.$inject = ['loginManagerService', '$rootScope', '$http', '$q'];
+        userManagerService.$inject = ['$rootScope', '$http', '$q'];
 
-        function userManagerService(loginManagerService, $rootScope, $http, $q) {
+        function userManagerService($rootScope, $http, $q) {
             var self = this,
                 userPrefix = '/matontorest/users',
                 groupPrefix = '/matontorest/groups';
@@ -93,7 +93,7 @@
                 $rootScope.showSpinner = true;
                 $http.get(userPrefix + '/' + username)
                     .then(response => {
-                        deferred.resolve();
+                        deferred.resolve(response.data);
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
                     }).then(() => {
@@ -115,7 +115,10 @@
                 $http.put(userPrefix + '/' + username, null, config)
                     .then(response => {
                         deferred.resolve();
-                        _.set(_.find(self.users, {username: username}), 'username', newUsername);
+                        var original = _.find(self.users, {username: username});
+                        if (newUsername) {
+                            _.set(original, 'username', newUsername);
+                        }
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
                     }).then(() => {
@@ -261,21 +264,6 @@
                 return deferred.promise;
             }
 
-            self.updateGroup = function(groupName) {
-                var deferred = $q.defer();
-
-                $rootScope.showSpinner = true;
-                $http.put(groupPrefix + '/' + groupName)
-                    .then(response => {
-                        deferred.resolve();
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-
             self.deleteGroup = function(groupName) {
                 var deferred = $q.defer();
 
@@ -334,12 +322,12 @@
                 return deferred.promise;
             }
 
-            self.isAdmin = function() {
-                if (_.includes(_.get(_.find(self.users, {username: loginManagerService.currentUser}), 'roles'), 'admin')) {
+            self.isAdmin = function(username) {
+                if (_.includes(_.get(_.find(self.users, {username: username}), 'roles', []), 'admin')) {
                     return true;
                 } else {
                     var userGroups = _.filter(self.groups, group => {
-                        return _.includes(group.members, loginManagerService.currentUser);
+                        return _.includes(group.members, username);
                     });
                     return _.includes(_.flatten(_.map(userGroups, 'roles')), 'admin');
                 }

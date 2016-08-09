@@ -24,21 +24,21 @@
     'use strict';
 
     angular
-        .module('login', [])
-        .controller('LoginController', LoginController);
+        .module('userPermissionsInput', [])
+        .directive('userPermissionsInput', userPermissionsInput);
 
-    LoginController.$inject = ['loginManagerService'];
-
-    function LoginController(loginManagerService) {
-        var vm = this;
-
-        vm.login = function() {
-            loginManagerService.login(vm.form.username, vm.form.password)
-                .then(function() {
-                    vm.errorMessage = '';
-                }, function(errorMessage) {
-                    vm.errorMessage = errorMessage;
-                });
+        function userPermissionsInput() {
+            return {
+                restrict: 'E',
+                controllerAs: 'dvm',
+                replace: true,
+                scope: {
+                    roles: '='
+                },
+                controller: function() {
+                    var dvm = this;
+                },
+                templateUrl: 'modules/user-management/directives/userPermissionsInput/userPermissionsInput.html'
+            }
         }
-    }
 })();

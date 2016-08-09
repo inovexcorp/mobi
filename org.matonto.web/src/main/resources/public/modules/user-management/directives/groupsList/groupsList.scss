@@ -2,35 +2,47 @@
 @import "./src/main/resources/public/css/variables";
 
 .groups-list {
-  .groups tr:hover {
-    cursor: pointer;
-  }
-  .toggle-btns {
-    margin-bottom: 25px;
-
-    td {
-      padding: 0 1em;
-      border-right: 2px solid $gray-light;
-
-      &.active {
-        font-weight: bold;
-      }
-      &:last-child {
-        border-right: none;
-      }
-      &:hover {
-        background-color: $gray-lighter;
-      }
-      a {
-        color: #333;
-        display: block;
-        width: 100%;
-        height: 100%;
-
-        &:hover {
-          text-decoration: none;
+    .groups {
+        tr {
+            &:hover {
+                cursor: pointer;                
+            }
+            td {
+                &:first-child {
+                    width: 15%;            
+                }
+                &:last-child {
+                    text-align: right;            
+                }
+            }
         }
-      }
     }
-  }
+    .toggle-btns {
+        margin-bottom: 25px;
+
+        td {
+            padding: 0 1em;
+            border-right: 2px solid $gray-light;
+
+            &.active {
+                font-weight: bold;
+            }
+            &:last-child {
+                border-right: none;
+            }
+            &:hover {
+                background-color: $gray-lighter;
+            }
+            a {
+                color: #333;
+                display: block;
+                width: 100%;
+                height: 100%;
+
+                &:hover {
+                    text-decoration: none;
+                }
+            }
+        }
+    }
 }

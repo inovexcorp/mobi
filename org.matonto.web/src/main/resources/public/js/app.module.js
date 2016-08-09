@@ -45,6 +45,7 @@
             'trusted',
 
             /* Custom Directives */
+            'checkbox',
             'circleButton',
             'confirmationOverlay',
             'customButton',
@@ -54,6 +55,7 @@
             'leftNav',
             'leftNavItem',
             'pagination',
+            'passwordConfirmInput',
             'radioButton',
             'tabButton',
             'tabButtonContainer',

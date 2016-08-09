@@ -36,10 +36,9 @@
         /**
          * @ngdoc service
          * @name loginManager.service:loginManagerService
-         * @requires $rootScope
          * @requires $http
          * @requires $q
-         * @requires $window
+         * @requires $state
          *
          * @description 
          * `loginManagerService` is a service that provides access to the MatOnto login REST 
@@ -47,12 +46,21 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', '$timeout'];
+        loginManagerService.$inject = ['$q', '$http', '$state'];
 
-        function loginManagerService($q, $http, $state, $timeout) {
+        function loginManagerService($q, $http, $state) {
             var self = this,
                 anon = 'self anon';
 
+            /**
+             * @ngdoc property
+             * @name currentUser
+             * @propertyOf loginManager.service:loginManagerService
+             * @type {string}
+             *
+             * @description 
+             * `currentUser` holds the username of the user that is currenlty logged into MatOnto.
+             */
             self.currentUser = '';
 
             /**
@@ -62,44 +70,41 @@
              *
              * @description 
              * Makes a call to GET /matontorest/user/login to attempt to log into MatOnto using the
-             * passed credentials and validity state of the login form. Returns a Promise with the 
-             * success of the log in attempt. If failed, contains an appropriate error message.
+             * passed credentials. Returns a Promise with the success of the log in attempt. 
+             * If failed, contains an appropriate error message.
              * 
-             * @param {boolean} isValid whether or not the login form is valid
              * @param {string} username the username to attempt to log in with
              * @param {string} password the password to attempt to log in with
              * @return {Promise} A Promise that resolves if the log in attempt succeeded and rejects 
              * with an error message if the log in attempt failed
              */
-            self.login = function(isValid, username, password) {
-                if(isValid) {
-                    var config = {
-                            params: {
-                                username: username,
-                                password: password
-                            }
-                        },
-                        deferred = $q.defer();
+            self.login = function(username, password) {
+                var config = {
+                        params: {
+                            username: username,
+                            password: password
+                        }
+                    },
+                    deferred = $q.defer();
 
-                    $http.get('/matontorest/user/login', config)
-                        .then(function(response) {
-                            if(response.status === 200 && response.data.scope !== anon) {
-                                self.currentUser = response.data.sub;
-                                $state.go('root.home');
-                                deferred.resolve(true);
-                            } else {
-                                deferred.resolve();
-                            }
-                        }, function(response) {
-                            if (response.status === 401) {
-                                deferred.reject('This email/password combination is not correct.');                            
-                            } else {
-                                deferred.reject('An error has occured. Please try again later.');
-                            }
-                        });
+                $http.get('/matontorest/user/login', config)
+                    .then(function(response) {
+                        if(response.status === 200 && response.data.scope !== anon) {
+                            self.currentUser = response.data.sub;
+                            $state.go('root.home');
+                            deferred.resolve(true);
+                        } else {
+                            deferred.resolve();
+                        }
+                    }, function(response) {
+                        if (response.status === 401) {
+                            deferred.reject('This email/password combination is not correct.');                            
+                        } else {
+                            deferred.reject('An error has occured. Please try again later.');
+                        }
+                    });
 
-                    return deferred.promise;
-                }
+                return deferred.promise;
             }
 
             /**
@@ -126,9 +131,8 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description 
-             * Makes a call to GET /matontorest/user/current to test whether a user is currently logged 
-             * in and if not, navigates to the log in page. Returns a Promise with whether or not a user 
-             * is logged in. 
+             * Test whether a user is currently logged in and if not, navigates to the log in page. Returns 
+             * a Promise with whether or not a user is logged in. 
              *
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
              * response data if no user is logged in.
@@ -136,9 +140,7 @@
             self.isAuthenticated = function () {
                 var handleError = function handleError(data) {
                     self.currentUser = '';            
-                    $timeout(function () {
-                        $state.go('login');
-                    });
+                    $state.go('login');
                     return $q.reject(data);
                 };
                 return self.getCurrentLogin().then(data => {
@@ -153,6 +155,18 @@
                 });
             };
 
+            /**
+             * @ngdoc method
+             * @name loginManager.loginManagerService#getCurrentLogin
+             * @methodOf loginManager.service:loginManagerService
+             *
+             * @description 
+             * Makes a call to GET /matontorest/user/current to retrieve the user that is currently logged 
+             * in. Returns a Promise with the result of the call. 
+             *
+             * @return {Promise} A Promise with the response data the resolves if the request was successful
+             * and rejects if unsuccessful
+             */
             self.getCurrentLogin = function () {
                 var deferred = $q.defer();
 

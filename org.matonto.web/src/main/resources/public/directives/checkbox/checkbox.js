@@ -26,35 +26,41 @@
     angular
         /**
          * @ngdoc overview
-         * @name userSelect
+         * @name checkbox
          */
-        .module('userSelect', [])
+        .module('checkbox', [])
         /**
          * @ngdoc directive
-         * @name userSelect.directive:userSelect
+         * @name checkbox.directive:checkbox
          * @scope
          * @restrict E
+         * @requires $timeout
          */
-        .directive('userSelect', userSelect);
+        .directive('checkbox', checkbox);
 
-        userSelect.$inject = ['loginManagerService'];
+        checkbox.$inject = ['$timeout'];
 
-        function userSelect(loginManagerService) {
+        function checkbox($timeout) {
             return {
                 restrict: 'E',
-                controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    users: '=',
+                    bindModel: '=ngModel',
+                    changeEvent: '&',
+                    displayText: '=',
+                    isDisabledWhen: '='
                 },
-                bindToController: {
-                    bindModel: '=ngModel'
-                },
-                controller: function() {
+                controllerAs: 'dvm',
+                controller: ['$scope', function($scope) {
                     var dvm = this;
-                    dvm.lm = loginManagerService;
-                },
-                templateUrl: 'modules/user-management/directives/userSelect/userSelect.html'
+
+                    dvm.onChange = function() {
+                        $timeout(function() {
+                            $scope.changeEvent();                            
+                        });
+                    }
+                }],
+                templateUrl: 'directives/checkbox/checkbox.html'
             }
         }
 })();

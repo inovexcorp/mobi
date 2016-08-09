@@ -40,12 +40,12 @@
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
-                dvm.members = [dvm.um.users[_.findIndex(dvm.um.users, { username: dvm.lm.currentUser })]];
+                dvm.members = [dvm.lm.currentUser];
                 dvm.errorMessage = '';
 
                 dvm.add = function () {
                     dvm.um.addGroup(dvm.name).then(response => {
-                        return $q.all(_.map(dvm.members, member => dvm.um.addUserGroup(member.username, dvm.name)));
+                        return $q.all(_.map(dvm.members, member => dvm.um.addUserGroup(member, dvm.name)));
                     }, error => {
                         return $q.reject(error);
                     }).then(responses => {
@@ -58,6 +58,14 @@
                 dvm.testUniqueness = function () {
                     dvm.form.name.$setValidity('uniqueName', !_.includes(_.map(dvm.um.groups, 'name'), dvm.name));
                 };
+                dvm.addMember = function() {
+                    dvm.members.push(dvm.state.memberName);
+                    dvm.state.memberName = '';
+                }
+                dvm.removeMember = function() {
+                    _.pull(dvm.members, dvm.state.memberName);
+                    dvm.state.memberName = '';
+                }
             },
             templateUrl: 'modules/user-management/directives/addGroupOverlay/addGroupOverlay.html'
         };

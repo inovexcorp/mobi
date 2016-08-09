@@ -27,9 +27,9 @@
         .module('usersList', [])
         .directive('usersList', usersList);
 
-    usersList.$inject = ['userStateService', 'userManagerService'];
+    usersList.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
 
-    function usersList(userStateService, userManagerService) {
+    function usersList(userStateService, userManagerService, loginManagerService) {
         return {
             restrict: 'E',
             controllerAs: 'dvm',
@@ -39,16 +39,13 @@
                 var dvm = this;
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
+                dvm.lm = loginManagerService;
 
                 dvm.editUser = function(user) {
                     dvm.state.selectedUser = user;
                     dvm.state.showUsersList = false;
                     dvm.state.editUser = true;
                 };
-
-                dvm.isAdmin = function(user) {
-                    return _.includes(user.roles, 'admin');
-                }
             },
             templateUrl: 'modules/user-management/directives/usersList/usersList.html'
         };

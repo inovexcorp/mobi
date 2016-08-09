@@ -24,15 +24,5 @@
   <h1>{{dvm.state.selectedGroup.name}}</h1>
 
   <h3>Members</h3>
-  <button type="button" class="btn btn-primary" ng-click="dvm.addMembers()">Add Member(s)</button>
-  <table class="table group-members">
-    <tr ng-repeat="user in dvm.getUsers()">
-      <td>
-        <span>{{user.username}}</span>
-        <div class="icons">
-          <span><a ng-click="dvm.removeMember(user)"><i class="fa fa-trash-o"></i></a></span>
-        </div>
-      </td>
-    </tr>
-  </table>
+  <member-table members="dvm.state.selectedGroup.members" remove-member="dvm.removeMember()" add-member="dvm.addMember()"></member-table>
 </div>
