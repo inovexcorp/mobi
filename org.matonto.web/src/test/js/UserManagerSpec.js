@@ -192,6 +192,49 @@ describe('User Manager service', function() {
             $httpBackend.flush();
         });
     });
+    describe('should check a password against a user password', function() {
+        beforeEach(function() {
+            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
+            $httpBackend.whenGET('/matontorest/users').respond(200, []);
+            $httpBackend.flush();
+            params = {
+                password: 'password'
+            };
+            this.username = 'user';
+        });
+        it('unless there is an error', function(done) {
+            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            userManagerSvc.checkPassword(this.username, params.password).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Error Message');
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('correctly if they match', function(done) {
+            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(200, true)
+            userManagerSvc.checkPassword(this.username, params.password).then(function(response) {
+                expect(true).toBe(true);
+                done();
+            });
+            $httpBackend.flush();
+        });
+        it('correctly if they do not match', function(done) {
+            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(200, false)
+            userManagerSvc.checkPassword(this.username, params.password).then(function(response) {
+                fail('Promise should have rejected');
+                done();
+            }, function(response) {
+                expect(response).toBe('Password does not match saved password. Please try again.');
+                done();
+            });
+            $httpBackend.flush();
+        });
+    });
     describe('should delete a user', function() {
         beforeEach(function() {
             $httpBackend.whenGET('/matontorest/groups').respond(200, {});

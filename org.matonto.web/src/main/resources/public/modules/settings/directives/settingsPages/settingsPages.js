@@ -24,17 +24,22 @@
     'use strict';
 
     angular
-        .module('settings', [
-            /* Custom directives */
-            'changePasswordPage',
-            'customSetting',
-            'settingsContainer',
-            'settingsPage',
-            'settingsPages',
-            'settingsSideBar',
-            'userInformationPage',
+        .module('settingsPages', [])
+        .directive('settingsPages', settingsPages);
 
-            /* Custom services */
-            'settingsState'
-        ]);
+        settingsPages.$inject = ['settingsStateService'];
+
+        function settingsPages(settingsStateService) {
+            return {
+                restrict: 'E',
+                controllerAs: 'dvm',
+                replace: true,
+                scope: {},
+                controller: function() {
+                    var dvm = this;
+                    dvm.state = settingsStateService;
+                },
+                templateUrl: 'modules/settings/directives/settingsPages/settingsPages.html'
+            }
+        }
 })();

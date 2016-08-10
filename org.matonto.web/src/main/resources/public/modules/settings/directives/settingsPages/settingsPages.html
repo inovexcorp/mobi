@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- settings.html -->
-<div class="settings clearfix full-height">
-    <settings-side-bar></settings-side-bar>
-    <settings-pages></settings-pages>
+<div class="settings-pages row full-height">
+    <settings-page ng-if="dvm.state.showSettings"></settings-page>
+    <change-password-page ng-if="dvm.state.showChangePassword"></change-password-page>
+    <user-information-page ng-if="dvm.state.showUserInfo"></user-information-page>
 </div>

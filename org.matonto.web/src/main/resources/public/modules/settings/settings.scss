@@ -1,59 +1,8 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.settings-page {
-    h1,
-    h2,
-    h3 {
-        margin: 0;
-    }
-
-    h1 {
-        font-size: 1.5em;
-        padding-bottom: 12px;
-
-        &.page-header {
-            border-bottom: 1px solid $gray-lighter;
-            margin-bottom: 12px;
-            padding-bottom: 3px;
-        }
-    }
-
-    section {
-        border-bottom: 1px solid $gray-lighter;
-        margin-bottom: 12px;
-        padding: 0 5px 4px;
-
-        &:last-child {
-            border-bottom: 0;
-            margin-bottom: 0;
-        }
-
-        h2 {
-            font-size: 1.2em;
-            padding-bottom: 10px;
-        }
-
-        article {
-            padding: 0 15px 8px;
-
-            h3 {
-                font-size: 1.1em;
-                padding-bottom: 5px;
-            }
-
-            .question {
-                margin: 0;
-                padding: 0 15px;
-            }
-
-            .answer {
-                padding: 2px 20px;
-
-                .radio {
-                    margin: 0;
-                }
-            }
-        }
+.settings {
+    &>.row {
+      padding-left: 39px; 
     }
 }

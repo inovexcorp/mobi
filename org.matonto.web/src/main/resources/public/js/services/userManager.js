@@ -127,6 +127,30 @@
                 return deferred.promise;
             }
 
+            self.checkPassword = function(username, password) {
+                var deferred = $q.defer(),
+                    config = {
+                        params: {
+                            password: password
+                        }
+                    };
+
+                $rootScope.showSpinner = true;
+                $http.post(userPrefix + '/' + username + '/password', null, config)
+                    .then(response => {
+                        if (response.data) {
+                            deferred.resolve();                        
+                        } else {
+                            deferred.reject('Password does not match saved password. Please try again.');
+                        }
+                    }, error => {
+                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
+                    }).then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
+
             self.deleteUser = function(username) {
                 var deferred = $q.defer();
 

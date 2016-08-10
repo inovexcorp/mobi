@@ -24,16 +24,28 @@
     'use strict';
 
     angular
-        .module('user-account', [])
-        .controller('UserAccountController', UserAccountController);
+        /**
+         * @ngdoc overview
+         * @name settingsState
+         */
+        .module('settingsState', [])
+        /**
+         * @ngdoc service
+         * @name settingsState.service:settingsStateService
+         */
+        .service('settingsStateService', settingsStateService);
 
-    UserAccountController.$inject = ['userManagerService', 'loginManagerService'];
+        function settingsStateService() {
+            var self = this;
 
-    function UserAccountController(userManagerService, loginManagerService) {
-        var vm = this;
-            vm.um = userManagerService;
-            vm.lm = loginManagerService;
+            self.showUserInfo = true;
+            self.showSettings = false;
+            self.showChangePassword = false;
 
-        vm.currentUser = _.find(vm.um.users, {username: vm.lm.currentUser});
-    }
+            self.reset = function() {
+                self.showUserInfo = false;
+                self.showSettings = false;
+                self.showChangePassword = false;
+            }
+        }
 })();

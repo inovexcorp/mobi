@@ -20,8 +20,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- settings.html -->
-<div class="settings clearfix full-height">
-    <settings-side-bar></settings-side-bar>
-    <settings-pages></settings-pages>
-</div>
+<left-nav class="settings-side-bar" module-name="My Account" doc-url="http://docs.matonto.org/#settings">
+  <left-nav-item on-click="dvm.openUserInfo()"
+                 nav-title="Change My Information"
+                 is-active-when="dvm.state.showUserInfo">
+      <i class="fa fa-info fa-fw"></i>
+  </left-nav-item>
+
+  <left-nav-item on-click="dvm.openChangePassword()"
+                 nav-title="Change Password"
+                 is-active-when="dvm.state.showChangePassword">
+      <i class="fa fa-key fa-fw"></i>
+  </left-nav-item>
+
+  <left-nav-item on-click="dvm.openSettings()"
+                 nav-title="Change Settings"
+                 is-active-when="dvm.state.showSettings">
+      <i class="fa fa-sliders fa-fw"></i>
+  </left-nav-item>
+</left-nav>

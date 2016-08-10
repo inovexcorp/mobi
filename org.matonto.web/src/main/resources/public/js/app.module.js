@@ -71,7 +71,6 @@
             'ontology-editor',
             'settings',
             'sparql',
-            'user-account',
             'user-management',
             'webtop',
 

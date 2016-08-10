@@ -20,21 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+describe('Settings State service', function() {
+    var $httpBackend,
+        settingsStateSvc;
 
-    angular
-        .module('settings', [
-            /* Custom directives */
-            'changePasswordPage',
-            'customSetting',
-            'settingsContainer',
-            'settingsPage',
-            'settingsPages',
-            'settingsSideBar',
-            'userInformationPage',
+    beforeEach(function() {
+        module('settingsState');
 
-            /* Custom services */
-            'settingsState'
-        ]);
-})();
+        inject(function(settingsStateService) {
+            settingsStateSvc = settingsStateService;
+        });
+    });
+
+    it('should reset variables', function() {
+        settingsStateSvc.reset();
+        expect(settingsStateSvc.showUserInfo).toBe(false);
+        expect(settingsStateSvc.showSettings).toBe(false);
+        expect(settingsStateSvc.showChangePassword).toBe(false);
+    });
+});
