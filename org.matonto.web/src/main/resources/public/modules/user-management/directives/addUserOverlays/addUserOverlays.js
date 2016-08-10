@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name addUserOverlays
+         *
+         * @description 
+         * The `addUserOverlays` module only provides the `addUserOverlays` directive which creates
+         * overlays for adding a user to MatOnto.
+         */
         .module('addUserOverlays', [])
+        /**
+         * @ngdoc directive
+         * @name addUserOverlays.directive:addUserOverlays
+         * @scope
+         * @restrict E
+         * @requires $q
+         * @requires $timeout
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         *
+         * @description 
+         * `addUserOverlays` is a directive that creates overlays with forms to add a user to Matonto.
+         * The first ovelray provides a form for the basic information about the user. The second overlay
+         * provides a form for settings the permissions and roles of the new user.
+         */
         .directive('addUserOverlays', addUserOverlays);
 
     addUserOverlays.$inject = ['$q', '$timeout', 'userStateService', 'userManagerService'];

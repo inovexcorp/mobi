@@ -24,7 +24,28 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name groupsPage
+         *
+         * @description 
+         * The `groupsPage` module only provides the `groupsPage` directive which provides the
+         * {@link groupsList.directive:groupsList groupsList} and 
+         * {@link groupEditor.directive:groupEditor groupEditor} directives.
+         */
         .module('groupsPage', [])
+        /**
+         * @ngdoc directive
+         * @name groupsPage.directive:groupsPage
+         * @scope
+         * @restrict E
+         * @requires userState.service:userStateService
+         *
+         * @description 
+         * `groupsPage` is a directive that provides the {@link groupsList.directive:groupsList groupsList} 
+         * and {@link groupEditor.directive:groupEditor groupEditor} directives depending on the
+         * {@link userState.service:userStateService state} of the user management page.
+         */
         .directive('groupsPage', groupsPage);
 
     groupsPage.$inject = ['userStateService'];

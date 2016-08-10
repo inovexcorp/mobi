@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name addGroupOverlay
+         *
+         * @description 
+         * The `addGroupOverlay` module only provides the `addGroupOverlay` directive which creates
+         * an overlay for adding a group to MatOnto.
+         */
         .module('addGroupOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name addGroupOverlay.directive:addGroupOverlay
+         * @scope
+         * @restrict E
+         * @requires $q
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         * @requires loginManager.service:loginManagerService
+         *
+         * @description 
+         * `addGroupOverlay` is a directive that creates an overlay with a form to add a group to Matonto.
+         * The directive is replaced by the contents of its template.
+         */
         .directive('addGroupOverlay', addGroupOverlay);
 
     addGroupOverlay.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];

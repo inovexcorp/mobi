@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name groupEditor
+         *
+         * @description 
+         * The `groupEditor` module only provides the `groupEditor` directive which creates
+         * an editor for the {@link userState.service:userStateService#selectedGroup selected group}.
+         */
         .module('groupEditor', [])
+        /**
+         * @ngdoc directive
+         * @name groupEditor.directive:groupEditor
+         * @scope
+         * @restrict E
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         * @requires loginManager.service:loginManagerService
+         *
+         * @description 
+         * `groupEditor` is a directive that creates a div containing components to edit the 
+         * {@link userState.service:userStateService#selectedGroup selected group}. Contains a
+         * {@link memberTable.directive:memberTable memberTable} directive. The directive is 
+         * replaced by the contents of its template.
+         */
         .directive('groupEditor', groupEditor);
 
     groupEditor.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];

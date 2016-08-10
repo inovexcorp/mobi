@@ -24,7 +24,32 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name groupsList
+         *
+         * @description 
+         * The `groupsList` module only provides the `groupsList` directive which creates
+         * an interactable list of all {@link userManager.service:userManagerService#groups groups}.
+         */
         .module('groupsList', [])
+        /**
+         * @ngdoc directive
+         * @name groupsList.directive:groupsList
+         * @scope
+         * @restrict E
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         * @requires loginManager.service:loginManagerService
+         *
+         * @description 
+         * `groupsList` is a directive that creates a table containing different subsets of the
+         * {@link userManager.service:userManagerService#groups groups} list depending on which 
+         * tab is selected. There is a tab for only groups the 
+         * {@link loginManager.service:loginManagerService#currentUser current user} is in and a 
+         * tab for all MatOnto groups. Groups can only be edited by admin users. The directive is 
+         * replaced by the contents of its template.
+         */
         .directive('groupsList', groupsList);
 
         groupsList.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];

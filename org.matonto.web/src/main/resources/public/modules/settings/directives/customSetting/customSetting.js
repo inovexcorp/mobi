@@ -24,7 +24,31 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name customSetting
+         *
+         * @description 
+         * The `customSetting` module only provides the `customSetting` directive which creates 
+         * an article with transcluded content and a customizable header and question representing
+         * the setting.
+         */
         .module('customSetting', [])
+        /**
+         * @ngdoc directive
+         * @name customSetting.directive:customSetting
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `customSetting` is a directive that creates an article with transcluded content, a header, and 
+         * a question representing what the setting is for. The main content for the overlay is transcluded 
+         * so it can contain whatever is put between the opening and closing tags. The directive is replaced 
+         * by the content of its template.
+         *
+         * @param {string} header the text to display in the article's header
+         * @param {string} question the text to display as the setting's representative question
+         */
         .directive('customSetting', customSetting);
 
         function customSetting() {

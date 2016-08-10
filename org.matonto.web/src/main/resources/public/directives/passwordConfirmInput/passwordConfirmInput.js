@@ -27,6 +27,11 @@
         /**
          * @ngdoc overview
          * @name passwordConfirmInput
+         *
+         * @description 
+         * The `passwordConfirmInput` module provides the `passwordConfirmInput` directive, which
+         * creates two password inputs whose values much match, and the `samePassword` directive,
+         * which is used for testing whether the values of the two password inputs match.
          */
         .module('passwordConfirmInput', [])
         /**
@@ -34,11 +39,29 @@
          * @name passwordConfirmInput.directive:passwordConfirmInput
          * @scope
          * @restrict E
+         *
+         * @description 
+         * `passwordConfirmInput` is a directive that creates two password inputs with validation
+         * to make sure the values of the inputs match each other. TheSecond input is required if 
+         * the first  input has a value, but the first can also be optionally set to required as well.
+         * The directive is replaced by the contents of its template.
+         *
+         * @param {string} password the value to bind to the first password input
+         * @param {string} toConfirm the value to bind to the second password input
+         * @param {string} label the label for the first password input
+         * @param {boolean} [required=false] whether or not the inputs should be required
          */
         .directive('passwordConfirmInput', passwordConfirmInput)
         /**
          * @ngdoc directive
          * @name passwordConfirmInput.directive:samePassword
+         * @restrict A
+         *
+         * @description 
+         * `samePassword` is a directive which tests whether the ngModel value is the same as the 
+         * evaluated value of the password variable. It requires the parent element to have an ngModel. 
+         * If the ngModel value does not match the evaluated value, it sets the samePassword validity 
+         * of the parent element to false.
          */
         .directive('samePassword', samePassword);
 

@@ -24,7 +24,28 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name usersPage
+         *
+         * @description 
+         * The `usersPage` module only provides the `usersPage` directive which provides the
+         * {@link usersList.directive:usersList usersList} and 
+         * {@link userEditor.directive:userEditor userEditor} directives.
+         */
         .module('usersPage', [])
+        /**
+         * @ngdoc directive
+         * @name usersPage.directive:usersPage
+         * @scope
+         * @restrict E
+         * @requires userState.service:userStateService
+         *
+         * @description 
+         * `usersPage` is a directive that provides the {@link usersList.directive:usersList usersList} 
+         * and {@link userEditor.directive:userEditor userEditor} directives depending on the
+         * {@link userState.service:userStateService state} of the user management page.
+         */
         .directive('usersPage', usersPage);
 
     usersPage.$inject = ['userStateService'];

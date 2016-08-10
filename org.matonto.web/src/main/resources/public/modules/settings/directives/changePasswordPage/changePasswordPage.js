@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name changePasswordPage
+         *
+         * @description 
+         * The `changePasswordPage` module only provides the `changePasswordPage` directive which creates
+         * a settings "page" with a form for changing the password of the currently logged in user.
+         */
         .module('changePasswordPage', [])
+        /**
+         * @ngdoc directive
+         * @name changePasswordPage.directive:changePasswordPage
+         * @scope
+         * @restrict E
+         * @requires  $q
+         * @requires  userManager.service:userManagerService
+         * @requires  loginManager.service:loginManagerService
+         *
+         * @description 
+         * `changePasswordPage` is a directive that creates a div containing a form to change the password 
+         * of the user that is currently logged in. The directive contains a 
+         * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput} to perform 
+         * confirmation of the new password. The directive is replaced by the contents of its template.
+         */
         .directive('changePasswordPage', changePasswordPage);
 
         changePasswordPage.$inject = ['$q', 'userManagerService', 'loginManagerService'];

@@ -24,7 +24,31 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name userManagementSideBar
+         *
+         * @description 
+         * The `userManagementSideBar` module only provides the `userManagementSideBar` directive 
+         * which creates a left navigation of action buttons for the user management page.
+         */
         .module('userManagementSideBar', [])
+        /**
+         * @ngdoc directive
+         * @name userManagementSideBar.directive:userManagementSideBar
+         * @scope
+         * @restrict E
+         * @requires  userManager.service:userManagerService
+         * @requires  userState.service:userStateService
+         * @requires loginManager.service:loginManagerService
+         *
+         * @description 
+         * `userManagementSideBar` is a directive that creates a "left-nav" div with buttons for user
+         * management actions. These actions are navigating to the 
+         * {@link groupsList.directive:groupsList groups list}, navigating to the 
+         * {@link usersList.directive:usersList users list}, creating a new group or user, and deleting 
+         * either a group or a user.
+         */
         .directive('userManagementSideBar', userManagementSideBar);
 
         userManagementSideBar.$inject = ['userStateService', 'userManagerService', 'loginManagerService']

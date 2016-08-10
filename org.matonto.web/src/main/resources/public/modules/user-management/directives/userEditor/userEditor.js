@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name userEditor
+         *
+         * @description 
+         * The `userEditor` module only provides the `userEditor` directive which creates
+         * an editor for the {@link userState.service:userStateService#selectedUser selected user}.
+         */
         .module('userEditor', [])
+        /**
+         * @ngdoc directive
+         * @name userEditor.directive:userEditor
+         * @scope
+         * @restrict E
+         * @requires $q
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         * @requires loginManager.service:loginManagerService
+         *
+         * @description 
+         * `userEditor` is a directive that creates a div containing components to edit the 
+         * {@link userState.service:userStateService#selectedUser selected user}. Contains a
+         * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput} 
+         * directive for changing the user's password and a 
+         * {@link userPermissionsInput.directive:userPermissionsInput userPermissionsInput}
+         * directive for changing the user's permissions and roles. The directive is replaced 
+         * by the contents of its template.
+         */
         .directive('userEditor', userEditor);
 
     userEditor.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];

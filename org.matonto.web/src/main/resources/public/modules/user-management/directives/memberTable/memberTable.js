@@ -24,7 +24,38 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name memberTable
+         *
+         * @description 
+         * The `memberTable` module only provides the `memberTable` directive which creates
+         * an editable table of group members.
+         */
         .module('memberTable', [])
+        /**
+         * @ngdoc directive
+         * @name memberTable.directive:memberTable
+         * @scope
+         * @restrict E
+         * @requires $q
+         * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
+         * @requires loginManager.service:loginManagerService
+         *
+         * @description 
+         * `memberTable` is a directive that creates a table of the passed members and provides 
+         * functionality for adding members to the and removing members from list. The exact method 
+         * of adding and removing is determined by the passed addMember and removeMember functions.
+         * When the "Add Member" link is clicked, a row is added to the table containins a ui-select 
+         * with the available users to add to the member list. Once a user has been selected in the 
+         * ui-select, it will be added to the list. The directive is replaced by the contents of its 
+         * template.
+         *
+         * @param {function} removeMember the method to call when a member is removed from the list
+         * @param {function} addMember the method to call when a member is added to the list
+         * @param {string[]} members the lsit of members names to display in the table
+         */
         .directive('memberTable', memberTable);
 
         memberTable.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];

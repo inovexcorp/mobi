@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name userPermissionsInput
+         *
+         * @description 
+         * The `userPermissionsInput` module only provides the `userPermissionsInput` directive 
+         * which creates a collections of {@link checkbox.directive:checkbox checkboxes} for 
+         * changing a user's permissions and roles.
+         */
         .module('userPermissionsInput', [])
+        /**
+         * @ngdoc directive
+         * @name userPermissionsInput.directive:userPermissionsInput
+         * @scope
+         * @restrict E
+         *
+         * @description 
+         * `userPermissionsInput` is a directive that creates an collection of 
+         * {@link checkbox.directive:checkbox checkboxes} for changing a user's permissions and roles. 
+         * It takes the state of a user's roles from the passed roles object whose keys are the roles and
+         * whose values are booleans indicating whether the user in question has that role. The directive 
+         * is replaced by the contents of its template.
+         */
         .directive('userPermissionsInput', userPermissionsInput);
 
         function userPermissionsInput() {

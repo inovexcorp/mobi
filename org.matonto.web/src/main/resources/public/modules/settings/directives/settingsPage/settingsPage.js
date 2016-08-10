@@ -24,7 +24,27 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name settingsPage
+         *
+         * @description 
+         * The `settingsPage` module only provides the `settingsPage` directive which creates 
+         * a "page" containing a form for changing user settings.
+         */
         .module('settingsPage', [])
+        /**
+         * @ngdoc directive
+         * @name settingsPage.directive:settingsPage
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `settingsPage` is a directive that creates a div with a form for changing the settings in 
+         * {@link settingManager.service:settingsManagerService settingManagerService} using 
+         * {@link customSetting.directive:customSetting customSetting} directives and a save button. 
+         * The directive is replaced by the content of its template.
+         */
         .directive('settingsPage', settingsPage);
 
         settingsPage.$inject = ['settingsManagerService'];

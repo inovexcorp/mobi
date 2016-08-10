@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name userManagementOverlays
+         *
+         * @description 
+         * The `userManagementOverlays` module only provides the `userManagementOverlays` directive 
+         * which provides all overlays used in the user management page.
+         */
         .module('userManagementOverlays', [])
+        /**
+         * @ngdoc directive
+         * @name userManagementOverlays.directive:userManagementOverlays
+         * @scope
+         * @restrict E
+         * @requires userState.service:userStateService
+         * @requires userManager.service:userManagerService
+         *
+         * @description 
+         * `userManagementOverlays` is a directive that creates all of the overlays used in the user 
+         * management page. Those overlays are {@link addGroupOverlay.directive:addGroupOverlay addGroupOverlay},
+         * {@link addUserOverlays.directive:addUserOverlays addUserOverlays},
+         * and several {@link confirmationOverlay.directive:confirmationOverlay confirmationOverlays}.
+         */
         .directive('userManagementOverlays', userManagementOverlays);
 
     userManagementOverlays.$inject = ['userStateService', 'userManagerService'];

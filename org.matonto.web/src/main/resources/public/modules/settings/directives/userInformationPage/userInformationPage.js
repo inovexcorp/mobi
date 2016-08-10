@@ -24,7 +24,26 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name userInformationPage
+         *
+         * @description 
+         * The `userInformationPage` module only provides the `userInformationPage` directive which 
+         * creates a "page" for editing information of the currently ogged in user.
+         */
         .module('userInformationPage', [])
+        /**
+         * @ngdoc directive
+         * @name userInformationPage.directive:userInformationPage
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `userInformationPage` is a directive that creates a div that will hold a form to 
+         * edit the information of the currently logged in user. Currently it simply provides a 
+         * welcome message to the user. The directive is replaced by the content of its template.
+         */
         .directive('userInformationPage', userInformationPage);
 
         userInformationPage.$inject = ['userManagerService', 'loginManagerService'];

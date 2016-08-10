@@ -24,12 +24,34 @@
     'use strict';
 
     angular
-        .module('settingsPages', [])
-        .directive('settingsPages', settingsPages);
+        /**
+         * @ngdoc overview
+         * @name settingsPages
+         *
+         * @description 
+         * The `settingsPages` module only provides the `settingsPages` directive which creates 
+         * a container for all pages for the settings module.
+         */
+        .module('settingsPagess', [])
+        /**
+         * @ngdoc directive
+         * @name settingsPages.directive:settingsPages
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `settingsPages` is a directive that creates a div styled as a Bootstrap "row" with 
+         * all pages for the settings module. These pages are
+         * {@link settingsPage.directive:settingsPage settingsPage}, 
+         * {@link userInformationPage.directive:userInformationPage userInformationPage}, and
+         * {@link changePasswordPage.directive:changePasswordPage changePasswordPage}.
+         * The directive is replaced by the content of its template.
+         */
+        .directive('settingsPagess', settingsPagess);
 
-        settingsPages.$inject = ['settingsStateService'];
+        settingsPagess.$inject = ['settingsStateService'];
 
-        function settingsPages(settingsStateService) {
+        function settingsPagess(settingsStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -39,7 +61,7 @@
                     var dvm = this;
                     dvm.state = settingsStateService;
                 },
-                templateUrl: 'modules/settings/directives/settingsPages/settingsPages.html'
+                templateUrl: 'modules/settings/directives/settingsPagess/settingsPagess.html'
             }
         }
 })();

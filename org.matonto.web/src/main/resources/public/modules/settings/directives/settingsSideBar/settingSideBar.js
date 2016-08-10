@@ -24,7 +24,28 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name settingsSideBar
+         *
+         * @description 
+         * The `settingsSideBar` module only provides the `settingsSideBar` directive which creates 
+         * a left navigation for all pages for the settings module.
+         */
         .module('settingsSideBar', [])
+        /**
+         * @ngdoc directive
+         * @name settingsSideBar.directive:settingsSideBar
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `settingsSideBar` is a directive that creates a "left-nav" div with buttons to navigate
+         * to the different pages of the settings module. These different pages are
+         * {@link settingsPage.directive:settingsPage settingsPage}, 
+         * {@link userInformationPage.directive:userInformationPage userInformationPage}, and
+         * {@link changePasswordPage.directive:changePasswordPage changePasswordPage}.
+         */
         .directive('settingsSideBar', settingsSideBar);
 
         settingsSideBar.$inject = ['settingsStateService']
