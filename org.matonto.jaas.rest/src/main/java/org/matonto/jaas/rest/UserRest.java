@@ -42,7 +42,7 @@ public interface UserRest {
      * @return a Response with a JSON array of the users in MatOnto
      */
     @GET
-    @RolesAllowed("admin")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get list of MatOnto users")
     Response listUsers();
@@ -115,7 +115,7 @@ public interface UserRest {
      */
     @GET
     @Path("{userId}/roles")
-    @RolesAllowed("admin")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List roles of a MatOnto user")
     Response getUserRoles(@PathParam("userId") String username);
@@ -154,7 +154,7 @@ public interface UserRest {
      */
     @GET
     @Path("{userId}/groups")
-    @RolesAllowed("admin")
+    @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List groups of a MatOnto user")
     Response listUserGroups(@PathParam("userId") String username);
