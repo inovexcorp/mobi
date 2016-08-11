@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  bnd-index
+  karaf.feature
   $Id:$
   $HeadURL:$
   %%
@@ -33,21 +33,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>bnd-index</artifactId>
-    <packaging>pom</packaging>
-
-    <properties>
-        <local.url.policy>REQUIRED</local.url.policy>
-    </properties>
-
-    <profiles>
-        <profile>
-            <id>jenkins</id>
-            <properties>
-                <local.url.policy>FORBIDDEN</local.url.policy>
-            </properties>
-        </profile>
-    </profiles>
+    <artifactId>karaf.feature</artifactId>
+    <packaging>feature</packaging>
 
     <dependencies>
         <dependency>
@@ -185,22 +172,27 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>bnd-indexer-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <localURLs>${local.url.policy}</localURLs>
-                    <includeTransitive>false</includeTransitive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>index</id>
-                        <goals>
-                            <goal>index</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <groupId>org.apache.karaf.tooling</groupId>
+                <artifactId>karaf-maven-plugin</artifactId>
+                <version>${karaf.version}</version>
+                <extensions>true</extensions>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/feature</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/feature.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/feature</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/feature.xml</exclude>
+                </excludes>
+            </resource>
+        </resources>
     </build>
 </project>

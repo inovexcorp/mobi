@@ -8,6 +8,14 @@
         li {
             text-overflow: ellipsis;
             width: auto;
+
+            .linked {
+                background-color: $gray-lighter;
+
+                &:hover {
+                    background-color: $gray-light;
+                }
+            }
         }
         .props li {
             margin-left: 1em;
