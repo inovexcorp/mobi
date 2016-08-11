@@ -64,7 +64,7 @@
                     dvm.om = ontologyManagerService;
 
                     dvm.noOntologies = function() {
-                        return _.concat(dvm.om.getList(), dvm.om.getOntologyIds()).length === 0;
+                        return _.concat(dvm.om.list, dvm.om.ontologyIds).length === 0;
                     }
                     dvm.mappingList = function() {
                         dvm.state.displayCancelConfirm = dvm.state.editMapping;

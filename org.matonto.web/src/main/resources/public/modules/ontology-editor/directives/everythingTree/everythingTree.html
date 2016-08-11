@@ -21,60 +21,53 @@
   #L%
   -->
 <div class="tree everything-tree scroll-without-buttons">
-    <!-- tree view -->
     <strong>Everything</strong>
-    <!-- start ontologies -->
-    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.sm.state.oi === oi && (dvm.sm.state.ci !== undefined || dvm.sm.state.pi !== undefined))">
-        <tree-item current-entity="ontology"
-                   current-ontology="ontology"
-                   is-active="dvm.sm.state.oi === $index && dvm.sm.state.ci === undefined && dvm.sm.state.pi === undefined"
-                   is-opened="opened"
-                   on-click="dvm.sm.selectItem('ontology-editor', $index)"
-                   has-children="!!ontology.matonto.classes.length || !!ontology.matonto.noDomains.length"></tree-item>
-
-        <li class="container" ng-show="opened">
-            <!-- start classes -->
-            <ul ng-repeat="(ci, class) in ontology.matonto.classes" ng-init="subOpened = (dvm.sm.state.ci === ci && dvm.sm.state.pi !== undefined)">
-                <tree-item current-entity="class"
-                           current-ontology="ontology"
-                           is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === $index && dvm.sm.state.pi === undefined"
-                           is-opened="subOpened"
-                           on-click="dvm.sm.selectItem('class-editor', oi, $index)"
-                           has-children="class.matonto.properties.length"></tree-item>
-
-                <li class="container" ng-show="subOpened">
-                    <!-- start properties -->
+    <!-- ontologies -->
+    <ul ng-repeat="item in dvm.om.list">
+        <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
+                   ontology-id="item.ontologyId"
+                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
+                   on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
+                   has-children="dvm.om.hasClasses(item.ontology)"
+                   is-opened="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))"></tree-item>
+        <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+            <!-- classes -->
+            <ul ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI">
+                <tree-item current-entity="clazz"
+                           ontology-id="item.ontologyId"
+                           is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === clazz.matonto.originalIRI"
+                           on-click="dvm.sm.selectItem('class-editor', clazz.matonto.originalIRI, item)"
+                           has-children="dvm.om.hasClassProperties(item.ontology, clazz.matonto.originalIRI)"
+                           is-opened="dvm.sm.getOpened(item.ontologyId, clazz.matonto.originalIRI)"></tree-item>
+                <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, clazz.matonto.originalIRI)">
+                    <!-- class properties -->
                     <ul>
-                        <tree-item ng-repeat="property in class.matonto.properties"
+                        <tree-item ng-repeat="property in dvm.om.getClassProperties(item.ontology, clazz.matonto.originalIRI) track by property.matonto.originalIRI"
+                                   ontology-id="item.ontologyId"
                                    current-entity="property"
-                                   current-ontology="ontology"
-                                   is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === ci && dvm.sm.state.pi === $index"
-                                   on-click="dvm.sm.selectItem('property-editor', oi, ci, $index)"></tree-item>
+                                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === property.matonto.originalIRI"
+                                   on-click="dvm.sm.selectItem('property-editor', property.matonto.originalIRI, item)"></tree-item>
                     </ul>
                 </li>
             </ul>
-
-            <!-- start no domains (these will be handled differently later) -->
-            <ul ng-if="ontology.matonto.noDomains.length" ng-init="opened = (dvm.sm.state.ci === undefined && dvm.sm.state.pi !== undefined)">
+            <!-- properties without domains -->
+            <ul ng-if="dvm.om.hasNoDomainProperties(item.ontology)">
                 <li>
-                    <a ng-click="opened = !opened; $event.stopPropagation();">
+                    <a ng-click="dvm.sm.setNoDomainsOpened(item.ontologyId, !dvm.sm.getNoDomainsOpened(item.ontologyId)); $event.stopPropagation()">
                         <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': opened, 'fa-folder-o': !opened}"></i>Properties
+                           ng-class="{'fa-folder-open-o': dvm.sm.getNoDomainsOpened(item.ontologyId), 'fa-folder-o': !dvm.sm.getNoDomainsOpened(item.ontologyId)}"></i>Properties
                     </a>
                 </li>
-                <!-- properties without domains -->
-                <li class="container" ng-show="opened">
+                <li class="container" ng-show="dvm.sm.getNoDomainsOpened(item.ontologyId)">
                     <ul>
-                        <tree-item ng-repeat="property in ontology.matonto.noDomains"
+                        <tree-item ng-repeat="property in dvm.om.getNoDomainProperties(item.ontology) track by property.matonto.originalIRI"
+                                   ontology-id="item.ontologyId"
                                    current-entity="property"
-                                   current-ontology="ontology"
-                                   is-active="dvm.sm.state.oi === oi && dvm.sm.state.ci === ci && dvm.sm.state.pi === $index"
-                                   on-click="dvm.sm.selectItem('property-editor', oi, undefined, $index)"></tree-item>
+                                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === property.matonto.originalIRI"
+                                   on-click="dvm.sm.selectItem('property-editor', property.matonto.originalIRI, item)"></tree-item>
                     </ul>
                 </li>
             </ul>
-
         </li>
     </ul>
-    <!-- end ontologies -->
 </div>

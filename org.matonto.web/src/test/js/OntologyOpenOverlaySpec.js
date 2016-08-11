@@ -108,11 +108,14 @@ describe('Ontology Open Overlay directive', function() {
                 expect(ontologyManagerSvc.openOntology).toHaveBeenCalledWith(controller.ontologyId);
             });
             it('when resolved, sets the correct variables', function() {
+                ontologyManagerSvc.list = [{ontology: {}, ontologyId: ''}];
                 deferred.resolve({});
                 scope.$apply();
+                var listItem = ontologyManagerSvc.list[ontologyManagerSvc.list.length - 1];
                 expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
                 expect(stateManagerSvc.setEditorTab).toHaveBeenCalledWith('basic');
-                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getList().length - 1);
+                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(listItem.ontology);
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getOntologyIRI(listItem.ontology), listItem);
                 expect(stateManagerSvc.showOpenOverlay).toBe(false);
             });
             it('when rejected, sets the correct variable', function() {

@@ -52,18 +52,18 @@ describe('Mapper Side Bar directive', function() {
             this.element = $compile(angular.element('<mapper-side-bar></mapper-side-bar>'))(scope);
             scope.$digest();
         });
-        it('should test whether there are ontologies availabale', function() {
+        it('should test whether there are ontologies available', function() {
             var controller = this.element.controller('mapperSideBar');
             var result = controller.noOntologies();
             expect(result).toBe(true);
 
-            ontologyManagerSvc.getList.and.returnValue([{}]);
+            ontologyManagerSvc.list = [{}];
             scope.$digest();
             result = controller.noOntologies();
             expect(result).toBe(false);
 
-            ontologyManagerSvc.getList.and.returnValue([]);
-            ontologyManagerSvc.getOntologyIds.and.returnValue(['']);
+            ontologyManagerSvc.list = [];
+            ontologyManagerSvc.ontologyIds = [''];
             scope.$digest();
             result = controller.noOntologies();
             expect(result).toBe(false);

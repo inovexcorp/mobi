@@ -80,7 +80,7 @@ describe('File Upload Overlay directive', function() {
             expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
             expect(ontologyManagerSvc.getClassProperty).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
+            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string');

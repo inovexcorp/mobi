@@ -61,11 +61,9 @@
          */
         self.getItemIri = function(item) {
             var iri = '';
-
             if(self.validateItem(item)) {
                 iri = item.namespace + item.localName;
             }
-
             return iri;
         }
 
@@ -82,7 +80,7 @@
          * otherwise
          */
         self.validateItem = function(item) {
-            return (item && item.hasOwnProperty('namespace') && item.hasOwnProperty('localName')) ? true : false;
+            return _.has(item, 'namespace') && _.has(item, 'localName');
         }
     }
 })();

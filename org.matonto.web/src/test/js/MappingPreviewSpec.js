@@ -58,7 +58,7 @@ describe('Mapping Preview directive', function() {
             var result = controller.ontologyExists();
             expect(result).toBe(false);
 
-            ontologyManagerSvc.getOntologyIds.and.returnValue(['']);
+            ontologyManagerSvc.ontologyIds = [''];
             mappingManagerSvc.getSourceOntologyId.and.returnValue('');
             result = controller.ontologyExists();
             expect(result).toBe(true);
@@ -83,7 +83,7 @@ describe('Mapping Preview directive', function() {
             it('if the ontology is valid', function() {
                 var controller = this.element.controller('mappingPreview');
                 var ontology = {matonto: {id: 'test'}};
-                ontologyManagerSvc.getList.and.returnValue([ontology]);
+                ontologyManagerSvc.list = [ontology];
                 mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology.matonto.id);
                 controller.useMapping();
                 scope.$apply();
@@ -94,7 +94,7 @@ describe('Mapping Preview directive', function() {
                 expect(mappingManagerSvc.sourceOntologies).toContain(ontology);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
 
-                ontologyManagerSvc.getList.and.returnValue([]);
+                ontologyManagerSvc.list = [];
                 controller.useMapping();
                 scope.$apply();
                 expect(mapperStateSvc.editMapping).toBe(true);
@@ -106,10 +106,10 @@ describe('Mapping Preview directive', function() {
             it('if the ontology is invalid', function() {
                 var controller = this.element.controller('mappingPreview');
                 var ontology = {matonto: {id: 'test'}};
-                ontologyManagerSvc.getList.and.returnValue([ontology]);
+                ontologyManagerSvc.list = [ontology];
                 mappingManagerSvc.getSourceOntologyId.and.returnValue(ontology.matonto.id);
                 mappingManagerSvc.getAllClassMappings.and.returnValue([{'mapsTo': 'test'}]);
-                ontologyManagerSvc.getClass.and.returnValue(undefined);
+                ontologyManagerSvc.getEntity.and.returnValue(undefined);
                 controller.useMapping();
                 scope.$apply();
                 expect(mapperStateSvc.editMapping).toBe(true);

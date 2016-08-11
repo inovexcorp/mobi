@@ -65,14 +65,14 @@
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
 
-                    var ontologyObjs = angular.copy(dvm.om.getList());
+                    var ontologyObjs = angular.copy(dvm.om.list);
                     var sourceOntology;
 
                     if (dvm.mm.sourceOntologies.length) {
                         sourceOntology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
                         ontologyObjs = _.union(ontologyObjs, [sourceOntology]);
                     }
-                    dvm.ontologyIds = _.union(dvm.om.getOntologyIds(), _.map(ontologyObjs, 'matonto.id'));
+                    dvm.ontologyIds = _.union(dvm.om.ontologyIds, _.map(ontologyObjs, 'matonto.id'));
                     if (sourceOntology) {
                         dvm.selectedOntology = angular.copy(sourceOntology);
                         dvm.selectedOntologyId = dvm.ontologyIds[dvm.ontologyIds.indexOf(dvm.selectedOntology.matonto.id)];

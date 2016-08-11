@@ -37,7 +37,8 @@ describe('Ontology Overlays directive', function() {
         mockStateManager();
         mockAnnotationManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _annotationManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_,
+            _annotationManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -88,57 +89,136 @@ describe('Ontology Overlays directive', function() {
             controller = element.controller('ontologyOverlays');
         });
         describe('deleteEntity', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.delete.and.returnValue(deferred.promise);
-                controller.deleteEntity();
-            });
-            it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.delete).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id, stateManagerSvc.selected.matonto.originalIri, stateManagerSvc.state);
-            });
-            describe('when resolved', function() {
-                it('and selectOntology is true, calls the correct functions', function() {
-                    deferred.resolve({selectOntology: true});
-                    scope.$apply();
-                    expect(stateManagerSvc.showDeleteConfirmation).toBe(false);
-                    expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
-                    expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', stateManagerSvc.state.oi);
+            describe('when selected isOntology', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.isOntology.and.returnValue(true);
+                    ontologyManagerSvc.deleteOntology.and.returnValue(deferred.promise);
+                    controller.deleteEntity();
                 });
-                it('and selectOntology is false, calls the correct function', function() {
-                    deferred.resolve({selectOntology: false});
+                it('calls the correct manager function', function() {
+                    expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+                });
+                it('when resolved', function() {
+                    deferred.resolve();
                     scope.$apply();
+                    expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
                     expect(stateManagerSvc.showDeleteConfirmation).toBe(false);
-                    expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.oi);
+                });
+                it('when rejected', function() {
+                    deferred.reject('error');
+                    scope.$apply();
+                    expect(controller.error).toBe('error');
                 });
             });
-            it('when rejected, sets the correct variable', function() {
-                deferred.reject('error');
-                scope.$apply();
-                expect(controller.error).toBe('error');
+            describe('when selected isClass', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.isOntology.and.returnValue(false);
+                    ontologyManagerSvc.isClass.and.returnValue(true);
+                    ontologyManagerSvc.deleteClass.and.returnValue(deferred.promise);
+                    controller.deleteEntity();
+                });
+                it('calls the correct manager function', function() {
+                    expect(ontologyManagerSvc.deleteClass).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
+                        stateManagerSvc.state.entityIRI);
+                });
+                it('when resolved', function() {
+                    deferred.resolve();
+                    scope.$apply();
+                    expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(stateManagerSvc.ontology);
+                    expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+                    expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor',
+                        ontologyManagerSvc.getOntologyIRI(stateManagerSvc.ontology),
+                        ontologyManagerSvc.getListItemById(stateManagerSvc.state.ontologyId));
+                    expect(stateManagerSvc.showDeleteConfirmation).toBe(false);
+                });
+                it('when rejected', function() {
+                    deferred.reject('error');
+                    scope.$apply();
+                    expect(controller.error).toBe('error');
+                });
             });
-        });
-        it('save calls the correct manager function', function() {
-            controller.save();
-            expect(ontologyManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
+            describe('when selected isObjectProperty', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.isOntology.and.returnValue(false);
+                    ontologyManagerSvc.isClass.and.returnValue(false);
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                    ontologyManagerSvc.deleteObjectProperty.and.returnValue(deferred.promise);
+                    controller.deleteEntity();
+                });
+                it('calls the correct manager function', function() {
+                    expect(ontologyManagerSvc.deleteObjectProperty).toHaveBeenCalledWith(
+                        stateManagerSvc.state.ontologyId, stateManagerSvc.state.entityIRI);
+                });
+                it('when resolved', function() {
+                    deferred.resolve();
+                    scope.$apply();
+                    expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(stateManagerSvc.ontology);
+                    expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+                    expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor',
+                        ontologyManagerSvc.getOntologyIRI(stateManagerSvc.ontology),
+                        ontologyManagerSvc.getListItemById(stateManagerSvc.state.ontologyId));
+                    expect(stateManagerSvc.showDeleteConfirmation).toBe(false);
+                });
+                it('when rejected', function() {
+                    deferred.reject('error');
+                    scope.$apply();
+                    expect(controller.error).toBe('error');
+                });
+            });
+            describe('when selected isDataTypeProperty', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.isOntology.and.returnValue(false);
+                    ontologyManagerSvc.isClass.and.returnValue(false);
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                    ontologyManagerSvc.deleteDataTypeProperty.and.returnValue(deferred.promise);
+                    controller.deleteEntity();
+                });
+                it('calls the correct manager function', function() {
+                    expect(ontologyManagerSvc.deleteDataTypeProperty).toHaveBeenCalledWith(
+                        stateManagerSvc.state.ontologyId, stateManagerSvc.state.entityIRI);
+                });
+                it('when resolved', function() {
+                    deferred.resolve();
+                    scope.$apply();
+                    expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(stateManagerSvc.ontology);
+                    expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+                    expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor',
+                        ontologyManagerSvc.getOntologyIRI(stateManagerSvc.ontology),
+                        ontologyManagerSvc.getListItemById(stateManagerSvc.state.ontologyId));
+                    expect(stateManagerSvc.showDeleteConfirmation).toBe(false);
+                });
+                it('when rejected', function() {
+                    deferred.reject('error');
+                    scope.$apply();
+                    expect(controller.error).toBe('error');
+                });
+            });
         });
         describe('save', function() {
             beforeEach(function() {
-                ontologyManagerSvc.edit.and.returnValue(deferred.promise);
+                stateManagerSvc.state.ontologyId = 'id';
+                ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
                 controller.save();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
+                expect(stateManagerSvc.getUnsavedEntities).toHaveBeenCalledWith(stateManagerSvc.ontology);
+                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
+                    stateManagerSvc.getUnsavedEntities(stateManagerSvc.ontology));
             });
-            it('when resolved, sets the correct variables', function() {
-                deferred.resolve({});
+            it('when resolved, sets the correct variable and calls correct manager function', function() {
+                deferred.resolve('id');
                 scope.$apply();
                 expect(stateManagerSvc.showSaveOverlay).toBe(false);
-                expect(stateManagerSvc.state).toEqual({});
+                expect(stateManagerSvc.afterSave).toHaveBeenCalledWith('id');
             });
         });
         it('removeAnnotation calls the correct manager functions and sets the correct manager variable', function() {
             controller.removeAnnotation();
-            expect(annotationManagerSvc.remove).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.key, stateManagerSvc.index);
-            expect(stateManagerSvc.entityChanged).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
+            expect(annotationManagerSvc.remove).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.key,
+                stateManagerSvc.index);
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
+                stateManagerSvc.state.entityIRI, true);
             expect(stateManagerSvc.showRemoveAnnotationOverlay).toBe(false);
         });
     });

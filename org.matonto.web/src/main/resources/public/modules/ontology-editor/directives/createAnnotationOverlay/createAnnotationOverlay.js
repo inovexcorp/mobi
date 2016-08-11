@@ -27,9 +27,10 @@
         .module('createAnnotationOverlay', [])
         .directive('createAnnotationOverlay', createAnnotationOverlay);
 
-        createAnnotationOverlay.$inject = ['REGEX', 'annotationManagerService', 'stateManagerService'];
+        createAnnotationOverlay.$inject = ['REGEX', 'annotationManagerService', 'stateManagerService',
+            'ontologyManagerService'];
 
-        function createAnnotationOverlay(REGEX, annotationManagerService, stateManagerService) {
+        function createAnnotationOverlay(REGEX, annotationManagerService, stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,14 +43,15 @@
                     dvm.iriPattern = REGEX.IRI;
                     dvm.am = annotationManagerService;
                     dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.create = function() {
-                        dvm.am.create(dvm.sm.ontology, dvm.iri)
-                            .then(function(response) {
-                                dvm.error = '';
-                                dvm.iri = '';
+                        dvm.am.create(dvm.sm.state.ontologyId, dvm.om.getAnnotationIRIs(dvm.sm.ontology), dvm.iri)
+                            .then(annotationJSON => {
+                                _.set(annotationJSON, 'matonto.originalIRI', angular.copy(annotationJSON['@id']));
+                                dvm.om.addEntity(dvm.sm.state.ontologyId, annotationJSON);
                                 dvm.sm.showCreateAnnotationOverlay = false;
-                            }, function(errorMessage) {
+                            }, errorMessage => {
                                 dvm.error = errorMessage;
                             });
                     }

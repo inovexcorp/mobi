@@ -42,7 +42,7 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.prefixes = prefixes;
-                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
+                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.state.subClasses, dvm.sm.state.entityIRI);
                 }
             }
         }

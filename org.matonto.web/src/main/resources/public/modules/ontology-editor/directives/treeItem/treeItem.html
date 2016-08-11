@@ -20,22 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<li ng-class="{'invalid': !currentEntity.matonto.isValid}">
-    <a ng-if="!hasChildren"
-       ng-click="onClick()"
-       ng-class="{'unsaved': currentEntity.matonto.unsaved, 'active': isActive}">
-        <i class="fa fa-fw {{currentEntity.matonto.icon}}" ng-class="{'fa-square-o': !currentEntity.matonto.icon}"
-        ></i>{{dvm.getTreeDisplay(currentEntity)}}
-        <i ng-show="currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
+<li ng-class="{'invalid': dvm.currentEntity.matonto.valid === false}">
+    <a ng-if="!hasChildren" ng-click="onClick()"
+       ng-class="{'unsaved': dvm.currentEntity.matonto.unsaved, 'active': isActive}">
+        <i class="fa fa-fw {{dvm.currentEntity.matonto.icon || 'fa-square-o'}}"></i>{{dvm.getTreeDisplay()}}
+        <i ng-show="dvm.currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
     </a>
-    <a ng-if="hasChildren"
-       ng-click="onClick()"
-       ng-dblclick="dvm.toggleOpen()"
-       ng-class="{'unsaved': currentEntity.matonto.unsaved, 'active': isActive}">
+    <a ng-if="hasChildren" ng-click="onClick()" ng-dblclick="dvm.toggleOpen()"
+       ng-class="{'unsaved': dvm.currentEntity.matonto.unsaved, 'active': isActive}">
         <i class="fa fa-fw"
            ng-class="{'fa-minus-square-o': dvm.isOpened, 'fa-plus-square-o': !dvm.isOpened}"
-           ng-click="dvm.toggleOpen(); $event.stopPropagation();"
-        ></i>{{dvm.getTreeDisplay(currentEntity)}}
-        <i ng-show="currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
+           ng-click="dvm.toggleOpen(); $event.stopPropagation();"></i>{{dvm.getTreeDisplay()}}
+        <i ng-show="dvm.currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
     </a>
 </li>

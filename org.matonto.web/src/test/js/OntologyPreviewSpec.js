@@ -58,8 +58,14 @@ describe('Ontology Preview directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
-
+            scope.ontology = [{'@id': ''}];
+            ontologyManagerSvc.getClasses.and.callFake(function(ontology) {
+                var result = [];
+                for(var i = 0; i < 6; i++) {
+                    result.push({'@type': ['Class']});
+                }
+                return result;
+            });
             this.element = $compile(angular.element('<ontology-preview ontology="ontology"></ontology-preview>'))(scope);
             scope.$digest();
         });
@@ -94,8 +100,8 @@ describe('Ontology Preview directive', function() {
             controller.full = true;
             result = controller.getClassList();
             expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(scope.ontology.matonto.classes.length);
-            expect(ontologyManagerSvc.getEntityName.calls.count()).toBe(scope.ontology.matonto.classes.length);
+            expect(result.length).toBe(ontologyManagerSvc.getClasses().length);
+            expect(ontologyManagerSvc.getEntityName.calls.count()).toBe(ontologyManagerSvc.getClasses().length);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -120,14 +126,28 @@ describe('Ontology Preview directive', function() {
             expect(this.element.querySelectorAll('a.header-link').length).toBe(0);
             expect(this.element.querySelectorAll('.classes')[0].innerHTML).toContain('None');
 
-            scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
+            scope.ontology = [{'@id': ''}];
+            ontologyManagerSvc.getClasses.and.callFake(function(ontology) {
+                var result = [];
+                for(var i = 0; i < 6; i++) {
+                    result.push({'@type': ['Class']});
+                }
+                return result;
+            });
             scope.$digest();
             expect(this.element.querySelectorAll('a.header-link').length).toBe(1);
             expect(this.element.querySelectorAll('.classes')[0].innerHTML).not.toContain('None');
         });
         it('depending on how many classes are showing', function() {
             var controller = this.element.controller('ontologyPreview');
-            scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
+            scope.ontology = [{'@id': ''}];
+            ontologyManagerSvc.getClasses.and.callFake(function(ontology) {
+                var result = [];
+                for(var i = 0; i < 6; i++) {
+                    result.push({'@type': ['Class']});
+                }
+                return result;
+            });
             scope.$digest();
             var link = angular.element(this.element.querySelectorAll('a.header-link')[0]);
             expect(link.text()).toBe('See More');
@@ -137,13 +157,27 @@ describe('Ontology Preview directive', function() {
         });
         it('with the correct number of list items for classes', function() {
             var controller = this.element.controller('ontologyPreview');
-            scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}]}};
+            scope.ontology = [{'@id': ''}];
+            ontologyManagerSvc.getClasses.and.callFake(function(ontology) {
+                var result = [];
+                for(var i = 0; i < 5; i++) {
+                    result.push({'@type': ['Class']});
+                }
+                return result;
+            });
             scope.$digest();
-            expect(this.element.querySelectorAll('.classes li').length).toBe(scope.ontology.matonto.classes.length);
+            expect(this.element.querySelectorAll('.classes li').length).toBe(ontologyManagerSvc.getClasses().length);
         });
     });
     it('sets full on click of link', function() {
-        scope.ontology = {'@id': '', matonto: {classes: [{}, {}, {}, {}, {}, {}]}};
+        scope.ontology = [{'@id': ''}];
+        ontologyManagerSvc.getClasses.and.callFake(function(ontology) {
+            var result = [];
+            for(var i = 0; i < 6; i++) {
+                result.push({'@type': ['Class']});
+            }
+            return result;
+        });
         var element = $compile(angular.element('<ontology-preview ontology="ontology"></ontology-preview>'))(scope);
         scope.$digest();
         var controller = element.controller('ontologyPreview');

@@ -88,7 +88,7 @@
                             dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId)
                         );
                         var propName = dvm.om.getEntityName(dvm.om.getClassProperty(ontology, classId, propId));
-                        var className = dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
+                        var className = dvm.om.getEntityName(dvm.om.getEntity(ontology, classId));
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.upload = function() {

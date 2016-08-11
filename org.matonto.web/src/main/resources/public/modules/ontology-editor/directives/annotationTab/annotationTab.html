@@ -27,7 +27,7 @@
     </div>
 
     <!-- list of annotations -->
-    <div class="annotation" ng-repeat="annotation in dvm.sm.selected | showAnnotations:dvm.sm.ontology.matonto.annotations | orderBy:'localName'">
+    <div class="annotation" ng-repeat="annotation in dvm.sm.selected | showAnnotations:dvm.sm.state.annotations | orderBy:'localName'">
         <h5 ng-click="isClosed = !isClosed" class="clearfix">
             {{annotation.localName | beautify}} <small>&lt;{{dvm.ro.getItemIri(annotation)}}&gt;</small><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
         </h5>

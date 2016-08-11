@@ -26,7 +26,8 @@ describe('Create Ontology Overlay directive', function() {
         element,
         ontologyManagerSvc,
         deferred,
-        stateManagerSvc;
+        stateManagerSvc,
+        prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -35,13 +36,15 @@ describe('Create Ontology Overlay directive', function() {
         injectCamelCaseFilter();
         mockOntologyManager();
         mockStateManager();
+        mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             stateManagerSvc = _stateManagerService_;
             deferred = _$q_.defer();
+            prefixes = _prefixes_;
         });
     });
 
@@ -78,39 +81,42 @@ describe('Create Ontology Overlay directive', function() {
         });
         describe('nameChanged', function() {
             beforeEach(function() {
-                controller.name = 'Name';
+                controller.ontology = {};
+                controller.ontology[prefixes.dcterms + 'title'] = [{'@value': 'Name'}];
             });
-            it('changes iri if iriHasChanged is false', function() {
+            it("changes ontology['@id'] if iriHasChanged is false", function() {
                 controller.iriHasChanged = false;
                 var date = new Date();
                 var prefix = 'https://matonto.org/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear() + '/';
                 controller.nameChanged();
-                expect(controller.iri).toEqual(prefix + controller.name);
+                expect(controller.ontology['@id']).toEqual(prefix + controller.ontology[prefixes.dcterms +
+                    'title'][0]['@value']);
             });
-            it('does not change iri if iriHasChanged is true', function() {
+            it("does not change ontology['@id'] if iriHasChanged is true", function() {
                 controller.iriHasChanged = true;
-                controller.iri = 'iri';
+                controller.ontology['@id'] = 'iri';
                 controller.nameChanged();
-                expect(controller.iri).toEqual('iri');
+                expect(controller.ontology['@id']).toEqual('iri');
             });
         });
         describe('create', function() {
             beforeEach(function() {
                 ontologyManagerSvc.createOntology.and.returnValue(deferred.promise);
-                controller.iri = 'ontology-iri';
-                controller.name = 'label';
-                controller.description = 'description';
+                controller.ontology = {'@id': 'ontology-iri'};
+                controller.ontology[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
+                controller.ontology[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                 controller.create();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.iri, controller.name, controller.description);
+                expect(ontologyManagerSvc.createOntology).toHaveBeenCalledWith(controller.ontology);
             });
             it('when resolved, sets the correct variables', function() {
-                deferred.resolve({});
+                deferred.resolve({entityIRI: 'entityIRI', ontologyId: 'ontologyId'});
                 scope.$apply();
-                expect(controller.error).toBe('');
                 expect(stateManagerSvc.showCreateOntologyOverlay).toBe(false);
-                expect(stateManagerSvc.setStateToNew).toHaveBeenCalledWith(stateManagerSvc.state, ontologyManagerSvc.getList(), 'ontology');
+                expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith('ontologyId');
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', 'entityIRI',
+                    ontologyManagerSvc.getListItemById('ontologyId'));
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');

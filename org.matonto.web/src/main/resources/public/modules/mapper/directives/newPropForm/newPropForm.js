@@ -81,7 +81,7 @@
                     dvm.getClassName = function() {
                         var classId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId);
                         var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
-                        return dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
+                        return dvm.om.getEntityName(dvm.om.getEntity(ontology, classId));
                     }
                     dvm.set = function() {
                         if (dvm.isObjectProperty()) {

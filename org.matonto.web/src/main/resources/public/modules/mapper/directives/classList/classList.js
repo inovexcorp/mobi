@@ -149,7 +149,7 @@
                     function getClassName(classMapping) {
                         var classId = getClassId(classMapping);
                         var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
-                        return dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
+                        return dvm.om.getEntityName(dvm.om.getEntity(ontology, classId));
                     }
                     function getPropName(propMapping, classMapping) {
                         var classId = getClassId(classMapping);

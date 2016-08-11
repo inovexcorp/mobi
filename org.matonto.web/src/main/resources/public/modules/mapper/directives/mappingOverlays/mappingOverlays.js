@@ -82,7 +82,7 @@
                         var ontologyEntity = undefined;
                         if (dvm.isClassMapping(dvm.state.deleteId)) {
                             var classId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            ontologyEntity = dvm.om.getClass(ontology, classId);
+                            ontologyEntity = dvm.om.getEntity(ontology, classId);
                         } else {
                             var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
                             var classMapping = dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId) 

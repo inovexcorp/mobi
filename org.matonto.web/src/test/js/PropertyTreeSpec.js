@@ -20,11 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 describe('Property Tree directive', function() {
     var $compile,
         scope,
         element,
-        ontologyManagerSvc;
+        controller,
+        ontologyManagerSvc,
+        stateManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,32 +36,25 @@ describe('Property Tree directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
     });
 
     beforeEach(function() {
-        ontologyManagerSvc.getList.and.returnValue([
-            {
-                matonto: {
-                    classes: [
-                        {
-                            matonto: {
-                                properties: ['prop1', 'prop2']
-                            }
-                        }
-                    ],
-                    noDomains: ['prop3']
-                }
-            }
-        ]);
+        ontologyManagerSvc.getObjectProperties.and.returnValue([{matonto:{originalIRI:'object1'}}, {matonto:{originalIRI:'object2'}}, {matonto:{originalIRI:'object3'}}]);
+        ontologyManagerSvc.getDataTypeProperties.and.returnValue([{matonto:{originalIRI:'dataType1'}}, {matonto:{originalIRI:'dataType2'}}, {matonto:{originalIRI:'dataType3'}}]);
+        ontologyManagerSvc.list = [{
+            id: '',
+            ontology: [{}],
+            ontologyIRI: ''
+        }];
         scope.headerText = 'test';
         scope.propertyType = 'test';
-
-        element = $compile(angular.element('<property-tree header-text="headerText" property-type="propertyType"></property-tree>'))(scope);
+        element = $compile(angular.element('<property-tree header-text="{{headerText}}" property-type="{{propertyType}}"></property-tree>'))(scope);
         scope.$digest();
     });
 
@@ -71,8 +67,6 @@ describe('Property Tree directive', function() {
         });
     });
     describe('controller bound variables', function() {
-        var controller;
-
         beforeEach(function() {
             controller = element.controller('propertyTree');
         });
@@ -94,30 +88,52 @@ describe('Property Tree directive', function() {
             expect(container.length).toBe(1);
         });
         it('based on ul', function() {
-            var uls = element.querySelectorAll('ul');
-            expect(uls.length).toBe(3);
+            var uls = element.find('ul');
+            expect(uls.length).toBe(2);
         });
         it('based on container tree-items', function() {
-            spyOn(element.controller('propertyTree'), 'isThisType').and.returnValue(true);
+            controller = element.controller('propertyTree');
+            controller.getPropertyIRIs = jasmine.createSpy('getPropertyIRIs').and.returnValue(['1', '2', '3']);
             scope.$digest();
-
             var lis = element.querySelectorAll('.container tree-item');
-            expect(lis.length).toBe(3);
+            expect(lis.length).toBe(controller.getPropertyIRIs().length);
         });
     });
     describe('controller methods', function() {
-        var controller;
-
         beforeEach(function() {
             controller = element.controller('propertyTree');
         });
-        it('isThisType returns a boolean value', function() {
-            var result = controller.isThisType({}, 'datatypeproperty');
-            expect(typeof result).toBe('boolean');
+        describe('getProperties calls correct function', function() {
+            it('if propertyType = "object"', function() {
+                scope.propertyType = 'object';
+                scope.$digest();
+                var result = controller.getProperties([]);
+                expect(ontologyManagerSvc.getObjectProperties).toHaveBeenCalledWith([]);
+                expect(result).toEqual(ontologyManagerSvc.getObjectProperties([]));
+            });
+            it('if propertyType = "dataType"', function() {
+                scope.propertyType = 'dataType';
+                scope.$digest();
+                var result = controller.getProperties([]);
+                expect(ontologyManagerSvc.getDataTypeProperties).toHaveBeenCalledWith([]);
+                expect(result).toEqual(ontologyManagerSvc.getDataTypeProperties([]));
+            });
         });
-        it('hasChildren returns a boolean value', function() {
-            var result = controller.hasChildren({});
-            expect(typeof result).toBe('boolean');
+        describe('hasProperties calls the correct function', function() {
+            it('if propertyType = "object"', function() {
+                scope.propertyType = 'object';
+                scope.$digest();
+                var result = controller.hasProperties([]);
+                expect(ontologyManagerSvc.hasObjectProperties).toHaveBeenCalledWith([]);
+                expect(result).toEqual(ontologyManagerSvc.hasObjectProperties([]));
+            });
+            it('if propertyType = "dataType"', function() {
+                scope.propertyType = 'dataType';
+                scope.$digest();
+                var result = controller.hasProperties([]);
+                expect(ontologyManagerSvc.hasDataTypeProperties).toHaveBeenCalledWith([]);
+                expect(result).toEqual(ontologyManagerSvc.hasDataTypeProperties([]));
+            });
         });
     });
 });

@@ -41,7 +41,10 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-                    dvm.ontologies = dvm.om.getList();
+
+                    dvm.toggleNoDomainsOpen = function(ontologyId) {
+                        dvm.sm.setNoDomainsOpened(ontologyId, !dvm.sm.getNoDomainsOpened(ontologyId));
+                    }
                 }
             }
         }

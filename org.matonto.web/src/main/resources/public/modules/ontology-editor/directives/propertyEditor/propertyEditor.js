@@ -42,9 +42,15 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.prefixes = prefixes;
-                    dvm.propertyTypes = dvm.om.getPropertyTypes();
-                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
-                    dvm.subObjectProperties = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subObjectProperties, dvm.sm.selected.matonto.originalIri);
+                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.state.subClasses, dvm.sm.state.entityIRI);
+                    dvm.subObjectProperties = $filter('removeIriFromArray')(dvm.sm.state.subObjectProperties,
+                        dvm.sm.state.entityIRI);
+
+                    dvm.checkDomain = function() {
+                        if (dvm.sm.selected[prefixes.rdfs + 'domain'].length === 0) {
+                            _.unset(dvm.sm.selected, prefixes.rdfs + 'domain');
+                        }
+                    }
                 }
             }
         }

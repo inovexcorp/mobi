@@ -36,7 +36,7 @@
                       confirm-text="'Yes'"
                       cancel-text="'No'">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id'] || dvm.sm.selected.matonto.id}}</strong>?</p>
+    <p>Are you sure that you want to delete <strong>{{dvm.sm.state.entityIRI}}</strong>?</p>
 </confirmation-overlay>
 <confirmation-overlay ng-if="dvm.sm.showRemoveAnnotationOverlay"
                       header-text="'Remove Annotation'"
@@ -46,11 +46,12 @@
                       cancel-text="'No'">
     <p>Are you sure you want to remove annotation:<br><strong>{{dvm.sm.key}}</strong></p>
     <p>with value:<br><strong>{{dvm.sm.selected[dvm.sm.key][dvm.sm.index]['@value'] || dvm.sm.selected[dvm.sm.key][0]['@id']}}</strong></p>
-    <p>from:<br><strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+    <p>from:<br><strong>{{dvm.sm.state.entityIRI}}</strong>?</p>
 </confirmation-overlay>
 <confirmation-overlay ng-if="dvm.sm.showSaveOverlay"
                       header-text="'Save Ontology Changes'"
                       confirm-click="dvm.save()"
                       cancel-click="dvm.sm.showSaveOverlay = false"
                       confirm-text="'Yes'"
-                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{dvm.sm.ontology['@id'] || dvm.sm.ontology.matonto.id}}</strong>?</confirmation-overlay>
+                      cancel-text="'No'">Are you sure that you want to save changes to <strong>{{dvm.om.getOntologyIRI(dvm.sm.ontology) || dvm.sm.state.ontologyId}}</strong>?</confirmation-overlay>
+<pre>{{dvm.sm.selected | json}}</pre>

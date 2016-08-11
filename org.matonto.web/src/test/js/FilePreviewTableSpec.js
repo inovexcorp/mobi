@@ -88,11 +88,13 @@ describe('File Preview Table directive', function() {
             result = controller.isClickable();
             expect(result).toBe(true);
 
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             mapperStateSvc.selectedPropMappingId = '';
             mapperStateSvc.selectedProp = {'@type': ['ObjectProperty']};
             result = controller.isClickable();
             expect(result).toBe(false);
 
+            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             mapperStateSvc.selectedProp = {'@type': ['DataProperty']};
             result = controller.isClickable();
             expect(result).toBe(true);

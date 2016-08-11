@@ -73,11 +73,12 @@ describe('Edit Prop Form directive', function() {
             var result = controller.getTitle();
 
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
+            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string')
         });
         it('should test whether property is an object property', function() {
+            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             var controller = this.element.controller('editPropForm');
             var result = controller.isObjectProperty();
             expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalled();

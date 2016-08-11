@@ -58,11 +58,13 @@ describe('New Prop Form directive', function() {
             scope.$digest();
         });
         it('should test whether the selected property is an object property', function() {
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             var controller = this.element.controller('newPropForm');
             mapperStateSvc.selectedProp = {'@type': ['ObjectProperty']};
             var result = controller.isObjectProperty();
             expect(result).toBe(true);
 
+            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             mapperStateSvc.selectedProp = {};
             result = controller.isObjectProperty();
             expect(result).toBe(false);

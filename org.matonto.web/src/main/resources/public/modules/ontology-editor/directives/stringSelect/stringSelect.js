@@ -27,9 +27,9 @@
         .module('stringSelect', [])
         .directive('stringSelect', stringSelect);
 
-        stringSelect.$inject = ['ontologyManagerService'];
+        stringSelect.$inject = ['$filter', 'ontologyManagerService', 'prefixes'];
 
-        function stringSelect(ontologyManagerService) {
+        function stringSelect($filter, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -48,6 +48,20 @@
                     var dvm = this;
 
                     dvm.om = ontologyManagerService;
+
+                    dvm.getItemNamespace = function(item) {
+                        var split = $filter('splitIRI')(item);
+                        return split.begin + split.then;
+                    }
+
+                    dvm.disableChoice = function(item) {
+                        if (_.isEqual(item, prefixes.owl + 'DataTypeProperty')) {
+                            return _.indexOf(dvm.bindModel, prefixes.owl + 'ObjectProperty') !== -1;
+                        } else if (_.isEqual(item, prefixes.owl + 'ObjectProperty')) {
+                            return _.indexOf(dvm.bindModel, prefixes.owl + 'DataTypeProperty') !== -1;
+                        }
+                        return false;
+                    }
                 }
             }
         }

@@ -43,17 +43,18 @@
                     dvm.sm = stateManagerService;
 
                     dvm.saveThenClose = function() {
-                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.state)
-                            .then(function(state) {
+                        dvm.om.saveChanges(dvm.sm.state.ontologyId, dvm.sm.getUnsavedEntities(dvm.sm.ontology))
+                            .then(newId => {
+                                dvm.sm.afterSave(newId);
                                 dvm.close();
-                            }, function(errorMessage) {
+                            }, errorMessage => {
                                 dvm.error = errorMessage;
                             });
                     }
 
                     dvm.close = function() {
-                        dvm.om.closeOntology(dvm.sm.state.oi, dvm.sm.ontology.matonto.id);
-                        dvm.sm.clearState(dvm.sm.state.oi);
+                        dvm.om.closeOntology(dvm.sm.state.ontologyId);
+                        dvm.sm.clearState(dvm.sm.state.ontologyId);
                         dvm.sm.showCloseOverlay = false;
                     }
                 }

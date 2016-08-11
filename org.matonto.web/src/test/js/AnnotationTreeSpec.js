@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 describe('Annotation Tree directive', function() {
     var $compile,
         scope,
@@ -44,9 +45,12 @@ describe('Annotation Tree directive', function() {
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            ontologyManagerSvc.getList.and.callFake(function() {
-                return [{matonto: {jsAnnotations: ['annotation1', 'annotation2']}}];
-            });
+            ontologyManagerSvc.list = [{
+                id: '',
+                ontology: [{}],
+                ontologyIRI: ''
+            }];
+            ontologyManagerSvc.getAnnotations.and.returnValue([{matonto:{originalIRI:'annotation1'}}, {matonto:{originalIRI:'annotation2'}}]);
             element = $compile(angular.element('<annotation-tree></annotation-tree>'))(scope);
             scope.$digest();
         });
@@ -65,21 +69,9 @@ describe('Annotation Tree directive', function() {
             expect(uls.length).toBe(2);
         });
         it('based on container tree-items', function() {
+            expect(ontologyManagerSvc.getAnnotations).toHaveBeenCalledWith(ontologyManagerSvc.list[0].ontology);
             var lis = element.querySelectorAll('.container tree-item');
-            expect(lis.length).toBe(2);
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<annotation-tree></annotation-tree>'))(scope);
-            scope.$digest();
-            controller = element.controller('annotationTree');
-        });
-        it('select annotation calls correct functions and sets correct variables', function() {
-            controller.selectAnnotation(0, 0);
-            expect(stateManagerSvc.setState).toHaveBeenCalledWith('annotation-editor', 0, undefined, 0);
-            expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(0);
-            expect(stateManagerSvc.selected).toEqual(stateManagerSvc.ontology.matonto.jsAnnotations[0]);
+            expect(lis.length).toBe(ontologyManagerSvc.getAnnotations().length);
         });
     });
 });

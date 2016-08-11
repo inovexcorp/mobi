@@ -35,6 +35,7 @@ describe('Class Editor directive', function() {
         module('classEditor');
         mockPrefixes();
         injectRemoveIriFromArrayFilter();
+        injectSplitIRIFilter();
         mockOntologyManager();
         mockStateManager();
 

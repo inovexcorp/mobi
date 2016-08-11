@@ -66,7 +66,7 @@ describe('Edit Class Form directive', function() {
             var result = controller.getTitle();
 
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
+            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });

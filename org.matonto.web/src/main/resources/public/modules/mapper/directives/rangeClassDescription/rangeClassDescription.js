@@ -80,7 +80,7 @@
                         var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, dvm.classId);
                         var propObj = dvm.om.getClassProperty(ontology, dvm.classId, dvm.selectedPropId);
                         var rangeClassId = _.get(propObj, "['"+ prefixes.rdfs + "range'][0]['@id']");
-                        return dvm.om.getClass(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, rangeClassId), rangeClassId);
+                        return dvm.om.getEntity(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, rangeClassId), rangeClassId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/rangeClassDescription/rangeClassDescription.html'

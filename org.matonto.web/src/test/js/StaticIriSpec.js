@@ -32,14 +32,16 @@ describe('Static IRI directive', function() {
         module('templates');
         module('staticIri');
         mockStateManager();
+        mockOntologyManager();
         injectSplitIRIFilter();
         injectRegexConstant();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _$filter_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _$filter_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
             $filter = _$filter_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -130,8 +132,10 @@ describe('Static IRI directive', function() {
             controller.iriBegin = 'new';
             controller.iriThen = 'new';
             controller.afterEdit();
-            expect(stateManagerSvc.ontology.matonto.iriBegin).toBe('new');
-            expect(stateManagerSvc.ontology.matonto.iriThen).toBe('new');
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+            var listItem = ontologyManagerSvc.getListItemById(stateManagerSvc.state.ontologyId);
+            expect(listItem.iriBegin).toBe('new');
+            expect(listItem.iriThen).toBe('new');
             expect(stateManagerSvc.showIriOverlay).toBe(false);
         });
         it('check $watch', function() {

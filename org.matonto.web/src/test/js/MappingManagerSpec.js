@@ -250,7 +250,7 @@ describe('Mapping Manager service', function() {
     });
     describe('should add a class mapping to a mapping', function() {
         it('unless the class does not exist in the passed ontology', function() {
-            ontologyManagerSvc.getClass.and.returnValue(undefined);
+            ontologyManagerSvc.getEntity.and.returnValue(undefined);
             var result = mappingManagerSvc.addClass([], {}, 'classid');
             expect(result).toEqual([]);
         });

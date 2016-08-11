@@ -25,6 +25,7 @@ describe('Annotation Tab directive', function() {
         scope,
         element,
         stateManagerSvc,
+        ontologyManagerSvc,
         controller;
 
 
@@ -33,13 +34,16 @@ describe('Annotation Tab directive', function() {
         module('annotationTab');
         injectBeautifyFilter();
         injectShowAnnotationsFilter();
+        injectSplitIRIFilter();
         mockStateManager();
+        mockOntologyManager();
         mockResponseObj();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _responseObj_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -49,14 +53,7 @@ describe('Annotation Tab directive', function() {
                 'prop1': [{'@id': 'value1'}],
                 'prop2': [{'@value': 'value2'}]
             };
-            stateManagerSvc.ontology = {
-                matonto: {
-                    annotations: [
-                        'prop1',
-                        'prop2'
-                    ]
-                }
-            };
+            ontologyManagerSvc.getAnnotationIRIs.and.returnValue(['prop1', 'prop2']);
             element = $compile(angular.element('<annotation-tab></annotation-tab>'))(scope);
             scope.$digest();
         });
@@ -70,7 +67,6 @@ describe('Annotation Tab directive', function() {
         it('based on listed annotations', function() {
             var annotations = element.querySelectorAll('.annotation');
             expect(annotations.length).toBe(2);
-
             stateManagerSvc.selected = undefined;
             scope.$digest();
             annotations = element.querySelectorAll('.annotation');
@@ -108,14 +104,14 @@ describe('Annotation Tab directive', function() {
             expect(stateManagerSvc.showRemoveAnnotationOverlay).toBe(true);
         });
         it('editClicked sets the correct manager values', function() {
-            var annotation = {localName: 'prop1'};
+            var annotationIRI = 'prop1';
             stateManagerSvc.selected = {
                 'prop1': [{'@value': 'value'}]
             };
-            controller.editClicked(annotation, 0);
+            controller.editClicked(annotationIRI, 0);
             expect(stateManagerSvc.editingAnnotation).toBe(true);
-            expect(stateManagerSvc.annotationSelect).toEqual(annotation);
-            expect(stateManagerSvc.annotationValue).toBe('value');
+            expect(stateManagerSvc.annotationSelect).toEqual(annotationIRI);
+            expect(stateManagerSvc.annotationValue).toBe(stateManagerSvc.selected[annotationIRI][0]['@value']);
             expect(stateManagerSvc.annotationIndex).toBe(0);
             expect(stateManagerSvc.showAnnotationOverlay).toBe(true);
         });

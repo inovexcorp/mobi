@@ -88,7 +88,7 @@
                     dvm.getTitle = function() {
                         var classId = dvm.getClassId();
                         var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
-                        var className = dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
+                        var className = dvm.om.getEntityName(dvm.om.getEntity(ontology, classId));
                         var propName = dvm.om.getEntityName(getClassProp(classId, dvm.getPropId()));
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }

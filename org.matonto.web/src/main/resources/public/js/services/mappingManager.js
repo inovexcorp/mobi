@@ -309,7 +309,7 @@
             self.addClass = function(mapping, ontology, classId) {
                 var newMapping = angular.copy(mapping);
                 // Check if class exists in ontology
-                if (ontologyManagerService.getClass(ontology, classId)) {
+                if (ontologyManagerService.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
                     var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontology, '@id', '')).toLowerCase();

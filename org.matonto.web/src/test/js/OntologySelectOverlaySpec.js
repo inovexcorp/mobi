@@ -48,10 +48,10 @@ describe('Ontology Select Overlay directive', function() {
         });
     });
 
-    describe('should intialize with the correct values', function() {
+    describe('should initialize with the correct values', function() {
         it('using opened and closed ontologies', function() {
-            ontologyManagerSvc.getList.and.returnValue([{matonto: {id: 'open'}}]);
-            ontologyManagerSvc.getOntologyIds.and.returnValue(['closed']);
+            ontologyManagerSvc.list = [{matonto: {id: 'open'}}];
+            ontologyManagerSvc.ontologyIds = ['closed'];
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
             var controller = element.controller('ontologySelectOverlay');

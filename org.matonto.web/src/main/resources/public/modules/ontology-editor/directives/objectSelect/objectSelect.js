@@ -53,7 +53,7 @@
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
                     dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyIri', _.get(dvm.sm.ontology, '@id', dvm.sm.ontology.matonto.id));
+                        return _.get(item, 'ontologyId', dvm.sm.state.ontologyId);
                     }
 
                     dvm.getItemIri = function(item) {
@@ -63,14 +63,14 @@
                     dvm.getTooltipDisplay = function(item) {
                         var itemIri = dvm.getItemIri(item);
                         var ontologyIndex = dvm.sm.state.oi;
-                        var selectedObject = dvm.om.getObjectCopyByIri(itemIri, ontologyIndex);
+                        var selectedObject = {};// dvm.om.getEntity(dvm.sm.ontology.ontology, itemIri);
                         var result = itemIri;
 
-                        if(dvm.tooltipDisplay === 'comment') {
+                        if (dvm.tooltipDisplay === 'comment') {
                             result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(selectedObject, "['" + prefixes.dcterms + "description'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri)));
-                        } else if(dvm.tooltipDisplay === 'label') {
+                        } else if (dvm.tooltipDisplay === 'label') {
                             result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']", _.get(selectedObject, "['" + prefixes.dcterms + "title'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri)));
-                        } else if(_.has(selectedObject, '@id')) {
+                        } else if (_.has(selectedObject, '@id')) {
                             result = selectedObject['@id'];
                         }
 
@@ -84,14 +84,14 @@
                     dvm.getBlankNodeValue = function(id) {
                         var result;
 
-                        if(dvm.isBlankNode(id)) {
+                        /*if (dvm.isBlankNode(id)) {
                             var propertyIRI = _.get(dvm.sm.ontology.matonto.propertyExpressions, id);
                             var classIRI = _.get(dvm.sm.ontology.matonto.classExpressions, id);
                             var unionOfIRI = _.get(dvm.sm.ontology.matonto.unionOfs, id);
                             var intersectionOfIRI = _.get(dvm.sm.ontology.matonto.intersectionOfs, id);
 
                             result = propertyIRI || classIRI || unionOfIRI || intersectionOfIRI || id;
-                        }
+                        }*/
 
                         return result;
                     }
