@@ -145,8 +145,23 @@
                     + encodeURIComponent(dataPropertyIRI));
             }
 
+            /* Individuals */
+            self.addIndividualToOntology = function(ontologyId, individualJSON) {
+                var config = {
+                    params: {
+                        resourcejson: individualJSON
+                    }
+                };
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
+            }
+
+            self.deleteIndividualFromOntology = function(ontologyId, individualIRI) {
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/' 
+                    + encodeURIComponent(individualIRI));
+            }
+
             /* Imported ontologies */
-            self.getImportsClosure = function(ontologyId, rdfFormat = 'jsonlod') {
+            self.getImportsClosure = function(ontologyId, rdfFormat = 'jsonld') {
                 var config = {
                     params: {
                         rdfformat: rdfFormat
@@ -293,6 +308,7 @@
                     listItem.subClasses = _.get(irisResponse, 'data.classes');
                     listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
                     listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
+                    listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
                     listItem.dataPropertyRange = _.unionWith(
                         _.get(irisResponse, 'data.datatypes'),
                         defaultDatatypes,
@@ -788,6 +804,52 @@
 
             self.getAnnotationIRIs = function(ontology) {
                 return _.map(self.getAnnotations(ontology), 'matonto.originalIRI');
+            }
+
+            self.isIndividual = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.owl + 'NamedIndividual');
+            }
+
+            self.getIndividuals = function(ontology) {
+                return _.filter(ontology, entity => _.includes(_.get(entity, '@type', []), prefixes.owl + 'NamedIndividual'));
+            }
+
+            self.hasClassIndividuals = function(ontology, classIRI) {
+                return _.some(self.getIndividuals(ontology), entity => _.includes(_.get(entity, '@type', []), classIRI));
+            }
+
+            self.getClassIndividuals = function(ontology, classIRI) {
+                return _.filter(self.getIndividuals(ontology), entity => _.includes(_.get(entity, '@type', []), classIRI));
+            }
+
+            self.deleteIndividual = function(ontologyId, individualIRI) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                self.deleteIndividualFromOntology(ontologyId, individualIRI)
+                    .then(response => {
+                        onDeleteSuccess(response, ontologyId, individualIRI, 'individuals', deferred);
+                    }, response => {
+                        onDeleteError(response, deferred);
+                    })
+                    .then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
+
+            self.createIndividual = function(ontologyId, individualJSON) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                self.addIndividualToOntology(ontologyId, individualJSON)
+                    .then(response => {
+                        onCreateSuccess(response, ontologyId, individualJSON, 'individuals', deferred);
+                    }, response => {
+                        onCreateError(response, deferred);
+                    })
+                    .then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
             }
 
             self.getRestrictions = function(ontology) {

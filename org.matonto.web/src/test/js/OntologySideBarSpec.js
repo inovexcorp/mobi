@@ -56,7 +56,7 @@ describe('Ontology Side Bar directive', function() {
         });
         it('based on left-nav-items', function() {
             var leftNavItems = element.find('left-nav-item');
-            expect(leftNavItems.length).toBe(10);
+            expect(leftNavItems.length).toBe(11);
         });
         it('based on .separators', function() {
             var separators = element.querySelectorAll('.separator');

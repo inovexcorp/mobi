@@ -58,6 +58,11 @@
                     tab: 'annotation',
                     editor: 'default-tab',
                     editorTab: 'basic'
+                },
+                individual: {
+                    tab: 'individual',
+                    editor: 'default-tab',
+                    editorTab: 'basic'
                 }
             }
 
@@ -178,6 +183,14 @@
 
             self.getNoDomainsOpened = function(ontologyId) {
                 return _.get(self.state, encodeURIComponent(ontologyId) + '.noDomainsOpened', false);
+            }
+
+            self.getIndividualsOpened = function(ontologyId, classIRI) {
+                return _.get(self.state, encodeURIComponent(ontologyId) + '.' + encodeURIComponent(classIRI) + '.individualsOpened', false);
+            }
+
+            self.setIndividualsOpened = function(ontologyId, classIRI, isOpened) {
+                return _.set(self.state, encodeURIComponent(ontologyId) + '.' + encodeURIComponent(classIRI) + '.individualsOpened', isOpened);
             }
 
             self.onEdit = function(iriBegin, iriThen, iriEnd) {

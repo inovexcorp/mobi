@@ -346,6 +346,20 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response getNamedIndividualsInOntology(@PathParam("ontologyid") String ontologyIdStr);
+
+    @POST
+    @Path("{ontologyid}/named-individuals")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response addIndividualToOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                     @QueryParam("resourcejson") String resourceJson);
+
+    @DELETE
+    @Path("{ontologyid}/named-individuals/{individualid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response deleteIndividualFromOntology(@PathParam("ontologyid") String ontologyIdStr,
+                                          @PathParam("individualid") String individualIdStr);
     
     /**
      * Returns IRIs in the direct imported ontologies of the ontology with requested ontology ID.

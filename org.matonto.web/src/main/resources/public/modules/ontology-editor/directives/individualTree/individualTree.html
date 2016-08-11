@@ -1,0 +1,54 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="tree individual-tree scroll-without-buttons">
+    <strong>Individuals</strong>
+    <!-- ontologies -->
+    <ul ng-repeat="item in dvm.om.list">
+        <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
+                   ontology-id="item.ontologyId"
+                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
+                   on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
+                   has-children="dvm.om.hasClasses(item.ontology)"
+                   is-opened="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))"></tree-item>
+        <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+            <!-- classes -->
+            <ul ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI">
+                <li>
+                    <a ng-click="dvm.sm.setIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI, !dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI)); $event.stopPropagation()">
+                        <i class="fa fa-fw"
+                           ng-class="{'fa-folder': !dvm.om.hasClassIndividuals(item.ontology, clazz.matonto.originalIRI), 'fa-folder-open-o': dvm.om.hasClassIndividuals(item.ontology, clazz.matonto.originalIRI) && dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI), 'fa-folder-o': dvm.om.hasClassIndividuals(item.ontology, clazz.matonto.originalIRI) && !dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI)}"></i>{{dvm.getTreeDisplay(clazz)}}
+                    </a>
+                </li>
+                <li class="container" ng-show="dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI)">
+                    <ul>
+                        <tree-item ng-repeat="individual in dvm.om.getClassIndividuals(item.ontology, clazz.matonto.originalIRI) track by individual.matonto.originalIRI"
+                                   ontology-id="item.ontologyId"
+                                   current-entity="individual"
+                                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === individual.matonto.originalIRI"
+                                   on-click="dvm.sm.selectItem('individual-editor', individual.matonto.originalIRI, item)"></tree-item>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>

@@ -26,9 +26,11 @@
     <tab-button is-active="dvm.sm.state.tab === 'object'" on-click="dvm.sm.setTreeTab('object')">Object</tab-button>
     <tab-button is-active="dvm.sm.state.tab === 'datatype'" on-click="dvm.sm.setTreeTab('datatype')">Data</tab-button>
     <tab-button is-active="dvm.sm.state.tab === 'annotation'" on-click="dvm.sm.setTreeTab('annotation')">Annotation</tab-button>
+    <tab-button is-active="dvm.sm.state.tab === 'individual'" on-click="dvm.sm.setTreeTab('individual')">Individual</tab-button>
 </tab-button-container>
 <everything-tree ng-if="dvm.sm.state.tab === 'everything'"></everything-tree>
 <class-tree ng-if="dvm.sm.state.tab === 'class'"></class-tree>
 <property-tree ng-if="dvm.sm.state.tab === 'object'" header-text="Object Properties"  property-type="object"></property-tree>
 <property-tree ng-if="dvm.sm.state.tab === 'datatype'" header-text="Data Properties" property-type="dataType"></property-tree>
 <annotation-tree ng-if="dvm.sm.state.tab === 'annotation'"></annotation-tree>
+<individual-tree ng-if="dvm.sm.state.tab === 'individual'"></individual-tree>

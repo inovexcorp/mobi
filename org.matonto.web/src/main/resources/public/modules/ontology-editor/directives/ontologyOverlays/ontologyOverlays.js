@@ -68,6 +68,9 @@
                         } else if (dvm.om.isDataTypeProperty(dvm.sm.selected)) {
                             dvm.om.deleteDataTypeProperty(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
                                 .then(selectCurrentOntology, onError);
+                        } else if (dvm.om.isIndividual(dvm.sm.selected)) {
+                            dvm.om.deleteIndividual(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
+                                .then(selectCurrentOntology, onError);
                         }
                     }
 

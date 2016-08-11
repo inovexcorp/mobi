@@ -39,6 +39,7 @@
                     selectList: '=',
                     mutedText: '=',
                     isDisabledWhen: '=',
+                    isRequiredWhen: '=',
                     onChange: '&'
                 },
                 bindToController: {
