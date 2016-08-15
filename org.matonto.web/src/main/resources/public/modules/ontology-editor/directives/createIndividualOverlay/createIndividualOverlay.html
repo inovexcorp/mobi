@@ -34,12 +34,12 @@
                 <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name">
             </div>
             <!-- rdfs:type -->
-            <object-select ng-model="dvm.types"
-                display-text="'Type'"
-                muted-text="dvm.prefixes.rdfs + 'type'"
-                select-list="dvm.sm.state.subClasses"
-                is-required-when="true"></object-select>
-            <!-- create individual buttons -->
+            <string-select ng-model="dvm.individual['@type']"
+              display-text="'Type'"
+              muted-text="'*Required'"
+              select-list="dvm.subClasses"
+              lock-choices="[dvm.prefixes.owl + 'NamedIndividual']"
+              is-required-when="true"></string-select>
             <div class="btn-container clearfix">
                 <custom-button is-disabled-when="dvm.form.$invalid" on-click="dvm.create()">Create</custom-button>
                 <custom-button on-click="dvm.sm.showCreateIndividualOverlay = false" type="'secondary'">Cancel</custom-button>

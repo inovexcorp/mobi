@@ -25,24 +25,100 @@
 
     angular
         .module('individualEditor', [])
-        .directive('individualEditor', individualEditor);
+        .directive('individualEditor', individualEditor)
+        .filter('isObjectProperty', isObjectProperty)
+        .filter('isDataProperty', isDataProperty);
 
-        individualEditor.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
+        individualEditor.$inject = ['responseObj', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
 
-        function individualEditor($filter, stateManagerService, ontologyManagerService, prefixes) {
+        function individualEditor(responseObj, stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/individualEditor/individualEditor.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
 
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.ro = responseObj;
                     dvm.prefixes = prefixes;
+
+                    dvm.openAddDataPropOverlay = function() {
+                        dvm.sm.editingProperty = false;
+                        dvm.sm.propertySelect = undefined;
+                        dvm.sm.propertyValue = '';
+                        dvm.sm.propertyType = undefined;
+                        dvm.sm.propertyIndex = 0;
+                        dvm.sm.showDataPropertyOverlay = true;
+                    }
+
+                    dvm.editDataProp = function(property, index) {
+                        dvm.sm.editingProperty = true;
+                        dvm.sm.propertySelect = property;
+                        dvm.sm.propertyValue = dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@value'];
+                        dvm.sm.propertyType = _.find(dvm.sm.state.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@type']);
+                        dvm.sm.propertyIndex = index;
+                        dvm.sm.showDataPropertyOverlay = true;
+                    }
+
+                    dvm.openAddObjectPropOverlay = function() {
+                        dvm.sm.editingProperty = false;
+                        dvm.sm.propertySelect = undefined;
+                        dvm.sm.propertyValue = undefined;
+                        dvm.sm.propertyIndex = 0;
+                        dvm.sm.showObjectPropertyOverlay = true;
+                    }
+
+                    dvm.editObjectProp = function(property, index) {
+                        dvm.sm.editingProperty = true;
+                        dvm.sm.propertySelect = property;
+                        dvm.sm.propertyValue = dvm.sm.selected[dvm.ro.getItemIri(property)][index]['@id'];
+                        dvm.sm.propertyIndex = index;
+                        dvm.sm.showObjectPropertyOverlay = true;
+                    }
+
+                    function getSubClasses() {
+                        dvm.subClasses = _.concat(dvm.om.getClassIRIs(dvm.sm.ontology), dvm.prefixes.owl + 'NamedIndividual');                    
+                    }
+
+                    $scope.$watch('dvm.sm.ontology', getSubClasses);
+                    getSubClasses();
+                }]
+            }
+        }
+
+        isObjectProperty.$inject = ['responseObj'];
+
+        function isObjectProperty(responseObj) {
+            return function(entity, objectProperties) {
+                var arr = [];
+                if (_.isArray(objectProperties)) {
+                    arr = _.filter(objectProperties, prop => {
+                        if (responseObj.validateItem(prop)) {
+                            return _.has(entity, responseObj.getItemIri(prop));
+                        }
+                    });
                 }
+                return arr;
+            }
+        }
+
+        isDataProperty.$inject = ['responseObj'];
+
+        function isDataProperty(responseObj) {
+            return function(entity, dataProperties) {
+                var arr = [];
+                if (_.isArray(dataProperties)) {
+                    arr = _.filter(dataProperties, prop => {
+                        if (responseObj.validateItem(prop)) {
+                            return _.has(entity, responseObj.getItemIri(prop));
+                        }
+                    });
+                }
+                return arr;
             }
         }
 })();

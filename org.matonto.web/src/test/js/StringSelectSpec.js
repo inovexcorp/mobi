@@ -51,12 +51,12 @@ describe('String Select directive', function() {
 
     beforeEach(function() {
         scope.bindModel = [];
-        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.onChange = jasmine.createSpy('onChange');
         scope.displayText = '';
         scope.selectList = [];
         scope.mutedText = '';
 
-        element = $compile(angular.element('<string-select ng-model="bindModel" change-event="changeEvent" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
+        element = $compile(angular.element('<string-select ng-model="bindModel" on-change="onChange" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
         scope.$digest();
     });
 

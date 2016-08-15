@@ -31,7 +31,7 @@
         <string-select ng-model="dvm.sm.selected['@type']"
                        display-text="'Type'"
                        muted-text="dvm.prefixes.rdf + 'type'"
-                       change-event="dvm.sm.setUnsaved(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"
+                       on-change="dvm.sm.setUnsaved(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"
                        select-list="dvm.om.propertyTypes"></string-select>
         <annotation-tab></annotation-tab>
     </div>
