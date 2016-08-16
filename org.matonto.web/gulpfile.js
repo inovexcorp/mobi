@@ -18,6 +18,8 @@ var gulp = require('gulp'),
     ngAnnotate = require('gulp-ng-annotate'),
     strip = require('gulp-strip-comments'),
     jasmine = require('gulp-jasmine-phantom'),
+    ngdocs = require('gulp-ngdocs'),
+    glob = require('glob-all'),
     templateCache = require('gulp-angular-templatecache');
 
 // Project specific path variables
@@ -75,6 +77,21 @@ var jsFiles = function(prefix) {
         ]
     };
 
+//Method to create frontend documentation
+var createDocs = function(scripts) {
+    var options = {
+        scripts: glob.sync(scripts.concat('./target/templates.js')),
+        title: "MatOnto Frontend Docs",
+        loadDefaults: {
+            angularAnimate: false,
+            angular: false
+        }
+    };
+    return gulp.src(src + '**/*.js')
+        .pipe(ngdocs.process(options))
+        .pipe(gulp.dest('./target/generated-docs'));
+}
+
 //Method to run jasmine tests
 var runJasmine = function(vendorFiles) {
     return gulp.src('./src/test/js/*Spec.js')
@@ -113,6 +130,14 @@ gulp.task('jasmine-minified', ['cacheTemplates', 'minify-scripts'], function() {
 
 gulp.task('jasmine-unminified', ['cacheTemplates', 'move-custom-js'], function() {
     return runJasmine(nodeJsFiles(nodeDir).concat(jsFiles(dest)));
+});
+
+gulp.task('ngdocs-minified', ['jasmine-minified'], function() {
+    return createDocs([dest + '**/*.js']);
+});
+
+gulp.task('ngdocs-unminified', ['jasmine-unminified'], function() {
+    return createDocs(nodeJsFiles(dest + 'js/').concat(jsFiles(dest)));
 });
 
 // Concatenate and minifies JS Files
@@ -231,7 +256,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified']);
+gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
