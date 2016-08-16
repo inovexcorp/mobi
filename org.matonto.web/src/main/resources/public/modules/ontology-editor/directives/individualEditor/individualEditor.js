@@ -26,8 +26,8 @@
     angular
         .module('individualEditor', [])
         .directive('individualEditor', individualEditor)
-        .filter('isObjectProperty', isObjectProperty)
-        .filter('isDataProperty', isDataProperty);
+        .filter('showObjectProperties', showObjectProperties)
+        .filter('showDataProperties', showDataProperties);
 
         individualEditor.$inject = ['responseObj', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
 
@@ -80,6 +80,12 @@
                         dvm.sm.showObjectPropertyOverlay = true;
                     }
 
+                    dvm.showRemovePropertyOverlay = function(key, index) {
+                        dvm.sm.key = key;
+                        dvm.sm.index = index;
+                        dvm.sm.showRemoveIndividualPropertyOverlay = true;
+                    }
+
                     function getSubClasses() {
                         dvm.subClasses = _.concat(dvm.om.getClassIRIs(dvm.sm.ontology), dvm.prefixes.owl + 'NamedIndividual');                    
                     }
@@ -90,9 +96,9 @@
             }
         }
 
-        isObjectProperty.$inject = ['responseObj'];
+        showObjectProperties.$inject = ['responseObj'];
 
-        function isObjectProperty(responseObj) {
+        function showObjectProperties(responseObj) {
             return function(entity, objectProperties) {
                 var arr = [];
                 if (_.isArray(objectProperties)) {
@@ -106,9 +112,9 @@
             }
         }
 
-        isDataProperty.$inject = ['responseObj'];
+        showDataProperties.$inject = ['responseObj'];
 
-        function isDataProperty(responseObj) {
+        function showDataProperties(responseObj) {
             return function(entity, dataProperties) {
                 var arr = [];
                 if (_.isArray(dataProperties)) {

@@ -60,7 +60,8 @@ describe('Ontology Trees directive', function() {
                 {tag: 'class-tree', text: 'class'},
                 {tag: 'property-tree', text: 'object'},
                 {tag: 'property-tree', text: 'datatype'},
-                {tag: 'annotation-tree', text: 'annotation'}
+                {tag: 'annotation-tree', text: 'annotation'},
+                {tag: 'individual-tree', text: 'individual'}
             ], function(item) {
             it('based on ' + item.tag, function() {
                 stateManagerSvc.state.tab = item.text;

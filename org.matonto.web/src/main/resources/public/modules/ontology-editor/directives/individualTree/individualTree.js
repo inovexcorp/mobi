@@ -47,7 +47,7 @@
                         if (treeDisplay === 'pretty') {
                             return dvm.om.getEntityName(entity);
                         }
-                        return getCurrentEntityIRI();
+                        return _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', ''));
                     }
                 }
             }

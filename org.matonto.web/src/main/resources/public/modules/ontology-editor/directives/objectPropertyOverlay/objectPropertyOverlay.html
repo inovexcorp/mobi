@@ -25,7 +25,7 @@
         <!-- section header -->
         <h6>{{dvm.sm.editingProperty ? 'Edit Individual Object Property' : 'Add Individual Object Property'}}</h6>
 
-        <!-- data property list -->
+        <!-- object property list -->
         <div class="form-group">
             <label class="control-label">Object Property</label>
             <ui-select ng-model="dvm.sm.propertySelect" ng-disabled="dvm.sm.editingProperty">
@@ -42,7 +42,7 @@
                        select-list="dvm.individuals"
                        multi-select="false"></object-select>
 
-        <!-- data property buttons -->
+        <!-- object property buttons -->
         <div class="btn-container clearfix">
             <custom-button ng-if="!dvm.sm.editingProperty"
                            is-disabled-when="dvm.propertyForm.$invalid || dvm.sm.propertySelect === undefined || !dvm.valueSelect"

@@ -84,8 +84,17 @@
 
                     dvm.removeAnnotation = function() {
                         dvm.am.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
-                        dvm.sm.setUnsaved(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
                         dvm.sm.showRemoveAnnotationOverlay = false;
+                    }
+
+                    dvm.removeIndividualProperty = function() {
+                        _.pullAt(dvm.sm.selected[dvm.sm.key], dvm.sm.index);
+                        if (!dvm.sm.selected[dvm.sm.key].length) {
+                            delete dvm.sm.selected[dvm.sm.key];
+                        }
+                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
+                        dvm.sm.showRemoveIndividualPropertyOverlay = false;
                     }
                 }
             }

@@ -141,6 +141,10 @@ function mockOntologyManager() {
             this.hasAnnotations = jasmine.createSpy('hasAnnotations').and.returnValue(true);
             this.getAnnotations = jasmine.createSpy('getAnnotations').and.returnValue([]);
             this.getAnnotationIRIs = jasmine.createSpy('getAnnotationIRIs').and.returnValue([]);
+            this.isIndividual = jasmine.createSpy('isIndividual').and.returnValue(true);
+            this.getIndividuals = jasmine.createSpy('getIndividuals').and.returnValue([]);
+            this.hasClassIndividuals = jasmine.createSpy('hasClassIndividuals').and.returnValue(true);
+            this.getClassIndividuals = jasmine.createSpy('getClassIndividuals').and.returnValue([]);
             this.findOntologyWithClass = jasmine.createSpy('findOntologyWithClass').and.returnValue({});
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(function(iri) {
                 return iri;
@@ -157,11 +161,12 @@ function mockOntologyManager() {
             this.deleteClass = jasmine.createSpy('deleteClass').and.returnValue($q.resolve({}));
             this.deleteObjectProperty = jasmine.createSpy('deleteObjectProperty').and.returnValue($q.resolve({}));
             this.deleteDataTypeProperty = jasmine.createSpy('deleteDataTypeProperty').and.returnValue($q.resolve({}));
+            this.deleteIndividual = jasmine.createSpy('deleteIndividual').and.returnValue($q.resolve({}));
             this.createClass = jasmine.createSpy('createClass').and.returnValue($q.resolve({}));
             this.createOntology = jasmine.createSpy('createOntology').and.returnValue($q.resolve({}));
             this.createObjectProperty = jasmine.createSpy('createObjectProperty').and.returnValue($q.resolve({}));
             this.createDataTypeProperty = jasmine.createSpy('createDataTypeProperty').and.returnValue($q.resolve({}));
-
+            this.createIndividual = jasmine.createSpy('createIndividual').and.returnValue($q.resolve({}));
 
             this.getThenRestructure = jasmine.createSpy('getThenRestructure').and.callFake(function(ontologyId) {
                 return ontologyId ? $q.when({matonto: {id: ontologyId}}) : $q.reject('Something went wrong');
@@ -448,6 +453,8 @@ function mockStateManager() {
             this.onEdit = jasmine.createSpy('onEdit');
             this.getUnsavedEntities = jasmine.createSpy('getUnsavedEntities');
             this.afterSave = jasmine.createSpy('afterSave');
+            this.setIndividualsOpened = jasmine.createSpy('setIndividualsOpened');
+            this.getIndividualsOpened = jasmine.createSpy('getIndividualsOpened').and.returnValue(false);
         });
     });
 }

@@ -64,24 +64,14 @@ describe('Annotation Tab directive', function() {
             var icon = element.querySelectorAll('.fa-plus');
             expect(icon.length).toBe(1);
         });
-        /*it('based on listed annotations', function() {
-            var annotations = element.querySelectorAll('.annotation');
+        it('based on listed anotations', function() {
+            var annotations = element.find('property-values');
             expect(annotations.length).toBe(2);
             stateManagerSvc.selected = undefined;
             scope.$digest();
-            annotations = element.querySelectorAll('.annotation');
+            annotations = element.find('property-values');
             expect(annotations.length).toBe(0);
         });
-        it('based on values', function() {
-            var values = element.querySelectorAll('.value-container');
-            expect(values.length).toBe(2);
-        });
-        it('based on buttons', function() {
-            var editButtons = element.querySelectorAll('[title=Edit]');
-            expect(editButtons.length).toBe(1);
-            var deleteButtons = element.querySelectorAll('[title=Delete]');
-            expect(deleteButtons.length).toBe(1);
-        });*/
     });
     describe('controller methods', function() {
         beforeEach(function() {

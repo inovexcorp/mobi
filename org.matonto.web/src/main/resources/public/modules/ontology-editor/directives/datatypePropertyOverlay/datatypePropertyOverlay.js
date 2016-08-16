@@ -69,7 +69,7 @@
                         if (property) {
                             dvm.sm.selected[property][dvm.sm.propertyIndex]['@value'] = value;
                         }
-                        if (type['@id'] !== dvm.sm.selected[property][dvm.sm.propertyIndex]['@type']) {
+                        if (_.get(type, '@id') !== dvm.sm.selected[property][dvm.sm.propertyIndex]['@type']) {
                             if (type) {
                                 dvm.sm.selected[property][dvm.sm.propertyIndex]['@type'] = type['@id'];
                             } else {

@@ -42,6 +42,7 @@
     <p>Are you sure that you want to delete <strong>{{dvm.sm.state.entityIRI}}</strong>?</p>
 </confirmation-overlay>
 <confirmation-overlay ng-if="dvm.sm.showRemoveAnnotationOverlay"
+
                       header-text="'Remove Annotation'"
                       confirm-click="dvm.removeAnnotation()"
                       cancel-click="dvm.sm.showRemoveAnnotationOverlay = false"
@@ -49,6 +50,16 @@
                       cancel-text="'No'">
     <p>Are you sure you want to remove annotation:<br><strong>{{dvm.sm.key}}</strong></p>
     <p>with value:<br><strong>{{dvm.sm.selected[dvm.sm.key][dvm.sm.index]['@value'] || dvm.sm.selected[dvm.sm.key][0]['@id']}}</strong></p>
+    <p>from:<br><strong>{{dvm.sm.state.entityIRI}}</strong>?</p>
+</confirmation-overlay>
+<confirmation-overlay ng-if="dvm.sm.showRemoveIndividualPropertyOverlay"
+                      header-text="'Remove Individual Property'"
+                      confirm-click="dvm.removeIndividualProperty()"
+                      cancel-click="dvm.sm.showRemoveIndividualPropertyOverlay = false"
+                      confirm-text="'Yes'"
+                      cancel-text="'No'">
+    <p>Are you sure you want to remove property:<br><strong>{{dvm.sm.key}}</strong></p>
+    <p>with value:<br><strong>{{dvm.sm.selected[dvm.sm.key][dvm.sm.index]['@value'] || dvm.sm.selected[dvm.sm.key][dvm.sm.index]['@id']}}</strong></p>
     <p>from:<br><strong>{{dvm.sm.state.entityIRI}}</strong>?</p>
 </confirmation-overlay>
 <confirmation-overlay ng-if="dvm.sm.showSaveOverlay"

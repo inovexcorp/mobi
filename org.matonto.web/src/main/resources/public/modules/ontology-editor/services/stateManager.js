@@ -190,7 +190,7 @@
             }
 
             self.setIndividualsOpened = function(ontologyId, classIRI, isOpened) {
-                return _.set(self.state, encodeURIComponent(ontologyId) + '.' + encodeURIComponent(classIRI) + '.individualsOpened', isOpened);
+                _.set(self.state, encodeURIComponent(ontologyId) + '.' + encodeURIComponent(classIRI) + '.individualsOpened', isOpened);
             }
 
             self.onEdit = function(iriBegin, iriThen, iriEnd) {

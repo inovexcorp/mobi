@@ -66,12 +66,10 @@
                     }
 
                     dvm.create = function() {
-                        // dvm.individual['@type'] = _.union(dvm.individual['@type'], _.map(dvm.types, '@id'));
                         dvm.om.createIndividual(dvm.sm.state.ontologyId, dvm.individual)
                             .then(response => {
                                 dvm.sm.showCreateIndividualOverlay = false;
-                                dvm.sm.selectItem('individual-editor', response.entityIRI,
-                                    dvm.om.getListItemById(response.ontologyId));
+                                dvm.sm.selectItem('individual-editor', response.entityIRI, dvm.om.getListItemById(response.ontologyId));
                                 dvm.sm.setOpened(response.ontologyId, dvm.om.getOntologyIRI(response.ontologyId), true);
                             }, errorMessage => {
                                 dvm.error = errorMessage;
