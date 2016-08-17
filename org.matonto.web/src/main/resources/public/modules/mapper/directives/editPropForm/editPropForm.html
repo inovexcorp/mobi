@@ -25,9 +25,7 @@
     <div class="form-group" ng-if="!dvm.isObjectProperty()">
         <column-select columns="dvm.state.availableColumns" selected-column="dvm.state.selectedColumn"></column-select>
     </div>
-    <range-class-description ng-if="dvm.isObjectProperty()" 
-        class-id="{{dvm.getClassId()}}" 
-        selected-prop-id="{{dvm.getPropId()}}"></range-class-description>
+    <range-class-description ng-if="dvm.isObjectProperty()" selected-prop-id="{{dvm.getPropId()}}"></range-class-description>
     <div class="form-btns form-group btn-container clearfix">
         <custom-button ng-if="!dvm.isObjectProperty()" type="'secondary'" on-click="dvm.set()" pull="'left'">Set</custom-button>
     </div>

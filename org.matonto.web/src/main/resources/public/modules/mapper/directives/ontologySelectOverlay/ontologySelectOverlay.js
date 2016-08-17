@@ -65,17 +65,20 @@
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
 
-                    var ontologyObjs = angular.copy(dvm.om.list);
+                    dvm.ontologyObjs = _.map(dvm.om.list, obj => {
+                        var obj = _.pick(obj, ['ontologyId', 'ontology']);
+                        return {id: obj.ontologyId, entities: obj.ontology};
+                    });
                     var sourceOntology;
 
                     if (dvm.mm.sourceOntologies.length) {
                         sourceOntology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
-                        ontologyObjs = _.union(ontologyObjs, [sourceOntology]);
+                        dvm.ontologyObjs = _.union(dvm.ontologyObjs, [sourceOntology]);
                     }
-                    dvm.ontologyIds = _.union(dvm.om.ontologyIds, _.map(ontologyObjs, 'matonto.id'));
+                    dvm.ontologyIds = _.union(dvm.om.ontologyIds, _.map(dvm.ontologyObjs, 'id'));
                     if (sourceOntology) {
                         dvm.selectedOntology = angular.copy(sourceOntology);
-                        dvm.selectedOntologyId = dvm.ontologyIds[dvm.ontologyIds.indexOf(dvm.selectedOntology.matonto.id)];
+                        dvm.selectedOntologyId = dvm.selectedOntology.id;
                     } else {
                         dvm.selectedOntology = undefined;
                         dvm.selectedOntologyId = '';
@@ -83,15 +86,15 @@
 
                     
                     dvm.isOpen = function(ontologyId) {
-                        return _.findIndex(ontologyObjs, {matonto: {id: ontologyId}}) >= 0;
+                        return _.findIndex(dvm.ontologyObjs, {id: ontologyId}) >= 0;
                     }
                     dvm.getOntology = function(ontologyId) {
                         var deferred = $q.defer();
-                        var ontology = _.find(ontologyObjs, {matonto: {id: ontologyId}});
+                        var ontology = _.find(dvm.ontologyObjs, {id: ontologyId});
                         if (!ontology) {
-                            dvm.om.getThenRestructure(ontologyId).then(response => {
-                                ontologyObjs.push(response);
-                                deferred.resolve(response);
+                            dvm.mm.getOntology(ontologyId).then(ontology => {
+                                dvm.ontologyObjs.push(ontology);
+                                deferred.resolve(ontology);
                             });
                         } else {
                             deferred.resolve(ontology);
@@ -101,9 +104,9 @@
                         });
                     }
                     dvm.getName = function(ontologyId) {
-                        var ontology = _.find(ontologyObjs, {matonto: {id: ontologyId}});
+                        var ontology = _.find(dvm.ontologyObjs, {id: ontologyId});
                         if (ontology) {
-                            return dvm.om.getEntityName(ontology);                            
+                            return dvm.om.getEntityName(dvm.om.getOntologyEntity(ontology.entities));
                         } else {
                             return dvm.om.getBeautifulIRI(ontologyId);
                         }
@@ -117,7 +120,10 @@
                             dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, dvm.selectedOntologyId);                        
                             dvm.mm.sourceOntologies = [dvm.selectedOntology];
                             dvm.om.getImportedOntologies(dvm.selectedOntologyId).then(response => {
-                                dvm.mm.sourceOntologies = _.concat(dvm.mm.sourceOntologies, response);
+                                var importedOntologies = _.map(response, obj => {
+                                    return {id: obj.id, entities: obj.ontology};
+                                });
+                                dvm.mm.sourceOntologies = _.concat(dvm.mm.sourceOntologies, importedOntologies);
                             });
                         }
 

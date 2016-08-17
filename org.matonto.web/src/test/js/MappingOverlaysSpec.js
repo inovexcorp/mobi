@@ -26,7 +26,8 @@ describe('Mapping Overlays directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        delimitedManagerSvc;
+        delimitedManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -37,16 +38,13 @@ describe('Mapping Overlays directive', function() {
         mockMapperState();
         mockDelimitedManager();
         
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -55,9 +53,9 @@ describe('Mapping Overlays directive', function() {
             mappingManagerSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<mapping-overlays></mapping-overlays>'))(scope);
             scope.$digest();
+            controller = this.element.controller('mappingOverlays');
         });
         it('should set the correct state for reseting', function() {
-            var controller = this.element.controller('mappingOverlays');
             controller.reset();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -66,97 +64,86 @@ describe('Mapping Overlays directive', function() {
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         });
         it('should test whether an entity is a class mapping', function() {
-            var controller = this.element.controller('mappingOverlays');
-            mappingManagerSvc.mapping.jsonld = [{'@id': 'test', '@type': 'ClassMapping'}, {'@id': ''}];
+            mappingManagerSvc.mapping.jsonld = [{'@id': 'test'}];
             var result = controller.isClassMapping('test');
-            expect(mappingManagerSvc.isClassMapping).toHaveBeenCalledWith({'@id': 'test', '@type': 'ClassMapping'});
+            expect(mappingManagerSvc.isClassMapping).toHaveBeenCalledWith({'@id': 'test'});
             expect(result).toBe(true);
 
+            mappingManagerSvc.isClassMapping.and.returnValue(false);
             result = controller.isClassMapping('');
-            expect(mappingManagerSvc.isClassMapping).toHaveBeenCalledWith({'@id': ''});
+            expect(mappingManagerSvc.isClassMapping).toHaveBeenCalledWith(undefined);
             expect(result).toBe(false);
         });
         it('should get the name of the entity being deleting', function() {
-            var controller = this.element.controller('mappingOverlays');
-            spyOn(controller, 'isClassMapping').and.returnValue(true);
-            controller.getDeleteEntityName();
-            expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
-            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(mappingManagerSvc.getPropIdByMappingId).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.findClassWithDataMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getClassProperty).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-
-            mappingManagerSvc.getSourceOntology.calls.reset();
-            mappingManagerSvc.getClassIdByMappingId.calls.reset();
-            ontologyManagerSvc.getEntity.calls.reset();
-            controller.isClassMapping.and.returnValue(false);
-            mappingManagerSvc.findClassWithDataMapping.and.returnValue({});
-            controller.getDeleteEntityName();
-            expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
-            expect(mappingManagerSvc.getClassIdByMappingId).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
-            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
-            expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getClassProperty).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-
-            mappingManagerSvc.findClassWithDataMapping.and.returnValue(undefined);
-            controller.getDeleteEntityName();
-            expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
-            expect(mappingManagerSvc.getClassIdByMappingId).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
-            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
-            expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
-            expect(ontologyManagerSvc.getClassProperty).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            it('if it is a class mapping', function() {
+                spyOn(controller, 'isClassMapping').and.returnValue(true);
+                controller.getDeleteEntityName();
+                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
+                expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
+                expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
+                expect(mappingManagerSvc.getPropIdByMappingId).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.findSourceOntologyWithProp).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            });
+            it('if it is a property mapping', function() {
+                spyOn(controller, 'isClassMapping').and.returnValue(false);
+                controller.getDeleteEntityName();
+                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
+                expect(mappingManagerSvc.getClassIdByMappingId).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.findSourceOntologyWithClass).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.deleteId);
+                expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            });
         });
         it('should delete an entity from the mapping', function() {
-            var controller = this.element.controller('mappingOverlays');
-            spyOn(controller, 'isClassMapping').and.returnValue(true);
-            var deleteId = 'test';
-            mapperStateSvc.deleteId = deleteId;
-            mapperStateSvc.openedClasses = [deleteId];
-            scope.$digest();
-            controller.deleteEntity();
-            expect(mapperStateSvc.openedClasses).not.toContain(deleteId);
-            expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
-            expect(mappingManagerSvc.findClassWithDataMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.removeProp).not.toHaveBeenCalled();
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.deleteId).toBe('');
-
-            controller.isClassMapping.and.returnValue(false);
-            mappingManagerSvc.findClassWithDataMapping.and.returnValue({});
-            mapperStateSvc.deleteId = deleteId;
-            controller.deleteEntity();
-            expect(mappingManagerSvc.removeClass).not.toHaveBeenCalledWith();
-            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
-            expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.removeProp).toHaveBeenCalled();
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.deleteId).toBe('');
-
-            mappingManagerSvc.findClassWithDataMapping.and.returnValue(undefined);
-            mapperStateSvc.deleteId = deleteId;
-            controller.deleteEntity();
-            expect(mappingManagerSvc.removeClass).not.toHaveBeenCalledWith();
-            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
-            expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
-            expect(mappingManagerSvc.removeProp).toHaveBeenCalled();
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.deleteId).toBe('');
+            beforeEach(function() {
+                mapperStateSvc.deleteId = 'test';
+            });
+            it('if it is a class mapping', function() {
+                spyOn(controller, 'isClassMapping').and.returnValue(true);
+                mapperStateSvc.openedClasses = [mapperStateSvc.deleteId];
+                scope.$digest();
+                controller.deleteEntity();
+                expect(mapperStateSvc.openedClasses).not.toContain(deleteId);
+                expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
+                expect(mappingManagerSvc.findClassWithDataMapping).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.removeProp).not.toHaveBeenCalled();
+                expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(mapperStateSvc.deleteId).toBe('');
+            });
+            describe('if it is a property mapping', function() {
+                beforeEach(function() {
+                    controller.isClassMapping.and.returnValue(false);
+                });
+                it('for a data property', function() {
+                    controller.deleteEntity();
+                    expect(mappingManagerSvc.removeClass).not.toHaveBeenCalledWith();
+                    expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
+                    expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
+                    expect(mappingManagerSvc.removeProp).toHaveBeenCalled();
+                    expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                    expect(mapperStateSvc.deleteId).toBe('');
+                });
+                it('for an object property', function() {
+                    mappingManagerSvc.findClassWithDataMapping.and.returnValue(undefined);
+                    controller.deleteEntity();
+                    expect(mappingManagerSvc.removeClass).not.toHaveBeenCalledWith();
+                    expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
+                    expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
+                    expect(mappingManagerSvc.removeProp).toHaveBeenCalled();
+                    expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                    expect(mapperStateSvc.deleteId).toBe('');
+                });
+            });
         });
         it('should delete a mapping', function() {
-            var controller = this.element.controller('mappingOverlays');
             var name = 'test';
             mappingManagerSvc.mapping.name = name;
             controller.deleteMapping();

@@ -78,19 +78,16 @@
                         dvm.dm.reset();
                     }
                     dvm.getDeleteEntityName = function() {
-                        var ontology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
-                        var ontologyEntity = undefined;
+                        var entityId = '';
+                        var ontology = undefined;
                         if (dvm.isClassMapping(dvm.state.deleteId)) {
-                            var classId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            ontologyEntity = dvm.om.getEntity(ontology, classId);
+                            entityId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
+                            ontology = dvm.mm.findSourceOntologyWithClass(entityId);
                         } else {
-                            var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            var classMapping = dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId) 
-                                || dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            var classId = dvm.mm.getClassIdByMapping(classMapping);
-                            ontologyEntity = dvm.om.getClassProperty(ontology, classId, propId);
+                            entityId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
+                            ontology = dvm.mm.findSourceOntologyWithProp(entityId);
                         }
-                        return dvm.om.getEntityName(ontologyEntity);
+                        return dvm.om.getEntityName(dvm.om.getEntity(ontology.entities, entityId));
                     }
                     dvm.isClassMapping = function(entityId) {
                         var entity = _.find(dvm.mm.mapping.jsonld, {'@id': entityId});

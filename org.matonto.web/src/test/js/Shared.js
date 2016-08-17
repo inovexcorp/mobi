@@ -114,6 +114,7 @@ function mockOntologyManager() {
             this.ontologyIds = [];
             this.list = [];
             this.propertyTypes = [];
+            this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getListItemById = jasmine.createSpy('getListItemById').and.returnValue({});
             this.isOntology = jasmine.createSpy('isOntology');
             this.getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
@@ -168,19 +169,8 @@ function mockOntologyManager() {
             this.createDataTypeProperty = jasmine.createSpy('createDataTypeProperty').and.returnValue($q.resolve({}));
             this.createIndividual = jasmine.createSpy('createIndividual').and.returnValue($q.resolve({}));
 
-            this.getThenRestructure = jasmine.createSpy('getThenRestructure').and.callFake(function(ontologyId) {
-                return ontologyId ? $q.when({matonto: {id: ontologyId}}) : $q.reject('Something went wrong');
-            });
-            this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.callFake(function(ontologyId) {
-                return ontologyId ? $q.when([]) : $q.reject('Something went wrong');
-            });
+            this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getObjectCopyByIri = jasmine.createSpy('getObjectCopyByIri').and.returnValue({});
-            this.getOntology = jasmine.createSpy('getOntology').and.returnValue({
-                matonto: {
-                    id: '',
-                    jsAnnotations: [{}]
-                }
-            });
             this.getPropertyTypes = jasmine.createSpy('getPropertyTypes').and.returnValue([]);
             this.downloadOntologyFile = jasmine.createSpy('downloadOntologyFile');
             this.openOntology = jasmine.createSpy('openOntology').and.returnValue($q.resolve({}));
@@ -222,18 +212,16 @@ function mockMappingManager() {
             this.addObjectProp = jasmine.createSpy('addObjectProp').and.returnValue([]);
             this.removeProp = jasmine.createSpy('removeProp').and.returnValue([]);
             this.removeClass = jasmine.createSpy('removeClass').and.returnValue([]);
-            this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.callFake(function(entity) {
-                return entity && entity.hasOwnProperty('@type') && _.includes(entity['@type'], 'ObjectMapping') ? true : false;
-            });
-            this.isDataMapping = jasmine.createSpy('isDataMapping').and.callFake(function(entity) {
-                return entity && entity.hasOwnProperty('@type') && _.includes(entity['@type'], 'DataMapping') ? true : false;
-            });
-            this.isClassMapping = jasmine.createSpy('isClassMapping').and.callFake(function(entity) {
-                return entity && entity.hasOwnProperty('@type') && _.includes(entity['@type'], 'ClassMapping') ? true : false;
-            });
+            this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.returnValue(true);
+            this.isDataMapping = jasmine.createSpy('isDataMapping').and.returnValue(true);
+            this.isClassMapping = jasmine.createSpy('isClassMapping').and.returnValue(true);
             this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.returnValue([]);
+            this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
+            this.findSourceOntologyWithClass = jasmine.createSpy('findSourceOntologyWithClass').and.returnValue({});
+            this.findSourceOntologyWithProp = jasmine.createSpy('findSourceOntologyWithProp').and.returnValue({});
             this.getSourceOntologyId = jasmine.createSpy('getSourceOntologyId').and.returnValue('');
             this.getSourceOntology = jasmine.createSpy('getSourceOntologyId').and.returnValue({});
+            this.areCompatible = jasmine.createSpy('areCompatible').and.returnValue(true);
             this.findClassWithObjectMapping = jasmine.createSpy('findClassWithObjectMapping').and.returnValue({});
             this.findClassWithDataMapping = jasmine.createSpy('findClassWithDataMapping').and.returnValue({});
             this.getClassIdByMapping = jasmine.createSpy('getClassIdByMapping').and.returnValue('');
@@ -258,9 +246,7 @@ function mockDelimitedManager() {
             this.containsHeaders = true;
             this.preview = '';
 
-            this.upload = jasmine.createSpy('upload').and.callFake(function(file) {
-                return file ? $q.when('fileName') : $q.reject('Something went wrong');
-            });
+            this.upload = jasmine.createSpy('upload').and.returnValue($q.when(''));
             this.previewFile = jasmine.createSpy('previewFile').and.callFake(function(rowCount) {
                 return rowCount ? $q.when() : $q.reject('Something went wrong');
             });

@@ -44,10 +44,11 @@
          *
          * @description 
          * `ontologyPreviewOverlay` is a directive which creates an overlay containing a 
-         * {@link ontologyPreview.directive:ontologyPreview} of the passed ontology object.
+         * {@link ontologyPreview.directive:ontologyPreview ontology preview} of the passed ontology object.
          * The directive is replaced by the contents of its template.
          *
-         * @param {object} ontology an ontology object from the {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
+         * @param {object} ontology an ontology object from the 
+         * {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies} list
          */
         .directive('ontologyPreviewOverlay', ontologyPreviewOverlay);
 

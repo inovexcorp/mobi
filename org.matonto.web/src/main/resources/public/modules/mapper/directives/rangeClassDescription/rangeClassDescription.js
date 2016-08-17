@@ -62,7 +62,6 @@
                 replace: true,
                 scope: {},
                 bindToController: {
-                    classId: '@',
                     selectedPropId: '@'
                 },
                 controller: function() {
@@ -77,10 +76,9 @@
                         return _.get(getRangeClass(), "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(getRangeClass(), "['" + prefixes.dc + "description'][0]['@value']", ''));
                     }
                     function getRangeClass() {
-                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, dvm.classId);
-                        var propObj = dvm.om.getClassProperty(ontology, dvm.classId, dvm.selectedPropId);
+                        var propObj = dvm.om.getEntity(dvm.mm.findSourceOntologyWithProp(dvm.selectedPropId).entities, dvm.selectedPropId);
                         var rangeClassId = _.get(propObj, "['"+ prefixes.rdfs + "range'][0]['@id']");
-                        return dvm.om.getEntity(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, rangeClassId), rangeClassId);
+                        return dvm.om.getEntity(dvm.mm.findSourceOntologyWithClass(rangeClassId).entities, rangeClassId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/rangeClassDescription/rangeClassDescription.html'

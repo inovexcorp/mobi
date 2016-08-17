@@ -48,7 +48,8 @@
          * list of all the classes defined within the ontology. The directive is replaced by the 
          * contents of its template.
          *
-         * @param {object} ontology an ontology object from the {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
+         * @param {object} ontology an ontology object from the 
+         * {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies} list
          */
         .directive('ontologyPreview', ontologyPreview);
 
@@ -70,16 +71,18 @@
                     dvm.full = false;
 
                     dvm.createTitle = function() {
-                        return dvm.om.getEntityName(dvm.ontology);
+                        return dvm.om.getEntityName(dvm.om.getOntologyEntity(dvm.ontology.entities));
                     }
                     dvm.createDescription = function() {
-                        return _.get(dvm.ontology, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.ontology, "['" + prefixes.dc + "description'][0]['@value']", ''));
+                        var ontologyEntity = dvm.om.getOntologyEntity(dvm.ontology.entities);
+                        return _.get(ontologyEntity, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(ontologyEntity, "['" + prefixes.dc + "description'][0]['@value']", ''));
                     }
                     dvm.getImports = function() {
-                        return _.map(_.get(dvm.ontology, "['" + prefixes.owl + "imports']", []), '@id');
+                        var ontologyEntity = dvm.om.getOntologyEntity(dvm.ontology.entities);
+                        return _.map(_.get(ontologyEntity, "['" + prefixes.owl + "imports']", []), '@id');
                     }
                     dvm.getClasses = function() {
-                        return dvm.om.getClasses(dvm.ontology);
+                        return dvm.om.getClasses(dvm.ontology.entities);
                     }
                     dvm.getClassList = function() {
                         var classes = dvm.getClasses();

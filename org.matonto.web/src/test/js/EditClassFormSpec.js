@@ -25,7 +25,8 @@ describe('Edit Class Form directive', function() {
         scope,
         ontologyManagerSvc,
         mappingManagerSvc,
-        mapperStateSvc;
+        mapperStateSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -35,15 +36,12 @@ describe('Edit Class Form directive', function() {
         mockMappingManager();
         mockMapperState();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -52,20 +50,18 @@ describe('Edit Class Form directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [{'@id': ''}]
             };
-
             this.element = $compile(angular.element('<edit-class-form></edit-class-form>'))(scope);
             scope.$digest();
+            controller = this.element.controller('editClassForm');
         });
         it('should create the IRI template for the class mapping', function() {
-            var controller = this.element.controller('editClassForm');
             var result = controller.getIriTemplate();
             expect(typeof result).toBe('string');
         });
         it('should get a class title', function() {
-            var controller = this.element.controller('editClassForm');
             var result = controller.getTitle();
-
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalled();
+            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(typeof result).toBe('string');
@@ -76,7 +72,6 @@ describe('Edit Class Form directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [{'@id': ''}]
             };
-
             this.element = $compile(angular.element('<edit-class-form></edit-class-form>'))(scope);
             scope.$digest();
         });
@@ -89,7 +84,6 @@ describe('Edit Class Form directive', function() {
         mappingManagerSvc.mapping = {
             jsonld: [{'@id': ''}]
         };
-
         var element = $compile(angular.element('<edit-class-form></edit-class-form>'))(scope);
         scope.$digest();
 

@@ -26,7 +26,10 @@ describe('File Upload Overlay directive', function() {
         mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        $q,
+        $timeout,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -37,16 +40,15 @@ describe('File Upload Overlay directive', function() {
         mockDelimitedManager();
         mockOntologyManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_, _$q_, _$timeout_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
+            $q = _$q_;
+            $timeout = _$timeout_;
         });
     });
 
@@ -56,9 +58,9 @@ describe('File Upload Overlay directive', function() {
             delimitedManagerSvc.fileObj = {};
             this.element = $compile(angular.element('<file-upload-overlay></file-upload-overlay>'))(scope);
             scope.$digest();
+            controller = this.element.controller('fileUploadOverlay');
         });
         it('should correctly test whether the file is an Excel file', function() {
-            var controller = this.element.controller('fileUploadOverlay');
             var result = controller.isExcel();
             expect(result).toBe(false);
 
@@ -73,9 +75,7 @@ describe('File Upload Overlay directive', function() {
             expect(result).toBe(true);
         });
         it('should get the name of a data mapping', function() {
-            var controller = this.element.controller('fileUploadOverlay');
             var result = controller.getDataMappingName('');
-
             expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
             expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
@@ -85,65 +85,90 @@ describe('File Upload Overlay directive', function() {
             expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
-        it('should upload a file', function() {
-            var controller = this.element.controller('fileUploadOverlay');
-            var invalidProps = mapperStateSvc.invalidProps;
-            mapperStateSvc.newMapping = false;
-            controller.upload();
-            scope.$apply();
-            expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(delimitedManagerSvc.fileObj);
-            expect(delimitedManagerSvc.fileName).not.toBe('');
-            expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(100);
-            expect(mapperStateSvc.invalidProps).not.toBe(invalidProps);
-
-            invalidProps = mapperStateSvc.invalidProps;
-            mapperStateSvc.newMapping = true;
-            controller.upload();
-            scope.$apply();
-            expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(delimitedManagerSvc.fileObj);
-            expect(delimitedManagerSvc.fileName).not.toBe('');
-            expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(100);
-            expect(mapperStateSvc.invalidProps).toBe(invalidProps);
+        describe('should upload a file', function() {
+            beforeEach(function() {
+                spyOn(controller, 'setUploadValidity');
+            });
+            it('unless an error occurs', function() {
+                delimitedManagerSvc.upload.and.returnValue($q.reject('Error message'));
+                controller.upload();
+                $timeout.flush();
+                expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(delimitedManagerSvc.fileObj);
+                expect(delimitedManagerSvc.previewFile).not.toHaveBeenCalled();
+                expect(controller.errorMessage).toBe('Error message');
+                expect(delimitedManagerSvc.filePreview).toBeUndefined();
+                expect(controller.setUploadValidity).toHaveBeenCalledWith(false);
+                expect(mapperStateSvc.invalidProps).toEqual([]);
+            });
+            describe('successfully', function() {
+                beforeEach(function() {
+                    this.invalidProps = mapperStateSvc.invalidProps;
+                    delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
+                });
+                it('if a new mapping is being created', function() {
+                    mapperStateSvc.newMapping = true;
+                    controller.upload();
+                    $timeout.flush();
+                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(delimitedManagerSvc.fileObj);
+                    expect(delimitedManagerSvc.fileName).not.toBe('');
+                    expect(controller.setUploadValidity).toHaveBeenCalledWith(true);
+                    expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(100);
+                    expect(mapperStateSvc.invalidProps).toBe(this.invalidProps);
+                });
+                it('if a saved mapping is being used', function() {
+                    mapperStateSvc.newMapping = false;
+                    controller.upload();
+                    $timeout.flush();
+                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(delimitedManagerSvc.fileObj);
+                    expect(delimitedManagerSvc.fileName).not.toBe('');
+                    expect(controller.setUploadValidity).toHaveBeenCalledWith(true);
+                    expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(100);
+                    expect(mapperStateSvc.invalidProps).not.toBe(this.invalidProps);
+                });
+            });
         });
-        it('should set the correct state for canceling', function() {
-            var controller = this.element.controller('fileUploadOverlay');
-            mapperStateSvc.newMapping = true;
-            controller.cancel();
-            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-            expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(0);
-            expect(mapperStateSvc.editMappingName).toBe(true);
-
-            mapperStateSvc.newMapping = false;
-            mapperStateSvc.editMappingName = false;
-            mapperStateSvc.step = 1;
-            controller.cancel();
-            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-            expect(mapperStateSvc.initialize).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(1);
-            expect(mapperStateSvc.editMappingName).toBe(false);
+        describe('should set the correct state for canceling', function() {
+            it('if a new mapping is being created', function() {
+                mapperStateSvc.newMapping = true;
+                controller.cancel();
+                expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(0);
+                expect(mapperStateSvc.editMappingName).toBe(true);
+            });
+            it('if a saved mapping is being used', function() {
+                mapperStateSvc.newMapping = false;
+                mapperStateSvc.editMappingName = false;
+                mapperStateSvc.step = 1;
+                controller.cancel();
+                expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(1);
+                expect(mapperStateSvc.editMappingName).toBe(false);
+            });
         });
-        it('should set the correct state for continuing', function() {
-            var controller = this.element.controller('fileUploadOverlay');
-            mapperStateSvc.newMapping = true;
-            var name = mapperStateSvc.selectedClassMappingId;
-            controller.continue();
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
-            expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
-            expect(mapperStateSvc.selectedClassMappingId).toBe(name);
-            expect(mapperStateSvc.updateAvailableProps).not.toHaveBeenCalled();
-
-            var classObj = {'@id': 'class'};
-            mappingManagerSvc.getAllClassMappings.and.returnValue([classObj])
-            mapperStateSvc.newMapping = false;
-            controller.continue();
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-            expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
-            expect(mapperStateSvc.selectedClassMappingId).toBe(classObj['@id']);
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+        describe('should set the correct state for continuing', function() {
+            it('if a new mapping is being created', function() {
+                mapperStateSvc.newMapping = true;
+                var name = mapperStateSvc.selectedClassMappingId;
+                controller.continue();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
+                expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
+                expect(mapperStateSvc.selectedClassMappingId).toBe(name);
+                expect(mapperStateSvc.updateAvailableProps).not.toHaveBeenCalled();
+            });
+            it('if a saved mapping is being used', function() {
+                var classObj = {'@id': 'class'};
+                mappingManagerSvc.getAllClassMappings.and.returnValue([classObj]);
+                mapperStateSvc.newMapping = false;
+                controller.continue();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+                expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(classObj['@id']);
+                expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            });
         });
         it('should set the upload validity', function() {
-            var controller = this.element.controller('fileUploadOverlay');
             controller.setUploadValidity(true);
             expect(controller.fileForm.$valid).toBe(true);
 
@@ -176,7 +201,7 @@ describe('File Upload Overlay directive', function() {
             expect(this.element.find('radio-button').length).toBe(0);
         });
         it('depending on whether the file was uploaded correctly', function() {
-            var controller = this.element.controller('fileUploadOverlay');
+            controller = this.element.controller('fileUploadOverlay');
             controller.fileForm.$setValidity('fileUploaded', false);
             scope.$digest();
             var uploadBtn = angular.element(this.element.querySelectorAll('.upload-btn custom-button')[0]);

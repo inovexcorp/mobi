@@ -72,8 +72,8 @@
                     dvm.set = function() {
                         var columnIdx = dvm.dm.filePreview.headers.indexOf(dvm.state.selectedColumn);
                         var propId = dvm.getPropId();
-                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, dvm.getClassId());
-                        dvm.mm.mapping.jsonld = dvm.mm.addDataProp(dvm.mm.mapping.jsonld, ontology, dvm.state.selectedClassMappingId, propId, columnIdx);
+                        var ontology = dvm.mm.findSourceOntologyWithClass(dvm.getClassId());
+                        dvm.mm.mapping.jsonld = dvm.mm.addDataProp(dvm.mm.mapping.jsonld, ontology.entities, dvm.state.selectedClassMappingId, propId, columnIdx);
                         var propMappingId = _.get(dvm.mm.getDataMappingFromClass(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId, propId), '@id');
                         _.remove(dvm.state.invalidProps, {'@id': propMappingId});
                         dvm.state.resetEdit();
@@ -86,18 +86,20 @@
                         return dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedPropMappingId);
                     }
                     dvm.getTitle = function() {
-                        var classId = dvm.getClassId();
-                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
-                        var className = dvm.om.getEntityName(dvm.om.getEntity(ontology, classId));
-                        var propName = dvm.om.getEntityName(getClassProp(classId, dvm.getPropId()));
+                        var className = dvm.om.getEntityName(getClass(dvm.getClassId()));
+                        var propName = dvm.om.getEntityName(getProp(dvm.getPropId()));
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.isObjectProperty = function() {
-                        return dvm.om.isObjectProperty(_.get(getClassProp(dvm.getClassId(), dvm.getPropId()), '@type', []));
+                        return dvm.om.isObjectProperty(getProp(dvm.getPropId()));
                     }
-                    function getClassProp(classId, propId) {
-                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classId);
-                        return dvm.om.getClassProperty(ontology, classId, propId);
+                    function getClass(classId) {
+                        var ontology = dvm.mm.findSourceOntologyWithClass(classId);
+                        return dvm.om.getEntity(ontology.entities, classId);
+                    }
+                    function getProp(propId) {
+                        var ontology = dvm.mm.findSourceOntologyWithProp(propId);
+                        return dvm.om.getEntity(ontology.entities, propId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editPropForm/editPropForm.html'

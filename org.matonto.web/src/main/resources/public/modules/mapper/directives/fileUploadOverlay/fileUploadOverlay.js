@@ -54,9 +54,9 @@
          */
         .directive('fileUploadOverlay', fileUploadOverlay);
 
-        fileUploadOverlay.$inject = ['prefixes', 'delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        fileUploadOverlay.$inject = ['$q', 'prefixes', 'delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function fileUploadOverlay(prefixes, delimitedManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
+        function fileUploadOverlay($q, prefixes, delimitedManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -87,8 +87,8 @@
                         var classId = dvm.mm.getClassIdByMapping(
                             dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId)
                         );
-                        var propName = dvm.om.getEntityName(dvm.om.getClassProperty(ontology, classId, propId));
-                        var className = dvm.om.getEntityName(dvm.om.getEntity(ontology, classId));
+                        var propName = dvm.om.getEntityName(dvm.om.getClassProperty(ontology.entities, classId, propId));
+                        var className = dvm.om.getEntityName(dvm.om.getEntity(ontology.entities, classId));
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.upload = function() {
@@ -96,7 +96,7 @@
                             dvm.dm.fileName = data;
                             dvm.setUploadValidity(true);
                             return dvm.dm.previewFile(100);
-                        }, onError).then(() => {
+                        }, errorMessage => $q.reject(errorMessage)).then(() => {
                             if (!dvm.state.newMapping) {
                                 testColumns();
                             }

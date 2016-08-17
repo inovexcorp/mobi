@@ -31,13 +31,10 @@ describe('Mapping Name Input directive', function() {
         injectRegexConstant();
         mockMappingManager();
 
-        inject(function(_mappingManagerService_) {
-            mappingManagerSvc = _mappingManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            mappingManagerSvc = _mappingManagerService_;
         });
     });
 
@@ -76,7 +73,6 @@ describe('Mapping Name Input directive', function() {
         it('focusEvent should be called in the parent scope', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.focusEvent();
-
             expect(scope.focusEvent).toHaveBeenCalled();
         });
     });

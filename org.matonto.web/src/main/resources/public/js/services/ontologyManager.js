@@ -863,7 +863,7 @@
             }
 
             self.getEntity = function(ontology, entityIRI) {
-                return _.find(ontology, {matonto:{originalIRI: entityIRI}});
+                return _.find(ontology, {matonto:{originalIRI: entityIRI}}) || _.find(ontology, {'@id': entityIRI});
             }
 
             self.removeEntity = function(ontologyId, entityIRI) {
@@ -884,8 +884,8 @@
                     + prefixes.dcterms + "title'][0]['@value']") || _.get(entity, "['" + prefixes.dc
                     + "title'][0]['@value']");
                 if (!result) {
-                    if (_.has(entity, 'matonto.originalIRI')) {
-                        result = self.getBeautifulIRI(entity.matonto.originalIRI);
+                    if (_.has(entity, '@id')) {
+                        result = self.getBeautifulIRI(entity['@id']);
                     } else {
                         result = _.get(entity, 'matonto.anonymous', '(Entity has no IRI)');
                     }
@@ -905,10 +905,7 @@
                 self.getImportsClosure(ontologyId)
                     .then(response => {
                         if(_.get(response, 'status') === 200 && _.has(response, 'data')) {
-                            var ontologies = _.map(response, item => {
-                                return item.ontology;
-                            });
-                            deferred.resolve(ontologies);
+                            deferred.resolve(response.data);
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
