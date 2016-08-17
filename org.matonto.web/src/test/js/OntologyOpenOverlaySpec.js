@@ -112,7 +112,6 @@ describe('Ontology Open Overlay directive', function() {
                 deferred.resolve({});
                 scope.$apply();
                 var listItem = ontologyManagerSvc.list[ontologyManagerSvc.list.length - 1];
-                expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
                 expect(stateManagerSvc.setEditorTab).toHaveBeenCalledWith('basic');
                 expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(listItem.ontology);
                 expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getOntologyIRI(listItem.ontology), listItem);

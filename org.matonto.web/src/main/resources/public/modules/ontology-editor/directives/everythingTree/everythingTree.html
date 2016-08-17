@@ -23,23 +23,25 @@
 <div class="tree everything-tree scroll-without-buttons">
     <strong>Everything</strong>
     <!-- ontologies -->
-    <ul ng-repeat="item in dvm.om.list">
+    <ul ng-repeat="item in dvm.om.list"
+        ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
         <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
                    ontology-id="item.ontologyId"
                    is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
                    on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
                    has-children="dvm.om.hasClasses(item.ontology)"
-                   is-opened="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))"></tree-item>
-        <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+                   is-opened="opened"></tree-item>
+        <li class="container" ng-show="opened">
             <!-- classes -->
-            <ul ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI">
+            <ul ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI"
+                ng-init="subOpened = dvm.sm.getOpened(item.ontologyId, clazz.matonto.originalIRI)">
                 <tree-item current-entity="clazz"
                            ontology-id="item.ontologyId"
                            is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === clazz.matonto.originalIRI"
                            on-click="dvm.sm.selectItem('class-editor', clazz.matonto.originalIRI, item)"
                            has-children="dvm.om.hasClassProperties(item.ontology, clazz.matonto.originalIRI)"
-                           is-opened="dvm.sm.getOpened(item.ontologyId, clazz.matonto.originalIRI)"></tree-item>
-                <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, clazz.matonto.originalIRI)">
+                           is-opened="subOpened"></tree-item>
+                <li class="container" ng-show="subOpened">
                     <!-- class properties -->
                     <ul>
                         <tree-item ng-repeat="property in dvm.om.getClassProperties(item.ontology, clazz.matonto.originalIRI) track by property.matonto.originalIRI"

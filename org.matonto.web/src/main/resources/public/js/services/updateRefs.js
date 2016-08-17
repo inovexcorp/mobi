@@ -61,7 +61,7 @@
         /**
          * @ngdoc method
          * @name update
-         * @methodOf updateRefs.updateRefsService
+         * @methodOf updateRefs.service:updateRefsService
          *
          * @description 
          * Changes every instance of a specific key in an object from 

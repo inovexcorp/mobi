@@ -36,6 +36,7 @@
                 scope: {
                     hasChildren: '=',
                     isActive: '=',
+                    isBold: '=',
                     onClick: '&'
                 },
                 bindToController: {
@@ -53,7 +54,8 @@
                     dvm.sm = stateManagerService;
 
                     function getCurrentEntityIRI() {
-                        return _.get(dvm.currentEntity, 'matonto.originalIRI', _.get(dvm.currentEntity, 'matonto.anonymous', ''));
+                        return _.get(dvm.currentEntity, 'matonto.originalIRI',
+                            _.get(dvm.currentEntity, 'matonto.anonymous', ''));
                     }
 
                     dvm.getTreeDisplay = function() {

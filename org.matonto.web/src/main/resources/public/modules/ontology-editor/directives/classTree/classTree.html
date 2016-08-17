@@ -30,20 +30,20 @@
                    has-children="dvm.om.hasClasses(item.ontology)"
                    is-opened="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))"></tree-item>
         <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
-            <ul ng-repeat="clazz in dvm.om.getSuperClasses(item.ontology) track by clazz.matonto.originalIRI"
-                ng-include="'tree_item'" ng-init="item = item; entity = clazz"></ul>
+            <ul ng-repeat="node in item.classHierarchy track by node.classIRI"
+                ng-include="'tree_item'" ng-init="item = item; node = node"></ul>
         </li>
     </ul>
     <script type="text/ng-template" id="tree_item">
-        <tree-item current-entity="entity"
+        <tree-item current-entity="dvm.om.getEntity(item.ontology, node.classIRI)"
                    ontology-id="item.ontologyId"
-                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === entity.matonto.originalIRI"
-                   on-click="dvm.sm.selectItem('class-editor', entity.matonto.originalIRI, item)"
-                   has-children="dvm.om.hasSubClassesOf(item.ontology, entity.matonto.originalIRI)"
-                   is-opened="dvm.sm.getOpened(item.ontologyId, entity.matonto.originalIRI)"></tree-item>
-        <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, entity.matonto.originalIRI)">
-            <ul ng-repeat="obj in dvm.om.getSubClassesOf(item.ontology, entity.matonto.originalIRI)"
-                 ng-include="'tree_item'" ng-init="item = item; entity = obj"></ul>
+                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === node.classIRI"
+                   on-click="dvm.sm.selectItem('class-editor', node.classIRI, item)"
+                   has-children="!!node.subClasses"
+                   is-opened="dvm.sm.getOpened(item.ontologyId, node.classIRI)"></tree-item>
+        <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, node.classIRI)">
+            <ul ng-repeat="node in node.subClasses track by node.classIRI"
+                 ng-include="'tree_item'" ng-init="item = item; node = node"></ul>
         </li>
     </script>
 </div>

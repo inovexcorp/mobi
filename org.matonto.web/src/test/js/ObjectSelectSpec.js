@@ -167,12 +167,12 @@ describe('Object Select directive', function() {
                 expect(responseObj.getItemIri).toHaveBeenCalled();
             });
         });
-        /*describe('getTooltipDisplay', function() {
+        describe('getTooltipDisplay', function() {
             beforeEach(function() {
                 spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
-                ontologyManagerService.getObjectCopyByIri.and.returnValue({'@id': 'id'});
+                ontologyManagerService.getEntity.and.returnValue({'@id': 'id'});
                 var result = controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });
@@ -186,7 +186,7 @@ describe('Object Select directive', function() {
                     selectedObject[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                     selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
 
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
+                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe(selectedObject[prefixes.rdfs + 'comment'][0]['@value']);
                 });
@@ -195,7 +195,7 @@ describe('Object Select directive', function() {
                     selectedObject[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
                     selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
 
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
+                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe(selectedObject[prefixes.dcterms + 'description'][0]['@value']);
                 });
@@ -203,13 +203,13 @@ describe('Object Select directive', function() {
                     var selectedObject = {'@id': 'id'};
                     selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
 
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
+                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe(selectedObject[prefixes.dc + 'description'][0]['@value']);
                 });
                 it('should return controller.getItemIri if no dc:description or dcterms:description or rdfs:comment', function() {
                     controller.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('iri');
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue({});
+                    ontologyManagerService.getEntity.and.returnValue({});
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe('iri');
                 });
@@ -224,7 +224,7 @@ describe('Object Select directive', function() {
                     selectedObject[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
                     selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
 
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
+                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe(selectedObject[prefixes.rdfs + 'label'][0]['@value']);
                 });
@@ -233,7 +233,7 @@ describe('Object Select directive', function() {
                     selectedObject[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
                     selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
 
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
+                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe(selectedObject[prefixes.dcterms + 'title'][0]['@value']);
                 });
@@ -241,18 +241,18 @@ describe('Object Select directive', function() {
                     var selectedObject = {'@id': 'id'};
                     selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
 
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue(selectedObject);
+                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe(selectedObject[prefixes.dc + 'title'][0]['@value']);
                 });
                 it('should return controller.getItemIri if no dc:title or dcterms:title or rdfs:label', function() {
                     controller.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('iri');
-                    ontologyManagerService.getObjectCopyByIri.and.returnValue({});
+                    ontologyManagerService.getEntity.and.returnValue({});
                     var result = controller.getTooltipDisplay();
                     expect(result).toBe('iri');
                 });
             });
-        });*/
+        });
         describe('isBlankNode should return', function() {
             it('false for falsey values', function() {
                 _.forEach([undefined, null, [], true], function(item) {
@@ -267,13 +267,11 @@ describe('Object Select directive', function() {
         });
         describe('getBlankNodeValue should return', function() {
             beforeEach(function() {
-                stateManagerSvc.ontology = {
-                    matonto: {
-                        propertyExpressions: {'_:b1': 'prop'},
-                        classExpressions: {'_:b2': 'class'},
-                        unionOfs: {'_:b3': 'union'},
-                        intersectionOfs: {'_:b4': 'intersection'}
-                    }
+                stateManagerSvc.state.blankNodes = {
+                    '_:b1': 'prop',
+                    '_:b2': 'class',
+                    '_:b3': 'union',
+                    '_:b4': 'intersection'
                 }
                 scope.$digest();
             });
@@ -282,7 +280,7 @@ describe('Object Select directive', function() {
                 var result = controller.getBlankNodeValue();
                 expect(result).toBe(undefined);
             });
-            /*it('id if isBlankNode returns true and id does not match any property', function() {
+            it('id if isBlankNode returns true and id does not match any property', function() {
                 spyOn(controller, 'isBlankNode').and.returnValue(true);
                 _.forEach(['_:b11', '_:b22', 'test', ''], function(item) {
                     var result = controller.getBlankNodeValue(item);
@@ -301,7 +299,7 @@ describe('Object Select directive', function() {
                     var result = controller.getBlankNodeValue(item.id);
                     expect(result).toBe(item.result);
                 });
-            });*/
+            });
         });
     });
 });
