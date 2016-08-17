@@ -47,7 +47,6 @@
                         dvm.om.openOntology(dvm.ontologyId)
                             .then(function(response) {
                                 var listItem = dvm.om.list[dvm.om.list.length - 1];
-                                dvm.sm.setTreeTab('everything');
                                 dvm.sm.setEditorTab('basic');
                                 dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(listItem.ontology), listItem);
                                 dvm.sm.showOpenOverlay = false;

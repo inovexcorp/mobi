@@ -36,7 +36,9 @@ import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
+import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.persistence.utils.Values;
+import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.*;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
@@ -481,6 +483,54 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getNamedIndividualsInImportedOntologies(String ontologyIdStr) {
         JSONArray result = doWithImportedOntologies(ontologyIdStr, this::getNamedIndividualArray);
         return Response.status(200).entity(result.toString()).build();
+    }
+
+    @Override
+    public Response getOntologyClassHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getSubClassesOf(ontologyIdStr);
+        Map<String, List<String>> results = new HashMap<>();
+        queryResults.forEach(queryResult -> {
+            List<String> values = new ArrayList<>(2);
+            queryResult.forEach(binding -> values.add(binding.getValue().stringValue()));
+            String key = values.get(0);
+            String value = values.get(1);
+            if (results.containsKey(key)) {
+                results.get(key).add(value);
+            } else {
+                results.put(key, new ArrayList<String>() {
+                    {
+                        add(value);
+                    }
+                });
+            }
+        });
+        Set<String> topLevelClassIRIs = new HashSet<>();
+        results.keySet().forEach(topLevelClassIRIs::add);
+        Set<String> resultValues = new HashSet<>();
+        results.values().forEach(subClassIRIs -> subClassIRIs.forEach(resultValues::add));
+        topLevelClassIRIs.removeAll(resultValues);
+        JSONArray response = new JSONArray();
+        topLevelClassIRIs.forEach(classIRI -> {
+            JSONObject item = getHierarchyItem(classIRI, results);
+            response.add(item);
+        });
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getClassHierarchy(String ontologyIdStr, String classIdStr) {
+        return Response.status(501).build();
+    }
+
+    private JSONObject getHierarchyItem(String itemIRI, Map<String, List<String>> results) {
+        JSONObject item = new JSONObject();
+        item.put("classIRI", itemIRI);
+        if (results.containsKey(itemIRI)) {
+            JSONArray subClassIRIs = new JSONArray();
+            results.get(itemIRI).forEach(subClassIRI -> subClassIRIs.add(getHierarchyItem(subClassIRI, results)));
+            item.put("subClasses", subClassIRIs);
+        }
+        return item;
     }
 
     /**

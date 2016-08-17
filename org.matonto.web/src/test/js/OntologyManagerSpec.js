@@ -1,10 +1,6 @@
-@Version("3.1.0.${build}")
-
-package org.matonto.ontology.core.api;
-
 /*-
  * #%L
- * org.matonto.ontology.api
+ * org.matonto.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,5 +20,28 @@ package org.matonto.ontology.core.api;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+describe('Ontology Manager service', function() {
+    var $httpBackend;
 
-import aQute.bnd.annotation.Version;
+    beforeEach(function() {
+        module('ontologyManager');
+        mockPrefixes();
+        mockUpdateRefs();
+        mockResponseObj();
+        mockAnnotationManager();
+
+        inject(function(ontologyManagerService, _$httpBackend_) {
+            ontologyManagerSvc = ontologyManagerService;
+            $httpBackend = _$httpBackend_;
+        });
+    });
+
+    //TODO: I'm not sure what to expect here.
+    /*it('the getAllOntologyIds function should call correct REST endpoint', function() {
+        var ontologyIds = ['id1', 'id2'];
+        $httpBackend.whenGET('/matontorest/ontologies/ontologyids').respond(200, ontologyIds);
+        $httpBackend.flush();
+    });*/
+
+
+});

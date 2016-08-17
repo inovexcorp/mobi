@@ -45,7 +45,6 @@ public interface OntologyRest {
     @GET
     @Path("ontologyids")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
     @ApiOperation(value = "Gets all Ontology Resource identifiers")
     Response getAllOntologyIds();
 
@@ -454,4 +453,31 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response getNamedIndividualsInImportedOntologies(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns the JSON class hierarchy for the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return nested JSON structure that represents the class hierarchy for the ontology with requested ontology ID.
+     */
+    @GET
+    @Path("{ontologyid}/class-hierarchies")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getOntologyClassHierarchy(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns the JSON class hierarchy for the class with requested class id.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return nested JSON structure that represents the class hierarchy for the class with requested class id.
+     */
+    @GET
+    @Path("{ontologyid}/class-hierarchies/{classId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getClassHierarchy(@PathParam("ontologyid") String ontologyIdStr,
+                               @PathParam("classId") String classIdStr);
 }

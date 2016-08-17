@@ -29,6 +29,8 @@ import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
+import org.apache.commons.io.IOUtils;
+import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -36,6 +38,8 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Models;
 import org.matonto.persistence.utils.Statements;
+import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
 import org.matonto.repository.api.Repository;
@@ -76,6 +80,19 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
+    private static final String GET_SUB_CLASSES_OF;
+    private static final String GRAPH_BINDING = "graph";
+
+    static {
+        try {
+            GET_SUB_CLASSES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+    }
 
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
@@ -468,5 +485,13 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public SesameTransformer getTransformer() {
         return transformer;
+    }
+
+    @Override
+    public TupleQueryResult getSubClassesOf(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_SUB_CLASSES_OF);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
     }
 }

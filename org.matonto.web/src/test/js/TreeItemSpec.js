@@ -53,13 +53,14 @@ describe('Tree Item directive', function() {
         scope.currentEntity = {};
         scope.isOpened = true;
         scope.ontologyId = '';
+        scope.isBold = false;
     });
 
     describe('in isolated scope', function() {
         var isolatedScope;
 
         beforeEach(function() {
-            element = $compile(angular.element('<tree-item ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item is-bold="isBold" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
             scope.$digest();
             isolatedScope = element.isolateScope();
             controller = element.controller('treeItem');
@@ -73,6 +74,11 @@ describe('Tree Item directive', function() {
             isolatedScope.isActive = true;
             scope.$digest();
             expect(scope.isActive).toBe(true);
+        });
+        it('isBold should be two way bound', function() {
+            isolatedScope.isBold = true;
+            scope.$digest();
+            expect(scope.isBold).toBe(true);
         });
         it('onClick should be called in parent scope when invoked', function() {
             isolatedScope.onClick();
@@ -96,7 +102,7 @@ describe('Tree Item directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<tree-item ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item is-bold="isBold" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
         });
         it('for an li', function() {
             scope.$digest();
@@ -140,14 +146,28 @@ describe('Tree Item directive', function() {
             it('is true', function() {
                 scope.isActive = true;
                 scope.$digest();
-                var anchor = element.querySelectorAll('a')[0];
+                var anchor = element.find('a')[0];
                 expect(angular.element(anchor).hasClass('active')).toBe(true);
             });
             it('is false', function() {
                 scope.isActive = false;
                 scope.$digest();
-                var anchor = element.querySelectorAll('a')[0];
+                var anchor = element.find('a')[0];
                 expect(angular.element(anchor).hasClass('active')).toBe(false);
+            });
+        });
+        describe('when isBold', function() {
+            it('is true', function() {
+                scope.isBold = true;
+                scope.$digest();
+                var strong = element.find('strong');
+                expect(strong.length).toBe(1);
+            });
+            it('is false', function() {
+                scope.isBold = false;
+                scope.$digest();
+                var strong = element.find('strong');
+                expect(strong.length).toBe(0);
             });
         });
     });

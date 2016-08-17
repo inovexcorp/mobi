@@ -25,6 +25,7 @@ package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 
@@ -114,4 +115,6 @@ public interface OntologyManager {
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 
     SesameTransformer getTransformer();
+
+    TupleQueryResult getSubClassesOf(String ontologyIdStr);
 }

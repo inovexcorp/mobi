@@ -27,9 +27,11 @@
         .module('objectSelect', [])
         .directive('objectSelect', objectSelect);
 
-        objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService', 'stateManagerService', 'prefixes'];
+        objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService',
+            'stateManagerService', 'prefixes'];
 
-        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, stateManagerService, prefixes) {
+        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, stateManagerService,
+            prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -63,17 +65,19 @@
                     dvm.getTooltipDisplay = function(item) {
                         var itemIri = dvm.getItemIri(item);
                         var ontologyIndex = dvm.sm.state.oi;
-                        var selectedObject = {};// dvm.om.getEntity(dvm.sm.ontology.ontology, itemIri);
+                        var selectedObject = dvm.om.getEntity(dvm.sm.ontology, itemIri);
                         var result = itemIri;
-
                         if (dvm.tooltipDisplay === 'comment') {
-                            result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(selectedObject, "['" + prefixes.dcterms + "description'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri)));
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']",
+                                _.get(selectedObject, "['" + prefixes.dcterms + "description'][0]['@value']",
+                                _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri)));
                         } else if (dvm.tooltipDisplay === 'label') {
-                            result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']", _.get(selectedObject, "['" + prefixes.dcterms + "title'][0]['@value']", _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri)));
+                            result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']",
+                                _.get(selectedObject, "['" + prefixes.dcterms + "title'][0]['@value']",
+                                _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri)));
                         } else if (_.has(selectedObject, '@id')) {
                             result = selectedObject['@id'];
                         }
-
                         return result;
                     }
 
@@ -83,16 +87,9 @@
 
                     dvm.getBlankNodeValue = function(id) {
                         var result;
-
-                        /*if (dvm.isBlankNode(id)) {
-                            var propertyIRI = _.get(dvm.sm.ontology.matonto.propertyExpressions, id);
-                            var classIRI = _.get(dvm.sm.ontology.matonto.classExpressions, id);
-                            var unionOfIRI = _.get(dvm.sm.ontology.matonto.unionOfs, id);
-                            var intersectionOfIRI = _.get(dvm.sm.ontology.matonto.intersectionOfs, id);
-
-                            result = propertyIRI || classIRI || unionOfIRI || intersectionOfIRI || id;
-                        }*/
-
+                        if (dvm.isBlankNode(id)) {
+                            result = _.get(dvm.sm.state.blankNodes, id, id);
+                        }
                         return result;
                     }
                 }
