@@ -22,7 +22,8 @@
  */
 describe('Login controller', function() {
     var $controller,
-        scope;
+        scope,
+        loginManagerSvc;
 
     beforeEach(function() {
         // To mock a module, you create dummy ones so the dependencies of the
@@ -46,7 +47,8 @@ describe('Login controller', function() {
         });
         // To test out a controller, you need to inject $rootScope and $controller
         // and save them to use
-        inject(function(_$rootScope_, _$controller_) {
+        inject(function(_loginManagerService_, _$rootScope_, _$controller_) {
+            loginManagerSvc = _loginManagerService_;
             scope = _$rootScope_;
             $controller = _$controller_;
         });

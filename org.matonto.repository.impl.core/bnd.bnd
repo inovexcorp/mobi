@@ -1,6 +1,0 @@
-build = ${tstamp}
-Bundle-SymbolicName: org.matonto.repository.impl.core
-Bundle-Name: MatOnto Repository Core Impl
-Export-Package: \
-    org.matonto.repository.api; provide:=true
-Service-Component: *
