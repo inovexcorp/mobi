@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>matonto-parent</artifactId>
+		<groupId>org.matonto</groupId>
+		<version>1.1.15-SNAPSHOT</version>
+		<relativePath>../matonto-parent/pom.xml</relativePath>
+	</parent>
+	<artifactId>rdf.orm</artifactId>
+	<name>RDF ORM</name>
+	<description>ORM for RDF data using simple POJOs</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.matonto</groupId>
+			<artifactId>persistence.api</artifactId>
+			<version>1.0.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.matonto</groupId>
+			<artifactId>persistence.utils</artifactId>
+			<version>1.0.32</version>
+		</dependency>
+		<dependency>
+			<groupId>org.spockframework</groupId>
+			<artifactId>spock-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.gpars</groupId>
+			<artifactId>gpars</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>biz.aQute.bnd</groupId>
+			<artifactId>biz.aQute.bndlib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>edu.washington.cs.types.checker</groupId>
+			<artifactId>checker-framework</artifactId>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.matonto</groupId>
+			<artifactId>rdf.impl.sesame</artifactId>
+			<version>1.0.6</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<version>0.0.1-SNAPSHOT</version>
+</project>

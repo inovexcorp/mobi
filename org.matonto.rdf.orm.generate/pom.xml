@@ -1,0 +1,88 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.matonto</groupId>
+		<artifactId>matonto-parent</artifactId>
+		<version>1.1.15-SNAPSHOT</version>
+		<relativePath>../matonto-parent/pom.xml</relativePath>
+	</parent>
+	<artifactId>rdf.orm.generate</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>org.matonto</groupId>
+			<artifactId>rdf.orm</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.spockframework</groupId>
+			<artifactId>spock-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.gpars</groupId>
+			<artifactId>gpars</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>biz.aQute.bnd</groupId>
+			<artifactId>biz.aQute.bndlib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>edu.washington.cs.types.checker</groupId>
+			<artifactId>checker-framework</artifactId>
+		</dependency>
+		<!-- For reading in ontology data -->
+		<dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-runtime-osgi</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+
+
+		<dependency>
+			<groupId>com.sun.codemodel</groupId>
+			<artifactId>codemodel</artifactId>
+			<version>2.6</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.matonto</groupId>
+			<artifactId>rdf.impl.sesame</artifactId>
+			<version>1.0.6</version>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.matonto.orm</groupId>
+				<artifactId>rdf-orm-maven-plugin</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+				<executions>
+					<execution>
+						<id>generateOrmSources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate-orm</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<ontologyFile>src/test/resources/foaf.rdf</ontologyFile>
+							<ontologyIri>http://xmlns.com/foaf/0.1/</ontologyIri>
+							<outputLocation>src/test/java</outputLocation>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
