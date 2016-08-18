@@ -88,6 +88,7 @@
         <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/jaas.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
     </feature>
 </features>
