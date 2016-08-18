@@ -84,7 +84,9 @@ describe('Individual Tree directive', function() {
             expect(container.hasClass('ng-hide')).toBe(true);
 
             stateManagerSvc.getOpened.and.returnValue(true);
+            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
             scope.$digest();
+            container = angular.element(element.querySelectorAll('ul.ontology > .container')[0]);
             expect(container.hasClass('ng-hide')).toBe(false);
         });
         it('depending on whether the individuals of a class are open', function() {

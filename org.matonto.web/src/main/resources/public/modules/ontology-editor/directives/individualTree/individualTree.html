@@ -31,7 +31,7 @@
                    on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
                    has-children="dvm.om.hasClasses(item.ontology)"
                    is-opened="opened"></tree-item>
-        <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+        <li class="container" ng-show="opened">
             <!-- classes -->
             <ul class="class" ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI">
                 <li>

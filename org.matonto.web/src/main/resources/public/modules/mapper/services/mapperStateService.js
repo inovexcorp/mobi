@@ -485,7 +485,6 @@
             self.updateAvailableProps = function() {
                 var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, self.selectedClassMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
                 var classId = mm.getClassIdByMappingId(mm.mapping.jsonld, self.selectedClassMappingId);
-                // var properties = om.getClassProperties(mm.findSourceOntologyWithClass(classId).entities, classId);
                 var properties = [];
                 _.forEach(mm.sourceOntologies, ontology => {
                     var props = om.getClassProperties(ontology.entities, classId);
