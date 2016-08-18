@@ -8,7 +8,7 @@
     margin-bottom: 15px;
     position: relative;
 
-    /* Spacing for the annotation header */
+    /* Spacing for the property header */
     h5 {
         border-bottom: 1px solid $gray-lighter;
         cursor: pointer;
@@ -20,7 +20,7 @@
         }
     }
 
-    /* Contains the value of the annotation */
+    /* Contains the value of the property */
     .value-container {
         position: relative;
 
@@ -29,7 +29,7 @@
             background-color: $gray-lighter;
         }
 
-        /* Removes paragraph margin from the annotation value */
+        /* Removes paragraph margin from the property value */
         span {
             display: inline-block;
             font-size: 14px;

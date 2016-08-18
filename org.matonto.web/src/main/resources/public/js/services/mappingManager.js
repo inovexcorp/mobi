@@ -557,7 +557,7 @@
             /**
              * @ngdoc method
              * @name getSourceOntologyId
-             * @methodOf mappingManager.mappingManagerService
+             * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
              * Collects the source ontology id of the passed mapping.
@@ -575,7 +575,7 @@
             /**
              * @ngdoc method
              * @name getSourceOntology
-             * @methodOf mappingManager.mappingManagerService
+             * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
              * Collects the source ontology of the passed mapping using the source ontology id and
@@ -600,7 +600,7 @@
              * @return {Object} The ontology with the class with the passed IRI
              */
             self.findSourceOntologyWithClass = function(classIRI) {
-                return _.find(self.sourceOntologies, ontology => _.includes(_.map(ontologyManagerService.getClasses(ontology.entities), '@id'), classIRI));
+                return _.find(self.sourceOntologies, ontology => _.findIndex(ontologyManagerService.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
             }
             /**
              * @ngdoc method
@@ -617,7 +617,7 @@
             self.findSourceOntologyWithProp = function(propertyIRI) {
                 return _.find(self.sourceOntologies, ontology => {
                     var properties = _.concat(ontologyManagerService.getDataTypeProperties(ontology.entities), ontologyManagerService.getObjectProperties(ontology.entities));
-                    return _.includes(_.map(properties, '@id'), propertyIRI);
+                    return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
             }
             /**
@@ -634,7 +634,7 @@
              * have not changed in an incompatible way; false otherwise
              */
             self.areCompatible = function() {
-                var invalid = _.some(self.getAllClassMappings(self.mapping.jsonld), classMapping => {
+                return !_.some(self.getAllClassMappings(self.mapping.jsonld), classMapping => {
                     if (!self.findSourceOntologyWithClass(self.getClassIdByMapping(classMapping))) {
                         return true;
                     }
@@ -654,7 +654,6 @@
                         }
                     });
                 });
-                return !invalid;
             }
 
             // Public helper methods
@@ -716,39 +715,6 @@
              */
             self.getPropIdByMapping = function(propMapping) {
                 return _.get(propMapping, "['" + prefixes.delim + "hasProperty'][0]['@id']", '');
-            }
-            /**
-             * @ngdoc method
-             * @name getSourceOntologyId
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Collects the source ontology id of the passed mapping.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @returns {string} The id of the source ontology of a mapping
-             */
-            self.getSourceOntologyId = function(mapping) {
-                return _.get(
-                    getEntityById(mapping, prefixes.dataDelim + 'Document'),
-                    "['" + prefixes.delim + "sourceOntology'][0]['@id']",
-                    ''
-                );
-            }
-            /**
-             * @ngdoc method
-             * @name getSourceOntology
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Collects the source ontology of the passed mapping using the source ontology id and
-             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @returns {Object} The source ontology of a mapping
-             */
-            self.getSourceOntology = function(mapping) {
-                return _.find(self.sourceOntologies, {matonto: {id: self.getSourceOntologyId(mapping)}});
             }
             /**
              * @ngdoc method

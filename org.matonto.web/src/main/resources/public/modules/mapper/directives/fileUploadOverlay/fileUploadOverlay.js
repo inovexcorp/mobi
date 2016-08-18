@@ -82,13 +82,14 @@
                         return _.includes(fileName, 'xls');
                     }
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var ontology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
                         var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dataMappingId);
                         var classId = dvm.mm.getClassIdByMapping(
                             dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId)
                         );
-                        var propName = dvm.om.getEntityName(dvm.om.getClassProperty(ontology.entities, classId, propId));
-                        var className = dvm.om.getEntityName(dvm.om.getEntity(ontology.entities, classId));
+                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId);
+                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId);
+                        var propName = dvm.om.getEntityName(dvm.om.getEntity(propOntology.entities, propId));
+                        var className = dvm.om.getEntityName(dvm.om.getEntity(classOntology.entities, classId));
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.upload = function() {

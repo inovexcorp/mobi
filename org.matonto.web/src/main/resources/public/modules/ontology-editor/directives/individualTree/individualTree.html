@@ -23,13 +23,14 @@
 <div class="tree individual-tree scroll-without-buttons">
     <strong>Individuals</strong>
     <!-- ontologies -->
-    <ul class="ontology" ng-repeat="item in dvm.om.list">
+    <ul class="ontology" ng-repeat="item in dvm.om.list"
+      ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
         <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
                    ontology-id="item.ontologyId"
                    is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
                    on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
                    has-children="dvm.om.hasClasses(item.ontology)"
-                   is-opened="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))"></tree-item>
+                   is-opened="opened"></tree-item>
         <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
             <!-- classes -->
             <ul class="class" ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI">

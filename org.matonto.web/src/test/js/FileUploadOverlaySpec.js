@@ -79,7 +79,6 @@ describe('File Upload Overlay directive', function() {
             expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
             expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getClassProperty).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();

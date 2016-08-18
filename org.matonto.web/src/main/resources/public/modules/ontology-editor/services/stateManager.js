@@ -186,11 +186,11 @@
             }
 
             self.getIndividualsOpened = function(ontologyId, classIRI) {
-                return _.get(self.state, encodeURIComponent(ontologyId) + '.' + encodeURIComponent(classIRI) + '.individualsOpened', false);
+                return _.get(self.state, self.getOpenPath(ontologyId, classIRI) + '.individualsOpened', false);
             }
 
             self.setIndividualsOpened = function(ontologyId, classIRI, isOpened) {
-                _.set(self.state, encodeURIComponent(ontologyId) + '.' + encodeURIComponent(classIRI) + '.individualsOpened', isOpened);
+                _.set(self.state, self.getOpenPath(ontologyId, classIRI) + '.individualsOpened', isOpened);
             }
 
             self.onEdit = function(iriBegin, iriThen, iriEnd) {

@@ -27,19 +27,21 @@
         /**
          * @ngdoc overview
          * @name mapperState
+         * @requires delimitedManager
          *
          * @description 
          * The `mapperState` module only provides the `mapperStateService` service which
          * contains various variables to hold the state of the mapping tool page and 
          * utility functions to update those variables.
          */
-        .module('mapperState', ['prefixes', 'mappingManager', 'ontologyManager', 'delimitedManager'])
+        .module('mapperState', ['delimitedManager'])
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService
          * @requires prefixes.service:prefixes
          * @requires mappingManager.service:mappingManagerService
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `mapperStateService` is a service which contains various variables to hold the 
@@ -483,7 +485,12 @@
             self.updateAvailableProps = function() {
                 var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, self.selectedClassMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
                 var classId = mm.getClassIdByMappingId(mm.mapping.jsonld, self.selectedClassMappingId);
-                var properties = om.getClassProperties(mm.findSourceOntologyWithClass(classId).entities, classId);
+                // var properties = om.getClassProperties(mm.findSourceOntologyWithClass(classId).entities, classId);
+                var properties = [];
+                _.forEach(mm.sourceOntologies, ontology => {
+                    var props = om.getClassProperties(ontology.entities, classId);
+                    properties = _.union(properties, props);
+                });
                 self.availableProps = _.filter(properties, prop => mappedProps.indexOf(prop['@id']) < 0);
             }
             /**
