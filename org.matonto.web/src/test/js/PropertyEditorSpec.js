@@ -28,7 +28,6 @@ describe('Property Editor directive', function() {
         controller,
         stateManagerSvc,
         ontologyManagerSvc,
-        controller,
         prefixes;
 
     beforeEach(function() {

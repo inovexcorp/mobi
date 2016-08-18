@@ -22,8 +22,8 @@
   -->
 <div class="form-group">
     <custom-label muted-text="mutedText">{{displayText}}</custom-label>
-    <ui-select multiple ng-model="dvm.bindModel" on-select="changeEvent()" on-remove="changeEvent()">
-        <ui-select-match placeholder="{{'Select ' + displayText}}">
+    <ui-select multiple ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()">
+        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="lockChoices.includes($item)">
             <span title="{{$item}}">{{($item | splitIRI).end}}</span>
         </ui-select-match>
         <!-- TODO: check by ui-disable-choice="dvm.disableChoice(item)" doesn't work properly -->

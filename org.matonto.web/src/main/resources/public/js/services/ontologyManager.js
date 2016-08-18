@@ -193,6 +193,265 @@
                 $window.location = prefix + encodeURIComponent(ontologyId)
                     + `?rdfFormat=${rdfFormat}&fileName=${fileName}`;
             }
+
+            self.saveChangesToOntology = function(ontologyId, resourceIRI, resourceJSON) {
+                var config = {
+                    params: {
+                        resourceid: resourceIRI,
+                        resourcejson: resourceJSON
+                    }
+                };
+                return $http.post(prefix + encodeURIComponent(ontologyId), null, config);
+            }
+
+            /* Classes */
+            self.addClassToOntology = function(ontologyId, classJSON) {
+                var config = {
+                    params: {
+                        resourcejson: classJSON
+                    }
+                };
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/classes', null, config);
+            }
+
+            self.deleteClassFromOntology = function(ontologyId, classIRI) {
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/classes/'
+                    + encodeURIComponent(classIRI));
+            }
+
+            /* Object Properties */
+            self.addObjectPropertyToOntology = function(ontologyId, objectPropertyJSON) {
+                var config = {
+                    params: {
+                        resourcejson: objectPropertyJSON
+                    }
+                };
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/object-properties', null, config);
+            }
+
+            self.deleteObjectPropertyFromOntology = function(ontologyId, objectPropertyIRI) {
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/object-properties/'
+                    + encodeURIComponent(objectPropertyIRI));
+            }
+
+            /* Data Properties */
+            self.addDataPropertyToOntology = function(ontologyId, dataPropertyJSON) {
+                var config = {
+                    params: {
+                        resourcejson: dataPropertyJSON
+                    }
+                };
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/data-properties', null, config);
+            }
+
+            self.deleteDataPropertyFromOntology = function(ontologyId, dataPropertyIRI) {
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/data-properties/'
+                    + encodeURIComponent(dataPropertyIRI));
+            }
+
+            /* Individuals */
+            self.addIndividualToOntology = function(ontologyId, individualJSON) {
+                var config = {
+                    params: {
+                        resourcejson: individualJSON
+                    }
+                };
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
+            }
+
+            self.deleteIndividualFromOntology = function(ontologyId, individualIRI) {
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/' 
+                    + encodeURIComponent(individualIRI));
+            }
+
+            /* Imported ontologies */
+            self.getImportsClosure = function(ontologyId, rdfFormat = 'jsonld') {
+                var config = {
+                    params: {
+                        rdfformat: rdfFormat
+                    }
+                };
+                return $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config);
+            }
+
+            /* UI Functions */
+            function onCreateSuccess(response, ontologyId, entityJSON, arrayProperty, deferred) {
+                if (_.get(response, 'data.added')) {
+                    _.set(entityJSON, 'matonto.originalIRI', entityJSON['@id']);
+                    self.addEntity(ontologyId, entityJSON);
+                    var split = $filter('splitIRI')(entityJSON['@id']);
+                    var listItem = self.getListItemById(ontologyId);
+                    _.get(listItem, arrayProperty).push({namespace:split.begin + split.then, localName: split.end});
+                    deferred.resolve({
+                        entityIRI: entityJSON['@id'],
+                        ontologyId: ontologyId
+                    });
+                } else {
+                    onCreateError(response, deferred);
+                }
+            }
+
+            function onCreateError(response, deferred) {
+                deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
+            }
+
+            function onDeleteSuccess(response, ontologyId, entityIRI, arrayProperty, deferred) {
+                if (_.get(response, 'data.deleted')) {
+                    self.removeEntity(ontologyId, entityIRI);
+                    updateModels(response);
+                    var split = $filter('splitIRI')(entityIRI);
+                    var listItem = self.getListItemById(ontologyId);
+                    _.remove(_.get(listItem, arrayProperty), {namespace:split.begin + split.then,
+                        localName: split.end});
+                    deferred.resolve();
+                } else {
+                    deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
+                }
+            }
+
+            function onDeleteError(response, deferred) {
+                deferred.reject(_.get(response, 'data.error', defaultErrorMessage));
+            }
+
+            function updateModels(response) {
+                if(_.has(response, 'data.models', [])) {
+                    _.forEach(response.data.models, function(model) {
+                        var ontologyId = _.get(model, "[0]['@id']");
+                        var newEntity = _.get(model, "[0]['@graph'][0]");
+                        var newEntityIRI = _.get(newEntity, '@id');
+                        var oldEntity = self.getEntity(self.getOntologyById(ontologyId), newEntityIRI);
+                        if (_.has(oldEntity, 'matonto.icon')) {
+                            _.set(newEntity, 'matonto.icon', oldEntity.matonto.icon);
+                        }
+                        _.set(newEntity, 'matonto.originalIRI', newEntityIRI);
+                        oldEntity = newEntity;
+                    });
+                }
+            }
+
+            function getIcon(property) {
+                var range = _.get(property, prefixes.rdfs + 'range');
+                var icon = 'fa-square-o';
+                if (range) {
+                    if (range.length === 1) {
+                        switch(range[0]['@id']) {
+                            case prefixes.xsd + 'string':
+                                icon = 'fa-font';
+                                break;
+                            case prefixes.xsd + 'decimal':
+                            case prefixes.xsd + 'double':
+                            case prefixes.xsd + 'float':
+                            case prefixes.xsd + 'int':
+                            case prefixes.xsd + 'integer':
+                            case prefixes.xsd + 'long':
+                            case prefixes.xsd + 'nonNegativeInteger':
+                                icon = 'fa-calculator';
+                                break;
+                            case prefixes.xsd + 'language':
+                                icon = 'fa-language';
+                                break;
+                            case prefixes.xsd + 'anyURI':
+                                icon = 'fa-external-link';
+                                break;
+                            case prefixes.xsd + 'dateTime':
+                                icon = 'fa-clock-o';
+                                break;
+                            case prefixes.xsd + 'boolean':
+                            case prefixes.xsd + 'byte':
+                                icon = 'fa-signal';
+                                break;
+                            default:
+                                icon = 'fa-link';
+                                break;
+                        }
+                    } else {
+                        icon = 'fa-cubes';
+                    }
+                }
+                return icon;
+            }
+
+            function addOntologyIdToArray(arr, ontologyId) {
+                return _.forEach(arr, item => {
+                    return _.set(item, 'ontologyId', ontologyId);
+                });
+            }
+
+            function compareListItems(obj1, obj2) {
+                return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
+                    && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
+            }
+
+            function addOntologyToList(ontologyId, ontology) {
+                var deferred = $q.defer();
+                // Assumes that all entities have an '@id' if they are not an ontology
+                _.forEach(ontology, entity => {
+                    if (_.has(entity, '@id')) {
+                        _.set(entity, 'matonto.originalIRI', entity['@id']);
+                    } else {
+                        _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
+                    }
+                    if (self.isProperty(entity)) {
+                        _.set(entity, 'matonto.icon', getIcon(entity));
+                    }
+                });
+                var listItem = {
+                    ontologyId: ontologyId,
+                    ontology: ontology
+                }
+                $q.all([
+                    $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
+                    $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris')
+                ]).then(response => {
+                    var irisResponse = response[0];
+                    listItem.annotations = _.unionWith(
+                        _.get(irisResponse, 'data.annotationProperties'),
+                        defaultAnnotations,
+                        _.isMatch
+                    );
+                    listItem.subClasses = _.get(irisResponse, 'data.classes');
+                    listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
+                    listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
+                    listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
+                    listItem.dataPropertyRange = _.unionWith(
+                        _.get(irisResponse, 'data.datatypes'),
+                        defaultDatatypes,
+                        _.isMatch
+                    );
+                    var importedIrisResponse = response[1];
+                    if (_.get(importedIrisResponse, 'status') === 200) {
+                        _.forEach(importedIrisResponse.data, iriList => {
+                            listItem.annotations = _.unionWith(
+                                addOntologyIdToArray(iriList.annotationProperties, iriList.id),
+                                listItem.annotations,
+                                compareListItems
+                            );
+                            listItem.subClasses = _.unionWith(
+                                addOntologyIdToArray(iriList.classes, iriList.id),
+                                listItem.subClasses,
+                                compareListItems
+                            );
+                            listItem.subDataProperties = _.unionWith(
+                                addOntologyIdToArray(iriList.dataProperties, iriList.id),
+                                listItem.subDataProperties,
+                                compareListItems
+                            );
+                            listItem.subObjectProperties = _.unionWith(
+                                addOntologyIdToArray(iriList.objectProperties, iriList.id),
+                                listItem.subObjectProperties,
+                                compareListItems
+                            );
+                        });
+                    }
+                    self.list.push(listItem);
+                    deferred.resolve();
+                }, () => {
+                    deferred.reject();
+                });
+                console.log(_.join(self.getSuperClassIRIs(ontology)));
+                return deferred.promise;
+            }
+
             /**
              * @ngdoc method
              * @name uploadThenGet
@@ -1110,6 +1369,53 @@
             self.getAnnotationIRIs = function(ontology) {
                 return _.map(self.getAnnotations(ontology), 'matonto.originalIRI');
             }
+
+            self.isIndividual = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.owl + 'NamedIndividual');
+            }
+
+            self.getIndividuals = function(ontology) {
+                return _.filter(ontology, entity => _.includes(_.get(entity, '@type', []), prefixes.owl + 'NamedIndividual'));
+            }
+
+            self.hasClassIndividuals = function(ontology, classIRI) {
+                return _.some(self.getIndividuals(ontology), entity => _.includes(_.get(entity, '@type', []), classIRI));
+            }
+
+            self.getClassIndividuals = function(ontology, classIRI) {
+                return _.filter(self.getIndividuals(ontology), entity => _.includes(_.get(entity, '@type', []), classIRI));
+            }
+
+            self.deleteIndividual = function(ontologyId, individualIRI) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                self.deleteIndividualFromOntology(ontologyId, individualIRI)
+                    .then(response => {
+                        onDeleteSuccess(response, ontologyId, individualIRI, 'individuals', deferred);
+                    }, response => {
+                        onDeleteError(response, deferred);
+                    })
+                    .then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
+
+            self.createIndividual = function(ontologyId, individualJSON) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                self.addIndividualToOntology(ontologyId, individualJSON)
+                    .then(response => {
+                        onCreateSuccess(response, ontologyId, individualJSON, 'individuals', deferred);
+                    }, response => {
+                        onCreateError(response, deferred);
+                    })
+                    .then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
+
             /**
              * @ngdoc method
              * @name isRestriction
@@ -1182,7 +1488,7 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.getEntity = function(ontology, entityIRI) {
-                return _.find(ontology, {matonto:{originalIRI: entityIRI}});
+                return _.find(ontology, {matonto:{originalIRI: entityIRI}}) || _.find(ontology, {'@id': entityIRI});
             }
             /**
              * @ngdoc method
@@ -1246,8 +1552,8 @@
                     + prefixes.dcterms + "title'][0]['@value']") || _.get(entity, "['" + prefixes.dc
                     + "title'][0]['@value']");
                 if (!result) {
-                    if (_.has(entity, 'matonto.originalIRI')) {
-                        result = self.getBeautifulIRI(entity.matonto.originalIRI);
+                    if (_.has(entity, '@id')) {
+                        result = self.getBeautifulIRI(entity['@id']);
                     } else {
                         result = _.get(entity, 'matonto.anonymous', '(Entity has no IRI)');
                     }
@@ -1279,10 +1585,7 @@
                 $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config)
                     .then(response => {
                         if(_.get(response, 'status') === 200 && _.has(response, 'data')) {
-                            var ontologies = _.map(response, item => {
-                                return item.ontology;
-                            });
-                            deferred.resolve(ontologies);
+                            deferred.resolve(response.data);
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {

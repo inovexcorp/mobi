@@ -27,19 +27,21 @@
         /**
          * @ngdoc overview
          * @name mapperState
+         * @requires delimitedManager
          *
          * @description 
          * The `mapperState` module only provides the `mapperStateService` service which
          * contains various variables to hold the state of the mapping tool page and 
          * utility functions to update those variables.
          */
-        .module('mapperState', ['prefixes', 'mappingManager', 'ontologyManager', 'delimitedManager'])
+        .module('mapperState', ['delimitedManager'])
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService
          * @requires prefixes.service:prefixes
          * @requires mappingManager.service:mappingManagerService
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `mapperStateService` is a service which contains various variables to hold the 
@@ -54,9 +56,9 @@
             var cachedOntologyId = '';
             var cachedSourceOntologies = undefined;
             var originalMappingName = '';
-            var manager = mappingManagerService,
-                ontology = ontologyManagerService,
-                csv = delimitedManagerService;
+            var mm = mappingManagerService,
+                om = ontologyManagerService,
+                dm = delimitedManagerService;
 
             // Static step indexes
             self.fileUploadStep = 1;
@@ -362,11 +364,11 @@
                 self.editMapping = true;
                 self.newMapping = true;
                 self.step = 0;
-                manager.mapping = {
+                mm.mapping = {
                     name: '',
                     jsonld: []
                 };
-                manager.sourceOntologies = [];
+                mm.sourceOntologies = [];
                 self.editMappingName = true;
                 self.resetEdit();
             }
@@ -381,8 +383,8 @@
              * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies}.
              */
             self.cacheSourceOntologies = function() {
-                cachedOntologyId = manager.getSourceOntologyId(manager.mapping.jsonld);
-                cachedSourceOntologies = angular.copy(manager.sourceOntologies);
+                cachedOntologyId = mm.getSourceOntologyId(mm.mapping.jsonld);
+                cachedSourceOntologies = angular.copy(mm.sourceOntologies);
             }
             /**
              * @ngdoc method
@@ -407,8 +409,8 @@
              * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies}.
              */
             self.restoreCachedSourceOntologies = function() {
-                manager.sourceOntologies = angular.copy(cachedSourceOntologies);
-                manager.setSourceOntology(manager.mapping.jsonld, cachedOntologyId);
+                mm.sourceOntologies = angular.copy(cachedSourceOntologies);
+                mm.setSourceOntology(mm.mapping.jsonld, cachedOntologyId);
                 self.clearCachedSourceOntologies();
             }
             /**
@@ -446,9 +448,9 @@
              * mapped yet
              */
             self.getMappedColumns = function() {
-                return _.chain(manager.getAllDataMappings(manager.mapping.jsonld))
+                return _.chain(mm.getAllDataMappings(mm.mapping.jsonld))
                     .map(dataMapping => parseInt(_.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'), 10))
-                    .map(index => _.get(csv.filePreview.headers, index))
+                    .map(index => _.get(dm.filePreview.headers, index))
                     .value();
             }
             /**
@@ -465,11 +467,11 @@
             self.updateAvailableColumns = function() {
                 var mappedColumns = self.getMappedColumns();
                 if (self.selectedPropMappingId) {
-                    var propMapping = _.find(manager.mapping.jsonld, {'@id': self.selectedPropMappingId});
+                    var propMapping = _.find(mm.mapping.jsonld, {'@id': self.selectedPropMappingId});
                     var index = parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'), 10);
-                    _.pull(mappedColumns, csv.filePreview.headers[index]);
+                    _.pull(mappedColumns, dm.filePreview.headers[index]);
                 }
-                self.availableColumns = _.difference(csv.filePreview.headers, mappedColumns);
+                self.availableColumns = _.difference(dm.filePreview.headers, mappedColumns);
             }
             /**
              * @ngdoc method
@@ -481,9 +483,13 @@
              * for the currently selected {@link mappingManager.mappingManagerService#mapping mapping}.
              */
             self.updateAvailableProps = function() {
-                var mappedProps = _.map(manager.getPropMappingsByClass(manager.mapping.jsonld, self.selectedClassMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
-                var classId = manager.getClassIdByMappingId(manager.mapping.jsonld, self.selectedClassMappingId);
-                var properties = ontology.getClassProperties(ontology.findOntologyWithClass(manager.sourceOntologies, classId), classId);
+                var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, self.selectedClassMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
+                var classId = mm.getClassIdByMappingId(mm.mapping.jsonld, self.selectedClassMappingId);
+                var properties = [];
+                _.forEach(mm.sourceOntologies, ontology => {
+                    var props = om.getClassProperties(ontology.entities, classId);
+                    properties = _.union(properties, props);
+                });
                 self.availableProps = _.filter(properties, prop => mappedProps.indexOf(prop['@id']) < 0);
             }
             /**
@@ -497,8 +503,8 @@
              */
             self.changedMapping = function() {
                 if (!self.newMapping && !originalMappingName) {
-                    originalMappingName = manager.mapping.name;
-                    manager.mapping.name = originalMappingName + '_' + Math.floor(Date.now() / 1000);
+                    originalMappingName = mm.mapping.name;
+                    mm.mapping.name = originalMappingName + '_' + Math.floor(Date.now() / 1000);
                 }
             }
         }

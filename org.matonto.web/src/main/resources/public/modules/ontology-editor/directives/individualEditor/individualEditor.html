@@ -1,0 +1,61 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="individual-editor clearfix">
+    <tab-button-container>
+        <tab-button is-active="dvm.sm.state.editorTab === 'basic'" on-click="dvm.sm.setEditorTab('basic')">{{dvm.om.getEntityName(dvm.sm.selected)}}</tab-button>
+        <tab-button is-active="dvm.sm.state.editorTab === 'properties'" on-click="dvm.sm.setEditorTab('properties')">Properties</tab-button>
+    </tab-button-container>
+
+    <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
+        <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <string-select ng-model="dvm.sm.selected['@type']"
+              display-text="'Type'"
+              select-list="dvm.subClasses"
+              lock-choices="[dvm.prefixes.owl + 'NamedIndividual']"
+              on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></string-select>
+    </div>
+
+    <div ng-if="dvm.sm.state.editorTab === 'properties'" class="tab clearfix">
+      <div class="well data-properties">
+        <div class="btn-container clearfix">
+            <a class="btn btn-link pull-left" ng-click="dvm.openAddDataPropOverlay()"><i class="fa fa-fw fa-plus"></i>Add Data Property</a>
+        </div>
+        <property-values ng-repeat="property in dvm.sm.selected | showDataProperties:dvm.sm.state.subDataProperties | orderBy:'localName'"
+          property="property"
+          entity="dvm.sm.selected"
+          edit="dvm.editDataProp(property, index)"
+          remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
+      </div>
+
+      <div class="well object-properties">
+        <div class="btn-container clearfix">
+            <a class="btn btn-link pull-left" ng-click="dvm.openAddObjectPropOverlay()"><i class="fa fa-fw fa-plus"></i>Add Object Property</a>
+        </div>
+        <property-values ng-repeat="property in dvm.sm.selected | showObjectProperties:dvm.sm.state.subObjectProperties | orderBy:'localName'"
+          property="property"
+          entity="dvm.sm.selected"
+          edit="dvm.editObjectProp(property, index)"
+          remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
+      </div>
+    </div>
+</div>

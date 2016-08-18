@@ -26,7 +26,8 @@ describe('Mapping Editor directive', function() {
         mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -36,16 +37,13 @@ describe('Mapping Editor directive', function() {
         mockDelimitedManager();
         mockOntologyManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -54,39 +52,54 @@ describe('Mapping Editor directive', function() {
             mappingManagerSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<mapping-editor></mapping-editor>'))(scope);
             scope.$digest();
+            controller = this.element.controller('mappingEditor');
         });
-        it('should get the name of the mapping\'s source ontology', function() {
-            var controller = this.element.controller('mappingEditor');
-            var result = controller.getSourceOntologyName();
-            expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
+        describe('should get the name of the mapping\'s source ontology', function() {
+            beforeEach(function() {
+                ontologyManagerSvc.getEntityName.calls.reset();
+            });
+            it('if it exists', function() {
+                var result = controller.getSourceOntologyName();
+                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+                expect(typeof result).toBe('string');
+            });
+            it('unless it does not exist', function() {
+                mappingManagerSvc.getSourceOntology.and.returnValue(undefined);
+                var result = controller.getSourceOntologyName();
+                expect(mappingManagerSvc.getSourceOntology).toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
+                expect(result).toBe('');
+            });
         });
         it('should set the correct state for changing the ontology', function() {
-            var controller = this.element.controller('mappingEditor');
             controller.changeOntology();
             expect(mapperStateSvc.changeOntology).toBe(true);
             expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
         });
-        it('should submit the mapping', function() {
-            var controller = this.element.controller('mappingEditor');
-            mappingManagerSvc.mapping.name = 'test';
-            mappingManagerSvc.previousMappingNames = [mappingManagerSvc.mapping.name];
-            controller.submit();
-            scope.$apply();
-            expect(mappingManagerSvc.uploadPut).not.toHaveBeenCalled();
-            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
-
-            mappingManagerSvc.previousMappingNames = [];
-            controller.submit();
-            scope.$apply();
-            expect(mappingManagerSvc.uploadPut).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.name);
-            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
+        describe('should submit the mapping', function() {
+            beforeEach(function() {
+                mappingManagerSvc.mapping.name = 'test';
+            });
+            it('if it has already been uploaded', function() {
+                mappingManagerSvc.previousMappingNames = [];
+                controller.submit();
+                scope.$apply();
+                expect(mappingManagerSvc.uploadPut).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.name);
+                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
+            });
+            it('if it has not been uploaded', function() {
+                mappingManagerSvc.previousMappingNames = [mappingManagerSvc.mapping.name];
+                controller.submit();
+                scope.$apply();
+                expect(mappingManagerSvc.uploadPut).not.toHaveBeenCalled();
+                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
+            });
         });
     });
     describe('replaces the element with the correct html', function() {

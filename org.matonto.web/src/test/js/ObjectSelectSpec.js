@@ -62,7 +62,7 @@ describe('Object Select directive', function() {
         scope.bindModel = [];
         scope.isDisabledWhen = false;
 
-        element = $compile(angular.element('<object-select on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen"></object-select>'))(scope);
+        element = $compile(angular.element('<object-select on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></object-select>'))(scope);
         scope.$digest();
     });
 
@@ -115,9 +115,21 @@ describe('Object Select directive', function() {
             var labels = element.querySelectorAll('custom-label');
             expect(labels.length).toBe(1);
         });
-        it('based on ui select tags', function() {
-            var selects = element.querySelectorAll('ui-select');
-            expect(selects.length).toBe(1);
+        describe('based on ui select tags', function() {
+            it('if it is a multi select', function() {
+                scope.multiSelect = true;
+                scope.$digest();
+                var selects = element.querySelectorAll('ui-select');
+                expect(selects.length).toBe(1);
+                expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
+            });
+            it('if it is not a multi select', function() {
+                scope.multiSelect = false;
+                scope.$digest();
+                var selects = element.querySelectorAll('ui-select');
+                expect(selects.length).toBe(1);
+                expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
+            });
         });
     });
     describe('controller methods', function() {

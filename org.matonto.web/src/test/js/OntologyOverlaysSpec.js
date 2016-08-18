@@ -62,7 +62,11 @@ describe('Ontology Overlays directive', function() {
             stateManagerSvc.showDeleteConfirmation = true;
             stateManagerSvc.showCloseOverlay = true;
             stateManagerSvc.showRemoveAnnotationOverlay = true;
+            stateManagerSvc.showRemoveIndividualPropertyOverlay = true;
             stateManagerSvc.showSaveOverlay = true;
+            stateManagerSvc.showCreateIndividualOverlay = true;
+            stateManagerSvc.showDataPropertyOverlay = true;
+            stateManagerSvc.showObjectPropertyOverlay = true;
             element = $compile(angular.element('<ontology-overlays></ontology-overlays>'))(scope);
             scope.$digest();
         });
@@ -71,11 +75,12 @@ describe('Ontology Overlays directive', function() {
         });
         it('based on confirmation-overlays', function() {
             var confirmations = element.find('confirmation-overlay');
-            expect(confirmations.length).toBe(3);
+            expect(confirmations.length).toBe(4);
         });
         _.forEach(['ontology-upload-overlay', 'annotation-overlay', 'ontology-download-overlay',
         'ontology-open-overlay', 'create-annotation-overlay', 'create-class-overlay',
-        'create-property-overlay', 'ontology-close-overlay'], function(item) {
+        'create-property-overlay', 'create-individual-overlay', 'ontology-close-overlay', 
+        'datatype-property-overlay', 'object-property-overlay'], function(item) {
             it('based on ' + item, function() {
                 var items = element.find(item);
                 expect(items.length).toBe(1);
@@ -213,13 +218,30 @@ describe('Ontology Overlays directive', function() {
                 expect(stateManagerSvc.afterSave).toHaveBeenCalledWith('id');
             });
         });
-        it('removeAnnotation calls the correct manager functions and sets the correct manager variable', function() {
+        it('removeAnnotation calls the correct manager functions and sets the correct manager variables', function() {
             controller.removeAnnotation();
             expect(annotationManagerSvc.remove).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.key,
                 stateManagerSvc.index);
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
                 stateManagerSvc.state.entityIRI, true);
             expect(stateManagerSvc.showRemoveAnnotationOverlay).toBe(false);
+        });
+        it('removeIndividualProperty calls the correct manager functions and sets the correct manager variables', function() {
+            stateManagerSvc.selected = {key: ['value0', 'value1']};
+            stateManagerSvc.key = 'key';
+            stateManagerSvc.index = 0;
+            controller.removeIndividualProperty();
+            expect(stateManagerSvc.selected.key).toBeDefined();
+            expect(stateManagerSvc.selected.key).not.toContain('value0');
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
+                stateManagerSvc.state.entityIRI, true);
+            expect(stateManagerSvc.showRemoveIndividualPropertyOverlay).toBe(false);
+
+            controller.removeIndividualProperty();
+            expect(stateManagerSvc.selected.key).toBeUndefined();
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
+                stateManagerSvc.state.entityIRI, true);
+            expect(stateManagerSvc.showRemoveIndividualPropertyOverlay).toBe(false);
         });
     });
 });

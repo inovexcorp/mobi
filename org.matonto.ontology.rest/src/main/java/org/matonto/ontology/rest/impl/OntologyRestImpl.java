@@ -55,6 +55,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -334,6 +336,11 @@ public class OntologyRestImpl implements OntologyRest {
         return deleteEntityFromOntology(ontologyIdStr, propertyIdStr);
     }
 
+    @Override
+    public Response deleteIndividualFromOntology(String ontologyIdStr, String individualIdStr) {
+        return deleteEntityFromOntology(ontologyIdStr, individualIdStr);
+    }
+
     private Response addEntityToOntology(String ontologyIdStr, String entityJson) {
         throwErrorIfMissingParam(ontologyIdStr, "ontologyIdStr is missing");
         throwErrorIfMissingParam(entityJson, "entityJson is missing");
@@ -371,6 +378,11 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response addAnnotationToOntology(String ontologyIdStr, String annotationJson) {
         return addEntityToOntology(ontologyIdStr, annotationJson);
+    }
+
+    @Override
+    public Response addIndividualToOntology(String ontologyIdStr, String resourceJson) {
+        return addEntityToOntology(ontologyIdStr, resourceJson);
     }
 
     @Override

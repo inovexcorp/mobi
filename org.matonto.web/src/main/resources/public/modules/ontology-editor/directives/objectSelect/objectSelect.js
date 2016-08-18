@@ -41,14 +41,18 @@
                     selectList: '=',
                     mutedText: '=',
                     isDisabledWhen: '=',
+                    isRequiredWhen: '=',
+                    multiSelect: '=',
+                    removeModel: '=',
                     onChange: '&'
                 },
                 bindToController: {
                     bindModel: '=ngModel'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
+                    $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
@@ -92,7 +96,7 @@
                         }
                         return result;
                     }
-                }
+                }]
             }
         }
 })();

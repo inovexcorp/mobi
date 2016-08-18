@@ -26,7 +26,8 @@ describe('File Preview Table directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        delimitedManagerSvc;
+        delimitedManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -36,16 +37,13 @@ describe('File Preview Table directive', function() {
         mockMappingManager();
         mockMapperState();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -60,9 +58,9 @@ describe('File Preview Table directive', function() {
             };
             this.element = $compile(angular.element('<file-preview-table></file-preview-table>'))(scope);
             scope.$digest();
+            controller = this.element.controller('filePreviewTable');
         });
         it('should set the correct values for toggling the table', function() {
-            var controller = this.element.controller('filePreviewTable');
             expect(controller.big).toBe(false);
 
             controller.toggleTable();
@@ -74,33 +72,26 @@ describe('File Preview Table directive', function() {
             expect(controller.big).toBe(false);
             expect(controller.showNum).toBe(5);
         });
-        it('should determine whether the table is clickable', function() {
-            var controller = this.element.controller('filePreviewTable');
-            var result = controller.isClickable();
-            expect(result).toBe(false);
-
-            mapperStateSvc.selectedPropMappingId = '';
-            result = controller.isClickable();
-            expect(result).toBe(false);
-
-            mappingManagerSvc.mapping.jsonld.push({'@id': 'data', '@type': 'DataMapping'});
-            mapperStateSvc.selectedPropMappingId = 'data';
-            result = controller.isClickable();
-            expect(result).toBe(true);
-
-            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-            mapperStateSvc.selectedPropMappingId = '';
-            mapperStateSvc.selectedProp = {'@type': ['ObjectProperty']};
-            result = controller.isClickable();
-            expect(result).toBe(false);
-
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            mapperStateSvc.selectedProp = {'@type': ['DataProperty']};
-            result = controller.isClickable();
-            expect(result).toBe(true);
+        describe('should determine whether the table is clickable', function() {
+            it('if no data mapping is selected nor one being created', function() {
+                mappingManagerSvc.isDataMapping.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                var result = controller.isClickable();
+                expect(result).toBe(false);
+            });
+            it('if a data mapping is selected', function() {
+                var result = controller.isClickable();
+                expect(result).toBe(true);
+            });
+            it('if a data mapping is being created', function() {
+                mappingManagerSvc.isDataMapping.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                mapperStateSvc.selectedProp = {};
+                var result = controller.isClickable();
+                expect(result).toBe(true);
+            });
         });
         it('should get the highlight index for the table', function() {
-            var controller = this.element.controller('filePreviewTable');
             spyOn(controller, 'isClickable').and.returnValue(false);
             var result = controller.getHighlightIdx();
             expect(result).toBe(-1);
@@ -115,7 +106,6 @@ describe('File Preview Table directive', function() {
             expect(result).toBe(0);
         });
         it('should set the correct state for clicking a column', function() {
-            var controller = this.element.controller('filePreviewTable');
             controller.clickColumn(0);
             expect(mapperStateSvc.selectedColumn).toBe(delimitedManagerSvc.filePreview.headers[0]);
         });
@@ -137,7 +127,7 @@ describe('File Preview Table directive', function() {
             expect(this.element.querySelectorAll('table.table').length).toBe(1);
         });
         it('with the correct classes depending on table size', function() {
-            var controller = this.element.controller('filePreviewTable');
+            controller = this.element.controller('filePreviewTable');
             var icon = angular.element(this.element.querySelectorAll('.toggle-table i')[0]);
             expect(icon.hasClass('fa-expand')).toBe(true);
             expect(icon.hasClass('fa-compress')).toBe(false);
@@ -150,7 +140,7 @@ describe('File Preview Table directive', function() {
             expect(this.element.hasClass('big')).toBe(true);
         });
         it('with the correct number of rows depending on the number to show', function() {
-            var controller = this.element.controller('filePreviewTable');
+            controller = this.element.controller('filePreviewTable');
             delimitedManagerSvc.filePreview.rows = [[''], [''], [''], [''], [''], ['']];
             expect(this.element.querySelectorAll('tbody tr:not(.hidden)').length).toBe(5);
 
@@ -158,25 +148,39 @@ describe('File Preview Table directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('tbody tr:not(.hidden)').length).toBe(delimitedManagerSvc.filePreview.rows.length);
         });
-        it('with the correct classes if clickable', function() {
-            var controller = this.element.controller('filePreviewTable');
+        it('depending on whether columns are available', function() {
+            controller = this.element.controller('filePreviewTable');
+            spyOn(controller, 'isClickable').and.returnValue(true);
+            scope.$digest();
             var items = this.element.querySelectorAll('th, td');
             for (var i = 0; i < items.length; i++) {
                 expect(angular.element(items[i]).hasClass('clickable')).toBe(false);
-                expect(angular.element(items[i]).hasClass('disabled')).toBe(false);
+                expect(angular.element(items[i]).hasClass('disabled')).toBe(true);
             }
-            spyOn(controller, 'isClickable').and.returnValue(true);
+
             mapperStateSvc.availableColumns = [''];
             scope.$digest();
             for (var i = 0; i < items.length; i++) {
                 expect(angular.element(items[i]).hasClass('clickable')).toBe(true);
                 expect(angular.element(items[i]).hasClass('disabled')).toBe(false);
             }
-            mapperStateSvc.availableColumns = [];
+        });
+        it('depending on whether columns are clickable', function() {
+            mapperStateSvc.availableColumns = [''];
+            controller = this.element.controller('filePreviewTable');
+            spyOn(controller, 'isClickable').and.returnValue(false);
             scope.$digest();
+            var items = this.element.querySelectorAll('th, td');
             for (var i = 0; i < items.length; i++) {
                 expect(angular.element(items[i]).hasClass('clickable')).toBe(false);
-                expect(angular.element(items[i]).hasClass('disabled')).toBe(true);
+                expect(angular.element(items[i]).hasClass('disabled')).toBe(false);
+            }
+
+            controller.isClickable.and.returnValue(true);
+            scope.$digest();
+            for (var i = 0; i < items.length; i++) {
+                expect(angular.element(items[i]).hasClass('clickable')).toBe(true);
+                expect(angular.element(items[i]).hasClass('disabled')).toBe(false);
             }
         });
         it('with the correct table data', function() {
@@ -186,7 +190,7 @@ describe('File Preview Table directive', function() {
             expect(rows[0].querySelectorAll('td').length).toBe(delimitedManagerSvc.filePreview.rows[0].length);
         });
         it('with the correct column highlighted', function() {
-            var controller = this.element.controller('filePreviewTable');
+            controller = this.element.controller('filePreviewTable');
             spyOn(controller, 'getHighlightIdx').and.returnValue(0);
             scope.$digest();
             expect(angular.element(this.element.find('th')[0]).hasClass('highlight')).toBe(true);
@@ -197,7 +201,7 @@ describe('File Preview Table directive', function() {
             }
         });
         it('with the correct class for the button if last column is highlighted', function() {
-            var controller = this.element.controller('filePreviewTable');
+            controller = this.element.controller('filePreviewTable');
             var button = angular.element(this.element.querySelectorAll('.toggle-table')[0]);
             expect(button.hasClass('opposite')).toBe(false);
 
@@ -216,7 +220,7 @@ describe('File Preview Table directive', function() {
         };
         var element = $compile(angular.element('<file-preview-table></file-preview-table>'))(scope);
         scope.$digest();
-        var controller = element.controller('filePreviewTable');
+        controller = element.controller('filePreviewTable');
         spyOn(controller, 'toggleTable').and.callThrough();
 
         angular.element(element.find('button')).triggerHandler('click');
@@ -233,26 +237,15 @@ describe('File Preview Table directive', function() {
         };
         var element = $compile(angular.element('<file-preview-table></file-preview-table>'))(scope);
         scope.$digest();
-        var controller = element.controller('filePreviewTable');
+        controller = element.controller('filePreviewTable');
         var tableHeader = angular.element(element.find('th')[0]);
         tableHeader.triggerHandler('mouseover');
         scope.$digest();
         expect(controller.hoverIdx).toBe(0);
-        expect(tableHeader.hasClass('highlight')).toBe(true);
-        var rows = element.querySelectorAll('tbody tr');
-        for (var i = 0; i < rows.length; i++) {
-            var items = rows[i].querySelectorAll('td');
-            expect(angular.element(items[0]).hasClass('highlight')).toBe(true);
-        }
 
         tableHeader.triggerHandler('mouseleave');
         scope.$digest();
         expect(controller.hoverIdx).toBe(undefined);
-        expect(tableHeader.hasClass('highlight')).toBe(false);
-        for (var i = 0; i < rows.length; i++) {
-            var items = rows[i].querySelectorAll('td');
-            expect(angular.element(items[0]).hasClass('highlight')).toBe(false);
-        }
     });
     it('should highlight columns on hover of td', function() {
         mappingManagerSvc.mapping = {
@@ -264,26 +257,15 @@ describe('File Preview Table directive', function() {
         };
         var element = $compile(angular.element('<file-preview-table></file-preview-table>'))(scope);
         scope.$digest();
-        var controller = element.controller('filePreviewTable');
+        controller = element.controller('filePreviewTable');
         var dataItem = angular.element(element.querySelectorAll('td')[0]);
         dataItem.triggerHandler('mouseover');
         scope.$digest();
         expect(controller.hoverIdx).toBe(0);
-        expect(angular.element(element.find('th')[0]).hasClass('highlight')).toBe(true);
-        var rows = element.querySelectorAll('tbody tr');
-        for (var i = 0; i < rows.length; i++) {
-            var items = rows[i].querySelectorAll('td');
-            expect(angular.element(items[0]).hasClass('highlight')).toBe(true);
-        }
 
         dataItem.triggerHandler('mouseleave');
         scope.$digest();
         expect(controller.hoverIdx).toBe(undefined);
-        expect(angular.element(element.find('th')[0]).hasClass('highlight')).toBe(false);
-        for (var i = 0; i < rows.length; i++) {
-            var items = rows[i].querySelectorAll('td');
-            expect(angular.element(items[0]).hasClass('highlight')).toBe(false);
-        }
     });
     it('should call clickColumn when a th or td is clicked', function() {
         mappingManagerSvc.mapping = {
@@ -296,12 +278,13 @@ describe('File Preview Table directive', function() {
         mapperStateSvc.availableColumns = [''];
         var element = $compile(angular.element('<file-preview-table></file-preview-table>'))(scope);
         scope.$digest();
-        var controller = element.controller('filePreviewTable');
+        controller = element.controller('filePreviewTable');
         spyOn(controller, 'clickColumn');
+        spyOn(controller, 'isClickable').and.returnValue(false);
         angular.element(element.find('th')[0]).triggerHandler('click');
         expect(controller.clickColumn).not.toHaveBeenCalled();
 
-        spyOn(controller, 'isClickable').and.returnValue(true);
+        controller.isClickable.and.returnValue(true);
         scope.$digest();
         angular.element(element.find('th')[0]).triggerHandler('click');
         expect(controller.clickColumn).toHaveBeenCalledWith(0);

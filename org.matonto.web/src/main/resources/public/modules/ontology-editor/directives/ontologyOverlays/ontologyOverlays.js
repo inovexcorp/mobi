@@ -68,6 +68,9 @@
                         } else if (dvm.om.isDataTypeProperty(dvm.sm.selected)) {
                             dvm.om.deleteDataTypeProperty(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
                                 .then(selectCurrentOntology, onError);
+                        } else if (dvm.om.isIndividual(dvm.sm.selected)) {
+                            dvm.om.deleteIndividual(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
+                                .then(selectCurrentOntology, onError);
                         }
                     }
 
@@ -81,8 +84,17 @@
 
                     dvm.removeAnnotation = function() {
                         dvm.am.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
-                        dvm.sm.setUnsaved(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
                         dvm.sm.showRemoveAnnotationOverlay = false;
+                    }
+
+                    dvm.removeIndividualProperty = function() {
+                        _.pullAt(dvm.sm.selected[dvm.sm.key], dvm.sm.index);
+                        if (!dvm.sm.selected[dvm.sm.key].length) {
+                            delete dvm.sm.selected[dvm.sm.key];
+                        }
+                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
+                        dvm.sm.showRemoveIndividualPropertyOverlay = false;
                     }
                 }
             }

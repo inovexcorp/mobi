@@ -35,10 +35,11 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/stringSelect/stringSelect.html',
                 scope: {
-                    changeEvent: '&',
+                    onChange: '&',
                     displayText: '=',
                     selectList: '=',
-                    mutedText: '='
+                    mutedText: '=',
+                    lockChoices: '='
                 },
                 bindToController: {
                     bindModel: '=ngModel'

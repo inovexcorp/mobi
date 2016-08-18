@@ -39,7 +39,7 @@
             <string-select ng-model="dvm.property['@type']"
                            display-text="'Type'"
                            muted-text="'*Required'"
-                           change-event="dvm.property[dvm.prefixes.rdfs + 'range'] = []"
+                           on-change="dvm.property[dvm.prefixes.rdfs + 'range'] = []"
                            select-list="dvm.om.propertyTypes"></string-select>
             <!-- dcterms:description -->
             <text-area ng-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
