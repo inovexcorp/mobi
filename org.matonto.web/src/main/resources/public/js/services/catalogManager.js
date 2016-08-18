@@ -203,7 +203,7 @@
             /**
              * @ngdoc method
              * @name getResourceTypes
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Calls the GET /matontorest/catalog/resource-types endpoint and returns the
@@ -222,7 +222,7 @@
             /**
              * @ngdoc method
              * @name getSortOptions
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Calls the GET /matontorest/catalog/sort-options endpoint and returns the
@@ -241,7 +241,7 @@
             /**
              * @ngdoc method
              * @name getResources
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Calls the GET /matontorest/catalog/resources endpoint and returns the object
@@ -291,7 +291,7 @@
             /**
              * @ngdoc method
              * @name getResultsPage
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Calls the GET /matontorest/catalog/resources endpoint with the passed URL and
@@ -336,7 +336,7 @@
             /**
              * @ngdoc method
              * @name getResource
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Calls the GET /matontorest/catalog/resources/{resourceId} endpoint with the passed
@@ -401,7 +401,7 @@
             /**
              * @ngdoc method
              * @name getResourceDistributions
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Calls the GET /matontorest/catalog/resources/{resourceId}/distributions endpoint and
@@ -434,7 +434,7 @@
             /**
              * @ngdoc method
              * @name getResourceDistribution
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Calls the GET /matontorest/catalog/resources/{resourceId}/distributions/{distributionId} 
@@ -501,7 +501,7 @@
             /**
              * @ngdoc method
              * @name downloadResource
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Retrieves the latest distribution for a resource and calls it's download link
@@ -524,7 +524,7 @@
             /**
              * @ngdoc method
              * @name getType
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Retrieves the local name of a resource type IRI.
@@ -542,7 +542,7 @@
             /**
              * @ngdoc method
              * @name getDate
-             * @methodOf catalogManager.catalogManagerService
+             * @methodOf catalogManager.service:catalogManagerService
              *
              * @description 
              * Creates a Date object from a date object in a resource or distribution object.

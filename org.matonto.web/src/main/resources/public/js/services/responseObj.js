@@ -50,7 +50,7 @@
         /**
          * @ngdoc method
          * @name getItemIri
-         * @methodOf responseObj.responseObj
+         * @methodOf responseObj.service:responseObj
          * 
          * @description
          * Retrieves an item's IRI by combining the namespace and local name. If the 
@@ -72,7 +72,7 @@
         /**
          * @ngdoc method
          * @name validateItem
-         * @methodOf responseObj.responseObj
+         * @methodOf responseObj.service:responseObj
          *
          * @description 
          * Checks whether the item passed in is a valid object with a namespace and local name.
