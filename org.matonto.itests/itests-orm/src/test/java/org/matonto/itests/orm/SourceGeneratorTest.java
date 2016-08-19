@@ -1,13 +1,34 @@
-package org.matonto.rdf.orm.generate;
+package org.matonto.itests.orm;
 
-import java.io.File;
-import java.util.Set;
+/*-
+ * #%L
+ * itests-orm
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 
+import com.xmlns.foaf._0._1.Agent;
+import com.xmlns.foaf._0._1.AgentFactory;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.ValueFactory;
@@ -15,23 +36,17 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
-import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
-import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
-import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
-import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
-import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
-import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.generate.GraphReadingUtility;
+import org.matonto.rdf.orm.generate.SourceGenerator;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
-import com.xmlns.foaf._0._1.Agent;
-import com.xmlns.foaf._0._1.AgentFactory;
+import java.io.File;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
-@RunWith(BlockJUnit4ClassRunner.class)
-public class TestSourceGenerator {
+public class SourceGeneratorTest {
 
 	private static ValueFactory valueFactory;
 
@@ -39,8 +54,10 @@ public class TestSourceGenerator {
 
 	private static ModelFactory modelFactory;
 
-	@Before
-	public void beforeTest() {
+    private Model model;
+
+	@BeforeClass
+	public static void beforeTest() {
 		valueFactory = new ValueFactoryService();
 		modelFactory = new LinkedHashModelFactoryService();
 		valueConverterRegistry = new DefaultValueConverterRegistry();
@@ -53,24 +70,6 @@ public class TestSourceGenerator {
 		valueConverterRegistry.registerValueConverter(new LiteralValueConverter());
 		valueConverterRegistry.registerValueConverter(new ThingFactory());
 	}
-
-	@Test
-	public void generateFoafOntologyStuff() throws Exception {
-		try {
-			final File foaf = new File("src/test/java/generated/test/foaf");
-			if (foaf.exists()) {
-				FileUtils.deleteDirectory(foaf);
-			}
-			SourceGenerator.toSource(GraphReadingUtility.readOntology(new File("src/test/resources/foaf.rdf"),
-					"http://xmlns.com/foaf/0.1/"), "http://xmlns.com/foaf/0.1/", "target/generated-test-sources");
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-
-	}
-
-	private Model model;
 
 	@Before
 	public void before() {
@@ -100,6 +99,21 @@ public class TestSourceGenerator {
 				valueFactory.createIRI("urn://matonto.org/orm/test/account"));
 	}
 
+    @Test
+    public void generateFoafOntologyStuff() throws Exception {
+        try {
+            final File foaf = new File("src/test/java/generated/test/foaf");
+            if (foaf.exists()) {
+                FileUtils.deleteDirectory(foaf);
+            }
+            SourceGenerator.toSource(GraphReadingUtility.readOntology(new File("src/test/resources/foaf.rdf"),
+                    "http://xmlns.com/foaf/0.1/"), "http://xmlns.com/foaf/0.1/", "target/generated-test-sources");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
 	@Test
 	public void testAgent() {
 		final AgentFactory factory = new AgentFactory();
@@ -116,5 +130,4 @@ public class TestSourceGenerator {
 						valueFactory.createIRI("urn://matonto.org/orm/test/account")));
 		assertEquals(valueFactory.createIRI("urn://matonto.org/orm/test/account"), mbox.getResource());
 	}
-
 }
