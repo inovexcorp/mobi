@@ -59,7 +59,8 @@ public class GraphReadingUtility {
 				readOntology(pair.getLeft(), pair.getRight());
 			} catch (Exception e) {
 				LOG.error("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage(), e);
-				issues.add("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage());
+				issues.add("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage()
+						+ "\n\tEnsure the file format matches type file suffix.");
 			}
 		});
 		if (!pairs.isEmpty()) {
