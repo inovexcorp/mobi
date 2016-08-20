@@ -44,12 +44,12 @@ public interface Thing {
 	/**
 	 * The type IRI string for a {@link Thing} instance.
 	 */
-	static final String TYPE = "http://www.w3.org/2002/07/owl#Thing";
+	String TYPE = "http://www.w3.org/2002/07/owl#Thing";
 
 	/**
 	 * The default impl for this interface.
 	 */
-	static final Class<? extends Thing> DEFAULT_IMPL = ThingImpl.class;
+	Class<? extends Thing> DEFAULT_IMPL = ThingImpl.class;
 
 	/**
 	 * 
