@@ -25,7 +25,10 @@ package org.matonto.rdf.orm.generate;
 
 public class OntologyToJavaException extends Exception {
 
-	private static final long serialVersionUID = 1L;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5767296429691201380L;
 
 	public OntologyToJavaException(final String msg) {
 		super(msg);
