@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -65,9 +66,9 @@ public class GraphReadingUtility {
 	public static Model readOntology(final File file, final String baseUri)
 			throws RDFParseException, RDFHandlerException, UnsupportedRDFormatException, IOException {
 		try (final InputStream is = new FileInputStream(file)) {
-			final RDFFormat format = identifyFormatFromFilename(file.getName());
-			if (format != null) {
-				return readOntology(format, is, baseUri);
+			final Optional<RDFFormat> format = Rio.getParserFormatForFileName(file.getName());
+			if (format.isPresent()) {
+				return readOntology(format.get(), is, baseUri);
 			} else {
 				throw new IOException("Could not identify format of file containing ontology: " + file.getName());
 			}
@@ -81,36 +82,6 @@ public class GraphReadingUtility {
 		parser.setRDFHandler(collector);
 		parser.parse(is, baseURI);
 		return new LinkedHashModel(collector.getStatements());
-	}
-
-	public static RDFFormat identifyFormatFromFilename(final String fileName) {
-		switch (fileName.contains(".") ? fileName.substring(fileName.indexOf('.') + 1).toLowerCase() : "") {
-		case "trig":
-			return RDFFormat.TRIG;
-		case "rdf":
-		case "rdfs":
-		case "owl":
-		case "owx":
-			return RDFFormat.RDFXML;
-		case "rj":
-			return RDFFormat.RDFJSON;
-		case "n3":
-			return RDFFormat.N3;
-		case "nq":
-			return RDFFormat.NQUADS;
-		case "nt":
-			return RDFFormat.NTRIPLES;
-		case "ttl":
-			return RDFFormat.TURTLE;
-		case "brf":
-			return RDFFormat.BINARY;
-		case "jsonld":
-			return RDFFormat.JSONLD;
-		case "xhtml":
-			return RDFFormat.RDFA;
-		default:
-			return null;
-		}
 	}
 
 }
