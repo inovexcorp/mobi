@@ -43,9 +43,13 @@ import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.UnsupportedRDFormatException;
 import org.openrdf.rio.helpers.StatementCollector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO - use matonto graph reading utilities instead of sesame
 public class GraphReadingUtility {
+
+	private static final Logger LOG = LoggerFactory.getLogger(GraphReadingUtility.class);
 
 	public static Model readOntologies(final Collection<Pair<File, String>> pairs) throws IOException {
 		final Model overall = new LinkedHashModel();
@@ -54,6 +58,7 @@ public class GraphReadingUtility {
 			try {
 				readOntology(pair.getLeft(), pair.getRight());
 			} catch (Exception e) {
+				LOG.error("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage(), e);
 				issues.add("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage());
 			}
 		});
@@ -68,6 +73,7 @@ public class GraphReadingUtility {
 		try (final InputStream is = new FileInputStream(file)) {
 			final Optional<RDFFormat> format = Rio.getParserFormatForFileName(file.getName());
 			if (format.isPresent()) {
+				LOG.info("Reading file '" + file.getAbsolutePath() + "' assumed format: " + format.get());
 				return readOntology(format.get(), is, baseUri);
 			} else {
 				throw new IOException("Could not identify format of file containing ontology: " + file.getName());
