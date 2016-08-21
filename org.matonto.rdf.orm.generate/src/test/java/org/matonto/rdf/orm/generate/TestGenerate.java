@@ -23,19 +23,22 @@ package org.matonto.rdf.orm.generate;
  * #L%
  */
 
-public class OntologyToJavaException extends Exception {
+import java.io.File;
+import java.io.IOException;
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 5767296429691201380L;
+import org.junit.Test;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.UnsupportedRDFormatException;
 
-	public OntologyToJavaException(final String msg) {
-		super(msg);
-	}
+public class TestGenerate {
 
-	public OntologyToJavaException(final String msg, final Throwable cause) {
-		super(msg, cause);
+	@Test
+	public void testSourceGenerate() throws RDFParseException, RDFHandlerException, UnsupportedRDFormatException, OntologyToJavaException, IOException {
+		SourceGenerator.toSource(
+				GraphReadingUtility.readOntology(new File("src/test/resources/mapping.trig"),
+						"http://matonto.org/ontologies/delimited/"),
+				"http://matonto.org/ontologies/delimited/", "target/generated-sources");
 	}
 
 }

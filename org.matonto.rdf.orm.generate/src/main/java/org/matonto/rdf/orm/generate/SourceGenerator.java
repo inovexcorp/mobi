@@ -137,14 +137,12 @@ public class SourceGenerator {
 				final JMethod getExisting = factory.method(JMod.PUBLIC, interfaze, "getExisting");
 
 				getExisting.annotate(Override.class);
-				getExisting.body()
-						._return(
-								JExpr._new(clazz).arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
-										.arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
-										.arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
-										.arg(getExisting.param(
-												org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
-												"valueConverterRegistry")));
+				getExisting.body()._return(
+						JExpr._new(clazz).arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
+								.arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
+								.arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
+								.arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
+										"valueConverterRegistry")));
 			} catch (final Exception e) {
 				issues.add("Issue generating factory class: " + factoryName + ": " + e.getMessage());
 			}
@@ -214,37 +212,45 @@ public class SourceGenerator {
 
 	private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
 			final JDefinedClass interfaceClass) {
-		final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
-		method.param(interfaceMethod.params().get(0).type(), "arg");
-		method._throws(OrmException.class);
-		method.annotate(Override.class);
-		if (interfaceMethod.params().get(0).type().fullName().startsWith("java.util.Set")) {
-			method.body().invoke("setProperties")
-					.arg(JExpr.ref("valueConverterRegistry").invoke("convertTypes").arg(interfaceMethod.params().get(0))
-							.arg(JExpr._this()))
-					.arg(JExpr.ref("valueFactory").invoke("createIRI")
-							.arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+		if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
+			final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
+			method.param(interfaceMethod.params().get(0).type(), "arg");
+			method._throws(OrmException.class);
+			method.annotate(Override.class);
+			if (interfaceMethod.params().get(0).type().fullName().startsWith("java.util.Set")) {
+				method.body().invoke("setProperties")
+						.arg(JExpr.ref("valueConverterRegistry").invoke("convertTypes")
+								.arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
+						.arg(JExpr.ref("valueFactory").invoke("createIRI")
+								.arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+			} else {
+				method.body().invoke("setProperty")
+						.arg(JExpr.ref("valueConverterRegistry").invoke("convertType")
+								.arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
+						.arg(JExpr.ref("valueFactory").invoke("createIRI")
+								.arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+			}
+			// TODO - add javadoc.
+			// JDocComment jdoc = method.javadoc();
+			// jdoc.add("");
 		} else {
-			method.body().invoke("setProperty")
-					.arg(JExpr.ref("valueConverterRegistry").invoke("convertType").arg(interfaceMethod.params().get(0))
-							.arg(JExpr._this()))
-					.arg(JExpr.ref("valueFactory").invoke("createIRI")
-							.arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+			LOG.warn("Avoided dupliace setter method: " + interfaceMethod.name() + " on class: " + impl.name());
 		}
-		// TODO - add javadoc.
-		// JDocComment jdoc = method.javadoc();
-		// jdoc.add("");
 	}
 
 	private void generateFieldGetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
 			final JDefinedClass interfaceClass) {
-		final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
-		method._throws(OrmException.class);
-		method.annotate(Override.class);
-		// TODO - add javadoc.
-		// JDocComment jdoc = method.javadoc();
-		// jdoc.add("");
-		convertValueBody(interfaceClass, interfaceMethod, impl, method);
+		if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
+			final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
+			method._throws(OrmException.class);
+			method.annotate(Override.class);
+			// TODO - add javadoc.
+			// JDocComment jdoc = method.javadoc();
+			// jdoc.add("");
+			convertValueBody(interfaceClass, interfaceMethod, impl, method);
+		} else {
+			LOG.warn("Avoided dupliace getter method: " + interfaceMethod.name() + " on class: " + impl.name());
+		}
 	}
 
 	private void generateImplConstructors(final JDefinedClass impl, final JDefinedClass interfaceClazz) {

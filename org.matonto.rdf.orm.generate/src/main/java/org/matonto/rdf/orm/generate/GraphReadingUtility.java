@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -42,9 +43,13 @@ import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.UnsupportedRDFormatException;
 import org.openrdf.rio.helpers.StatementCollector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO - use matonto graph reading utilities instead of sesame
 public class GraphReadingUtility {
+
+	private static final Logger LOG = LoggerFactory.getLogger(GraphReadingUtility.class);
 
 	public static Model readOntologies(final Collection<Pair<File, String>> pairs) throws IOException {
 		final Model overall = new LinkedHashModel();
@@ -53,7 +58,9 @@ public class GraphReadingUtility {
 			try {
 				readOntology(pair.getLeft(), pair.getRight());
 			} catch (Exception e) {
-				issues.add("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage());
+				LOG.error("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage(), e);
+				issues.add("Issue reading ontology '" + pair.getLeft() + "'" + e.getMessage()
+						+ "\n\tEnsure the file format matches type file suffix.");
 			}
 		});
 		if (!pairs.isEmpty()) {
@@ -65,9 +72,10 @@ public class GraphReadingUtility {
 	public static Model readOntology(final File file, final String baseUri)
 			throws RDFParseException, RDFHandlerException, UnsupportedRDFormatException, IOException {
 		try (final InputStream is = new FileInputStream(file)) {
-			final RDFFormat format = identifyFormatFromFilename(file.getName());
-			if (format != null) {
-				return readOntology(format, is, baseUri);
+			final Optional<RDFFormat> format = Rio.getParserFormatForFileName(file.getName());
+			if (format.isPresent()) {
+				LOG.info("Reading file '" + file.getAbsolutePath() + "' assumed format: " + format.get());
+				return readOntology(format.get(), is, baseUri);
 			} else {
 				throw new IOException("Could not identify format of file containing ontology: " + file.getName());
 			}
@@ -81,36 +89,6 @@ public class GraphReadingUtility {
 		parser.setRDFHandler(collector);
 		parser.parse(is, baseURI);
 		return new LinkedHashModel(collector.getStatements());
-	}
-
-	public static RDFFormat identifyFormatFromFilename(final String fileName) {
-		switch (fileName.contains(".") ? fileName.substring(fileName.indexOf('.') + 1).toLowerCase() : "") {
-		case "trig":
-			return RDFFormat.TRIG;
-		case "rdf":
-		case "rdfs":
-		case "owl":
-		case "owx":
-			return RDFFormat.RDFXML;
-		case "rj":
-			return RDFFormat.RDFJSON;
-		case "n3":
-			return RDFFormat.N3;
-		case "nq":
-			return RDFFormat.NQUADS;
-		case "nt":
-			return RDFFormat.NTRIPLES;
-		case "ttl":
-			return RDFFormat.TURTLE;
-		case "brf":
-			return RDFFormat.BINARY;
-		case "jsonld":
-			return RDFFormat.JSONLD;
-		case "xhtml":
-			return RDFFormat.RDFA;
-		default:
-			return null;
-		}
 	}
 
 }

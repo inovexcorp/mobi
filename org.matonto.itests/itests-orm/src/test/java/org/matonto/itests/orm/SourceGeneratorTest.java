@@ -23,8 +23,14 @@ package org.matonto.itests.orm;
  * #L%
  */
 
-import com.xmlns.foaf._0._1.Agent;
-import com.xmlns.foaf._0._1.AgentFactory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.util.Set;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -36,15 +42,20 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-import org.matonto.rdf.orm.conversion.impl.*;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.generate.GraphReadingUtility;
 import org.matonto.rdf.orm.generate.SourceGenerator;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
-import java.io.File;
-import java.util.Set;
-
-import static org.junit.Assert.*;
+import com.xmlns.foaf._0._1.Agent;
+import com.xmlns.foaf._0._1.AgentFactory;
 
 public class SourceGeneratorTest {
 
@@ -54,7 +65,7 @@ public class SourceGeneratorTest {
 
 	private static ModelFactory modelFactory;
 
-    private Model model;
+	private Model model;
 
 	@BeforeClass
 	public static void beforeTest() {
@@ -99,20 +110,22 @@ public class SourceGeneratorTest {
 				valueFactory.createIRI("urn://matonto.org/orm/test/account"));
 	}
 
-    @Test
-    public void generateFoafOntologyStuff() throws Exception {
-        try {
-            final File foaf = new File("src/test/java/generated/test/foaf");
-            if (foaf.exists()) {
-                FileUtils.deleteDirectory(foaf);
-            }
-            SourceGenerator.toSource(GraphReadingUtility.readOntology(new File("src/test/resources/foaf.rdf"),
-                    "http://xmlns.com/foaf/0.1/"), "http://xmlns.com/foaf/0.1/", "target/generated-test-sources");
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.getMessage());
-        }
-    }
+	@Test
+	public void generateFoafOntologyStuff() throws Exception {
+		try {
+			final File foaf = new File("src/test/java/generated/test/foaf");
+			if (foaf.exists()) {
+				FileUtils.deleteDirectory(foaf);
+			}
+			SourceGenerator.toSource(
+					GraphReadingUtility.readOntology(new File("src/test/resources/foaf.rdf"),
+							"http://xmlns.com/foaf/0.1/"),
+					"http://xmlns.com/foaf/0.1/", "target/generated-test-sources");
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
 
 	@Test
 	public void testAgent() {
