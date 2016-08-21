@@ -482,16 +482,15 @@ public interface OntologyRest {
     Response getOntologyClassHierarchy(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
-     * Returns the JSON class hierarchy for the class with requested class id.
+     * Returns classes with individuals defined.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @return nested JSON structure that represents the class hierarchy for the class with requested class id.
+     * @return nested JSON structure that represents the class hierarchy for the ontology with requested ontology ID.
      */
     @GET
-    @Path("{ontologyid}/class-hierarchies/{classId}")
+    @Path("{ontologyid}/classes-with-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    Response getClassHierarchy(@PathParam("ontologyid") String ontologyIdStr,
-                               @PathParam("classId") String classIdStr);
+    Response getClassesWithIndividuals(@PathParam("ontologyid") String ontologyIdStr);
 }

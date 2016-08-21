@@ -49,10 +49,10 @@
 
                     dvm.individual = {
                         '@id': dvm.prefix,
-                        '@type': [prefixes.owl + 'NamedIndividual']
+                        '@type': []
                     };
 
-                    dvm.subClasses = _.concat(dvm.om.getClassIRIs(dvm.sm.ontology), prefixes.owl + 'NamedIndividual');
+                    dvm.subClasses = dvm.om.getClassIRIs(dvm.sm.ontology);
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -66,11 +66,19 @@
                     }
 
                     dvm.create = function() {
+                        dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.om.createIndividual(dvm.sm.state.ontologyId, dvm.individual)
                             .then(response => {
                                 dvm.sm.showCreateIndividualOverlay = false;
-                                dvm.sm.selectItem('individual-editor', response.entityIRI, dvm.om.getListItemById(response.ontologyId));
+                                dvm.sm.selectItem('individual-editor', response.entityIRI,
+                                    dvm.om.getListItemById(response.ontologyId));
                                 dvm.sm.setOpened(response.ontologyId, dvm.om.getOntologyIRI(response.ontologyId), true);
+                                _.forEach(dvm.individual['@type'], type => {
+                                    if (!_.isEqual(type, prefixes.owl + 'NamedIndividual')
+                                        && !_.includes(dvm.sm.state.classesWithIndividuals, type)) {
+                                        dvm.sm.state.classesWithIndividuals.push(type);
+                                    }
+                                });
                             }, errorMessage => {
                                 dvm.error = errorMessage;
                             });

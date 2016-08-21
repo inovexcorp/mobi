@@ -50,6 +50,7 @@ describe('Annotation Tree directive', function() {
                 ontology: [{}],
                 ontologyIRI: ''
             }];
+            stateManagerSvc.getOpened.and.returnValue(true);
             ontologyManagerSvc.getAnnotations.and.returnValue([{matonto:{originalIRI:'annotation1'}}, {matonto:{originalIRI:'annotation2'}}]);
             element = $compile(angular.element('<annotation-tree></annotation-tree>'))(scope);
             scope.$digest();

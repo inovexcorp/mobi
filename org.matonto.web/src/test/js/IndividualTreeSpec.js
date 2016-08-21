@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 describe('Individual Tree directive', function() {
     var $compile,
         scope,
@@ -46,9 +47,11 @@ describe('Individual Tree directive', function() {
 
         ontologyManagerSvc.list = [{
             id: '',
-            ontology: [{}]
+            ontology: [{}],
+            classesWithIndividuals: ['class1']
         }];
-        ontologyManagerSvc.getClasses.and.returnValue(['class1']);
+        stateManagerSvc.getOpened.and.returnValue(true);
+        stateManagerSvc.getIndividualsOpened.and.returnValue(true);
         ontologyManagerSvc.getClassIndividuals.and.returnValue(['individual1']);
     });
 
@@ -70,8 +73,8 @@ describe('Individual Tree directive', function() {
         it('depending on the number of classes', function() {
             var classes = element.querySelectorAll('ul.class');
             var links = element.querySelectorAll('ul.class > li a');
-            expect(classes.length).toBe(ontologyManagerSvc.getClasses().length);
-            expect(links.length).toBe(ontologyManagerSvc.getClasses().length);
+            expect(classes.length).toBe(ontologyManagerSvc.list[0].classesWithIndividuals.length);
+            expect(links.length).toBe(ontologyManagerSvc.list[0].classesWithIndividuals.length);
         });
         it('depending on the number of individuals', function() {
             var individuals = element.querySelectorAll('ul.individual');
@@ -80,33 +83,34 @@ describe('Individual Tree directive', function() {
             expect(treeItems.length).toBe(ontologyManagerSvc.getClassIndividuals().length);
         });
         it('depending on whether an ontology is open', function() {
-            var container = angular.element(element.querySelectorAll('ul.ontology > .container')[0]);
-            expect(container.hasClass('ng-hide')).toBe(true);
+            stateManagerSvc.getOpened.and.returnValue(false);
+            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
+            scope.$digest();
+            var container = angular.element(element.querySelectorAll('ul.ontology > .container'));
+            expect(container.length).toBe(0);
 
             stateManagerSvc.getOpened.and.returnValue(true);
             element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
             scope.$digest();
-            container = angular.element(element.querySelectorAll('ul.ontology > .container')[0]);
-            expect(container.hasClass('ng-hide')).toBe(false);
+            container = angular.element(element.querySelectorAll('ul.ontology > .container'));
+            expect(container.length).toBe(1);
         });
         it('depending on whether the individuals of a class are open', function() {
-            var container = angular.element(element.querySelectorAll('ul.class > .container')[0]);
+            stateManagerSvc.getIndividualsOpened.and.returnValue(false);
+            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
+            scope.$digest();
+            var container = angular.element(element.querySelectorAll('ul.class > .container'));
             var icon = angular.element(element.querySelectorAll('ul.class > li a i')[0]);
-            expect(container.hasClass('ng-hide')).toBe(true);
+            expect(container.length).toBe(0);
             expect(icon.hasClass('fa-folder-o')).toBe(true);
 
             stateManagerSvc.getIndividualsOpened.and.returnValue(true);
+            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
             scope.$digest();
-            expect(container.hasClass('ng-hide')).toBe(false);
+            container = angular.element(element.querySelectorAll('ul.class > .container'));
+            icon = angular.element(element.querySelectorAll('ul.class > li a i')[0]);
+            expect(container.length).toBe(1);
             expect(icon.hasClass('fa-folder-open-o')).toBe(true);
-        });
-        it('depending on whether individuals exist with a class', function() {
-            var icon = angular.element(element.querySelectorAll('ul.class > li a i')[0]);
-            expect(icon.hasClass('fa-folder')).toBe(false);
-
-            ontologyManagerSvc.hasClassIndividuals.and.returnValue(false);
-            scope.$digest();
-            expect(icon.hasClass('fa-folder')).toBe(true);
         });
     });
     describe('controller methods', function() {
@@ -138,13 +142,5 @@ describe('Individual Tree directive', function() {
                 expect(result).toBe('');
             });
         });
-    });
-    it('should set whether individuals are opened when a class is clicked', function() {
-        element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
-        scope.$digest();
-
-        var classIcon = angular.element(element.querySelectorAll('ul.class > li a')[0]);
-        classIcon.triggerHandler('click');
-        expect(stateManagerSvc.setIndividualsOpened).toHaveBeenCalled();
     });
 });

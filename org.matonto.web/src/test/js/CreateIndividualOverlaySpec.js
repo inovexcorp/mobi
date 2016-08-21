@@ -52,13 +52,6 @@ describe('Create Individual Overlay directive', function() {
     });
 
     describe('initializes with the correct values', function() {
-        it('for subClasses', function() {
-            ontologyManagerSvc.getClassIRIs.and.returnValue([]);
-            element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
-            scope.$digest();
-            controller = element.controller('createIndividualOverlay');
-            expect(controller.subClasses).toEqual([prefixes.owl + 'NamedIndividual']);
-        });
         it('if parent ontology is opened', function() {
             var ontology = {iriBegin: 'begin', iriThen: '/'};
             ontologyManagerSvc.getListItemById.and.returnValue(ontology);
@@ -67,7 +60,7 @@ describe('Create Individual Overlay directive', function() {
             controller = element.controller('createIndividualOverlay');
             expect(controller.prefix).toBe(ontology.iriBegin + ontology.iriThen);
             expect(controller.individual['@id']).toBe(controller.prefix);
-            expect(controller.individual['@type']).toEqual([prefixes.owl + 'NamedIndividual']);
+            expect(controller.individual['@type']).toEqual([]);
         });
         it('if parent ontology is not opened', function() {
             ontologyManagerSvc.getListItemById.and.returnValue(undefined);
@@ -77,7 +70,7 @@ describe('Create Individual Overlay directive', function() {
             controller = element.controller('createIndividualOverlay');
             expect(controller.prefix).toBe('iri#');
             expect(controller.individual['@id']).toBe(controller.prefix);
-            expect(controller.individual['@type']).toEqual([prefixes.owl + 'NamedIndividual']);
+            expect(controller.individual['@type']).toEqual([]);
         });
     });
     describe('replaces the element with the correct html', function() {

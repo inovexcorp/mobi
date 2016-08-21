@@ -159,14 +159,7 @@
             }
 
             self.getOpenPath = function(ontologyId, entityIRI) {
-                var encodedIRI = '';
-                var entity = self.om.getEntity(self.om.getOntologyById(ontologyId), entityIRI);
-                if (_.has(entity, 'matonto.originalIRI')) {
-                    encodedIRI = encodeURIComponent(entity.matonto.originalIRI);
-                } else {
-                    encodedIRI = encodeURIComponent(_.get(entity, 'matonto.anonymous', ontologyId));
-                }
-                return encodeURIComponent(ontologyId) + '.' + encodedIRI;
+                return encodeURIComponent(ontologyId) + '.' + encodeURIComponent(entityIRI);
             }
 
             self.setOpened = function(ontologyId, entityIRI, isOpened) {
@@ -195,7 +188,7 @@
 
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
-                updateRefsService.update(self.ontology, self.selected['@id'], newIRI);
+                updateRefsService.update(self.om.getListItemById(self.state.ontologyId), self.selected['@id'], newIRI);
                 self.selected['@id'] = newIRI;
                 self.setUnsaved(self.ontology, self.state.entityIRI, true);
             }

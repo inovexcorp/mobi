@@ -38,8 +38,7 @@
                     onChange: '&',
                     displayText: '=',
                     selectList: '=',
-                    mutedText: '=',
-                    lockChoices: '='
+                    mutedText: '='
                 },
                 bindToController: {
                     bindModel: '=ngModel'

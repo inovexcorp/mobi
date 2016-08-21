@@ -24,14 +24,14 @@
     <strong>Everything</strong>
     <!-- ontologies -->
     <ul ng-repeat="item in dvm.om.list"
-        ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+        ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology)); noDomainsOpened = dvm.sm.getNoDomainsOpened(item.ontologyId)">
         <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
                    ontology-id="item.ontologyId"
                    is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
                    on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
                    has-children="dvm.om.hasClasses(item.ontology)"
                    is-opened="opened"></tree-item>
-        <li class="container" ng-show="opened">
+        <li class="container" ng-if="opened">
             <!-- classes -->
             <ul ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI"
                 ng-init="subOpened = dvm.sm.getOpened(item.ontologyId, clazz.matonto.originalIRI)">
@@ -41,10 +41,10 @@
                            on-click="dvm.sm.selectItem('class-editor', clazz.matonto.originalIRI, item)"
                            has-children="dvm.om.hasClassProperties(item.ontology, clazz.matonto.originalIRI)"
                            is-opened="subOpened"></tree-item>
-                <li class="container" ng-show="subOpened">
+                <li class="container" ng-if="subOpened">
                     <!-- class properties -->
                     <ul>
-                        <tree-item ng-repeat="property in dvm.om.getClassProperties(item.ontology, clazz.matonto.originalIRI) track by property.matonto.originalIRI"
+                        <tree-item ng-repeat="property in dvm.om.getClassProperties(item.ontology, clazz['@id']) track by property.matonto.originalIRI"
                                    ontology-id="item.ontologyId"
                                    current-entity="property"
                                    is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === property.matonto.originalIRI"
@@ -55,12 +55,12 @@
             <!-- properties without domains -->
             <ul ng-if="dvm.om.hasNoDomainProperties(item.ontology)">
                 <li>
-                    <a ng-click="dvm.sm.setNoDomainsOpened(item.ontologyId, !dvm.sm.getNoDomainsOpened(item.ontologyId)); $event.stopPropagation()">
+                    <a ng-click="noDomainsOpened = !noDomainsOpened; dvm.sm.setNoDomainsOpened(item.ontologyId, noDomainsOpened); $event.stopPropagation()">
                         <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': dvm.sm.getNoDomainsOpened(item.ontologyId), 'fa-folder-o': !dvm.sm.getNoDomainsOpened(item.ontologyId)}"></i>Properties
+                           ng-class="{'fa-folder-open-o': noDomainsOpened, 'fa-folder-o': !noDomainsOpened}"></i>Properties
                     </a>
                 </li>
-                <li class="container" ng-show="dvm.sm.getNoDomainsOpened(item.ontologyId)">
+                <li class="container" ng-if="noDomainsOpened">
                     <ul>
                         <tree-item ng-repeat="property in dvm.om.getNoDomainProperties(item.ontology) track by property.matonto.originalIRI"
                                    ontology-id="item.ontologyId"

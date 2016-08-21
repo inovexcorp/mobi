@@ -117,4 +117,6 @@ public interface OntologyManager {
     SesameTransformer getTransformer();
 
     TupleQueryResult getSubClassesOf(String ontologyIdStr);
+
+    TupleQueryResult getClassesWithIndividuals(String ontologyIdStr);
 }

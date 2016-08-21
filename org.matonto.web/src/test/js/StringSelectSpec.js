@@ -28,7 +28,8 @@ describe('String Select directive', function() {
         controller,
         prefixes,
         item,
-        splitIRIFilter;
+        splitIRIFilter,
+        isolatedScope;
 
     beforeEach(function() {
         module('templates');
@@ -55,36 +56,29 @@ describe('String Select directive', function() {
         scope.displayText = '';
         scope.selectList = [];
         scope.mutedText = '';
-        scope.lockChoices = [];
 
-        element = $compile(angular.element('<string-select ng-model="bindModel" on-change="onChange" display-text="displayText" select-list="selectList" muted-text="mutedText" lock-choices="lockChoices"></string-select>'))(scope);
+        element = $compile(angular.element('<string-select ng-model="bindModel" on-change="onChange" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
         scope.$digest();
     });
 
     describe('in isolated scope', function() {
+        beforeEach(function() {
+            isolatedScope = element.isolateScope();
+        });
         it('displayText should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
             isolatedScope.displayText = 'new value';
             scope.$digest();
             expect(scope.displayText).toEqual('new value');
         });
         it('mutedText should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
             isolatedScope.mutedText = 'new value';
             scope.$digest();
             expect(scope.mutedText).toEqual('new value');
         });
         it('selectList should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
             isolatedScope.selectList = ['new value'];
             scope.$digest();
             expect(scope.selectList).toEqual(['new value']);
-        });
-        it('lockChoices should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
-            isolatedScope.lockChoices = ['value'];
-            scope.$digest();
-            expect(scope.lockChoices).toEqual(['value']);
         });
     });
     describe('controller bound variables', function() {

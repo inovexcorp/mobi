@@ -81,12 +81,21 @@ public class SimpleOntologyManager implements OntologyManager {
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
     private static final String GET_SUB_CLASSES_OF;
+    private static final String GET_CLASSES_WITH_INDIVIDUALS;
     private static final String GRAPH_BINDING = "graph";
 
     static {
         try {
             GET_SUB_CLASSES_OF = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CLASSES_WITH_INDIVIDUALS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-classes-with-individuals.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -491,6 +500,14 @@ public class SimpleOntologyManager implements OntologyManager {
     public TupleQueryResult getSubClassesOf(String ontologyIdStr) {
         RepositoryConnection conn = repository.getConnection();
         TupleQuery query = conn.prepareTupleQuery(GET_SUB_CLASSES_OF);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getClassesWithIndividuals(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_CLASSES_WITH_INDIVIDUALS);
         query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
         return query.evaluate();
     }

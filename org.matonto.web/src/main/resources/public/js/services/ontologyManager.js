@@ -55,7 +55,7 @@
         .service('ontologyManagerService', ontologyManagerService);
 
         ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'uuid', 'annotationManagerService'];
+            'uuid', 'annotationManagerService', 'updateRefsService'];
 
         function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes, uuid,
             annotationManagerService) {
@@ -100,6 +100,7 @@
              *      dataPropertyRange: [],
              *      classHierarchy: []
              * }
+             * ```
              */
             self.list = [];
             /**
@@ -192,264 +193,6 @@
             self.downloadOntologyFile = function(ontologyId, rdfFormat = 'jsonld', fileName = 'ontology') {
                 $window.location = prefix + encodeURIComponent(ontologyId)
                     + `?rdfFormat=${rdfFormat}&fileName=${fileName}`;
-            }
-
-            self.saveChangesToOntology = function(ontologyId, resourceIRI, resourceJSON) {
-                var config = {
-                    params: {
-                        resourceid: resourceIRI,
-                        resourcejson: resourceJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId), null, config);
-            }
-
-            /* Classes */
-            self.addClassToOntology = function(ontologyId, classJSON) {
-                var config = {
-                    params: {
-                        resourcejson: classJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/classes', null, config);
-            }
-
-            self.deleteClassFromOntology = function(ontologyId, classIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/classes/'
-                    + encodeURIComponent(classIRI));
-            }
-
-            /* Object Properties */
-            self.addObjectPropertyToOntology = function(ontologyId, objectPropertyJSON) {
-                var config = {
-                    params: {
-                        resourcejson: objectPropertyJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/object-properties', null, config);
-            }
-
-            self.deleteObjectPropertyFromOntology = function(ontologyId, objectPropertyIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/object-properties/'
-                    + encodeURIComponent(objectPropertyIRI));
-            }
-
-            /* Data Properties */
-            self.addDataPropertyToOntology = function(ontologyId, dataPropertyJSON) {
-                var config = {
-                    params: {
-                        resourcejson: dataPropertyJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/data-properties', null, config);
-            }
-
-            self.deleteDataPropertyFromOntology = function(ontologyId, dataPropertyIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/data-properties/'
-                    + encodeURIComponent(dataPropertyIRI));
-            }
-
-            /* Individuals */
-            self.addIndividualToOntology = function(ontologyId, individualJSON) {
-                var config = {
-                    params: {
-                        resourcejson: individualJSON
-                    }
-                };
-                return $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
-            }
-
-            self.deleteIndividualFromOntology = function(ontologyId, individualIRI) {
-                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/' 
-                    + encodeURIComponent(individualIRI));
-            }
-
-            /* Imported ontologies */
-            self.getImportsClosure = function(ontologyId, rdfFormat = 'jsonld') {
-                var config = {
-                    params: {
-                        rdfformat: rdfFormat
-                    }
-                };
-                return $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-ontologies', null, config);
-            }
-
-            /* UI Functions */
-            function onCreateSuccess(response, ontologyId, entityJSON, arrayProperty, deferred) {
-                if (_.get(response, 'data.added')) {
-                    _.set(entityJSON, 'matonto.originalIRI', entityJSON['@id']);
-                    self.addEntity(ontologyId, entityJSON);
-                    var split = $filter('splitIRI')(entityJSON['@id']);
-                    var listItem = self.getListItemById(ontologyId);
-                    _.get(listItem, arrayProperty).push({namespace:split.begin + split.then, localName: split.end});
-                    deferred.resolve({
-                        entityIRI: entityJSON['@id'],
-                        ontologyId: ontologyId
-                    });
-                } else {
-                    onCreateError(response, deferred);
-                }
-            }
-
-            function onCreateError(response, deferred) {
-                deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-            }
-
-            function onDeleteSuccess(response, ontologyId, entityIRI, arrayProperty, deferred) {
-                if (_.get(response, 'data.deleted')) {
-                    self.removeEntity(ontologyId, entityIRI);
-                    updateModels(response);
-                    var split = $filter('splitIRI')(entityIRI);
-                    var listItem = self.getListItemById(ontologyId);
-                    _.remove(_.get(listItem, arrayProperty), {namespace:split.begin + split.then,
-                        localName: split.end});
-                    deferred.resolve();
-                } else {
-                    deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                }
-            }
-
-            function onDeleteError(response, deferred) {
-                deferred.reject(_.get(response, 'data.error', defaultErrorMessage));
-            }
-
-            function updateModels(response) {
-                if(_.has(response, 'data.models', [])) {
-                    _.forEach(response.data.models, function(model) {
-                        var ontologyId = _.get(model, "[0]['@id']");
-                        var newEntity = _.get(model, "[0]['@graph'][0]");
-                        var newEntityIRI = _.get(newEntity, '@id');
-                        var oldEntity = self.getEntity(self.getOntologyById(ontologyId), newEntityIRI);
-                        if (_.has(oldEntity, 'matonto.icon')) {
-                            _.set(newEntity, 'matonto.icon', oldEntity.matonto.icon);
-                        }
-                        _.set(newEntity, 'matonto.originalIRI', newEntityIRI);
-                        oldEntity = newEntity;
-                    });
-                }
-            }
-
-            function getIcon(property) {
-                var range = _.get(property, prefixes.rdfs + 'range');
-                var icon = 'fa-square-o';
-                if (range) {
-                    if (range.length === 1) {
-                        switch(range[0]['@id']) {
-                            case prefixes.xsd + 'string':
-                                icon = 'fa-font';
-                                break;
-                            case prefixes.xsd + 'decimal':
-                            case prefixes.xsd + 'double':
-                            case prefixes.xsd + 'float':
-                            case prefixes.xsd + 'int':
-                            case prefixes.xsd + 'integer':
-                            case prefixes.xsd + 'long':
-                            case prefixes.xsd + 'nonNegativeInteger':
-                                icon = 'fa-calculator';
-                                break;
-                            case prefixes.xsd + 'language':
-                                icon = 'fa-language';
-                                break;
-                            case prefixes.xsd + 'anyURI':
-                                icon = 'fa-external-link';
-                                break;
-                            case prefixes.xsd + 'dateTime':
-                                icon = 'fa-clock-o';
-                                break;
-                            case prefixes.xsd + 'boolean':
-                            case prefixes.xsd + 'byte':
-                                icon = 'fa-signal';
-                                break;
-                            default:
-                                icon = 'fa-link';
-                                break;
-                        }
-                    } else {
-                        icon = 'fa-cubes';
-                    }
-                }
-                return icon;
-            }
-
-            function addOntologyIdToArray(arr, ontologyId) {
-                return _.forEach(arr, item => {
-                    return _.set(item, 'ontologyId', ontologyId);
-                });
-            }
-
-            function compareListItems(obj1, obj2) {
-                return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
-                    && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
-            }
-
-            function addOntologyToList(ontologyId, ontology) {
-                var deferred = $q.defer();
-                // Assumes that all entities have an '@id' if they are not an ontology
-                _.forEach(ontology, entity => {
-                    if (_.has(entity, '@id')) {
-                        _.set(entity, 'matonto.originalIRI', entity['@id']);
-                    } else {
-                        _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
-                    }
-                    if (self.isProperty(entity)) {
-                        _.set(entity, 'matonto.icon', getIcon(entity));
-                    }
-                });
-                var listItem = {
-                    ontologyId: ontologyId,
-                    ontology: ontology
-                }
-                $q.all([
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris')
-                ]).then(response => {
-                    var irisResponse = response[0];
-                    listItem.annotations = _.unionWith(
-                        _.get(irisResponse, 'data.annotationProperties'),
-                        defaultAnnotations,
-                        _.isMatch
-                    );
-                    listItem.subClasses = _.get(irisResponse, 'data.classes');
-                    listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
-                    listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
-                    listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
-                    listItem.dataPropertyRange = _.unionWith(
-                        _.get(irisResponse, 'data.datatypes'),
-                        defaultDatatypes,
-                        _.isMatch
-                    );
-                    var importedIrisResponse = response[1];
-                    if (_.get(importedIrisResponse, 'status') === 200) {
-                        _.forEach(importedIrisResponse.data, iriList => {
-                            listItem.annotations = _.unionWith(
-                                addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                                listItem.annotations,
-                                compareListItems
-                            );
-                            listItem.subClasses = _.unionWith(
-                                addOntologyIdToArray(iriList.classes, iriList.id),
-                                listItem.subClasses,
-                                compareListItems
-                            );
-                            listItem.subDataProperties = _.unionWith(
-                                addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                                listItem.subDataProperties,
-                                compareListItems
-                            );
-                            listItem.subObjectProperties = _.unionWith(
-                                addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                                listItem.subObjectProperties,
-                                compareListItems
-                            );
-                        });
-                    }
-                    self.list.push(listItem);
-                    deferred.resolve();
-                }, () => {
-                    deferred.reject();
-                });
-                console.log(_.join(self.getSuperClassIRIs(ontology)));
-                return deferred.promise;
             }
 
             /**
@@ -1369,28 +1112,100 @@
             self.getAnnotationIRIs = function(ontology) {
                 return _.map(self.getAnnotations(ontology), 'matonto.originalIRI');
             }
-
+            /**
+             * @ngdoc method
+             * @name isIndividual
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided entity is an owl:NamedIndividual entity. Returns a boolean.
+             *
+             * @param {Object} entity The entity you want to check.
+             * @returns {boolean} Returns true if it is an owl:NamedIndividual entity, otherwise returns false.
+             */
             self.isIndividual = function(entity) {
                 return _.includes(_.get(entity, '@type', []), prefixes.owl + 'NamedIndividual');
             }
-
+            /**
+             * @ngdoc method
+             * @name hasIndividuals
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks to see if the ontology has individuals. Returns a boolean indicating the existence of those
+             * individuals.
+             *
+             * @param {Object[]} ontology The ontology you want to check.
+             * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
+             */
+            self.hasIndividuals = function(ontology) {
+                return _.some(ontology, {'@type': [prefixes.owl + 'NamedIndividual']});
+            }
+            /**
+             * @ngdoc method
+             * @name getIndividuals
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the list of all owl:NamedIndividual entities within the provided ontology. Returns an Object[].
+             *
+             * @param {Object[]} ontology The ontology you want to check.
+             * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontology.
+             */
             self.getIndividuals = function(ontology) {
-                return _.filter(ontology, entity => _.includes(_.get(entity, '@type', []), prefixes.owl + 'NamedIndividual'));
+                return _.filter(ontology, {'@type': [prefixes.owl + 'NamedIndividual']});
             }
-
+            /**
+             * @ngdoc method
+             * @name hasClassIndividuals
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks to see if the class within the provided ontology has individuals with that type. Returns a
+             * boolean indicating the existence of those individuals.
+             *
+             * @param {Object[]} ontology The ontology you want to check.
+             * @param {string} classIRI The class IRI of the class you want to check about.
+             * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
+             */
             self.hasClassIndividuals = function(ontology, classIRI) {
-                return _.some(self.getIndividuals(ontology), entity => _.includes(_.get(entity, '@type', []), classIRI));
+                return _.some(self.getIndividuals(ontology), {'@type': [classIRI]});
             }
-
+            /**
+             * @ngdoc method
+             * @name getClassIndividuals
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the individuals associated with the class within the provided ontology by the type. Returns an
+             * array of all the properties associated with the provided class IRI.
+             *
+             * @param {Object[]} ontology The ontology you want to check.
+             * @param {string} classIRI The class IRI of the class you want to check about.
+             * @returns {Object[]} Returns an array of all the individuals associated with the provided class IRI.
+             */
             self.getClassIndividuals = function(ontology, classIRI) {
-                return _.filter(self.getIndividuals(ontology), entity => _.includes(_.get(entity, '@type', []), classIRI));
+                return _.filter(self.getIndividuals(ontology), {'@type': [classIRI]});
             }
-
+            /**
+             * @ngdoc method
+             * @name deleteIndividual
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the DELETE /matontorest/ontology/{ontologyId}/named-individuals/{individualId} endpoint which
+             * deletes the specified individual from the ontology in the MatOnto repository. Returns a promise with the
+             * success of the deletion.
+             *
+             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @param {string} individualIRI The IRI of the individual you want to delete.
+             * @returns {Promise} A promise with a boolean indicating the success of the deletion.
+             */
             self.deleteIndividual = function(ontologyId, individualIRI) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                self.deleteIndividualFromOntology(ontologyId, individualIRI)
-                    .then(response => {
+                $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/'
+                    + encodeURIComponent(individualIRI)).then(response => {
                         onDeleteSuccess(response, ontologyId, individualIRI, 'individuals', deferred);
                     }, response => {
                         onDeleteError(response, deferred);
@@ -1400,11 +1215,30 @@
                     });
                 return deferred.promise;
             }
-
+            /**
+             * @ngdoc method
+             * @name createIndividual
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the POST /matontorest/ontology/{ontologyId}/named-individuals endpoint which adds the provided
+             * individual to the ontology within the MatOnto repository. Returns a promise with the entityIRI and
+             * ontologyId for the state of the newly created individual.
+             *
+             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @param {string} individualJSON The JSON-LD representing the owl:NamedIndividual to create.
+             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
+             * property.
+             */
             self.createIndividual = function(ontologyId, individualJSON) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                self.addIndividualToOntology(ontologyId, individualJSON)
+                var config = {
+                    params: {
+                        resourcejson: individualJSON
+                    }
+                };
+                $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config)
                     .then(response => {
                         onCreateSuccess(response, ontologyId, individualJSON, 'individuals', deferred);
                     }, response => {
@@ -1415,7 +1249,6 @@
                     });
                 return deferred.promise;
             }
-
             /**
              * @ngdoc method
              * @name isRestriction
@@ -1769,7 +1602,8 @@
                 $q.all([
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies')
+                    $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies'),
+                    $http.get(prefix + encodeURIComponent(ontologyId) + '/classes-with-individuals')
                 ]).then(response => {
                     var irisResponse = response[0];
                     listItem.annotations = _.unionWith(
@@ -1780,6 +1614,7 @@
                     listItem.subClasses = _.get(irisResponse, 'data.classes');
                     listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
                     listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
+                    listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
                     listItem.dataPropertyRange = _.unionWith(
                         _.get(irisResponse, 'data.datatypes'),
                         defaultDatatypes,
@@ -1813,6 +1648,14 @@
                     var classHierarchyResponse = response[2];
                     if (_.get(classHierarchyResponse, 'status') === 200) {
                         listItem.classHierarchy = classHierarchyResponse.data;
+                    } else {
+                        listItem.classHierarchy = [];
+                    }
+                    var classesWithIndividualsResponse = response[3];
+                    if (_.get(classesWithIndividualsResponse, 'status') === 200) {
+                        listItem.classesWithIndividuals = classesWithIndividualsResponse.data;
+                    } else {
+                        listItem.classesWithIndividuals = [];
                     }
                     self.list.push(listItem);
                     deferred.resolve();

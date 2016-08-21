@@ -29,19 +29,20 @@
                    ontology-id="item.ontologyId"
                    is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
                    on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
-                   has-children="dvm.om.hasClasses(item.ontology)"
+                   has-children="dvm.om.hasIndividuals(item.ontology)"
                    is-opened="opened"></tree-item>
-        <li class="container" ng-show="opened">
+        <li class="container" ng-if="opened">
             <!-- classes -->
-            <ul class="class" ng-repeat="clazz in dvm.om.getClasses(item.ontology) track by clazz.matonto.originalIRI">
+            <ul class="class" ng-repeat="classIRI in item.classesWithIndividuals | orderBy track by classIRI"
+                ng-init="classOpened = dvm.sm.getIndividualsOpened(item.ontologyId, classIRI)">
                 <li>
-                    <a ng-click="dvm.sm.setIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI, !dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI)); $event.stopPropagation()">
+                    <a ng-click="classOpened = !classOpened; dvm.sm.setIndividualsOpened(item.ontologyId, classIRI, classOpened); $event.stopPropagation()">
                         <i class="fa fa-fw"
-                           ng-class="{'fa-folder': !dvm.om.hasClassIndividuals(item.ontology, clazz.matonto.originalIRI), 'fa-folder-open-o': dvm.om.hasClassIndividuals(item.ontology, clazz.matonto.originalIRI) && dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI), 'fa-folder-o': dvm.om.hasClassIndividuals(item.ontology, clazz.matonto.originalIRI) && !dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI)}"></i>{{dvm.getTreeDisplay(clazz)}}
+                           ng-class="{'fa-folder-open-o': classOpened, 'fa-folder-o': !classOpened}"></i>{{dvm.getTreeDisplay(dvm.om.getEntity(item.ontology, classIRI))}}
                     </a>
                 </li>
-                <li class="container" ng-show="dvm.sm.getIndividualsOpened(item.ontologyId, clazz.matonto.originalIRI)">
-                    <ul class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(item.ontology, clazz.matonto.originalIRI) track by individual.matonto.originalIRI">
+                <li class="container" ng-if="classOpened">
+                    <ul class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(item.ontology, classIRI) track by individual.matonto.originalIRI">
                         <tree-item ontology-id="item.ontologyId"
                                    current-entity="individual"
                                    is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === individual.matonto.originalIRI"

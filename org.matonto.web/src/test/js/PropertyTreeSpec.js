@@ -42,6 +42,7 @@ describe('Property Tree directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             stateManagerSvc = _stateManagerService_;
         });
+        stateManagerSvc.getOpened.and.returnValue(true);
     });
 
     beforeEach(function() {

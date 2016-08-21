@@ -22,14 +22,15 @@
   -->
 <div class="tree scroll-without-buttons">
     <strong>{{headerText}}</strong>
-    <ul ng-repeat="item in dvm.om.list">
+    <ul ng-repeat="item in dvm.om.list"
+        ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
         <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
                    ontology-id="item.ontologyId"
                    is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
                    on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
                    has-children="dvm.hasProperties(item.ontology)"
-                   is-opened="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))"></tree-item>
-        <li class="container" ng-show="dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+                   is-opened="opened"></tree-item>
+        <li class="container" ng-if="opened">
             <ul>
                 <tree-item ng-repeat="property in dvm.getProperties(item.ontology) track by property.matonto.originalIRI"
                            current-entity="property"
