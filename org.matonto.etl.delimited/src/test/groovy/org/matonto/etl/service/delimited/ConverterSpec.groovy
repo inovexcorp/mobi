@@ -24,11 +24,25 @@ import org.matonto.etl.api.config.ExcelConfig;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.config.SVConfig
+import org.matonto.ontologies.delimited.ClassMappingFactory
+import org.matonto.ontologies.delimited.DataMappingFactory
+import org.matonto.ontologies.delimited.ObjectMappingFactory
+import org.matonto.ontologies.delimited.PropertyFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
-import org.matonto.rdf.core.utils.Values;
+import org.matonto.rdf.core.utils.Values
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter
+import org.matonto.rdf.orm.conversion.impl.IRIValueConverter
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter
+import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter
+import org.matonto.rdf.orm.impl.ThingFactory;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.springframework.core.io.ClassPathResource;
@@ -36,8 +50,14 @@ import spock.lang.Specification;
 
 class ConverterSpec extends Specification {
 
-    def mf = LinkedHashModelFactory.getInstance();
-    def vf = SimpleValueFactory.getInstance();
+    def mf = LinkedHashModelFactory.getInstance()
+    def vf = SimpleValueFactory.getInstance()
+    def vcr = new DefaultValueConverterRegistry()
+    def classMappingFactory = new ClassMappingFactory()
+    def dataMappingFactory = new DataMappingFactory()
+    def propertyFactory = new PropertyFactory()
+    def objectFactory = new ObjectMappingFactory()
+    def thingFactory = new ThingFactory()
 
     def c = Spy(DelimitedConverterImpl)
 
@@ -45,8 +65,34 @@ class ConverterSpec extends Specification {
     def r = new FileReader(out);
 
     def setup() {
+        classMappingFactory.setValueFactory(vf);
+        classMappingFactory.setValueConverterRegistry(vcr);
+        dataMappingFactory.setValueFactory(vf)
+        dataMappingFactory.setValueConverterRegistry(vcr)
+        propertyFactory.setValueFactory(vf)
+        propertyFactory.setValueConverterRegistry(vcr)
+        objectFactory.setValueFactory(vf)
+        objectFactory.setValueConverterRegistry(vcr)
+        thingFactory.setValueFactory(vf)
+        thingFactory.setValueConverterRegistry(vcr)
+
+        vcr.registerValueConverter(classMappingFactory)
+        vcr.registerValueConverter(dataMappingFactory)
+        vcr.registerValueConverter(propertyFactory)
+        vcr.registerValueConverter(objectFactory)
+        vcr.registerValueConverter(thingFactory)
+        vcr.registerValueConverter(new ResourceValueConverter())
+        vcr.registerValueConverter(new IRIValueConverter())
+        vcr.registerValueConverter(new DoubleValueConverter())
+        vcr.registerValueConverter(new IntegerValueConverter())
+        vcr.registerValueConverter(new FloatValueConverter())
+        vcr.registerValueConverter(new ShortValueConverter())
+        vcr.registerValueConverter(new StringValueConverter())
+        vcr.registerValueConverter(new ValueValueConverter())
+
         c.setValueFactory(vf)
         c.setModelFactory(mf);
+        c.setClassMappingFactory(classMappingFactory);
     }
 
     def "Convert CSV File with Multiple Object per Row and Object and Data Properties"() {
@@ -164,6 +210,7 @@ class ConverterSpec extends Specification {
         "abcd/12345/ijkl"   | "\${0}/\${UUID}/\${2}"
         "abcd/abcd"         | "\${0}/\${0}"
         "12345"             | ""
+        "12345/_/abcd"      | "\${UUID}/\${5}/\${0}"
     }
 
     def "With a limit set with no offset"() {
