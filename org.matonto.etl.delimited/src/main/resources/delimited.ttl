@@ -38,7 +38,7 @@
 # http://matonto.org/ontologies/delimited/mapsTo
 
 :mapsTo a owl:ObjectProperty ;
-	rdfs:domain :PropertyMapping ;
+	rdfs:domain :ClassMapping ;
 	rdfs:range owl:Thing ;
 	rdfs:comment "Defines the type that will be used when defining an object from this class mapping" .
 # 
@@ -108,7 +108,7 @@
 :index a owl:DatatypeProperty ;
 	rdfs:domain :Row ;
 	rdfs:range xsd:integer ;
-	rdfs:comment "The index of the row or column. Starts at 1" .
+	rdfs:comment "The index of the row or column. Numbering starts at 0." .
 # 
 # http://matonto.org/ontologies/delimited/isInstance
 
@@ -119,8 +119,13 @@
 # 
 # http://matonto.org/ontologies/delimited/localName
 
-:localName a owl:DatatypeProperty ;
-	rdfs:domain :ClassMapping .
+:localName a owl:DatatypeProperty, owl:FunctionalProperty ;
+	rdfs:domain :ClassMapping ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The pattern specifying the local name of the generated instance. A value of \"${UUID}\" results
+    in the generation of random UUID. A digit value results in the value for the cell in that column being inserted
+    into the IRI (e.g. ${2} would be the value for the third column in the row)" .
+
 # 
 # http://matonto.org/ontologies/delimited/quoteCharacter
 
