@@ -113,11 +113,11 @@
             }
 
             self.clearState = function(ontologyId) {
-                _.forOwn(self.states, prop => {
-                    if (_.isEqual(_.get(self.states, '[' + prop + '].ontologyId'), ontologyId)) {
-                        self.state = self.states[prop];
-                        self.state.ontologyId = self.state.entityIRI = undefined;
-                        self.state.editor = 'default-tab';
+                _.forOwn(self.states, state => {
+                    if (_.isEqual(_.get(state, 'ontologyId'), ontologyId)) {
+                        state.ontologyId = undefined;
+                        state.entityIRI = undefined;
+                        state.editor = 'default-tab';
                     }
                 });
                 self.selected = undefined;
