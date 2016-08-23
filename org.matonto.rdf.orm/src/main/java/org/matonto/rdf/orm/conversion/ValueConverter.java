@@ -1,6 +1,6 @@
 package org.matonto.rdf.orm.conversion;
 
-import javax.validation.constraints.NotNull;
+import javax.annotation.Nonnull;
 
 /*-
  * #%L
@@ -52,7 +52,7 @@ public interface ValueConverter<TYPE> {
 	 * @throws ValueConversionException
 	 *             If there is an issue converting the value
 	 */
-	TYPE convertValue(@NotNull Value value, @NotNull Thing thing, @NotNull Class<? extends TYPE> desiredType)
+	TYPE convertValue(@Nonnull Value value, @Nonnull Thing thing, @Nonnull Class<? extends TYPE> desiredType)
 			throws ValueConversionException;
 
 	/**
@@ -67,7 +67,7 @@ public interface ValueConverter<TYPE> {
 	 * @throws ValueConversionException
 	 *             If there is an issue performing the conversion
 	 */
-	Value convertType(@NotNull TYPE type, @NotNull Thing thing) throws ValueConversionException;
+	Value convertType(@Nonnull TYPE type, @Nonnull Thing thing) throws ValueConversionException;
 
 	/**
 	 *
