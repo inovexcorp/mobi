@@ -32,8 +32,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
+import com.sun.codemodel.JConditional;
+import com.sun.codemodel.JExpression;
+import com.sun.codemodel.JInvocation;
+import com.sun.codemodel.JType;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
@@ -293,13 +298,25 @@ public class SourceGenerator {
 				if (!name.equals(CLASS_TYPE_IRI_FIELD)) {
 					final IRI propertyIri = interfaceFieldIriMap.get(clazz).get(name);
 					final String fieldName = name.substring(0, name.length() - 4);
-					final JClass type = identifyType(propertyIri, isPropertyFunctional(propertyIri));
+
+					final JClass type = identifyType(propertyIri);
+                    JClass getterType;
+                    JClass setterType;
+
+                    if (isPropertyFunctional(propertyIri)) {
+                        getterType = codeModel.ref(Optional.class).narrow(type);
+                        setterType = type;
+                    } else {
+                        getterType = codeModel.ref(Set.class).narrow(type);
+                        setterType = codeModel.ref(Set.class).narrow(type);
+                    }
+
 					if (type != null) {
 						methodIriMap.put(
-								generateGetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, type),
+								generateGetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, getterType),
 								clazz.fields().get(fieldName + "_IRI"));
 						methodIriMap.put(
-								generateSetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, type),
+								generateSetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, setterType),
 								clazz.fields().get(fieldName + "_IRI"));
 					} else {
 						// TODO - handle the type is undefined... Work with it
@@ -344,49 +361,37 @@ public class SourceGenerator {
 	 * @param property
 	 * @return
 	 */
-	private JClass identifyType(final IRI property, final boolean functional) {
+	private JClass identifyType(final IRI property) {
 		for (final Statement stmt : model.filter(property, RDFS.RANGE, null)) {
 			final IRI rangeIri = (IRI) stmt.getObject();
 			// Handle our types.
 			final JDefinedClass ourClass = interfaces.get(rangeIri);
 			if (ourClass != null) {
-				return functional ? codeModel.ref(ourClass.fullName())
-						: codeModel.ref(Set.class).narrow(codeModel.ref(ourClass.fullName()));
+				return codeModel.ref(ourClass.fullName());
 			} else if (rangeIri.equals(RDFS.LITERAL)) {
-				return functional ? codeModel.ref(org.matonto.rdf.api.Literal.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(org.matonto.rdf.api.Literal.class));
+				return codeModel.ref(org.matonto.rdf.api.Literal.class);
 			} else if (rangeIri.equals(XMLSchema.STRING)) {
-				return functional ? codeModel.ref(String.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(String.class));
+				return codeModel.ref(String.class);
 			} else if (rangeIri.equals(XMLSchema.BOOLEAN)) {
-				return functional ? codeModel.ref(Boolean.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Boolean.class));
+				return codeModel.ref(Boolean.class);
 			} else if (rangeIri.equals(XMLSchema.BYTE)) {
-				return functional ? codeModel.ref(Byte.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Byte.class));
+				return codeModel.ref(Byte.class);
 			} else if (rangeIri.equals(XMLSchema.DATE) || rangeIri.equals(XMLSchema.DATETIME)) {
-				return functional ? codeModel.ref(Date.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Date.class));
+				return codeModel.ref(Date.class);
 			} else if (rangeIri.equals(XMLSchema.FLOAT)) {
-				return functional ? codeModel.ref(Float.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Float.class));
+				return codeModel.ref(Float.class);
 			} else if (rangeIri.equals(XMLSchema.DOUBLE)) {
-				return functional ? codeModel.ref(Double.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Double.class));
+				return codeModel.ref(Double.class);
 			} else if (rangeIri.equals(XMLSchema.LONG)) {
-				return functional ? codeModel.ref(Long.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Long.class));
+				return codeModel.ref(Long.class);
 			} else if (rangeIri.equals(XMLSchema.INTEGER)) {
-				return functional ? codeModel.ref(Integer.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Integer.class));
+				return codeModel.ref(Integer.class);
 			} else if (rangeIri.equals(OWL.THING)) {
-				return functional ? codeModel.ref(Thing.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Thing.class));
+				return codeModel.ref(Thing.class);
 			} else {
 				LOG.warn("Ibis does not know what type to make properties of range '" + rangeIri.stringValue()
-						+ "' so we'll use Value or Set<Value>");
-				return functional ? codeModel.ref(Value.class)
-						: codeModel.ref(Set.class).narrow(codeModel.ref(Value.class));
+						+ "' so we'll use Optional<Value> or Set<Value>");
+				return codeModel.ref(Value.class);
 			}
 		}
 		return null;
@@ -598,23 +603,34 @@ public class SourceGenerator {
 
 	private JBlock convertValueBody(final JDefinedClass interfaceClass, final JMethod interfaceMethod,
 			final JDefinedClass implClass, final JMethod implMethod) {
-		final boolean set = interfaceMethod.type().fullName().startsWith("java.util.Set");
-		final JVar value = implMethod.body().decl(JMod.FINAL,
-				(set) ? codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Value.class)
-						: codeModel.ref(org.matonto.rdf.api.Value.class),
-				"value", JExpr.invoke(set ? "getProperties" : "getProperty").arg(JExpr.ref("valueFactory")
-						.invoke("createIRI").arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod))));
-		if (interfaceMethod.type().equals(codeModel.ref(org.matonto.rdf.api.Value.class))
-				|| (set && ((JClass) interfaceMethod.type()).getTypeParameters().get(0)
-						.equals(codeModel.ref(org.matonto.rdf.api.Value.class)))) {
+		final boolean returnsSet = interfaceMethod.type().fullName().startsWith("java.util.Set");
+
+        JType returnType = (returnsSet) ? codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Value.class)
+                : codeModel.ref(Optional.class).narrow(org.matonto.rdf.api.Value.class);
+        JExpression callGet = JExpr.invoke(returnsSet ? "getProperties" : "getProperty").arg(JExpr.ref("valueFactory")
+                .invoke("createIRI").arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+
+		final JVar value = implMethod.body().decl(JMod.FINAL, returnType, "value", callGet);
+
+        boolean returnsValue = interfaceMethod.type().equals(codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Value.class));
+        boolean returnsValueSet = (returnsSet && ((JClass) interfaceMethod.type()).getTypeParameters().get(0).equals(codeModel.ref(org.matonto.rdf.api.Value.class)));
+
+		if (returnsValue || returnsValueSet) {
 			implMethod.body()._return(value);
-		} else if (set) {
+		} else if (returnsSet) {
 			implMethod.body()._return(JExpr.ref("valueConverterRegistry").invoke("convertValues").arg(value)
 					.arg(JExpr._this()).arg(((JClass) interfaceMethod.type()).getTypeParameters().get(0).dotclass()));
 		} else {
-			implMethod.body()._return(JExpr.ref("valueConverterRegistry").invoke("convertValue").arg(value)
-					.arg(JExpr._this()).arg(((JClass) interfaceMethod.type()).dotclass()));
+            JExpression convertValue = JExpr.ref("valueConverterRegistry").invoke("convertValue")
+                    .arg(JExpr.ref("value").invoke("get"))
+                    .arg(JExpr._this())
+                    .arg((((JClass) interfaceMethod.type()).getTypeParameters().get(0)).dotclass());
+
+            JConditional conditional = implMethod.body()._if(JExpr.ref("value").invoke("isPresent"));
+            conditional._then()._return(codeModel.ref(Optional.class).staticInvoke("of").arg(convertValue));
+            conditional._else()._return(codeModel.ref(Optional.class).staticInvoke("empty"));
 		}
+
 		return implMethod.body();
 	}
 

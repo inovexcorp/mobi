@@ -28,6 +28,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
@@ -92,14 +93,19 @@ public class TestCoreThingApi {
 	public void testBasic() {
 		final Thing t = thingFactory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
 				valueFactory);
-		TestCase.assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"),
-				t.getProperty(valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")));
-		TestCase.assertEquals(100,
-				Integer.parseInt(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).stringValue()));
+
+        Value typeValue = t.getProperty(valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).get();
+        TestCase.assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"), typeValue);
+
+        int ageValue = Integer.parseInt(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).get().stringValue());
+		TestCase.assertEquals(100, ageValue);
+
 		t.addProperty(valueFactory.createLiteral("Ben"), valueFactory.createIRI("urn://matonto.org/silly#myNameIs"),
 				valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"));
-		TestCase.assertEquals("Ben", (t.getProperty(valueFactory.createIRI("urn://matonto.org/silly#myNameIs"),
-				valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"))).stringValue());
+        String nameValue = t.getProperty(valueFactory.createIRI("urn://matonto.org/silly#myNameIs"),
+                valueFactory.createIRI("urn://matonto.org/orm/test/testAgent")).get().stringValue();
+		TestCase.assertEquals("Ben", nameValue);
+
 		t.setProperty(valueFactory.createLiteral("John"), valueFactory.createIRI("urn://matonto.org/silly#myNameIs"),
 				valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"));
 		TestCase.assertEquals(1, t.getModel().filter(t.getResource(),
