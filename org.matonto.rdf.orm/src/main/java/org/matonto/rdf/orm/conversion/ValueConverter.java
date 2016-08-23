@@ -1,5 +1,7 @@
 package org.matonto.rdf.orm.conversion;
 
+import javax.validation.constraints.NotNull;
+
 /*-
  * #%L
  * RDF ORM
@@ -50,7 +52,8 @@ public interface ValueConverter<TYPE> {
 	 * @throws ValueConversionException
 	 *             If there is an issue converting the value
 	 */
-	TYPE convertValue(Value value, Thing thing, Class<? extends TYPE> desiredType) throws ValueConversionException;
+	TYPE convertValue(@NotNull Value value, @NotNull Thing thing, @NotNull Class<? extends TYPE> desiredType)
+			throws ValueConversionException;
 
 	/**
 	 * Convert an instance of the TYPE of object this {@link ValueConverter}
@@ -64,7 +67,7 @@ public interface ValueConverter<TYPE> {
 	 * @throws ValueConversionException
 	 *             If there is an issue performing the conversion
 	 */
-	Value convertType(TYPE type, Thing thing) throws ValueConversionException;
+	Value convertType(@NotNull TYPE type, @NotNull Thing thing) throws ValueConversionException;
 
 	/**
 	 *
