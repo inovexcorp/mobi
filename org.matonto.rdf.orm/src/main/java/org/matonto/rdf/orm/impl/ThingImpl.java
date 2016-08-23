@@ -23,10 +23,6 @@ package org.matonto.rdf.orm.impl;
  * #L%
  */
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
@@ -34,6 +30,11 @@ import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This is the core {@link Thing} implementation that will provide the API hooks
@@ -125,9 +126,9 @@ public class ThingImpl implements Thing {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Value getProperty(IRI predicate, IRI... context) {
+	public Optional<Value> getProperty(IRI predicate, IRI... context) {
 		final Collection<Value> values = getProperties(predicate, context);
-		return values.isEmpty() ? null : values.iterator().next();
+		return values.isEmpty() ? Optional.empty() : Optional.of(values.iterator().next());
 	}
 
 	/**

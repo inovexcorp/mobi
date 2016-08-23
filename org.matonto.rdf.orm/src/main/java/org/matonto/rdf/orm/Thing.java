@@ -23,14 +23,15 @@ package org.matonto.rdf.orm;
  * #L%
  */
 
-import java.util.Set;
-
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.impl.ThingImpl;
+
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * A Thing is the base entity in an ontology. Every class will implement this
@@ -73,7 +74,7 @@ public interface Thing {
 	 * @return The {@link Value} from the backing {@link Model} for this
 	 *         {@link Thing}
 	 */
-	Value getProperty(IRI predicate, IRI... context);
+	Optional<Value> getProperty(IRI predicate, IRI... context);
 
 	/**
 	 * Get a non-functional {@link Set} of {@link Value} objects from the
