@@ -23,20 +23,15 @@ package org.matonto.itests.orm;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.util.Set;
-
+import com.xmlns.foaf._0._1.Agent;
+import com.xmlns.foaf._0._1.AgentFactory;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
@@ -54,8 +49,13 @@ import org.matonto.rdf.orm.generate.GraphReadingUtility;
 import org.matonto.rdf.orm.generate.SourceGenerator;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
-import com.xmlns.foaf._0._1.Agent;
-import com.xmlns.foaf._0._1.AgentFactory;
+import java.io.File;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class SourceGeneratorTest {
 
@@ -132,15 +132,17 @@ public class SourceGeneratorTest {
 		final AgentFactory factory = new AgentFactory();
 		final Agent a = factory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
 				valueFactory, valueConverterRegistry);
-		assertEquals(valueFactory.createLiteral(100), a.getAge());
-		assertEquals(valueFactory.createLiteral("male"), a.getGender());
+		assertEquals(valueFactory.createLiteral(100), a.getAge().get());
+		assertEquals(valueFactory.createLiteral("male"), a.getGender().get());
 		final Set<Thing> mboxes = a.getMbox();
 		assertNotNull(mboxes);
 		assertFalse(mboxes.isEmpty());
 		final Thing mbox = mboxes.iterator().next();
-		assertEquals(valueFactory.createLiteral("tester@gmail.com"),
-				mbox.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/accountName"),
-						valueFactory.createIRI("urn://matonto.org/orm/test/account")));
+
+        Value mboxValue = mbox.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/accountName"),
+                valueFactory.createIRI("urn://matonto.org/orm/test/account")).get();
+        assertEquals(valueFactory.createLiteral("tester@gmail.com"), mboxValue);
+
 		assertEquals(valueFactory.createIRI("urn://matonto.org/orm/test/account"), mbox.getResource());
 	}
 }
