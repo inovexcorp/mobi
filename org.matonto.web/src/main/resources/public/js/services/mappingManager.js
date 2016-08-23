@@ -218,7 +218,7 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Calls the GET /matontorest/mappings/{mappingName} endpoint using the `window.open` function
+             * Calls the GET /matontorest/mappings/{mappingName} endpoint using the `window.location` function
              * which will start a download of the JSON-LD of a saved mapping.
              * 
              * @param {string} mappingName The IRI for the mapping with the user-defined local name

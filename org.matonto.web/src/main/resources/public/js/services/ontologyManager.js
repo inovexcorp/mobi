@@ -55,7 +55,7 @@
         .service('ontologyManagerService', ontologyManagerService);
 
         ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'uuid', 'annotationManagerService', 'updateRefsService'];
+            'uuid', 'annotationManagerService'];
 
         function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes, uuid,
             annotationManagerService) {
@@ -78,7 +78,7 @@
              * @type {string[]}
              *
              * @description
-             * `ontologyIds` holds an array of the ontology ids in the MatOnto repository.
+             * `ontologyIds` holds an array of the unopened ontology ids in the MatOnto repository.
              */
             self.ontologyIds = [];
             /**
@@ -98,7 +98,9 @@
              *      subDataProperties: [],
              *      subObjectProperties: [],
              *      dataPropertyRange: [],
-             *      classHierarchy: []
+             *      classHierarchy: [],
+             *      individuals: [],
+             *      classesWithIndividuals: []
              * }
              * ```
              */
@@ -162,7 +164,8 @@
              *
              * @description
              * Calls the GET /matontorest/ontologies/{ontologyId} endpoint which gets an ontology from the MatOnto
-             * with the JSON-LD ontology string provided. Returns a promise which includes the serialized ontology.
+             * repository with the JSON-LD ontology string provided. Returns a promise which includes the serialized
+             * ontology.
              *
              * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
@@ -182,8 +185,8 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{ontologyId} endpoint using the `window.open` function which will
-             * start a download of the specified ontology.
+             * Calls the GET /matontorest/ontologies/{ontologyId} endpoint using the `window.location` function which
+             * will start a download of the specified ontology.
              *
              * @param {string} ontologyId The ontology ID of the ontology you want to download.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
@@ -202,11 +205,11 @@
              *
              * @description
              * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
-             * with the file provided and then calls `ontologyManagerService.getOntology` to get the ontology they
-             * just uploaded. Returns a promise.
+             * with the file provided and then calls {@link ontologyManager.service:ontologyManagerService#getOntology getOntology}
+             * to get the ontology they just uploaded. Returns a promise.
              *
              * @param {File} file The ontology file.
-             * @returns {Promise} A promise with an empty object or error message.
+             * @returns {Promise} A promise with the ontology ID or error message.
              */
             self.uploadThenGet = function(file) {
                 $rootScope.showSpinner = true;
@@ -223,7 +226,7 @@
                                 addOntologyToList(response.data.id, response.data.ontology)
                                     .then(() => {
                                         $rootScope.showSpinner = false;
-                                        deferred.resolve({});
+                                        deferred.resolve(ontologyId);
                                     });
                             } else {
                                 onError(response);
@@ -251,11 +254,11 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Used to open an ontology from the MatOnto repository. It calls `ontologyManagerService.getOntology` to
-             * get the specified ontology from the MatOnto repository. Returns a promise.
+             * Used to open an ontology from the MatOnto repository. It calls {@link ontologyManager.service:ontologyManagerService#getOntology getOntology}
+             * to get the specified ontology from the MatOnto repository. Returns a promise.
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Promise} A promise with an empty object or error message.
+             * @returns {Promise} A promise with with the ontology ID or error message.
              */
             self.openOntology = function(ontologyId) {
                 $rootScope.showSpinner = true;
@@ -266,14 +269,14 @@
                             && _.has(response, 'data.ontology')) {
                             addOntologyToList(response.data.id, response.data.ontology)
                                 .then(() => {
-                                    self.ontologyIds.splice(_.indexOf(self.ontologyIds, ontologyId), 1);
-                                    deferred.resolve({});
+                                    _.pull(self.ontologyIds, ontologyId);
+                                    deferred.resolve(ontologyId);
                                 });
                         } else {
-                            deferred.reject(response.statusText);
+                            deferred.reject(_.get(response, 'statusText'));
                         }
                     }, response => {
-                        deferred.reject(response.statusText);
+                        deferred.reject(_.get(response, 'statusText'));
                     });
                 deferred.promise.then(() => {
                     $rootScope.showSpinner = false;
@@ -293,7 +296,7 @@
              * @param {string} ontologyId The ontology ID of the requested ontology.
              */
             self.closeOntology = function(ontologyId) {
-                self.list.splice(_.findIndex(self.list, {ontologyId: ontologyId}), 1);
+                _.remove(self.list, item => _.get(item, 'ontologyId') === ontologyId);
                 self.ontologyIds.push(ontologyId);
             }
             /**
@@ -303,8 +306,8 @@
              *
              * @description
              * Used to get the string representation of the requested serialization of the ontology. It calls
-             * `ontologyManagerService.getOntology` to get the specified ontology from the MatOnto repository. Returns
-             * a promise with the string representation of the ontology.
+             * {@link ontologyManager.service:ontologyManagerService#getOntology getOntology} to get the specified
+             * ontology from the MatOnto repository. Returns a promise with the string representation of the ontology.
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
@@ -356,6 +359,8 @@
                         }
                     };
                     promises.push($http.post(prefix + encodeURIComponent(ontologyId), null, config));
+                    // TODO: the following calls should only be done on successful save
+                    // This will be addressed in a future branch dealing with $q.all()
                     _.set(entity, 'matonto.unsaved', false);
                     if (_.has(entity, '@id')) {
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
@@ -364,11 +369,14 @@
                 $q.all(promises)
                     .then(response => {
                         if (!_.some(response, {data: {updated: false}})) {
-                            var newId = _.get(response, '[0].data.id');
-                            if (!_.isEqual(ontologyId, newId)) {
-                                self.setOntologyId(ontologyId, newId);
-                            }
-                            deferred.resolve(newId);
+                            self.updateClassHierarchies(ontologyId)
+                                .then(() => {
+                                    var newId = _.get(response, '[0].data.id');
+                                    if (!_.isEqual(ontologyId, newId)) {
+                                        self.setOntologyId(ontologyId, newId);
+                                    }
+                                    deferred.resolve(newId);
+                                });
                         } else {
                             // TODO: find a useful error message if this did go wrong
                             deferred.reject('An error has occurred.');
@@ -449,7 +457,7 @@
              * @returns {boolean} Returns true if it is an owl:Ontology entity, otherwise returns false.
              */
             self.isOntology = function(entity) {
-                return _.indexOf(_.get(entity, '@type', []), prefixes.owl + 'Ontology') !== -1;
+                return _.includes(_.get(entity, '@type', []), prefixes.owl + 'Ontology');
             }
             /**
              * @ngdoc method
@@ -513,7 +521,7 @@
                 $http.delete(prefix + encodeURIComponent(ontologyId))
                     .then(response => {
                         if (_.get(response, 'data.deleted')) {
-                            self.list.splice(_.findIndex(self.list, {ontologyId: ontologyId}), 1);
+                            _.remove(self.list, item => _.get(item, 'ontologyId') === ontologyId);
                             deferred.resolve();
                         } else {
                             deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
@@ -559,7 +567,10 @@
                                 dataPropertyRange: defaultDatatypes,
                                 subClasses: [],
                                 subDataProperties: [],
-                                subObjectProperties: []
+                                subObjectProperties: [],
+                                individuals: [],
+                                classHierarchy: [],
+                                classesWithIndividuals: []
                             }
                             self.list.push(listItem);
                             deferred.resolve({
@@ -589,7 +600,7 @@
              * @returns {boolean} Returns true if it is an owl:Class entity, otherwise returns false.
              */
             self.isClass = function(entity) {
-                return _.indexOf(_.get(entity, '@type', []), prefixes.owl + 'Class') !== -1;
+                return _.includes(_.get(entity, '@type', []), prefixes.owl + 'Class');
             }
             /**
              * @ngdoc method
@@ -658,7 +669,10 @@
                 var deferred = $q.defer();
                 $http.delete(prefix + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classIRI))
                     .then(response => {
-                        onDeleteSuccess(response, ontologyId, classIRI, 'subClasses', deferred);
+                        self.updateClassHierarchies(ontologyId)
+                            .then(() => {
+                                onDeleteSuccess(response, ontologyId, classIRI, 'subClasses', deferred);
+                            });
                     }, response => {
                         onDeleteError(response, deferred);
                     })
@@ -692,12 +706,43 @@
                 };
                 $http.post(prefix + encodeURIComponent(ontologyId) + '/classes', null, config)
                     .then(response => {
-                        onCreateSuccess(response, ontologyId, classJSON, 'subClasses', deferred);
+                        self.updateClassHierarchies(ontologyId)
+                            .then(() => {
+                                onCreateSuccess(response, ontologyId, classJSON, 'subClasses', deferred);
+                            });
                     }, response => {
                         onCreateError(response, deferred);
                     })
                     .then(function() {
                         $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name updateClassHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{ontologyId}/class-hierarchies endpoint which gets the class
+             * hierarchy of the ontology for the provided ontology ID and uses the response data to update the list
+             * item's class hierarchy associated with the provided ontology ID.
+             *
+             * @param {string} ontologyId The ontology ID of the requested ontology.
+             * @returns {Promise} An empty promise
+             */
+            self.updateClassHierarchies = function(ontologyId) {
+                var deferred = $q.defer();
+                $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies')
+                    .then(hierarchyResponse => {
+                        if (_.get(hierarchyResponse, 'status') === 200) {
+                            self.getListItemById(ontologyId).classHierarchy = hierarchyResponse.data;
+                        }
+                        deferred.resolve();
+                    }, () => {
+                        // TODO: perhaps use a toast to let the user know this in the future
+                        console.log('Unable to update class hierarchy');
+                        deferred.resolve();
                     });
                 return deferred.promise;
             }
@@ -761,7 +806,7 @@
              * @returns {boolean} Returns true if it is an owl:ObjectProperty entity, otherwise returns false.
              */
             self.isObjectProperty = function(entity) {
-                return _.indexOf(_.get(entity, '@type', []), prefixes.owl + 'ObjectProperty') !== -1;
+                return _.includes(_.get(entity, '@type', []), prefixes.owl + 'ObjectProperty');
             }
             /**
              * @ngdoc method
@@ -776,8 +821,8 @@
              */
             self.isDataTypeProperty = function(entity) {
                 var types = _.get(entity, '@type', []);
-                return _.indexOf(types, prefixes.owl + 'DatatypeProperty') !== -1
-                    || _.indexOf(types, prefixes.owl + 'DataTypeProperty') !== -1;
+                return _.includes(types, prefixes.owl + 'DatatypeProperty')
+                    || _.includes(types, prefixes.owl + 'DataTypeProperty');
             }
             /**
              * @ngdoc method
@@ -1139,7 +1184,7 @@
              * @returns {boolean} Returns true if it does have individuals, otherwise returns false.
              */
             self.hasIndividuals = function(ontology) {
-                return _.some(ontology, {'@type': [prefixes.owl + 'NamedIndividual']});
+                return _.some(ontology, entity => self.isIndividual(entity));
             }
             /**
              * @ngdoc method
@@ -1153,7 +1198,7 @@
              * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontology.
              */
             self.getIndividuals = function(ontology) {
-                return _.filter(ontology, {'@type': [prefixes.owl + 'NamedIndividual']});
+                return _.filter(ontology, entity => self.isIndividual(entity));
             }
             /**
              * @ngdoc method
@@ -1261,7 +1306,7 @@
              * @returns {boolean} Returns true if it is an owl:Restriction entity, otherwise returns false.
              */
             self.isRestriction = function(entity) {
-                return _.indexOf(_.get(entity, '@type', []), prefixes.owl + 'Restriction') !== -1;
+                return _.includes(_.get(entity, '@type', []), prefixes.owl + 'Restriction');
             }
             /**
              * @ngdoc method
@@ -1275,7 +1320,7 @@
              * @returns {Object[]} An array of all owl:Restriction entities within the ontology.
              */
             self.getRestrictions = function(ontology) {
-                return _.filter(ontology, {'@type': [prefixes.owl + 'Restriction']});
+                return _.filter(ontology, entity => self.isRestriction(entity));
             }
             /**
              * @ngdoc method
@@ -1335,8 +1380,8 @@
              * @param {Object[]} ontology The ontology you want to check.
              * @returns {Object} An Object which represents the requested entity.
              */
-            self.removeEntity = function(ontologyId, entityIRI) {
-                return _.remove(self.getOntologyById(ontologyId), {matonto:{originalIRI: entityIRI}});
+            self.removeEntity = function(ontology, entityIRI) {
+                return _.remove(ontology, {matonto:{originalIRI: entityIRI}});
             }
             /**
              * @ngdoc method
@@ -1349,8 +1394,8 @@
              *
              * @param {Object[]} ontology The ontology you want to check.
              */
-            self.addEntity = function(ontologyId, entityJSON) {
-                self.getOntologyById(ontologyId).push(entityJSON);
+            self.addEntity = function(ontology, entityJSON) {
+                ontology.push(entityJSON);
             }
             /**
              * @ngdoc method
@@ -1407,7 +1452,7 @@
              * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
              * ontology.
              */
-            self.getImportedOntologies = function(ontologyId, rdfFormat = 'jsonlod') {
+            self.getImportedOntologies = function(ontologyId, rdfFormat = 'jsonld') {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
@@ -1435,7 +1480,7 @@
             function onCreateSuccess(response, ontologyId, entityJSON, arrayProperty, deferred) {
                 if (_.get(response, 'data.added')) {
                     _.set(entityJSON, 'matonto.originalIRI', entityJSON['@id']);
-                    self.addEntity(ontologyId, entityJSON);
+                    self.addEntity(self.getOntologyById(ontologyId), entityJSON);
                     var split = $filter('splitIRI')(entityJSON['@id']);
                     var listItem = self.getListItemById(ontologyId);
                     _.get(listItem, arrayProperty).push({namespace:split.begin + split.then, localName: split.end});
@@ -1452,7 +1497,7 @@
             }
             function onDeleteSuccess(response, ontologyId, entityIRI, arrayProperty, deferred) {
                 if (_.get(response, 'data.deleted')) {
-                    self.removeEntity(ontologyId, entityIRI);
+                    self.removeEntity(self.getOntologyById(ontologyId), entityIRI);
                     updateModels(response);
                     var split = $filter('splitIRI')(entityIRI);
                     var listItem = self.getListItemById(ontologyId);
@@ -1468,7 +1513,7 @@
             }
             function updateModels(response) {
                 if(_.has(response, 'data.models', [])) {
-                    _.forEach(response.data.models, function(model) {
+                    _.forEach(response.data.models, model => {
                         var ontologyId = _.get(model, "[0]['@id']");
                         var newEntity = _.get(model, "[0]['@graph'][0]");
                         var newEntityIRI = _.get(newEntity, '@id');
@@ -1565,13 +1610,9 @@
                     joiningWord = 'and';
                 }
                 if (list.length) {
-                    readableText = '';
-                    _.forEach(list, (item, index) => {
-                        readableText += $filter('splitIRI')(_.get(item, '@id')).end;
-                        if (index !== (list.length - 1)) {
-                            readableText += ' ' + joiningWord + ' ';
-                        }
-                    });
+                    readableText = _.join(_.map(list, item => {
+                        return $filter('splitIRI')(_.get(item, '@id')).end;
+                    }), joiningWord);
                 }
                 return readableText;
             }
@@ -1606,59 +1647,73 @@
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/classes-with-individuals')
                 ]).then(response => {
                     var irisResponse = response[0];
-                    listItem.annotations = _.unionWith(
-                        _.get(irisResponse, 'data.annotationProperties'),
-                        defaultAnnotations,
-                        _.isMatch
-                    );
-                    listItem.subClasses = _.get(irisResponse, 'data.classes');
-                    listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
-                    listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
-                    listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
-                    listItem.dataPropertyRange = _.unionWith(
-                        _.get(irisResponse, 'data.datatypes'),
-                        defaultDatatypes,
-                        _.isMatch
-                    );
-                    var importedIrisResponse = response[1];
-                    if (_.get(importedIrisResponse, 'status') === 200) {
-                        _.forEach(importedIrisResponse.data, iriList => {
-                            listItem.annotations = _.unionWith(
-                                addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                                listItem.annotations,
-                                compareListItems
-                            );
-                            listItem.subClasses = _.unionWith(
-                                addOntologyIdToArray(iriList.classes, iriList.id),
-                                listItem.subClasses,
-                                compareListItems
-                            );
-                            listItem.subDataProperties = _.unionWith(
-                                addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                                listItem.subDataProperties,
-                                compareListItems
-                            );
-                            listItem.subObjectProperties = _.unionWith(
-                                addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                                listItem.subObjectProperties,
-                                compareListItems
-                            );
-                        });
-                    }
-                    var classHierarchyResponse = response[2];
-                    if (_.get(classHierarchyResponse, 'status') === 200) {
-                        listItem.classHierarchy = classHierarchyResponse.data;
+                    if (_.get(irisResponse, 'status') === 200) {
+                        listItem.annotations = _.unionWith(
+                            _.get(irisResponse, 'data.annotationProperties'),
+                            defaultAnnotations,
+                            _.isMatch
+                        );
+                        listItem.subClasses = _.get(irisResponse, 'data.classes');
+                        listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
+                        listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
+                        listItem.individuals = _.get(irisResponse, 'data.namedIndividuals');
+                        listItem.dataPropertyRange = _.unionWith(
+                            _.get(irisResponse, 'data.datatypes'),
+                            defaultDatatypes,
+                            _.isMatch
+                        );
+                        var importedIrisResponse = response[1];
+                        if (_.get(importedIrisResponse, 'status') === 200) {
+                            _.forEach(importedIrisResponse.data, iriList => {
+                                listItem.annotations = _.unionWith(
+                                    addOntologyIdToArray(iriList.annotationProperties, iriList.id),
+                                    listItem.annotations,
+                                    compareListItems
+                                );
+                                listItem.subClasses = _.unionWith(
+                                    addOntologyIdToArray(iriList.classes, iriList.id),
+                                    listItem.subClasses,
+                                    compareListItems
+                                );
+                                listItem.subDataProperties = _.unionWith(
+                                    addOntologyIdToArray(iriList.dataProperties, iriList.id),
+                                    listItem.subDataProperties,
+                                    compareListItems
+                                );
+                                listItem.subObjectProperties = _.unionWith(
+                                    addOntologyIdToArray(iriList.objectProperties, iriList.id),
+                                    listItem.subObjectProperties,
+                                    compareListItems
+                                );
+                                listItem.individuals = _.unionWith(
+                                    addOntologyIdToArray(iriList.individuals, iriList.id),
+                                    listItem.individuals,
+                                    compareListItems
+                                );
+                                listItem.dataPropertyRange = _.unionWith(
+                                    addOntologyIdToArray(iriList.datatypes, iriList.id),
+                                    listItem.dataPropertyRange,
+                                    compareListItems
+                                );
+                            });
+                        }
+                        var classHierarchyResponse = response[2];
+                        if (_.get(classHierarchyResponse, 'status') === 200) {
+                            listItem.classHierarchy = classHierarchyResponse.data;
+                        } else {
+                            listItem.classHierarchy = [];
+                        }
+                        var classesWithIndividualsResponse = response[3];
+                        if (_.get(classesWithIndividualsResponse, 'status') === 200) {
+                            listItem.classesWithIndividuals = classesWithIndividualsResponse.data;
+                        } else {
+                            listItem.classesWithIndividuals = [];
+                        }
+                        self.list.push(listItem);
+                        deferred.resolve();
                     } else {
-                        listItem.classHierarchy = [];
+                        deferred.reject();
                     }
-                    var classesWithIndividualsResponse = response[3];
-                    if (_.get(classesWithIndividualsResponse, 'status') === 200) {
-                        listItem.classesWithIndividuals = classesWithIndividualsResponse.data;
-                    } else {
-                        listItem.classesWithIndividuals = [];
-                    }
-                    self.list.push(listItem);
-                    deferred.resolve();
                 }, () => {
                     deferred.reject();
                 });

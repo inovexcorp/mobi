@@ -103,14 +103,16 @@ describe('Ontology Upload Overlay directive', function() {
                 expect(ontologyManagerSvc.uploadThenGet).toHaveBeenCalledWith(controller.file);
             });
             it('when resolved, sets the correct variables', function() {
-                deferred.resolve({});
-                ontologyManagerSvc.list = [{ontology: {}, ontologyId: ''}];
+                var listItem = [{ontology: {}, ontologyId: ''}];
+                ontologyManagerSvc.getListItemById.and.returnValue(listItem);
+                deferred.resolve('ontologyId');
                 scope.$apply();
-                var listItem = ontologyManagerSvc.list[ontologyManagerSvc.list.length - 1];
+                expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith('ontologyId');
                 expect(stateManagerSvc.setTreeTab).toHaveBeenCalledWith('everything');
                 expect(stateManagerSvc.setEditorTab).toHaveBeenCalledWith('basic');
                 expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(listItem.ontology);
-                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor', ontologyManagerSvc.getOntologyIRI(listItem.ontology), listItem);
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('ontology-editor',
+                    ontologyManagerSvc.getOntologyIRI(listItem.ontology), listItem);
                 expect(stateManagerSvc.showUploadOverlay).toBe(false);
             });
             it('when rejected, sets the correct variable', function() {

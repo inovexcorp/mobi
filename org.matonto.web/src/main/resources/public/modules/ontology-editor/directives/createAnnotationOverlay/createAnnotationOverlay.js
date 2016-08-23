@@ -49,7 +49,7 @@
                         dvm.am.create(dvm.sm.state.ontologyId, dvm.om.getAnnotationIRIs(dvm.sm.ontology), dvm.iri)
                             .then(annotationJSON => {
                                 _.set(annotationJSON, 'matonto.originalIRI', angular.copy(annotationJSON['@id']));
-                                dvm.om.addEntity(dvm.sm.state.ontologyId, annotationJSON);
+                                dvm.om.addEntity(dvm.sm.ontology, annotationJSON);
                                 dvm.sm.showCreateAnnotationOverlay = false;
                             }, errorMessage => {
                                 dvm.error = errorMessage;

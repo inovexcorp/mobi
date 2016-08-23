@@ -29,23 +29,27 @@ describe('Individual Editor directive', function() {
         stateManagerSvc,
         ontologyManagerSvc,
         responseObj,
-        prefixes;
+        prefixes,
+        showPropertiesFilter;
 
     beforeEach(function() {
         module('templates');
         module('individualEditor');
+        injectShowPropertiesFilter();
         mockPrefixes();
         mockOntologyManager();
         mockStateManager();
         mockResponseObj();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _prefixes_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _prefixes_, _responseObj_,
+            _showPropertiesFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             prefixes = _prefixes_;
             responseObj = _responseObj_;
+            showPropertiesFilter = _showPropertiesFilter_;
         });
 
         element = $compile(angular.element('<individual-editor></individual-editor>'))(scope);
@@ -93,18 +97,14 @@ describe('Individual Editor directive', function() {
                     expect(element.querySelectorAll('.btn-container').length).toBe(2);
                 });
                 it('with the correct number of data property values', function() {
-                    stateManagerSvc.selected = {'prop': []};
-                    stateManagerSvc.state.subDataProperties = [{}];
-                    responseObj.getItemIri.and.returnValue('prop');
+                    showPropertiesFilter.and.returnValue(['prop']);
                     scope.$digest();
-                    expect(element.find('property-values').length).toBe(1);
+                    expect(element.querySelectorAll('.data-properties property-values').length).toBe(1);
                 });
                 it('with the correct number of object property values', function() {
-                    stateManagerSvc.selected = {'prop': []};
-                    stateManagerSvc.state.subObjectProperties = [{}];
-                    responseObj.getItemIri.and.returnValue('prop');
+                    showPropertiesFilter.and.returnValue(['prop']);
                     scope.$digest();
-                    expect(element.find('property-values').length).toBe(1);
+                    expect(element.querySelectorAll('.object-properties property-values').length).toBe(1);
                 });
             });
         });

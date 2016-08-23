@@ -25,9 +25,7 @@
 
     angular
         .module('individualEditor', [])
-        .directive('individualEditor', individualEditor)
-        .filter('showObjectProperties', showObjectProperties)
-        .filter('showDataProperties', showDataProperties);
+        .directive('individualEditor', individualEditor);
 
         individualEditor.$inject = ['responseObj', 'stateManagerService', 'ontologyManagerService', 'prefixes'];
 
@@ -87,44 +85,12 @@
                     }
 
                     function getSubClasses() {
-                        dvm.subClasses = _.concat(dvm.om.getClassIRIs(dvm.sm.ontology), dvm.prefixes.owl + 'NamedIndividual');                    
+                        dvm.subClasses = dvm.om.getClassIRIs(dvm.sm.ontology);
                     }
 
                     $scope.$watch('dvm.sm.ontology', getSubClasses);
                     getSubClasses();
                 }]
-            }
-        }
-
-        showObjectProperties.$inject = ['responseObj'];
-
-        function showObjectProperties(responseObj) {
-            return function(entity, objectProperties) {
-                var arr = [];
-                if (_.isArray(objectProperties)) {
-                    arr = _.filter(objectProperties, prop => {
-                        if (responseObj.validateItem(prop)) {
-                            return _.has(entity, responseObj.getItemIri(prop));
-                        }
-                    });
-                }
-                return arr;
-            }
-        }
-
-        showDataProperties.$inject = ['responseObj'];
-
-        function showDataProperties(responseObj) {
-            return function(entity, dataProperties) {
-                var arr = [];
-                if (_.isArray(dataProperties)) {
-                    arr = _.filter(dataProperties, prop => {
-                        if (responseObj.validateItem(prop)) {
-                            return _.has(entity, responseObj.getItemIri(prop));
-                        }
-                    });
-                }
-                return arr;
             }
         }
 })();

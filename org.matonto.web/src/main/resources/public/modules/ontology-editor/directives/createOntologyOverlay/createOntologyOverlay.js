@@ -68,7 +68,7 @@
                     }
 
                     dvm.create = function() {
-                        if (_.isEqual(dvm.ontology[prefixes.dcterms + 'description'][0]['@value'], '')) {
+                        if (dvm.ontology[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.ontology, prefixes.dcterms + 'description');
                         }
                         dvm.om.createOntology(dvm.ontology)

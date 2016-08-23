@@ -73,7 +73,7 @@
                             if (type) {
                                 dvm.sm.selected[property][dvm.sm.propertyIndex]['@type'] = type['@id'];
                             } else {
-                                delete dvm.sm.selected[property][dvm.sm.propertyIndex]['@type'];
+                                _.unset(dvm.sm.selected[property][dvm.sm.propertyIndex], '@type');
                             }
                         }
                         closeAndMark();

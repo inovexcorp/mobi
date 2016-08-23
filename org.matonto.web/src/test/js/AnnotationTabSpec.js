@@ -33,8 +33,8 @@ describe('Annotation Tab directive', function() {
         module('templates');
         module('annotationTab');
         injectBeautifyFilter();
-        injectShowAnnotationsFilter();
         injectSplitIRIFilter();
+        injectShowPropertiesFilter();
         mockStateManager();
         mockOntologyManager();
         mockResponseObj();

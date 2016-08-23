@@ -482,7 +482,7 @@ public interface OntologyRest {
     Response getOntologyClassHierarchy(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
-     * Returns classes with individuals defined.
+     * Returns classes with individuals defined in the ontology with the requested ontologyID.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".

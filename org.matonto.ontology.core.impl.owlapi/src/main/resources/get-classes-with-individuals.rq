@@ -3,7 +3,7 @@ prefix owl: <http://www.w3.org/2002/07/owl#>
 
 select ?type
 where {
-    graph <http://data.qudt.org/qudt/owl/1.0.0/qudt.owl> {
+    graph ?graph {
         ?individual rdf:type owl:NamedIndividual .
         ?individual rdf:type ?type .
         filter (?type != owl:NamedIndividual)

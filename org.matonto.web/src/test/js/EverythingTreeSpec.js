@@ -103,15 +103,5 @@ describe('Everything Tree directive', function() {
                 expect(treeItems.length).toBe(1);
             });
         });
-        describe('controller methods', function() {
-            beforeEach(function() {
-                controller = element.controller('everythingTree');
-            });
-            it('toggleNoDomainsOpen calls the correct manager functions', function() {
-                controller.toggleNoDomainsOpen('');
-                expect(stateManagerSvc.getNoDomainsOpened).toHaveBeenCalledWith('');
-                expect(stateManagerSvc.setNoDomainsOpened).toHaveBeenCalledWith('', !stateManagerSvc.getNoDomainsOpened(''));
-            });
-        });
     });
 });

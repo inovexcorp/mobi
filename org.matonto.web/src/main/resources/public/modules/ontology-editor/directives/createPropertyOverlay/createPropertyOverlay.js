@@ -84,7 +84,7 @@
                     }
 
                     dvm.create = function() {
-                        if (_.isEqual(dvm.property[prefixes.dcterms + 'description'][0]['@value'], '')) {
+                        if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.property, prefixes.dcterms + 'description');
                         }
                         _.forEach(['domain', 'range'], function(axiom) {

@@ -27,7 +27,7 @@
     </div>
 
     <!-- list of annotations -->
-    <property-values ng-repeat="annotation in dvm.sm.selected | showAnnotations:dvm.sm.state.annotations | orderBy:'localName'"
+    <property-values ng-repeat="annotation in dvm.sm.selected | showProperties:dvm.sm.state.annotations | orderBy:'localName'"
       property="annotation"
       entity="dvm.sm.selected"
       remove="dvm.openRemoveOverlay(iri, index)"

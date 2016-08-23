@@ -91,7 +91,7 @@
                     dvm.removeIndividualProperty = function() {
                         _.pullAt(dvm.sm.selected[dvm.sm.key], dvm.sm.index);
                         if (!dvm.sm.selected[dvm.sm.key].length) {
-                            delete dvm.sm.selected[dvm.sm.key];
+                            _.unset(dvm.sm.selected, dvm.sm.key);
                         }
                         dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
                         dvm.sm.showRemoveIndividualPropertyOverlay = false;

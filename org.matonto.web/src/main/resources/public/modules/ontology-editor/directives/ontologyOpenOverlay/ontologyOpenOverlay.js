@@ -45,12 +45,12 @@
 
                     dvm.open = function() {
                         dvm.om.openOntology(dvm.ontologyId)
-                            .then(function(response) {
-                                var listItem = dvm.om.list[dvm.om.list.length - 1];
+                            .then(ontologyId => {
+                                var listItem = dvm.om.getListItemById(ontologyId);
                                 dvm.sm.setEditorTab('basic');
                                 dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(listItem.ontology), listItem);
                                 dvm.sm.showOpenOverlay = false;
-                            }, function(errorMessage) {
+                            }, errorMessage => {
                                 dvm.error = errorMessage;
                             });
                     }

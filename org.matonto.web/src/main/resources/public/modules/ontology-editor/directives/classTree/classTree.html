@@ -22,7 +22,7 @@
   -->
 <div class="tree class-tree scroll-without-buttons">
     <strong>Classes</strong>
-    <ul ng-repeat="item in dvm.om.list"
+    <ul ng-repeat="item in dvm.om.list track by item.ontologyId"
         ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
         <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
                    ontology-id="item.ontologyId"
@@ -43,7 +43,7 @@
                    on-click="dvm.sm.selectItem('class-editor', node.entityIRI, item)"
                    has-children="!!node.subEntities"
                    is-opened="opened"></tree-item>
-        <li class="container" ng-if="opened">
+        <li class="container" ng-if="opened && !!node.subEntities">
             <ul ng-repeat="node in node.subEntities track by node.entityIRI"
                 ng-init="opened = dvm.sm.getOpened(item.ontologyId, node.entityIRI)"
                  ng-include="'tree_item'" ng-init="item = item; node = node; opened = opened"></ul>

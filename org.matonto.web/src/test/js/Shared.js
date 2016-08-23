@@ -85,11 +85,11 @@ function injectCamelCaseFilter() {
     });
 }
 
-function injectShowAnnotationsFilter() {
+function injectShowPropertiesFilter() {
     module(function($provide) {
-        var annotations = ['prop1', 'prop2'];
-        $provide.value('showAnnotationsFilter', jasmine.createSpy('showAnnotationsFilter').and.callFake(function(entity, arr) {
-            return entity ? annotations : [];
+        var properties = ['prop1', 'prop2'];
+        $provide.value('showPropertiesFilter', jasmine.createSpy('showPropertiesFilter').and.callFake(function(entity, arr) {
+            return entity ? properties : [];
         }));
     });
 }

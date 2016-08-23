@@ -40,6 +40,7 @@
             'escapeHTML',
             'removeIriFromArray',
             'removeMatonto',
+            'showProperties',
             'splitIRI',
             'trusted',
 

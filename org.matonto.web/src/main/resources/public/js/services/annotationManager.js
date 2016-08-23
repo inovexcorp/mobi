@@ -25,8 +25,7 @@
 
     angular
         .module('annotationManager', [])
-        .service('annotationManagerService', annotationManagerService)
-        .filter('showAnnotations', showAnnotations);
+        .service('annotationManagerService', annotationManagerService);
 
         annotationManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'prefixes'];
 
@@ -112,22 +111,6 @@
                     $rootScope.showSpinner = false;
                 }
                 return deferred.promise;
-            }
-        }
-
-        showAnnotations.$inject = ['responseObj'];
-
-        function showAnnotations(responseObj) {
-            return function(entity, annotations) {
-                var arr = [];
-                if (_.isArray(annotations)) {
-                    arr = _.filter(annotations, annotation => {
-                        if (responseObj.validateItem(annotation)) {
-                            return _.has(entity, responseObj.getItemIri(annotation));
-                        }
-                    });
-                }
-                return arr;
             }
         }
 })();

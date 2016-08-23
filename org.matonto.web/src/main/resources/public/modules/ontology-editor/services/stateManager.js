@@ -93,7 +93,7 @@
             }
 
             self.afterSave = function(newId) {
-                if (!_.isEqual(self.state.ontologyId, newId)) {
+                if (self.state.ontologyId !== newId) {
                     self.state.ontologyId = newId;
                 }
                 self.state.entityIRI = self.selected.matonto.originalIRI;
@@ -114,7 +114,7 @@
 
             self.clearState = function(ontologyId) {
                 _.forOwn(self.states, state => {
-                    if (_.isEqual(_.get(state, 'ontologyId'), ontologyId)) {
+                    if (_.get(state, 'ontologyId') === ontologyId) {
                         state.ontologyId = undefined;
                         state.entityIRI = undefined;
                         state.editor = 'default-tab';

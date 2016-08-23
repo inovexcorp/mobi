@@ -23,7 +23,7 @@
 <div class="tree everything-tree scroll-without-buttons">
     <strong>Everything</strong>
     <!-- ontologies -->
-    <ul ng-repeat="item in dvm.om.list"
+    <ul ng-repeat="item in dvm.om.list track by item.ontologyId"
         ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology)); noDomainsOpened = dvm.sm.getNoDomainsOpened(item.ontologyId)">
         <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
                    ontology-id="item.ontologyId"

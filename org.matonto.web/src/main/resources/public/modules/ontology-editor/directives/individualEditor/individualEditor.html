@@ -29,33 +29,32 @@
     <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
         <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <string-select ng-model="dvm.sm.selected['@type']"
-              display-text="'Type'"
-              select-list="dvm.subClasses"
-              lock-choices="[dvm.prefixes.owl + 'NamedIndividual']"
-              on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></string-select>
+                       display-text="'Type'"
+                       select-list="dvm.subClasses"
+                       on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></string-select>
     </div>
 
     <div ng-if="dvm.sm.state.editorTab === 'properties'" class="tab clearfix">
-      <div class="well data-properties">
-        <div class="btn-container clearfix">
-            <a class="btn btn-link pull-left" ng-click="dvm.openAddDataPropOverlay()"><i class="fa fa-fw fa-plus"></i>Add Data Property</a>
+        <div class="well data-properties">
+            <div class="btn-container clearfix">
+                <a class="btn btn-link pull-left" ng-click="dvm.openAddDataPropOverlay()"><i class="fa fa-fw fa-plus"></i>Add Data Property</a>
+            </div>
+            <property-values ng-repeat="property in dvm.sm.selected | showProperties:dvm.sm.state.subDataProperties | orderBy:'localName'"
+                             property="property"
+                             entity="dvm.sm.selected"
+                             edit="dvm.editDataProp(property, index)"
+                             remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
         </div>
-        <property-values ng-repeat="property in dvm.sm.selected | showDataProperties:dvm.sm.state.subDataProperties | orderBy:'localName'"
-          property="property"
-          entity="dvm.sm.selected"
-          edit="dvm.editDataProp(property, index)"
-          remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
-      </div>
 
-      <div class="well object-properties">
-        <div class="btn-container clearfix">
-            <a class="btn btn-link pull-left" ng-click="dvm.openAddObjectPropOverlay()"><i class="fa fa-fw fa-plus"></i>Add Object Property</a>
+        <div class="well object-properties">
+            <div class="btn-container clearfix">
+                <a class="btn btn-link pull-left" ng-click="dvm.openAddObjectPropOverlay()"><i class="fa fa-fw fa-plus"></i>Add Object Property</a>
+            </div>
+            <property-values ng-repeat="property in dvm.sm.selected | showProperties:dvm.sm.state.subObjectProperties | orderBy:'localName'"
+                             property="property"
+                             entity="dvm.sm.selected"
+                             edit="dvm.editObjectProp(property, index)"
+                             remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
         </div>
-        <property-values ng-repeat="property in dvm.sm.selected | showObjectProperties:dvm.sm.state.subObjectProperties | orderBy:'localName'"
-          property="property"
-          entity="dvm.sm.selected"
-          edit="dvm.editObjectProp(property, index)"
-          remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
-      </div>
     </div>
 </div>

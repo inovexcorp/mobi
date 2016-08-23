@@ -135,7 +135,7 @@ describe('Create Annotation Overlay directive', function() {
             it('when resolved, sets the correct variables', function() {
                 deferred.resolve({'@id': 'id'});
                 scope.$apply();
-                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(stateManagerSvc.ontology,
                     {'@id': 'id', matonto: {originalIRI: 'id'}});
                 expect(stateManagerSvc.showCreateAnnotationOverlay).toBe(false);
             });
