@@ -21,23 +21,22 @@
   #L%
   -->
 <div class="tree annotation-tree scroll-without-buttons">
-    <!-- annotation view -->
     <strong>Annotations</strong>
-    <ul ng-repeat="(oi, ontology) in dvm.ontologies" ng-init="opened = (dvm.sm.state.oi === oi)">
-        <tree-item current-entity="ontology"
-                   current-ontology="ontology"
-                   is-active="dvm.sm.state.oi === $index && dvm.sm.state.pi === undefined"
-                   is-opened="opened"
-                   on-click="dvm.sm.selectItem('ontology-editor', $index)"
-                   has-children="ontology.matonto.jsAnnotations.length"></tree-item>
-
-        <li class="container" ng-show="opened">
+    <ul ng-repeat="item in dvm.om.list track by item.ontologyId"
+        ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+        <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
+                   ontology-id="item.ontologyId"
+                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
+                   on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
+                   has-children="dvm.om.hasAnnotations(item.ontology)"
+                   is-opened="opened"></tree-item>
+        <li class="container" ng-if="opened">
             <ul>
-                <tree-item ng-repeat="annotation in ontology.matonto.jsAnnotations"
+                <tree-item ng-repeat="annotation in dvm.om.getAnnotations(item.ontology) track by annotation.matonto.originalIRI"
                            current-entity="annotation"
-                           current-ontology="ontology"
-                           is-active="dvm.sm.state.oi === oi && dvm.sm.state.pi === $index"
-                           on-click="dvm.selectAnnotation(oi, $index)"></tree-item>
+                           ontology-id="item.ontologyId"
+                           is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === annotation.matonto.originalIRI"
+                           on-click="dvm.sm.selectItem('annotation-editor', annotation.matonto.originalIRI, item)"></tree-item>
             </ul>
         </li>
     </ul>

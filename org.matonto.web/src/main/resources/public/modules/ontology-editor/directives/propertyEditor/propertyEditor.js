@@ -36,16 +36,28 @@
                 templateUrl: 'modules/ontology-editor/directives/propertyEditor/propertyEditor.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
 
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.prefixes = prefixes;
-                    dvm.propertyTypes = dvm.om.getPropertyTypes();
-                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
-                    dvm.subObjectProperties = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subObjectProperties, dvm.sm.selected.matonto.originalIri);
-                }
+
+                    dvm.checkDomain = function() {
+                        if (dvm.sm.selected[prefixes.rdfs + 'domain'].length === 0) {
+                            _.unset(dvm.sm.selected, prefixes.rdfs + 'domain');
+                        }
+                    }
+
+                    function getLists() {
+                        dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.state.subClasses, dvm.sm.state.entityIRI);
+                        dvm.subObjectProperties = $filter('removeIriFromArray')(dvm.sm.state.subObjectProperties,
+                            dvm.sm.state.entityIRI);
+                    }
+
+                    $scope.$watch('dvm.sm.ontology', getLists);
+                    getLists();
+                }]
             }
         }
 })();

@@ -27,7 +27,7 @@
         .module('annotationTree', [])
         .directive('annotationTree', annotationTree);
 
-        annotationTree.$inject = ['ontologyManagerService', 'stateManagerService']
+        annotationTree.$inject = ['ontologyManagerService', 'stateManagerService'];
 
         function annotationTree(ontologyManagerService, stateManagerService) {
             return {
@@ -41,14 +41,6 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-
-                    dvm.ontologies = dvm.om.getList();
-
-                    dvm.selectAnnotation = function(oi, index) {
-                        dvm.sm.setState('annotation-editor', oi, undefined, index);
-                        dvm.sm.ontology = ontologyManagerService.getOntology(oi);
-                        dvm.sm.selected = dvm.sm.ontology.matonto.jsAnnotations[index];
-                    }
                 }
             }
         }

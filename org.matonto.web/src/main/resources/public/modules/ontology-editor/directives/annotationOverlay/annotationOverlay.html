@@ -30,7 +30,7 @@
             <label class="control-label">Annotation</label>
             <ui-select ng-model="dvm.sm.annotationSelect" ng-disabled="dvm.sm.editingAnnotation">
                 <ui-select-match placeholder="Select an annotation">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.om.getItemNamespace" repeat="annotation in dvm.sm.ontology.matonto.annotations | filter: $select.search | orderBy:'localName'">
+                <ui-select-choices group-by="dvm.getItemNamespace" repeat="annotation in dvm.sm.state.annotations | filter: $select.search | orderBy:'localName'">
                     <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
@@ -42,7 +42,7 @@
         <!-- annotation buttons -->
         <div class="btn-container clearfix">
             <custom-button ng-if="!dvm.sm.editingAnnotation"
-                           is-disabled-when="dvm.annotationForm.$invalid || dvm.sm.annotationSelect === 'default' || !dvm.sm.annotationValue"
+                           is-disabled-when="dvm.annotationForm.$invalid || dvm.sm.annotationSelect === undefined || !dvm.sm.annotationValue"
                            on-click="dvm.addAnnotation(dvm.sm.annotationSelect, dvm.sm.annotationValue)">Add</custom-button>
 
             <custom-button ng-if="dvm.sm.editingAnnotation"

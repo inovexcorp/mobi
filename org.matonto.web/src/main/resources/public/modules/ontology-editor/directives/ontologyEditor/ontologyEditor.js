@@ -44,7 +44,7 @@
                     dvm.sm = stateManagerService;
 
                     dvm.getPreview = function() {
-                        dvm.om.getPreview(dvm.sm.ontology.matonto.id, dvm.serialization)
+                        dvm.om.getPreview(dvm.sm.state.ontologyId, dvm.serialization)
                             .then(function(response) {
                                 dvm.preview = response;
                             }, function(response) {
@@ -53,8 +53,8 @@
                     }
 
                     dvm.iriChanged = function() {
-                        dvm.sm.ontology.matonto.isValid = dvm.form.$valid;
-                        dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state);
+                        dvm.sm.setValid(dvm.sm.ontology, dvm.sm.state.entityIRI, dvm.form.$valid);
+                        dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true);
                     }
                 }
             }

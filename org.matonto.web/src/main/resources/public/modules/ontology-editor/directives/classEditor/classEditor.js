@@ -36,14 +36,20 @@
                 templateUrl: 'modules/ontology-editor/directives/classEditor/classEditor.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
 
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.prefixes = prefixes;
-                    dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.ontology.matonto.subClasses, dvm.sm.selected.matonto.originalIri);
-                }
+
+                    function getSubClasses() {
+                        dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.state.subClasses, dvm.sm.state.entityIRI);
+                    }
+
+                    $scope.$watch('dvm.sm.ontology', getSubClasses);
+                    getSubClasses();
+                }]
             }
         }
 })();

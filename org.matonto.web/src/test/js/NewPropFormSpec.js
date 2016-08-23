@@ -26,7 +26,8 @@ describe('New Prop Form directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        delimitedManagerSvc;
+        delimitedManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -37,16 +38,13 @@ describe('New Prop Form directive', function() {
         mockMapperState();
         mockDelimitedManager();
         
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -56,65 +54,56 @@ describe('New Prop Form directive', function() {
             delimitedManagerSvc.filePreview = {headers: []};
             this.element = $compile(angular.element('<new-prop-form></new-prop-form>'))(scope);
             scope.$digest();
+            controller = this.element.controller('newPropForm');
         });
-        it('should test whether the selected property is an object property', function() {
-            var controller = this.element.controller('newPropForm');
-            mapperStateSvc.selectedProp = {'@type': ['ObjectProperty']};
-            var result = controller.isObjectProperty();
-            expect(result).toBe(true);
-
-            mapperStateSvc.selectedProp = {};
-            result = controller.isObjectProperty();
-            expect(result).toBe(false);
-        });
-        it('should update the available columns based on the type of the selected property', function() {
-            var controller = this.element.controller('newPropForm');
-            spyOn(controller, 'isObjectProperty').and.returnValue(true);
-            controller.update();
-            expect(mapperStateSvc.updateAvailableColumns).not.toHaveBeenCalled();
-            controller.isObjectProperty.and.returnValue(false);
-            controller.update();
-            expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
+        describe('should update the available columns', function() {
+            it('unless the selected property is an object property', function() {
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                controller.update();
+                expect(mapperStateSvc.updateAvailableColumns).not.toHaveBeenCalled();
+            });
+            it('if the selected property is a data property', function() {
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                controller.update();
+                expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
+            });
         });
         it('should return the name of the selected class', function() {
-            var controller = this.element.controller('newPropForm');
             var result = controller.getClassName();
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId);
-            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalled();
+            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
-        it('should set the corrcet state for setting a property', function() {
-            var controller = this.element.controller('newPropForm');
-            mapperStateSvc.selectedProp = {'@id': ''};
-            spyOn(controller, 'isObjectProperty').and.returnValue(true);
-            mappingManagerSvc.getClassIdByMappingId.calls.reset();
-            ontologyManagerSvc.findOntologyWithClass.calls.reset();
-            var classMappingId = mapperStateSvc.selectedClassMappingId;
-            controller.set();
-            expect(mappingManagerSvc.addObjectProp).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.sourceOntologies, 
-                mapperStateSvc.selectedClassMappingId, mapperStateSvc.selectedProp['@id']);
-            expect(mappingManagerSvc.getClassIdByMappingId).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.findOntologyWithClass).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.openedClasses).toContain(classMappingId);
-
-            controller.isObjectProperty.and.returnValue(false);
-            mappingManagerSvc.addObjectProp.calls.reset();
-            classMappingId = mapperStateSvc.selectedClassMappingId;
-            controller.set();
-            expect(mappingManagerSvc.addObjectProp).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId);
-            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalled();
-            expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.openedClasses).toContain(classMappingId);
+        describe('should set the corrcet state for setting a property', function() {
+            beforeEach(function() {
+                mapperStateSvc.selectedProp = {'@id': ''};
+                mappingManagerSvc.addDataProp.calls.reset();
+                mappingManagerSvc.addObjectProp.calls.reset();
+                this.classMappingId = mapperStateSvc.selectedClassMappingId;
+            });
+            it('if the selected property is an object property', function() {
+                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                controller.set();
+                expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(mapperStateSvc.selectedProp['@id']);
+                expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.openedClasses).toContain(this.classMappingId);
+            });
+            it('if the selected property is a data property', function() {
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                controller.set();
+                expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(mapperStateSvc.selectedProp['@id']);
+                expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
+                expect(mappingManagerSvc.addObjectProp).not.toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.openedClasses).toContain(this.classMappingId);
+            });
         });
         it('should set the correct state for setting a property and continuing to the next', function() {
-            var controller = this.element.controller('newPropForm');
             mapperStateSvc.selectedClassMappingId = 'test';
             spyOn(controller, 'set');
             controller.setNext();
@@ -137,19 +126,21 @@ describe('New Prop Form directive', function() {
             expect(this.element.find('prop-select').length).toBe(1);
         });
         it('depending on the type of selected property', function() {
-            var controller = this.element.controller('newPropForm');
+            controller = this.element.controller('newPropForm');
             mapperStateSvc.selectedProp = undefined;
             scope.$digest();
             expect(this.element.find('range-class-description').length).toBe(0);
             expect(this.element.find('column-select').length).toBe(0);
 
             mapperStateSvc.selectedProp = {};
-            spyOn(controller, 'isObjectProperty').and.returnValue(false);
+            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             scope.$digest();
             expect(this.element.find('range-class-description').length).toBe(0);
             expect(this.element.find('column-select').length).toBe(1);
 
-            controller.isObjectProperty.and.returnValue(true);
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
             scope.$digest();
             expect(this.element.find('range-class-description').length).toBe(1);
             expect(this.element.find('column-select').length).toBe(0);

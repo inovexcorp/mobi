@@ -22,7 +22,8 @@
  */
 describe('Column Select directive', function() {
     var $compile,
-        scope;
+        scope,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -43,7 +44,6 @@ describe('Column Select directive', function() {
         beforeEach(function() {
             scope.columns = [];
             scope.selectedColumn = '';
-
             this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
             scope.$digest();
         });
@@ -53,25 +53,31 @@ describe('Column Select directive', function() {
             scope.$digest();
             expect(scope.columns).toEqual(['test']);
         });
+    });
+    describe('controller bound variable', function() {
+        beforeEach(function() {
+            scope.columns = [];
+            scope.selectedColumn = '';
+            this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
+            scope.$digest();
+            controller = this.element.controller('columnSelect');
+        });
         it('selectedColumn should be two way bound', function() {
-            var controller = this.element.controller('columnSelect');
             controller.selectedColumn = 'test';
             scope.$digest();
             expect(scope.selectedColumn).toEqual('test');
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for wrapping containers', function() {
-            var element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);;
+        beforeEach(function() {
+            this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);;
             scope.$digest();
-
-            expect(element.hasClass('column-select')).toBe(true);
+        });
+        it('for wrapping containers', function() { 
+            expect(this.element.hasClass('column-select')).toBe(true);
         });
         it('with a column select', function() {
-            var element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);;
-            scope.$digest();
-
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
     });
 });

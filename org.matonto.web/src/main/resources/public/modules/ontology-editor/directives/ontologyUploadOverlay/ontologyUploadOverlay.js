@@ -44,12 +44,13 @@
 
                     dvm.upload = function() {
                         dvm.om.uploadThenGet(dvm.file)
-                            .then(function(response) {
+                            .then(ontologyId => {
+                                var listItem = dvm.om.getListItemById(ontologyId);
                                 dvm.sm.setTreeTab('everything');
                                 dvm.sm.setEditorTab('basic');
-                                dvm.sm.selectItem('ontology-editor', dvm.om.getList().length - 1);
+                                dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(listItem.ontology), listItem);
                                 dvm.sm.showUploadOverlay = false;
-                            }, function(response) {
+                            }, response => {
                                 dvm.error = response.statusText;
                             });
                     }

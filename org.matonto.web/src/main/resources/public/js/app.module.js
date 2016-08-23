@@ -40,6 +40,7 @@
             'escapeHTML',
             'removeIriFromArray',
             'removeMatonto',
+            'showProperties',
             'splitIRI',
             'trusted',
 
@@ -86,19 +87,21 @@
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
             'FILENAME': /^[\w\-. ]+$/
         })
-        .factory('beforeUnload', beforeUnload)
+        .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
-            // We have to invoke the factory at least once
+            // We have to invoke the service at least once
         });
 
         beforeUnload.$inject = ['$window', 'ontologyManagerService'];
 
         function beforeUnload($window, ontologyManagerService) {
             $window.onbeforeunload = function(e) {
-                if(ontologyManagerService.getChangedEntries().length) {
+                var hasUnsavedChanges = _.some(ontologyManagerService.list, listItem => {
+                    return _.some(_.get(listItem, 'ontology', []), {matonto: {unsaved: true}});
+                });
+                if (hasUnsavedChanges) {
                     return true;
                 }
             }
-            return {};
         }
 })();

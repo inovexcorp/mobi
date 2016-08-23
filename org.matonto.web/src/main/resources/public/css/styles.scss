@@ -227,6 +227,7 @@ ul {
 /* Styles for the left side of the screen */
 .tree {
     padding: 10px;
+    @include noCopy();
 
     /* Anchor inherits the color of parent and fills container completely */
     a {
@@ -502,6 +503,10 @@ ul {
                 font-weight: bold;
                 text-align: left;
                 padding-left: 3px;
+
+                &.narrow {
+                    padding-left: 7px;
+                }
             }
 
             .fa {

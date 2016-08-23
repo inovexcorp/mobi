@@ -29,7 +29,7 @@
 
         ontologyTrees.$inject = ['stateManagerService'];
 
-        function ontologyTrees(stateManagerService, ontologyManagerService, annotationManagerService) {
+        function ontologyTrees(stateManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/ontologyTrees/ontologyTrees.html',

@@ -24,7 +24,8 @@ describe('Edit Prop Form directive', function() {
     var $compile,
         scope,
         ontologyManagerSvc,
-        mappingManagerSvc;
+        mappingManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -35,16 +36,13 @@ describe('Edit Prop Form directive', function() {
         mockMapperState();
         mockDelimitedManager();
         
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
     
@@ -53,38 +51,31 @@ describe('Edit Prop Form directive', function() {
             mappingManagerSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<edit-prop-form></edit-prop-form>'))(scope);
             scope.$digest();
+            controller = this.element.controller('editPropForm');
         });
         it('should get the class id', function() {
-            var controller = this.element.controller('editPropForm');
             var result = controller.getClassId();
-
             expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId);
             expect(typeof result).toBe('string')
         });
         it('should get the prop id', function() {
-            var controller = this.element.controller('editPropForm');
             var result = controller.getPropId();
-
             expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedPropMappingId);
             expect(typeof result).toBe('string')
         });
         it('should get the property title', function() {
-            var controller = this.element.controller('editPropForm');
             var result = controller.getTitle();
-
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getClass).toHaveBeenCalled();
             expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
             expect(typeof result).toBe('string')
         });
         it('should test whether property is an object property', function() {
-            var controller = this.element.controller('editPropForm');
+            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             var result = controller.isObjectProperty();
             expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalled();
             expect(result).toBe(false);
         });
         it('should set a new column index correctly', function() {
-            var controller = this.element.controller('editPropForm');
             var prop = {'@id': 'test'};
             delimitedManagerSvc.filePreview = {headers: []};
             spyOn(controller, 'getPropId').and.returnValue(prop['@id']);
@@ -93,7 +84,7 @@ describe('Edit Prop Form directive', function() {
             mapperStateSvc.invalidProps = [prop];
             scope.$digest();
             controller.set();
-            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalled();
+            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
             expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
             expect(mappingManagerSvc.getDataMappingFromClass).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
