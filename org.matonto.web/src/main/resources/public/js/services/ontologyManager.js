@@ -81,7 +81,7 @@
                 individuals: [],
                 classHierarchy: [],
                 classesWithIndividuals: [],
-                blankNodes: []
+                blankNodes: {}
             };
 
             /**
@@ -113,7 +113,9 @@
              *      dataPropertyRange: [],
              *      classHierarchy: [],
              *      individuals: [],
-             *      classesWithIndividuals: []
+             *      classesWithIndividuals: [],
+             *      subClasses: [],
+             *      blankNodes: {}
              * }
              * ```
              */
@@ -901,9 +903,7 @@
              * returns false.
              */
             self.hasObjectProperties = function(ontology) {
-                return _.some(ontology, entity => {
-                    return self.isObjectProperty(entity) && !self.isBlankNode(entity);
-                });
+                return _.some(ontology, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -918,9 +918,7 @@
              * @returns {Object[]} An array of all owl:ObjectProperty entities within the ontology.
              */
             self.getObjectProperties = function(ontology) {
-                return _.filter(ontology, entity => {
-                    return self.isObjectProperty(entity) && !self.isBlankNode(entity);
-                });
+                return _.filter(ontology, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1028,9 +1026,7 @@
              * @returns {Object[]} An array of all owl:DatatypeProperty entities within the ontology.
              */
             self.getDataTypeProperties = function(ontology) {
-                return _.filter(ontology, entity => {
-                    return self.isDataTypeProperty(entity) && !self.isBlankNode(entity);
-                });
+                return _.filter(ontology, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1218,7 +1214,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all owl:NamedIndividual entities within the provided ontology the have no other type.
+             * Gets the list of all owl:NamedIndividual entities within the provided ontology that have no other type.
              * Returns an Object[].
              *
              * @param {Object[]} ontology The ontology you want to check.

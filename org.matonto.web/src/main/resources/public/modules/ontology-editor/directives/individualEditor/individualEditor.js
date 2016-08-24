@@ -89,7 +89,7 @@
                         var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         var difference = _.difference(dvm.types, listItem.classesWithIndividuals);
                         if (difference.length) {
-                            var classesWithIndividuals = _.concat(dvm.sm.state.classesWithIndividuals, difference);
+                            var classesWithIndividuals = _.concat(listItem.classesWithIndividuals, difference);
                             listItem.classesWithIndividuals = classesWithIndividuals;
                             dvm.sm.state.classesWithIndividuals = classesWithIndividuals;
                         }
