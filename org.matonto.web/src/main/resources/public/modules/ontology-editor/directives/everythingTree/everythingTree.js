@@ -41,7 +41,6 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-                    dvm.ontologies = dvm.om.getList();
                 }
             }
         }

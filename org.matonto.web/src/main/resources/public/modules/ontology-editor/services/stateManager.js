@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('stateManager', ['ontologyManager'])
+        .module('stateManager', [])
         .service('stateManagerService', stateManagerService);
 
-        stateManagerService.$inject = ['ontologyManagerService'];
+        stateManagerService.$inject = ['ontologyManagerService', 'updateRefsService'];
 
-        function stateManagerService(ontologyManagerService) {
+        function stateManagerService(ontologyManagerService, updateRefsService) {
             var self = this;
 
             self.states = {
@@ -58,118 +58,147 @@
                     tab: 'annotation',
                     editor: 'default-tab',
                     editorTab: 'basic'
+                },
+                individual: {
+                    tab: 'individual',
+                    editor: 'default-tab',
+                    editorTab: 'basic'
                 }
             }
 
             self.om = ontologyManagerService;
             self.ontology = {};
             self.selected = {};
-            self.ontologyIds = self.om.getOntologyIds();
+            self.ontologyIds = self.om.ontologyIds;
             self.state = self.states[self.states.current];
 
 
-            function setVariables(oi) {
-                if(oi === undefined) {
-                    self.selected = undefined;
-                    self.ontology = undefined;
-                } else {
-                    self.selected = self.om.getObject(self.getState());
-                    self.ontology = self.om.getOntology(oi);
-                }
+            function setVariables(ontologyId, entityIRI) {
+                self.ontology = self.om.getOntologyById(ontologyId);
+                self.selected = self.om.getEntity(self.ontology, entityIRI);
             }
 
             self.setTreeTab = function(tab) {
                 self.states.current = tab;
                 self.state = self.getState();
-                if(tab !== 'annotation') {
-                    self.selected = self.om.getObject(self.state);
-                } else {
-                    self.selected = _.get(self.om.getList(), '[' + self.state.oi + '].matonto.jsAnnotations[' + self.state.pi + ']');
-                }
-                self.ontology = self.om.getOntology(self.state.oi);
+                setVariables(self.state.ontologyId, self.state.entityIRI);
             }
 
             self.setEditorTab = function(tab) {
-                self.states[self.states.current].editorTab = tab;
-                self.state = self.getState();
+                self.state.editorTab = tab;
             }
 
             self.getEditorTab = function() {
                 return self.states[self.states.current].editorTab;
             }
 
-            self.setState = function(editor, oi, ci, pi) {
-                var state = self.states[self.states.current];
-                if(editor !== state.editor) {
-                    state.editorTab = 'basic';
+            self.afterSave = function(newId) {
+                if (self.state.ontologyId !== newId) {
+                    self.state.ontologyId = newId;
                 }
-                state.oi = oi;
-                state.ci = ci;
-                state.pi = pi;
-                state.editor = editor;
-                self.state = self.getState();
+                self.state.entityIRI = self.selected.matonto.originalIRI;
+            }
+
+            self.setState = function(editor, entityIRI, listItem) {
+                if (editor !== self.state.editor) {
+                    self.state.editorTab = 'basic';
+                }
+                self.state.editor = editor;
+                self.state.entityIRI = entityIRI;
+                _.assign(self.state, listItem);
             }
 
             self.getState = function() {
                 return self.states[self.states.current];
             }
 
-            self.setStateToNew = function(state, ontologies, type) {
-                var editor,
-                    oi = state.oi,
-                    ci = state.ci,
-                    pi = state.pi;
-                if(type === 'ontology') {
-                    oi = ontologies.length - 1;
-                    ci = undefined;
-                    pi = undefined;
-                    editor = 'ontology-editor';
-                } else if(type === 'class') {
-                    ci = ontologies[oi].matonto.classes.length - 1;
-                    pi = undefined;
-                    editor = 'class-editor';
-                } else if(type === 'property') {
-                    if(ci !== undefined) {
-                        pi = ontologies[oi].matonto.classes[ci].matonto.properties.length - 1;
-                    } else {
-                        pi = ontologies[oi].matonto.noDomains.length - 1;
-                    }
-                    editor = 'property-editor';
-                }
-                self.setState(editor, oi, ci, pi);
-                setVariables(oi);
-                return oi;
-            }
-
-            self.clearState = function(oi) {
-                var prop, state;
-                for(prop in self.states) {
-                    if(self.states[prop].oi === oi) {
-                        state = self.states[prop];
-                        state.oi = undefined;
-                        state.ci = undefined;
-                        state.pi = undefined;
+            self.clearState = function(ontologyId) {
+                _.forOwn(self.states, state => {
+                    if (_.get(state, 'ontologyId') === ontologyId) {
+                        state.ontologyId = undefined;
+                        state.entityIRI = undefined;
                         state.editor = 'default-tab';
                     }
-                }
-                self.state = self.getState();
+                });
+                self.selected = undefined;
+                self.ontology = undefined;
+                _.unset(self.state, encodeURIComponent(ontologyId));
             }
 
-            self.selectItem = function(editor, oi, ci, pi) {
-                self.setState(editor, oi, ci, pi);
-                setVariables(oi);
+            self.selectItem = function(editor, entityIRI, listItem) {
+                self.setState(editor, entityIRI, listItem);
+                setVariables(listItem.ontologyId, entityIRI);
             }
 
-            self.entityChanged = function() {
-                self.selected.matonto.unsaved = true;
-                self.om.addToChangedList(self.ontology.matonto.id, self.selected.matonto.originalIri, self.state);
+            self.setUnsaved = function(ontology, entityIRI, isUnsaved) {
+                _.set(self.om.getEntity(ontology, entityIRI), 'matonto.unsaved', isUnsaved);
+            }
+
+            self.getUnsaved = function(ontology, entityIRI) {
+                return _.get(self.om.getEntity(ontology, entityIRI), 'matonto.unsaved', false);
+            }
+
+            self.hasUnsavedEntities = function(ontology) {
+                return _.some(ontology, {matonto:{unsaved: true}});
+            }
+
+            self.getUnsavedEntities = function(ontology) {
+                return _.filter(ontology, {matonto:{unsaved: true}});
+            }
+
+            self.setValid = function(ontology, entityIRI, isValid) {
+                _.set(self.om.getEntity(ontology, entityIRI), 'matonto.valid', isValid);
+            }
+
+            self.getValid = function(ontology, entityIRI) {
+                return _.get(self.om.getEntity(ontology, entityIRI), 'matonto.valid', true);
+            }
+
+            self.hasInvalidEntities = function(ontology) {
+                return _.some(ontology, {matonto:{valid: false}});
+            }
+
+            self.getOpenPath = function(ontologyId, entityIRI) {
+                return encodeURIComponent(ontologyId) + '.' + encodeURIComponent(entityIRI);
+            }
+
+            self.setOpened = function(ontologyId, entityIRI, isOpened) {
+                _.set(self.state, self.getOpenPath(ontologyId, entityIRI), isOpened);
+            }
+
+            self.getOpened = function(ontologyId, entityIRI) {
+                return _.get(self.state, self.getOpenPath(ontologyId, entityIRI), false);
+            }
+
+            self.setNoDomainsOpened = function(ontologyId, isOpened) {
+                _.set(self.state, encodeURIComponent(ontologyId) + '.noDomainsOpened', isOpened);
+            }
+
+            self.getNoDomainsOpened = function(ontologyId) {
+                return _.get(self.state, encodeURIComponent(ontologyId) + '.noDomainsOpened', false);
+            }
+
+            self.getIndividualsOpened = function(ontologyId, classIRI) {
+                return _.get(self.state, self.getOpenPath(ontologyId, classIRI) + '.individualsOpened', false);
+            }
+
+            self.setIndividualsOpened = function(ontologyId, classIRI, isOpened) {
+                _.set(self.state, self.getOpenPath(ontologyId, classIRI) + '.individualsOpened', isOpened);
+            }
+
+            self.getNoTypeIndividualsOpened = function(ontologyId) {
+                return _.get(self.state, encodeURIComponent(ontologyId) + '.noTypeIndividualsOpened', false);
+            }
+
+            self.setNoTypeIndividualsOpened = function(ontologyId, isOpened) {
+                _.set(self.state, encodeURIComponent(ontologyId) + '.noTypeIndividualsOpened', isOpened);
             }
 
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
-                self.om.editIRI(iriBegin, iriThen, iriEnd, self.selected, self.ontology);
-                self.entityChanged(self.selected, self.ontology.matonto.id, self.state);
+                var newIRI = iriBegin + iriThen + iriEnd;
+                updateRefsService.update(self.om.getListItemById(self.state.ontologyId), self.selected['@id'], newIRI);
+                self.selected['@id'] = newIRI;
+                self.setUnsaved(self.ontology, self.state.entityIRI, true);
             }
-
-            setVariables(self.state.oi);
         }
 })();

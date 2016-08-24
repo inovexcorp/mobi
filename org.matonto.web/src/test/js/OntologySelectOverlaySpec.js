@@ -25,7 +25,10 @@ describe('Ontology Select Overlay directive', function() {
         scope,
         ontologyManagerSvc,
         mappingManagerSvc,
-        mapperStateSvc;
+        mapperStateSvc,
+        $q,
+        $timeout,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -36,22 +39,21 @@ describe('Ontology Select Overlay directive', function() {
         mockMappingManager();
         mockMapperState();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _$q_, _$timeout_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
+            $q = _$q_;
+            $timeout = _$timeout_;
         });
     });
 
-    describe('should intialize with the correct values', function() {
+    describe('should initialize with the correct values', function() {
         it('using opened and closed ontologies', function() {
-            ontologyManagerSvc.getList.and.returnValue([{matonto: {id: 'open'}}]);
-            ontologyManagerSvc.getOntologyIds.and.returnValue(['closed']);
+            ontologyManagerSvc.list = [{ontologyId: 'open', ontology: []}];
+            ontologyManagerSvc.ontologyIds = ['closed'];
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
             var controller = element.controller('ontologySelectOverlay');
@@ -70,7 +72,7 @@ describe('Ontology Select Overlay directive', function() {
         });
         it('if a mapping has already been set', function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            var sourceOntology = {matonto: {id: ''}};
+            var sourceOntology = {id: '', entities: []};
             mappingManagerSvc.sourceOntologies = [sourceOntology];
             mappingManagerSvc.getSourceOntology.and.returnValue(sourceOntology);
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
@@ -78,103 +80,120 @@ describe('Ontology Select Overlay directive', function() {
             var controller = element.controller('ontologySelectOverlay');
             expect(controller.ontologyIds.length).toBe(1);
             expect(controller.selectedOntology).toEqual(sourceOntology);
-            expect(controller.selectedOntologyId).toBe(sourceOntology.matonto.id);
+            expect(controller.selectedOntologyId).toBe(sourceOntology.id);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            this.sourceOntology = {matonto: {id: ''}};
+            this.sourceOntology = {id: '', entities: []};
             mappingManagerSvc.sourceOntologies = [this.sourceOntology];
             mappingManagerSvc.getSourceOntology.and.returnValue(this.sourceOntology);
             this.element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
+            controller = this.element.controller('ontologySelectOverlay');
         });
         it('should test whether an ontology is open', function() {
-            var controller = this.element.controller('ontologySelectOverlay');
             var result = controller.isOpen('test');
             expect(result).toBe(false);
             result = controller.isOpen('');
             expect(result).toBe(true);
         });
-        it('should get an ontology by id', function() {
-            var controller = this.element.controller('ontologySelectOverlay');
-            controller.getOntology('test');
-            scope.$digest();
-            expect(ontologyManagerSvc.getThenRestructure).toHaveBeenCalledWith('test');
-            expect(typeof controller.selectedOntology).toBe('object');
-            expect(controller.selectedOntology.matonto.id).toBe('test');
-
-            ontologyManagerSvc.getThenRestructure.calls.reset();
-            controller.getOntology('test');
-            scope.$digest();
-            expect(ontologyManagerSvc.getThenRestructure).not.toHaveBeenCalled();
-            expect(typeof controller.selectedOntology).toBe('object');
-            expect(controller.selectedOntology.matonto.id).toBe('test');
+        describe('should get an ontology by id', function() {
+            beforeEach(function() {
+                this.ontology = {id: 'test', entities: []};
+                mappingManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
+            });
+            it('if it is open', function() {
+                controller.getOntology('test');
+                $timeout.flush();
+                expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith('test');
+                expect(typeof controller.selectedOntology).toBe('object');
+            });
+            it('if it is not open', function() {
+                controller.ontologyObjs = [{id: 'test'}];
+                controller.getOntology('test');
+                $timeout.flush();
+                expect(mappingManagerSvc.getOntology).not.toHaveBeenCalled();
+                expect(typeof controller.selectedOntology).toBe('object');
+            });
         });
         it('should get the name of the passed ontology', function() {
-            var controller = this.element.controller('ontologySelectOverlay');
             var result = controller.getName('test');
             expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
+            expect(ontologyManagerSvc.getBeautifulIRI).toHaveBeenCalledWith('test');
             expect(typeof result).toBe('string');
 
-            controller.getOntology('test');
-            scope.$digest();
+            ontologyManagerSvc.getBeautifulIRI.calls.reset();
+            controller.ontologyObjs = [{id: 'test'}];
             result = controller.getName('test');
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            expect(ontologyManagerSvc.getBeautifulIRI).not.toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
-        it('should set the correct state for continuing', function() {
-            var sourceOntologies = angular.copy(mappingManagerSvc.sourceOntologies);
-            // mapperStateSvc.step = 2;
-            mapperStateSvc.changeOntology = false;
-            var controller = this.element.controller('ontologySelectOverlay');
-            controller.selectedOntologyId = '';
-            controller.continue();
-            expect(mapperStateSvc.cacheSourceOntologies).not.toHaveBeenCalled();
-            expect(mapperStateSvc.getCachedSourceOntologyId).toHaveBeenCalled();
-            expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.sourceOntologies).toEqual(sourceOntologies);
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
-
-            mapperStateSvc.changeOntology = true;
-            controller.continue();
-            expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
-            expect(mapperStateSvc.getCachedSourceOntologyId).toHaveBeenCalled();
-            expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.sourceOntologies).toEqual(sourceOntologies);
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
-
-            controller.selectedOntology = {matonto: {id: 'test'}};
-            controller.selectedOntologyId = controller.selectedOntology.matonto.id;
-            controller.continue();
-            expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
-            expect(mapperStateSvc.getCachedSourceOntologyId).toHaveBeenCalled();
-            expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.selectedOntologyId);
-            expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(controller.selectedOntologyId);
-            expect(mappingManagerSvc.sourceOntologies).not.toEqual(sourceOntologies);
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
+        describe('should set the correct state for continuing', function() {
+            beforeEach(function() {
+                this.sourceOntologies = angular.copy(mappingManagerSvc.sourceOntologies);
+                controller.selectedOntology = {id: 'test', entities: []};
+            });
+            it('if the ontology is not being changed', function() {
+                mapperStateSvc.changeOntology = false;
+                controller.selectedOntologyId = 'test';
+                controller.continue();
+                expect(mapperStateSvc.cacheSourceOntologies).not.toHaveBeenCalled();
+                expect(mapperStateSvc.getCachedSourceOntologyId).toHaveBeenCalled();
+                expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.selectedOntologyId);
+                expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(controller.selectedOntologyId);
+                expect(mappingManagerSvc.sourceOntologies).not.toEqual(this.sourceOntologies);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
+            });
+            describe('if the ontology is being changed', function() {
+                beforeEach(function() {
+                    mapperStateSvc.changeOntology = true;
+                });
+                it('and a different ontology is selected', function() {
+                    controller.selectedOntologyId = 'test';
+                    controller.continue();
+                    expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
+                    expect(mapperStateSvc.getCachedSourceOntologyId).toHaveBeenCalled();
+                    expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.selectedOntologyId);
+                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(controller.selectedOntologyId);
+                    expect(mappingManagerSvc.sourceOntologies).not.toEqual(this.sourceOntologies);
+                    expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
+                });
+                it('and the same ontology is chosen', function() {
+                    controller.selectedOntologyId = '';
+                    controller.continue();
+                    expect(mapperStateSvc.cacheSourceOntologies).toHaveBeenCalled();
+                    expect(mapperStateSvc.getCachedSourceOntologyId).toHaveBeenCalled();
+                    expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
+                    expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalled();
+                    expect(mappingManagerSvc.sourceOntologies).toEqual(this.sourceOntologies);
+                    expect(mapperStateSvc.step).toBe(mapperStateSvc.startingClassSelectStep);
+                });
+            });
         });
-        it('should set the correct state for going back', function() {
-            var controller = this.element.controller('ontologySelectOverlay');
-            var sourceOntologies = angular.copy(mappingManagerSvc.sourceOntologies);
-            mapperStateSvc.changeOntology = true;
-            controller.back();
-            expect(mapperStateSvc.restoreCachedSourceOntologies).toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-            expect(mapperStateSvc.changeOntology).toBe(false);
-            expect(mappingManagerSvc.sourceOntologies).toEqual(sourceOntologies);
-            expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
-
-            mapperStateSvc.restoreCachedSourceOntologies.calls.reset();
-            mapperStateSvc.changeOntology = false;
-            controller.back();
-            expect(mapperStateSvc.restoreCachedSourceOntologies).not.toHaveBeenCalled();
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
-            expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
+        describe('should set the correct state for going back', function() {
+            beforeEach(function() {
+                this.sourceOntologies = angular.copy(mappingManagerSvc.sourceOntologies);
+            });
+            it('if the ontology is being changed', function() {
+                mapperStateSvc.changeOntology = true;
+                controller.back();
+                expect(mapperStateSvc.restoreCachedSourceOntologies).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+                expect(mapperStateSvc.changeOntology).toBe(false);
+                expect(mappingManagerSvc.sourceOntologies).toEqual(this.sourceOntologies);
+                expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
+            });
+            it('if the ontology is not being changed', function() {
+                mapperStateSvc.changeOntology = false;
+                controller.back();
+                expect(mapperStateSvc.restoreCachedSourceOntologies).not.toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
+                expect(mappingManagerSvc.sourceOntologies).toEqual([]);
+                expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
+            });
         });
     });
     describe('replaces the element with the correct html', function() {

@@ -41,16 +41,16 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
 
-                    dvm.shouldSaveBeDisabled = function() {
-                        return !_.get(dvm.sm.ontology, 'matonto.isValid', false) || !dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length;
+                    dvm.shouldSaveBeEnabled = function() {
+                        return dvm.sm.hasUnsavedEntities(dvm.sm.ontology) && !dvm.sm.hasInvalidEntities(dvm.sm.ontology);
                     }
 
                     dvm.closeOntology = function() {
-                        if(dvm.om.getChangedListForOntology(_.get(dvm.sm.ontology, 'matonto.id')).length) {
+                        if (dvm.shouldSaveBeEnabled()) {
                             dvm.sm.showCloseOverlay = true;
                         } else {
-                            dvm.om.closeOntology(dvm.sm.state.oi, _.get(dvm.sm.ontology, 'matonto.id'));
-                            dvm.sm.clearState(dvm.sm.state.oi);
+                            dvm.om.closeOntology(dvm.sm.state.ontologyId);
+                            dvm.sm.clearState(dvm.sm.state.ontologyId);
                         }
                     }
                 }

@@ -1,0 +1,72 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="tree individual-tree scroll-without-buttons">
+    <strong>Individuals</strong>
+    <!-- ontologies -->
+    <ul class="ontology" ng-repeat="item in dvm.om.list track by item.ontologyId"
+      ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+        <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
+                   ontology-id="item.ontologyId"
+                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
+                   on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
+                   has-children="dvm.om.hasIndividuals(item.ontology)"
+                   is-opened="opened"></tree-item>
+        <li class="container" ng-if="opened">
+            <!-- classes -->
+            <ul class="class" ng-repeat="classIRI in item.classesWithIndividuals | orderBy track by classIRI"
+                ng-init="classOpened = dvm.sm.getIndividualsOpened(item.ontologyId, classIRI)"
+                ng-if="dvm.om.hasClassIndividuals(item.ontology, classIRI)">
+                <li>
+                    <a ng-click="classOpened = !classOpened; dvm.sm.setIndividualsOpened(item.ontologyId, classIRI, classOpened); $event.stopPropagation()">
+                        <i class="fa fa-fw"
+                           ng-class="{'fa-folder-open-o': classOpened, 'fa-folder-o': !classOpened}"></i>{{dvm.getTreeDisplay(dvm.om.getEntity(item.ontology, classIRI))}}
+                    </a>
+                </li>
+                <li class="container" ng-if="classOpened">
+                    <ul class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(item.ontology, classIRI) track by individual.matonto.originalIRI">
+                        <tree-item ontology-id="item.ontologyId"
+                                   current-entity="individual"
+                                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === individual.matonto.originalIRI"
+                                   on-click="dvm.sm.selectItem('individual-editor', individual.matonto.originalIRI, item)"></tree-item>
+                    </ul>
+                </li>
+            </ul>
+            <ul class="no-type" ng-if="dvm.om.hasNoTypeIndividuals(item.ontology)" ng-init="noTypeOpened = dvm.sm.getNoTypeIndividualsOpened(item.ontologyId)">
+                <li>
+                    <a ng-click="noTypeOpened = !noTypeOpened; dvm.sm.setNoTypeIndividualsOpened(item.ontologyId, noTypeOpened); $event.stopPropagation()">
+                        <i class="fa fa-fw"
+                           ng-class="{'fa-folder-open-o': noTypeOpened, 'fa-folder-o': !noTypeOpened}"></i>Other Individuals
+                    </a>
+                </li>
+                <li class="container" ng-if="noTypeOpened">
+                    <ul class="individual" ng-repeat="individual in dvm.om.getNoTypeIndividuals(item.ontology) track by individual.matonto.originalIRI">
+                        <tree-item ontology-id="item.ontologyId"
+                                   current-entity="individual"
+                                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === individual.matonto.originalIRI"
+                                   on-click="dvm.sm.selectItem('individual-editor', individual.matonto.originalIRI, item)"></tree-item>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>

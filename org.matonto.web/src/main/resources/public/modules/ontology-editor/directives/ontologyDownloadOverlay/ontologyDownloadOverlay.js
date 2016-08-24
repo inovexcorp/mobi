@@ -42,10 +42,10 @@
                     dvm.fileNamePattern = REGEX.FILENAME;
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.fileName = dvm.om.getBeautifulIRI(_.get(dvm.sm.ontology, '@id', dvm.sm.ontology.matonto.id)).replace(' ', '_');
+                    dvm.fileName = dvm.om.getBeautifulIRI(dvm.om.getOntologyIRI(dvm.sm.ontology)).replace(' ', '_');
 
                     dvm.download = function() {
-                        dvm.om.download(dvm.sm.ontology.matonto.id, dvm.serialization, dvm.fileName);
+                        dvm.om.downloadOntologyFile(dvm.sm.state.ontologyId, dvm.serialization, dvm.fileName);
                         dvm.sm.showDownloadOverlay = false;
                     }
                 }

@@ -50,9 +50,9 @@
          */
         .directive('classPreview', classPreview);
 
-        classPreview.$inject = ['prefixes', 'ontologyManagerService'];
+        classPreview.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
 
-        function classPreview(prefixes, ontologyManagerService) {
+        function classPreview(prefixes, ontologyManagerService, mappingManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,20 +64,19 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
+                    dvm.mm = mappingManagerService;
                     dvm.numPropPreview = 5;
                     dvm.full = false;
 
                     dvm.createTitle = function() {
                         return dvm.om.getEntityName(dvm.classObj);
                     }
-                    dvm.createPropList = function() {
-                        return _.map(_.get(dvm.classObj, 'matonto.properties'), prop => dvm.om.getEntityName(prop));
-                    }
                     dvm.createDescription = function() {
                         return _.get(dvm.classObj, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.classObj, "['" + prefixes.dc + "description'][0]['@value']", ''));
                     }
                     dvm.getProps = function() {
-                        return _.get(dvm.classObj, 'matonto.properties', []);
+                        var ontology = dvm.mm.findSourceOntologyWithClass(dvm.classObj['@id']);
+                        return dvm.om.getClassProperties(ontology.entities, dvm.classObj['@id']);
                     }
                     dvm.getPropList = function() {
                         var props = dvm.getProps();

@@ -26,7 +26,7 @@
         border-color: $btn-bg-dark;
     }
 
-    @for $i from 2 through 5 {
+    @for $i from 2 through 6 {
         &:first-child:nth-last-child(#{$i}),
         &:first-child:nth-last-child(#{$i}) ~ .tab-button {
             width: #{100%/$i};

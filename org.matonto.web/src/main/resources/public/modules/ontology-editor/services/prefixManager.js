@@ -35,7 +35,7 @@
             function updateContext(context, prop, old, fresh) {
                 var i = 0;
                 while(i < context.length) {
-                    if(context[i][prop] === old) {
+                    if (context[i][prop] === old) {
                         context[i][prop] = fresh;
                         break;
                     }
@@ -45,7 +45,7 @@
 
             self.editPrefix = function(edit, old, index, ontology) {
                 var input = document.getElementById('prefix-' + index);
-                if(edit) {
+                if (edit) {
                     updateRefsService.update(ontology, old + ':', input.value + ':', ontology.matonto.owl);
                     updateContext(ontology.matonto.context, 'key', old, input.value);
                 } else {
@@ -55,7 +55,7 @@
 
             self.editValue = function(edit, key, old, index, ontology) {
                 var input = document.getElementById('value-' + index);
-                if(edit) {
+                if (edit) {
                     updateRefsService.update(ontology, key + ':', old, ontology.matonto.owl);
                     updateRefsService.update(ontology, input.value, key + ':', ontology.matonto.owl);
                     updateContext(ontology.matonto.context, 'value', old, input.value);
@@ -69,7 +69,7 @@
                     context = ontology.matonto.context,
                     duplicate = _.findIndex(context, { 'key': key }) !== -1 || _.findIndex(context, { 'value': value }) !== -1;
 
-                if(!duplicate) {
+                if (!duplicate) {
                     context.push({key: key, value: value});
                     updateRefsService.update(ontology, value, key + ':', ontology.matonto.owl);
                     deferred.resolve();
@@ -84,7 +84,7 @@
                 var i = 0;
 
                 while(i < ontology.matonto.context.length) {
-                    if(ontology.matonto.context[i].key === key) {
+                    if (ontology.matonto.context[i].key === key) {
                         updateRefsService.update(ontology, key + ':', ontology.matonto.context[i].value, ontology.matonto.owl);
                         ontology.matonto.context.splice(i, 1);
                         break;

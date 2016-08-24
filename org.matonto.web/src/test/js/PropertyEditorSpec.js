@@ -27,7 +27,8 @@ describe('Property Editor directive', function() {
         element,
         controller,
         stateManagerSvc,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -37,19 +38,19 @@ describe('Property Editor directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             stateManagerSvc = _stateManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            prefixes = _prefixes_;
         });
+
+        element = $compile(angular.element('<property-editor></property-editor>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<property-editor></property-editor>'))(scope);
-            scope.$digest();
-        });
         it('for a div', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
@@ -88,20 +89,39 @@ describe('Property Editor directive', function() {
                     var warnings = element.querySelectorAll('.text-warning');
                     expect(warnings.length).toBe(1);
                 });
-                describe('with @type', function() {
-                    it('and isObjectProperty returns true', function() {
-                        stateManagerSvc.selected = {'@type': ['ObjectProperty']};
+                describe('when', function() {
+                    it('isObjectProperty returns true', function() {
+                        ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                        element = $compile(angular.element('<property-editor></property-editor>'))(scope);
                         scope.$digest();
                         var objectSelects = element.querySelectorAll('object-select');
                         expect(objectSelects.length).toBe(6);
                     });
-                    it('and isObjectProperty returns false', function() {
-                        stateManagerSvc.selected = {'@type': ['DatatypeProperty']};
+                    it('isDataTypeProperty returns true', function() {
+                        ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                        element = $compile(angular.element('<property-editor></property-editor>'))(scope);
                         scope.$digest();
                         var objectSelects = element.querySelectorAll('object-select');
                         expect(objectSelects.length).toBe(5);
                     });
                 });
+            });
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            controller = element.controller('propertyEditor');
+        });
+        describe('checkDomain', function() {
+            it('keeps rdfs:domain if it has a value', function() {
+                stateManagerSvc.selected[prefixes.rdfs + 'domain'] = ['value'];
+                controller.checkDomain();
+                expect(_.has(stateManagerSvc.selected, prefixes.rdfs + 'domain')).toBe(true);
+            });
+            it('unsets rdfs:domain if it has no value', function() {
+                stateManagerSvc.selected[prefixes.rdfs + 'domain'] = [];
+                controller.checkDomain();
+                expect(_.has(stateManagerSvc.selected, prefixes.rdfs + 'domain')).toBe(false);
             });
         });
     });
