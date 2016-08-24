@@ -292,6 +292,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             Model prefixModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.HAS_PREFIX.stringValue()), null);
             if (!prefixModel.isEmpty()) {
+                // TODO: Throw exception when missing
                 classMapping.setPrefix(Models.objectString(prefixModel).get());
             }
 
@@ -299,6 +300,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             Model mapsToModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.MAPS_TO.stringValue()), null);
             if (!mapsToModel.isEmpty()) {
+                // TODO: Throw exception when missing
                 classMapping.setMapping(Models.objectString(mapsToModel).get());
             }
 
@@ -306,6 +308,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             Model localNameModel = mappingModel.filter(classMappingIRI,
                     valueFactory.createIRI(Delimited.LOCAL_NAME.stringValue()), null);
             if (!localNameModel.isEmpty()) {
+                // TODO: Throw exception when missing
                 classMapping.setLocalName(Models.objectString(localNameModel).get());
             }
 
@@ -315,6 +318,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             dataPropertyModel.objects().forEach(dataProperty -> {
                 Model propertyModel = mappingModel.filter((IRI) dataProperty,
                         valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
+                // TODO: Throw exception when missing
                 String property = Models.objectString(propertyModel).get();
 
                 Model indexModel = mappingModel.filter((IRI) dataProperty,
@@ -331,10 +335,12 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
                 Model propertyModel = mappingModel.filter((IRI) s.getObject(),
                         valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
+                // TODO: Throw exception when missing
                 String property = Models.objectString(propertyModel).get();
 
                 Model classModel = mappingModel.filter((IRI) s.getObject(),
                         valueFactory.createIRI(Delimited.CLASS_MAPPING_PROP.stringValue()), null);
+                // TODO: Throw exception when missing
                 IRI objectMappingResultIRI = Models.objectIRI(classModel).get();
 
                 if (uriToObject.containsKey(objectMappingResultIRI)) {

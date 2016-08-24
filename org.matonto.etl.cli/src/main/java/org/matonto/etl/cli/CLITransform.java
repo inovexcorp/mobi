@@ -140,7 +140,7 @@ public class CLITransform implements Action {
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            LOGGER.error(e);
+            LOGGER.error("Unspecified error in transformation.", e);
         }
 
         return null;
