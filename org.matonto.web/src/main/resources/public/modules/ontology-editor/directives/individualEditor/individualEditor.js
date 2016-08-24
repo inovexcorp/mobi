@@ -84,11 +84,28 @@
                         dvm.sm.showRemoveIndividualPropertyOverlay = true;
                     }
 
+                    dvm.updateTypes = function() {
+                        dvm.sm.selected['@type'] = _.concat(dvm.types, [prefixes.owl + 'NamedIndividual']);
+                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                        var difference = _.difference(dvm.types, listItem.classesWithIndividuals);
+                        if (difference.length) {
+                            var classesWithIndividuals = _.concat(dvm.sm.state.classesWithIndividuals, difference);
+                            listItem.classesWithIndividuals = classesWithIndividuals;
+                            dvm.sm.state.classesWithIndividuals = classesWithIndividuals;
+                        }
+                    }
+
                     function getSubClasses() {
                         dvm.subClasses = dvm.om.getClassIRIs(dvm.sm.ontology);
                     }
 
+                    function getTypes() {
+                        dvm.types = _.without(dvm.sm.selected['@type'], prefixes.owl + 'NamedIndividual');
+                    }
+
                     $scope.$watch('dvm.sm.ontology', getSubClasses);
+                    $scope.$watch('dvm.sm.selected', getTypes);
+                    getTypes();
                     getSubClasses();
                 }]
             }

@@ -35,16 +35,16 @@
         .module('showProperties', [])
         /**
          * @ngdoc filter
-         * @name beautify.filter:beautify
+         * @name showProperties.filter:showProperties
          * @kind function
          *
          * @description
          * Takes an Object and array of property Objects, checks whether or not the Object has that property, and
          * returns an array of the properties it does have.
          *
-         * @param {string} entity The Object to check if it has the properties
+         * @param {Object} entity The Object to check if it has the properties
          * @param {Object[]} properties The array of property Objects
-         * @returns {string[]} Either an empty array or a string array of the properties from that list that the entity
+         * @returns {Object[]} Either an empty array or a string array of the properties from that list that the entity
          * has.
          */
         .filter('showProperties', showProperties);

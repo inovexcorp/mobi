@@ -186,6 +186,14 @@
                 _.set(self.state, self.getOpenPath(ontologyId, classIRI) + '.individualsOpened', isOpened);
             }
 
+            self.getNoTypeIndividualsOpened = function(ontologyId) {
+                return _.get(self.state, encodeURIComponent(ontologyId) + '.noTypeIndividualsOpened', false);
+            }
+
+            self.setNoTypeIndividualsOpened = function(ontologyId, isOpened) {
+                _.set(self.state, encodeURIComponent(ontologyId) + '.noTypeIndividualsOpened', isOpened);
+            }
+
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
                 updateRefsService.update(self.om.getListItemById(self.state.ontologyId), self.selected['@id'], newIRI);

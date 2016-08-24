@@ -28,10 +28,11 @@
 
     <div ng-if="dvm.sm.state.editorTab === 'basic'" class="tab clearfix">
         <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
-        <string-select ng-model="dvm.sm.selected['@type']"
+        <string-select ng-model="dvm.types"
                        display-text="'Type'"
                        select-list="dvm.subClasses"
-                       on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></string-select>
+                       on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true); dvm.updateTypes(item, model)"></string-select>
+        <annotation-tab></annotation-tab>
     </div>
 
     <div ng-if="dvm.sm.state.editorTab === 'properties'" class="tab clearfix">

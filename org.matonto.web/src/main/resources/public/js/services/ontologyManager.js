@@ -70,6 +70,19 @@
             });
             var defaultAnnotations = annotationManagerService.getDefaultAnnotations();
             var defaultErrorMessage = defaultErrorMessage;
+            var listItemTemplate = {
+                ontology: [],
+                ontologyId: '',
+                annotations: defaultAnnotations,
+                dataPropertyRange: defaultDatatypes,
+                subClasses: [],
+                subDataProperties: [],
+                subObjectProperties: [],
+                individuals: [],
+                classHierarchy: [],
+                classesWithIndividuals: [],
+                blankNodes: []
+            };
 
             /**
              * @ngdoc property
@@ -289,8 +302,9 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Used to close an ontology from the MatOnto application. It removes the ontology list item from
-             * `ontologyManagerService.list` and adds the ontology ID to `ontologyManagerService.ontologyIds` so that it
+             * Used to close an ontology from the MatOnto application. It removes the ontology list item from the
+             * {@link ontologyManager.service:ontologyManagerService#list list} and adds the ontology ID to the
+             * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontologyIds array} so that it
              * can be opened later if necessary.
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
@@ -393,11 +407,12 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the associated object from `ontologyManagerService.list` that contains the requested ontology ID.
-             * Returns the list item.
+             * Gets the associated object from the {@link ontologyManager.service:ontologyManagerService#list list} that
+             * contains the requested ontology ID. Returns the list item.
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
-             * @returns {Object} The associated Object from `ontologyManagerService.list`.
+             * @returns {Object} The associated Object from the
+             * {@link ontologyManager.service:ontologyManagerService#list list}.
              */
             self.getListItemById = function(ontologyId) {
                 return _.find(self.list, {ontologyId: ontologyId});
@@ -422,8 +437,8 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the ontology from the `ontologyManagerService.list` using the requested ontology ID. Returns the
-             * JSON-LD of the ontology.
+             * Gets the ontology from the {@link ontologyManager.service:ontologyManagerService#list list} using the
+             * requested ontology ID. Returns the JSON-LD of the ontology.
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
              * @returns {Object[]} The JSON-LD of the requested ontology.
@@ -472,7 +487,7 @@
              * false.
              */
             self.hasOntologyEntity = function(ontology) {
-                return _.some(ontology, {'@type': [prefixes.owl + 'Ontology']});
+                return _.some(ontology, entity => self.isOntology(entity));
             }
             /**
              * @ngdoc method
@@ -486,7 +501,7 @@
              * @returns {Object} Returns the ontology entity.
              */
             self.getOntologyEntity = function(ontology) {
-                return _.find(ontology, {'@type': [prefixes.owl + 'Ontology']}, {});
+                return _.find(ontology, entity => self.isOntology(entity), {});
             }
             /**
              * @ngdoc method
@@ -560,18 +575,10 @@
                     .then(response => {
                         if (_.has(response, 'data.persisted') && _.has(response, 'data.ontologyId')) {
                             _.set(ontologyJSON, 'matonto.originalIRI', ontologyJSON['@id']);
-                            var listItem = {
-                                ontology: [ontologyJSON],
-                                ontologyId: response.data.ontologyId,
-                                annotations: defaultAnnotations,
-                                dataPropertyRange: defaultDatatypes,
-                                subClasses: [],
-                                subDataProperties: [],
-                                subObjectProperties: [],
-                                individuals: [],
-                                classHierarchy: [],
-                                classesWithIndividuals: []
-                            }
+
+                            var listItem = angular.copy(listItemTemplate);
+                            listItem.ontology.push(ontologyJSON);
+                            listItem.ontologyId = response.data.ontologyId;
                             self.list.push(listItem);
                             deferred.resolve({
                                 entityIRI: ontologyJSON['@id'],
@@ -615,9 +622,7 @@
              * false.
              */
             self.hasClasses = function(ontology) {
-                return _.some(ontology, entity => {
-                    return self.isClass(entity) && !self.isBlankNode(entity);
-                });
+                return _.some(ontology, entity => self.isClass(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -632,9 +637,7 @@
              * @returns {Object[]} An array of all owl:Class entities within the ontology.
              */
             self.getClasses = function(ontology) {
-                return _.filter(ontology, entity => {
-                    return self.isClass(entity) && !self.isBlankNode(entity);
-                });
+                return _.filter(ontology, entity => self.isClass(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -713,7 +716,7 @@
                     }, response => {
                         onCreateError(response, deferred);
                     })
-                    .then(function() {
+                    .then(() => {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
@@ -853,9 +856,7 @@
              * false.
              */
             self.hasNoDomainProperties = function(ontology) {
-                return _.some(ontology, entity => {
-                    return self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain');
-                });
+                return _.some(ontology, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'));
             }
             /**
              * @ngdoc method
@@ -870,9 +871,7 @@
              * @returns {Object[]} Returns an array of properties not associated with a class.
              */
             self.getNoDomainProperties = function(ontology) {
-                return _.filter(ontology, entity => {
-                    return self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain');
-                });
+                return _.filter(ontology, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'));
             }
             /**
              * @ngdoc method
@@ -996,7 +995,7 @@
                     }, response => {
                         onCreateError(response, deferred);
                     })
-                    .then(function() {
+                    .then(() => {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
@@ -1014,9 +1013,7 @@
              * returns false.
              */
             self.hasDataTypeProperties = function(ontology) {
-                return _.some(ontology, entity => {
-                    return self.isDataTypeProperty(entity);
-                });
+                return _.some(ontology, entity =>  self.isDataTypeProperty(entity));
             }
             /**
              * @ngdoc method
@@ -1108,7 +1105,7 @@
                     }, response => {
                         onCreateError(response, deferred);
                     })
-                    .then(function() {
+                    .then(() => {
                         $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
@@ -1199,6 +1196,36 @@
              */
             self.getIndividuals = function(ontology) {
                 return _.filter(ontology, entity => self.isIndividual(entity));
+            }
+            /**
+             * @ngdoc method
+             * @name hasNoTypeIndividuals
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks to see if the ontology has individuals with no other type. Returns a boolean indicating the
+             * existence of those individuals.
+             *
+             * @param {Object[]} ontology The ontology you want to check.
+             * @returns {boolean} Returns true if it does have individuals with no other type, otherwise returns false.
+             */
+            self.hasNoTypeIndividuals = function(ontology) {
+                return _.some(ontology, entity => self.isIndividual(entity) && entity['@type'].length === 1);
+            }
+            /**
+             * @ngdoc method
+             * @name getNoTypeIndividuals
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the list of all owl:NamedIndividual entities within the provided ontology the have no other type.
+             * Returns an Object[].
+             *
+             * @param {Object[]} ontology The ontology you want to check.
+             * @returns {Object[]} An array of all owl:NamedIndividual entities with no other type within the ontology.
+             */
+            self.getNoTypeIndividuals = function(ontology) {
+                return _.filter(ontology, entity => self.isIndividual(entity) && entity['@type'].length === 1);
             }
             /**
              * @ngdoc method
@@ -1348,9 +1375,7 @@
              * @returns {Object[]} An array of all owl:Restriction entities within the ontology.
              */
             self.getBlankNodes = function(ontology) {
-                return _.filter(ontology, entity => {
-                    return self.isBlankNode(entity);
-                });
+                return _.filter(ontology, entity => self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1568,9 +1593,7 @@
                 return icon;
             }
             function addOntologyIdToArray(arr, ontologyId) {
-                return _.forEach(arr, item => {
-                    return _.set(item, 'ontologyId', ontologyId);
-                });
+                return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
             }
             function compareListItems(obj1, obj2) {
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
@@ -1635,11 +1658,10 @@
                         _.set(blankNodes, id, getReadableBlankNodeText(id, entity));
                     }
                 });
-                var listItem = {
-                    ontologyId: ontologyId,
-                    ontology: ontology,
-                    blankNodes: blankNodes
-                }
+                var listItem = angular.copy(listItemTemplate);
+                listItem.ontologyId = ontologyId;
+                listItem.ontology = ontology;
+                listItem.blankNodes = blankNodes;
                 $q.all([
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris'),
@@ -1700,14 +1722,10 @@
                         var classHierarchyResponse = response[2];
                         if (_.get(classHierarchyResponse, 'status') === 200) {
                             listItem.classHierarchy = classHierarchyResponse.data;
-                        } else {
-                            listItem.classHierarchy = [];
                         }
                         var classesWithIndividualsResponse = response[3];
                         if (_.get(classesWithIndividualsResponse, 'status') === 200) {
                             listItem.classesWithIndividuals = classesWithIndividualsResponse.data;
-                        } else {
-                            listItem.classesWithIndividuals = [];
                         }
                         self.list.push(listItem);
                         deferred.resolve();
