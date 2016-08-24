@@ -1,5 +1,7 @@
 package org.matonto.rdf.orm.generate.plugin;
 
+import java.io.File;
+
 /*-
  * #%L
  * RDF ORM Maven Plugin
@@ -33,8 +35,6 @@ import org.matonto.rdf.orm.generate.GraphReadingUtility;
 import org.matonto.rdf.orm.generate.SourceGenerator;
 import org.openrdf.model.Model;
 
-import java.io.File;
-
 /**
  * This class is the {@link Mojo} that our plugin will use for generating the
  * source code for a given ontology.
@@ -54,8 +54,8 @@ public class OrmGenerationMojo extends AbstractMojo {
 	/**
 	 * The {@link IRI} string for the target ontology.
 	 */
-	@Parameter(property = "ontologyIri", required = true)
-	private String ontologyIri;
+	@Parameter(property = "outputPackage", required = true)
+	private String outputPackage;
 
 	/**
 	 * The location where the generated source will be stored.
@@ -73,10 +73,10 @@ public class OrmGenerationMojo extends AbstractMojo {
 		if (file.isFile()) {
 			try {
                 Model ontology = GraphReadingUtility.readOntology(file, ontologyFile);
-                SourceGenerator.toSource(ontology, ontologyIri, outputLocation);
+                SourceGenerator.toSource(ontology, outputPackage, outputLocation);
 			} catch (Exception e) {
 			    String msg = String.format("Issue generating source from ontology specified: {%s} {%s} {%s}",
-                        ontologyFile, ontologyIri, outputLocation);
+                        ontologyFile, outputPackage, outputLocation);
 				throw new MojoFailureException(msg, e);
 			}
 		} else {

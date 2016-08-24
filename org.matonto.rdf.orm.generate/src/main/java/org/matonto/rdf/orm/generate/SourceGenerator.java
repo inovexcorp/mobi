@@ -92,10 +92,10 @@ public class SourceGenerator {
 
     private final String packageName;
 
-    public SourceGenerator(final Model ontologyGraph, final String targetOntologyIri)
+    public SourceGenerator(final Model ontologyGraph, final String outputPackage)
             throws OntologyToJavaException, IOException {
         this.model = ontologyGraph;
-        this.packageName = PackageNamer.packageFromUrl(targetOntologyIri);
+        this.packageName = outputPackage;
         // Built interfaces...
         generateIndividualInterfaces();
         // Link the interfaces inheritence-wise.

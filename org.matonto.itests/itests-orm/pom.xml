@@ -71,7 +71,7 @@
                         <inherited>false</inherited>
                         <configuration>
                             <ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
-                            <ontologyIri>http://xmlns.com/foaf/0.1/</ontologyIri>
+							<outputPackage>com.xmlns.foaf._0._1</outputPackage>
                             <outputLocation>${project.basedir}/src/test/java</outputLocation>
                         </configuration>
                     </execution>
