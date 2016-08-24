@@ -416,8 +416,11 @@ public class SimpleOntologyManager implements OntologyManager {
                     conn.getStatements(entityResource, null, null, ontologyResource);
             RepositoryResult<Statement> entityObjectStatements =
                     conn.getStatements(null, null, entityResource, ontologyResource);
+            RepositoryResult<Statement> entityPredicateStatements =
+                    conn.getStatements(null, factory.createIRI(entityResource.stringValue()), null, ontologyResource);
 
             Set<Statement> cachedObjectStatements = new HashSet<>();
+            Set<Statement> cachedPredicateStatements = new HashSet<>();
             Set<String> changedIriStrings = new HashSet<>();
             Set<org.openrdf.model.Model> changedModels = new HashSet<>();
 
@@ -425,10 +428,15 @@ public class SimpleOntologyManager implements OntologyManager {
                 changedIriStrings.add(stmt.getSubject().stringValue());
                 cachedObjectStatements.add(stmt);
             }
+            for (Statement stmt : entityPredicateStatements) {
+                changedIriStrings.add(stmt.getSubject().stringValue());
+                cachedPredicateStatements.add(stmt);
+            }
             changedEntities.put("iris", changedIriStrings);
 
             conn.remove(entitySubjectStatements, ontologyResource);
             conn.remove(cachedObjectStatements, ontologyResource);
+            conn.remove(cachedPredicateStatements, ontologyResource);
 
             for (String iriString : changedIriStrings) {
                 RepositoryResult<Statement> changedEntity =

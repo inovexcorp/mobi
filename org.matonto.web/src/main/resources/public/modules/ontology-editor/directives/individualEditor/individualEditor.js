@@ -96,7 +96,7 @@
                     }
 
                     function getSubClasses() {
-                        dvm.subClasses = dvm.om.getClassIRIs(dvm.sm.ontology);
+                        dvm.subClasses = _.map(dvm.sm.state.subClasses, obj => dvm.ro.getItemIri(obj));
                     }
 
                     function getTypes() {

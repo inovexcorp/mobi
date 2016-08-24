@@ -122,6 +122,7 @@ describe('Create Property Overlay directive', function() {
                     controller.property['@type'] = [prefixes.owl + 'ObjectProperty'];
                     ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                     controller.create();
+                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                     expect(ontologyManagerSvc.createObjectProperty).toHaveBeenCalledWith(
                         stateManagerSvc.state.ontologyId, controller.property);
                 });
@@ -129,6 +130,7 @@ describe('Create Property Overlay directive', function() {
                     controller.property['@type'] = [prefixes.owl + 'DataTypeProperty'];
                     ontologyManagerSvc.isObjectProperty.and.returnValue(false);
                     controller.create();
+                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
                     expect(ontologyManagerSvc.createDataTypeProperty).toHaveBeenCalledWith(
                         stateManagerSvc.state.ontologyId, controller.property);
                 });

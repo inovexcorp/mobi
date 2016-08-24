@@ -60,8 +60,14 @@
                                     dvm.sm.showDeleteConfirmation = false;
                                 }, onError);
                         } else if (dvm.om.isClass(dvm.sm.selected)) {
-                            dvm.om.deleteClass(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
-                                .then(selectCurrentOntology, onError);
+                            var classIRI = dvm.sm.state.entityIRI;
+                            dvm.om.deleteClass(dvm.sm.state.ontologyId, classIRI)
+                                .then(() => {
+                                    var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                                    _.pull(dvm.sm.state.classesWithIndividuals, classIRI);
+                                    _.pull(listItem.classesWithIndividuals, classIRI);
+                                    selectCurrentOntology();
+                                }, onError);
                         } else if (dvm.om.isObjectProperty(dvm.sm.selected)) {
                             dvm.om.deleteObjectProperty(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
                                 .then(selectCurrentOntology, onError);

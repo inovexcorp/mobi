@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'stateManagerService', 'responseObj', 'prefixes'];
 
-        function createIndividualOverlay($filter, ontologyManagerService, stateManagerService, prefixes) {
+        function createIndividualOverlay($filter, ontologyManagerService, stateManagerService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,6 +40,7 @@
                     var dvm = this;
 
                     dvm.prefixes = prefixes;
+                    dvm.ro = responseObj;
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
 
@@ -52,7 +53,7 @@
                         '@type': []
                     };
 
-                    dvm.subClasses = dvm.om.getClassIRIs(dvm.sm.ontology);
+                    dvm.subClasses = _.map(dvm.sm.state.subClasses, obj => dvm.ro.getItemIri(obj));
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
