@@ -27,9 +27,10 @@
         .module('createOntologyOverlay', [])
         .directive('createOntologyOverlay', createOntologyOverlay);
 
-        createOntologyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService']
+        createOntologyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService',
+            'prefixes'];
 
-        function createOntologyOverlay($filter, REGEX, ontologyManagerService, stateManagerService) {
+        function createOntologyOverlay($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,28 +41,42 @@
                     var dvm = this;
 
                     var date = new Date();
-                    var prefix = 'https://matonto.org/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear() + '/';
+                    var prefix = 'https://matonto.org/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear()
+                        + '/';
 
+                    dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.iriHasChanged = false;
-                    dvm.iri = prefix;
-
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
 
+                    dvm.ontology = {
+                        '@id': prefix,
+                        '@type': [prefixes.owl + 'Ontology'],
+                        [prefixes.dcterms + 'title']: [{
+                            '@value': ''
+                        }],
+                        [prefixes.dcterms + 'description']: [{
+                            '@value': ''
+                        }]
+                    };
+
                     dvm.nameChanged = function() {
-                        if(!dvm.iriHasChanged) {
-                            dvm.iri = prefix + $filter('camelCase')(dvm.name, 'class');
+                        if (!dvm.iriHasChanged) {
+                            dvm.ontology['@id'] = prefix + $filter('camelCase')(
+                                dvm.ontology[prefixes.dcterms + 'title'][0]['@value'], 'class');
                         }
                     }
 
                     dvm.create = function() {
-                        dvm.om.createOntology(dvm.iri, dvm.name, dvm.description)
-                            .then(function(response) {
-                                dvm.error = '';
+                        if (dvm.ontology[prefixes.dcterms + 'description'][0]['@value'] === '') {
+                            _.unset(dvm.ontology, prefixes.dcterms + 'description');
+                        }
+                        dvm.om.createOntology(dvm.ontology)
+                            .then(response => {
                                 dvm.sm.showCreateOntologyOverlay = false;
-                                dvm.sm.setStateToNew(dvm.sm.state, dvm.om.getList(), 'ontology');
-                            }, function(errorMessage) {
+                                dvm.sm.selectItem('ontology-editor', response.entityIRI,
+                                    dvm.om.getListItemById(response.ontologyId));
+                            }, errorMessage => {
                                 dvm.error = errorMessage;
                             });
                     }

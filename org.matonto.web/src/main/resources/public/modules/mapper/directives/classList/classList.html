@@ -31,7 +31,7 @@
                     {{dvm.getClassTitle(classMapping)}}</a>
                 <ul class="props">
                     <li ng-if="dvm.isOpen(classMapping['@id'])" ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id'])">
-                        <a ng-click="dvm.clickProp(propMapping, classMapping)" ng-class="{'invalid': dvm.getInvalidPropIds().indexOf(propMapping['@id']) >= 0, 'active': propMapping['@id'] === dvm.state.selectedPropMappingId && !dvm.state.newProp}">{{dvm.getPropTitle(propMapping, classMapping)}}</a>
+                        <a ng-click="dvm.clickProp(propMapping, classMapping)" ng-class="{'invalid': dvm.getInvalidPropIds().indexOf(propMapping['@id']) >= 0, 'active': propMapping['@id'] === dvm.state.selectedPropMappingId && !dvm.state.newProp}">{{dvm.getPropTitle(propMapping)}}</a>
                     </li>
                     <li ng-if="!dvm.mappedAllProps(classMapping)"><a ng-click="dvm.clickAddProp(classMapping)" ng-class="{'active': classMapping['@id'] === dvm.state.selectedClassMappingId && dvm.state.newProp}"><i class="fa fa-plus"></i> Add Property</a></li>
                 </ul>

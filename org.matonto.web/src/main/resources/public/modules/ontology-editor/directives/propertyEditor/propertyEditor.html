@@ -30,88 +30,79 @@
         <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <string-select ng-model="dvm.sm.selected['@type']"
                        display-text="'Type'"
-                       muted-text="'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'"
-                       change-event="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"
-                       select-list="dvm.propertyTypes">
-        </string-select>
+                       muted-text="dvm.prefixes.rdf + 'type'"
+                       on-change="dvm.sm.setUnsaved(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"
+                       select-list="dvm.om.propertyTypes"></string-select>
         <annotation-tab></annotation-tab>
     </div>
 
     <div ng-if="dvm.sm.state.editorTab === 'axioms'" class="tab clearfix">
+        <!-- rdfs:domain -->
         <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'domain']"
                        display-text="'Domain'"
                        muted-text="dvm.prefixes.rdfs + 'domain'"
-                       select-list="dvm.subClasses"></object-select>
+                       select-list="dvm.subClasses"
+                       on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true); dvm.checkDomain()"></object-select>
+        <!-- object property -->
+        <div ng-if="dvm.om.isObjectProperty(dvm.sm.selected)">
+            <!-- rdfs:range -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'range']"
+                           display-text="'Range'"
+                           muted-text="dvm.prefixes.rdfs + 'range'"
+                           select-list="dvm.subClasses"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+            <!-- owl:equivalentProperty -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'equivalentProperty']"
+                           display-text="'Equivalent Property'"
+                           muted-text="dvm.prefixes.owl + 'equivalentProperty'"
+                           select-list="dvm.subObjectProperties"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+            <!-- rdfs:subPropertyOf -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'subPropertyOf']"
+                           display-text="'Sub Property Of'"
+                           muted-text="dvm.prefixes.rdfs + 'subPropertyOf'"
+                           select-list="dvm.subObjectProperties"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+            <!-- owl:inverseOf -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'inverseOf']"
+                           display-text="'Inverse Of'"
+                           muted-text="dvm.prefixes.owl + 'inverseOf'"
+                           select-list="dvm.subObjectProperties"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+            <!-- owl:disjointWith -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'disjointWith']"
+                           display-text="'Disjoint With'"
+                           muted-text="dvm.prefixes.owl + 'disjointWith'"
+                           select-list="dvm.subObjectProperties"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+        </div>
 
-        <div ng-if="dvm.sm.selected['@type'].length">
-            <!-- object property -->
-            <div ng-if="dvm.om.isObjectProperty(dvm.sm.selected['@type'])">
-                <!-- rdfs:range -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'range']"
-                               display-text="'Range'"
-                               muted-text="dvm.prefixes.rdfs + 'range'"
-                               select-list="dvm.subClasses"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-
-                <!-- owl:equivalentProperty -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'equivalentProperty']"
-                               display-text="'Equivalent Property'"
-                               muted-text="dvm.prefixes.owl + 'equivalentProperty'"
-                               select-list="dvm.subObjectProperties"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-
-                <!-- rdfs:subPropertyOf -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'subPropertyOf']"
-                               display-text="'Sub Property Of'"
-                               muted-text="dvm.prefixes.rdfs + 'subPropertyOf'"
-                               select-list="dvm.subObjectProperties"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-
-                <!-- owl:inverseOf -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'inverseOf']"
-                               display-text="'Inverse Of'"
-                               muted-text="dvm.prefixes.owl + 'inverseOf'"
-                               select-list="dvm.subObjectProperties"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-
-                <!-- owl:disjointWith -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'disjointWith']"
-                               display-text="'Disjoint With'"
-                               muted-text="dvm.prefixes.owl + 'disjointWith'"
-                               select-list="dvm.subObjectProperties"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-            </div>
-
-            <!-- datatype property -->
-            <div ng-if="!dvm.om.isObjectProperty(dvm.sm.selected['@type'])">
-                <!-- rdfs:range -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'range']"
-                               display-text="'Range'"
-                               muted-text="dvm.prefixes.rdfs + 'range'"
-                               select-list="dvm.sm.ontology.matonto.dataPropertyRange"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-
-                <!-- owl:equivalentProperty -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'equivalentProperty']"
-                               display-text="'Equivalent Property'"
-                               muted-text="dvm.prefixes.owl + 'equivalentProperty'"
-                               select-list="dvm.sm.ontology.matonto.subDataProperties"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-
-                <!-- rdfs:subPropertyOf -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'subPropertyOf']"
-                               display-text="'Sub Property Of'"
-                               muted-text="dvm.prefixes.rdfs + 'subPropertyOf'"
-                               select-list="dvm.sm.ontology.matonto.subDataProperties"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-
-                <!-- owl:disjointWith -->
-                <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'disjointWith']"
-                               display-text="'Disjoint With'"
-                               muted-text="dvm.prefixes.owl + 'disjointWith'"
-                               select-list="dvm.sm.ontology.matonto.subDataProperties"
-                               on-change="dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state)"></object-select>
-            </div>
+        <!-- datatype property -->
+        <div ng-if="dvm.om.isDataTypeProperty(dvm.sm.selected)">
+            <!-- rdfs:range -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'range']"
+                           display-text="'Range'"
+                           muted-text="dvm.prefixes.rdfs + 'range'"
+                           select-list="dvm.sm.state.dataPropertyRange"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+            <!-- owl:equivalentProperty -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'equivalentProperty']"
+                           display-text="'Equivalent Property'"
+                           muted-text="dvm.prefixes.owl + 'equivalentProperty'"
+                           select-list="dvm.sm.state.subDataProperties"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+            <!-- rdfs:subPropertyOf -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.rdfs + 'subPropertyOf']"
+                           display-text="'Sub Property Of'"
+                           muted-text="dvm.prefixes.rdfs + 'subPropertyOf'"
+                           select-list="dvm.sm.state.subDataProperties"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
+            <!-- owl:disjointWith -->
+            <object-select ng-model="dvm.sm.selected[dvm.prefixes.owl + 'disjointWith']"
+                           display-text="'Disjoint With'"
+                           muted-text="dvm.prefixes.owl + 'disjointWith'"
+                           select-list="dvm.sm.state.subDataProperties"
+                           on-change="dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.state.entityIRI, true)"></object-select>
         </div>
 
         <div ng-if="!dvm.sm.selected['@type'].length">

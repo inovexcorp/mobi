@@ -90,6 +90,5 @@
         <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
     </feature>
 </features>

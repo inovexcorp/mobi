@@ -56,7 +56,7 @@ describe('Ontology Side Bar directive', function() {
         });
         it('based on left-nav-items', function() {
             var leftNavItems = element.find('left-nav-item');
-            expect(leftNavItems.length).toBe(10);
+            expect(leftNavItems.length).toBe(11);
         });
         it('based on .separators', function() {
             var separators = element.querySelectorAll('.separator');
@@ -69,23 +69,22 @@ describe('Ontology Side Bar directive', function() {
             scope.$digest();
             controller = element.controller('ontologySideBar');
         });
-        it('shouldSaveBeDisabled should call the appropriate manager functions', function() {
-            controller.shouldSaveBeDisabled();
-            expect(ontologyManagerSvc.getChangedListForOntology).not.toHaveBeenCalled();
-            stateManagerSvc.ontology.matonto.isValid = true;
-            controller.shouldSaveBeDisabled();
-            expect(ontologyManagerSvc.getChangedListForOntology).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id);
+        it('shouldSaveBeEnabled should call the appropriate manager functions', function() {
+            stateManagerSvc.hasUnsavedEntities.and.returnValue(true);
+            controller.shouldSaveBeEnabled();
+            expect(stateManagerSvc.hasUnsavedEntities).toHaveBeenCalledWith(stateManagerSvc.ontology);
+            expect(stateManagerSvc.hasInvalidEntities).toHaveBeenCalledWith(stateManagerSvc.ontology);
         });
         describe('closeOntology', function() {
             it('for no changes, sets the correct variable', function() {
-                ontologyManagerSvc.getChangedListForOntology.and.returnValue(['']);
+                controller.shouldSaveBeEnabled = jasmine.createSpy('shouldSaveBeEnabled').and.returnValue(true);
                 controller.closeOntology();
                 expect(stateManagerSvc.showCloseOverlay).toBe(true);
             });
             it('for changes, calls the correct functions', function() {
                 controller.closeOntology();
-                expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.oi, stateManagerSvc.ontology.matonto.id);
-                expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.oi);
+                expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+                expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
             });
         });
     });

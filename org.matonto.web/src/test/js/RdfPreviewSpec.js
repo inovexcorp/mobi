@@ -25,7 +25,9 @@ describe('RDF Preview directive', function() {
         scope,
         jsonFilter = jasmine.createSpy('jsonFilter'),
         delimitedManagerSvc,
-        mappingManagerSvc;
+        mappingManagerSvc,
+        $timeout,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -37,34 +39,37 @@ describe('RDF Preview directive', function() {
             $provide.value('jsonFilter', jsonFilter);
         });
 
-        inject(function(_delimitedManagerService_, _mappingManagerService_) {
-            delimitedManagerSvc = _delimitedManagerService_;
-            mappingManagerSvc = _mappingManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _delimitedManagerService_, _mappingManagerService_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            delimitedManagerSvc = _delimitedManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
+            $timeout = _$timeout_;
         });
     });
 
     describe('controller methods', function() {
-        it('should generate an RDF preview', function() {
+        beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            var element = $compile(angular.element('<rdf-preview></rdf-preview>'))(scope);
+            this.element = $compile(angular.element('<rdf-preview></rdf-preview>'))(scope);
             scope.$digest();
-            var controller = element.controller('rdfPreview');
-            controller.serializeOption = 'jsonld';
-            controller.generatePreview();
-            scope.$apply();
-            expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
-            expect(typeof delimitedManagerSvc.preview).toBe('object');
-
-            controller.serializeOption = 'turtle';
-            controller.generatePreview();
-            scope.$apply();
-            expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
-            expect(typeof delimitedManagerSvc.preview).toBe('string');
+            controller = this.element.controller('rdfPreview');
+        });
+        describe('should generate an RDF preview', function() {            
+            it('if format is JSON-LD', function() {
+                controller.serializeOption = 'jsonld';
+                controller.generatePreview();
+                $timeout.flush();
+                expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
+                expect(typeof delimitedManagerSvc.preview).toBe('object');
+            });
+            it('if format is not JSON-LD', function() {
+                controller.serializeOption = 'turtle';
+                controller.generatePreview();
+                $timeout.flush();
+                expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeOption);
+                expect(typeof delimitedManagerSvc.preview).toBe('string');
+            });
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -84,7 +89,7 @@ describe('RDF Preview directive', function() {
             expect(toggleIcon.hasClass('fa-chevron-right')).toBe(false);
             expect(toggleIcon.hasClass('fa-chevron-left')).toBe(true);
 
-            var controller = this.element.controller('rdfPreview');
+            controller = this.element.controller('rdfPreview');
             controller.visible = true;
             scope.$digest();
             expect(this.element.hasClass('out')).toBe(true);
@@ -106,7 +111,7 @@ describe('RDF Preview directive', function() {
     it('should set the visibility when the toggle button is clicked', function() {
         var element = $compile(angular.element('<rdf-preview></rdf-preview>'))(scope);
         scope.$digest();
-        var controller = element.controller('rdfPreview');
+        controller = element.controller('rdfPreview');
         expect(controller.visible).toBe(false);
         angular.element(element.querySelectorAll('.toggle-btn')).triggerHandler('click');
         expect(controller.visible).toBe(true);
@@ -115,7 +120,7 @@ describe('RDF Preview directive', function() {
         scope.createPreview = jasmine.createSpy('createPreview');
         var element = $compile(angular.element('<rdf-preview></rdf-preview>'))(scope);
         scope.$digest();
-        var controller = element.controller('rdfPreview');
+        controller = element.controller('rdfPreview');
         spyOn(controller, 'generatePreview');
         angular.element(element.querySelectorAll('.controls button')).triggerHandler('click');
         expect(controller.generatePreview).toHaveBeenCalled();

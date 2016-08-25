@@ -20,11 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+
 describe('Class Tree directive', function() {
     var $compile,
         scope,
         element,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        stateManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,22 +35,22 @@ describe('Class Tree directive', function() {
         mockStateManager();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
     });
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            ontologyManagerSvc.getList.and.returnValue([
-                {
-                    matonto: {
-                        classes: ['class1', 'class2']
-                    }
-                }
-            ]);
+            stateManagerSvc.getOpened.and.returnValue(true);
+            ontologyManagerSvc.list = [{
+                ontologyId: '',
+                ontology: [{}],
+                classHierarchy: [{'entityIRI': 'class1'},{'entityIRI': 'class2'}]
+            }];
             element = $compile(angular.element('<class-tree></class-tree>'))(scope);
             scope.$digest();
         });
@@ -63,7 +66,7 @@ describe('Class Tree directive', function() {
         });
         it('based on ul', function() {
             var uls = element.find('ul');
-            expect(uls.length).toBe(2);
+            expect(uls.length).toBe(3);
         });
         it('based on container tree-items', function() {
             var lis = element.querySelectorAll('.container tree-item');

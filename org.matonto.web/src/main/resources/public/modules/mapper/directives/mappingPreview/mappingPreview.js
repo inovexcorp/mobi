@@ -70,28 +70,32 @@
                         dvm.state.editMapping = true;
                         dvm.state.newMapping = false;
                         var ontologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
-                        var ontology = _.find(dvm.om.getList(), {matonto: {id: ontologyId}});
+                        var ontology = _.find(dvm.om.list, {ontologyId: ontologyId});
                         if (ontology) {
-                            deferred.resolve(ontology);
+                            var obj = _.pick(ontology, ['ontologyId', 'ontology']);
+                            deferred.resolve({id: obj.ontologyId, entities: obj.ontology});
                         } else {
-                            dvm.om.getThenRestructure(ontologyId).then(ontology => {
+                            dvm.mm.getOntology(ontologyId).then(ontology => {
                                 deferred.resolve(ontology);
                             });
                         }
                         deferred.promise.then(ontology => {
-                            if (isValid(ontology)) {
-                                dvm.om.getImportedOntologies(ontology.matonto.id).then(imported => {
-                                    dvm.mm.sourceOntologies = _.concat(ontology, imported);
-                                    dvm.state.step = dvm.state.fileUploadStep;
+                            dvm.om.getImportedOntologies(ontology.id).then(imported => {
+                                var importedOntologies = _.map(imported, obj => {
+                                    return {id: obj.id, entities: obj.ontology};
                                 });
-                            } else {
-                                dvm.state.invalidOntology = true;
-                            }
+                                dvm.mm.sourceOntologies = _.concat(ontology, importedOntologies);
+                                if (dvm.mm.areCompatible()) {
+                                    dvm.state.step = dvm.state.fileUploadStep;                                
+                                } else {
+                                    dvm.state.invalidOntology = true;
+                                }
+                            });
                         });
                     }
                     dvm.ontologyExists = function() {
-                        var objs = angular.copy(dvm.om.getList());
-                        var ids = _.union(dvm.om.getOntologyIds(), _.map(objs, 'matonto.id'));
+                        var objs = angular.copy(dvm.om.list);
+                        var ids = _.union(dvm.om.ontologyIds, _.map(objs, 'ontologyId'));
                         return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld));
                     }
                     dvm.getClassName = function(classMapping) {
@@ -102,29 +106,6 @@
                     }
                     dvm.getColumnIndex = function(propMapping) {
                         return parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
-                    }
-                    function isValid(ontology) {
-                        var invalid = _.some(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), classMapping => {
-                            var classId = classMapping[prefixes.delim + 'mapsTo'][0]['@id'];
-                            if (!dvm.om.getClass(ontology, classId)) {
-                                return true;
-                            }
-                            return _.some(dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']), propMapping => {
-                                var propId = propMapping[prefixes.delim + 'hasProperty'][0]['@id'];
-                                var propObj = dvm.om.getClassProperty(ontology, classId, propId);
-                                if (!propObj) {
-                                    return true;
-                                } else {
-                                    if (dvm.om.isObjectProperty(propObj['@type']) && dvm.mm.isDataMapping(propMapping)) {
-                                        return true;
-                                    }
-                                    if (!dvm.om.isObjectProperty(propObj['@type']) && dvm.mm.isObjectMapping(propMapping)) {
-                                        return true;
-                                    }
-                                }
-                            });
-                        });
-                        return !invalid;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingPreview/mappingPreview.html'
