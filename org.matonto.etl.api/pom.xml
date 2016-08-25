@@ -106,8 +106,12 @@
                         </goals>
                         <inherited>false</inherited>
                         <configuration>
-                            <ontologyFile>${project.basedir}/src/main/resources/delimited.ttl</ontologyFile>
-                            <ontologyIri>http://matonto.org/etl/api/ontologies/delimited/</ontologyIri>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/delimited.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.etl.api.ontologies.delimited</outputPackage>
+                                </ontology>
+                            </generates>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>
