@@ -23,11 +23,21 @@ package org.matonto.etl.service.delimited;
  * #L%
  */
 
-import aQute.bnd.annotation.component.*;
+import aQute.bnd.annotation.component.Activate;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Deactivate;
+import aQute.bnd.annotation.component.Modified;
+import aQute.bnd.annotation.component.Reference;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Statements;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
@@ -39,10 +49,17 @@ import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Component(
         name = SimpleMappingManager.COMPONENT_NAME,
@@ -54,6 +71,7 @@ public class SimpleMappingManager implements MappingManager {
     private Resource registrySubject;
     private IRI registryPredicate;
     private static final Logger logger = LoggerFactory.getLogger(SimpleMappingManager.class);
+    private static final String DEFAULT_MAPPING_PREFIX = "http://matonto.org/mappings/";
     private ValueFactory factory;
     private ModelFactory modelFactory;
     private Repository repository;
@@ -112,12 +130,12 @@ public class SimpleMappingManager implements MappingManager {
     @Override
     public Resource createMappingIRI() {
         String localName = generateUuid();
-        return factory.createIRI(Delimited.MAPPING.stringValue() + "/" + localName.trim());
+        return factory.createIRI(DEFAULT_MAPPING_PREFIX + localName.trim());
     }
 
     @Override
     public Resource createMappingIRI(String localName) {
-        return factory.createIRI(Delimited.MAPPING.stringValue() + "/" + localName.trim());
+        return factory.createIRI(DEFAULT_MAPPING_PREFIX + localName.trim());
     }
 
     @Override

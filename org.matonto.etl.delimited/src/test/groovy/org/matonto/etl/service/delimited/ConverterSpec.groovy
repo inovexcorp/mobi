@@ -1,6 +1,18 @@
 package org.matonto.etl.service.delimited
 
-import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.config.ExcelConfig
+import org.matonto.etl.api.config.SVConfig
+import org.matonto.etl.api.ontologies.delimited.*
+import org.matonto.rdf.api.Model
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
+import org.matonto.rdf.core.utils.Values
+import org.matonto.rdf.orm.conversion.impl.*
+import org.matonto.rdf.orm.impl.ThingFactory
+import org.openrdf.rio.RDFFormat
+import org.openrdf.rio.Rio
+import org.springframework.core.io.ClassPathResource
+import spock.lang.Specification
 
 /*-
  * #%L
@@ -24,29 +36,6 @@ import org.matonto.etl.api.config.ExcelConfig;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import org.matonto.etl.api.config.SVConfig
-import org.matonto.ontologies.delimited.ClassMappingFactory
-import org.matonto.ontologies.delimited.DataMappingFactory
-import org.matonto.ontologies.delimited.ObjectMappingFactory
-import org.matonto.ontologies.delimited.PropertyFactory;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
-import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
-import org.matonto.rdf.core.utils.Values
-import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry
-import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter
-import org.matonto.rdf.orm.conversion.impl.FloatValueConverter
-import org.matonto.rdf.orm.conversion.impl.IRIValueConverter
-import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter
-import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter
-import org.matonto.rdf.orm.conversion.impl.ShortValueConverter
-import org.matonto.rdf.orm.conversion.impl.StringValueConverter
-import org.matonto.rdf.orm.conversion.impl.ValueValueConverter
-import org.matonto.rdf.orm.impl.ThingFactory;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.springframework.core.io.ClassPathResource;
-import spock.lang.Specification;
 
 class ConverterSpec extends Specification {
 
@@ -193,13 +182,18 @@ class ConverterSpec extends Specification {
         m.equals(convertedModel);
     }
 
-    def "Test Generation of Local Name"() {
+    def "Test Generation of Local Name #localName Results in #result"() {
         setup:
         String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
         c.generateUuid() >> "12345"
+        def cm = Mock(ClassMapping)
 
-        expect:
-        result.equals(c.generateLocalName(localName, nextLine))
+        when:
+        def result2 = c.generateLocalName(cm, nextLine)
+
+        then:
+        cm.getLocalName() >>> Optional.ofNullable(localName)
+        result2.get() == result
 
         where:
         result              | localName
@@ -210,7 +204,21 @@ class ConverterSpec extends Specification {
         "abcd/12345/ijkl"   | "\${0}/\${UUID}/\${2}"
         "abcd/abcd"         | "\${0}/\${0}"
         "12345"             | ""
-        "12345/_/abcd"      | "\${UUID}/\${5}/\${0}"
+        "12345"             | null
+    }
+
+    def "Test Generation of Local Name with missing columns results in empty optional"() {
+        setup:
+        String[] nextLine = ["abcd","efgh","ijkl","mnop","qrst"]
+        c.generateUuid() >> "12345"
+        def cm = Mock(ClassMapping)
+
+        when:
+        def result2 = c.generateLocalName(cm, nextLine)
+
+        then:
+        cm.getLocalName() >>> Optional.ofNullable("\${UUID}/\${5}/\${0}")
+        !result2.isPresent()
     }
 
     def "With a limit set with no offset"() {
@@ -294,6 +302,6 @@ class ConverterSpec extends Specification {
         Model convertedModel = c.convert(config);
 
         expect:
-        m.equals(convertedModel);
+        m as Set == convertedModel as Set
     }
 }

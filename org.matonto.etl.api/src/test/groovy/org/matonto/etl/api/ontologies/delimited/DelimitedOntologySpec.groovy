@@ -1,4 +1,4 @@
-package org.matonto.ontologies.delimited
+package org.matonto.etl.api.ontologies.delimited
 
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
