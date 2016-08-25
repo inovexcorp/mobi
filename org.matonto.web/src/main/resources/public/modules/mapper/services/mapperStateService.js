@@ -110,7 +110,7 @@
              * `invalidProps` holds an array of property objects from 
              * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
              * that are mapped to non-existent column indexes in the currently selected 
-             * {@link mappingManager.mappingManagerService#mapping mapping}.
+             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
              */
             self.invalidProps = [];
             /**
@@ -122,7 +122,7 @@
              * @description 
              * `availableColumns` holds an array of the header strings for all the columns
              * that haven't been mapped yet in the currently selected 
-             * {@link mappingManager.mappingManagerService#mapping mapping}.
+             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
              */
             self.availableColumns = [];
             /**
@@ -135,7 +135,7 @@
              * `availableColumns` holds an array of property objects from 
              * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
              * that haven't been mapped yet in the currently selected 
-             * {@link mappingManager.mappingManagerService#mapping mapping}.
+             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
              */
             self.availableProps = [];
             /**
@@ -157,7 +157,7 @@
              *
              * @description 
              * `invalidOntology` holds a boolean indicating whether or not the source ontology for the 
-             * currently selected {@link mappingManager.mappingManagerService#mapping mapping} is 
+             * currently selected {@link mappingManager.service:mappingManagerService#mapping mapping} is 
              * incompatible.
              */
             self.invalidOntology = false;
@@ -203,7 +203,7 @@
              * @description 
              * `changeOntology` holds a boolean indicating whether or not the mapping page is
              * changing the source ontology for the currently selected 
-             * {@link mappingManager.mappingManagerService#mapping mapping}.
+             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
              */
             self.changeOntology = false;
             /**
@@ -356,8 +356,8 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description 
-             * Sets the state variables, {@link mappingManager.mappingManagerService#mapping mapping}, and
-             * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies} to indicate creating
+             * Sets the state variables, {@link mappingManager.service:mappingManagerService#mapping mapping}, and
+             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies} to indicate creating
              * a new mapping.
              */
             self.createMapping = function() {
@@ -379,8 +379,8 @@
              *
              * @description 
              * Saves the current values of the source ontology id from 
-             * {@link mappingManager.mappingManagerService#mapping mapping} and 
-             * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies}.
+             * {@link mappingManager.service:mappingManagerService#mapping mapping} and 
+             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
              */
             self.cacheSourceOntologies = function() {
                 cachedOntologyId = mm.getSourceOntologyId(mm.mapping.jsonld);
@@ -405,8 +405,8 @@
              *
              * @description 
              * Sets the saved values of the source ontology id and source ontologies back to
-             * {@link mappingManager.mappingManagerService#mapping mapping} and 
-             * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies}.
+             * {@link mappingManager.service:mappingManagerService#mapping mapping} and 
+             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
              */
             self.restoreCachedSourceOntologies = function() {
                 mm.sourceOntologies = angular.copy(cachedSourceOntologies);
@@ -442,7 +442,7 @@
              *
              * @description 
              * Finds the column headers matching all of the column indexes that haven't
-             * been mapped to data mappings yet in the currently selected {@link mappingManager.mappingManagerService#mapping mapping}.
+             * been mapped to data mappings yet in the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping}.
              * 
              * @return {string[]} an array of header names of columns that haven't been 
              * mapped yet
@@ -459,8 +459,8 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description 
-             * Updates the list of {@link mapperState.mapperStateService#availableColumns "available columns"}
-             * for the currently selected {@link mappingManager.mappingManagerService#mapping mapping} 
+             * Updates the list of {@link mapperState.service:mapperStateService#availableColumns "available columns"}
+             * for the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping} 
              * and saved file preview. If a data property mapping has been selected, adds the header 
              * corresponding to its mapped column index from the available columns.
              */
@@ -479,18 +479,20 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description 
-             * Updates the list of {@link mapperState.mapperStateService#availableProps "available properties"}
-             * for the currently selected {@link mappingManager.mappingManagerService#mapping mapping}.
+             * Updates the list of {@link mapperState.service:mapperStateService#availableProps available properties}
+             * for the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping} and
+             * {@link mappingManager.service:mappingManagerService#selectedClassMappingId class mapping}.
              */
             self.updateAvailableProps = function() {
                 var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, self.selectedClassMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
                 var classId = mm.getClassIdByMappingId(mm.mapping.jsonld, self.selectedClassMappingId);
-                var properties = [];
+                var props = [];
                 _.forEach(mm.sourceOntologies, ontology => {
-                    var props = om.getClassProperties(ontology.entities, classId);
-                    properties = _.union(properties, props);
+                    var classProps = om.getClassProperties(ontology.entities, classId);
+                    var noDomainProps = om.getNoDomainProperties(ontology.entities);
+                    props = _.union(props, classProps, noDomainProps);
                 });
-                self.availableProps = _.filter(properties, prop => mappedProps.indexOf(prop['@id']) < 0);
+                self.availableProps = _.filter(props, prop => mappedProps.indexOf(prop['@id']) < 0);
             }
             /**
              * @ngdoc method
@@ -498,7 +500,7 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description 
-             * Tests whether the currently selected {@link mappingManager.mappingManagerService#mapping mapping}, 
+             * Tests whether the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping}, 
              * that has just been updated, is a saved mapping and if so, adds a timestamp to the end of the name.
              */
             self.changedMapping = function() {

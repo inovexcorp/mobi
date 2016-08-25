@@ -124,12 +124,16 @@ describe('Mapper State service', function() {
     it('should update availableProps', function() {
         mappingManagerSvc.sourceOntologies = [{}];
         var classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];
-        mappingManagerSvc.getPropMappingsByClass.and.returnValue([{'hasProperty': [classProps[0]]}]);
+        var noDomainProps = [{'@id': 'prop3'}, {'@id': 'prop4'}];
+        mappingManagerSvc.getPropMappingsByClass.and.returnValue([{'hasProperty': [classProps[0]]}, {'hasProperty': [noDomainProps[0]]}]);
         ontologyManagerSvc.getClassProperties.and.returnValue(classProps);
+        ontologyManagerSvc.getNoDomainProperties.and.returnValue(noDomainProps);
         mapperStateSvc.updateAvailableProps();
         expect(ontologyManagerSvc.getClassProperties.calls.count()).toBe(mappingManagerSvc.sourceOntologies.length);
         expect(mapperStateSvc.availableProps).not.toContain(classProps[0]);
         expect(mapperStateSvc.availableProps).toContain(classProps[1]);
+        expect(mapperStateSvc.availableProps).not.toContain(noDomainProps[0]);
+        expect(mapperStateSvc.availableProps).toContain(noDomainProps[1]);
     });
     it('should change the mapping name if editing a previous mapping', function() {
         var name = mappingManagerSvc.mapping.name;
