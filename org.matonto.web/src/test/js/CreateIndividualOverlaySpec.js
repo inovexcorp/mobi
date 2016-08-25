@@ -27,6 +27,7 @@ describe('Create Individual Overlay directive', function() {
         controller,
         ontologyManagerSvc,
         stateManagerSvc,
+        resObj,
         deferred,
         prefixes,
         $timeout;
@@ -37,9 +38,10 @@ describe('Create Individual Overlay directive', function() {
         injectCamelCaseFilter();
         mockOntologyManager();
         mockStateManager();
+        mockResponseObj();
         mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _stateManagerService_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _stateManagerService_, _responseObj_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -47,6 +49,7 @@ describe('Create Individual Overlay directive', function() {
             stateManagerSvc = _stateManagerService_;
             deferred = _$q_.defer();
             prefixes = _prefixes_;
+            resObj = _responseObj_;
             $timeout = _$timeout_;
         });
     });

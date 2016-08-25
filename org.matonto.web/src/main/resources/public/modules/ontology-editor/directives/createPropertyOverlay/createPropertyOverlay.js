@@ -92,7 +92,7 @@
                                 _.unset(dvm.property, prefixes.rdfs + axiom);
                             }
                         });
-                        if (dvm.om.isObjectProperty(dvm.sm.state.ontologyId, dvm.property)) {
+                        if (dvm.om.isObjectProperty(dvm.property)) {
                             dvm.om.createObjectProperty(dvm.sm.state.ontologyId, dvm.property)
                                 .then(onCreateSuccess, onCreateError);
                         } else {
