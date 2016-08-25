@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.rdf.api.Value;
@@ -419,6 +420,25 @@ public class SourceGenerator {
     }
 
     /**
+     * This method will take a root IRI identifying a class, and then populate a
+     * list with the complete ancestry of that class.
+     * 
+     * @param root
+     *            The IRI to climb the ancestry tree of
+     * @param parents
+     *            The parent entities
+     */
+    private void getAncestors(final IRI root, final List<IRI> parents) {
+        List<IRI> firstLevel = this.model.filter(root, RDFS.SUBCLASSOF, null).stream()
+                .map(stmt -> (IRI) ((Statement) stmt).getObject()).filter(iri -> !parents.contains(iri))
+                .collect(Collectors.toList());
+        parents.addAll(firstLevel);
+        firstLevel.stream().forEach(newRoot -> {
+            getAncestors(newRoot, parents);
+        });
+    }
+
+    /**
      * Generate each individual interface with its static final predicate
      * fields.
      * 
@@ -441,6 +461,9 @@ public class SourceGenerator {
 
                 final String className = packageName + "." + getName(true, classIri, modelOfThisClass);
 
+                List<IRI> ancestors = new ArrayList<>();
+                getAncestors(classIri, ancestors);
+
                 JDefinedClass clazz = codeModel._class(JMod.PUBLIC, className, ClassType.INTERFACE);
                 clazz._extends(Thing.class);
 
@@ -449,20 +472,19 @@ public class SourceGenerator {
                 clazz.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, CLASS_TYPE_IRI_FIELD,
                         JExpr.lit(classIri.stringValue())).javadoc().add("The rdf:type IRI of this class.");
 
-                // Add all domain predicates.
-                allDomainPredicates.forEach(pred -> {
-                    LOG.debug(
-                            "Adding '" + pred.stringValue() + "' to '" + classIri.stringValue() + "' as an all domain");
-                    clazz.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class,
-                            getName(false, (IRI) pred, this.model) + "_IRI", JExpr.lit(pred.stringValue())).javadoc()
-                            .add("IRI of the predicate that this property will represent.  This particular property has no domain specified, so it's on each class.");
-                });
-
                 // Track field names to the IRI.
                 final Map<String, IRI> fieldIriMap = new HashMap<>();
                 final Map<String, IRI> rangeMap = new HashMap<>();
+
                 // Look for properties on this domain.
-                this.model.filter(null, RDFS.DOMAIN, classIri).forEach(stmt -> {
+                this.model.filter(null, RDFS.DOMAIN, classIri).stream().filter(stmt -> {
+                    for (final IRI ancestorIri : ancestors) {
+                        if (this.model.filter(stmt.getSubject(), RDFS.DOMAIN, ancestorIri).size() > 0) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }).forEach(stmt -> {
                     LOG.debug("Adding '" + stmt.getSubject().stringValue() + "' to '" + classIri.stringValue()
                             + "' as it specifies it in its range");
 
