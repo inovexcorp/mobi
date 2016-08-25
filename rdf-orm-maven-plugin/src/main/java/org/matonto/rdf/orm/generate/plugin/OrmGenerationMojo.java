@@ -1,5 +1,17 @@
 package org.matonto.rdf.orm.generate.plugin;
 
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.matonto.rdf.orm.generate.GraphReadingUtility;
+import org.matonto.rdf.orm.generate.SourceGenerator;
+import org.openrdf.model.Model;
+
+import java.io.File;
+import java.util.List;
+
 /*-
  * #%L
  * RDF ORM Maven Plugin
@@ -23,18 +35,6 @@ package org.matonto.rdf.orm.generate.plugin;
  * #L%
  */
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.orm.generate.GraphReadingUtility;
-import org.matonto.rdf.orm.generate.SourceGenerator;
-import org.openrdf.model.Model;
-
-import java.io.File;
-
 /**
  * This class is the {@link Mojo} that our plugin will use for generating the
  * source code for a given ontology.
@@ -45,46 +45,42 @@ import java.io.File;
 @Mojo(name = "generate-orm")
 public class OrmGenerationMojo extends AbstractMojo {
 
-	/**
-	 * The file containing the ontology for our ingestion.
-	 */
-	@Parameter(property = "ontologyFile", required = true)
-	private String ontologyFile;
+    /**
+     * List of ontologies to generate.
+     */
+    @Parameter(alias = "generates", required = true)
+    private List<Ontology> generates;
 
-	/**
-	 * The {@link IRI} string for the target ontology.
-	 */
-	@Parameter(property = "ontologyIri", required = true)
-	private String ontologyIri;
+    /**
+     * The location where the generated source will be stored.
+     */
+    @Parameter(property = "outputLocation", required = true, defaultValue = "./src/main/java")
+    private String outputLocation;
 
-	/**
-	 * The location where the generated source will be stored.
-	 */
-	@Parameter(property = "outputLocation", required = true, defaultValue = "./src/main/java")
-	private String outputLocation;
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
-		final File file = new File(ontologyFile);
-		// Check that the file exists!
-		if (file.isFile()) {
-			try {
-                Model ontology = GraphReadingUtility.readOntology(file, ontologyFile);
-                SourceGenerator.toSource(ontology, ontologyIri, outputLocation);
-			} catch (Exception e) {
-			    String msg = String.format("Issue generating source from ontology specified: {%s} {%s} {%s}",
-                        ontologyFile, ontologyIri, outputLocation);
-				throw new MojoFailureException(msg, e);
-			}
-		} else {
-			// Throw an exception if that ontology file doesn't exist
-            String msg = "Issue generating source from ontology specified. No ontology found at specified location: "
-                    + ontologyFile;
-			throw new MojoExecutionException(msg);
-		}
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        for (Ontology generate : generates) {
+            final File file = new File(generate.getOntologyFile());
+            // Check that the file exists!
+            if (file.isFile()) {
+                try {
+                    Model ontology = GraphReadingUtility.readOntology(file, generate.getOntologyFile());
+                    SourceGenerator.toSource(ontology, generate.getOutputPackage(), outputLocation);
+                } catch (Exception e) {
+                    String msg = String.format("Issue generating source from ontology specified: {%s} {%s} {%s}",
+                            generate.getOntologyFile(), generate.getOutputPackage(), outputLocation);
+                    throw new MojoFailureException(msg, e);
+                }
+            } else {
+                // Throw an exception if that ontology file doesn't exist
+                String msg = "Issue generating source from ontology specified. No ontology found at specified location: "
+                        + generate.getOntologyFile();
+                throw new MojoExecutionException(msg);
+            }
+        }
+    }
 
 }

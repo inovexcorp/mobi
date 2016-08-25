@@ -23,11 +23,11 @@ package org.matonto.rdf.orm.conversion;
  * #L%
  */
 
-import java.util.Set;
-
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.OrmException;
 import org.matonto.rdf.orm.Thing;
+
+import java.util.Set;
 
 /**
  * This service references all the {@link ValueConverter}s registered and
@@ -112,4 +112,11 @@ public interface ValueConverterRegistry {
 	 */
 	<T> void registerValueConverter(final ValueConverter<T> converter);
 
+	/**
+	 * Unregister a given type converter.
+	 *
+	 * @param converter
+	 *            The {@link ValueConverter} we're unregistering
+	 */
+	<T> void unregisterValueConverter(final ValueConverter<T> converter);
 }

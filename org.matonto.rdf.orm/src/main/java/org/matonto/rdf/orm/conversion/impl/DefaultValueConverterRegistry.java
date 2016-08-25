@@ -23,6 +23,15 @@ package org.matonto.rdf.orm.conversion.impl;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.orm.OrmException;
+import org.matonto.rdf.orm.Thing;
+import org.matonto.rdf.orm.conversion.ValueConversionException;
+import org.matonto.rdf.orm.conversion.ValueConverter;
+import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,16 +40,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
-
-import org.matonto.rdf.api.Value;
-import org.matonto.rdf.orm.OrmException;
-import org.matonto.rdf.orm.Thing;
-import org.matonto.rdf.orm.conversion.ValueConversionException;
-import org.matonto.rdf.orm.conversion.ValueConverter;
-import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
-
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 
 /**
  * The default {@link ValueConverterRegistry} instance.
@@ -191,13 +190,29 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
 	 * {@inheritDoc}
 	 */
 	@Override
-	@Reference(target = "*", dynamic = true)
+	@Reference(multiple = true, dynamic = true, unbind = "unregisterValueConverter")
 	public <T> void registerValueConverter(final ValueConverter<T> converter) {
 		final Class<T> type = converter.getType();
 		if (!registry.containsKey(type)) {
 			registry.put(type, new ArrayList<>());
 		}
 		registry.get(type).add(converter);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public <T> void unregisterValueConverter(final ValueConverter<T> converter) {
+		final Class<T> type = converter.getType();
+
+		if (registry.containsKey(type)) {
+			registry.get(type).remove(converter);
+
+			if (registry.get(type).size() == 0) {
+				registry.remove(type);
+			}
+		}
 	}
 
 	/**

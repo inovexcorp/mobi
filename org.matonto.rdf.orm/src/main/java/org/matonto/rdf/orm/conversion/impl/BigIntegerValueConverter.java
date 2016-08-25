@@ -23,15 +23,14 @@ package org.matonto.rdf.orm.conversion.impl;
  * #L%
  */
 
-import java.math.BigInteger;
-
+import aQute.bnd.annotation.component.Component;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.AbstractValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
-import aQute.bnd.annotation.component.Component;
+import java.math.BigInteger;
 
 /**
  * {@link ValueConverter} for {@link BigInteger} objects.
@@ -39,7 +38,7 @@ import aQute.bnd.annotation.component.Component;
  * @author bdgould
  *
  */
-@Component
+@Component(provide = ValueConverter.class)
 public class BigIntegerValueConverter extends AbstractValueConverter<BigInteger> {
 
 	/**

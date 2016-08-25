@@ -23,9 +23,7 @@ package org.matonto.rdf.orm;
  * #L%
  */
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
+import aQute.bnd.annotation.component.Reference;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -34,7 +32,8 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
-import aQute.bnd.annotation.component.Reference;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * This is the abstract class for basic {@link OrmFactory} implementations. It

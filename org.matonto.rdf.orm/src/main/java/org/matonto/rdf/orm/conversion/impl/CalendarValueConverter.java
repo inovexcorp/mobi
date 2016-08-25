@@ -23,19 +23,17 @@ package org.matonto.rdf.orm.conversion.impl;
  * #L%
  */
 
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-
+import aQute.bnd.annotation.component.Component;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.AbstractValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
-import aQute.bnd.annotation.component.Component;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 /**
  * {@link ValueConverter} for creating {@link Calendar} objects from statements.
@@ -43,7 +41,7 @@ import aQute.bnd.annotation.component.Component;
  * @author bdgould
  *
  */
-@Component
+@Component(provide = ValueConverter.class)
 public class CalendarValueConverter extends AbstractValueConverter<Calendar> {
 
 	private static final String XSD_DATETIME = XSD_PREFIX + "dateTime";
