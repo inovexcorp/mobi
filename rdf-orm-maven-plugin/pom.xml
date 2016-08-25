@@ -28,7 +28,7 @@
 	<parent>
 		<artifactId>matonto-parent</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.1.15-SNAPSHOT</version>
+		<version>1.1.19-SNAPSHOT</version>
 		<relativePath>../matonto-parent/pom.xml</relativePath>
 	</parent>
 	<name>RDF ORM Maven Plugin</name>
@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>org.matonto</groupId>
 			<artifactId>rdf.orm.generate</artifactId>
-			<version>1.1.15-SNAPSHOT</version>
+			<version>1.1.19-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>edu.washington.cs.types.checker</groupId>
