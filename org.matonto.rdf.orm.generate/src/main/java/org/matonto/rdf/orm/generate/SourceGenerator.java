@@ -430,8 +430,8 @@ public class SourceGenerator {
      */
     private void getAncestors(final IRI root, final List<IRI> parents) {
         List<IRI> firstLevel = this.model.filter(root, RDFS.SUBCLASSOF, null).stream()
-                .map(stmt -> (IRI) ((Statement) stmt).getObject()).filter(iri -> !parents.contains(iri))
-                .collect(Collectors.toList());
+                .map(stmt -> ((Statement) stmt).getObject()).filter(obj -> obj instanceof IRI).map(obj -> (IRI) obj)
+                .filter(iri -> !parents.contains(iri)).collect(Collectors.toList());
         parents.addAll(firstLevel);
         firstLevel.stream().forEach(newRoot -> {
             getAncestors(newRoot, parents);
