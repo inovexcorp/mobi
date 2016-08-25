@@ -37,7 +37,7 @@ import aQute.bnd.annotation.component.Component;
  * @author bdgould
  *
  */
-@Component
+@Component(provide = ValueConverter.class)
 public class StringValueConverter extends AbstractValueConverter<String> {
 
 	/**

@@ -30,8 +30,11 @@
 		<relativePath>../matonto-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>rdf.orm.generate</artifactId>
+    <name>${project.groupId}.${project.artifactId}</name>
 
-	<dependencies>
+    <packaging>bundle</packaging>
+
+    <dependencies>
 		<dependency>
 			<groupId>org.matonto</groupId>
 			<artifactId>rdf.orm</artifactId>
@@ -69,4 +72,27 @@
 			<version>2.6</version>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+						<Bundle-Name>MatOnto RDF ORM Generate</Bundle-Name>
+						<Bundle-Version>${project.version}</Bundle-Version>
+						<Export-Package>
+							org.matonto.rdf.orm.generate
+						</Export-Package>
+						<Service-Component>*</Service-Component>
+						<build>${maven.build.timestamp}</build>
+						<_snapshot>${maven.build.timestamp}</_snapshot>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

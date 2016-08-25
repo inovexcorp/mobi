@@ -23,6 +23,7 @@ package org.matonto.rdf.orm.conversion.impl;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.Thing;
@@ -36,6 +37,7 @@ import org.matonto.rdf.orm.conversion.ValueConverter;
  * @author bdgould
  *
  */
+@Component(provide = ValueConverter.class)
 public class ResourceValueConverter extends AbstractValueConverter<Resource> {
 
 	/**
@@ -49,7 +51,7 @@ public class ResourceValueConverter extends AbstractValueConverter<Resource> {
 	 * {@inheritDoc}<br>
 	 * <br>
 	 * Try and cast the value to a {@link Resource}, and if this doesn't work,
-	 * then try and create an from the {@link String} value.
+	 * then try and create an IRI from the {@link String} value.
 	 */
 	@Override
 	public Resource convertValue(final Value value, final Thing thing, final Class<? extends Resource> desiredType)

@@ -30,8 +30,10 @@
 		<relativePath>../matonto-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>rdf.orm</artifactId>
-	<name>RDF ORM</name>
+    <name>${project.groupId}.${project.artifactId}</name>
 	<description>ORM for RDF data using simple POJOs</description>
+
+    <packaging>bundle</packaging>
 
 	<dependencies>
 		<dependency>
@@ -61,7 +63,6 @@
 			<artifactId>checker-framework</artifactId>
 		</dependency>
 
-
 		<dependency>
 			<groupId>org.matonto</groupId>
 			<artifactId>rdf.impl.sesame</artifactId>
@@ -69,4 +70,29 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>MatOnto RDF ORM</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>
+                            org.matonto.rdf.orm,
+                            org.matonto.rdf.orm.impl,
+                            org.matonto.rdf.orm.conversion
+                        </Export-Package>
+                        <Service-Component>*</Service-Component>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

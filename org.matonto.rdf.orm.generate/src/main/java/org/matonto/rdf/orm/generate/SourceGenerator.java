@@ -35,16 +35,21 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import aQute.bnd.annotation.component.Reference;
+import com.sun.codemodel.JArray;
 import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JType;
 import org.apache.commons.lang3.StringUtils;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.AbstractOrmFactory;
 import org.matonto.rdf.orm.OrmException;
+import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
+import org.matonto.rdf.orm.conversion.ValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import org.matonto.rdf.orm.impl.ThingImpl;
 import org.openrdf.model.IRI;
@@ -136,11 +141,15 @@ public class SourceGenerator {
 								+ interfaze.name() + " objects.  It will be published as an OSGi service.  "
 								+ (id != null ? "See " + id.stringValue() + " for more information." : ""));
 				factory._extends(codeModel.ref(AbstractOrmFactory.class).narrow(interfaze));
-				factory.annotate(aQute.bnd.annotation.component.Component.class);
+				factory.annotate(aQute.bnd.annotation.component.Component.class)
+                        .paramArray("provide")
+                        .param(OrmFactory.class)
+                        .param(ValueConverter.class)
+                        .param(factory.dotclass());
 				factory.constructor(JMod.PUBLIC).body().invoke("super").arg(JExpr.dotclass(interfaze))
 						.arg(JExpr.dotclass(clazz));
-				final JMethod getExisting = factory.method(JMod.PUBLIC, interfaze, "getExisting");
 
+				final JMethod getExisting = factory.method(JMod.PUBLIC, interfaze, "getExisting");
 				getExisting.annotate(Override.class);
 				getExisting.body()._return(
 						JExpr._new(clazz).arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
@@ -148,6 +157,24 @@ public class SourceGenerator {
 								.arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
 								.arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
 										"valueConverterRegistry")));
+
+                final JMethod setModelFactory = factory.method(JMod.PUBLIC, codeModel.VOID, "setModelFactory");
+                setModelFactory.annotate(Override.class);
+                setModelFactory.annotate(Reference.class);
+                JVar modelFactoryParam = setModelFactory.param(ModelFactory.class, "modelFactory");
+                setModelFactory.body().assign(JExpr._this().ref("modelFactory"), modelFactoryParam);
+
+                final JMethod setValueFactory = factory.method(JMod.PUBLIC, codeModel.VOID, "setValueFactory");
+                setValueFactory.annotate(Override.class);
+                setValueFactory.annotate(Reference.class);
+                JVar valueFactoryParam = setValueFactory.param(ValueFactory.class, "valueFactory");
+                setValueFactory.body().assign(JExpr._this().ref("valueFactory"), valueFactoryParam);
+
+                final JMethod setValueConverterRegistry = factory.method(JMod.PUBLIC, codeModel.VOID, "setValueConverterRegistry");
+                setValueConverterRegistry.annotate(Override.class);
+                setValueConverterRegistry.annotate(Reference.class);
+                JVar valueConverterRegistryParam = setValueConverterRegistry.param(ValueConverterRegistry.class, "valueConverterRegistry");
+                setValueConverterRegistry.body().assign(JExpr._this().ref("valueConverterRegistry"), valueConverterRegistryParam);
 			} catch (final Exception e) {
 				issues.add("Issue generating factory class: " + factoryName + ": " + e.getMessage());
 			}
