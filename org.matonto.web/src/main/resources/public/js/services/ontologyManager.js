@@ -1535,15 +1535,16 @@
             function updateModels(response) {
                 if(_.has(response, 'data.models', [])) {
                     _.forEach(response.data.models, model => {
-                        var ontologyId = _.get(model, "[0]['@id']");
+                        var ontology = self.getOntologyById(_.get(model, "[0]['@id']"));
                         var newEntity = _.get(model, "[0]['@graph'][0]");
                         var newEntityIRI = _.get(newEntity, '@id');
-                        var oldEntity = self.getEntity(self.getOntologyById(ontologyId), newEntityIRI);
+                        var oldEntity = self.getEntity(ontology, newEntityIRI);
                         if (_.has(oldEntity, 'matonto.icon')) {
                             _.set(newEntity, 'matonto.icon', oldEntity.matonto.icon);
                         }
                         _.set(newEntity, 'matonto.originalIRI', newEntityIRI);
-                        oldEntity = newEntity;
+                        self.removeEntity(ontology, oldEntity.matonto.originalIRI);
+                        self.addEntity(ontology, newEntity);
                     });
                 }
             }

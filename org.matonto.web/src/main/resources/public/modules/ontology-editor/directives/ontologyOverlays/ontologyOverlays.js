@@ -61,28 +61,19 @@
                                 }, onError);
                         } else if (dvm.om.isClass(dvm.sm.selected)) {
                             var classIRI = dvm.sm.state.entityIRI;
-                            dvm.om.deleteClass(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
+                            dvm.om.deleteClass(dvm.sm.state.ontologyId, classIRI)
                                 .then(() => {
                                     var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                                     _.pull(dvm.sm.state.classesWithIndividuals, classIRI);
                                     _.pull(listItem.classesWithIndividuals, classIRI);
-                                    _.forEach(dvm.om.getClassIndividuals(dvm.sm.ontology, classIRI), individual => _.pull(individual['@type'], classIRI));
                                     selectCurrentOntology();
                                 }, onError);
                         } else if (dvm.om.isObjectProperty(dvm.sm.selected)) {
-                            var propIRI = dvm.sm.state.entityIRI;
                             dvm.om.deleteObjectProperty(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
-                                .then(() => {
-                                    _.forEach(dvm.om.getIndividuals(dvm.sm.ontology), individual => _.unset(individual, propIRI));
-                                    selectCurrentOntology();
-                                }, onError);
+                                .then(selectCurrentOntology, onError);
                         } else if (dvm.om.isDataTypeProperty(dvm.sm.selected)) {
-                            var propIRI = dvm.sm.state.entityIRI;
                             dvm.om.deleteDataTypeProperty(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
-                                .then(() => {
-                                    _.forEach(dvm.om.getIndividuals(dvm.sm.ontology), individual => _.unset(individual, propIRI));
-                                    selectCurrentOntology();
-                                }, onError);
+                                .then(selectCurrentOntology, onError);
                         } else if (dvm.om.isIndividual(dvm.sm.selected)) {
                             dvm.om.deleteIndividual(dvm.sm.state.ontologyId, dvm.sm.state.entityIRI)
                                 .then(selectCurrentOntology, onError);
