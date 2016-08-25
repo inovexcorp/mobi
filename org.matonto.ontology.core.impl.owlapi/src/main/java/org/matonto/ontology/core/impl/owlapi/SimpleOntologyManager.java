@@ -425,11 +425,15 @@ public class SimpleOntologyManager implements OntologyManager {
             Set<org.openrdf.model.Model> changedModels = new HashSet<>();
 
             for (Statement stmt : entityObjectStatements) {
-                changedIriStrings.add(stmt.getSubject().stringValue());
+                if (!(stmt.getSubject() instanceof BNode)) {
+                    changedIriStrings.add(stmt.getSubject().stringValue());
+                }
                 cachedObjectStatements.add(stmt);
             }
             for (Statement stmt : entityPredicateStatements) {
-                changedIriStrings.add(stmt.getSubject().stringValue());
+                if (!(stmt.getSubject() instanceof BNode)) {
+                    changedIriStrings.add(stmt.getSubject().stringValue());
+                }
                 cachedPredicateStatements.add(stmt);
             }
             changedEntities.put("iris", changedIriStrings);
