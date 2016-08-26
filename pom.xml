@@ -82,6 +82,7 @@
         <module>org.matonto.rdf.orm</module>
         <module>org.matonto.rdf.orm.generate</module>
         <module>rdf-orm-maven-plugin</module>
+        <module>org.matonto.rdf.orm.ontologies</module>
     </modules>
 
     <properties>

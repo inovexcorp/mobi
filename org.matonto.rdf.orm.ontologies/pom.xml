@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.15-SNAPSHOT</version>
+        <version>1.1.19-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>1.1.15-SNAPSHOT</version>
+            <version>1.1.19-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -71,7 +71,7 @@
             <plugin>
                 <groupId>org.matonto.orm</groupId>
                 <artifactId>rdf-orm-maven-plugin</artifactId>
-                <version>1.1.15-SNAPSHOT</version>
+                <version>1.1.19-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <id>generateOrmSources</id>
@@ -81,8 +81,12 @@
                         </goals>
                         <inherited>false</inherited>
                         <configuration>
-                            <ontologyFile>${project.basedir}/src/main/resources/rdfs.owl</ontologyFile>
-                            <ontologyIri>http://matonto.org/ontologies/RDFS</ontologyIri>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/rdfs.owl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.rdfs</outputPackage>
+                                </ontology>
+                            </generates>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>
