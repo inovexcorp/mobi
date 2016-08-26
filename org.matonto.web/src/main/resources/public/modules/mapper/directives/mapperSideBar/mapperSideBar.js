@@ -85,7 +85,7 @@
                         dvm.state.resetEdit();
                         dvm.state.newProp = true;
                         dvm.state.selectedClassMappingId = classMappingId;
-                        dvm.state.updateAvailableProps();
+                        dvm.state.updateAvailableProps(dvm.state.selectedClassMappingId);
                     }
                     dvm.deleteEntity = function() {
                         dvm.state.displayDeleteEntityConfirm = true;

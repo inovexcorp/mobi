@@ -86,7 +86,6 @@ describe('Starting Class Select Overlay directive', function() {
             expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(controller.selectedClass['@id']);
             expect(mappingManagerSvc.addClass).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
 
             mapperStateSvc.changeOntology = true;
@@ -99,7 +98,6 @@ describe('Starting Class Select Overlay directive', function() {
             expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(controller.selectedClass['@id']);
             expect(mappingManagerSvc.addClass).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
         });
     });

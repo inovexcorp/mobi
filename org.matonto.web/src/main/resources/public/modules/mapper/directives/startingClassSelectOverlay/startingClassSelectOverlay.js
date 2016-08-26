@@ -90,7 +90,7 @@
                         dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology.entities, dvm.selectedClass['@id']);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = _.get(_.find(dvm.mm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']}), '@id');
-                        dvm.state.updateAvailableProps();
+                        dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
                         dvm.state.step = dvm.state.editMappingStep;
                     }
                     dvm.back = function() {

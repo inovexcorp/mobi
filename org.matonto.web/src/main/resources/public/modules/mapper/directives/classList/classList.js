@@ -84,7 +84,6 @@
                     dvm.clickClass = function(classMapping) {
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
-                        dvm.state.updateAvailableProps();
                     }
                     dvm.clickProp = function(propMapping, classMapping) {
                         dvm.state.resetEdit();
@@ -98,7 +97,7 @@
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.newProp = true;
                         dvm.state.updateAvailableColumns();
-                        dvm.state.updateAvailableProps();
+                        dvm.state.updateAvailableProps(dvm.state.selectedClassMappingId);
                     }
                     dvm.getInvalidPropIds = function() {
                         return _.map(dvm.state.invalidProps, '@id');
@@ -122,14 +121,6 @@
                             mappingName = dvm.dm.filePreview.headers[index];
                         }
                         return propName + ': ' + mappingName;
-                    }
-                    dvm.mappedAllProps = function(classMapping) {
-                        var mappedProps = dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']);
-                        var classId = dvm.mm.getClassIdByMapping(classMapping);
-                        var ontology = dvm.mm.findSourceOntologyWithClass(classId);
-                        var classProps = dvm.om.getClassProperties(ontology.entities, classId);
-
-                        return mappedProps.length === classProps.length;
                     }
                     dvm.getLinks = function(classMapping) {
                         var objectMappings = _.filter(

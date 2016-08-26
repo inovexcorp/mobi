@@ -50,6 +50,7 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availableColumns).toEqual([]);
         expect(mapperStateSvc.availableProps).toEqual([]);
         expect(mapperStateSvc.openedClasses).toEqual([]);
+        expect(mapperStateSvc.availablePropsByClass).toEqual({});
     });
     it('should reset edit related variables', function() {
         mapperStateSvc.resetEdit();
@@ -121,15 +122,43 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availableColumns).toContain('test1');
         expect(mapperStateSvc.availableColumns).toContain('test2');
     });
-    it('should update availableProps', function() {
+    it('should update availableProps for a specific class mapping', function() {
+        var props = [{}];
+        spyOn(mapperStateSvc, 'getAvailableProps').and.returnValue([{}]);
+        mapperStateSvc.updateAvailableProps('class');
+        expect(mapperStateSvc.getAvailableProps).toHaveBeenCalledWith('class');
+        expect(mapperStateSvc.availableProps).toEqual(props);
+    });
+    it('should check whether a class mapping has available properties', function() {
+        mapperStateSvc.availablePropsByClass = {'class': true};
+        var result = mapperStateSvc.hasAvailableProps('class');
+        expect(result).toBe(true);
+        result = mapperStateSvc.hasAvailableProps('class1');
+        expect(result).toBe(false);
+    });
+    it('should set whether a class mapping has available properties', function() {
+        spyOn(mapperStateSvc, 'getAvailableProps').and.returnValue([{}]);
+        mapperStateSvc.setAvailableProps('class');
+        expect(mapperStateSvc.availablePropsByClass.class).toBe(true);
+
+        mapperStateSvc.getAvailableProps.and.returnValue([]);
+        mapperStateSvc.setAvailableProps('class');
+        expect(mapperStateSvc.availablePropsByClass.class).toBe(false);
+    });
+    it('should retrieve the list of property objects that have not been used been by a class mapping', function() {
         mappingManagerSvc.sourceOntologies = [{}];
         var classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];
-        mappingManagerSvc.getPropMappingsByClass.and.returnValue([{'hasProperty': [classProps[0]]}]);
+        var noDomainProps = [{'@id': 'prop3'}, {'@id': 'prop4'}];
+        mappingManagerSvc.getPropMappingsByClass.and.returnValue([{'hasProperty': [classProps[0]]}, {'hasProperty': [noDomainProps[0]]}]);
         ontologyManagerSvc.getClassProperties.and.returnValue(classProps);
-        mapperStateSvc.updateAvailableProps();
+        ontologyManagerSvc.getNoDomainProperties.and.returnValue(noDomainProps);
+        var result = mapperStateSvc.getAvailableProps('class');
+        expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, 'class');
         expect(ontologyManagerSvc.getClassProperties.calls.count()).toBe(mappingManagerSvc.sourceOntologies.length);
-        expect(mapperStateSvc.availableProps).not.toContain(classProps[0]);
-        expect(mapperStateSvc.availableProps).toContain(classProps[1]);
+        expect(result).not.toContain(classProps[0]);
+        expect(result).toContain(classProps[1]);
+        expect(result).not.toContain(noDomainProps[0]);
+        expect(result).toContain(noDomainProps[1]);
     });
     it('should change the mapping name if editing a previous mapping', function() {
         var name = mappingManagerSvc.mapping.name;
