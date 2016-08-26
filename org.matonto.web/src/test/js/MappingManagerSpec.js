@@ -267,7 +267,7 @@ describe('Mapping Manager service', function() {
                 var result = mappingManagerSvc.addDataProp(this.mapping, {}, 'classId', 'propId', 0);
                 var classMapping = _.find(result, {'@id': 'classId'});
                 var propMapping = _.find(result, {'@type': ['DataMapping']});
-                expect(result.length).toBe(2);
+                expect(result.length).toBe(3);
                 expect(propMapping).toBeTruthy();
                 expect(uuidSvc.v4).toHaveBeenCalled();
                 expect(_.isArray(classMapping.dataProperty)).toBe(true);
@@ -282,7 +282,7 @@ describe('Mapping Manager service', function() {
                 var result = mappingManagerSvc.addDataProp(this.mapping, {}, 'classId', 'propId', 0);
                 var classMapping = _.find(result, {'@id': 'classId'});
                 var propMapping = _.find(result, {'@type': ['DataMapping']});
-                expect(result.length).toBe(2);
+                expect(result.length).toBe(3    );
                 expect(uuidSvc.v4).not.toHaveBeenCalled();
                 expect(propMapping.columnIndex[0]['@value']).toEqual('0');
                 expect(propMapping.hasProperty[0]['@id']).toEqual('propId');
