@@ -34,44 +34,43 @@ import java.math.BigInteger;
 
 /**
  * {@link ValueConverter} for {@link BigInteger} objects.
- * 
- * @author bdgould
  *
+ * @author bdgould
  */
 @Component(provide = ValueConverter.class)
 public class BigIntegerValueConverter extends AbstractValueConverter<BigInteger> {
 
-	/**
-	 * The type of literal this {@link ValueConverter} works with.
-	 */
-	private static final String XSD_INTEGER = XSD_PREFIX + "integer";
+    /**
+     * The type of literal this {@link ValueConverter} works with.
+     */
+    private static final String XSD_INTEGER = XSD_PREFIX + "integer";
 
-	/**
-	 * Default constructor.
-	 */
-	public BigIntegerValueConverter() {
-		super(BigInteger.class);
-	}
+    /**
+     * Default constructor.
+     */
+    public BigIntegerValueConverter() {
+        super(BigInteger.class);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public BigInteger convertValue(Value value, Thing thing, Class<? extends BigInteger> desiredType)
-			throws ValueConversionException {
-		try {
-			return new BigInteger(value.stringValue());
-		} catch (NumberFormatException e) {
-			throw new ValueConversionException("Issue getting big integer value from statement.", e);
-		}
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public BigInteger convertValue(Value value, Thing thing, Class<? extends BigInteger> desiredType)
+            throws ValueConversionException {
+        try {
+            return new BigInteger(value.stringValue());
+        } catch (NumberFormatException e) {
+            throw new ValueConversionException("Issue getting big integer value from statement.", e);
+        }
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Value convertType(BigInteger type, Thing thing) throws ValueConversionException {
-		return getValueFactory(thing).createLiteral(type.toString(), XSD_INTEGER);
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Value convertType(BigInteger type, Thing thing) throws ValueConversionException {
+        return getValueFactory(thing).createLiteral(type.toString(), XSD_INTEGER);
+    }
 
 }

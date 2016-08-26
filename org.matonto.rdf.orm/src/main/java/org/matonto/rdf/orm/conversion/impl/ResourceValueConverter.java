@@ -33,50 +33,49 @@ import org.matonto.rdf.orm.conversion.ValueConverter;
 
 /**
  * {@link ValueConverter} for {@link Resource}.
- * 
- * @author bdgould
  *
+ * @author bdgould
  */
 @Component(provide = ValueConverter.class)
 public class ResourceValueConverter extends AbstractValueConverter<Resource> {
 
-	/**
-	 * Default constructor.
-	 */
-	public ResourceValueConverter() {
-		super(Resource.class);
-	}
+    /**
+     * Default constructor.
+     */
+    public ResourceValueConverter() {
+        super(Resource.class);
+    }
 
-	/**
-	 * {@inheritDoc}<br>
-	 * <br>
-	 * Try and cast the value to a {@link Resource}, and if this doesn't work,
-	 * then try and create an IRI from the {@link String} value.
-	 */
-	@Override
-	public Resource convertValue(final Value value, final Thing thing, final Class<? extends Resource> desiredType)
-			throws ValueConversionException {
-		if (value instanceof Resource) {
-			try {
-				return Resource.class.cast(value);
-			} catch (ClassCastException e) {
-				throw new ValueConversionException("Issue casting value '" + value + "' into a Resource", e);
-			}
-		} else {
-			try {
-				return getValueFactory(thing).createIRI(value.stringValue());
-			} catch (Exception e) {
-				throw new ValueConversionException("Issue converting '" + value + "' into a IRI object", e);
-			}
-		}
-	}
+    /**
+     * {@inheritDoc}<br>
+     * <br>
+     * Try and cast the value to a {@link Resource}, and if this doesn't work,
+     * then try and create an IRI from the {@link String} value.
+     */
+    @Override
+    public Resource convertValue(final Value value, final Thing thing, final Class<? extends Resource> desiredType)
+            throws ValueConversionException {
+        if (value instanceof Resource) {
+            try {
+                return Resource.class.cast(value);
+            } catch (ClassCastException e) {
+                throw new ValueConversionException("Issue casting value '" + value + "' into a Resource", e);
+            }
+        } else {
+            try {
+                return getValueFactory(thing).createIRI(value.stringValue());
+            } catch (Exception e) {
+                throw new ValueConversionException("Issue converting '" + value + "' into a IRI object", e);
+            }
+        }
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Value convertType(Resource type, Thing thing) throws ValueConversionException {
-		return type;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Value convertType(Resource type, Thing thing) throws ValueConversionException {
+        return type;
+    }
 
 }

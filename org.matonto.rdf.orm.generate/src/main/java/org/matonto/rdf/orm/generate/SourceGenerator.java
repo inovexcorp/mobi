@@ -23,18 +23,8 @@ package org.matonto.rdf.orm.generate;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import aQute.bnd.annotation.component.Reference;
+import com.sun.codemodel.*;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -56,22 +46,10 @@ import org.openrdf.model.vocabulary.XMLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.codemodel.ClassType;
-import com.sun.codemodel.JBlock;
-import com.sun.codemodel.JClass;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JConditional;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JDocComment;
-import com.sun.codemodel.JExpr;
-import com.sun.codemodel.JExpression;
-import com.sun.codemodel.JFieldVar;
-import com.sun.codemodel.JMethod;
-import com.sun.codemodel.JMod;
-import com.sun.codemodel.JType;
-import com.sun.codemodel.JVar;
-
-import aQute.bnd.annotation.component.Reference;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SourceGenerator {
 
@@ -80,23 +58,15 @@ public class SourceGenerator {
     private static final String CLASS_TYPE_IRI_FIELD = "TYPE";
 
     private static final String DEFAULT_IMPL_FIELD = "DEFAULT_IMPL";
-
-    public static void toSource(final Model model, final String outputPackage, final String location)
-            throws OntologyToJavaException, IOException {
-        final SourceGenerator generator = new SourceGenerator(model, outputPackage);
-        generator.build(location);
-    }
-
     private final JCodeModel codeModel = new JCodeModel();
     private final Model model;
+    private final String packageName;
     private Collection<IRI> classIris;
     private Map<IRI, JDefinedClass> interfaces = new HashMap<>();
     private Map<JDefinedClass, Map<String, IRI>> interfaceFieldIriMap = new HashMap<>();
     private Map<JDefinedClass, Map<String, IRI>> interfaceFieldRangeMap = new HashMap<>();
     private Map<JDefinedClass, Map<JMethod, JFieldVar>> classMethodIriMap = new HashMap<>();
     private Map<JDefinedClass, JDefinedClass> interfaceImplMap = new HashMap<>();
-
-    private final String packageName;
 
     public SourceGenerator(final Model ontologyGraph, final String outputPackage)
             throws OntologyToJavaException, IOException {
@@ -115,9 +85,73 @@ public class SourceGenerator {
         // TODO - Generate ValueConverters for generated types.
     }
 
+    public static void toSource(final Model model, final String outputPackage, final String location)
+            throws OntologyToJavaException, IOException {
+        final SourceGenerator generator = new SourceGenerator(model, outputPackage);
+        generator.build(location);
+    }
+
+    /**
+     * Generate a method name from a given static field name.
+     *
+     * @param prefix
+     * @param staticFieldName
+     * @return
+     */
+    private static String generateMethodName(final String prefix, final String staticFieldName) {
+        return prefix + StringUtils.capitalize(staticFieldName.substring(0, staticFieldName.length() - 4));
+    }
+
+    /**
+     * This method will simply convert a given IRI to its name by pulling off
+     * the end of the IRI.
+     *
+     * @param capitalize Whether or not to capitalize the first letter of the name
+     * @param iri        The {@link IRI} to process
+     * @param model      The {@link Model} to process statements from (should contain
+     *                   the ontology)
+     * @return The name of the field we'll use
+     */
+    private static String getName(final boolean capitalize, final IRI iri, final Model model) {
+        final String classIriString = iri.stringValue();
+        String className = classIriString.contains("#") ? classIriString.substring(classIriString.lastIndexOf('#') + 1)
+                : classIriString.contains("/") ? classIriString.substring(classIriString.lastIndexOf('/') + 1) : null;
+        if (className != null) {
+            className = stripWhiteSpace(className.trim());
+            className = (capitalize ? StringUtils.capitalize(className) : StringUtils.uncapitalize(className));
+        }
+        return className;
+    }
+
+    /**
+     * Simple method to strip whitespaces from the name. It will also ensure it
+     * is a valid class or field name.
+     *
+     * @param input The input string
+     * @return The stripped and cleaned output name
+     */
+    private static String stripWhiteSpace(final String input) {
+        StringBuilder builder = new StringBuilder();
+        boolean lastIsWhiteSpace = false;
+        boolean first = true;
+        for (char c : input.toCharArray()) {
+            if (first && !Character.isJavaIdentifierStart(c) && Character.isJavaIdentifierPart(c)) {
+                builder.append("_" + c);
+                first = false;
+            } else if (Character.isWhitespace(c)) {
+                lastIsWhiteSpace = true;
+            } else if (Character.isJavaIdentifierPart(c)) {
+                builder.append(lastIsWhiteSpace ? StringUtils.capitalize(c + "") : c);
+                lastIsWhiteSpace = false;
+                first = false;
+            }
+        }
+        return builder.toString();
+    }
+
     /**
      * Build the code.
-     * 
+     *
      * @param path
      * @throws IOException
      */
@@ -238,7 +272,7 @@ public class SourceGenerator {
     }
 
     private void generateFieldAccessorsForEachInterfaceMethod(final JDefinedClass impl,
-            final JDefinedClass interfaceClass) {
+                                                              final JDefinedClass interfaceClass) {
         interfaceClass.methods().forEach(interfaceMethod -> {
             LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
             // Generate getter.
@@ -254,7 +288,7 @@ public class SourceGenerator {
     }
 
     private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
-            final JDefinedClass interfaceClass) {
+                                            final JDefinedClass interfaceClass) {
         if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
             final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
             method.param(interfaceMethod.params().get(0).type(), "arg");
@@ -282,7 +316,7 @@ public class SourceGenerator {
     }
 
     private void generateFieldGetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
-            final JDefinedClass interfaceClass) {
+                                            final JDefinedClass interfaceClass) {
         if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
             final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
             method._throws(OrmException.class);
@@ -368,7 +402,7 @@ public class SourceGenerator {
     }
 
     private JMethod generateGetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
-            final String name, final String fieldName, final IRI propertyIri, final JClass type) {
+                                                     final String name, final String fieldName, final IRI propertyIri, final JClass type) {
         final JMethod method = clazz.method(JMod.PUBLIC, type,
                 generateMethodName(type.equals(boolean.class) ? "is" : "get", name));
         method._throws(OrmException.class);
@@ -380,7 +414,7 @@ public class SourceGenerator {
     }
 
     private JMethod generateSetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
-            final String name, final String fieldName, final IRI propertyIri, final JClass type) {
+                                                     final String name, final String fieldName, final IRI propertyIri, final JClass type) {
         final JMethod method = clazz.method(JMod.PUBLIC, codeModel.VOID, generateMethodName("set", name));
         method._throws(OrmException.class);
         method.param(type, "arg");
@@ -396,7 +430,7 @@ public class SourceGenerator {
 
     /**
      * TODO - make better?
-     * 
+     *
      * @param property
      * @return
      */
@@ -438,7 +472,7 @@ public class SourceGenerator {
 
     /**
      * Link the ontology generated interfaces together.
-     * 
+     *
      * @throws OntologyToJavaException
      */
     private void linkIndividualInterfaces() throws OntologyToJavaException {
@@ -456,11 +490,9 @@ public class SourceGenerator {
     /**
      * This method will take a root IRI identifying a class, and then populate a
      * list with the complete ancestry of that class.
-     * 
-     * @param root
-     *            The IRI to climb the ancestry tree of
-     * @param parents
-     *            The parent entities
+     *
+     * @param root    The IRI to climb the ancestry tree of
+     * @param parents The parent entities
      */
     private void getAncestors(final IRI root, final List<IRI> parents) {
         List<IRI> firstLevel = this.model.filter(root, RDFS.SUBCLASSOF, null).stream()
@@ -475,7 +507,7 @@ public class SourceGenerator {
     /**
      * Generate each individual interface with its static final predicate
      * fields.
-     * 
+     *
      * @param issues
      * @throws OntologyToJavaException
      */
@@ -548,9 +580,8 @@ public class SourceGenerator {
 
     /**
      * Gets the range of a given property IRI.
-     * 
-     * @param propertyIri
-     *            The property to fetch the range of
+     *
+     * @param propertyIri The property to fetch the range of
      * @return The IRI representing the range of the property
      */
     private IRI getRangeOfProperty(final IRI propertyIri) {
@@ -564,11 +595,10 @@ public class SourceGenerator {
 
     /**
      * Determines whether or not a supplied property IRI is functional.
-     * 
-     * @param propertyIri
-     *            The {@link IRI} of the property to check
+     *
+     * @param propertyIri The {@link IRI} of the property to check
      * @return Whether or not the {@link IRI} is the subject in a statement
-     *         saying it is a owl:FunctionalProperty.
+     * saying it is a owl:FunctionalProperty.
      */
     private boolean isPropertyFunctional(final IRI propertyIri) {
         return !this.model.filter(propertyIri, RDF.TYPE, OWL.FUNCTIONALPROPERTY).isEmpty();
@@ -577,9 +607,9 @@ public class SourceGenerator {
     /**
      * Identify all of the subjects in the ontology that have the rdf:type of
      * owl:Class.
-     * 
+     *
      * @return The {@link Collection} of {@link IRI}s that are classes in the
-     *         ontology
+     * ontology
      */
     private Collection<IRI> identifyClasses() {
         final Model submodel = this.model.filter(null, RDF.TYPE, OWL.CLASS);
@@ -599,70 +629,8 @@ public class SourceGenerator {
         return builder.toString().trim();
     }
 
-    /**
-     * Generate a method name from a given static field name.
-     * 
-     * @param prefix
-     * @param staticFieldName
-     * @return
-     */
-    private static String generateMethodName(final String prefix, final String staticFieldName) {
-        return prefix + StringUtils.capitalize(staticFieldName.substring(0, staticFieldName.length() - 4));
-    }
-
-    /**
-     * This method will simply convert a given IRI to its name by pulling off
-     * the end of the IRI.
-     * 
-     * @param capitalize
-     *            Whether or not to capitalize the first letter of the name
-     * @param iri
-     *            The {@link IRI} to process
-     * @param model
-     *            The {@link Model} to process statements from (should contain
-     *            the ontology)
-     * @return The name of the field we'll use
-     */
-    private static String getName(final boolean capitalize, final IRI iri, final Model model) {
-        final String classIriString = iri.stringValue();
-        String className = classIriString.contains("#") ? classIriString.substring(classIriString.lastIndexOf('#') + 1)
-                : classIriString.contains("/") ? classIriString.substring(classIriString.lastIndexOf('/') + 1) : null;
-        if (className != null) {
-            className = stripWhiteSpace(className.trim());
-            className = (capitalize ? StringUtils.capitalize(className) : StringUtils.uncapitalize(className));
-        }
-        return className;
-    }
-
-    /**
-     * Simple method to strip whitespaces from the name. It will also ensure it
-     * is a valid class or field name.
-     * 
-     * @param input
-     *            The input string
-     * @return The stripped and cleaned output name
-     */
-    private static String stripWhiteSpace(final String input) {
-        StringBuilder builder = new StringBuilder();
-        boolean lastIsWhiteSpace = false;
-        boolean first = true;
-        for (char c : input.toCharArray()) {
-            if (first && !Character.isJavaIdentifierStart(c) && Character.isJavaIdentifierPart(c)) {
-                builder.append("_" + c);
-                first = false;
-            } else if (Character.isWhitespace(c)) {
-                lastIsWhiteSpace = true;
-            } else if (Character.isJavaIdentifierPart(c)) {
-                builder.append(lastIsWhiteSpace ? StringUtils.capitalize(c + "") : c);
-                lastIsWhiteSpace = false;
-                first = false;
-            }
-        }
-        return builder.toString();
-    }
-
     private JBlock convertValueBody(final JDefinedClass interfaceClass, final JMethod interfaceMethod,
-            final JDefinedClass implClass, final JMethod implMethod) {
+                                    final JDefinedClass implClass, final JMethod implMethod) {
         final boolean returnsSet = interfaceMethod.type().fullName().startsWith("java.util.Set");
 
         JType returnType = (returnsSet) ? codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Value.class)

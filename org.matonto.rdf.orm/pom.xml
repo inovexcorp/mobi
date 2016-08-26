@@ -20,58 +20,58 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<artifactId>matonto-parent</artifactId>
-		<groupId>org.matonto</groupId>
-		<version>1.1.20-SNAPSHOT</version>
-		<relativePath>../matonto-parent/pom.xml</relativePath>
-	</parent>
-	<artifactId>rdf.orm</artifactId>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>matonto-parent</artifactId>
+        <groupId>org.matonto</groupId>
+        <version>1.1.20-SNAPSHOT</version>
+        <relativePath>../matonto-parent/pom.xml</relativePath>
+    </parent>
+    <artifactId>rdf.orm</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
-	<description>ORM for RDF data using simple POJOs</description>
+    <description>ORM for RDF data using simple POJOs</description>
 
     <packaging>bundle</packaging>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.matonto</groupId>
-			<artifactId>persistence.api</artifactId>
-			<version>1.0.6</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matonto</groupId>
-			<artifactId>persistence.utils</artifactId>
-			<version>1.0.32</version>
-		</dependency>
-		<dependency>
-			<groupId>org.spockframework</groupId>
-			<artifactId>spock-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.gpars</groupId>
-			<artifactId>gpars</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>biz.aQute.bnd</groupId>
-			<artifactId>biz.aQute.bndlib</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>edu.washington.cs.types.checker</groupId>
-			<artifactId>checker-framework</artifactId>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.api</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>1.0.32</version>
+        </dependency>
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.gpars</groupId>
+            <artifactId>gpars</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>edu.washington.cs.types.checker</groupId>
+            <artifactId>checker-framework</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>org.matonto</groupId>
-			<artifactId>rdf.impl.sesame</artifactId>
-			<version>1.0.6</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
+            <version>1.0.6</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-	<build>
+    <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.felix</groupId>

@@ -23,23 +23,22 @@ package org.matonto.rdf.orm.conversion.impl;
  * #L%
  */
 
-import java.math.BigInteger;
-
+import junit.framework.TestCase;
 import org.junit.Test;
 
-import junit.framework.TestCase;
+import java.math.BigInteger;
 
 public class TestBigIntegerValueConverter extends ValueConverterTestCase<BigInteger> {
 
-	public TestBigIntegerValueConverter() {
-		super(new BigIntegerValueConverter(), BigInteger.class);
-	}
+    public TestBigIntegerValueConverter() {
+        super(new BigIntegerValueConverter(), BigInteger.class);
+    }
 
-	@Test
-	public void simpleTest() {
-		BigInteger test = new BigInteger("12345678987654321");
-		TestCase.assertEquals(test,
-				valueConverter.convertValue(valueConverter.convertType(test, null), null, BigInteger.class));
-	}
+    @Test
+    public void simpleTest() {
+        BigInteger test = new BigInteger("12345678987654321");
+        TestCase.assertEquals(test,
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, BigInteger.class));
+    }
 
 }

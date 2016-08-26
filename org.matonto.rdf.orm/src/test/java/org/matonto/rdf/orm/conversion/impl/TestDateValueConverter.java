@@ -23,23 +23,22 @@ package org.matonto.rdf.orm.conversion.impl;
  * #L%
  */
 
-import java.util.Date;
-
+import junit.framework.TestCase;
 import org.junit.Test;
 
-import junit.framework.TestCase;
+import java.util.Date;
 
 public class TestDateValueConverter extends ValueConverterTestCase<Date> {
 
-	public TestDateValueConverter() {
-		super(new DateValueConverter(), Date.class);
-	}
+    public TestDateValueConverter() {
+        super(new DateValueConverter(), Date.class);
+    }
 
-	@Test
-	public void simpleTest() {
-		Date test = new Date();
-		TestCase.assertEquals(test,
-				valueConverter.convertValue(valueConverter.convertType(test, null), null, Date.class));
-	}
+    @Test
+    public void simpleTest() {
+        Date test = new Date();
+        TestCase.assertEquals(test,
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, Date.class));
+    }
 
 }

@@ -38,9 +38,8 @@ import java.util.List;
 /**
  * This class is the {@link Mojo} that our plugin will use for generating the
  * source code for a given ontology.
- * 
- * @author bdgould
  *
+ * @author bdgould
  */
 @Mojo(name = "generate-orm")
 public class OrmGenerationMojo extends AbstractMojo {

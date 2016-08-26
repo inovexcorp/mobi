@@ -23,30 +23,24 @@ package org.matonto.rdf.orm.impl;
  * #L%
  */
 
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.ValueFactory;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
+import org.matonto.rdf.api.*;
 import org.matonto.rdf.orm.AbstractOrmFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-
 /**
  * This is the core {@link OrmFactory} for {@link Thing} instances. It provides
  * a useful pattern for working with the {@link Thing} class. It is a OSGi
  * service for {@link OrmFactory} instances that return {@link Thing} typed ORM
  * objects.
- * 
- * @author bdgould
  *
+ * @author bdgould
  */
-@Component(provide = { OrmFactory.class, ValueConverter.class, ThingFactory.class })
+@Component(provide = {OrmFactory.class, ValueConverter.class, ThingFactory.class})
 public class ThingFactory extends AbstractOrmFactory<Thing> {
 
     /**
@@ -61,7 +55,7 @@ public class ThingFactory extends AbstractOrmFactory<Thing> {
      */
     @Override
     public Thing getExisting(Resource resource, Model model, ValueFactory valueFactory,
-            ValueConverterRegistry valueConverterRegistry) {
+                             ValueConverterRegistry valueConverterRegistry) {
         return new ThingImpl(resource, model, valueFactory, valueConverterRegistry);
     }
 
