@@ -119,7 +119,7 @@
                             dvm.state.step = dvm.state.editMappingStep;
                             var classes = dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld);
                             dvm.state.selectedClassMappingId = _.get(classes, "[0]['@id']");
-                            dvm.state.updateAvailableProps();
+                            _.forEach(classes, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         }
                     }
                     dvm.setUploadValidity = function(bool) {

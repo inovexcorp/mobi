@@ -83,11 +83,20 @@ describe('New Prop Form directive', function() {
                 this.classMappingId = mapperStateSvc.selectedClassMappingId;
             });
             it('if the selected property is an object property', function() {
+                var i = 0;
+                var newClass = {'@id': '2'};
+                var classes = [{'@id': '1'}];
+                mappingManagerSvc.getAllClassMappings.and.callFake(function() {
+                    i++;
+                    return i === 1 ? classes : _.concat(classes, newClass);
+                });
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.set();
                 expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(mapperStateSvc.selectedProp['@id']);
                 expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(newClass['@id']);
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
                 expect(mapperStateSvc.openedClasses).toContain(this.classMappingId);
@@ -98,6 +107,7 @@ describe('New Prop Form directive', function() {
                 expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(mapperStateSvc.selectedProp['@id']);
                 expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
                 expect(mappingManagerSvc.addObjectProp).not.toHaveBeenCalled();
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
                 expect(mapperStateSvc.openedClasses).toContain(this.classMappingId);

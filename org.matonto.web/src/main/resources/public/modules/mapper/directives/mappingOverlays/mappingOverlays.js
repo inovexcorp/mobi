@@ -97,10 +97,12 @@
                         if (dvm.isClassMapping(dvm.state.deleteId)) {
                             _.pull(dvm.state.openedClasses, dvm.state.deleteId);
                             dvm.mm.mapping.jsonld = dvm.mm.removeClass(dvm.mm.mapping.jsonld, dvm.state.deleteId);
+                            _.unset(dvm.state.availablePropsByClass, encodeURIComponent(dvm.state.deleteId));
                         } else {
                             var classMapping = dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId) 
                                 || dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId);
                             dvm.mm.mapping.jsonld = dvm.mm.removeProp(dvm.mm.mapping.jsonld, classMapping['@id'], dvm.state.deleteId);
+                            dvm.state.setAvailableProps(classMapping['@id']);
                         }
                         dvm.state.changedMapping();
                         dvm.state.resetEdit();

@@ -98,7 +98,7 @@ describe('Mapper Side Bar directive', function() {
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.newProp).toBe(true);
             expect(mapperStateSvc.editingClassMappingId).toBe('test');
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
         });
         it('should set the correct state for deleting an entity', function() {
             mapperStateSvc.selectedPropMappingId = 'prop';
