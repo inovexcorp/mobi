@@ -52,10 +52,12 @@ describe('Ontology Select Overlay directive', function() {
 
     describe('should initialize with the correct values', function() {
         it('using opened and closed ontologies', function() {
-            ontologyManagerSvc.list = [{ontologyId: 'open', ontology: []}];
+            ontologyManagerSvc.list = [{ontologyId: 'open'}];
             ontologyManagerSvc.ontologyIds = ['closed'];
+            mappingManagerSvc.getOntology.and.returnValue($q.when({id: 'open'}))
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
+            $timeout.flush();
             var controller = element.controller('ontologySelectOverlay');
             expect(controller.ontologyIds).toContain('open');
             expect(controller.ontologyIds).toContain('closed');
@@ -65,6 +67,7 @@ describe('Ontology Select Overlay directive', function() {
             mappingManagerSvc.sourceOntologies = [];
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
+            $timeout.flush();
             var controller = element.controller('ontologySelectOverlay');
             expect(controller.ontologyIds.length).toBe(0);
             expect(controller.selectedOntology).toEqual(undefined);
@@ -77,6 +80,7 @@ describe('Ontology Select Overlay directive', function() {
             mappingManagerSvc.getSourceOntology.and.returnValue(sourceOntology);
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
+            $timeout.flush();
             var controller = element.controller('ontologySelectOverlay');
             expect(controller.ontologyIds.length).toBe(1);
             expect(controller.selectedOntology).toEqual(sourceOntology);

@@ -65,25 +65,22 @@
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
 
-                    dvm.ontologyObjs = _.map(dvm.om.list, obj => {
-                        var obj = _.pick(obj, ['ontologyId', 'ontology']);
-                        return {id: obj.ontologyId, entities: obj.ontology};
+                    $q.all(_.map(_.map(dvm.om.list, 'ontologyId'), id => dvm.mm.getOntology(id))).then(responses => {
+                        dvm.ontologyObjs = responses;
+                        var sourceOntology;
+                        if (dvm.mm.sourceOntologies.length) {
+                            sourceOntology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
+                            dvm.ontologyObjs = _.union(dvm.ontologyObjs, [sourceOntology]);
+                        }
+                        dvm.ontologyIds = _.union(dvm.om.ontologyIds, _.map(dvm.ontologyObjs, 'id'));
+                        if (sourceOntology) {
+                            dvm.selectedOntology = angular.copy(sourceOntology);
+                            dvm.selectedOntologyId = dvm.selectedOntology.id;
+                        } else {
+                            dvm.selectedOntology = undefined;
+                            dvm.selectedOntologyId = '';
+                        }
                     });
-                    var sourceOntology;
-
-                    if (dvm.mm.sourceOntologies.length) {
-                        sourceOntology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
-                        dvm.ontologyObjs = _.union(dvm.ontologyObjs, [sourceOntology]);
-                    }
-                    dvm.ontologyIds = _.union(dvm.om.ontologyIds, _.map(dvm.ontologyObjs, 'id'));
-                    if (sourceOntology) {
-                        dvm.selectedOntology = angular.copy(sourceOntology);
-                        dvm.selectedOntologyId = dvm.selectedOntology.id;
-                    } else {
-                        dvm.selectedOntology = undefined;
-                        dvm.selectedOntologyId = '';
-                    }
-
                     
                     dvm.isOpen = function(ontologyId) {
                         return _.findIndex(dvm.ontologyObjs, {id: ontologyId}) >= 0;
