@@ -33,14 +33,11 @@ describe('Mapping List directive', function() {
         mockMappingManager();
         mockMapperState();
 
-        inject(function(_mappingManagerService_, _mapperStateService_) {
-            mappingManagerSvc = _mappingManagerService_;
-            mapperStateSvc = _mapperStateService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
         });
     });
 
@@ -48,9 +45,9 @@ describe('Mapping List directive', function() {
         beforeEach(function() {
             this.element = $compile(angular.element('<mapping-list></mapping-list>'))(scope);
             scope.$digest();
+            controller = this.element.controller('mappingList');
         });
         it('should open a mapping on click', function() {
-            var controller = this.element.controller('mappingList');
             mappingManagerSvc.previousMappingNames = ['test1', 'test2'];
             controller.onClick('test1');
             scope.$apply();
@@ -98,7 +95,7 @@ describe('Mapping List directive', function() {
         mappingManagerSvc.previousMappingNames = ['test1'];
         var element = $compile(angular.element('<mapping-list></mapping-list>'))(scope);
         scope.$digest();
-        var controller = element.controller('mappingList');
+        controller = element.controller('mappingList');
         spyOn(controller, 'onClick');
 
         angular.element(element.querySelectorAll('li a')[0]).triggerHandler('click');

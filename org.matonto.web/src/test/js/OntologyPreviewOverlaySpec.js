@@ -32,12 +32,9 @@ describe('Ontology Preview Overlay directive', function() {
         mockOntologyManager();
         mockMapperState();
 
-        inject(function(_ontologyManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mapperStateService_) {
             ontologyManagerSvc = _ontologyManagerService_;
             mapperStateSvc = _mapperStateService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
@@ -45,21 +42,20 @@ describe('Ontology Preview Overlay directive', function() {
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.ontology = {'@id': ''};
-
+            scope.ontology = {};
             this.element = $compile(angular.element('<ontology-preview-overlay ontology="ontology"></ontology-preview-overlay>'))(scope);
             scope.$digest();
         });
         it('ontology should be two way bound', function() {
             var isolatedScope = this.element.isolateScope();
-            isolatedScope.ontology = {'@id': 'test'};
+            isolatedScope.ontology = {entities: []};
             scope.$digest();
-            expect(scope.ontology).toEqual({'@id': 'test'});
+            expect(scope.ontology).toEqual({entities: []});
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.ontology = {'@id': ''};
+            scope.ontology = {};
             this.element = $compile(angular.element('<ontology-preview-overlay ontology="ontology"></ontology-preview-overlay>'))(scope);
             scope.$digest();
         });

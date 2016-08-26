@@ -24,6 +24,8 @@ describe('Everything Tree directive', function() {
     var $compile,
         scope,
         element,
+        controller,
+        stateManagerSvc,
         ontologyManagerSvc;
 
     beforeEach(function() {
@@ -32,29 +34,26 @@ describe('Everything Tree directive', function() {
         mockOntologyManager();
         mockStateManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
         });
+
+        ontologyManagerSvc.list = [{
+            id: '',
+            ontology: [{}]
+        }];
+        ontologyManagerSvc.getClasses.and.returnValue(['class1']);
+        ontologyManagerSvc.getClassProperties.and.returnValue(['property1']);
+        ontologyManagerSvc.getNoDomainProperties.and.returnValue(['property1']);
+        stateManagerSvc.getOpened.and.returnValue(true);
     });
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            ontologyManagerSvc.getList.and.returnValue([
-                {
-                    matonto: {
-                        classes: [
-                            {
-                                matonto: {
-                                    properties: ['property1']
-                                }
-                            }
-                        ],
-                        noDomains: ['property1']
-                    }
-                }
-            ]);
+            ontologyManagerSvc.getClassPropertyIRIs.and.returnValue(['property1']);
             element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
             scope.$digest();
         });
@@ -77,57 +76,26 @@ describe('Everything Tree directive', function() {
             expect(treeItems.length).toBe(3);
         });
         describe('based on tree-item length', function() {
-            it('when ontology.noDomains is empty', function() {
-                ontologyManagerSvc.getList.and.returnValue([
-                    {
-                        matonto: {
-                            classes: [
-                                {
-                                    matonto: {
-                                        properties: ['property1']
-                                    }
-                                }
-                            ],
-                            noDomains: []
-                        }
-                    }
-                ]);
+            it('when noDomainProperties is empty', function() {
+                ontologyManagerSvc.getNoDomainProperties.and.returnValue([]);
+                ontologyManagerSvc.getClassProperties.and.returnValue(['property1']);
                 element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
                 var treeItems = element.querySelectorAll('.container tree-item');
                 expect(treeItems.length).toBe(2);
             });
-            it('when class.matonto.properties is empty', function() {
-                ontologyManagerSvc.getList.and.returnValue([
-                    {
-                        matonto: {
-                            classes: [
-                                {
-                                    matonto: {
-                                        properties: []
-                                    }
-                                }
-                            ],
-                            noDomains: ['property1']
-                        }
-                    }
-                ]);
+            it('when getClassProperties returns an empty array', function() {
+                ontologyManagerSvc.getClassProperties.and.returnValue([]);
                 element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 
                 var treeItems = element.querySelectorAll('.container tree-item');
                 expect(treeItems.length).toBe(2);
             });
-            it('when ontology.matonto.classes is empty', function() {
-                ontologyManagerSvc.getList.and.returnValue([
-                    {
-                        matonto: {
-                            classes: [],
-                            noDomains: ['property1']
-                        }
-                    }
-                ]);
+            it('when getClasses is empty', function() {
+                ontologyManagerSvc.getNoDomainProperties.and.returnValue(['property1']);
+                ontologyManagerSvc.getClasses.and.returnValue([]);
                 element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
                 scope.$digest();
 

@@ -24,36 +24,45 @@
     <div class="content">
         <!-- section header -->
         <h6>Create New OWL Property</h6>
-
         <!-- error -->
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-
-        <!-- static iri -->
-        <static-iri iri="dvm.iri" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
-
+        <!-- @id -->
+        <static-iri iri="dvm.property['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <form name="dvm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
-            <!-- name -->
+            <!-- dcterms:title -->
             <div class="form-group">
                 <custom-label muted-text="'*Required'">Name</custom-label>
-                <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
+                <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
+                       ng-model="dvm.property[dvm.prefixes.dcterms + 'title'][0]['@value']">
             </div>
-
-            <string-select ng-model="dvm.type" display-text="'Type'" muted-text="'*Required'" select-list="dvm.propertyTypes" change-event="dvm.setRange()"></string-select>
-
-            <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
-
-            <object-select ng-model="dvm.domain"
+            <!-- @type -->
+            <string-select ng-model="dvm.property['@type']"
+                           display-text="'Type'"
+                           muted-text="'*Required'"
+                           on-change="dvm.property[dvm.prefixes.rdfs + 'range'] = []"
+                           select-list="dvm.om.propertyTypes"></string-select>
+            <!-- dcterms:description -->
+            <text-area ng-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
+                       display-text="'Description'"></text-area>
+            <!-- rdfs:domain -->
+            <object-select ng-model="dvm.property[dvm.prefixes.rdfs + 'domain']"
                            display-text="'Domain'"
-                           select-list="dvm.sm.ontology.matonto.subClasses"></object-select>
-
-            <object-select ng-model="dvm.range"
+                           select-list="dvm.sm.state.subClasses"></object-select>
+            <!-- rdfs:range -->
+            <object-select ng-if="dvm.om.isObjectProperty(dvm.property)"
+                           ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
                            display-text="'Range'"
-                           select-list="dvm.rangeList"
-                           is-disabled-when="!dvm.type.length"></object-select>
-
+                           select-list="dvm.sm.state.subClasses"></object-select>
+            <object-select ng-if="dvm.om.isDataTypeProperty(dvm.property)"
+                           ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
+                           display-text="'Range'"
+                           select-list="dvm.sm.state.dataPropertyRange"></object-select>
+            <!-- create property buttons -->
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.type.length" on-click="dvm.create()">Create</custom-button>
-                <custom-button on-click="dvm.sm.showCreatePropertyOverlay = false" type="'secondary'">Cancel</custom-button>
+                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.property['@type'].length"
+                               on-click="dvm.create()">Create</custom-button>
+                <custom-button on-click="dvm.sm.showCreatePropertyOverlay = false"
+                               type="'secondary'">Cancel</custom-button>
             </div>
         </form>
     </div>

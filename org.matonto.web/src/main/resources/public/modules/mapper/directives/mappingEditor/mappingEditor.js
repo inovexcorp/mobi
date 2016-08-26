@@ -71,7 +71,8 @@
                     dvm.dm = delimitedManagerService;
 
                     dvm.getSourceOntologyName = function() {
-                        return dvm.om.getEntityName(dvm.mm.getSourceOntology(_.get(dvm.mm.mapping, 'jsonld')));
+                        var sourceOntology = dvm.mm.getSourceOntology(_.get(dvm.mm.mapping, 'jsonld'));
+                        return sourceOntology ? dvm.om.getEntityName(dvm.om.getOntologyEntity(sourceOntology.entities)) : '';
                     }
                     dvm.changeOntology = function() {
                         dvm.state.changeOntology = true;

@@ -27,7 +27,8 @@ describe('Create Annotation Overlay directive', function() {
         controller,
         stateManagerSvc,
         annotationManagerSvc,
-        deferred;
+        deferred,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,14 +36,17 @@ describe('Create Annotation Overlay directive', function() {
         injectRegexConstant();
         mockAnnotationManager();
         mockStateManager();
+        mockOntologyManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _annotationManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _annotationManagerService_, _stateManagerService_,
+            _ontologyManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             annotationManagerSvc = _annotationManagerService_;
             stateManagerSvc = _stateManagerService_;
             deferred = _$q_.defer();
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -124,13 +128,15 @@ describe('Create Annotation Overlay directive', function() {
                 controller.create();
             });
             it('calls the correct manager function', function() {
-                expect(annotationManagerSvc.create).toHaveBeenCalledWith(stateManagerSvc.ontology, controller.iri);
+                expect(ontologyManagerSvc.getAnnotationIRIs).toHaveBeenCalledWith(stateManagerSvc.ontology);
+                expect(annotationManagerSvc.create).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
+                    ontologyManagerSvc.getAnnotationIRIs(stateManagerSvc.ontology), controller.iri);
             });
             it('when resolved, sets the correct variables', function() {
-                deferred.resolve({});
+                deferred.resolve({'@id': 'id'});
                 scope.$apply();
-                expect(controller.error).toBe('');
-                expect(controller.iri).toBe('');
+                expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                    {'@id': 'id', matonto: {originalIRI: 'id'}});
                 expect(stateManagerSvc.showCreateAnnotationOverlay).toBe(false);
             });
             it('when rejected, sets the correct variable', function() {

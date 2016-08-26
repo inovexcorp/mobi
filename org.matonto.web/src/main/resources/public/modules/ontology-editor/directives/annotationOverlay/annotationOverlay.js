@@ -45,8 +45,8 @@
                     dvm.sm = stateManagerService;
 
                     function closeAndMark() {
+                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
                         dvm.sm.showAnnotationOverlay = false;
-                        dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.getState());
                     }
 
                     dvm.addAnnotation = function(select, value) {
@@ -57,6 +57,10 @@
                     dvm.editAnnotation = function(select, value) {
                         dvm.am.edit(dvm.sm.selected, dvm.ro.getItemIri(select), value, dvm.sm.annotationIndex);
                         closeAndMark();
+                    }
+
+                    dvm.getItemNamespace = function(item) {
+                        return _.get(item, 'namespace', 'No namespace');
                     }
                 }
             }

@@ -33,33 +33,22 @@ describe('Range Class Description directive', function() {
         mockOntologyManager();
         mockMappingManager();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
         });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
-        });
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         beforeEach(function() {
-            scope.classId = '';
             scope.selectedProp = '';
-            this.element = $compile(angular.element('<range-class-description class-id="{{classId}}" selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
+            this.element = $compile(angular.element('<range-class-description selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
             scope.$digest();
-        });
-
-        it('classId should be one way bound', function() {
-            var controller = this.element.controller('rangeClassDescription');
-            controller.classId = 'test';
-            scope.$digest();
-            expect(scope.classId).not.toEqual('test');
+            controller = this.element.controller('rangeClassDescription');
         });
         it('selectedProp should be one way bound', function() {
-            var controller = this.element.controller('rangeClassDescription');
             controller.selectedProp = 'test';
             scope.$digest();
             expect(scope.selectedProp).not.toEqual('test');
@@ -69,26 +58,24 @@ describe('Range Class Description directive', function() {
         beforeEach(function() {
             scope.classId = '';
             scope.selectedProp = '';
-            this.element = $compile(angular.element('<range-class-description class-id="{{classId}}" selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
+            this.element = $compile(angular.element('<range-class-description selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
             scope.$digest();
+            controller = this.element.controller('rangeClassDescription');
         });
         it('should get the name of the range class', function() {
-            var controller = this.element.controller('rangeClassDescription');
             var result = controller.getRangeClassName();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
         it('should get the description of the range class', function() {
-            var controller = this.element.controller('rangeClassDescription');
             var result = controller.getRangeClassDescription();
             expect(typeof result).toBe('string');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            scope.classId = '';
             scope.selectedProp = '';
-            var element = $compile(angular.element('<range-class-description class-id="{{classId}}" selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
+            var element = $compile(angular.element('<range-class-description selected-prop="{{selectedProp}}"></range-class-description>'))(scope);
             scope.$digest();
             expect(element.hasClass('class-description')).toBe(true);
         });

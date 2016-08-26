@@ -93,7 +93,7 @@
                     }
                     dvm.isClickable = function() {
                         return dvm.mm.isDataMapping(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId})) 
-                            || (!!dvm.state.selectedProp && !dvm.om.isObjectProperty(_.get(dvm.state.selectedProp, '@type', [])));
+                            || (!!dvm.state.selectedProp && dvm.om.isDataTypeProperty(dvm.state.selectedProp));
                     }
                     dvm.clickColumn = function(index) {
                         dvm.state.selectedColumn = dvm.dm.filePreview.headers[index];

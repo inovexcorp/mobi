@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.1.15-SNAPSHOT</version>
+    <version>1.1.20-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -79,6 +79,9 @@
         <module>org.matonto.jaas</module>
         <module>org.matonto.web.security</module>
         <module>org.matonto.karaf.feature</module>
+        <module>org.matonto.rdf.orm</module>
+        <module>org.matonto.rdf.orm.generate</module>
+        <module>rdf-orm-maven-plugin</module>
     </modules>
 
     <properties>

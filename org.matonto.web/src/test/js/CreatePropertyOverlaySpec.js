@@ -26,23 +26,28 @@ describe('Create Property Overlay directive', function() {
         element,
         ontologyManagerSvc,
         stateManagerSvc,
-        deferred;
+        deferred,
+        prefixes;
 
     beforeEach(function() {
         module('templates');
         module('createPropertyOverlay');
         injectRegexConstant();
         injectCamelCaseFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
         mockStateManager();
+        mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             stateManagerSvc = _stateManagerService_;
             deferred = _$q_.defer();
+            prefixes = _prefixes_;
         });
     });
 
@@ -79,72 +84,74 @@ describe('Create Property Overlay directive', function() {
         });
         describe('nameChanged', function() {
             beforeEach(function() {
-                controller.name = 'name';
+                controller.property = {};
+                controller.property[prefixes.dcterms + 'title'] = [{'@value': 'Name'}];
+                controller.prefix = 'start';
             });
             it('changes iri if iriHasChanged is false', function() {
                 controller.iriHasChanged = false;
                 controller.nameChanged();
-                expect(controller.iri).toEqual(controller.iriBegin + controller.iriThen + controller.name);
+                expect(controller.property['@id']).toEqual(controller.prefix + controller.property[prefixes.dcterms +
+                    'title'][0]['@value']);
             });
             it('does not change iri if iriHasChanged is true', function() {
                 controller.iriHasChanged = true;
-                controller.iri = 'iri';
+                controller.property['@id'] = 'iri';
                 controller.nameChanged();
-                expect(controller.iri).toEqual('iri');
+                expect(controller.property['@id']).toEqual('iri');
             });
         });
         it('onEdit changes iri based on the params', function() {
             controller.onEdit('begin', 'then', 'end');
-            expect(controller.iri).toBe('begin' + 'then' + 'end');
-        });
-        describe('setRange', function() {
-            it('changes rangeList to subClasses when type is ObjectProperty', function() {
-                controller.type = ['ObjectProperty'];
-                stateManagerSvc.ontology = {
-                    matonto: {
-                        subClasses: ['subClass1']
-                    }
-                }
-                controller.setRange();
-                expect(controller.rangeList.indexOf('subClass1') !== -1).toBe(true);
-            });
-            it('changes rangeList to propertyRange when type is not ObjectProperty', function() {
-                controller.type = ['DatatypeProperty'];
-                stateManagerSvc.ontology = {
-                    matonto: {
-                        dataPropertyRange: ['range1']
-                    }
-                }
-                controller.setRange();
-                expect(controller.rangeList.indexOf('range1') !== -1).toBe(true);
-            });
+            expect(controller.property['@id']).toBe('begin' + 'then' + 'end');
         });
         describe('create', function() {
             beforeEach(function() {
-                ontologyManagerSvc.createProperty.and.returnValue(deferred.promise);
-                controller.iri = 'property-iri';
-                controller.name = 'label';
-                controller.type = 'type';
-                controller.range = [];
-                controller.domain = [];
-                controller.description = 'description';
-                controller.create();
+                ontologyManagerSvc.createObjectProperty.and.returnValue(deferred.promise);
+                ontologyManagerSvc.createDataTypeProperty.and.returnValue(deferred.promise);
+                controller.property = {
+                    '@id': 'property-iri'
+                }
+                controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
+                controller.property[prefixes.rdfs + 'range'] = [];
+                controller.property[prefixes.rdfs + 'domain'] = [];
+                controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
             });
-            it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.createProperty).toHaveBeenCalledWith(stateManagerSvc.ontology, controller.iri, controller.name, controller.type, controller.range, controller.domain, controller.description);
+            describe('calls the correct manager function', function() {
+                it('when isObjectProperty is true', function() {
+                    controller.property['@type'] = [prefixes.owl + 'ObjectProperty'];
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                    controller.create();
+                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
+                    expect(ontologyManagerSvc.createObjectProperty).toHaveBeenCalledWith(
+                        stateManagerSvc.state.ontologyId, controller.property);
+                });
+                it('when isObjectProperty is false', function() {
+                    controller.property['@type'] = [prefixes.owl + 'DataTypeProperty'];
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                    controller.create();
+                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
+                    expect(ontologyManagerSvc.createDataTypeProperty).toHaveBeenCalledWith(
+                        stateManagerSvc.state.ontologyId, controller.property);
+                });
             });
-            it('when resolved, sets the correct variables', function() {
-                deferred.resolve(1);
-                scope.$apply();
-                expect(stateManagerSvc.state.ci).toBe(1);
-                expect(controller.error).toBe('');
-                expect(stateManagerSvc.showCreatePropertyOverlay).toBe(false);
-                expect(stateManagerSvc.setStateToNew).toHaveBeenCalledWith(stateManagerSvc.state, ontologyManagerSvc.getList(), 'property');
-            });
-            it('when rejected, sets the correct variable', function() {
-                deferred.reject('error');
-                scope.$apply();
-                expect(controller.error).toBe('error');
+            describe('when', function() {
+                beforeEach(function() {
+                    controller.create();
+                });
+                it('resolved, sets the correct variables', function() {
+                    deferred.resolve({entityIRI: 'entityIRI', ontologyId: 'ontologyId'});
+                    scope.$apply();
+                    expect(stateManagerSvc.showCreatePropertyOverlay).toBe(false);
+                    expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith('ontologyId');
+                    expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('property-editor', 'entityIRI',
+                        ontologyManagerSvc.getListItemById('ontologyId'));
+                });
+                it('rejected, sets the correct variable', function() {
+                    deferred.reject('error');
+                    scope.$apply();
+                    expect(controller.error).toBe('error');
+                });
             });
         });
     });

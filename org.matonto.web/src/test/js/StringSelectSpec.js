@@ -24,7 +24,12 @@ describe('String Select directive', function() {
     var $compile,
         scope,
         element,
-        $filter;
+        $filter,
+        controller,
+        prefixes,
+        item,
+        splitIRIFilter,
+        isolatedScope;
 
     beforeEach(function() {
         module('templates');
@@ -34,40 +39,43 @@ describe('String Select directive', function() {
         injectSplitIRIFilter();
         injectRemoveIriFromArrayFilter();
         mockOntologyManager();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$filter_) {
+        inject(function(_$compile_, _$rootScope_, _$filter_, _prefixes_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $filter = _$filter_;
+            prefixes = _prefixes_;
+            splitIRIFilter = _splitIRIFilter_;
         });
     });
 
     beforeEach(function() {
-        scope.bindModel = '';
-        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.bindModel = [];
+        scope.onChange = jasmine.createSpy('onChange');
         scope.displayText = '';
         scope.selectList = [];
         scope.mutedText = '';
 
-        element = $compile(angular.element('<string-select ng-model="bindModel" change-event="changeEvent" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
+        element = $compile(angular.element('<string-select ng-model="bindModel" on-change="onChange" display-text="displayText" select-list="selectList" muted-text="mutedText"></string-select>'))(scope);
         scope.$digest();
     });
 
     describe('in isolated scope', function() {
+        beforeEach(function() {
+            isolatedScope = element.isolateScope();
+        });
         it('displayText should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
             isolatedScope.displayText = 'new value';
             scope.$digest();
             expect(scope.displayText).toEqual('new value');
         });
         it('mutedText should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
             isolatedScope.mutedText = 'new value';
             scope.$digest();
             expect(scope.mutedText).toEqual('new value');
         });
         it('selectList should be two way bound', function() {
-            var isolatedScope = element.isolateScope();
             isolatedScope.selectList = ['new value'];
             scope.$digest();
             expect(scope.selectList).toEqual(['new value']);
@@ -76,9 +84,9 @@ describe('String Select directive', function() {
     describe('controller bound variables', function() {
         it('bindModel should be two way bound', function() {
             var controller = element.controller('stringSelect');
-            controller.bindModel = 'new value';
+            controller.bindModel = ['new value'];
             scope.$digest();
-            expect(scope.bindModel).toBe('new value');
+            expect(scope.bindModel).toEqual(['new value']);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -95,6 +103,45 @@ describe('String Select directive', function() {
         it('based on ui-select', function() {
             var items = element.find('ui-select');
             expect(items.length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            controller = element.controller('stringSelect');
+        });
+        it('getItemNamespace returns the correct value', function() {
+            var result = controller.getItemNamespace('string');
+            expect(splitIRIFilter).toHaveBeenCalledWith('string');
+            expect(result).toEqual(splitIRIFilter('string').begin + splitIRIFilter('string').then);
+        });
+        describe('disableChoice', function() {
+            it('when item is not DataTypeProperty or ObjectProperty, returns false', function() {
+                expect(controller.disableChoice('')).toBe(false);
+            });
+            describe('when item is DataTypeProperty', function() {
+                beforeEach(function() {
+                    item = prefixes.owl + 'DataTypeProperty';
+                });
+                it('and ObjectProperty is selected, returns true', function() {
+                    controller.bindModel = [prefixes.owl + 'ObjectProperty'];
+                    expect(controller.disableChoice(item)).toBe(true);
+                });
+                it('and ObjectProperty is not selected, returns false', function() {
+                    expect(controller.disableChoice(item)).toBe(false);
+                });
+            });
+            describe('when item is ObjectProperty', function() {
+                beforeEach(function() {
+                    item = prefixes.owl + 'ObjectProperty';
+                });
+                it('and DataTypeProperty is selected, returns true', function() {
+                    controller.bindModel = [prefixes.owl + 'DataTypeProperty'];
+                    expect(controller.disableChoice(item)).toBe(true);
+                });
+                it('and DataTypeProperty is not selected, returns false', function() {
+                    expect(controller.disableChoice(item)).toBe(false);
+                });
+            });
         });
     });
 });
