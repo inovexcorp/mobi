@@ -35,11 +35,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
-import aQute.bnd.annotation.component.Reference;
-import com.sun.codemodel.JConditional;
-import com.sun.codemodel.JExpression;
-import com.sun.codemodel.JType;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Value;
@@ -65,97 +60,104 @@ import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JDocComment;
 import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
+import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
+
+import aQute.bnd.annotation.component.Reference;
 
 public class SourceGenerator {
 
-	private static final Logger LOG = LoggerFactory.getLogger(SourceGenerator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SourceGenerator.class);
 
-	private static final String CLASS_TYPE_IRI_FIELD = "TYPE";
+    private static final String CLASS_TYPE_IRI_FIELD = "TYPE";
 
-	private static final String DEFAULT_IMPL_FIELD = "DEFAULT_IMPL";
+    private static final String DEFAULT_IMPL_FIELD = "DEFAULT_IMPL";
 
-	public static void toSource(final Model model, final String outputPackage, final String location)
-			throws OntologyToJavaException, IOException {
-		final SourceGenerator generator = new SourceGenerator(model, outputPackage);
-		generator.build(location);
-	}
+    public static void toSource(final Model model, final String outputPackage, final String location)
+            throws OntologyToJavaException, IOException {
+        final SourceGenerator generator = new SourceGenerator(model, outputPackage);
+        generator.build(location);
+    }
 
-	private final JCodeModel codeModel = new JCodeModel();
-	private final Model model;
-	private Collection<IRI> classIris;
-	private Map<IRI, JDefinedClass> interfaces = new HashMap<>();
-	private Map<JDefinedClass, Map<String, IRI>> interfaceFieldIriMap = new HashMap<>();
-	private Map<JDefinedClass, Map<String, IRI>> interfaceFieldRangeMap = new HashMap<>();
-	private Map<JDefinedClass, Map<JMethod, JFieldVar>> classMethodIriMap = new HashMap<>();
-	private Map<JDefinedClass, JDefinedClass> interfaceImplMap = new HashMap<>();
+    private final JCodeModel codeModel = new JCodeModel();
+    private final Model model;
+    private Collection<IRI> classIris;
+    private Map<IRI, JDefinedClass> interfaces = new HashMap<>();
+    private Map<JDefinedClass, Map<String, IRI>> interfaceFieldIriMap = new HashMap<>();
+    private Map<JDefinedClass, Map<String, IRI>> interfaceFieldRangeMap = new HashMap<>();
+    private Map<JDefinedClass, Map<JMethod, JFieldVar>> classMethodIriMap = new HashMap<>();
+    private Map<JDefinedClass, JDefinedClass> interfaceImplMap = new HashMap<>();
 
-	private final String packageName;
+    private final String packageName;
 
-	public SourceGenerator(final Model ontologyGraph, final String outputPackage)
-			throws OntologyToJavaException, IOException {
-		this.model = ontologyGraph;
-		this.packageName = outputPackage;
-		// Built interfaces...
-		generateIndividualInterfaces();
-		// Link the interfaces inheritence-wise.
-		linkIndividualInterfaces();
-		// Populate each individual interface with the required accessors.
-		populateInterfacesWithMethods();
-		// Build Impls.
-		generateImplementations();
-		// Build factories.
-		generateFactories();
-		// TODO - Generate ValueConverters for generated types.
-	}
+    public SourceGenerator(final Model ontologyGraph, final String outputPackage)
+            throws OntologyToJavaException, IOException {
+        this.model = ontologyGraph;
+        this.packageName = outputPackage;
+        // Built interfaces...
+        generateIndividualInterfaces();
+        // Link the interfaces inheritence-wise.
+        linkIndividualInterfaces();
+        // Populate each individual interface with the required accessors.
+        populateInterfacesWithMethods();
+        // Build Impls.
+        generateImplementations();
+        // Build factories.
+        generateFactories();
+        // TODO - Generate ValueConverters for generated types.
+    }
 
-	/**
-	 * Build the code.
-	 * 
-	 * @param path
-	 * @throws IOException
-	 */
-	public void build(final String path) throws IOException {
-		File output = new File(path);
-		output.mkdirs();
-		codeModel.build(output);
-	}
+    /**
+     * Build the code.
+     * 
+     * @param path
+     * @throws IOException
+     */
+    public void build(final String path) throws IOException {
+        File output = new File(path);
+        output.mkdirs();
+        codeModel.build(output);
+    }
 
-	private void generateFactories() throws OntologyToJavaException {
-		final Collection<String> issues = new ArrayList<>();
-		interfaceImplMap.forEach((interfaze, clazz) -> {
-			final String factoryName = interfaze.name() + "Factory";
-			try {
-				final IRI id = iriFromInterface(interfaze);
-				final JDefinedClass factory = codeModel._class(JMod.PUBLIC, packageName + "." + factoryName,
-						ClassType.CLASS);
-				factory.javadoc()
-						.add("This {@link org.matonto.rdf.orm.OrmFactory} implementation will construct "
-								+ interfaze.name() + " objects.  It will be published as an OSGi service.  "
-								+ (id != null ? "See " + id.stringValue() + " for more information." : ""));
-				factory._extends(codeModel.ref(AbstractOrmFactory.class).narrow(interfaze));
-				factory.annotate(aQute.bnd.annotation.component.Component.class)
-                        .paramArray("provide")
-                        .param(OrmFactory.class)
-                        .param(ValueConverter.class)
-                        .param(factory.dotclass());
-				factory.constructor(JMod.PUBLIC).body().invoke("super").arg(JExpr.dotclass(interfaze))
-						.arg(JExpr.dotclass(clazz));
+    private void generateFactories() throws OntologyToJavaException {
+        final Collection<String> issues = new ArrayList<>();
+        interfaceImplMap.forEach((interfaze, clazz) -> {
+            final String factoryName = interfaze.name() + "Factory";
+            try {
+                final IRI id = iriFromInterface(interfaze);
+                final JDefinedClass factory = codeModel._class(JMod.PUBLIC, packageName + "." + factoryName,
+                        ClassType.CLASS);
+                factory.javadoc()
+                        .add("This {@link org.matonto.rdf.orm.OrmFactory} implementation will construct "
+                                + interfaze.name() + " objects.  It will be published as an OSGi service.  "
+                                + (id != null ? "See " + id.stringValue() + " for more information." : ""));
+                factory._extends(codeModel.ref(AbstractOrmFactory.class).narrow(interfaze));
+                factory.annotate(aQute.bnd.annotation.component.Component.class).paramArray("provide")
+                        .param(OrmFactory.class).param(ValueConverter.class).param(factory.dotclass());
+                factory.constructor(JMod.PUBLIC).body().invoke("super").arg(JExpr.dotclass(interfaze))
+                        .arg(JExpr.dotclass(clazz));
 
-				final JMethod getExisting = factory.method(JMod.PUBLIC, interfaze, "getExisting");
-				getExisting.annotate(Override.class);
-				getExisting.body()._return(
-						JExpr._new(clazz).arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
-								.arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
-								.arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
-								.arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
-										"valueConverterRegistry")));
+                final JMethod getExisting = factory.method(JMod.PUBLIC, interfaze, "getExisting");
+                getExisting.annotate(Override.class);
+                getExisting.body()._return(
+                        JExpr._new(clazz).arg(getExisting.param(org.matonto.rdf.api.Resource.class, "resource"))
+                                .arg(getExisting.param(org.matonto.rdf.api.Model.class, "model"))
+                                .arg(getExisting.param(org.matonto.rdf.api.ValueFactory.class, "valueFactory"))
+                                .arg(getExisting.param(org.matonto.rdf.orm.conversion.ValueConverterRegistry.class,
+                                        "valueConverterRegistry")));
+
+                final JMethod getTypeIri = factory.method(JMod.PUBLIC, org.matonto.rdf.api.IRI.class, "getTypeIRI");
+                getTypeIri.annotate(Override.class);
+                getTypeIri.body()
+                        ._return(JExpr.ref("valueFactory").invoke("createIRI").arg(interfaze.staticRef("TYPE")));
 
                 final JMethod setModelFactory = factory.method(JMod.PUBLIC, codeModel.VOID, "setModelFactory");
                 setModelFactory.annotate(Override.class);
@@ -169,20 +171,24 @@ public class SourceGenerator {
                 JVar valueFactoryParam = setValueFactory.param(ValueFactory.class, "valueFactory");
                 setValueFactory.body().assign(JExpr._this().ref("valueFactory"), valueFactoryParam);
 
-                final JMethod setValueConverterRegistry = factory.method(JMod.PUBLIC, codeModel.VOID, "setValueConverterRegistry");
+                final JMethod setValueConverterRegistry = factory.method(JMod.PUBLIC, codeModel.VOID,
+                        "setValueConverterRegistry");
                 setValueConverterRegistry.annotate(Override.class);
                 setValueConverterRegistry.annotate(Reference.class);
-                JVar valueConverterRegistryParam = setValueConverterRegistry.param(ValueConverterRegistry.class, "valueConverterRegistry");
-                setValueConverterRegistry.body().assign(JExpr._this().ref("valueConverterRegistry"), valueConverterRegistryParam);
-			} catch (final Exception e) {
-				issues.add("Issue generating factory class: " + factoryName + ": " + e.getMessage());
-			}
-		});
-		if (!issues.isEmpty()) {
-			throw new OntologyToJavaException("Could not generate POJOs from ontology due to the following issues:\n\t"
-					+ StringUtils.join(issues, "\n\t") + "\n\n");
-		}
-	}
+                JVar valueConverterRegistryParam = setValueConverterRegistry.param(ValueConverterRegistry.class,
+                        "valueConverterRegistry");
+                setValueConverterRegistry.body().assign(JExpr._this().ref("valueConverterRegistry"),
+                        valueConverterRegistryParam);
+
+            } catch (final Exception e) {
+                issues.add("Issue generating factory class: " + factoryName + ": " + e.getMessage());
+            }
+        });
+        if (!issues.isEmpty()) {
+            throw new OntologyToJavaException("Could not generate POJOs from ontology due to the following issues:\n\t"
+                    + StringUtils.join(issues, "\n\t") + "\n\n");
+        }
+    }
 
     private void recurseImplementations(JDefinedClass impl, JClass interfaceClass) {
         // implement the supplied interface class.
@@ -197,141 +203,141 @@ public class SourceGenerator {
         }
     }
 
-	private void generateImplementations() throws OntologyToJavaException {
-		final Collection<String> issues = new ArrayList<>();
-		interfaces.forEach((classIri, interfaceClass) -> {
-			try {
-				/*
-				 * Define the implementation class, wire it to the correct
-				 * interface and extend Thing.
-				 */
-				final JDefinedClass impl = codeModel._class(JMod.PUBLIC,
-						packageName + "." + interfaceClass.name() + "Impl", ClassType.CLASS);
-				interfaceImplMap.put(interfaceClass, impl);
-				impl._extends(codeModel.ref(ThingImpl.class));
-				impl._implements(interfaceClass);
-				impl.javadoc().add("This implementation of the '" + classIri.stringValue()
-						+ "' entity will allow developers to work in native java POJOs.");
-				// Constructors - call super from Thing.
-				generateImplConstructors(impl, interfaceClass);
+    private void generateImplementations() throws OntologyToJavaException {
+        final Collection<String> issues = new ArrayList<>();
+        interfaces.forEach((classIri, interfaceClass) -> {
+            try {
+                /*
+                 * Define the implementation class, wire it to the correct
+                 * interface and extend Thing.
+                 */
+                final JDefinedClass impl = codeModel._class(JMod.PUBLIC,
+                        packageName + "." + interfaceClass.name() + "Impl", ClassType.CLASS);
+                interfaceImplMap.put(interfaceClass, impl);
+                impl._extends(codeModel.ref(ThingImpl.class));
+                impl._implements(interfaceClass);
+                impl.javadoc().add("This implementation of the '" + classIri.stringValue()
+                        + "' entity will allow developers to work in native java POJOs.");
+                // Constructors - call super from Thing.
+                generateImplConstructors(impl, interfaceClass);
                 recurseImplementations(impl, interfaceClass);
 
-				// Generate default impl.
-				interfaceClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL,
-						codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
-						impl.dotclass()).javadoc().add("The default implementation for this interface");
-			} catch (Exception e) {
-				e.printStackTrace();
-				issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
-			}
-		});
-		if (!issues.isEmpty()) {
-			throw new OntologyToJavaException("Could not generate POJOs from ontology due to the following issues:\n\t"
-					+ StringUtils.join(issues, "\n\t") + "\n\n");
-		}
-	}
+                // Generate default impl.
+                interfaceClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL,
+                        codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
+                        impl.dotclass()).javadoc().add("The default implementation for this interface");
+            } catch (Exception e) {
+                e.printStackTrace();
+                issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
+            }
+        });
+        if (!issues.isEmpty()) {
+            throw new OntologyToJavaException("Could not generate POJOs from ontology due to the following issues:\n\t"
+                    + StringUtils.join(issues, "\n\t") + "\n\n");
+        }
+    }
 
-	private void generateFieldAccessorsForEachInterfaceMethod(final JDefinedClass impl,
-			final JDefinedClass interfaceClass) {
-		interfaceClass.methods().forEach(interfaceMethod -> {
-			LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
-			// Generate getter.
-			if (interfaceMethod.name().startsWith("get") || interfaceMethod.name().startsWith("is")) {
-				generateFieldGetterForImpl(impl, interfaceMethod, interfaceClass);
-			}
-			// Generate setter.
-			else if (interfaceMethod.name().startsWith("set")) {
-				// TODO
-				generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
-			}
-		});
-	}
+    private void generateFieldAccessorsForEachInterfaceMethod(final JDefinedClass impl,
+            final JDefinedClass interfaceClass) {
+        interfaceClass.methods().forEach(interfaceMethod -> {
+            LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
+            // Generate getter.
+            if (interfaceMethod.name().startsWith("get") || interfaceMethod.name().startsWith("is")) {
+                generateFieldGetterForImpl(impl, interfaceMethod, interfaceClass);
+            }
+            // Generate setter.
+            else if (interfaceMethod.name().startsWith("set")) {
+                // TODO
+                generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
+            }
+        });
+    }
 
-	private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
-			final JDefinedClass interfaceClass) {
-		if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
-			final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
-			method.param(interfaceMethod.params().get(0).type(), "arg");
-			method._throws(OrmException.class);
-			method.annotate(Override.class);
-			if (interfaceMethod.params().get(0).type().fullName().startsWith("java.util.Set")) {
-				method.body().invoke("setProperties")
-						.arg(JExpr.ref("valueConverterRegistry").invoke("convertTypes")
-								.arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
-						.arg(JExpr.ref("valueFactory").invoke("createIRI")
-								.arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
-			} else {
-				method.body().invoke("setProperty")
-						.arg(JExpr.ref("valueConverterRegistry").invoke("convertType")
-								.arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
-						.arg(JExpr.ref("valueFactory").invoke("createIRI")
-								.arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
-			}
-			// TODO - add javadoc.
-			// JDocComment jdoc = method.javadoc();
-			// jdoc.add("");
-		} else {
-			LOG.warn("Avoided dupliace setter method: " + interfaceMethod.name() + " on class: " + impl.name());
-		}
-	}
+    private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
+            final JDefinedClass interfaceClass) {
+        if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
+            final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
+            method.param(interfaceMethod.params().get(0).type(), "arg");
+            method._throws(OrmException.class);
+            method.annotate(Override.class);
+            if (interfaceMethod.params().get(0).type().fullName().startsWith("java.util.Set")) {
+                method.body().invoke("setProperties")
+                        .arg(JExpr.ref("valueConverterRegistry").invoke("convertTypes")
+                                .arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
+                        .arg(JExpr.ref("valueFactory").invoke("createIRI")
+                                .arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+            } else {
+                method.body().invoke("setProperty")
+                        .arg(JExpr.ref("valueConverterRegistry").invoke("convertType")
+                                .arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
+                        .arg(JExpr.ref("valueFactory").invoke("createIRI")
+                                .arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+            }
+            // TODO - add javadoc.
+            // JDocComment jdoc = method.javadoc();
+            // jdoc.add("");
+        } else {
+            LOG.warn("Avoided dupliace setter method: " + interfaceMethod.name() + " on class: " + impl.name());
+        }
+    }
 
-	private void generateFieldGetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
-			final JDefinedClass interfaceClass) {
-		if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
-			final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
-			method._throws(OrmException.class);
-			method.annotate(Override.class);
-			// TODO - add javadoc.
-			// JDocComment jdoc = method.javadoc();
-			// jdoc.add("");
-			convertValueBody(interfaceClass, interfaceMethod, impl, method);
-		} else {
-			LOG.warn("Avoided dupliace getter method: " + interfaceMethod.name() + " on class: " + impl.name());
-		}
-	}
+    private void generateFieldGetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
+            final JDefinedClass interfaceClass) {
+        if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
+            final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
+            method._throws(OrmException.class);
+            method.annotate(Override.class);
+            // TODO - add javadoc.
+            // JDocComment jdoc = method.javadoc();
+            // jdoc.add("");
+            convertValueBody(interfaceClass, interfaceMethod, impl, method);
+        } else {
+            LOG.warn("Avoided dupliace getter method: " + interfaceMethod.name() + " on class: " + impl.name());
+        }
+    }
 
-	private void generateImplConstructors(final JDefinedClass impl, final JDefinedClass interfaceClazz) {
-		final JMethod constructor = impl.constructor(JMod.PUBLIC);
-		constructor.body().invoke("super")
-				.arg(constructor.param(JMod.FINAL, org.matonto.rdf.api.Resource.class, "subjectIri"))
-				.arg(constructor.param(JMod.FINAL, org.matonto.rdf.api.Model.class, "backingModel"))
-				.arg(constructor.param(JMod.FINAL, ValueFactory.class, "valueFactory"))
-				.arg(constructor.param(JMod.FINAL, ValueConverterRegistry.class, "valueConverterRegistry"));
-		JDocComment basicDoc = constructor.javadoc();
-		basicDoc.add("Construct a new " + interfaceClazz.name() + " with the subject IRI and the backing dataset");
-		basicDoc.addParam("subjectIri").add("The subject of this " + interfaceClazz.name());
-		basicDoc.addParam("valueFactory").add("The value factory to use for this " + interfaceClazz.name());
-		basicDoc.addParam("backingModel").add("The backing dataset/model of this " + interfaceClazz.name());
-		basicDoc.addParam("valueConversionRegistry")
-				.add("The ValueConversionRegistry for this " + interfaceClazz.name());
+    private void generateImplConstructors(final JDefinedClass impl, final JDefinedClass interfaceClazz) {
+        final JMethod constructor = impl.constructor(JMod.PUBLIC);
+        constructor.body().invoke("super")
+                .arg(constructor.param(JMod.FINAL, org.matonto.rdf.api.Resource.class, "subjectIri"))
+                .arg(constructor.param(JMod.FINAL, org.matonto.rdf.api.Model.class, "backingModel"))
+                .arg(constructor.param(JMod.FINAL, ValueFactory.class, "valueFactory"))
+                .arg(constructor.param(JMod.FINAL, ValueConverterRegistry.class, "valueConverterRegistry"));
+        JDocComment basicDoc = constructor.javadoc();
+        basicDoc.add("Construct a new " + interfaceClazz.name() + " with the subject IRI and the backing dataset");
+        basicDoc.addParam("subjectIri").add("The subject of this " + interfaceClazz.name());
+        basicDoc.addParam("valueFactory").add("The value factory to use for this " + interfaceClazz.name());
+        basicDoc.addParam("backingModel").add("The backing dataset/model of this " + interfaceClazz.name());
+        basicDoc.addParam("valueConversionRegistry")
+                .add("The ValueConversionRegistry for this " + interfaceClazz.name());
 
-		final JMethod constructor2 = impl.constructor(JMod.PUBLIC);
-		constructor2.body().invoke("super").arg(constructor2.param(JMod.FINAL, String.class, "subjectIriStr"))
-				.arg(constructor2.param(JMod.FINAL, org.matonto.rdf.api.Model.class, "backingModel"))
-				.arg(constructor2.param(JMod.FINAL, ValueFactory.class, "valueFactory"))
-				.arg(constructor2.param(JMod.FINAL, ValueConverterRegistry.class, "valueConversionRegistry"));
-		JDocComment basicDoc2 = constructor2.javadoc();
-		basicDoc2.add("Construct a new " + interfaceClazz.name() + " with the subject IRI and the backing dataset");
-		basicDoc2.addParam("subjectIri").add("The subject of this " + interfaceClazz.name());
-		basicDoc2.addParam("valueFactory").add("The value factory to use for this " + interfaceClazz.name());
-		basicDoc2.addParam("backingModel").add("The backing dataset/model of this " + interfaceClazz.name());
-		basicDoc2.addParam("valueConversionRegistry")
-				.add("The ValueConversionRegistry for this " + interfaceClazz.name());
+        final JMethod constructor2 = impl.constructor(JMod.PUBLIC);
+        constructor2.body().invoke("super").arg(constructor2.param(JMod.FINAL, String.class, "subjectIriStr"))
+                .arg(constructor2.param(JMod.FINAL, org.matonto.rdf.api.Model.class, "backingModel"))
+                .arg(constructor2.param(JMod.FINAL, ValueFactory.class, "valueFactory"))
+                .arg(constructor2.param(JMod.FINAL, ValueConverterRegistry.class, "valueConversionRegistry"));
+        JDocComment basicDoc2 = constructor2.javadoc();
+        basicDoc2.add("Construct a new " + interfaceClazz.name() + " with the subject IRI and the backing dataset");
+        basicDoc2.addParam("subjectIri").add("The subject of this " + interfaceClazz.name());
+        basicDoc2.addParam("valueFactory").add("The value factory to use for this " + interfaceClazz.name());
+        basicDoc2.addParam("backingModel").add("The backing dataset/model of this " + interfaceClazz.name());
+        basicDoc2.addParam("valueConversionRegistry")
+                .add("The ValueConversionRegistry for this " + interfaceClazz.name());
 
-	}
+    }
 
-	/**
-	 * Add getters and setters to the interfaces.
-	 */
-	private void populateInterfacesWithMethods() {
-		interfaces.forEach((iri, clazz) -> {
-			final Map<JMethod, JFieldVar> methodIriMap = new HashMap<>();
-			clazz.fields().forEach((name, fieldVar) -> {
-				if (!name.equals(CLASS_TYPE_IRI_FIELD)) {
-					final IRI propertyIri = interfaceFieldIriMap.get(clazz).get(name);
-					final String fieldName = name.substring(0, name.length() - 4);
+    /**
+     * Add getters and setters to the interfaces.
+     */
+    private void populateInterfacesWithMethods() {
+        interfaces.forEach((iri, clazz) -> {
+            final Map<JMethod, JFieldVar> methodIriMap = new HashMap<>();
+            clazz.fields().forEach((name, fieldVar) -> {
+                if (!name.equals(CLASS_TYPE_IRI_FIELD)) {
+                    final IRI propertyIri = interfaceFieldIriMap.get(clazz).get(name);
+                    final String fieldName = name.substring(0, name.length() - 4);
 
-					final JClass type = identifyType(propertyIri);
+                    final JClass type = identifyType(propertyIri);
 
                     JClass getterType;
                     JClass setterType;

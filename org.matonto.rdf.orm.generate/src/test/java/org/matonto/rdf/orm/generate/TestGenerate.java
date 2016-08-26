@@ -38,7 +38,7 @@ public class TestGenerate {
 		SourceGenerator.toSource(
 				GraphReadingUtility.readOntology(new File("src/test/resources/mapping.trig"),
 						"http://matonto.org/ontologies/delimited/"),
-				"http://matonto.org/ontologies/delimited/", "target/generated-sources");
+				"test", "target/generated-sources");
 	}
 
 }
