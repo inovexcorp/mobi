@@ -57,7 +57,6 @@ describe('Ontology Select Overlay directive', function() {
             mappingManagerSvc.getOntology.and.returnValue($q.when({id: 'open'}))
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
-            $timeout.flush();
             var controller = element.controller('ontologySelectOverlay');
             expect(controller.ontologyIds).toContain('open');
             expect(controller.ontologyIds).toContain('closed');
@@ -67,9 +66,8 @@ describe('Ontology Select Overlay directive', function() {
             mappingManagerSvc.sourceOntologies = [];
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
-            $timeout.flush();
             var controller = element.controller('ontologySelectOverlay');
-            expect(controller.ontologyIds.length).toBe(0);
+            expect(controller.ontologyObjs.length).toBe(0);
             expect(controller.selectedOntology).toEqual(undefined);
             expect(controller.selectedOntologyId).toBe('');
         });
@@ -80,9 +78,8 @@ describe('Ontology Select Overlay directive', function() {
             mappingManagerSvc.getSourceOntology.and.returnValue(sourceOntology);
             var element = $compile(angular.element('<ontology-select-overlay></ontology-select-overlay>'))(scope);
             scope.$digest();
-            $timeout.flush();
             var controller = element.controller('ontologySelectOverlay');
-            expect(controller.ontologyIds.length).toBe(1);
+            expect(controller.ontologyObjs).toContain(sourceOntology);
             expect(controller.selectedOntology).toEqual(sourceOntology);
             expect(controller.selectedOntologyId).toBe(sourceOntology.id);
         });
