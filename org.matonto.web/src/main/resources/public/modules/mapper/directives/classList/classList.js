@@ -122,14 +122,6 @@
                         }
                         return propName + ': ' + mappingName;
                     }
-                    dvm.mappedAllProps = function(classMapping) {
-                        var mappedProps = dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id']);
-                        var classId = dvm.mm.getClassIdByMapping(classMapping);
-                        var ontology = dvm.mm.findSourceOntologyWithClass(classId);
-                        var classProps = dvm.om.getClassProperties(ontology.entities, classId);
-
-                        return mappedProps.length === classProps.length;
-                    }
                     dvm.getLinks = function(classMapping) {
                         var objectMappings = _.filter(
                             _.filter(dvm.mm.mapping.jsonld, {'@type': [prefixes.delim + 'ObjectMapping']}),

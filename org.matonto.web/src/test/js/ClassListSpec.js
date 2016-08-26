@@ -127,12 +127,6 @@ describe('Class List directive', function() {
             expect(mappingManagerSvc.isDataMapping).toHaveBeenCalledWith(dataMapping);
             expect(typeof result).toBe('string');
         });
-        it('should test whether all properties have been mapped', function() {
-            var result = controller.mappedAllProps({'@id': ''});
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
-            expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalled();
-            expect(typeof result).toBe('boolean');
-        });
         it('should get a list of properties linking to a class mapping', function() {
             mappingManagerSvc.mapping.jsonld.push({'@type': ['ObjectMapping'], 'classMapping': [{'@id': ''}]});
             var result = controller.getLinks({'@id': ''});
@@ -265,14 +259,12 @@ describe('Class List directive', function() {
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             mapperStateSvc.hasAvailableProps.and.returnValue(false);
-            // spyOn(controller, 'mappedAllProps').and.returnValue(true);
             mapperStateSvc.openedClasses = ['class'];
             scope.$digest();
             var propList = angular.element(this.element.querySelectorAll('ul.list ul.props')[0]);
             expect(propList.html()).not.toContain('Add Property');
 
             mapperStateSvc.hasAvailableProps.and.returnValue(true);
-            // controller.mappedAllProps.and.returnValue(false);
             scope.$digest();
             expect(propList.html()).toContain('Add Property');
         });
@@ -373,7 +365,6 @@ describe('Class List directive', function() {
         scope.$digest();
         controller = element.controller('classList');
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
-        // spyOn(controller, 'mappedAllProps').and.returnValue(false);
         spyOn(controller, 'clickAddProp');
         mapperStateSvc.hasAvailableProps.and.returnValue(true);
         mapperStateSvc.openedClasses = ['class'];
