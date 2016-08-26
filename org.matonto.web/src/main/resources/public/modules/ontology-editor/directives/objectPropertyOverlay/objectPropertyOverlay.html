@@ -29,7 +29,7 @@
         <div class="form-group">
             <label class="control-label">Object Property</label>
             <ui-select ng-model="dvm.sm.propertySelect" ng-disabled="dvm.sm.editingProperty">
-                <ui-select-match placeholder="Select a data property">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
+                <ui-select-match placeholder="Select an object property">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
                 <ui-select-choices group-by="dvm.getItemNamespace" repeat="property in dvm.sm.state.subObjectProperties | filter: $select.search | orderBy:'localName'">
                     <div ng-bind-html="property.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
