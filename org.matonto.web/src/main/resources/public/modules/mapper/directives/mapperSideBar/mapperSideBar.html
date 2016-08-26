@@ -48,7 +48,8 @@
   <left-nav-item on-click="dvm.addPropMapping()"
                  nav-title="Add Property Mapping"
                  is-active-when="dvm.state.newProp"
-                 is-disabled-when="!dvm.state.editMapping || !dvm.state.selectedClassMappingId || dvm.state.selectedPropMappingId || (dvm.state.selectedClassMappingId && dvm.state.availableProps.length === 0)">
+                 is-disabled-when="!dvm.state.editMapping || !dvm.state.selectedClassMappingId || dvm.state.selectedPropMappingId || (dvm.state.selectedClassMappingId && !dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId))">
+                 <!-- is-disabled-when="!dvm.state.editMapping || !dvm.state.selectedClassMappingId || dvm.state.selectedPropMappingId || (dvm.state.selectedClassMappingId && dvm.state.availableProps.length === 0)"> -->
       <span class="create-icon">
           <span class="fa-fw identifier">P</span>
           <i class="fa fa-plus"></i>

@@ -84,7 +84,6 @@
                     dvm.clickClass = function(classMapping) {
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
-                        dvm.state.updateAvailableProps();
                     }
                     dvm.clickProp = function(propMapping, classMapping) {
                         dvm.state.resetEdit();
@@ -98,7 +97,7 @@
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.newProp = true;
                         dvm.state.updateAvailableColumns();
-                        dvm.state.updateAvailableProps();
+                        dvm.state.updateAvailableProps(dvm.state.selectedClassMappingId);
                     }
                     dvm.getInvalidPropIds = function() {
                         return _.map(dvm.state.invalidProps, '@id');

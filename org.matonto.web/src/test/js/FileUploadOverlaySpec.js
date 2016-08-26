@@ -154,7 +154,6 @@ describe('File Upload Overlay directive', function() {
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.ontologySelectStep);
                 expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(name);
-                expect(mapperStateSvc.updateAvailableProps).not.toHaveBeenCalled();
             });
             it('if a saved mapping is being used', function() {
                 var classObj = {'@id': 'class'};
@@ -164,7 +163,6 @@ describe('File Upload Overlay directive', function() {
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
                 expect(mapperStateSvc.selectedClassMappingId).toBe(classObj['@id']);
-                expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
             });
         });
         it('should set the upload validity', function() {

@@ -83,7 +83,6 @@ describe('Class List directive', function() {
         it('should set the proper state for editing a class', function() {
             controller.clickClass({'@id': ''});
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe('');
         });
         it('should set the proper state for editing a property', function() {
@@ -99,7 +98,7 @@ describe('Class List directive', function() {
             controller.clickAddProp({'@id': ''});
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.newProp).toBe(true);
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
             expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe('');
         });
@@ -229,14 +228,14 @@ describe('Class List directive', function() {
             expect(toggleBtn.hasClass('fa-minus-square-o')).toBe(false);
             expect(toggleBtn.hasClass('fa-plus-square-o')).toBe(true);
             expect(toggleBtn.hasClass('fa-square-o')).toBe(false);
-            expect(propList[0].childElementCount).toBe(1);
+            expect(propList[0].childElementCount).toBe(0);
           
             mapperStateSvc.openedClasses = [''];
             scope.$digest();
             expect(toggleBtn.hasClass('fa-minus-square-o')).toBe(true);
             expect(toggleBtn.hasClass('fa-plus-square-o')).toBe(false);
             expect(toggleBtn.hasClass('fa-square-o')).toBe(false);
-            expect(propList[0].childElementCount).toBe(propMappings.length + 1);
+            expect(propList[0].childElementCount).toBe(propMappings.length);
         });
         it('depending on whether a prop is selected', function() {
             controller = this.element.controller('classList');
@@ -261,18 +260,19 @@ describe('Class List directive', function() {
         it('depending on whether all properties have been mapped', function() {
             controller = this.element.controller('classList');
             spyOn(controller, 'getPropTitle').and.returnValue('');
-            var classMappings = [{'@id': ''}];
+            var classMappings = [{'@id': 'class'}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
-            spyOn(controller, 'mappedAllProps').and.returnValue(true);
-            mapperStateSvc.openedClasses = [''];
+            mapperStateSvc.hasAvailableProps.and.returnValue(false);
+            // spyOn(controller, 'mappedAllProps').and.returnValue(true);
+            mapperStateSvc.openedClasses = ['class'];
             scope.$digest();
-
             var propList = angular.element(this.element.querySelectorAll('ul.list ul.props')[0]);
             expect(propList.html()).not.toContain('Add Property');
 
-            controller.mappedAllProps.and.returnValue(false);
+            mapperStateSvc.hasAvailableProps.and.returnValue(true);
+            // controller.mappedAllProps.and.returnValue(false);
             scope.$digest();
             expect(propList.html()).toContain('Add Property');
         });
@@ -291,11 +291,13 @@ describe('Class List directive', function() {
             expect(angular.element(propItem.querySelectorAll('a')[0]).hasClass('invalid')).toBe(true);
         });
         it('depending on whether a new property is being added', function() {
-            var classMappings = [{'@id': ''}];
+            var classMappings = [{'@id': 'class'}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             mapperStateSvc.newProp = true;
+            mapperStateSvc.hasAvailableProps.and.returnValue(true);
+            mapperStateSvc.selectedClassMappingId = 'class';
             scope.$digest();
 
             var addPropLink = this.element.querySelectorAll('ul.list ul.props li a:last-child')[0];
@@ -366,14 +368,15 @@ describe('Class List directive', function() {
     it('should call clickAddProp when an add prop link is clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};
         delimitedManagerSvc.filePreview = {};
-        var classMapping = {'@id': ''};
+        var classMapping = {'@id': 'class'};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
         controller = element.controller('classList');
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
-        spyOn(controller, 'mappedAllProps').and.returnValue(false);
+        // spyOn(controller, 'mappedAllProps').and.returnValue(false);
         spyOn(controller, 'clickAddProp');
-        mapperStateSvc.openedClasses = [''];
+        mapperStateSvc.hasAvailableProps.and.returnValue(true);
+        mapperStateSvc.openedClasses = ['class'];
         scope.$digest();
 
         var addProp = angular.element(element.querySelectorAll('ul.list ul.props li a')[0]);
