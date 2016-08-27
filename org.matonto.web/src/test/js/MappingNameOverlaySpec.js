@@ -58,8 +58,9 @@ describe('Mapping Name Overlay directive', function() {
                 mapperStateSvc.step = 0;
                 controller.set();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalled();
-                expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
+                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.getMappingId(controller.newName));
+                expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mappingManagerSvc.mapping.name).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
             it('if it is not the intitial step', function() {
@@ -67,7 +68,8 @@ describe('Mapping Name Overlay directive', function() {
                 controller.set();
                 expect(mapperStateSvc.step).toBe(1);
                 expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
-                expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
+                expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mappingManagerSvc.mapping.name).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
         });

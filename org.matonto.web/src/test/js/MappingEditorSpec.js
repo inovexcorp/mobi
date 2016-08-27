@@ -86,7 +86,7 @@ describe('Mapping Editor directive', function() {
                 mappingManagerSvc.previousMappingNames = [];
                 controller.submit();
                 scope.$apply();
-                expect(mappingManagerSvc.uploadPut).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.name);
+                expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
                 expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
@@ -95,7 +95,7 @@ describe('Mapping Editor directive', function() {
                 mappingManagerSvc.previousMappingNames = [mappingManagerSvc.mapping.name];
                 controller.submit();
                 scope.$apply();
-                expect(mappingManagerSvc.uploadPut).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
                 expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);

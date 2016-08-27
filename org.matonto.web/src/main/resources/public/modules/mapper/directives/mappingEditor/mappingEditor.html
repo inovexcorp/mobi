@@ -31,14 +31,14 @@
             <a ng-click="dvm.state.displayCancelConfirm = true">Cancel</a>
         </form>
         <div class="mapping-title">
-            <h1>{{dvm.mm.mapping.name}} <button type="button" class="btn btn-link" ng-click="dvm.state.editMappingName = true"><i class="fa fa-pencil"></i></button></h1>
+            <h1>{{dvm.mm.getMappingName(dvm.mm.mapping.name)}} <button type="button" class="btn btn-link" ng-click="dvm.state.editMappingName = true"><i class="fa fa-pencil"></i></button></h1>
         </div>
     </div>
     <div class="edit-mapping">
         <rdf-preview></rdf-preview>
         <class-list></class-list>
         <div class="form-container col-xs-8 full-height"><div class="boxed">
-            <p ng-if="dvm.saveError" class="error-msg"><i class="fa fa-exclamation-triangle fa-fw">An error has occured when saving the mapping. Please try again later.</i></p>
+            <p ng-if="dvm.saveError" class="error-msg"><i class="fa fa-exclamation-triangle fa-fw"></i> An error has occured when saving the mapping. Please try again later.</p>
             <edit-class-form ng-if="dvm.state.selectedClassMappingId && !dvm.state.selectedPropMappingId && !dvm.state.newProp"></edit-class-form>
             <edit-prop-form ng-if="dvm.state.selectedPropMappingId && !dvm.state.newProp"></edit-prop-form>
             <new-prop-form ng-if="dvm.state.newProp"></new-prop-form>

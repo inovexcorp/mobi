@@ -78,7 +78,7 @@
                         if (ctrl.$isEmpty(modelValue)) {
                             return true;
                         }
-                        return viewValue === value || previousMappings.indexOf(viewValue) < 0;
+                        return viewValue === value || previousMappings.indexOf(mappingManagerService.getMappingId(viewValue)) < 0;
                     }
                 }
             }

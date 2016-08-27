@@ -29,7 +29,11 @@ import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
+import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
+import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.etl.api.ontologies.delimited.Mapping;
+import org.matonto.etl.api.ontologies.delimited.MappingFactory;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.Statements;
 import org.matonto.rdf.api.IRI;
@@ -50,12 +54,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -75,6 +76,7 @@ public class SimpleMappingManager implements MappingManager {
     private ValueFactory factory;
     private ModelFactory modelFactory;
     private Repository repository;
+    private MappingFactory mappingFactory;
 
     public SimpleMappingManager() {}
 
@@ -110,6 +112,11 @@ public class SimpleMappingManager implements MappingManager {
         this.repository = repository;
     }
 
+    @Reference
+    protected void setMappingFactory(MappingFactory mappingFactory) {
+        this.mappingFactory = mappingFactory;
+    }
+
     @Override
     public Set<Resource> getMappingRegistry() {
         RepositoryConnection conn = null;
@@ -128,46 +135,80 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public Resource createMappingIRI() {
+    public IRI createMappingIRI() {
         String localName = generateUuid();
         return factory.createIRI(DEFAULT_MAPPING_PREFIX + localName.trim());
     }
 
     @Override
-    public Resource createMappingIRI(String localName) {
-        return factory.createIRI(DEFAULT_MAPPING_PREFIX + localName.trim());
+    public IRI createMappingIRI(String localName) {
+            return factory.createIRI(DEFAULT_MAPPING_PREFIX + localName.trim());
     }
 
     @Override
-    public Model createMapping(File mapping) throws IOException {
-        RDFFormat mapFormat;
-        mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(IllegalArgumentException::new);
-        FileReader reader = new FileReader(mapping);
-        return Values.matontoModel(Rio.parse(reader, "", mapFormat));
+    public String getMappingLocalName(IRI iri) {
+        if (iri.getNamespace().equals(Delimited.MAPPINGS.stringValue() + "/")) {
+            return iri.getLocalName();
+        }
+        return iri.getNamespace().replace(Delimited.MAPPINGS.stringValue() + "/", "");
     }
 
     @Override
-    public Model createMapping(String jsonld) throws IOException {
-        InputStream in = new ByteArrayInputStream(jsonld.getBytes(StandardCharsets.UTF_8));
-        return Values.matontoModel(Rio.parse(in, "", RDFFormat.JSONLD));
+    public MappingId createMappingId(Resource id) {
+        return new SimpleMappingId.Builder(factory).id(id).build();
     }
 
     @Override
-    public Model createMapping(InputStream in, RDFFormat format) throws IOException {
-        return Values.matontoModel(Rio.parse(in, "", format));
+    public MappingId createMappingId(IRI mappingIRI) {
+        return new SimpleMappingId.Builder(factory).mappingIRI(mappingIRI).build();
     }
 
     @Override
-    public boolean storeMapping(Model mappingModel, @Nonnull Resource mappingIRI) throws MatOntoException {
-        if (mappingExists(mappingIRI)) {
+    public MappingId createMappingId(IRI mappingIRI, IRI versionIRI) {
+        return new SimpleMappingId.Builder(factory).mappingIRI(mappingIRI).versionIRI(versionIRI).build();
+    }
+
+    @Override
+    public MappingWrapper createMapping(MappingId id) {
+        Resource mappingResource = id.getMappingIRI().isPresent() ? id.getMappingIRI().get() : id.getMappingIdentifier();
+        Mapping mapping = mappingFactory.createNew(mappingResource);
+
+        if (id.getVersionIRI().isPresent()) {
+            mapping.setVersionIRI(mappingFactory.createNew(id.getVersionIRI().get(), mapping.getModel()));
+        }
+
+        return new SimpleMappingWrapper(id, mapping);
+    }
+
+    @Override
+    public MappingWrapper createMapping(File mapping) throws IOException, MatOntoException {
+        return new SimpleMapping(mapping, factory, modelFactory);
+    }
+
+    @Override
+    public MappingWrapper createMapping(String jsonld) throws IOException, MatOntoException {
+        return new SimpleMapping(jsonld, factory, modelFactory);
+    }
+
+    @Override
+    public MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException, MatOntoException {
+        Model model = Values.matontoModel(Rio.parse(in, "", format));
+        mappingFactory.getExisting()
+
+        return new SimpleMapping(in, format, factory, modelFactory);
+    }
+
+    @Override
+    public boolean storeMapping(@Nonnull Mapping mapping) throws MatOntoException {
+        if (mappingExists(mapping.getId().getMappingIdentifier())) {
             throw new MatOntoException("Mapping with mapping ID already exists");
         }
 
         RepositoryConnection conn = null;
         try {
             conn = repository.getConnection();
-            conn.add(mappingModel, mappingIRI);
-            conn.add(registrySubject, registryPredicate, mappingIRI, registryContext);
+            conn.add(mapping.asModel(), mapping.getId().getMappingIdentifier());
+            conn.add(registrySubject, registryPredicate, mapping.getId().getMappingIdentifier(), registryContext);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         } finally {
@@ -178,22 +219,22 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public Optional<Model> retrieveMapping(@Nonnull Resource mappingIRI) {
-        if (!mappingExists(mappingIRI)) {
+    public Optional<Mapping> retrieveMapping(@Nonnull Resource mappingId) {
+        if (!mappingExists(mappingId)) {
             return Optional.empty();
         }
         RepositoryConnection conn = null;
         Model mappingModel = modelFactory.createModel();
         try {
             conn = repository.getConnection();
-            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, mappingIRI);
+            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, mappingId);
             statements.forEach(mappingModel::add);
         } catch (RepositoryException e) {
             throw new MatOntoException("Error in repository connection", e);
         } finally {
             closeConnection(conn);
         }
-        return Optional.of(mappingModel);
+        return Optional.of(new SimpleMapping(mappingModel, factory, modelFactory));
     }
 
     @Override

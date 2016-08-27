@@ -1,10 +1,8 @@
-@Version("8.0.0.${build}")
-
-package org.matonto.etl.rest;
+package org.matonto.etl.api.delimited;
 
 /*-
  * #%L
- * org.matonto.etl.rest
+ * org.matonto.etl.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,15 @@ package org.matonto.etl.rest;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+
+import java.util.Optional;
+
+public interface MappingId {
+    Optional<IRI> getMappingIRI();
+
+    Optional<IRI> getVersionIRI();
+
+    Resource getMappingIdentifier();
+}

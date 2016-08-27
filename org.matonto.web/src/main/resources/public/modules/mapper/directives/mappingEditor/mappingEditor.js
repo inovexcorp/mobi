@@ -84,7 +84,7 @@
                         if (_.includes(dvm.mm.previousMappingNames, dvm.mm.mapping.name)) {
                             deferred.resolve();
                         } else {
-                            dvm.mm.uploadPut(dvm.mm.mapping.jsonld, dvm.mm.mapping.name)
+                            dvm.mm.upload(dvm.mm.mapping.jsonld)
                                 .then(() => deferred.resolve(), errorMessage => deferred.reject(errorMessage));
                         }
                         deferred.promise.then(() => {

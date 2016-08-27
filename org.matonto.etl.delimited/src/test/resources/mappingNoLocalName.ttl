@@ -3,6 +3,8 @@
 @prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
 
+<http://matonto.org/mappings/no_local_name> rdfs:type delim:Mapping.
+
 delim-data:Material rdfs:type               delim:ClassMapping ;
                     delim:mapsTo            uhtc:Material ;
                     delim:dataProperty      delim-data:DataMapping1 ;
