@@ -20,16 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <artifactId>matonto-parent</artifactId>
-        <groupId>org.matonto</groupId>
-        <version>1.1.20-SNAPSHOT</version>
-        <relativePath>../matonto-parent/pom.xml</relativePath>
-    </parent>
-    <artifactId>rdf.orm</artifactId>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>matonto-parent</artifactId>
+		<groupId>org.matonto</groupId>
+		<version>1.1.22-SNAPSHOT</version>
+		<relativePath>../matonto-parent/pom.xml</relativePath>
+	</parent>
+	<artifactId>rdf.orm</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <description>ORM for RDF data using simple POJOs</description>
 

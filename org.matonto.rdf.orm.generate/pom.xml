@@ -20,16 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.matonto</groupId>
-        <artifactId>matonto-parent</artifactId>
-        <version>1.1.20-SNAPSHOT</version>
-        <relativePath>../matonto-parent/pom.xml</relativePath>
-    </parent>
-    <artifactId>rdf.orm.generate</artifactId>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.matonto</groupId>
+		<artifactId>matonto-parent</artifactId>
+		<version>1.1.22-SNAPSHOT</version>
+		<relativePath>../matonto-parent/pom.xml</relativePath>
+	</parent>
+	<artifactId>rdf.orm.generate</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
 
     <packaging>bundle</packaging>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>1.1.19</version>
+            <version>1.1.22-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.spockframework</groupId>
