@@ -26,7 +26,7 @@
 	<parent>
 		<artifactId>matonto-parent</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.1.22-SNAPSHOT</version>
+		<version>1.1.22</version>
 		<relativePath>../matonto-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>rdf.orm</artifactId>
