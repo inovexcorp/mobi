@@ -1,4 +1,4 @@
-package org.matonto.itests;
+package org.matonto.itests.support;
 
 /*-
  * #%L
@@ -29,27 +29,49 @@ import org.apache.karaf.features.FeaturesService;
 import org.apache.karaf.shell.api.console.Session;
 import org.apache.karaf.shell.api.console.SessionFactory;
 import org.junit.Assert;
-import org.ops4j.pax.exam.*;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.ProbeBuilder;
+import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
+import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.util.tracker.ServiceTracker;
-import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 
 import javax.inject.Inject;
 import javax.security.auth.Subject;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 
 public class KarafTestSupport {
 
@@ -87,37 +109,41 @@ public class KarafTestSupport {
 
     @Configuration
     public Option[] config() throws IOException {
-        MavenArtifactUrlReference karafUrl = maven()
-                .groupId("org.apache.karaf")
-                .artifactId("apache-karaf")
+        MavenArtifactUrlReference karafUrl = CoreOptions.maven()
+                .groupId("org.matonto")
+                .artifactId("distribution")
                 .versionAsInProject()
                 .type("tar.gz");
 
         List<Option> options = new ArrayList<>();
 
         options.addAll(Arrays.asList(
-                karafDistributionConfiguration()
+                KarafDistributionOption.karafDistributionConfiguration()
                         .frameworkUrl(karafUrl)
                         .unpackDirectory(new File("target/exam"))
                         .useDeployFolder(false),
-                keepRuntimeFolder(),
-                logLevel(LogLevel.INFO),
-                replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", getFileResource("/etc/org.ops4j.pax.logging.cfg")),
-                editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", NEXUS),
-                editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", HTTP_PORT),
-                editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", RMI_REG_PORT),
-                editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", SSH_PORT),
-                editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", RMI_SERVER_PORT)
+                KarafDistributionOption.keepRuntimeFolder(),
+                KarafDistributionOption.logLevel(LogLevel.INFO),
+                KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", getFileResource("/etc/org.ops4j.pax.logging.cfg")),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", NEXUS),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", HTTP_PORT),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", RMI_REG_PORT),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", SSH_PORT),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", RMI_SERVER_PORT),
+                CoreOptions.mavenBundle()
+                        .groupId("org.matonto")
+                        .artifactId("itests-support")
+                        .versionAsInProject()
         ));
 
         Files.list(getFileResource("/etc").toPath()).forEach(path -> {
-            options.add(replaceConfigurationFile("etc/" + path.getFileName(), path.toFile()));
+            options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile()));
         });
 
         return options.toArray(new Option[options.size()]);
     }
 
-    public File getFileResource(String path) {
+    protected File getFileResource(String path) {
         URL res = this.getClass().getResource(path);
         if (res == null) {
             throw new RuntimeException("File resource " + path + " not found");
@@ -323,7 +349,7 @@ public class KarafTestSupport {
         assertFeatureInstalled(feature, version);
     }
 
-    public void assertFeatureInstalled(String featureName) throws Exception {
+    protected void assertFeatureInstalled(String featureName) throws Exception {
         Feature[] features = featureService.listInstalledFeatures();
         for (Feature feature : features) {
             if (featureName.equals(feature.getName())) {
@@ -333,7 +359,7 @@ public class KarafTestSupport {
         Assert.fail("Feature " + featureName + " should be installed but is not");
     }
 
-    public void assertFeatureInstalled(String featureName, String featureVersion) throws Exception {
+    protected void assertFeatureInstalled(String featureName, String featureVersion) throws Exception {
         Feature[] features = featureService.listInstalledFeatures();
         for (Feature feature : features) {
             if (featureName.equals(feature.getName()) && featureVersion.equals(feature.getVersion())) {
@@ -343,7 +369,7 @@ public class KarafTestSupport {
         Assert.fail("Feature " + featureName + "/" + featureVersion + " should be installed but is not");
     }
 
-    public Bundle installBundle(String url) throws Exception {
+    protected Bundle installBundle(String url) throws Exception {
         return bundleContext.installBundle(url);
     }
 
@@ -356,7 +382,7 @@ public class KarafTestSupport {
         return null;
     }
 
-    public org.osgi.service.cm.Configuration[] getFactoryConfigs(String factoryPid) throws IOException, InvalidSyntaxException {
+    protected org.osgi.service.cm.Configuration[] getFactoryConfigs(String factoryPid) throws IOException, InvalidSyntaxException {
         org.osgi.service.cm.Configuration[] configs = configAdmin.listConfigurations("(service.factorypid="+ factoryPid + ")");
         return configs;
     }
