@@ -63,6 +63,11 @@
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/2.6.3</bundle>
     </feature>
     <feature name="matonto" description="MatOnto Platform Bundles" version="${project.version}">
+        <feature>scr</feature>
+        <feature>jax-rs-connector</feature>
+        <feature>jax-rs-provider-gson</feature>
+        <feature>jax-rs-provider-multipart</feature>
+        <feature>jax-rs-provider-security</feature>
         <bundle start-level="80">mvn:org.matonto/api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rest.util/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.api/${project.version}</bundle>
