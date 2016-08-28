@@ -1,0 +1,3 @@
+(&(objectClass=org.matonto.repository.api.Repository)(component.name=org.matonto.service.repository.native)(id=system))
+(&(objectClass=org.matonto.catalog.api.CatalogFactory))
+(&(objectClass=org.matonto.sparql.rest.SparqlRest))

@@ -49,10 +49,13 @@ import org.osgi.util.tracker.ServiceTracker;
 
 import javax.inject.Inject;
 import javax.security.auth.Subject;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -77,6 +80,7 @@ public class KarafTestSupport {
 
     public static final String RMI_SERVER_PORT = "44445";
     public static final String HTTP_PORT = "9081";
+    public static final String HTTPS_PORT = "9082";
     public static final String RMI_REG_PORT = "1100";
     public static final String SSH_PORT = "8102";
     public static final String NEXUS = "http://nexus.inovexcorp.com/nexus/content/groups/public/";
@@ -127,6 +131,7 @@ public class KarafTestSupport {
                 KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", getFileResource("/etc/org.ops4j.pax.logging.cfg")),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", NEXUS),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", HTTP_PORT),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", HTTPS_PORT),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", RMI_REG_PORT),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", SSH_PORT),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", RMI_SERVER_PORT),
@@ -149,6 +154,14 @@ public class KarafTestSupport {
             throw new RuntimeException("File resource " + path + " not found");
         }
         return new File(res.getFile());
+    }
+
+    protected InputStream getBundleEntry(BundleContext context, String entry) throws IOException {
+        return context.getBundle().getEntry(entry).openStream();
+    }
+
+    protected BufferedReader getReaderForEntry(BundleContext context, String entry) throws IOException {
+        return new BufferedReader(new InputStreamReader(getBundleEntry(context, entry)));
     }
 
     /**

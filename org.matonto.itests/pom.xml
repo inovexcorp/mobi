@@ -41,6 +41,7 @@
         <module>itests-orm</module>
         <module>itests-support</module>
         <module>itests-web</module>
+        <module>itests-platform</module>
     </modules>
 
     <properties>

@@ -37,6 +37,8 @@ import static org.junit.Assert.assertEquals;
 @ExamReactorStrategy(PerClass.class)
 public class WebIT extends KarafTestSupport {
 
+    // TODO: Add selenium tests in here
+
     @Test
     public void bundleActivates() throws Exception {
         assertEquals(findBundleByName("org.matonto.repository.impl.sesame").getState(), Bundle.ACTIVE);
