@@ -55,7 +55,7 @@
                             dvm.sm.state.entityIRI);
                     }
 
-                    $scope.$watch('dvm.sm.ontology', getLists);
+                    $scope.$watch('dvm.sm.selected', getLists);
                     getLists();
                 }]
             }
