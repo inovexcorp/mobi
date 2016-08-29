@@ -10,6 +10,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*-
  * #%L
@@ -165,12 +167,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      */
     @Override
     public Collection<T> getAllExisting(final Model model) {
-        final Model filteredModel = model.filter(null, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), getTypeIRI());
-        final Collection<T> existing = new ArrayList<>(filteredModel.size());
-        filteredModel.stream().map(stmt -> stmt.getSubject()).forEach(resource -> {
-            existing.add(getExisting(resource, model));
-        });
-        return existing;
+        return streamExisting(model).collect(Collectors.toList());
     }
 
     /**
@@ -178,7 +175,15 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      */
     @Override
     public void processAllExisting(final Model model, final Consumer<T> consumer) {
-        model.filter(null, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), getTypeIRI()).stream().map(stmt -> getExisting(stmt.getSubject(), model)).forEach(consumer);
+        streamExisting(model).forEach(consumer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Stream<T> streamExisting(final Model model){
+        return model.filter(null, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), getTypeIRI()).stream().map(stmt -> getExisting(stmt.getSubject(), model));
     }
 
     /**

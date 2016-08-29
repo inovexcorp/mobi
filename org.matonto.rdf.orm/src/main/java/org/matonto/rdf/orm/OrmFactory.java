@@ -6,6 +6,7 @@ import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
 import java.util.Collection;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /*-
  * #%L
@@ -129,10 +130,18 @@ public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
     /**
      * Run a consumer function against each instance of this type in a given model.
      *
-     * @param model The Model to read against
+     * @param model    The Model to read against
      * @param consumer The {@link Consumer} function to run against each instance
      */
     void processAllExisting(final Model model, final Consumer<T> consumer);
+
+    /**
+     * Get the stream of existing entities in the supplied model.
+     *
+     * @param model The {@link Model} of statements to stream through
+     * @return The {@link Stream} of entities defined in your model
+     */
+    Stream<T> streamExisting(final Model model);
 
     /**
      * @return The type of {@link Thing} extension interface that this
