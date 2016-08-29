@@ -5,6 +5,7 @@ import org.matonto.rdf.orm.conversion.ValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /*-
  * #%L
@@ -43,7 +44,7 @@ public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
     /**
      * The IRI string representing the rdf:type value.
      */
-    static final String RDF_TYPE_IRI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+    String RDF_TYPE_IRI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
     /**
      * Create a new instance of the specified type with the provided params.
@@ -124,6 +125,14 @@ public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
      * @return The {@link Collection} of instances of this type
      */
     Collection<T> getAllExisting(final Model model);
+
+    /**
+     * Run a consumer function against each instance of this type in a given model.
+     *
+     * @param model The Model to read against
+     * @param consumer The {@link Consumer} function to run against each instance
+     */
+    void processAllExisting(final Model model, final Consumer<T> consumer);
 
     /**
      * @return The type of {@link Thing} extension interface that this

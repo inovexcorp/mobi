@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /*-
  * #%L
@@ -170,6 +171,14 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
             existing.add(getExisting(resource, model));
         });
         return existing;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void processAllExisting(final Model model, final Consumer<T> consumer) {
+        model.filter(null, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), getTypeIRI()).stream().map(stmt -> getExisting(stmt.getSubject(), model)).forEach(consumer);
     }
 
     /**
