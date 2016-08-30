@@ -193,9 +193,25 @@ public class SimpleMappingManager implements MappingManager {
     @Override
     public MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException, MatOntoException {
         Model model = Values.matontoModel(Rio.parse(in, "", format));
-        mappingFactory.getExisting()
+        Model mappings = model.filter(null, factory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), factory.createIRI(Mapping.TYPE));
 
-        return new SimpleMapping(in, format, factory, modelFactory);
+        if (mappings.size() != 1) {
+            throw new MatOntoException("Input source must contain exactly one Mapping resource.");
+        }
+
+        Resource mappingResource = mappings.iterator().next().getSubject();
+
+        Mapping mapping = mappingFactory.getExisting(mappingResource, model);
+        Optional<Mapping> versionIriOpt = mapping.getVersionIRI();
+
+        SimpleMappingId.Builder builder = new SimpleMappingId.Builder(factory)
+                .mappingIRI(factory.createIRI(mapping.getResource().stringValue()));
+
+        if (versionIriOpt.isPresent()) {
+            builder.versionIRI(factory.createIRI(versionIriOpt.get().getResource().stringValue()));
+        }
+
+        return new SimpleMappingWrapper(builder.build(), mapping);
     }
 
     @Override

@@ -108,6 +108,7 @@ public interface MappingManager {
      * @param mapping a file containing RDF with a mapping
      * @return a Mapping with the mapping RDF and id pulled from the data
      * @throws IOException thrown if an error occurs when parsing
+     * @throws MatOntoException if the file does not contain exactly one mapping resource
      */
     MappingWrapper createMapping(File mapping) throws IOException, MatOntoException;
 
@@ -117,6 +118,7 @@ public interface MappingManager {
      * @param jsonld a string containing JSON-LD of a mapping
      * @return a Mapping with the mapping RDF and id pulled from the data
      * @throws IOException thrown if an error occurs when parsing
+     * @throws MatOntoException if the file does not contain exactly one mapping resource
      */
     MappingWrapper createMapping(String jsonld) throws IOException, MatOntoException;
 
@@ -128,6 +130,7 @@ public interface MappingManager {
      * @param format the RDF format the mapping is in
      * @return a Mapping with the mapping RDF and id pulled from the data
      * @throws IOException thrown if an error occurs when parsing
+     * @throws MatOntoException if the file does not contain exactly one mapping resource
      */
     MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException, MatOntoException;
 
