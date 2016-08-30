@@ -84,12 +84,16 @@
                         var propId = dvm.state.selectedProp['@id'];
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId);
                         if (dvm.om.isObjectProperty(dvm.state.selectedProp)) {
+                            var classMappings = dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld);
                             dvm.mm.mapping.jsonld = dvm.mm.addObjectProp(dvm.mm.mapping.jsonld, ontology.entities, dvm.state.selectedClassMappingId, propId);
+                            var classMapping = _.differenceBy(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), classMappings, '@id')[0];
+                            dvm.state.setAvailableProps(classMapping['@id']);
                         } else {
                             var columnIdx = dvm.dm.filePreview.headers.indexOf(dvm.state.selectedColumn);
                             dvm.mm.mapping.jsonld = dvm.mm.addDataProp(dvm.mm.mapping.jsonld, ontology.entities, dvm.state.selectedClassMappingId, propId, columnIdx);
                         }
                         
+                        dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
                         dvm.state.openedClasses = _.union(dvm.state.openedClasses, [dvm.state.selectedClassMappingId]);
                         dvm.state.resetEdit();
                         dvm.state.changedMapping();

@@ -274,6 +274,7 @@ function mockMapperState() {
             this.startingClassSelectStep = 3;
             this.editMappingStep = 4;
             this.finishStep = 5;
+            this.availablePropsByClass = {};
             this.editMapping = false;
             this.newMapping = false;
             this.step = 0;
@@ -306,6 +307,9 @@ function mockMapperState() {
             this.getCachedSourceOntologyId = jasmine.createSpy('getCachedSourceOntologyId').and.returnValue('');
             this.updateAvailableColumns = jasmine.createSpy('updateAvailableColumns');
             this.updateAvailableProps = jasmine.createSpy('updateAvailableProps');
+            this.getAvailableProps = jasmine.createSpy('getAvailableProps');
+            this.setAvailableProps = jasmine.createSpy('setAvailableProps');
+            this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
             this.changedMapping = jasmine.createSpy('changedMapping');
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
         });

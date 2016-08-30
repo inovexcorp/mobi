@@ -51,6 +51,15 @@ mvn clean install -P release-build
 
 The `release-build` profile will minify the web resources and prepare karaf scripts to use release versions.
 
+### Running Integration Tests
+
+Integration tests are controlled by the `skipITs` system property and are disabled by default. To run integration
+tests as part of the build, set the property to false:
+
+```
+mvn clean install -DskipITs=false
+```
+
 ## License
 
 MatOnto is made available under the terms of the GNU Affero General Public License (AGPL).  See LICENSE.TXT for details.
