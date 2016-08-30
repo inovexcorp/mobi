@@ -1,5 +1,6 @@
 package org.matonto.rdf.orm.generate.plugin;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -66,9 +67,14 @@ public class OrmGenerationMojo extends AbstractMojo {
             // Check that the file exists!
             if (file.isFile()) {
                 try {
-                    Model ontology = GraphReadingUtility.readOntology(file, generate.getOntologyFile());
+                    // Read the ontology file into our Model.
+                    final Model ontology = GraphReadingUtility.readOntology(file, generate.getOntologyFile());
+                    // If the destination package already exists, remove the previous version.
+                    FileUtils.deleteQuietly(new File(outputLocation + (outputLocation.endsWith(File.separator) ? "" : File.separator) + generate.getOutputPackage().replace('.', File.separatorChar)));
+                    // Generate the source in the targeted output package.
                     SourceGenerator.toSource(ontology, generate.getOutputPackage(), outputLocation);
                 } catch (Exception e) {
+                    // Catch an exception during source generation and throw MojoFailureException.
                     String msg = String.format("Issue generating source from ontology specified: {%s} {%s} {%s}",
                             generate.getOntologyFile(), generate.getOutputPackage(), outputLocation);
                     throw new MojoFailureException(msg, e);
