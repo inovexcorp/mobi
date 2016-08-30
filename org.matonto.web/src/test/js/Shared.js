@@ -231,6 +231,7 @@ function mockMappingManager() {
             this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.returnValue([]);
             this.getAllDataMappings = jasmine.createSpy('getAllDataMappings').and.returnValue([]);
             this.getDataMappingFromClass = jasmine.createSpy('getDataMappingFromClass').and.returnValue({});
+            this.getPropsLinkingToClass = jasmine.createSpy('getPropsLinkingToClass').and.returnValue([]);
             this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
         });
     });

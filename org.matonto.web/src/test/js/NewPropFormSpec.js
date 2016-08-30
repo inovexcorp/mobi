@@ -120,7 +120,7 @@ describe('New Prop Form directive', function() {
             expect(controller.set).toHaveBeenCalled();
             expect(mapperStateSvc.newProp).toBe(true);
             expect(mapperStateSvc.selectedClassMappingId).toBe('test');
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
         });
     });
     describe('replaces the element with the correct html', function() {

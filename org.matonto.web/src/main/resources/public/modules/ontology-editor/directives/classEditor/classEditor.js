@@ -47,7 +47,7 @@
                         dvm.subClasses = $filter('removeIriFromArray')(dvm.sm.state.subClasses, dvm.sm.state.entityIRI);
                     }
 
-                    $scope.$watch('dvm.sm.ontology', getSubClasses);
+                    $scope.$watch('dvm.sm.selected', getSubClasses);
                     getSubClasses();
                 }]
             }
