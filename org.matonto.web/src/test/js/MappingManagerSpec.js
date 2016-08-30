@@ -581,6 +581,14 @@ describe('Mapping Manager service', function() {
         var result = mappingManagerSvc.findClassWithObjectMapping([classMapping], 'propId');
         expect(result).toEqual(classMapping);
     });
+    it('should find all object property mappings that link to a specified class mapping', function() {
+        var classMappingId = 'class';
+        var prop = {};
+        prop[prefixes.delim + 'classMapping'] = [{'@id': classMappingId}];
+        spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([prop]);
+        var result = mappingManagerSvc.getPropsLinkingToClass([], classMappingId);
+        expect(result).toContain(prop);
+    });
     it('should return the title of a property mapping', function() {
         var result = mappingManagerSvc.getPropMappingTitle('class', 'prop');
         expect(typeof result).toBe('string');

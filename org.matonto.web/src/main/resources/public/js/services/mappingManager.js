@@ -466,10 +466,7 @@
                     // Collect class mapping and any object mappings that use the class mapping
                     var classMapping = getEntityById(newMapping, classMappingId);
                     var classId = self.getClassIdByMapping(classMapping);
-                    var objectMappings = _.filter(
-                        self.getAllObjectMappings(newMapping),
-                        ["['" + prefixes.delim + "classMapping'][0]['@id']", classMapping['@id']]
-                    );
+                    var objectMappings = self.getPropsLinkingToClass(newMapping, classMapping['@id']);
                     // If there are object mappings that use the class mapping, iterate through them
                     _.forEach(objectMappings, objectMapping => {
                         // Collect the class mapping that uses the object mapping
@@ -842,6 +839,24 @@
             self.findClassWithObjectMapping = function(mapping, objectMappingId) {
                 return findClassWithPropMapping(mapping, objectMappingId, 'objectProperty');
             } 
+            /**
+             * @ngdoc method
+             * @name getPropsLinkingToClass
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Finds all property mappings that link to the class mapping with the specified id.
+             * 
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {string} classMappingId The id of the class mapping to search for properties linking to
+             * @return {Object[]} The property mappings that link to the specified class mapping
+             */
+            self.getPropsLinkingToClass = function(mapping, classMappingId) {
+                return _.filter(
+                    self.getAllObjectMappings(mapping),
+                    ["['" + prefixes.delim + "classMapping'][0]['@id']", classMappingId]
+                );
+            }
             /**
              * @ngdoc method
              * @name getPropMappingTitle
