@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.generate</artifactId>
-            <version>1.1.22-SNAPSHOT</version>
+            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>edu.washington.cs.types.checker</groupId>
