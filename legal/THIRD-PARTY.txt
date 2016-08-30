@@ -1,5 +1,5 @@
 
-Lists of 323 third-party dependencies.
+Lists of 322 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -58,7 +58,6 @@ Lists of 323 third-party dependencies.
      (The Apache Software License, Version 2.0) Bean Validation API (javax.validation:validation-api:1.1.0.Final - http://beanvalidation.org)
      (Common Development and Distribution License, Version 1.1) (GNU General Public License, Version 2 with Classpath Exception) javax.ws.rs-api (javax.ws.rs:javax.ws.rs-api:2.0.1 - http://jax-rs-spec.java.net)
      (Revised BSD License) JLine (jline:jline:2.13 - http://nexus.sonatype.org/oss-repository-hosting.html/jline)
-     (Common Public License Version 1.0) JUnit (junit:junit:4.11 - http://junit.org)
      (Eclipse Public License, Version 1.0) JUnit (junit:junit:4.12 - http://junit.org)
      (The Apache Software License, Version 2.0) Apache Log4j (log4j:log4j:1.2.17 - http://logging.apache.org/log4j/1.2/)
      (ISC License) logkit (logkit:logkit:1.0.1 - no url defined)
