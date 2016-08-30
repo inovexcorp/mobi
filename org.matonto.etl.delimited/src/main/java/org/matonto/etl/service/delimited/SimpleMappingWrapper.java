@@ -25,16 +25,21 @@ package org.matonto.etl.service.delimited;
 
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.etl.api.ontologies.delimited.ClassMapping;
 import org.matonto.etl.api.ontologies.delimited.Mapping;
+
+import java.util.Collection;
 
 public class SimpleMappingWrapper implements MappingWrapper {
 
     private MappingId mappingId;
     private Mapping mapping;
+    private Collection<ClassMapping> classMappings;
 
-    public SimpleMappingWrapper(MappingId mappingId, Mapping mapping) {
+    public SimpleMappingWrapper(MappingId mappingId, Mapping mapping, Collection<ClassMapping> classMappings) {
         this.mappingId = mappingId;
         this.mapping = mapping;
+        this.classMappings = classMappings;
     }
 
     @Override
@@ -45,5 +50,10 @@ public class SimpleMappingWrapper implements MappingWrapper {
     @Override
     public Mapping getMapping() {
         return mapping;
+    }
+
+    @Override
+    public Collection<ClassMapping> getClassMappings() {
+        return classMappings;
     }
 }

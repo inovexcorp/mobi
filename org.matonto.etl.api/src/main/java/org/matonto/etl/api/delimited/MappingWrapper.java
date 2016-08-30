@@ -23,11 +23,16 @@ package org.matonto.etl.api.delimited;
  * #L%
  */
 
+import org.matonto.etl.api.ontologies.delimited.ClassMapping;
 import org.matonto.etl.api.ontologies.delimited.Mapping;
+
+import java.util.Collection;
 
 public interface MappingWrapper {
 
     MappingId getId();
 
     Mapping getMapping();
+
+    Collection<ClassMapping> getClassMappings();
 }

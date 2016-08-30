@@ -23,7 +23,6 @@ package org.matonto.etl.api.delimited;
  * #L%
  */
 
-import org.matonto.etl.api.ontologies.delimited.Mapping;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
@@ -143,17 +142,17 @@ public interface MappingManager {
      * @throws MatOntoException thrown if a connection to the repository
      *                          could not be made
      */
-    Optional<Mapping> retrieveMapping(@Nonnull Resource mappingId) throws MatOntoException;
+    Optional<MappingWrapper> retrieveMapping(@Nonnull Resource mappingId) throws MatOntoException;
 
     /**
      * Persist a mapping in the repository.
      *
-     * @param mapping a Mapping with an id and RDF data
+     * @param mappingWrapper a MappingWrapper with an id and RDF data
      * @return true if the mapping was persisted, false otherwise
      * @throws MatOntoException thrown if a connection to the repository
      *                          could not be made
      */
-    boolean storeMapping(@Nonnull Mapping mapping) throws MatOntoException;
+    boolean storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException;
 
     /**
      * Delete a mapping from the repository.
