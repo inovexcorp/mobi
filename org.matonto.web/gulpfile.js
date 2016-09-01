@@ -183,7 +183,7 @@ gulp.task('images', function() {
                 interlaced: true
             })
         ))
-        .pipe(gulp.dest(dest + 'img'));
+        .pipe(gulp.dest(dest + 'images'));
 });
 
 // Moves all of the html files to build folder

@@ -33,15 +33,17 @@
     <!-- inject:css -->
     <!-- endinject -->
 </head>
-<!-- REMOVE BETA CLASS ONCE OUT OF BETA -->
-<body class="beta" ng-class="{'show-words': ($root.showWords && $state.current.name !== 'login')}">
-
-    <!-- REMOVE BETA BANNER <P> ONCE OUT OF BETA -->
-    <p class="beta-banner"><i class="fa fa-fw fa-exclamation-circle"></i><strong>Warning:</strong> This is an alpha version of the software.</p>
+<body class="beta" ng-class="{'no-text': $root.noText}">
 
     <!-- Basic header, container, and footer for all states -->
-    <nav ui-view="header" ng-hide="$state.current.name === 'login'"></nav>
-    <div ui-view="container" class="view-container full-height"></div>
+    <div ng-hide="$state.current.name === 'login'" class="full-height">
+        <nav ui-view="nav"></nav>
+        <div class="main-page">
+            <custom-header page-title="{{$state.current.data.title}}"></custom-header>
+            <section ui-view="container" class="view-container full-height"></section>
+        </div>
+    </div>
+    <section ng-hide="$state.current.name !== 'login'" ui-view="container" class="view-container full-height"></section>
     <footer ui-view="footer"></footer>
 
     <!-- spinner -->

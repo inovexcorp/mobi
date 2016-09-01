@@ -31,7 +31,6 @@
             'annotationTab',
             'annotationTree',
             'classEditor',
-            'classTree',
             'createAnnotationOverlay',
             'createClassOverlay',
             'createIndividualOverlay',
@@ -46,7 +45,6 @@
             'objectSelect',
             'ontologyCloseOverlay',
             'ontologyDownloadOverlay',
-            'ontologyEditor',
             'ontologyEntityEditors',
             'ontologyOpenOverlay',
             'ontologyOverlays',
@@ -60,6 +58,12 @@
             'staticIri',
             'stringSelect',
             'treeItem',
+
+            /* New Directives */
+            'hierarchyTree',
+            'ontologyTab',
+            'projectPage',
+            'selectedDetails',
 
             /* Custom Services */
             'stateManager'

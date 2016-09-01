@@ -24,36 +24,24 @@
     'use strict';
 
     angular
-        .module('nav', ['loginManager'])
+        .module('nav', [])
         .controller('NavController', NavController);
 
-    NavController.$inject = ['$state', 'loginManagerService'];
+    NavController.$inject = ['$rootScope', '$state'];
 
-    function NavController($state, loginManagerService) {
+    function NavController($rootScope, $state) {
         var vm = this;
-        vm.perspectives;
 
-        activate();
+        vm.perspectives = [
+            { icon: 'home', sref: 'root.home', isActive: $state.is('root.home'), name: 'Home' },
+            { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Ontology Editor'},
+            { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Map' },
+            { icon: 'terminal', sref: 'root.sparql', isActive: $state.is('root.sparql'), name: 'SPARQL' },
+            { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' }
+        ];
 
-        function activate() {
-            getPerspectives();
-        }
-
-        // TODO: removing catalog and webtop from the navigation since they don't have anything yet
-        function getPerspectives() {
-            // Default perspectives
-            vm.perspectives = [
-                { icon: 'home', sref: 'root.home', isActive: $state.is('root.home'), name: 'Home' },
-                /*{ icon: 'desktop', sref: 'root.webtop', isActive: $state.is('root.webtop'), name: 'Webtop' },*/
-                { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Editor'},
-                { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Map' },
-                { icon: 'terminal', sref: 'root.sparql', isActive: $state.is('root.sparql'), name: 'SPARQL' },
-                { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' }
-            ];
-        }
-
-        vm.logout = function() {
-            loginManagerService.logout();
+        vm.toggle = function() {
+            $rootScope.noText = !$rootScope.noText;
         }
     }
 })();

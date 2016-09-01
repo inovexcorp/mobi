@@ -1,0 +1,40 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.tabset {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .tabset-headings {
+        height: 48px;
+
+        &.with-background {
+            background: darkseagreen;
+        }
+
+        a {
+            background-color: $gray-lighter;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            color: black;
+            display: inline-block;
+            font-size: 1.125em;
+            margin: 12px 0 0 8px;
+            padding: 7px 15px 7px 20px;
+            text-decoration: none;
+            @include noCopy();
+
+            &.active {
+                background-color: white;
+            }
+
+            span {
+                margin-right: 10px;
+            }
+        }
+    }
+    .tabset-contents {
+        flex: 1;
+    }
+}

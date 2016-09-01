@@ -56,7 +56,7 @@
                     authenticate: authenticate
                 },
                 views: {
-                    header: {
+                    nav: {
                         templateUrl: 'modules/nav/nav.html'
                     },
                     footer: {

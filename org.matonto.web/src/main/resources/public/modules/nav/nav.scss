@@ -1,108 +1,84 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-/* Style to show the words for the nav menu */
-.show-words {
-    &.left-nav nav {
-        width: 125px;
-    }
-    .nav .icon-container li a .name {
-        display: inline-block;
-    }
-}
+.no-text {
+    .left-nav {
+        width: 50px;
 
-/* Default styles - top nav layout */
-/* Adding color to the background */
-.nav {
-    background-color: $gray;
-
-    /* Removing the list style from the element */
-    .icon-container {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-
-        /* Adding the proper spacing to the icons */
-        li {
-            color: #fff;
-            display: inline-block;
-
-            /* Styles the icon itself */
-            a {
-                border-top: 2px solid transparent;
-                color: inherit;
-                cursor: pointer;
-                display: inline-block;
-                padding: 4px 6px 6px 6px;
-                text-decoration: none;
-
-                /* Changes the color of the icons as you hover over them. */
-                &:hover {
-                    color: $gray-light;
-                }
-
-                /* The words that appear next to the icon */
-                .name {
-                    display: none;
-                    line-height: 2em;
-                    padding-left: 10px;
-                    vertical-align: top;
-                }
-
-                /* Style to show which perspective you are currently viewing */
-                &.active {
-                    border-color: $brand-info;
-                }
-            }
+        a span,
+        .version-details p {
+			opacity: 0;
+			overflow: hidden;
+			visibility: hidden;
         }
     }
 }
-
-/* Left Nav styles */
 .left-nav {
-    nav {
-        background-color: $gray;
-        height: 100%;
-        left: 0;
-        position: absolute;
-        top: 0;
-        width: 60px;
+	background: gray;
+	height: 100%;
+	overflow: hidden;
+	position: absolute;
+	transition: width .25s ease;
+	width: 200px;
+    @include noCopy();
 
-        .nav {
-            background-color: transparent;
-            margin: 0;
+	a {
+	    color: white;
+        display: inline-block;
+        padding: 7px 10px;
+        text-decoration: none;
+        white-space: nowrap;
+        width: 100%;
 
-            /* Removing the list style from the element */
-            .icon-container li {
-                width: 100%;
-
-                /* Styles the icon itself */
-                a {
-                    padding: 10px;
-                    width: 100%;
-                }
-            }
-
-            /* Adds bar for the different perspective options */
-            .perspectives li a {
-                border-left: 5px solid transparent;
-                border-top: 0;
-                padding-left: 5px;
-
-                /* Style to show which perspective you are currently viewing */
-                &.active {
-                    border-color: $brand-info;
-                }
-            }
+        &:hover {
+            color: lightgray;
         }
-    }
-}
 
-/* Positions the right side for the top nav layout */
-body:not(.left-nav) nav {
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
-    z-index: 1;
+        &.active {
+            background: darkslategray;
+            color: lightgray;
+        }
+
+        &.toggle {
+            padding-top: 12px;
+        }
+
+        * {
+           vertical-align: middle;
+        }
+
+        i {
+            font-size: 1.5em;
+        }
+
+        span {
+			font-size: 1.125em;
+			opacity: 1;
+			padding-left: 10px;
+        }
+	}
+
+	a span,
+	.version-details p {
+	    transition: opacity .25s ease-in, visibility .25s ease-in;
+	}
+
+	.version-details {
+	    bottom: 0;
+        color: white;
+        padding: 7px 5px;
+        position: absolute;
+        text-align: center;
+        width: 200px;
+
+        img {
+            height: 40px;
+           	float: left;
+        }
+
+        p {
+            line-height: 40px;
+            margin: 0 0 0 38px;
+        }
+	}
 }
