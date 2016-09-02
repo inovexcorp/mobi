@@ -1745,6 +1745,7 @@
                     .then(() => {
                         $rootScope.showSpinner = false;
                     });
+                self.openOntology('http://data.qudt.org/qudt/owl/1.0.0/qudt.owl');
             }
             initialize();
         }

@@ -45,9 +45,9 @@
                 replace: true,
                 transclude: true,
                 scope: {
-                    hasHeader: '=',
-                    hasFooter: '=',
-                    hasSearch: '='
+                    hasHeader: '@',
+                    hasFooter: '@',
+                    hasSearch: '@'
                 },
                 templateUrl: 'directives/block/block.html'
             }

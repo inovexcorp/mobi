@@ -36,11 +36,15 @@
                 scope: {
                     active: '=',
                     heading: '@',
+                    onClick: '&',
                     onClose: '&?'
                 },
                 templateUrl: 'directives/tab/tab.html',
                 link: function(scope, elem, attr, tabsetController) {
                     tabsetController.addTab(scope);
+                    scope.$on('$destroy', function() {
+                        tabsetController.removeTab(scope);
+                    });
                 }
             }
         }

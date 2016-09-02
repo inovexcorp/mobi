@@ -3,31 +3,8 @@
 
 .block {
     .content {
+        flex: 1;
         max-height: 100%;
         overflow-y: auto;
-    }
-
-    &.has-header {
-        .content {
-            @include offsetHeight(36px);
-        }
-
-        &.has-footer .content,
-        &.has-search .content {
-            @include offsetHeight(82px);
-        }
-
-        &.has-footer.has-search .content {
-            @include offsetHeight(123px);
-        }
-    }
-
-    &.has-footer .content,
-    &.has-search .content {
-        @include offsetHeight(46px);
-    }
-
-    &.has-footer.has-search .content {
-        @include offsetHeight(87px);
     }
 }

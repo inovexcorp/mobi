@@ -62,6 +62,7 @@
             /* New Directives */
             'hierarchyTree',
             'ontologyTab',
+            'ontologyEditorTabset',
             'projectPage',
             'selectedDetails',
 

@@ -24,32 +24,27 @@
     'use strict';
 
     angular
-        /**
-         * @ngdoc overview
-         * @name blockHeader
-         *
-         */
-        .module('blockHeader', [])
-        /**
-         * @ngdoc directive
-         * @name blockHeader.directive:blockHeader
-         * @scope
-         * @restrict E
-         *
-         */
-        .directive('blockHeader', blockHeader);
+        .module('ontologyEditorTabset', [])
+        .directive('ontologyEditorTabset', ontologyEditorTabset);
 
-        function blockHeader() {
+        ontologyEditorTabset.$inject = ['ontologyManagerService'];
+
+        function ontologyEditorTabset(ontologyManagerService) {
             return {
-                require: '^^block',
-                replace: true,
                 restrict: 'E',
-                transclude: true,
-                scope: {
-                    linkText: '@',
-                    linkEvent: '&?'
-                },
-                templateUrl: 'directives/blockHeader/blockHeader.html'
+                replace: true,
+                templateUrl: 'modules/ontology-editor/new-directives/ontologyEditorTabset/ontologyEditorTabset.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.om = ontologyManagerService;
+
+                    dvm.onClose = function() {
+                        console.log('close was clicked');
+                    }
+                }
             }
         }
 })();

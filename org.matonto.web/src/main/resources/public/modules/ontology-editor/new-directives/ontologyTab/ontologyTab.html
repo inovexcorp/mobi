@@ -21,8 +21,8 @@
   #L%
   -->
 <div class="ontology-tab">
-    <tab heading="Ontology" active="true" on-close="dvm.onClose()">
-        <tabset>
+    <tab heading="{{dvm.om.getEntityName(dvm.om.getOntologyEntity(listItem.ontology))}}" active="true" on-close="dvm.onClose()">
+        <tabset class="centered">
             <tab heading="Project" active="true">
                 <project-page></project-page>
             </tab>

@@ -27,7 +27,9 @@
         .module('projectPage', [])
         .directive('projectPage', projectPage);
 
-        function projectPage() {
+        projectPage.$inject = ['stateManagerService'];
+
+        function projectPage(stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -37,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
 
-                    dvm.actions = []
+                    dvm.sm = stateManagerService;
                 }
             }
         }

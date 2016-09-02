@@ -20,6 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-editor clearfix">
-    <ontology-editor-tabset></ontology-editor-tabset>
+<div class="ontology-editor-tabset">
+    <tabset>
+        <ontology-tab ng-repeat="item in dvm.om.list" list-item="item"></ontology-tab>
+    </tabset>
 </div>

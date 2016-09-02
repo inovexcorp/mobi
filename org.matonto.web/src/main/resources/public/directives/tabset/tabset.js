@@ -44,17 +44,17 @@
                         dvm.tabs.push(tab);
                     }
 
+                    dvm.removeTab = function(tab) {
+                        _.pull(dvm.tabs, tab);
+                    }
+
                     dvm.select = function(selectedTab) {
                         _.forEach(dvm.tabs, tab => {
-                            if (tab.active && tab !== selectedTab) {
+                            if (tab.active && !_.isEqual(tab, selectedTab)) {
                                 tab.active = false;
                             }
                         });
                         selectedTab.active = true;
-                    }
-
-                    dvm.close = function(selectedTab) {
-                        _.pull(dvm.tabs, selectedTab);
                     }
                 }
             }
