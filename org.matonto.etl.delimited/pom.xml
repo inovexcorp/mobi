@@ -57,7 +57,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.1.24-SNAPSHOT</version>
+            <version>1.1.26-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -99,12 +99,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>1.1.24-SNAPSHOT</version>
+            <version>1.1.26-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.1.24-SNAPSHOT</version>
+            <version>1.1.26-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
