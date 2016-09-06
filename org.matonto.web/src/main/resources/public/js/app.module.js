@@ -52,7 +52,6 @@
             'blockSearch',
             'circleButton',
             'confirmationOverlay',
-            'customButton',
             'customHeader',
             'customLabel',
             'errorDisplay',
