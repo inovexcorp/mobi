@@ -22,7 +22,7 @@
   -->
 <div class="tabset" role="tabpanel">
     <div class="tabset-headings clearfix">
-        <a ng-repeat="tab in dvm.tabs" ng-click="dvm.select(tab)" ng-class="{'active': tab.active}" ng-click="tab.onClick({'tab': tab})" class="heading">
+        <a ng-repeat="tab in dvm.tabs" ng-click="dvm.select(tab); tab.onClick()" ng-class="{'active': tab.active}" class="heading">
             <span>{{tab.heading}}</span><i ng-if="tab.onClose" ng-click="tab.onClose({'tab': tab})" class="fa fa-times"></i>
         </a>
     </div>
