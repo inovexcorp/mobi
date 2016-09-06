@@ -19,7 +19,7 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>itests-orm</artifactId>
+    <artifactId>itests-orm</artifactId>
 
 	<dependencies>
         <dependency>
@@ -51,36 +51,36 @@
 		</dependency>
 	</dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.matonto.orm</groupId>
-				<artifactId>rdf-orm-maven-plugin</artifactId>
-				<version>${project.version}</version>
-				<executions>
-					<execution>
-						<id>generateOrmSources</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>generate-orm</goal>
-						</goals>
-						<inherited>false</inherited>
-						<configuration>
-							<generates>
-								<ontology>
-									<ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
-									<outputPackage>com.xmlns.foaf._0._1</outputPackage>
-								</ontology>
-								<ontology>
-									<ontologyFile>${project.basedir}/src/test/resources/crazy.trig</ontologyFile>
-									<outputPackage>org.matonto.delimited</outputPackage>
-								</ontology>
-							</generates>
-							<outputLocation>${project.basedir}/src/test/java</outputLocation>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.matonto.orm</groupId>
+                <artifactId>rdf-orm-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>generateOrmSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-orm</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/foaf.rdf</ontologyFile>
+                                    <outputPackage>com.xmlns.foaf._0._1</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/crazy.trig</ontologyFile>
+                                    <outputPackage>org.matonto.delimited</outputPackage>
+                                </ontology>
+                            </generates>
+                            <outputLocation>${project.basedir}/src/test/java</outputLocation>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
