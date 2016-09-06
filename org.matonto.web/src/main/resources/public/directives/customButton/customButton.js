@@ -73,17 +73,12 @@
             return {
                 restrict: 'E',
                 transclude: true,
+                replace: true,
                 scope: {
-                    type: '=',
                     isDisabledWhen: '=',
-                    onClick: '&',
-                    pull: '='
+                    onClick: '&'
                 },
-                templateUrl: 'directives/customButton/customButton.html',
-                controller: ['$scope', function($scope) {
-                    $scope.type = angular.isDefined($scope.type) ? $scope.type : 'primary';
-                    $scope.pull = angular.isDefined($scope.pull) ? $scope.pull : 'right';
-                }]
+                templateUrl: 'directives/customButton/customButton.html'
             }
         }
 })();
