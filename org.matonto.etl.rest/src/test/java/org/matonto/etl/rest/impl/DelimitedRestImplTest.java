@@ -26,7 +26,12 @@ package org.matonto.etl.rest.impl;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -37,9 +42,10 @@ import org.junit.Assert;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
-import org.matonto.etl.api.delimited.Mapping;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
+import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.etl.api.ontologies.delimited.Mapping;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -48,8 +54,6 @@ import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.when;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;
@@ -62,7 +66,16 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
 
 public class DelimitedRestImplTest extends MatontoRestTestNg {
     private DelimitedRestImpl rest;
@@ -72,6 +85,9 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
     @Mock
     MappingManager manager;
+
+    @Mock
+    MappingWrapper mappingWrapper;
 
     @Mock
     Mapping mapping;
@@ -85,11 +101,12 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         rest.setMappingManager(manager);
         rest.setFactory(factory);
 
-        when(mapping.asModel()).thenReturn(new LinkedHashModel());
+        when(mappingWrapper.getMapping()).thenReturn(mapping);
+        when(mapping.getModel()).thenReturn(new LinkedHashModel());
         when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
         when(converter.convert(any(ExcelConfig.class))).thenReturn(new LinkedHashModel());
         when(manager.createMappingIRI(anyString())).thenReturn(factory.createIRI("http://test.org"));
-        when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(mapping));
+        when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(mappingWrapper));
         when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
@@ -408,7 +425,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
             }
         }
         Response response = wt.request().get();
-        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(response.getEntity().toString(), 200, response.getStatus());
         return response.readEntity(String.class);
     }
 

@@ -28,6 +28,7 @@ import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.api.ontologies.delimited.ClassMapping;
 import org.matonto.etl.api.ontologies.delimited.Mapping;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 
 public class SimpleMappingWrapper implements MappingWrapper {
@@ -36,7 +37,7 @@ public class SimpleMappingWrapper implements MappingWrapper {
     private Mapping mapping;
     private Collection<ClassMapping> classMappings;
 
-    public SimpleMappingWrapper(MappingId mappingId, Mapping mapping, Collection<ClassMapping> classMappings) {
+    public SimpleMappingWrapper(@Nonnull MappingId mappingId, @Nonnull Mapping mapping, @Nonnull Collection<ClassMapping> classMappings) {
         this.mappingId = mappingId;
         this.mapping = mapping;
         this.classMappings = classMappings;

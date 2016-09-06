@@ -29,7 +29,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.etl.api.delimited.MappingManager;
-import org.matonto.etl.api.ontologies.delimited.Mapping;
+import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
@@ -78,7 +78,7 @@ public class MappingRestImpl implements MappingRest {
             throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
                     Response.Status.BAD_REQUEST);
         }
-        Mapping mapping;
+        MappingWrapper mapping;
         try {
             if (fileInputStream != null) {
                 RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName())
@@ -207,10 +207,10 @@ public class MappingRestImpl implements MappingRest {
      */
     private Optional<String> getFormattedMapping(Resource mappingIRI, RDFFormat format) throws MatOntoException {
         String mapping;
-        Optional<Mapping> mappingModel = manager.retrieveMapping(mappingIRI);
+        Optional<MappingWrapper> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(Values.sesameModel(mappingModel.get().asModel()), out, format);
+            Rio.write(Values.sesameModel(mappingModel.get().getMapping().getModel()), out, format);
             mapping = new String(out.toByteArray(), StandardCharsets.UTF_8);
         } else {
             return Optional.empty();

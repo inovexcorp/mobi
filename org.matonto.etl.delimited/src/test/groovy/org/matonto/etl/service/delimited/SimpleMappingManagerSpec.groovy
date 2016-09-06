@@ -22,8 +22,9 @@
  */
 package org.matonto.etl.service.delimited
 
+import org.matonto.etl.api.ontologies.delimited.Mapping
 import org.matonto.exception.MatOntoException
-import org.matonto.etl.api.delimited.Mapping
+import org.matonto.etl.api.delimited.MappingWrapper
 import org.matonto.etl.api.delimited.MappingId
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.api.ModelFactory
@@ -40,11 +41,15 @@ class SimpleMappingManagerSpec extends Specification {
     def model = Mock(Model)
     def vf = Mock(ValueFactory)
     def mf = Mock(ModelFactory)
-    def mapping = Mock(Mapping)
+    def mappingWrapper = Mock(MappingWrapper)
     def mappingId = Mock(MappingId)
+    def mapping = Mock(Mapping)
 
     def setup() {
-        mapping.getId() >> mappingId
+        mappingWrapper.getId() >> mappingId
+        mappingWrapper.getMapping() >> mapping
+        mappingWrapper.getClassMappings() >> []
+
         mapping.getModel() >> model
     }
 
@@ -58,7 +63,7 @@ class SimpleMappingManagerSpec extends Specification {
         manager.setRepository(repository)
 
         when:
-        manager.storeMapping(mapping)
+        manager.storeMapping(mappingWrapper)
 
         then:
         thrown(MatOntoException)
@@ -69,13 +74,12 @@ class SimpleMappingManagerSpec extends Specification {
         def manager = [
                 mappingExists: { o -> return false }
         ] as SimpleMappingManager
-
         manager.setValueFactory(vf)
         manager.setModelFactory(mf)
         manager.setRepository(repository)
 
         when:
-        def result = manager.storeMapping(mapping)
+        def result = manager.storeMapping(mappingWrapper)
 
         then:
         repository.getConnection() >> connection

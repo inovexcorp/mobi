@@ -32,9 +32,10 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
-import org.matonto.etl.api.delimited.Mapping;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
+import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.etl.api.ontologies.delimited.Mapping;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
@@ -52,7 +53,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -60,7 +60,6 @@ import java.util.*;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MappingRestImplTest extends MatontoRestTestNg {
@@ -70,33 +69,40 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     MappingManager manager;
 
     @Mock
-    Mapping mapping;
+    MappingWrapper mappingWrapper;
 
     @Mock
     MappingId mappingId;
 
+    @Mock
+    Mapping mapping;
+
     @Override
     protected Application configureApp() throws Exception {
         ValueFactory factory = SimpleValueFactory.getInstance();
+
         Model fakeModel = new LinkedHashModel();
         fakeModel.add(factory.createIRI("http://test.org"), factory.createIRI("http://test.org/isTest"), factory.createLiteral(true));
+
         MockitoAnnotations.initMocks(this);
+
         rest = new MappingRestImpl();
         rest.setManager(manager);
         rest.setFactory(factory);
 
         when(mappingId.getMappingIdentifier()).thenReturn(factory.createIRI("http://test.org"));
-        when(mapping.asModel()).thenReturn(fakeModel);
-        when(mapping.getId()).thenReturn(mappingId);
+        when(mappingWrapper.getMapping()).thenReturn(mapping);
+        when(mappingWrapper.getId()).thenReturn(mappingId);
+        when(mapping.getModel()).thenReturn(fakeModel);
         when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
-        when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mapping);
-        when(manager.createMapping(anyString())).thenReturn(mapping);
-        when(manager.storeMapping(any(Mapping.class))).thenReturn(true);
+        when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mappingWrapper);
+        when(manager.createMapping(anyString())).thenReturn(mappingWrapper);
+        when(manager.storeMapping(any(MappingWrapper.class))).thenReturn(true);
         when(manager.deleteMapping(any(Resource.class))).thenReturn(true);
-        when(manager.getMappingRegistry()).thenReturn(new HashSet<Resource>());
+        when(manager.getMappingRegistry()).thenReturn(new HashSet<>());
         when(manager.createMappingIRI()).thenReturn(factory.createIRI("http://test.org"));
         when(manager.createMappingIRI(anyString())).thenAnswer(i -> factory.createIRI("http://test.org/" + i.getArguments()[0]));
-        when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(mapping));
+        when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(mappingWrapper));
         when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override

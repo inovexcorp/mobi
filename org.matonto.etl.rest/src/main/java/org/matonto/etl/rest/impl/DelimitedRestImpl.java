@@ -31,13 +31,18 @@ import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
-import org.matonto.etl.api.delimited.Mapping;
 import org.matonto.etl.api.delimited.MappingManager;
+import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.rest.DelimitedRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
@@ -53,17 +58,32 @@ import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -193,9 +213,9 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Collect uploaded mapping model
         Model mappingModel;
         Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
-        Optional<Mapping> mappingOptional = mappingManager.retrieveMapping(mappingId);
+        Optional<MappingWrapper> mappingOptional = mappingManager.retrieveMapping(mappingId);
         if (mappingOptional.isPresent()) {
-            mappingModel = Values.sesameModel(mappingOptional.get().asModel());
+            mappingModel = Values.sesameModel(mappingOptional.get().getMapping().getModel());
         } else {
             throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist",
                     Response.Status.BAD_REQUEST);
