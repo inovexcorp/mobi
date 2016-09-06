@@ -36,29 +36,12 @@ describe('Block footer directive', function() {
             scope = _$rootScope_;
         });
 
-        scope.linkText = 'text';
-        scope.linkEvent = jasmine.createSpy('linkEvent');
-
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        element = angular.element('<block-footer link-event="linkEvent()" link-text="linkText"></block-footer>');
+        element = angular.element('<block-footer></block-footer>');
         parent.append(element);
         element = $compile(element)(scope);
         scope.$digest();
-    });
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
-        it('linkEvent should be called in parent scope when invoked', function() {
-            isolatedScope.linkEvent();
-            expect(scope.linkEvent).toHaveBeenCalled();
-        });
-        it('linkText should be one way bound', function() {
-            isolatedScope.linkText = 'new';
-            scope.$digest();
-            expect(scope.linkText).toEqual('text');
-        });
     });
     describe('contains the correct html', function() {
         it('for a DIV tag', function() {
@@ -66,15 +49,6 @@ describe('Block footer directive', function() {
         });
         it('based on .footer', function() {
             expect(element.hasClass('footer')).toBe(true);
-        });
-        it('based on a', function() {
-            expect(element.find('a').length).toBe(1);
-        });
-        it('based on i', function() {
-            expect(element.find('i').length).toBe(1);
-        });
-        it('based on span', function() {
-            expect(element.find('span').length).toBe(1);
         });
     });
 });

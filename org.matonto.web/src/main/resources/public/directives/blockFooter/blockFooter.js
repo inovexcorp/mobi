@@ -44,10 +44,8 @@
                 restrict: 'E',
                 replace: true,
                 require: '^^block',
-                scope: {
-                    linkText: '@',
-                    linkEvent: '&'
-                },
+                transclude: true,
+                scope: {},
                 templateUrl: 'directives/blockFooter/blockFooter.html'
             }
         }

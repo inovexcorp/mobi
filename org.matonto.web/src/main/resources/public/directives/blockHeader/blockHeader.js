@@ -45,10 +45,7 @@
                 replace: true,
                 restrict: 'E',
                 transclude: true,
-                scope: {
-                    linkText: '@',
-                    linkEvent: '&?'
-                },
+                scope: {},
                 templateUrl: 'directives/blockHeader/blockHeader.html'
             }
         }

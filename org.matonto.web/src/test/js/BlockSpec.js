@@ -35,11 +35,7 @@ describe('Block directive', function() {
             scope = _$rootScope_;
         });
 
-        scope.hasHeader = '';
-        scope.hasFooter = '';
-        scope.hasSearch = '';
-
-        element = $compile(angular.element('<block has-header="hasHeader" has-footer="hasFooter" has-search="hasSearch"></block>'))(scope);
+        element = $compile(angular.element('<block></block>'))(scope);
         scope.$digest();
     });
     describe('contains the correct html', function() {
@@ -48,11 +44,6 @@ describe('Block directive', function() {
         });
         it('based on .block', function() {
             expect(element.hasClass('block')).toBe(true);
-        });
-        _.forEach(['has-header', 'has-footer', 'has-search'], function(item) {
-            it('based on .' + item, function() {
-                expect(element.hasClass(item)).toBe(true);
-            });
         });
     });
 });

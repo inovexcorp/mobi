@@ -44,11 +44,7 @@
                 restrict: 'E',
                 replace: true,
                 transclude: true,
-                scope: {
-                    hasHeader: '@',
-                    hasFooter: '@',
-                    hasSearch: '@'
-                },
+                scope: {},
                 templateUrl: 'directives/block/block.html'
             }
         }

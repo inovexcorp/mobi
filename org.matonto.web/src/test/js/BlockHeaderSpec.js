@@ -36,29 +36,12 @@ describe('Block header directive', function() {
             scope = _$rootScope_;
         });
 
-        scope.linkText = 'text';
-        scope.linkEvent = jasmine.createSpy('linkEvent');
-
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        element = angular.element('<block-header link-text="linkText" link-event="linkEvent()"></block-header>');
+        element = angular.element('<block-header></block-header>');
         parent.append(element);
         element = $compile(element)(scope);
         scope.$digest();
-    });
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
-        it('linkText should be one way bound', function() {
-            isolatedScope.linkText = 'new';
-            scope.$digest();
-            expect(scope.linkText).toEqual('text');
-        });
-        it('linkEvent should be called in parent scope when invoked', function() {
-            isolatedScope.linkEvent();
-            expect(scope.linkEvent).toHaveBeenCalled();
-        });
     });
     describe('contains the correct html', function() {
         it('for a DIV tag', function() {
@@ -66,35 +49,6 @@ describe('Block header directive', function() {
         });
         it('based on .header', function() {
             expect(element.hasClass('header')).toBe(true);
-        });
-        it('based on span', function() {
-            expect(element.find('span').length).toBe(2);
-        });
-        it('based on i', function() {
-            expect(element.find('i').length).toBe(1);
-        });
-        describe('based on a', function() {
-            it('when linkText is not provided', function() {
-                var parent = $compile('<div></div>')(scope);
-                parent.data('$blockController', {});
-                element = angular.element('<block-header link-event="linkEvent"></block-header>');
-                parent.append(element);
-                element = $compile(element)(scope);
-                scope.$digest();
-                expect(element.find('a').length).toBe(0);
-            });
-            it('when linkEvent is not provided', function() {
-                var parent = $compile('<div></div>')(scope);
-                parent.data('$blockController', {});
-                element = angular.element('<block-header link-text="linkText"></block-header>');
-                parent.append(element);
-                element = $compile(element)(scope);
-                scope.$digest();
-                expect(element.find('a').length).toBe(0);
-            });
-            it('when both are provided', function() {
-                expect(element.find('a').length).toBe(1);
-            });
         });
     });
 });
