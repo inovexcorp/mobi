@@ -44,7 +44,7 @@ describe('Mapping Name Overlay directive', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {
-                name: ''
+                id: ''
             };
             this.element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
             scope.$digest();
@@ -60,7 +60,7 @@ describe('Mapping Name Overlay directive', function() {
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                 expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
-                expect(mappingManagerSvc.mapping.name).toBe(mappingManagerSvc.getMappingId(controller.newName));
+                expect(mappingManagerSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
             it('if it is not the intitial step', function() {
@@ -69,7 +69,7 @@ describe('Mapping Name Overlay directive', function() {
                 expect(mapperStateSvc.step).toBe(1);
                 expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
-                expect(mappingManagerSvc.mapping.name).toBe(mappingManagerSvc.getMappingId(controller.newName));
+                expect(mappingManagerSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
         });

@@ -80,23 +80,23 @@ describe('Mapping Editor directive', function() {
         });
         describe('should submit the mapping', function() {
             beforeEach(function() {
-                mappingManagerSvc.mapping.name = 'test';
+                mappingManagerSvc.mapping.id = 'test';
             });
             it('if it has already been uploaded', function() {
-                mappingManagerSvc.previousMappingNames = [];
+                mappingManagerSvc.mappingIds = [];
                 controller.submit();
                 scope.$apply();
                 expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
-                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
             });
             it('if it has not been uploaded', function() {
-                mappingManagerSvc.previousMappingNames = [mappingManagerSvc.mapping.name];
+                mappingManagerSvc.mappingIds = [mappingManagerSvc.mapping.id];
                 controller.submit();
                 scope.$apply();
                 expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.finishStep);
             });

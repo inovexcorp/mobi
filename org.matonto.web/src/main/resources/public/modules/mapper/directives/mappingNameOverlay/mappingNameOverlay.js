@@ -60,7 +60,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.newName = dvm.mm.getMappingName(_.get(dvm.mm.mapping, 'name', ''));
+                    dvm.newName = dvm.mm.getMappingName(_.get(dvm.mm.mapping, 'id', ''));
 
                     dvm.set = function() {
                         var iri = dvm.mm.getMappingId(dvm.newName);
@@ -68,7 +68,7 @@
                             dvm.state.step = dvm.state.fileUploadStep;
                             dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(iri);
                         }
-                        dvm.mm.mapping.name = iri;
+                        dvm.mm.mapping.id = iri;
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {

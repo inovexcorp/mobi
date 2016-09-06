@@ -55,7 +55,7 @@
             var self = this;
             var cachedOntologyId = '';
             var cachedSourceOntologies = undefined;
-            var originalMappingName = '';
+            var originalMappingId = '';
             var mm = mappingManagerService,
                 om = ontologyManagerService,
                 dm = delimitedManagerService;
@@ -345,7 +345,7 @@
                 self.invalidProps = [];
                 self.availableColumns = [];
                 self.availableProps = [];
-                originalMappingName = '';
+                originalMappingId = '';
                 self.openedClasses = [];
                 self.availablePropsByClass = {};
             }
@@ -379,7 +379,7 @@
                 self.newMapping = true;
                 self.step = 0;
                 mm.mapping = {
-                    name: '',
+                    id: '',
                     jsonld: []
                 };
                 mm.sourceOntologies = [];
@@ -569,9 +569,9 @@
              * that has just been updated, is a saved mapping and if so, adds a timestamp to the end of the name.
              */
             self.changedMapping = function() {
-                if (!self.newMapping && !originalMappingName) {
-                    originalMappingName = mm.mapping.name;
-                    mm.mapping.name = originalMappingName + '_' + Math.floor(Date.now() / 1000);
+                if (!self.newMapping && !originalMappingId) {
+                    originalMappingId = mm.mapping.id;
+                    mm.mapping.id = originalMappingId + '_' + Math.floor(Date.now() / 1000);
                 }
             }
         }

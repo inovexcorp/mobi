@@ -23,7 +23,7 @@
 <div class="invalid-ontology-overlay overlay">
     <form class="content">
         <h6><i class="fa fa-exclamation-triangle"></i> Incompatible Ontology!</h6>
-        <p class="text-danger">The source ontologies for the {{dvm.mm.mapping.name}} mapping has been changed and is no longer compatible.</p>
+        <p class="text-danger">The source ontologies for the {{dvm.mm.getMappingName(dvm.mm.mapping.id)}} mapping has been changed and is no longer compatible.</p>
 
         <div class="btn-container clearfix">
             <custom-button on-click="dvm.close()">Close</custom-button>

@@ -55,12 +55,12 @@ describe('Mapping Manager service', function() {
         });
     });
 
-    it('should set the correct initial state for previous mapping names', function() {
+    it('should set the correct initial state for previous mapping ids', function() {
         var mappings = ['mapping1', 'mapping2'];
         $httpBackend.whenGET('/matontorest/mappings').respond(200, mappings);
         $httpBackend.flush();
-        expect(mappingManagerSvc.previousMappingNames.length).toBe(mappings.length);
-        _.forEach(mappingManagerSvc.previousMappingNames, function(name) {
+        expect(mappingManagerSvc.mappingIds.length).toBe(mappings.length);
+        _.forEach(mappingManagerSvc.mappingIds, function(name) {
             expect(typeof name).toBe('string');
         });
     });
@@ -96,7 +96,7 @@ describe('Mapping Manager service', function() {
                 }).respond(200, 'mapping');
             mappingManagerSvc.upload([]).then(function(response) {
                 expect(response).toBe('mapping');
-                expect(mappingManagerSvc.previousMappingNames).toContain('mapping');
+                expect(mappingManagerSvc.mappingIds).toContain('mapping');
                 done();
             }, function(response) {
                 fail('Promise should have resolved');
@@ -106,7 +106,7 @@ describe('Mapping Manager service', function() {
         });
         it('replacing an existing one', function(done) {
             var name = 'mappingname';
-            mappingManagerSvc.previousMappingNames = [name];
+            mappingManagerSvc.mappingIds = [name];
             $httpBackend.expectPOST('/matontorest/mappings', 
                 function(data) {
                     return data instanceof FormData;
@@ -115,7 +115,7 @@ describe('Mapping Manager service', function() {
                 }).respond(200, name);
             mappingManagerSvc.upload([]).then(function(response) {
                 expect(response).toBe(name);
-                expect(mappingManagerSvc.previousMappingNames).toEqual([name]);
+                expect(mappingManagerSvc.mappingIds).toEqual([name]);
                 done();
             }, function(response) {
                 fail('Promise should have resolved');
@@ -124,17 +124,17 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
     });
-    describe('should retrieve a mapping by name', function() {
+    describe('should retrieve a mapping by id', function() {
         beforeEach(function() {
             $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
             $httpBackend.flush();
+            this.id = 'mappingname';
         });
         it('unless an error occurs', function(done) {
-            var name = 'mappingname';
-            $httpBackend.expectGET('/matontorest/mappings/' + name).respond(function(method, url, data, headers) {
+            $httpBackend.expectGET('/matontorest/mappings/' + this.id).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            mappingManagerSvc.getMapping(name).then(function(response) {
+            mappingManagerSvc.getMapping(this.id).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -144,9 +144,8 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            var name = 'mappingname';
-            $httpBackend.expectGET('/matontorest/mappings/' + name).respond(200, {'@graph': []});
-            mappingManagerSvc.getMapping(name).then(function(response) {
+            $httpBackend.expectGET('/matontorest/mappings/' + this.id).respond(200, {'@graph': []});
+            mappingManagerSvc.getMapping(this.id).then(function(response) {
                 expect(response).toEqual([]);
                 done();
             }, function(response) {
@@ -156,21 +155,21 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
     });
-    it('should download a mapping by name', function() {
+    it('should download a mapping by id', function() {
         mappingManagerSvc.downloadMapping('mapping', 'jsonld');
         expect(windowSvc.location).toBe('/matontorest/mappings/mapping?format=jsonld');
     });
-    describe('should delete a mapping by name', function() {
+    describe('should delete a mapping by id', function() {
         beforeEach(function() {
             $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
             $httpBackend.flush();
+            this.id = 'mappingname';
         });
         it('unless an error occurs', function(done) {
-            var name = 'mappingname';
-            $httpBackend.expectDELETE('/matontorest/mappings/' + name).respond(function(method, url, data, headers) {
+            $httpBackend.expectDELETE('/matontorest/mappings/' + this.id).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            mappingManagerSvc.deleteMapping(name).then(function(response) {
+            mappingManagerSvc.deleteMapping(this.id).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -180,11 +179,10 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            var name = 'mappingname';
-            mappingManagerSvc.previousMappingNames = [name];
-            $httpBackend.expectDELETE('/matontorest/mappings/' + name).respond(200, '');
-            mappingManagerSvc.deleteMapping(name).then(function(response) {
-                expect(mappingManagerSvc.previousMappingNames).not.toContain(name);
+            mappingManagerSvc.mappingIds = [name];
+            $httpBackend.expectDELETE('/matontorest/mappings/' + this.id).respond(200, '');
+            mappingManagerSvc.deleteMapping(this.id).then(function(response) {
+                expect(mappingManagerSvc.mappingIds).not.toContain(this.id);
                 done();
             }, function(response) {
                 fail('Promise should have resolved');

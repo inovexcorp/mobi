@@ -48,22 +48,22 @@ describe('Mapping List directive', function() {
             controller = this.element.controller('mappingList');
         });
         it('should open a mapping on click', function() {
-            mappingManagerSvc.previousMappingNames = ['test1', 'test2'];
+            mappingManagerSvc.mappingIds = ['test1', 'test2'];
             controller.onClick('test1');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test1');
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], name: 'test1'});
+            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test1'});
 
             controller.onClick('test2');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test2');
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], name: 'test2'});
+            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test2'});
 
             mappingManagerSvc.getMapping.calls.reset();
             controller.onClick('test1');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], name: 'test1'});
+            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test1'});
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -76,23 +76,23 @@ describe('Mapping List directive', function() {
             expect(this.element.querySelectorAll('.boxed').length).toBe(1);
         });
         it('with the correct number of mapping list items', function() {
-            mappingManagerSvc.previousMappingNames = ['test1'];
+            mappingManagerSvc.mappingIds = ['test1'];
             scope.$digest();
-            expect(this.element.find('li').length).toBe(mappingManagerSvc.previousMappingNames.length);
+            expect(this.element.find('li').length).toBe(mappingManagerSvc.mappingIds.length);
         });
         it('depending on whether the mapping is selected', function() {
-            mappingManagerSvc.previousMappingNames = ['test1'];
+            mappingManagerSvc.mappingIds = ['test1'];
             scope.$digest();
             var mappingName = angular.element(this.element.querySelectorAll('li a'));
             expect(mappingName.hasClass('active')).toBe(false);
 
-            mappingManagerSvc.mapping = {name: 'test1'};
+            mappingManagerSvc.mapping = {id: 'test1'};
             scope.$digest();
             expect(mappingName.hasClass('active')).toBe(true);
         });
     });
     it('should call onClick when a mapping name is clicked', function() {
-        mappingManagerSvc.previousMappingNames = ['test1'];
+        mappingManagerSvc.mappingIds = ['test1'];
         var element = $compile(angular.element('<mapping-list></mapping-list>'))(scope);
         scope.$digest();
         controller = element.controller('mappingList');

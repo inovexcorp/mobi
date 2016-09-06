@@ -63,15 +63,15 @@
 
             /**
              * @ngdoc property
-             * @name previousMappingNames
+             * @name mappingIds
              * @propertyOf mappingManager.service:mappingManagerService
              * @type {string[]}
              *
              * @description 
-             * `previousMappingNames` holds an array of the local names of all saved mappings in the
+             * `mappingIds` holds an array of the local names of all saved mappings in the
              * MatOnto repository
              */
-            self.previousMappingNames = [];
+            self.previousMappingIds = [];
             /**
              * @ngdoc property
              * @name mapping
@@ -107,7 +107,7 @@
             function initialize() {
                 $http.get(prefix, {})
                     .then(response => {
-                        self.previousMappingNames = response.data;
+                        self.mappingIds = response.data;
                     });
             }
 
@@ -140,7 +140,7 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(response => {
-                        self.previousMappingNames = _.union(self.previousMappingNames, [response.data]);
+                        self.mappingIds = _.union(self.mappingIds, [response.data]);
                         deferred.resolve(response.data);
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', ''));
@@ -207,7 +207,7 @@
                 $rootScope.showSpinner = true;
                 $http.delete(prefix + '/' + encodeURIComponent(mappingId))
                     .then(response => {
-                        _.pull(self.previousMappingNames, mappingId);
+                        _.pull(self.mappingIds, mappingId);
                         deferred.resolve();
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', ''));
@@ -216,9 +216,33 @@
                     });
                 return deferred.promise;
             }
+
+            /**
+             * @ngdoc method
+             * @name getMappingName
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Retrieves the local name of a mapping id for display purposes.
+             * 
+             * @param {string} mappingId The id of a mapping
+             * @return {string} The local name of a mapping
+             */
             self.getMappingName = function(mappingId) {
                 return typeof mappingId === 'string' ? mappingId.replace(prefixes.mappings, '') : '';
             }
+
+            /**
+             * @ngdoc method
+             * @name getMappingId
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Creates a mapping id from the display (local) name of a mapping.
+             * 
+             * @param {string} mappingName The display (local) name of a mapping
+             * @return {string} A mapping id made from the display (local) name of a mapping
+             */
             self.getMappingId = function(mappingName) {
                 return prefixes.mappings + mappingName;
             }

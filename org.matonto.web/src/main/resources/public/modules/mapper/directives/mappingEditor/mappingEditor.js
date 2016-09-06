@@ -81,14 +81,14 @@
                     }
                     dvm.submit = function() {
                         var deferred = $q.defer();
-                        if (_.includes(dvm.mm.previousMappingNames, dvm.mm.mapping.name)) {
+                        if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
                             deferred.resolve();
                         } else {
                             dvm.mm.upload(dvm.mm.mapping.jsonld)
                                 .then(() => deferred.resolve(), errorMessage => deferred.reject(errorMessage));
                         }
                         deferred.promise.then(() => {
-                            dvm.dm.map(dvm.mm.mapping.name);
+                            dvm.dm.map(dvm.mm.mapping.id);
                             dvm.state.resetEdit();
                             dvm.state.step = dvm.state.finishStep;
                             dvm.saveError = false;

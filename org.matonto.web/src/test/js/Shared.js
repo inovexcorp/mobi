@@ -187,7 +187,7 @@ function mockOntologyManager() {
 function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
-            this.previousMappingNames = [];
+            this.mappingIds = [];
             this.mapping = undefined;
             this.sourceOntologies = [];
 

@@ -42,7 +42,7 @@ describe('Invalid Ontology Overlay directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: ''};
+            mappingManagerSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('invalidOntologyOverlay');
