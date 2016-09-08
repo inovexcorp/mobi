@@ -5,15 +5,18 @@ $overlay-height: 450px;
 $list-padding: 10px;
 $list-padding-neg: -10px;
 
-.float-container {
+/* .float-container {
     overflow: hidden;
 }
 .header-link {
     font-size: 14px;
-}
+} */
 .mapper {
+    background-color: $gray-lighter;
+    height: 100%;
 
-    > .row {
+
+    /* > .row {
         padding-left: $sidebar-width;
     }
     .boxed {
@@ -69,5 +72,5 @@ $list-padding-neg: -10px;
             padding: 0.5em;
             margin-bottom: 0;
         }
-    }
+    } */
 }

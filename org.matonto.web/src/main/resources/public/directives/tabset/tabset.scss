@@ -7,7 +7,7 @@
     height: 100%;
     min-height: 0;
 
-    .tabset-headings {
+    > .tabset-headings {
         height: 48px;
 
         a {
@@ -31,13 +31,13 @@
             }
         }
     }
-    .tabset-contents {
+    > .tabset-contents {
         flex: 1;
         height: 0;
     }
 
     &.centered {
-        .tabset-headings {
+        > .tabset-headings {
             background: white;
             box-shadow: 5px 5px 5px 0px $gray-light;
             height: 52px;

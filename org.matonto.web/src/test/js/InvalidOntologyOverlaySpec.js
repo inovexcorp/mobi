@@ -64,8 +64,8 @@ describe('Invalid Ontology Overlay directive', function() {
             expect(this.element.hasClass('invalid-ontology-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
-        it('with a custom button for closing', function() {
-            var buttons = this.element.find('custom-button');
+        it('with a button for closing', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(1);
             expect(angular.element(buttons[0]).text()).toContain('Close');
         });

@@ -127,8 +127,8 @@ describe('IRI Template Overlay directive', function() {
             var endsWith = angular.element(this.element.querySelectorAll('.template-ends-with select')[0]);
             expect(endsWith.find('option').length).toBe(controller.localNameOptions.length);
         });
-        it('with custom buttons to cancel and set', function() {
-            var buttons = this.element.find('custom-button');
+        it('with buttons to cancel and set', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);

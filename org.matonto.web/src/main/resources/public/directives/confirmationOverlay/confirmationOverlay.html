@@ -30,9 +30,8 @@
 
         <!-- overlay buttons -->
         <div class="btn-container clearfix">
-            <custom-button on-click="confirmClick()">{{confirmText}}</custom-button>
-
-            <custom-button on-click="cancelClick()" type="'secondary'">{{cancelText}}</custom-button>
+            <button ng-click="confirmClick()" class="btn btn-primary pull-right">{{confirmText}}</button>
+            <button ng-click="cancelClick()" class="btn btn-default pull-right">{{cancelText}}</button>
         </div>
     </div>
 </div>

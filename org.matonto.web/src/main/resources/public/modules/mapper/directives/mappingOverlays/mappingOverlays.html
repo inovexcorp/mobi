@@ -21,13 +21,12 @@
   #L%
   -->
 <mapping-name-overlay ng-if="dvm.state.editMappingName"></mapping-name-overlay>
-<file-upload-overlay ng-if="dvm.state.step === dvm.state.fileUploadStep"></file-upload-overlay>
-<ontology-select-overlay ng-if="dvm.state.step === dvm.state.ontologySelectStep"></ontology-select-overlay>
-<starting-class-select-overlay ng-if="dvm.state.step === dvm.state.startingClassSelectStep"></starting-class-select-overlay>
-<ontology-preview-overlay ng-if="dvm.state.previewOntology" ontology="dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld)"></ontology-preview-overlay>
 <iri-template-overlay ng-if="dvm.state.editIriTemplate"></iri-template-overlay>
 <invalid-ontology-overlay ng-if="dvm.state.invalidOntology"></invalid-ontology-overlay>
-<finish-overlay ng-if="dvm.state.step === dvm.state.finishStep"></finish-overlay>
+<create-mapping-overlay ng-if="dvm.state.displayCreateMapping"></create-mapping-overlay>
+<download-mapping-overlay ng-if="dvm.state.displayDownloadMapping"></download-mapping-overlay>
+<mapping-config-overlay ng-if="dvm.state.displayMappingConfig"></mapping-config-overlay>
+<prop-mapping-overlay ng-if="dvm.state.displayPropMappingOverlay"></prop-mapping-overlay>
 
 <confirmation-overlay ng-if="dvm.state.displayCancelConfirm"
     class="cancel-confirm"
@@ -35,27 +34,28 @@
     confirm-click="dvm.state.displayCancelConfirm = false; dvm.reset()"
     cancel-click="dvm.state.displayCancelConfirm = false"
     confirm-text="'Yes'"
-    cancel-text="'No'">Are you sure you want to cancel mapping? Any current progress will be lost.</confirmation-overlay>
+    cancel-text="'No'">Are you sure you want to cancel? Any current progress will be lost.</confirmation-overlay>
 
-<confirmation-overlay ng-if="dvm.state.displayNewMappingConfirm"
-    class="create-new-mapping"
-    header-text="'Create New Mapping'"
-    confirm-click="dvm.state.displayNewMappingConfirm = false; dvm.state.createMapping(); dvm.dm.reset()"
-    cancel-click="dvm.state.displayNewMappingConfirm = false"
+<confirmation-overlay ng-if="dvm.state.displayDeletePropConfirm"
+    class="delete-prop"
+    header-text="'Delete ' + dvm.getPropName(dvm.state.selectedPropMappingId)"
+    confirm-click="dvm.state.displayDeletePropConfirm = false; dvm.deleteProp()"
+    cancel-click="dvm.state.displayDeletePropConfirm = false"
     confirm-text="'Yes'"
-    cancel-text="'No'">Are you sure you want to create a new mapping? Any current progress will be lost.</confirmation-overlay>
+    cancel-text="'No'">
+        Are you sure you want to delete <strong>{{dvm.getPropName(dvm.state.selectedPropMappingId)}}</strong> from <strong>{{dvm.getClassName(dvm.state.selectedClassMappingId)}}</strong>?
+</confirmation-overlay>
 
-<confirmation-overlay ng-if="dvm.state.displayDeleteEntityConfirm"
-    class="delete-entity"
-    header-text="'Delete ' + dvm.getDeleteEntityName()"
-    confirm-click="dvm.state.displayDeleteEntityConfirm = false; dvm.deleteEntity()"
-    cancel-click="dvm.state.displayDeleteEntityConfirm = false; dvm.state.deleteId = ''"
+<confirmation-overlay ng-if="dvm.state.displayDeleteClassConfirm"
+    class="delete-class"
+    header-text="'Delete ' + dvm.getClassName(dvm.state.selectedClassMappingId)"
+    confirm-click="dvm.state.displayDeleteClassConfirm = false; dvm.deleteClass()"
+    cancel-click="dvm.state.displayDeleteClassConfirm = false"
     confirm-text="'Yes'"
-    cancel-text="'No'">Are you sure you want to delete <strong>{{dvm.getDeleteEntityName()}}</strong>?
-        <p ng-if="dvm.isClassMapping(dvm.state.deleteId)" class="help-block">
-            Deleting a class will remove any properties that link to it.
-        </p>
-    </confirmation-overlay>
+    cancel-text="'No'">
+        Are you sure you want to delete <strong>{{dvm.getClassName(dvm.state.selectedClassMappingId)}}</strong>?
+        <p class="help-block">Deleting a class will remove any properties that link to it.</p>
+</confirmation-overlay>
 
 <confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
     class="delete-mapping"

@@ -50,21 +50,22 @@
          */
         .directive('classPreview', classPreview);
 
-        classPreview.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
+        classPreview.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService'];
 
-        function classPreview(prefixes, ontologyManagerService, mappingManagerService) {
+        function classPreview(prefixes, ontologyManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {},
                 bindToController: {
-                    classObj: '='
+                    classObj: '=',
+                    ontologies: '='
                 },
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.mm = mappingManagerService;
+                    dvm.state = mapperStateService;
                     dvm.numPropPreview = 5;
                     dvm.full = false;
 
@@ -75,8 +76,7 @@
                         return _.get(dvm.classObj, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.classObj, "['" + prefixes.dc + "description'][0]['@value']", ''));
                     }
                     dvm.getProps = function() {
-                        var ontology = dvm.mm.findSourceOntologyWithClass(dvm.classObj['@id']);
-                        return dvm.om.getClassProperties(ontology.entities, dvm.classObj['@id']);
+                        return dvm.state.getClassProps(dvm.ontologies, dvm.classObj['@id']);
                     }
                     dvm.getPropList = function() {
                         var props = dvm.getProps();

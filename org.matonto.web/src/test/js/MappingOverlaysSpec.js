@@ -63,7 +63,7 @@ describe('Mapping Overlays directive', function() {
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         });
-        it('should test whether an entity is a class mapping', function() {
+        /*it('should test whether an entity is a class mapping', function() {
             mappingManagerSvc.mapping.jsonld = [{'@id': 'test'}];
             var result = controller.isClassMapping('test');
             expect(mappingManagerSvc.isClassMapping).toHaveBeenCalledWith({'@id': 'test'});
@@ -142,7 +142,7 @@ describe('Mapping Overlays directive', function() {
                     expect(mapperStateSvc.deleteId).toBe('');
                 });
             });
-        });
+        });*/
         it('should delete a mapping', function() {
             var name = 'test';
             mappingManagerSvc.mapping.name = name;
@@ -158,7 +158,7 @@ describe('Mapping Overlays directive', function() {
             this.element = $compile(angular.element('<mapping-overlays></mapping-overlays>'))(scope);
             scope.$digest();
         });
-        it('depending on the state step', function() {
+        /*it('depending on the state step', function() {
             mapperStateSvc.step = 0;
             scope.$digest();
             expect(this.element.find('file-upload-overlay').length).toBe(0);
@@ -193,7 +193,7 @@ describe('Mapping Overlays directive', function() {
             expect(this.element.find('ontology-select-overlay').length).toBe(0);
             expect(this.element.find('starting-class-select-overlay').length).toBe(0);
             expect(this.element.find('finish-overlay').length).toBe(1);
-        });
+        });*/
         it('depending on whether the mapping name is being edited', function() {
             mapperStateSvc.editMappingName = true;
             scope.$digest();
@@ -203,7 +203,7 @@ describe('Mapping Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('mapping-name-overlay').length).toBe(0);
         });
-        it('depending on whether the ontology is being previewed', function() {
+        /*it('depending on whether the ontology is being previewed', function() {
             mapperStateSvc.previewOntology = true;
             scope.$digest();
             expect(this.element.find('ontology-preview-overlay').length).toBe(1);
@@ -211,7 +211,7 @@ describe('Mapping Overlays directive', function() {
             mapperStateSvc.previewOntology = false;
             scope.$digest();
             expect(this.element.find('ontology-preview-overlay').length).toBe(0);
-        });
+        });*/
         it('depending on whether an IRI template is being edited', function() {
             mapperStateSvc.editIriTemplate = true;
             scope.$digest();
@@ -241,7 +241,7 @@ describe('Mapping Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('confirmation-overlay').length).toBe(0);
         });
-        it('depending on whether creating a new mapping should be confirmed', function() {
+        /*it('depending on whether creating a new mapping should be confirmed', function() {
             mapperStateSvc.displayNewMappingConfirm = true;
             scope.$digest();
             var overlay = this.element.find('confirmation-overlay');
@@ -263,7 +263,7 @@ describe('Mapping Overlays directive', function() {
             mapperStateSvc.displayDeleteEntityConfirm = false;
             scope.$digest();
             expect(this.element.find('confirmation-overlay').length).toBe(0);
-        });
+        });*/
         it('depending on whether deleting a mapping should be confirmed', function() {
             mapperStateSvc.displayDeleteMappingConfirm = true;
             scope.$digest();

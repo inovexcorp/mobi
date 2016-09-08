@@ -73,7 +73,7 @@ describe('Mapping List directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-list')).toBe(true);
-            expect(this.element.querySelectorAll('.boxed').length).toBe(1);
+            expect(this.element.hasClass('tree')).toBe(true);
         });
         it('with the correct number of mapping list items', function() {
             mappingManagerSvc.previousMappingNames = ['test1'];

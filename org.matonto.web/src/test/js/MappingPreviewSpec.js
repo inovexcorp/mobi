@@ -157,20 +157,17 @@ describe('Mapping Preview directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-preview')).toBe(true);
-            expect(this.element.querySelectorAll('.boxed').length).toBe(1);
         });
         it('depending on whether a mapping has been selected', function() {
             mappingManagerSvc.mapping = undefined;
             scope.$digest();
             expect(this.element.querySelectorAll('.lead').length).toBe(1);
-            expect(this.element.find('custom-button').length).toBe(0);
             expect(this.element.querySelectorAll('.class-list').length).toBe(0);
             expect(this.element.querySelectorAll('.list').length).toBe(0);
 
             mappingManagerSvc.mapping = {jsonld: []};
             scope.$digest();
             expect(this.element.querySelectorAll('.lead').length).toBe(0);
-            expect(this.element.find('custom-button').length).toBe(1);
             expect(this.element.querySelectorAll('.class-list').length).toBe(1);
             expect(this.element.querySelectorAll('.list').length).toBe(1);
         });

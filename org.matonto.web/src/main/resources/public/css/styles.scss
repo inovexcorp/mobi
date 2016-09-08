@@ -184,7 +184,8 @@ ul {
 
         /* header text style */
         h6 {
-            background-color: $brand-primary;
+            background-color: $highlight-blue;
+            // background-color: $brand-primary;
             border-top-left-radius: 5px;
             border-top-right-radius: 5px;
             color: #fff;
@@ -532,4 +533,12 @@ body {
         padding-top: 42px;
 		transition: all .25s ease;
     }
+}
+
+/* Helper Classes */
+.padding {
+    padding: 15px;
+}
+a[disabled] {
+    cursor: not-allowed;
 }

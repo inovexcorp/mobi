@@ -61,11 +61,17 @@
                 dm = delimitedManagerService;
 
             // Static step indexes
+            self.selectMappingStep = 0;
             self.fileUploadStep = 1;
-            self.ontologySelectStep = 2;
-            self.startingClassSelectStep = 3;
-            self.editMappingStep = 4;
-            self.finishStep = 5;
+            self.editMappingStep = 2;
+
+            self.mappingSearchString = '';
+            self.displayCreateMapping = false;
+            self.displayDownloadMapping = false;
+            self.displayMappingConfig = false;
+            self.displayPropMappingOverlay = false;
+            self.displayDeletePropConfirm = false;
+            self.displayDeleteClassConfirm = false;
 
             /**
              * @ngdoc property
@@ -377,13 +383,13 @@
             self.createMapping = function() {
                 self.editMapping = true;
                 self.newMapping = true;
-                self.step = 0;
+                // self.step = 0;
                 mm.mapping = {
                     name: '',
                     jsonld: []
                 };
                 mm.sourceOntologies = [];
-                self.editMappingName = true;
+                // self.editMappingName = true;
                 self.resetEdit();
                 self.availablePropsByClass = {};
             }
@@ -551,13 +557,18 @@
             self.getAvailableProps = function(classMappingId) {
                 var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
                 var classId = mm.getClassIdByMappingId(mm.mapping.jsonld, classMappingId);
+                var props = self.getClassProps(mm.sourceOntologies, classId);
+                return _.filter(props, prop => mappedProps.indexOf(prop['@id']) < 0);
+            }
+            
+            self.getClassProps = function(ontologies, classId) {
                 var props = [];
-                _.forEach(mm.sourceOntologies, ontology => {
+                _.forEach(ontologies, ontology => {
                     var classProps = om.getClassProperties(ontology.entities, classId);
                     var noDomainProps = om.getNoDomainProperties(ontology.entities);
                     props = _.union(props, classProps, noDomainProps);
                 });
-                return _.filter(props, prop => mappedProps.indexOf(prop['@id']) < 0);
+                return props;
             }
             /**
              * @ngdoc method

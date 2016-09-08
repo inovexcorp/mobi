@@ -1,0 +1,64 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="mapping-select-page row">
+	<div class="col-xs-4">
+		<block has-header="true">
+			<block-header>
+				<span>Mappings</span>
+				<button class="btn btn-link pull-right" ng-click="dvm.createMapping()">
+					<i class="fa fa-plus"></i>Create Mapping
+				</button>
+			</block-header>
+			<block-search ng-model="dvm.state.mappingSearchString"></block-search>
+			<block-content>
+				<mapping-list></mapping-list>
+			</block-content>
+			<block-footer class="centered">
+				<button class="btn btn-link" ng-click="dvm.deleteMapping()" ng-disabled="!dvm.mm.mapping">
+					<i class="fa fa-trash"></i>Delete Mapping
+				</button>
+			</block-footer>
+		</block>
+	</div>
+	<div class="col-xs-8">
+		<block has-header="true">
+			<block-header>
+				<div class="mapping-preview-header" ng-class="{'invisible': !dvm.mm.mapping}">
+					<span>{{dvm.mm.mapping.name}}</span>
+					<button class="btn btn-link pull-right" ng-click="dvm.downloadMapping()">
+						<i class="fa fa-download"></i>Download
+					</button>
+					<button class="btn btn-link pull-right" ng-click="dvm.run()" ng-disabled="!dvm.ontologyExists()">
+						<i class="fa fa-play-circle-o"></i>Run
+					</button>
+					<button class="btn btn-link pull-right" ng-click="dvm.edit()" ng-disabled="!dvm.ontologyExists()">
+						<i class="fa fa-pencil"></i>Edit
+					</button>
+				</div>
+			</block-header>
+			<block-content class="padding">
+				<mapping-preview></mapping-preview>
+			</block-content>
+		</block>
+	</div>
+</div>

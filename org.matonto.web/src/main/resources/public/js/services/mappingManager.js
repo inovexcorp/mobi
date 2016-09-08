@@ -294,6 +294,21 @@
             }
             /**
              * @ngdoc method
+             * @name copyMapping
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Creates a copy of a mapping using the passwed new id.
+             * 
+             * @param {Object[]} mapping A mapping JSON-LD array
+             * @param {string} newId The id of the new mapping
+             * @return {Object[]} A copy of the passed mapping with the new id
+             */
+            self.copyMapping = function(mapping, newId) {
+                return angular.copy(mapping);
+            }
+            /**
+             * @ngdoc method
              * @name addClass
              * @methodOf mappingManager.service:mappingManagerService
              *
@@ -885,6 +900,23 @@
              */
             self.getPropMappingTitle = function(className, propName) {
                 return className + ': ' + propName;
+            }
+            /**
+             * @ngdoc method
+             * @name getBaseClass
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Finds the base class of a mapping by finding the class mapping that isn't used by an
+             * object property mapping. 
+             * 
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @return {Object} The base class mapping object 
+             */
+            self.getBaseClass = function(mapping) {
+                var classes = self.getAllClassMappings(mapping);
+                var usedClasses = _.map(self.getAllObjectMappings(mapping), "['" + prefixes.delim + "classMapping'][0]['@id']");
+                return _.get(_.filter(classes, classMap => !_.includes(usedClasses, classMap['@id'])), '0');
             }
 
             // Private helper methods

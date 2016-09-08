@@ -308,6 +308,7 @@ function mockMapperState() {
             this.getAvailableProps = jasmine.createSpy('getAvailableProps');
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');
             this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
+            this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.changedMapping = jasmine.createSpy('changedMapping');
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
         });

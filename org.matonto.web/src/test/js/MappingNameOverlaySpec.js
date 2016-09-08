@@ -116,8 +116,8 @@ describe('Mapping Name Overlay directive', function() {
         it('with a mapping name input', function() {
             expect(this.element.find('mapping-name-input').length).toBe(1);
         });
-        it('with custom buttons for cancel and set', function() {
-            var buttons = this.element.find('custom-button');
+        it('with buttons for cancel and set', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
