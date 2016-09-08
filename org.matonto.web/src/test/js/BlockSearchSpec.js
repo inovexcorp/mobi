@@ -37,10 +37,11 @@ describe('Block search directive', function() {
         });
 
         scope.keyupEvent = jasmine.createSpy('keyupEvent');
+        scope.bindModel = '';
 
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        element = angular.element('<block-search keyup-event="keyupEvent()"></block-search>');
+        element = angular.element('<block-search ng-model="bindModel" keyup-event="keyupEvent()"></block-search>');
         parent.append(element);
         element = $compile(element)(scope);
         scope.$digest();
@@ -49,6 +50,11 @@ describe('Block search directive', function() {
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
+        it('bindModel should be two way bound', function() {
+            isolatedScope.bindModel = 'test';
+            scope.$digest();
+            expect(scope.bindModel).toBe('test');
+        })
         it('keyupEvent should be called in parent scope when invoked', function() {
             isolatedScope.keyupEvent();
             expect(scope.keyupEvent).toHaveBeenCalled();
