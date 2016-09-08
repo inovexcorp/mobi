@@ -37,7 +37,7 @@ public class TestGenerate {
     public void testSourceGenerate() throws RDFParseException, RDFHandlerException, UnsupportedRDFormatException, OntologyToJavaException, IOException {
         SourceGenerator.toSource(
                 GraphReadingUtility.readOntology(new File("src/test/resources/mapping.trig"),
-                        "http://matonto.org/ontologies/delimited/"),
+                        "http://matonto.org/ontologies/delimited"),
                 "test", "target/generated-sources");
     }
 

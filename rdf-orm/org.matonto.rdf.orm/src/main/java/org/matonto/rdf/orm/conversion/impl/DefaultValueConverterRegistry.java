@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  *
  * @author bdgould
  */
-@Component
+@Component(immediate = true)
 public class DefaultValueConverterRegistry implements ValueConverterRegistry {
 
     /**

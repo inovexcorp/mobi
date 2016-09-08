@@ -66,6 +66,7 @@ public class EtlIT extends KarafTestSupport {
 
         waitForService("(&(objectClass=org.matonto.etl.api.delimited.DelimitedConverter))", 10000L);
         waitForService("(&(objectClass=org.matonto.rdf.orm.impl.ThingFactory))", 10000L);
+        waitForService("(&(objectClass=org.matonto.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
         String outputFilename = "test.ttl";
         executeCommand(String.format("matonto:transform -h=true -o=%s %s %s", outputFilename, delimitedFile, mappingFile));

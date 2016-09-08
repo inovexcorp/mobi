@@ -46,6 +46,7 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.CharsetUtils;
 
 import java.io.ByteArrayInputStream;
@@ -56,6 +57,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,6 +69,7 @@ import java.util.regex.Pattern;
 public class DelimitedConverterImpl implements DelimitedConverter {
     private static final Logger LOGGER = Logger.getLogger(DelimitedConverterImpl.class);
     private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
+    private static final String DEFAULT_PREFIX = "http://matonto.org/data/";
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
@@ -198,8 +201,22 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             return convertedRDF;
         }
 
-        // TODO: Handle hasNext()
-        IRI classInstance = valueFactory.createIRI(cm.getHasPrefix().iterator().next() + nameOptional.get());
+        IRI classInstance;
+        Iterator<String> prefixes = cm.getHasPrefix().iterator();
+        if (prefixes.hasNext()) {
+            classInstance = valueFactory.createIRI(prefixes.next() + nameOptional.get());
+        } else {
+            classInstance = valueFactory.createIRI(DEFAULT_PREFIX + nameOptional.get());
+        }
+
+        Resource mapsToResource;
+        Iterator<Thing> mapsTo = cm.getMapsTo().iterator();
+        if (mapsTo.hasNext()) {
+            mapsToResource = mapsTo.next().getResource();
+        } else {
+
+        }
+
         convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), cm.getMapsTo().iterator().next().getResource());
         mappedClasses.put(cm.getResource(), classInstance);
 

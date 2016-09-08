@@ -1,9 +1,9 @@
 @prefix : <http://matonto.org/mappings/newest_mapping/> .
-@prefix delim: <http://matonto.org/ontologies/delimited/> .
+@prefix delim: <http://matonto.org/ontologies/delimited#> .
 @prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
 
-<http://matonto.org/mappings/newest_mapping> rdfs:type delim:Mapping.
+:newest_mapping rdfs:type         delim:Mapping .
 
 :Material rdfs:type               delim:ClassMapping ;
           delim:mapsTo            uhtc:Material ;
