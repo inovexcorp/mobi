@@ -62,6 +62,7 @@
                         }
 
                         deferred.promise.then(mapping => {
+                            dvm.state.mappingSearchString = '';
                             dvm.mm.mapping.jsonld = mapping;
                             dvm.state.step = dvm.state.fileUploadStep;
                             dvm.state.displayCreateMapping = false;

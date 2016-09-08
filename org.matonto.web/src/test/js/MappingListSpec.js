@@ -33,6 +33,11 @@ describe('Mapping List directive', function() {
         mockMappingManager();
         mockMapperState();
 
+        module(function($provide) {
+            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
+            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
+        });
+
         inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;

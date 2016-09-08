@@ -47,9 +47,11 @@
                         return _.includes(ids, dvm.mm.getSourceOntologyId(_.get(dvm.mm.mapping, 'jsonld')));
                     }
                     dvm.run = function() {
+                        dvm.state.mappingSearchString = '';
                         loadOntologyAndContinue();
                     }
                     dvm.edit = function() {
+                        dvm.state.mappingSearchString = '';
                         dvm.state.editMapping = true;
                         loadOntologyAndContinue();
                     }

@@ -23,7 +23,7 @@
   <div class="mapping-list tree scroll-without-buttons">
       <ul>
           <li ng-repeat="mappingName in dvm.mm.previousMappingNames | filter:dvm.state.mappingSearchString">
-            <a ng-click="dvm.onClick(mappingName)" ng-class="{'active': mappingName === dvm.mm.mapping.name}" ng-bind-html="mappingName | highlight:dvm.state.mappingSearchString">{{mappingName}}</a>
+            <a ng-click="dvm.onClick(mappingName)" ng-class="{'active': mappingName === dvm.mm.mapping.name}" ng-bind-html="mappingName | highlight:dvm.state.mappingSearchString | trusted">{{mappingName}}</a>
           </li>
       </ul>
   </div>
