@@ -37,11 +37,12 @@ describe('Block search directive', function() {
         });
 
         scope.keyupEvent = jasmine.createSpy('keyupEvent');
+        scope.clearEvent = jasmine.createSpy('clearEvent');
         scope.bindModel = '';
 
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        element = angular.element('<block-search ng-model="bindModel" keyup-event="keyupEvent()"></block-search>');
+        element = angular.element('<block-search ng-model="bindModel" keyup-event="keyupEvent()" clear-event="clearEvent()"></block-search>');
         parent.append(element);
         element = $compile(element)(scope);
         scope.$digest();
@@ -58,6 +59,10 @@ describe('Block search directive', function() {
         it('keyupEvent should be called in parent scope when invoked', function() {
             isolatedScope.keyupEvent();
             expect(scope.keyupEvent).toHaveBeenCalled();
+        });
+        it('clearEvent should be called in parent scope when invoked', function() {
+            isolatedScope.clearEvent();
+            expect(scope.clearEvent).toHaveBeenCalled();
         });
     });
     describe('contains the correct html', function() {

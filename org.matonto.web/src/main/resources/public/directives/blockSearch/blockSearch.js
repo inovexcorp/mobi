@@ -46,7 +46,8 @@
                 require: '^^block',
                 scope: {
                     bindModel: '=ngModel',
-                    keyupEvent: '&'
+                    keyupEvent: '&',
+                    clearEvent: '&'
                 },
                 templateUrl: 'directives/blockSearch/blockSearch.html'
             }
