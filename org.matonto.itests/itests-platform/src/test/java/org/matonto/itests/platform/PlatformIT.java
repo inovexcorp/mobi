@@ -48,13 +48,13 @@ public class PlatformIT extends KarafTestSupport {
 
     private Set<String> bundleList = new HashSet<>();
     private Set<String> serviceFilters = new HashSet<>();
-    private boolean setupComplete = false;
+    private static boolean setupComplete = false;
 
     @Inject
     protected BundleContext thisBundleContext;
 
     @Before
-    public void setup() throws Exception {
+    public synchronized void setup() throws Exception {
         if (setupComplete) return;
 
         String bundlesFilename = "/active-bundles.txt";
