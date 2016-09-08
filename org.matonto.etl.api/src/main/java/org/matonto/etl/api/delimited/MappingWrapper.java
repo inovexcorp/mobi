@@ -25,6 +25,7 @@ package org.matonto.etl.api.delimited;
 
 import org.matonto.etl.api.ontologies.delimited.ClassMapping;
 import org.matonto.etl.api.ontologies.delimited.Mapping;
+import org.matonto.rdf.api.Model;
 
 import java.util.Collection;
 
@@ -35,4 +36,6 @@ public interface MappingWrapper {
     Mapping getMapping();
 
     Collection<ClassMapping> getClassMappings();
+
+    Model getModel();
 }

@@ -190,7 +190,7 @@ public class SimpleMappingManager implements MappingManager {
             mapping.setVersionIRI(mappingFactory.createNew(id.getVersionIRI().get(), mapping.getModel()));
         }
 
-        return new SimpleMappingWrapper(id, mapping, Collections.emptySet());
+        return new SimpleMappingWrapper(id, mapping, Collections.emptySet(), mapping.getModel());
     }
 
     @Override
@@ -218,7 +218,7 @@ public class SimpleMappingManager implements MappingManager {
         Resource mappingIdentifier = mappingWrapper.getId().getMappingIdentifier();
 
         try (RepositoryConnection conn = repository.getConnection()){
-            conn.add(mappingWrapper.getMapping().getModel(), mappingIdentifier);
+            conn.add(mappingWrapper.getModel(), mappingIdentifier);
             mappingWrapper.getClassMappings().forEach(cm -> conn.add(cm.getModel(), mappingIdentifier));
             conn.add(registrySubject, registryPredicate, mappingIdentifier, registryContext);
         } catch (RepositoryException e) {
@@ -335,6 +335,6 @@ public class SimpleMappingManager implements MappingManager {
 
         Collection<ClassMapping> classMappings = classMappingFactory.getAllExisting(model);
 
-        return new SimpleMappingWrapper(builder.build(), mapping, classMappings);
+        return new SimpleMappingWrapper(builder.build(), mapping, classMappings, model);
     }
 }

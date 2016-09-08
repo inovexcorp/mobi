@@ -35,7 +35,6 @@ import org.junit.Assert;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
-import org.matonto.etl.api.ontologies.delimited.Mapping;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
@@ -56,7 +55,10 @@ import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -74,9 +76,6 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     @Mock
     MappingId mappingId;
 
-    @Mock
-    Mapping mapping;
-
     @Override
     protected Application configureApp() throws Exception {
         ValueFactory factory = SimpleValueFactory.getInstance();
@@ -91,9 +90,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         rest.setFactory(factory);
 
         when(mappingId.getMappingIdentifier()).thenReturn(factory.createIRI("http://test.org"));
-        when(mappingWrapper.getMapping()).thenReturn(mapping);
+        when(mappingWrapper.getModel()).thenReturn(fakeModel);
         when(mappingWrapper.getId()).thenReturn(mappingId);
-        when(mapping.getModel()).thenReturn(fakeModel);
         when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
         when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mappingWrapper);
         when(manager.createMapping(anyString())).thenReturn(mappingWrapper);

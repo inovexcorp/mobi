@@ -49,6 +49,7 @@ class SimpleMappingManagerSpec extends Specification {
         mappingWrapper.getId() >> mappingId
         mappingWrapper.getMapping() >> mapping
         mappingWrapper.getClassMappings() >> []
+        mappingWrapper.getModel() >> model
 
         mapping.getModel() >> model
     }

@@ -64,6 +64,7 @@ public class EtlIT extends KarafTestSupport {
         String mappingFile = "newestMapping.ttl";
         Files.copy(getBundleEntry(thisBundleContext, "/" + mappingFile), Paths.get(mappingFile));
 
+        waitForService("(&(objectClass=org.matonto.etl.api.delimited.DelimitedConverter))", 10000L);
         waitForService("(&(objectClass=org.matonto.rdf.orm.impl.ThingFactory))", 10000L);
 
         String outputFilename = "test.ttl";

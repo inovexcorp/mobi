@@ -210,7 +210,7 @@ public class MappingRestImpl implements MappingRest {
         Optional<MappingWrapper> mappingModel = manager.retrieveMapping(mappingIRI);
         if (mappingModel.isPresent()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Rio.write(Values.sesameModel(mappingModel.get().getMapping().getModel()), out, format);
+            Rio.write(Values.sesameModel(mappingModel.get().getModel()), out, format);
             mapping = new String(out.toByteArray(), StandardCharsets.UTF_8);
         } else {
             return Optional.empty();

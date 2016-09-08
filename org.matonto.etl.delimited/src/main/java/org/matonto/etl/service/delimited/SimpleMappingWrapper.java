@@ -27,6 +27,7 @@ import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.api.ontologies.delimited.ClassMapping;
 import org.matonto.etl.api.ontologies.delimited.Mapping;
+import org.matonto.rdf.api.Model;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -36,11 +37,14 @@ public class SimpleMappingWrapper implements MappingWrapper {
     private MappingId mappingId;
     private Mapping mapping;
     private Collection<ClassMapping> classMappings;
+    private Model model;
 
-    public SimpleMappingWrapper(@Nonnull MappingId mappingId, @Nonnull Mapping mapping, @Nonnull Collection<ClassMapping> classMappings) {
+    public SimpleMappingWrapper(@Nonnull MappingId mappingId, @Nonnull Mapping mapping,
+                                @Nonnull Collection<ClassMapping> classMappings, @Nonnull Model model) {
         this.mappingId = mappingId;
         this.mapping = mapping;
         this.classMappings = classMappings;
+        this.model = model;
     }
 
     @Override
@@ -56,5 +60,10 @@ public class SimpleMappingWrapper implements MappingWrapper {
     @Override
     public Collection<ClassMapping> getClassMappings() {
         return classMappings;
+    }
+
+    @Override
+    public Model getModel() {
+        return model;
     }
 }
