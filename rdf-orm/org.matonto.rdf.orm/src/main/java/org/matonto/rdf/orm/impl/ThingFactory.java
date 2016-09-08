@@ -40,7 +40,7 @@ import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
  *
  * @author bdgould
  */
-@Component(provide = {OrmFactory.class, ValueConverter.class, ThingFactory.class})
+@Component(provide = {OrmFactory.class, ValueConverter.class, ThingFactory.class}, immediate = true)
 public class ThingFactory extends AbstractOrmFactory<Thing> {
 
     /**
