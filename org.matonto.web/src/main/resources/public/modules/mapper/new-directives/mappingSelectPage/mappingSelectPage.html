@@ -29,7 +29,7 @@
 					<i class="fa fa-plus"></i>Create Mapping
 				</button>
 			</block-header>
-			<block-search ng-model="dvm.state.mappingSearchString"></block-search>
+			<block-search ng-model="dvm.state.mappingSearchString" clear-event="dvm.state.mappingSearchString = ''"></block-search>
 			<block-content>
 				<mapping-list></mapping-list>
 			</block-content>
