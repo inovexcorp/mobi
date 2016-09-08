@@ -18,7 +18,7 @@
             display: inline-block;
             font-size: 1.125em;
             margin: 12px 0 0 8px;
-            padding: 7px 15px 7px 20px;
+            padding: 7px 15px;
             text-decoration: none;
             @include noCopy();
 
@@ -33,6 +33,7 @@
     }
     .tabset-contents {
         flex: 1;
+        height: 0;
     }
 
     &.centered {

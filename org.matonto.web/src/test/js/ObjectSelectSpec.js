@@ -169,6 +169,7 @@ describe('Object Select directive', function() {
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
+                ontologyManagerService.getEntity.and.returnValue({});
                 spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
@@ -180,76 +181,34 @@ describe('Object Select directive', function() {
                 beforeEach(function() {
                     controller.tooltipDisplay = 'comment';
                 });
-                it('should return rdfs:comment before dcterms:description and dc:description', function() {
-                    var selectedObject = {'@id': 'id'};
-                    selectedObject[prefixes.rdfs + 'comment'] = [{'@value': 'comment'}];
-                    selectedObject[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
-                    selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
-
-                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
+                it('when getEntityDescription is undefined', function() {
+                    ontologyManagerService.getEntityDescription.and.returnValue(undefined);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe(selectedObject[prefixes.rdfs + 'comment'][0]['@value']);
+                    expect(ontologyManagerService.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(result).toEqual('test'); // The value of getItemIri
                 });
-                it('should return dcterms:description before dc:description if no rdfs:comment', function() {
-                    var selectedObject = {'@id': 'id'};
-                    selectedObject[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
-                    selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
-
-                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
+                it('when getEntityDescription is defined', function() {
+                    ontologyManagerService.getEntityDescription.and.returnValue('new');
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe(selectedObject[prefixes.dcterms + 'description'][0]['@value']);
-                });
-                it('should return dc:description if no rdfs:comment or dcterms:description', function() {
-                    var selectedObject = {'@id': 'id'};
-                    selectedObject[prefixes.dc + 'description'] = [{'@value': 'description'}];
-
-                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
-                    var result = controller.getTooltipDisplay();
-                    expect(result).toBe(selectedObject[prefixes.dc + 'description'][0]['@value']);
-                });
-                it('should return controller.getItemIri if no dc:description or dcterms:description or rdfs:comment', function() {
-                    controller.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('iri');
-                    ontologyManagerService.getEntity.and.returnValue({});
-                    var result = controller.getTooltipDisplay();
-                    expect(result).toBe('iri');
+                    expect(ontologyManagerService.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(result).toEqual('new'); // The value of getItemIri
                 });
             });
             describe('for label', function() {
                 beforeEach(function() {
                     controller.tooltipDisplay = 'label';
                 });
-                it('should return rdfs:label before dcterms:title or dc:title', function() {
-                    var selectedObject = {'@id': 'id'};
-                    selectedObject[prefixes.rdfs + 'label'] = [{'@value': 'label'}];
-                    selectedObject[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
-                    selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
-
-                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
+                it('when getEntityName is undefined', function() {
+                    ontologyManagerService.getEntityName.and.returnValue(undefined);
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe(selectedObject[prefixes.rdfs + 'label'][0]['@value']);
+                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(result).toEqual('test'); // The value of getItemIri
                 });
-                it('should return dcterms:title before dc:title if no rdfs:label', function() {
-                    var selectedObject = {'@id': 'id'};
-                    selectedObject[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
-                    selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
-
-                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
+                it('when getEntityName is defined', function() {
+                    ontologyManagerService.getEntityName.and.returnValue('new');
                     var result = controller.getTooltipDisplay();
-                    expect(result).toBe(selectedObject[prefixes.dcterms + 'title'][0]['@value']);
-                });
-                it('should return dc:title if no rdfs:label or dcterms:title', function() {
-                    var selectedObject = {'@id': 'id'};
-                    selectedObject[prefixes.dc + 'title'] = [{'@value': 'title'}];
-
-                    ontologyManagerService.getEntity.and.returnValue(selectedObject);
-                    var result = controller.getTooltipDisplay();
-                    expect(result).toBe(selectedObject[prefixes.dc + 'title'][0]['@value']);
-                });
-                it('should return controller.getItemIri if no dc:title or dcterms:title or rdfs:label', function() {
-                    controller.getItemIri = jasmine.createSpy('getItemIri').and.returnValue('iri');
-                    ontologyManagerService.getEntity.and.returnValue({});
-                    var result = controller.getTooltipDisplay();
-                    expect(result).toBe('iri');
+                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(result).toEqual('new'); // The value of getItemIri
                 });
             });
         });

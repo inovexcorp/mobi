@@ -1443,7 +1443,7 @@
              * If none of those annotations exist, it returns the beautified `@id`. Returns a string for the entity
              * name.
              *
-             * @param {Object} entity The ontology entity you want the name of.
+             * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
              */
             self.getEntityName = function(entity) {
@@ -1454,10 +1454,27 @@
                     if (_.has(entity, '@id')) {
                         result = self.getBeautifulIRI(entity['@id']);
                     } else {
-                        result = _.get(entity, 'matonto.anonymous', '(Entity has no IRI)');
+                        result = _.get(entity, 'matonto.anonymous');
                     }
                 }
                 return result;
+            }
+            /**
+             * @ngdoc method
+             * @name getEntityDescription
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the provided entity's description. This description is either the `rdfs:comment`,
+             * `dcterms:description`, or `dc:description`. If none of those annotations exist, it returns undefined.
+             *
+             * @param {Object} entity The entity you want the description of.
+             * @returns {string} The entity's description text.
+             */
+            self.getEntityDescription = function(entity) {
+                return _.get(entity, "['" + prefixes.rdfs + "comment'][0]['@value']",
+                    _.get(entity, "['" + prefixes.dcterms + "description'][0]['@value']",
+                    _.get(entity, "['" + prefixes.dc + "description'][0]['@value']")));
             }
             /**
              * @ngdoc method

@@ -156,6 +156,7 @@ function mockOntologyManager() {
             this.getEntityName = jasmine.createSpy('getEntityName').and.callFake(function(ontology, entity) {
                 return _.has(entity, '@id') ? entity['@id'] : '';
             });
+            this.getEntityDescription = jasmine.createSpy('getEntityDescription');
             this.getImportedClasses = jasmine.createSpy('getImportedClasses').and.returnValue([]);
             this.getSubClasses = jasmine.createSpy('getSubClasses').and.returnValue([]);
             this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.resolve({}));

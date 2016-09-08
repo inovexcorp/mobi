@@ -72,13 +72,9 @@
                         if (!_.has(item, 'ontologyId')) {
                             var selectedObject = dvm.om.getEntity(dvm.sm.ontology, itemIri);
                             if (dvm.tooltipDisplay === 'comment') {
-                                result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dcterms + "description'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri)));
+                                result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {
-                                result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dcterms + "title'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri)));
+                                result = dvm.om.getEntityName(selectedObject) || itemIri;
                             } else if (_.has(selectedObject, '@id')) {
                                 result = selectedObject['@id'];
                             }

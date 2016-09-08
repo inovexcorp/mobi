@@ -6,7 +6,7 @@
 
     .actions {
         background: white;
-        box-shadow: 5px 5px 5px 0px $gray-lighter;
+        box-shadow: 5px 5px 5px 0px $gray-light;
         height: 52px;
         text-align: center;
 
@@ -43,10 +43,12 @@
 
         > .row {
             flex: 1;
+            height: 0;
         }
 
         .vertical-half {
             flex: 1;
+            height: 0;
             padding: 15px 0;
 
             &:first-child {
