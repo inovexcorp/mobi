@@ -45,6 +45,7 @@
                 replace: true,
                 require: '^^block',
                 scope: {
+                    bindModel: '=ngModel',
                     keyupEvent: '&'
                 },
                 templateUrl: 'directives/blockSearch/blockSearch.html'
