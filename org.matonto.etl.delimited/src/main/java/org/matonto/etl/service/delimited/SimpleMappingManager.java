@@ -148,25 +148,6 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public IRI createMappingIRI() {
-        String localName = generateUuid();
-        return factory.createIRI(DEFAULT_MAPPING_PREFIX + localName.trim());
-    }
-
-    @Override
-    public IRI createMappingIRI(String localName) {
-            return factory.createIRI(DEFAULT_MAPPING_PREFIX + localName.trim());
-    }
-
-    @Override
-    public String getMappingLocalName(IRI iri) {
-        if (iri.getNamespace().equals(DEFAULT_MAPPING_PREFIX + "/")) {
-            return iri.getLocalName();
-        }
-        return iri.getNamespace().replace(DEFAULT_MAPPING_PREFIX + "/", "");
-    }
-
-    @Override
     public MappingId createMappingId(Resource id) {
         return new SimpleMappingId.Builder(factory).id(id).build();
     }

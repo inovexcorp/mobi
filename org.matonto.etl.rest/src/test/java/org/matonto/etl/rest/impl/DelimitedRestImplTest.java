@@ -73,7 +73,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 public class DelimitedRestImplTest extends MatontoRestTestNg {
@@ -101,9 +100,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         when(mappingWrapper.getModel()).thenReturn(new LinkedHashModel());
         when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
         when(converter.convert(any(ExcelConfig.class))).thenReturn(new LinkedHashModel());
-        when(manager.createMappingIRI(anyString())).thenReturn(factory.createIRI(MAPPING_IRI));
         when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(mappingWrapper));
-        when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
             public Optional<IRI> getMappingIRI() {

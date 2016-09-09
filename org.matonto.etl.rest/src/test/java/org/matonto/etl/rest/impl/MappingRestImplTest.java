@@ -68,6 +68,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRestImpl rest;
     private static final String MAPPING_IRI = "http://test.org";
 
+    private ValueFactory factory = SimpleValueFactory.getInstance();
+
     @Mock
     MappingManager manager;
 
@@ -79,18 +81,18 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Override
     protected Application configureApp() throws Exception {
-        ValueFactory factory = SimpleValueFactory.getInstance();
+        ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
         Model fakeModel = new LinkedHashModel();
-        fakeModel.add(factory.createIRI(MAPPING_IRI), factory.createIRI("http://test.org/isTest"), factory.createLiteral(true));
+        fakeModel.add(valueFactory.createIRI(MAPPING_IRI), valueFactory.createIRI("http://test.org/isTest"), valueFactory.createLiteral(true));
 
         MockitoAnnotations.initMocks(this);
 
         rest = new MappingRestImpl();
         rest.setManager(manager);
-        rest.setFactory(factory);
+        rest.setFactory(valueFactory);
 
-        when(mappingId.getMappingIdentifier()).thenReturn(factory.createIRI(MAPPING_IRI));
+        when(mappingId.getMappingIdentifier()).thenReturn(valueFactory.createIRI(MAPPING_IRI));
         when(mappingWrapper.getModel()).thenReturn(fakeModel);
         when(mappingWrapper.getId()).thenReturn(mappingId);
         when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
@@ -99,10 +101,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         when(manager.storeMapping(any(MappingWrapper.class))).thenReturn(true);
         when(manager.deleteMapping(any(Resource.class))).thenReturn(true);
         when(manager.getMappingRegistry()).thenReturn(new HashSet<>());
-        when(manager.createMappingIRI()).thenReturn(factory.createIRI(MAPPING_IRI));
-        when(manager.createMappingIRI(anyString())).thenAnswer(i -> factory.createIRI("http://test.org/" + i.getArguments()[0]));
         when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(mappingWrapper));
-        when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
             public Optional<IRI> getMappingIRI() {
@@ -116,7 +115,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
             @Override
             public Resource getMappingIdentifier() {
-                return factory.createIRI(i.getArguments()[0].toString());
+                return valueFactory.createIRI(i.getArguments()[0].toString());
             }
         });
 
@@ -152,7 +151,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI().stringValue()));
+        Assert.assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));//manager.createMappingIRI().stringValue()));
     }
 
     @Test
@@ -169,8 +168,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getMappingsByIdsTest() {
-        List<String> ids = Arrays.asList(manager.createMappingIRI("test1").toString(),
-                manager.createMappingIRI("test2").toString());
+        List<String> ids = Arrays.asList(factory.createIRI("http://test.org/test1").toString(),
+                factory.createIRI("http://test.org/test2").toString());
         WebTarget wt = target().path("mappings");
         for (String id : ids) {
             wt = wt.queryParam("ids", id);
@@ -184,8 +183,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }
 
-        ids = Arrays.asList(manager.createMappingIRI("test1").toString(),
-                manager.createMappingIRI("error").toString());
+        ids = Arrays.asList(factory.createIRI("http://test.org/test1").toString(),
+                factory.createIRI("http://test.org/error").toString());
         wt = target().path("mappings");
         for (String id : ids) {
             wt = wt.queryParam("ids", id);
@@ -202,34 +201,34 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getMappingTest() {
-        Response response = target().path("mappings/" + encode(manager.createMappingIRI("test").toString()))
+        Response response = target().path("mappings/" + encode(factory.createIRI("http://test.org/test").toString()))
             .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         Assert.assertEquals(200, response.getStatus());
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            JSONObject.fromObject(response.readEntity(String.class));
         } catch (Exception e) {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }
 
-        response = target().path("mappings/" + encode(manager.createMappingIRI("error").toString())).request()
+        response = target().path("mappings/" + encode(factory.createIRI("http://test.org/error").toString())).request()
                 .accept(MediaType.APPLICATION_JSON_TYPE).get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void downloadMappingTest() {
-        Response response = target().path("mappings/" + encode(manager.createMappingIRI("test").toString()))
+        Response response = target().path("mappings/" + encode(factory.createIRI("http://test.org/test").toString()))
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         Assert.assertEquals(200, response.getStatus());
 
-        response = target().path("mappings/" + encode(manager.createMappingIRI("error").toString()))
+        response = target().path("mappings/" + encode(factory.createIRI("http://test.org/error").toString()))
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void deleteMappingTest() {
-        Response response = target().path("mappings/" + encode(manager.createMappingIRI("test").toString()))
+        Response response = target().path("mappings/" + encode(factory.createIRI("http://test.org/test").toString()))
                 .request().delete();
         Assert.assertEquals(200, response.getStatus());
         try {

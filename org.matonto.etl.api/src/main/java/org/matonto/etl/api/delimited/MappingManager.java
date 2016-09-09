@@ -63,35 +63,12 @@ public interface MappingManager {
     MappingId createMappingId(IRI mappingIRI, IRI versionIRI);
 
     /**
-     * Retrieves the local name of a mapping IRI.
-     *
-     * @param iri a mapping IRI
-     * @return the local name of the mapping IRI
-     */
-    String getMappingLocalName(IRI iri);
-
-    /**
      * Retrieves the mapping registry.
      *
      * @return the mapping registry as a map between mapping IRIs and the name
      *         of the repository they are in
      */
     Set<Resource> getMappingRegistry();
-
-    /**
-     * Generates a mapping IRI Resource with a UUID for a local name.
-     *
-     * @return an IRI Resource for a mapping with a new UUID local name
-     */
-    IRI createMappingIRI();
-
-    /**
-     * Generates a mapping IRI Resource with the passed local name.
-     *
-     * @param localName the local name to use for the mapping IRI Resource
-     * @return an IRI Resource for a mapping with the passed local name
-     */
-    IRI createMappingIRI(String localName);
 
     /**
      * Creates an empty mapping with the passed in MappingId.

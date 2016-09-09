@@ -173,7 +173,7 @@ public class MappingRestImpl implements MappingRest {
             };
 
             return Response.ok(stream).header("Content-Disposition", "attachment; filename="
-                    + manager.getMappingLocalName(factory.createIRI(mappingIRI)) + "."
+                    + factory.createIRI(mappingIRI).getLocalName() + "."
                     + rdfFormat.getDefaultFileExtension()).header("Content-Type", rdfFormat.getDefaultMIMEType())
                     .build();
         } else {
