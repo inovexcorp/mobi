@@ -41,7 +41,7 @@
             restrict: 'E',
             replace: true,
             scope: {
-                pageTitle: '@'
+                pageTitle: '<'
             },
             controllerAs: 'dvm',
             controller: function() {

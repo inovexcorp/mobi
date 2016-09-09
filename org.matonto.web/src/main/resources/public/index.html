@@ -35,23 +35,23 @@
 </head>
 <body class="beta" ng-class="{'no-text': $root.noText}">
 
-    <!-- Basic header, container, and footer for all states -->
-    <div ng-hide="$state.current.name === 'login'" class="full-height">
-        <nav ui-view="nav"></nav>
-        <div class="main-page">
-            <custom-header page-title="{{$state.current.data.title}}"></custom-header>
-            <section ui-view="container" class="view-container full-height"></section>
-        </div>
+<!-- Basic header, container, and footer for all states -->
+<div ng-hide="$state.current.name === 'login'" class="full-height">
+    <nav ui-view="nav"></nav>
+    <div class="main-page">
+        <custom-header page-title="$state.current.data.title"></custom-header>
+        <section ui-view="container" class="view-container full-height"></section>
     </div>
-    <section ng-hide="$state.current.name !== 'login'" ui-view="container" class="view-container full-height"></section>
-    <footer ui-view="footer"></footer>
+</div>
+<section ng-hide="$state.current.name !== 'login'" ui-view="container" class="view-container full-height"></section>
+<footer ui-view="footer"></footer>
 
-    <!-- spinner -->
-    <div class="spinner" ng-show="$root.showSpinner">
-        <i class="fa fa-4x fa-spin fa-spinner"></i>
-    </div>
+<!-- spinner -->
+<div class="spinner" ng-show="$root.showSpinner">
+    <i class="fa fa-4x fa-spin fa-spinner"></i>
+</div>
 
-    <!-- inject:js -->
-    <!-- endinject -->
+<!-- inject:js -->
+<!-- endinject -->
 </body>
 </html>
