@@ -37,6 +37,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
+import org.matonto.etl.api.exception.MatOntoETLException;
 import org.matonto.etl.api.ontologies.delimited.ClassMapping;
 import org.matonto.etl.api.ontologies.delimited.ClassMappingFactory;
 import org.matonto.etl.api.ontologies.delimited.Property;
@@ -214,10 +215,11 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         if (mapsTo.hasNext()) {
             mapsToResource = mapsTo.next().getResource();
         } else {
-
+            throw new MatOntoETLException("Invalid mapping configuration. Missing mapsTo property on " +
+                    cm.getResource());
         }
 
-        convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), cm.getMapsTo().iterator().next().getResource());
+        convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), mapsToResource);
         mappedClasses.put(cm.getResource(), classInstance);
 
         cm.getDataProperty().forEach(dataMapping -> {
@@ -234,8 +236,15 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         });
 
         cm.getObjectProperty().forEach(objectMapping -> {
-            // TODO: Handle hasNext()
-            ClassMapping targetClassMapping = objectMapping.getClassMapping().iterator().next();
+            ClassMapping targetClassMapping;
+            Iterator<ClassMapping> classMappingIterator = objectMapping.getClassMapping().iterator();
+            if (classMappingIterator.hasNext()) {
+                targetClassMapping = classMappingIterator.next();
+            } else {
+                throw new MatOntoETLException("Invalid mapping configuration. Missing classMapping property on " +
+                        objectMapping.getResource());
+            }
+
             Property prop = objectMapping.getHasProperty().iterator().next();
 
             IRI targetIri;
@@ -246,7 +255,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 if (!targetNameOptional.isPresent()) {
                     return;
                 } else {
-                    targetIri = valueFactory.createIRI(targetClassMapping.getHasPrefix().iterator().next() + targetNameOptional.get());
+                    targetIri = valueFactory.createIRI(targetClassMapping.getHasPrefix().iterator().next() +
+                            targetNameOptional.get());
                     mappedClasses.put(targetClassMapping.getResource(), targetIri);
                 }
             }
