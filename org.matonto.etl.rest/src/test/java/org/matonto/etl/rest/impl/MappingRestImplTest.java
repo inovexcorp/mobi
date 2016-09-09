@@ -66,6 +66,7 @@ import static org.mockito.Mockito.when;
 
 public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRestImpl rest;
+    private static final String MAPPING_IRI = "http://test.org";
 
     @Mock
     MappingManager manager;
@@ -81,7 +82,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         ValueFactory factory = SimpleValueFactory.getInstance();
 
         Model fakeModel = new LinkedHashModel();
-        fakeModel.add(factory.createIRI("http://test.org"), factory.createIRI("http://test.org/isTest"), factory.createLiteral(true));
+        fakeModel.add(factory.createIRI(MAPPING_IRI), factory.createIRI("http://test.org/isTest"), factory.createLiteral(true));
 
         MockitoAnnotations.initMocks(this);
 
@@ -89,7 +90,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         rest.setManager(manager);
         rest.setFactory(factory);
 
-        when(mappingId.getMappingIdentifier()).thenReturn(factory.createIRI("http://test.org"));
+        when(mappingId.getMappingIdentifier()).thenReturn(factory.createIRI(MAPPING_IRI));
         when(mappingWrapper.getModel()).thenReturn(fakeModel);
         when(mappingWrapper.getId()).thenReturn(mappingId);
         when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
@@ -98,7 +99,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         when(manager.storeMapping(any(MappingWrapper.class))).thenReturn(true);
         when(manager.deleteMapping(any(Resource.class))).thenReturn(true);
         when(manager.getMappingRegistry()).thenReturn(new HashSet<>());
-        when(manager.createMappingIRI()).thenReturn(factory.createIRI("http://test.org"));
+        when(manager.createMappingIRI()).thenReturn(factory.createIRI(MAPPING_IRI));
         when(manager.createMappingIRI(anyString())).thenAnswer(i -> factory.createIRI("http://test.org/" + i.getArguments()[0]));
         when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(mappingWrapper));
         when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");

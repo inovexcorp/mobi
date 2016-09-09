@@ -78,6 +78,7 @@ import static org.mockito.Mockito.when;
 
 public class DelimitedRestImplTest extends MatontoRestTestNg {
     private DelimitedRestImpl rest;
+    private static final String MAPPING_IRI = "http://test.org";
 
     @Mock
     DelimitedConverter converter;
@@ -100,7 +101,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         when(mappingWrapper.getModel()).thenReturn(new LinkedHashModel());
         when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
         when(converter.convert(any(ExcelConfig.class))).thenReturn(new LinkedHashModel());
-        when(manager.createMappingIRI(anyString())).thenReturn(factory.createIRI("http://test.org"));
+        when(manager.createMappingIRI(anyString())).thenReturn(factory.createIRI(MAPPING_IRI));
         when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(mappingWrapper));
         when(manager.getMappingLocalName(any(IRI.class))).thenReturn("");
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
@@ -258,7 +259,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     public void mapCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
-        String body = testMap(fileName, "http://test.org", null);
+        String body = testMap(fileName, MAPPING_IRI, null);
         isJsonld(body);
     }
 
@@ -271,7 +272,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
-        String body = testMap(fileName, "http://test.org", params);
+        String body = testMap(fileName, MAPPING_IRI, params);
         isNotJsonld(body);
     }
 
@@ -280,7 +281,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, "http://test.org", null);
+        String body = testMap(fileName, MAPPING_IRI, null);
         isJsonld(body);
     }
     @Test
@@ -292,13 +293,13 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, "http://test.org", params);
+        String body = testMap(fileName, MAPPING_IRI, params);
         isNotJsonld(body);
     }
 
     @Test
     public void mapNonexistentDelimitedTest() {
-        Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", "http://test.org")
+        Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", MAPPING_IRI)
                 .request().get();
         Assert.assertEquals(400, response.getStatus());
     }
@@ -312,7 +313,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
         Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
 
-        testMap(fileName, "http://test.org", params);
+        testMap(fileName, MAPPING_IRI, params);
         Assert.assertFalse(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
     }
 

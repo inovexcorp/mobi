@@ -70,7 +70,7 @@ class SimpleMappingManagerSpec extends Specification {
         thrown(MatOntoException)
     }
 
-    def "storeMapping stores an Ontology when ontology does not exist"() {
+    def "storeMapping stores a Mapping when mapping does not exist"() {
         setup:
         def manager = [
                 mappingExists: { o -> return false }
@@ -87,4 +87,102 @@ class SimpleMappingManagerSpec extends Specification {
         repository.getConfig() >> Mock(RepositoryConfig.class)
         result
     }
+
+//    def "Create a Mapping using a MappingId with an id"() {
+//        setup:
+//        def mappingId = builder.id(mappingIRI).build();
+//        def mapping = new SimpleMappingWrapper(mappingId, mf, vf);
+//
+//        expect:
+//        mapping.getId().equals(mappingId);
+//        mapping.asModel().contains(mappingIRI, vf.createIRI(Delimited.TYPE.stringValue()),
+//                vf.createIRI(Delimited.MAPPING.stringValue()));
+//    }
+//
+//    def "Create a Mapping using a MappingId without an id"() {
+//        setup:
+//        SimpleMappingId mappingId = builder.mappingIRI(mappingIRI).build();
+//        SimpleMapping mapping = new SimpleMapping(mappingId, mf, vf);
+//
+//        expect:
+//        mapping.getId().equals(mappingId);
+//        mapping.asModel().contains(mappingIRI, vf.createIRI(Delimited.TYPE.stringValue()),
+//                vf.createIRI(Delimited.MAPPING.stringValue()));
+//    }
+//
+//    def "Create a Mapping using a MappingId with a version IRI"() {
+//        setup:
+//        SimpleMappingId mappingId = new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI)
+//                .versionIRI(versionIRI).build();
+//        SimpleMapping mapping = new SimpleMapping(mappingId, mf, vf);
+//
+//        expect:
+//        mapping.getId().equals(mappingId);
+//        mapping.asModel().contains(mappingIRI, vf.createIRI(Delimited.VERSION.stringValue()), versionIRI);
+//    }
+//
+//    def "Create a Mapping using a valid Model"() {
+//        setup:
+//        SimpleMapping mapping = new SimpleMapping(model, vf, mf);
+//        SimpleMapping versionedMapping = new SimpleMapping(versionedModel, vf, mf);
+//
+//        expect:
+//        mapping.asModel().equals(model);
+//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
+//        versionedMapping.asModel().equals(versionedModel);
+//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
+//                .build());
+//    }
+//
+//    def "Create a Mapping using a valid File"() {
+//        setup:
+//        SimpleMapping mapping = new SimpleMapping(new ClassPathResource("newestMapping.jsonld").getFile(), vf, mf);
+//        SimpleMapping versionedMapping = new SimpleMapping(new ClassPathResource("newestVersionedMapping.jsonld")
+//                .getFile(), vf, mf);
+//
+//        expect:
+//        mapping.asModel().equals(model);
+//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
+//        versionedMapping.asModel().equals(versionedModel);
+//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
+//                .build());
+//    }
+//
+//    def "Create a Mapping using a valid InputStream"() {
+//        setup:
+//        SimpleMapping mapping = new SimpleMapping(new ClassPathResource("newestMapping.jsonld").getInputStream(),
+//                RDFFormat.JSONLD, vf, mf);
+//        SimpleMapping versionedMapping = new SimpleMapping(new ClassPathResource("newestVersionedMapping.jsonld")
+//                .getInputStream(), RDFFormat.JSONLD, vf, mf);
+//
+//        expect:
+//        mapping.asModel().equals(model);
+//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
+//        versionedMapping.asModel().equals(versionedModel);
+//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
+//                .build());
+//    }
+//
+//    def "Create a Mapping using a valid JSON-LD String"() {
+//        setup:
+//        SimpleMapping mapping = new SimpleMapping(new ClassPathResource("newestMapping.jsonld").getFile()
+//                .getText("UTF-8"), vf, mf);
+//        SimpleMapping versionedMapping = new SimpleMapping(new ClassPathResource("newestVersionedMapping.jsonld")
+//                .getFile().getText("UTF-8"), vf, mf);
+//
+//        expect:
+//        mapping.asModel().equals(model);
+//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
+//        versionedMapping.asModel().equals(versionedModel);
+//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
+//                .build());
+//    }
+//
+//    def "Throw an exception when Mapping is invalid"() {
+//        when:
+//        SimpleMapping mapping = new SimpleMapping(mf.createModel(), vf, mf);
+//
+//        then:
+//        thrown(MatOntoException);
+//    }
 }

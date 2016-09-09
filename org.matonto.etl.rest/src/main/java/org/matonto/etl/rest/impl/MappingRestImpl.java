@@ -78,6 +78,7 @@ public class MappingRestImpl implements MappingRest {
             throw ErrorUtils.sendError("Must provide either a file or a string of JSON-LD",
                     Response.Status.BAD_REQUEST);
         }
+
         MappingWrapper mapping;
         try {
             if (fileInputStream != null) {
@@ -93,8 +94,11 @@ public class MappingRestImpl implements MappingRest {
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
-        logger.info("Mapping Uploaded: " + mapping.getId().getMappingIdentifier().stringValue());
-        return Response.status(200).entity(mapping.getId().getMappingIdentifier().stringValue()).build();
+
+        String mappingId = mapping.getId().getMappingIdentifier().stringValue();
+
+        logger.info("Mapping Uploaded: " + mappingId);
+        return Response.status(200).entity(mappingId).build();
     }
 
     @Override

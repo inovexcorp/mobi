@@ -211,13 +211,13 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public boolean storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException {
-        if (mappingExists(mappingWrapper.getId().getMappingIdentifier())) {
+        Resource mappingIdentifier = mappingWrapper.getId().getMappingIdentifier();
+
+        if (mappingExists(mappingIdentifier)) {
             throw new MatOntoException("Mapping with mapping ID already exists");
         }
 
-        Resource mappingIdentifier = mappingWrapper.getId().getMappingIdentifier();
-
-        try (RepositoryConnection conn = repository.getConnection()){
+        try (RepositoryConnection conn = repository.getConnection()) {
             conn.add(mappingWrapper.getModel(), mappingIdentifier);
             mappingWrapper.getClassMappings().forEach(cm -> conn.add(cm.getModel(), mappingIdentifier));
             conn.add(registrySubject, registryPredicate, mappingIdentifier, registryContext);
@@ -229,12 +229,12 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource mappingId) {
+    public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource mappingId) throws MatOntoException {
         if (!mappingExists(mappingId)) {
             return Optional.empty();
         }
         Model mappingModel = modelFactory.createModel();
-        try(RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = repository.getConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null, mappingId);
             statements.forEach(mappingModel::add);
         } catch (RepositoryException e) {

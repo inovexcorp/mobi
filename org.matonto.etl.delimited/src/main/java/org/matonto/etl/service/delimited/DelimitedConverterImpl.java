@@ -219,7 +219,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                     cm.getResource());
         }
 
-        convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), mapsToResource);
+        convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
+                mapsToResource);
         mappedClasses.put(cm.getResource(), classInstance);
 
         cm.getDataProperty().forEach(dataMapping -> {
