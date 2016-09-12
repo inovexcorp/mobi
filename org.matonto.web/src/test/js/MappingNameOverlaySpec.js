@@ -25,6 +25,7 @@ describe('Mapping Name Overlay directive', function() {
         scope,
         mappingManagerSvc,
         mapperStateSvc,
+        ontologyManagerSvc,
         controller;
 
     beforeEach(function() {
@@ -32,12 +33,14 @@ describe('Mapping Name Overlay directive', function() {
         module('mappingNameOverlay');
         mockMappingManager();
         mockMapperState();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
