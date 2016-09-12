@@ -22,16 +22,20 @@
  */
 package org.matonto.etl.service.delimited
 
-import org.matonto.etl.api.ontologies.delimited.Mapping
-import org.matonto.exception.MatOntoException
-import org.matonto.etl.api.delimited.MappingWrapper
 import org.matonto.etl.api.delimited.MappingId
+import org.matonto.etl.api.delimited.MappingWrapper
+import org.matonto.etl.api.ontologies.delimited.*
+import org.matonto.exception.MatOntoException
+import org.matonto.ontologies.rdfs.Resource
 import org.matonto.rdf.api.Model
-import org.matonto.rdf.api.ModelFactory
-import org.matonto.rdf.api.ValueFactory
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
+import org.matonto.rdf.orm.conversion.impl.*
+import org.matonto.rdf.orm.impl.ThingFactory
 import org.matonto.repository.api.Repository
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.config.RepositoryConfig
+import org.matonto.vocabularies.xsd.XSD
 import spock.lang.Specification
 
 class SimpleMappingManagerSpec extends Specification {
@@ -39,13 +43,60 @@ class SimpleMappingManagerSpec extends Specification {
     def repository = Mock(Repository)
     def connection = Mock(RepositoryConnection)
     def model = Mock(Model)
-    def vf = Mock(ValueFactory)
-    def mf = Mock(ModelFactory)
+    def vf = SimpleValueFactory.getInstance()
+    def mf = LinkedHashModelFactory.getInstance()
     def mappingWrapper = Mock(MappingWrapper)
     def mappingId = Mock(MappingId)
     def mapping = Mock(Mapping)
+    def service = new SimpleMappingManager()
+    def vcr = new DefaultValueConverterRegistry()
+    def mappingFactory = new MappingFactory()
+    def classMappingFactory = new ClassMappingFactory()
+    def dataMappingFactory = new DataMappingFactory()
+    def propertyFactory = new PropertyFactory()
+    def objectFactory = new ObjectMappingFactory()
+    def thingFactory = new ThingFactory()
+    def builder = new SimpleMappingId.Builder(vf)
+    def mappingIRI = vf.createIRI("http://test.com/mapping")
+    def versionIRI = vf.createIRI("http://test.com/mapping/1.0")
 
     def setup() {
+        mappingFactory.setValueFactory(vf)
+        mappingFactory.setModelFactory(mf)
+        mappingFactory.setValueConverterRegistry(vcr)
+        classMappingFactory.setValueFactory(vf)
+        classMappingFactory.setModelFactory(mf)
+        classMappingFactory.setValueConverterRegistry(vcr);
+        dataMappingFactory.setValueFactory(vf)
+        dataMappingFactory.setValueConverterRegistry(vcr)
+        propertyFactory.setValueFactory(vf)
+        propertyFactory.setValueConverterRegistry(vcr)
+        objectFactory.setValueFactory(vf)
+        objectFactory.setValueConverterRegistry(vcr)
+        thingFactory.setValueFactory(vf)
+        thingFactory.setValueConverterRegistry(vcr)
+
+        vcr.registerValueConverter(classMappingFactory)
+        vcr.registerValueConverter(dataMappingFactory)
+        vcr.registerValueConverter(propertyFactory)
+        vcr.registerValueConverter(objectFactory)
+        vcr.registerValueConverter(thingFactory)
+        vcr.registerValueConverter(new ResourceValueConverter())
+        vcr.registerValueConverter(new IRIValueConverter())
+        vcr.registerValueConverter(new DoubleValueConverter())
+        vcr.registerValueConverter(new IntegerValueConverter())
+        vcr.registerValueConverter(new FloatValueConverter())
+        vcr.registerValueConverter(new ShortValueConverter())
+        vcr.registerValueConverter(new StringValueConverter())
+        vcr.registerValueConverter(new ValueValueConverter())
+        vcr.registerValueConverter(new LiteralValueConverter())
+
+        service.setValueFactory(vf)
+        service.setRepository(repository)
+        service.setModelFactory(mf)
+        service.setMappingFactory(mappingFactory)
+        service.setClassMappingFactory(classMappingFactory)
+
         mappingWrapper.getId() >> mappingId
         mappingWrapper.getMapping() >> mapping
         mappingWrapper.getClassMappings() >> []
@@ -88,39 +139,40 @@ class SimpleMappingManagerSpec extends Specification {
         result
     }
 
-//    def "Create a Mapping using a MappingId with an id"() {
-//        setup:
-//        def mappingId = builder.id(mappingIRI).build();
-//        def mapping = new SimpleMappingWrapper(mappingId, mf, vf);
-//
-//        expect:
-//        mapping.getId().equals(mappingId);
-//        mapping.asModel().contains(mappingIRI, vf.createIRI(Delimited.TYPE.stringValue()),
-//                vf.createIRI(Delimited.MAPPING.stringValue()));
-//    }
-//
-//    def "Create a Mapping using a MappingId without an id"() {
-//        setup:
-//        SimpleMappingId mappingId = builder.mappingIRI(mappingIRI).build();
-//        SimpleMapping mapping = new SimpleMapping(mappingId, mf, vf);
-//
-//        expect:
-//        mapping.getId().equals(mappingId);
-//        mapping.asModel().contains(mappingIRI, vf.createIRI(Delimited.TYPE.stringValue()),
-//                vf.createIRI(Delimited.MAPPING.stringValue()));
-//    }
-//
-//    def "Create a Mapping using a MappingId with a version IRI"() {
-//        setup:
-//        SimpleMappingId mappingId = new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI)
-//                .versionIRI(versionIRI).build();
-//        SimpleMapping mapping = new SimpleMapping(mappingId, mf, vf);
-//
-//        expect:
-//        mapping.getId().equals(mappingId);
-//        mapping.asModel().contains(mappingIRI, vf.createIRI(Delimited.VERSION.stringValue()), versionIRI);
-//    }
-//
+    def "Create a Mapping using a MappingId with an id"() {
+        setup:
+        def mappingId = builder.id(mappingIRI).build();
+        def mapping = service.createMapping(mappingId)
+
+        expect:
+        mapping.getId() == mappingId;
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE));
+    }
+
+    def "Create a Mapping using a MappingId with a mapping iri"() {
+        setup:
+        def mappingId = builder.mappingIRI(mappingIRI).build();
+        def mapping = service.createMapping(mappingId)
+
+        expect:
+        mapping.getId() == mappingId;
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE));
+    }
+
+    def "Create a Mapping using a MappingId with a version IRI"() {
+        setup:
+        SimpleMappingId mappingId = new SimpleMappingId.Builder(vf)
+                .mappingIRI(mappingIRI)
+                .versionIRI(versionIRI)
+                .build();
+        def mapping = service.createMapping(mappingId)
+
+        expect:
+        mapping.getId() == mappingId;
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE));
+        mapping.getModel().contains(mappingIRI, vf.createIRI(Mapping.versionIRI_IRI), vf.createLiteral(versionIRI.stringValue(), vf.createIRI(XSD.ANYURI)));
+    }
+
 //    def "Create a Mapping using a valid Model"() {
 //        setup:
 //        SimpleMapping mapping = new SimpleMapping(model, vf, mf);

@@ -25,13 +25,18 @@ package org.matonto.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleLiteral;
 import org.matonto.rdf.core.impl.sesame.ValueFactoryService;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 
 public class TestDefaultValueConverterRegistry {
@@ -67,7 +72,83 @@ public class TestDefaultValueConverterRegistry {
         Iterator<Double> it = doubles.iterator();
         TestCase.assertEquals(3.14, it.next());
         TestCase.assertEquals(1.23, it.next());
-
     }
 
+    @Test
+    public void testGetValueConverterRecursive() {
+        final DefaultValueConverterRegistry reg = new DefaultValueConverterRegistry();
+        final ValueConverter<Literal> converter = new LiteralValueConverter();
+        reg.registerValueConverter(converter);
+//        TestCase.assertEquals(converter, reg.getValueConverter(Literal.class));
+//        TestCase.assertEquals(converter, reg.getValueConverter(SimpleLiteral.class));
+        TestCase.assertEquals(converter, reg.getValueConverter(ComplexLiteral.class));
+    }
+
+    private static class ComplexLiteral extends SimpleLiteral {}
+
+    private interface SubLiteral extends Literal {}
+
+    private static class SubLiteralImpl implements SubLiteral {
+        @Override
+        public IRI getDatatype() {
+            return null;
+        }
+
+        @Override
+        public String getLabel() {
+            return null;
+        }
+
+        @Override
+        public Optional<String> getLanguage() {
+            return null;
+        }
+
+        @Override
+        public boolean booleanValue() {
+            return false;
+        }
+
+        @Override
+        public byte byteValue() {
+            return 0;
+        }
+
+        @Override
+        public OffsetDateTime dateTimeValue() {
+            return null;
+        }
+
+        @Override
+        public double doubleValue() {
+            return 0;
+        }
+
+        @Override
+        public float floatValue() {
+            return 0;
+        }
+
+        @Override
+        public int intValue() {
+            return 0;
+        }
+
+        @Override
+        public long longValue() {
+            return 0;
+        }
+
+        @Override
+        public short shortValue() {
+            return 0;
+        }
+
+        @Override
+        public String stringValue() {
+            return null;
+        }
+    }
+
+    private static class SubLiteralImplExt extends SubLiteralImpl {}
 }
