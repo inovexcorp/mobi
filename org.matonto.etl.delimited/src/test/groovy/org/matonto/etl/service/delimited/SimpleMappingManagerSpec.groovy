@@ -30,12 +30,15 @@ import org.matonto.ontologies.rdfs.Resource
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
+import org.matonto.rdf.core.utils.Values
 import org.matonto.rdf.orm.conversion.impl.*
 import org.matonto.rdf.orm.impl.ThingFactory
 import org.matonto.repository.api.Repository
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.config.RepositoryConfig
 import org.matonto.vocabularies.xsd.XSD
+import org.openrdf.rio.RDFFormat
+import org.openrdf.rio.Rio
 import spock.lang.Specification
 
 class SimpleMappingManagerSpec extends Specification {
@@ -175,6 +178,9 @@ class SimpleMappingManagerSpec extends Specification {
 
 //    def "Create a Mapping using a valid Model"() {
 //        setup:
+//        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader().getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
+//        def mapping = service.createMapping()
+//
 //        SimpleMapping mapping = new SimpleMapping(model, vf, mf);
 //        SimpleMapping versionedMapping = new SimpleMapping(versionedModel, vf, mf);
 //
@@ -185,56 +191,61 @@ class SimpleMappingManagerSpec extends Specification {
 //        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
 //                .build());
 //    }
-//
-//    def "Create a Mapping using a valid File"() {
-//        setup:
-//        SimpleMapping mapping = new SimpleMapping(new ClassPathResource("newestMapping.jsonld").getFile(), vf, mf);
-//        SimpleMapping versionedMapping = new SimpleMapping(new ClassPathResource("newestVersionedMapping.jsonld")
-//                .getFile(), vf, mf);
-//
-//        expect:
-//        mapping.asModel().equals(model);
-//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
-//        versionedMapping.asModel().equals(versionedModel);
-//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
-//                .build());
-//    }
-//
-//    def "Create a Mapping using a valid InputStream"() {
-//        setup:
-//        SimpleMapping mapping = new SimpleMapping(new ClassPathResource("newestMapping.jsonld").getInputStream(),
-//                RDFFormat.JSONLD, vf, mf);
-//        SimpleMapping versionedMapping = new SimpleMapping(new ClassPathResource("newestVersionedMapping.jsonld")
-//                .getInputStream(), RDFFormat.JSONLD, vf, mf);
-//
-//        expect:
-//        mapping.asModel().equals(model);
-//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
-//        versionedMapping.asModel().equals(versionedModel);
-//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
-//                .build());
-//    }
-//
-//    def "Create a Mapping using a valid JSON-LD String"() {
-//        setup:
-//        SimpleMapping mapping = new SimpleMapping(new ClassPathResource("newestMapping.jsonld").getFile()
-//                .getText("UTF-8"), vf, mf);
-//        SimpleMapping versionedMapping = new SimpleMapping(new ClassPathResource("newestVersionedMapping.jsonld")
-//                .getFile().getText("UTF-8"), vf, mf);
-//
-//        expect:
-//        mapping.asModel().equals(model);
-//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
-//        versionedMapping.asModel().equals(versionedModel);
-//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
-//                .build());
-//    }
-//
-//    def "Throw an exception when Mapping is invalid"() {
-//        when:
-//        SimpleMapping mapping = new SimpleMapping(mf.createModel(), vf, mf);
-//
-//        then:
-//        thrown(MatOntoException);
-//    }
+
+    def "Create a Mapping using a valid File"() {
+        setup:
+        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
+        def mapping = service.createMapping(new File(getClass().getClassLoader()
+                .getResource("newestMapping.ttl").getFile()))
+        def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
+        def versionedMapping = service.createMapping(new File(getClass().getClassLoader()
+                .getResource("newestVersionedMapping.jsonld").getFile()))
+
+        expect:
+        mapping.getModel() == model;
+        versionedMapping.getModel() == versionedModel;
+    }
+
+    def "Create a Mapping using a valid InputStream"() {
+        setup:
+        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
+        def mapping = service.createMapping(getClass().getClassLoader()
+                .getResourceAsStream("newestMapping.ttl"), RDFFormat.TURTLE)
+        def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
+        def versionedMapping = service.createMapping(getClass().getClassLoader()
+                .getResourceAsStream("newestVersionedMapping.jsonld"), RDFFormat.JSONLD)
+
+        expect:
+        mapping.getModel() == model;
+        versionedMapping.getModel() == versionedModel;
+    }
+
+    def "Create a Mapping using a valid JSON-LD String"() {
+        setup:
+        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestMapping.jsonld"), "", RDFFormat.JSONLD))
+        def mapping = service.createMapping(new File(getClass().getClassLoader()
+                .getResource("newestMapping.jsonld").getFile()).getText("UTF-8"))
+        def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+                .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
+        def versionedMapping = service.createMapping(new File(getClass().getClassLoader()
+                .getResource("newestVersionedMapping.jsonld").getFile()).getText("UTF-8"))
+
+        expect:
+        mapping.getModel() == model;
+        versionedMapping.getModel() == versionedModel;
+    }
+
+    def "Throw an exception when Mapping is invalid"() {
+        when:
+        service.createMapping(getClass().getClassLoader()
+                .getResourceAsStream("testInvalidMapping.ttl"), RDFFormat.TURTLE)
+
+        then:
+        thrown(MatOntoException);
+    }
 }

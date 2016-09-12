@@ -151,7 +151,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));//manager.createMappingIRI().stringValue()));
+        Assert.assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
     }
 
     @Test
