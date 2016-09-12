@@ -31,7 +31,7 @@
             <a ng-click="dvm.state.displayCancelConfirm = true">Cancel</a>
         </form>
         <div class="mapping-title">
-            <h1>{{dvm.mm.getMappingName(dvm.mm.mapping.id)}} <button type="button" class="btn btn-link" ng-click="dvm.state.editMappingName = true"><i class="fa fa-pencil"></i></button></h1>
+            <h1>{{dvm.om.getBeautifulIRI(dvm.mm.mapping.id)}} <button type="button" class="btn btn-link" ng-click="dvm.state.editMappingName = true"><i class="fa fa-pencil"></i></button></h1>
         </div>
     </div>
     <div class="edit-mapping">

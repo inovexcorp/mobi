@@ -49,9 +49,9 @@
          */
         .directive('mappingList', mappingList);
 
-        mappingList.$inject = ['mappingManagerService', 'mapperStateService'];
+        mappingList.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
 
-        function mappingList(mappingManagerService, mapperStateService) {
+        function mappingList(mappingManagerService, mapperStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -62,6 +62,7 @@
                     var openedMappings = [];
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.onClick = function(id) {
                         var openedMapping = _.find(openedMappings, {id: id});

@@ -48,9 +48,9 @@
          */
         .directive('mappingNameOverlay', mappingNameOverlay);
 
-        mappingNameOverlay.$inject = ['mappingManagerService', 'mapperStateService']
+        mappingNameOverlay.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService']
 
-        function mappingNameOverlay(mappingManagerService, mapperStateService) {
+        function mappingNameOverlay(mappingManagerService, mapperStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -60,7 +60,8 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.newName = dvm.mm.getMappingName(_.get(dvm.mm.mapping, 'id', ''));
+                    dvm.om = ontologyManagerService;
+                    dvm.newName = dvm.om.getBeautifulIRI(_.get(dvm.mm.mapping, 'id', ''));
 
                     dvm.set = function() {
                         var iri = dvm.mm.getMappingId(dvm.newName);

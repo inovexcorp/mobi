@@ -219,21 +219,6 @@
 
             /**
              * @ngdoc method
-             * @name getMappingName
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description 
-             * Retrieves the local name of a mapping id for display purposes.
-             * 
-             * @param {string} mappingId The id of a mapping
-             * @return {string} The local name of a mapping
-             */
-            self.getMappingName = function(mappingId) {
-                return typeof mappingId === 'string' ? mappingId.replace(prefixes.mappings, '') : '';
-            }
-
-            /**
-             * @ngdoc method
              * @name getMappingId
              * @methodOf mappingManager.service:mappingManagerService
              *
