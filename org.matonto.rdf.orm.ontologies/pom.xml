@@ -61,7 +61,10 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto RDF ORM Ontologies</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>org.matonto.ontologies.rdfs</Export-Package>
+                        <Export-Package>
+                            org.matonto.ontologies.rdfs,
+                            org.matonto.vocabularies.xsd
+                        </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

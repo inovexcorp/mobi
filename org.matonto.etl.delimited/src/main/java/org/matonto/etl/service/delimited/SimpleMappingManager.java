@@ -43,6 +43,7 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.repository.api.Repository;
@@ -50,6 +51,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.config.RepositoryConsumerConfig;
 import org.matonto.repository.exception.RepositoryException;
+import org.matonto.vocabularies.xsd.XSD;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
@@ -67,7 +69,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 @Component(
         name = SimpleMappingManager.COMPONENT_NAME,
@@ -79,7 +80,6 @@ public class SimpleMappingManager implements MappingManager {
     private Resource registrySubject;
     private IRI registryPredicate;
     private static final Logger logger = LoggerFactory.getLogger(SimpleMappingManager.class);
-    private static final String DEFAULT_MAPPING_PREFIX = "http://matonto.org/mappings/";
     private ValueFactory factory;
     private ModelFactory modelFactory;
     private Repository repository;
@@ -167,8 +167,10 @@ public class SimpleMappingManager implements MappingManager {
         Resource mappingResource = id.getMappingIRI().isPresent() ? id.getMappingIRI().get() : id.getMappingIdentifier();
         Mapping mapping = mappingFactory.createNew(mappingResource);
 
-        if (id.getVersionIRI().isPresent()) {
-            mapping.setVersionIRI(mappingFactory.createNew(id.getVersionIRI().get(), mapping.getModel()));
+        Optional<IRI> versionIRI = id.getVersionIRI();
+        if (versionIRI.isPresent()) {
+            Value version = factory.createLiteral(versionIRI.get().stringValue(), factory.createIRI(XSD.ANYURI));
+            mapping.setVersionIRI(version);
         }
 
         return new SimpleMappingWrapper(id, mapping, Collections.emptySet(), mapping.getModel());
@@ -264,15 +266,6 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     /**
-     * Generates a UUID.
-     * 
-     * @return a UUID string
-     */
-    private String generateUuid() {
-        return UUID.randomUUID().toString();
-    }
-
-    /**
      * Closes the passed connection to the repository.
      * 
      * @param conn a connection to the repository for mappings
@@ -305,13 +298,13 @@ public class SimpleMappingManager implements MappingManager {
         }
 
         Mapping mapping = mappings.iterator().next();
-        Optional<Mapping> versionIriOpt = mapping.getVersionIRI();
+        Optional<Value> versionIriOpt = mapping.getVersionIRI();
 
         SimpleMappingId.Builder builder = new SimpleMappingId.Builder(factory)
                 .mappingIRI(factory.createIRI(mapping.getResource().stringValue()));
 
         if (versionIriOpt.isPresent()) {
-            builder.versionIRI(factory.createIRI(versionIriOpt.get().getResource().stringValue()));
+            builder.versionIRI(factory.createIRI(versionIriOpt.get().stringValue()));
         }
 
         Collection<ClassMapping> classMappings = classMappingFactory.getAllExisting(model);

@@ -25,6 +25,7 @@
 ###  http://matonto.org/ontologies/delimited#dataProperty
 
 :dataProperty a owl:ObjectProperty ;
+    rdfs:subPropertyOf :propertyMapping ;
 	rdfs:domain :ClassMapping ;
 	rdfs:range :DataMapping ;
     rdfs:comment "A data property mapping for a ClassMapping." .
@@ -46,6 +47,7 @@
 ###  http://matonto.org/ontologies/delimited#objectProperty
 
 :objectProperty a owl:ObjectProperty ;
+    rdfs:subPropertyOf :propertyMapping ;
 	rdfs:domain :ClassMapping ;
 	rdfs:range :ObjectMapping ;
 	rdfs:comment "An object property mapping for a ClassMapping." .
@@ -66,7 +68,7 @@
 
 :versionIRI a owl:ObjectProperty, owl:FunctionalProperty ;
         rdfs:domain :Mapping ;
-        rdfs:range :Mapping ;
+        rdfs:range xsd:anyURI ;
         rdfs:comment "The IRI of the current version of a Mapping." .
 
 #################################################################
@@ -124,7 +126,8 @@
 
 :separator a owl:DatatypeProperty ;
 	rdfs:domain :Mapping ;
-	rdfs:range xsd:string .
+	rdfs:range xsd:string ;
+	rdfs:comment "The character used as separator or delimiter between files columns" .
 
 
 #################################################################

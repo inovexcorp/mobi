@@ -54,7 +54,7 @@ class SimpleMappingManagerSpec extends Specification {
         mapping.getModel() >> model
     }
 
-    def "storeMapping throws an exception when ontology exists"() {
+    def "storeMapping throws an exception when mapping exists"() {
         setup:
         def manager = [
                 mappingExists: { o -> return true }
