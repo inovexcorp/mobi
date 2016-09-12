@@ -66,7 +66,7 @@ import static org.mockito.Mockito.when;
 
 public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRestImpl rest;
-    private static final String MAPPING_IRI = "http://test.org";
+    private static final String MAPPING_IRI = "http://test.org/test";
 
     private ValueFactory factory = SimpleValueFactory.getInstance();
 
@@ -201,7 +201,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getMappingTest() {
-        Response response = target().path("mappings/" + encode(factory.createIRI("http://test.org/test").toString()))
+        Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
             .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         Assert.assertEquals(200, response.getStatus());
         try {
@@ -217,7 +217,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void downloadMappingTest() {
-        Response response = target().path("mappings/" + encode(factory.createIRI("http://test.org/test").toString()))
+        Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         Assert.assertEquals(200, response.getStatus());
 
@@ -228,7 +228,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void deleteMappingTest() {
-        Response response = target().path("mappings/" + encode(factory.createIRI("http://test.org/test").toString()))
+        Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
                 .request().delete();
         Assert.assertEquals(200, response.getStatus());
         try {

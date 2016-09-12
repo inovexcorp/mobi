@@ -86,8 +86,8 @@ public class EtlIT extends KarafTestSupport {
         Model expected = Rio.parse(getBundleEntry(thisBundleContext, "/testOutput.ttl"), "", RDFFormat.TURTLE);
         Model actual = Rio.parse(new FileInputStream(outputFile), "", RDFFormat.TURTLE);
 
-        // TODO: I get around the UUID issue by using the formula in the IRI. We need to support IRI isomorphism the same
-        // way bnode isomorphism is handled.
+        // TODO: I get around the UUID issue by setting the localname to values in the cells. We need to support IRI
+        // isomorphism the same way bnode isomorphism is handled.
         assertTrue(Models.isomorphic(expected, actual));
     }
 }
