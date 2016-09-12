@@ -59,8 +59,8 @@
                 replace: true,
                 scope: {},
                 bindToController: {
-                    classObj: '=',
-                    ontologies: '='
+                    classObj: '<',
+                    ontologies: '<'
                 },
                 controller: function() {
                     var dvm = this;
@@ -83,7 +83,7 @@
                         if (!dvm.full) {
                             props = _.take(props, dvm.numPropPreview);
                         }
-                        return _.map(props, prop => dvm.om.getEntityName(prop));
+                        return _.map(props, prop => dvm.om.getBeautifulIRI(prop['@id']));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classPreview/classPreview.html'

@@ -207,6 +207,7 @@ function mockMappingManager() {
             });
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
             this.setSourceOntology = jasmine.createSpy('setSourceOntology').and.returnValue([]);
+            this.copyMapping = jasmine.createSpy('copyMapping').and.returnValue([]);
             this.addClass = jasmine.createSpy('addClass').and.returnValue([]);
             this.editIriTemplate = jasmine.createSpy('editIriTemplate').and.returnValue([]);
             this.addDataProp = jasmine.createSpy('addDataProp').and.returnValue([]);
@@ -233,6 +234,7 @@ function mockMappingManager() {
             this.getAllDataMappings = jasmine.createSpy('getAllDataMappings').and.returnValue([]);
             this.getDataMappingFromClass = jasmine.createSpy('getDataMappingFromClass').and.returnValue({});
             this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
+            this.getBaseClass = jasmine.createSpy('getBaseClass').and.returnValue({});
         });
     });
 }
@@ -267,6 +269,15 @@ function mockDelimitedManager() {
 function mockMapperState() {
     module(function($provide) {
         $provide.service('mapperStateService', function() {
+            this.selectMappingStep = 0;
+            this.mappingSearchString = '';
+            this.displayCreateMapping = false;
+            this.displayDownloadMapping = false;
+            this.displayMappingConfig = false;
+            this.displayPropMappingOverlay = false;
+            this.displayDeletePropConfirm = false;
+            this.displayDeleteClassConfirm = false;
+
             this.fileUploadStep = 1;
             this.ontologySelectStep = 2;
             this.startingClassSelectStep = 3;

@@ -221,7 +221,7 @@ describe('Mapping Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('iri-template-overlay').length).toBe(0);
         });
-        it('depending on whether the soruce ontology is invalid', function() {
+        it('depending on whether the source ontology is invalid', function() {
             mapperStateSvc.invalidOntology = true;
             scope.$digest();
             expect(this.element.find('invalid-ontology-overlay').length).toBe(1);

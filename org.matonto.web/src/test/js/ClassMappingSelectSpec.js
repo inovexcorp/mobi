@@ -20,42 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Prop Select directive', function() {
+describe('Class Mapping Select directive', function() {
     var $compile,
         scope,
         ontologyManagerSvc,
+        mappingManagerSvc,
         controller;
 
     beforeEach(function() {
         module('templates');
-        module('propSelect');
+        module('classMappingSelect');
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
+        mockMappingManager();
 
-        module(function($provide) {
-            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
-            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
-        });
-
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
         });
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.props = [];
-            scope.selectedProp = '';
+            scope.bindModel = '';
             scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
+            this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
             scope.$digest();
-        });
-        it('props should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.props = [{}];
-            scope.$digest();
-            expect(scope.props).not.toEqual([{}]);
         });
         it('onChange should be called in the parent scope', function() {
             var isolatedScope = this.element.isolateScope();
@@ -65,26 +58,25 @@ describe('Prop Select directive', function() {
     });
     describe('controller bound variable', function() {
         beforeEach(function() {
-            scope.props = [];
-            scope.selectedProp = '';
+            scope.bindModel = '';
             scope.onChange = jasmine.createSpy('onChange');
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
+            this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
             scope.$digest();
-            controller = this.element.controller('propSelect');
+            controller = this.element.controller('classMappingSelect');
         });
         it('selectedProp should be two way bound', function() {
-            controller.selectedProp = 'test';
+            controller.bindModel = 'test';
             scope.$digest();
-            expect(scope.selectedProp).toEqual('test');
+            expect(scope.bindModel).toEqual('test');
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
+            this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('prop-select')).toBe(true);
+            expect(this.element.hasClass('class-mapping-select')).toBe(true);
         });
         it('with a ui-select', function() {
             expect(this.element.find('ui-select').length).toBe(1);

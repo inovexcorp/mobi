@@ -65,10 +65,8 @@ describe('Mapper State service', function() {
         mapperStateSvc.createMapping();
         expect(mapperStateSvc.editMapping).toBe(true);
         expect(mapperStateSvc.newMapping).toBe(true);
-        // expect(mapperStateSvc.step).toBe(0);
         expect(mappingManagerSvc.mapping).toEqual({jsonld: [], name: ''});
         expect(mappingManagerSvc.sourceOntologies).toEqual([]);
-        // expect(mapperStateSvc.editMappingName).toBe(true);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
     });
     it('should get the cached source ontology values', function() {
@@ -122,7 +120,7 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availableColumns).toContain('test1');
         expect(mapperStateSvc.availableColumns).toContain('test2');
     });
-    it('should update availableProps for a specific class mapping', function() {
+    /*it('should update availableProps for a specific class mapping', function() {
         var props = [{}];
         spyOn(mapperStateSvc, 'getAvailableProps').and.returnValue([{}]);
         mapperStateSvc.updateAvailableProps('class');
@@ -159,19 +157,5 @@ describe('Mapper State service', function() {
         expect(result).toContain(classProps[1]);
         expect(result).not.toContain(noDomainProps[0]);
         expect(result).toContain(noDomainProps[1]);
-    });
-    it('should change the mapping name if editing a previous mapping', function() {
-        var name = mappingManagerSvc.mapping.name;
-        mapperStateSvc.newMapping = true;
-        mapperStateSvc.changedMapping();
-        expect(mappingManagerSvc.mapping.name).toBe(name);
-
-        mapperStateSvc.newMapping = false;
-        mapperStateSvc.changedMapping();
-        expect(mappingManagerSvc.mapping.name).not.toBe(name);
-
-        var newName = mappingManagerSvc.mapping.name;
-        mapperStateSvc.changedMapping();
-        expect(mappingManagerSvc.mapping.name).toBe(newName);
-    });
+    });*/
 });

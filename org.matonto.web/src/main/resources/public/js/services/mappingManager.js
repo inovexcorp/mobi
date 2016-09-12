@@ -264,7 +264,7 @@
              * 
              * @returns {Object[]} A new mapping array
              */
-            self.createNewMapping = function() {
+            self.createNewMapping = function(iri) {
                 var jsonld = [];
                 var documentEntity = {
                     '@id': prefixes.dataDelim + 'Document',
@@ -298,14 +298,27 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description 
-             * Creates a copy of a mapping using the passwed new id.
+             * Creates a copy of a mapping using the passed new id.
              * 
              * @param {Object[]} mapping A mapping JSON-LD array
              * @param {string} newId The id of the new mapping
              * @return {Object[]} A copy of the passed mapping with the new id
              */
             self.copyMapping = function(mapping, newId) {
-                return angular.copy(mapping);
+                var newMapping = angular.copy(mapping);
+                var idTransforms = {};
+                _.forEach(self.getAllClassMappings(newMapping), classMapping => {
+                    _.set(idTransforms, encodeURIComponent(classMapping['@id']), prefixes.dataDelim + uuid.v4());
+                    classMapping['@id'] = _.get(idTransforms, encodeURIComponent(classMapping['@id']));
+                });
+                _.forEach(_.concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
+                    if (self.isObjectMapping(propMapping)) {
+                        propMapping[prefixes.delim + 'classMapping'][0]['@id'] = _.get(idTransforms, encodeURIComponent(propMapping[prefixes.delim + 'classMapping'][0]['@id']));
+                    }
+                    _.set(idTransforms, encodeURIComponent(propMapping['@id']), prefixes.dataDelim + uuid.v4());
+                    propMapping['@id'] = _.get(idTransforms, encodeURIComponent(propMapping['@id']));
+                });
+                return newMapping;
             }
             /**
              * @ngdoc method

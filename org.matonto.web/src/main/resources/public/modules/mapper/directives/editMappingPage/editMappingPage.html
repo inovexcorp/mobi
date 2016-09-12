@@ -1,0 +1,58 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="edit-mapping-page row">
+	<div class="col-xs-5">
+		<mapping-title></mapping-title>
+		<tabset class="edit-tabs">
+			<tab heading="Edit" active="true">
+				<block>
+					<block-content class="padding">
+						<edit-mapping-form></edit-mapping-form>
+					</block-content>
+					<block-footer>
+						<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save</button>
+						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.save(true)" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save &amp; Run</button>
+					</block-footer>
+				</block>
+			</tab>
+			<tab heading="Preview">
+				<block>
+					<block-content class="padding">
+						<rdf-preview-form></rdf-preview-form>
+					</block-content>
+					<block-footer>
+						<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save</button>
+						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.save(true)" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save &amp; Run</button>
+					</block-footer>
+				</block>
+			</tab>
+		</tabset>
+	</div>
+	<div class="col-xs-7">
+		<block>
+			<block-content></block-content>
+		</block>
+	</div>
+</div>

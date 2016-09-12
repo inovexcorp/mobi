@@ -62,7 +62,7 @@
                 replace: true,
                 scope: {},
                 bindToController: {
-                    ontology: '='
+                    ontology: '<'
                 },
                 controller: function() {
                     var dvm = this;

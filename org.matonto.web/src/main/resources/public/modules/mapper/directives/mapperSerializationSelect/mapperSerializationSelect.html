@@ -20,13 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="prop-select">
-    <ui-select ng-model="dvm.selectedProp" on-select="onChange()" ng-disabled="isDisabledWhen">
-        <ui-select-match placeholder="Select a property">
-            <span title="{{$select.selected['@id']}}">{{dvm.om.getBeautifulIRI($select.selected['@id'])}}</span>
-        </ui-select-match>
-        <ui-select-choices repeat="prop in props track by prop['@id'] | filter:$select.search">
-            <div title="{{prop['@id']}}" ng-bind-html="dvm.om.getBeautifulIRI(prop['@id']) | highlight:$select.search | trusted"></div>
-        </ui-select-choices>
-    </ui-select>
-</div>
+<select ng-model="format" class="mapper-serialization-select form-control">
+    <option ng-repeat="option in dvm.options" value="{{option.value}}">{{option.name}}</option>
+</select>

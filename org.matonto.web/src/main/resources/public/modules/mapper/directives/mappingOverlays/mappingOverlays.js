@@ -92,9 +92,11 @@
                         dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld), '@id', '');
                     }
                     dvm.deleteProp = function() {
+                        var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.selectedPropMappingId);
+                        var ontology = dvm.mm.findSourceOntologyWithProp(propId);
                         var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                        dvm.state.getAvailableProps(classMapping['@id']).push({'@id': propId, ontologyId: ontology.id});
                         dvm.mm.mapping.jsonld = dvm.mm.removeProp(dvm.mm.mapping.jsonld, classMapping['@id'], dvm.state.selectedPropMappingId);
-                        dvm.state.setAvailableProps(classMapping['@id']);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                     }

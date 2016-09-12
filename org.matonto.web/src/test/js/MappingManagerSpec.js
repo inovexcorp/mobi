@@ -27,7 +27,8 @@ describe('Mapping Manager service', function() {
         uuidSvc,
         windowSvc,
         prefixes,
-        $q;
+        $q,
+        $timeout;
 
     beforeEach(function() {
         module('mappingManager');
@@ -44,7 +45,7 @@ describe('Mapping Manager service', function() {
             });
         });
 
-        inject(function(mappingManagerService, _ontologyManagerService_, _uuid_, _$httpBackend_, _$window_, _prefixes_, _$q_) {
+        inject(function(mappingManagerService, _ontologyManagerService_, _uuid_, _$httpBackend_, _$window_, _prefixes_, _$q_, _$timeout_) {
             mappingManagerSvc = mappingManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
             uuidSvc = _uuid_;
@@ -52,6 +53,7 @@ describe('Mapping Manager service', function() {
             windowSvc = _$window_;
             prefixes = _prefixes_;
             $q = _$q_;
+            $timeout = _$timeout_;
         });
     });
 
@@ -249,6 +251,30 @@ describe('Mapping Manager service', function() {
         var doc = _.find(result, {'@id': 'Document'});
         expect(doc.sourceOntology).toEqual([{'@id': 'ontology'}]);
     });
+    it('should create a copy of a mapping', function() {
+        var classMapping1 = {'@id': 'class1', 'id': 'class1'};
+        var classMapping2 = {'@id': 'class2', 'id': 'class2'};
+        var objectMapping = {'@id': 'object', 'id': 'object'};
+        objectMapping[prefixes.delim + 'classMapping'] = [angular.copy(classMapping2)];
+        var dataMapping = {'@id': 'data', 'id': 'data'};
+        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping1, classMapping2]);
+        spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([objectMapping]);
+        spyOn(mappingManagerSvc, 'getAllDataMappings').and.returnValue([dataMapping]);
+        spyOn(mappingManagerSvc, 'isObjectMapping').and.callFake(function(entity) {
+            return entity.id === objectMapping.id;
+        });
+        var changedMapping = [classMapping1, classMapping2, objectMapping, dataMapping];
+        var mapping = angular.copy(changedMapping);
+        var result = mappingManagerSvc.copyMapping(mapping);
+        expect(result.length).toBe(mapping.length);
+        _.forEach(changedMapping, entity => {
+            var original = _.find(mapping, {'id': entity.id});
+            expect(original['@id']).not.toBe(entity['@id']);
+            if (_.has(entity, "['" + prefixes.delim + "classMapping']")){
+                expect(entity[prefixes.delim + 'classMapping']).not.toEqual(original[prefixes.delim + 'classMapping']);
+            }
+        });
+    });
     describe('should add a class mapping to a mapping', function() {
         it('unless the class does not exist in the passed ontology', function() {
             ontologyManagerSvc.getEntity.and.returnValue(undefined);
@@ -340,7 +366,7 @@ describe('Mapping Manager service', function() {
             var result = mappingManagerSvc.addObjectProp(this.mapping, [], 'class1', 'propId');
             expect(result).toEqual(this.mapping);
         });
-        it('unless the IRI isnot for an object property', function() {
+        it('unless the IRI is not for an object property', function() {
             ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             var result = mappingManagerSvc.addObjectProp(this.mapping, [], 'class1', 'propId');
             expect(result).toEqual(this.mapping);
@@ -460,7 +486,11 @@ describe('Mapping Manager service', function() {
         var result = mappingManagerSvc.getPropIdByMapping(propMapping);
         expect(result).toBe('prop');
     });
-    it('should get an ontology in the correct structure', function() {
+    describe('should get an ontology in the correct structure', function() {
+        beforeEach(function() {
+            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
+            $httpBackend.flush();
+        });
         it('unless an error occurs', function(done) {
             ontologyManagerSvc.getOntology.and.returnValue($q.reject({statusText: 'Error message'}));
             mappingManagerSvc.getOntology('').then(function() {
@@ -470,6 +500,7 @@ describe('Mapping Manager service', function() {
                 expect(error).toBe('Error message');
                 done();
             });
+            $timeout.flush();
         });
         it('unless something went wrong', function(done) {
             ontologyManagerSvc.getOntology.and.returnValue($q.when({status: 206, statusText: 'Error message'}));
@@ -480,16 +511,18 @@ describe('Mapping Manager service', function() {
                 expect(error).toBe('Error message');
                 done();
             });
+            $timeout.flush();
         });
         it('successfully', function(done) {
             var ontology = {id: '', ontology: []};
-            ontologyManagerSvc.getOntology.and.returnValue($q.when({status: 206, data: ontology}));
+            ontologyManagerSvc.getOntology.and.returnValue($q.when({status: 200, data: ontology}));
             mappingManagerSvc.getOntology('').then(function(response) {
                 expect(typeof response).toBe('object');
                 expect(response.id).toBe(ontology.id);
                 expect(response.entities).toBe(ontology.ontology);
                 done();
             });
+            $timeout.flush();
         });
     });
     it('should get the id of the source ontology of a mapping', function() {
@@ -623,5 +656,15 @@ describe('Mapping Manager service', function() {
     it('should return the title of a property mapping', function() {
         var result = mappingManagerSvc.getPropMappingTitle('class', 'prop');
         expect(typeof result).toBe('string');
+    });
+    it('should get the base class mapping of a mapping', function() {
+        var classMapping1 = {'@id': 'class1'};
+        var classMapping2 = {'@id': 'class2'};
+        var objectMapping = {};
+        objectMapping[prefixes.delim + 'classMapping'] = [classMapping2];
+        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping1, classMapping2]);
+        spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([objectMapping]);
+        var result = mappingManagerSvc.getBaseClass([]);
+        expect(result).toEqual(classMapping1);
     });
 });

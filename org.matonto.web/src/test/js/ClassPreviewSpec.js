@@ -25,7 +25,6 @@ describe('Class Preview directive', function() {
         scope,
         ontologyManagerSvc,
         mapperStateSvc,
-        // mappingManagerSvc,
         controller;
 
     beforeEach(function() {
@@ -33,14 +32,12 @@ describe('Class Preview directive', function() {
         module('classPreview');
         mockPrefixes();
         mockOntologyManager();
-        // mockMappingManager();
         mockMapperState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mapperStateService_/* _mappingManagerService_*/) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            // mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
         });
     });
@@ -53,15 +50,15 @@ describe('Class Preview directive', function() {
             scope.$digest();
             controller = this.element.controller('classPreview');
         });
-        it('classObj should be two way bound', function() {
+        it('classObj should be one way bound', function() {
             controller.classObj = {'@id': ''};
             scope.$digest();
-            expect(scope.classObj).toEqual({'@id': ''});
+            expect(scope.classObj).not.toEqual({'@id': ''});
         });
-        it('ontologies should be two way bound', function() {
+        it('ontologies should be one way bound', function() {
             controller.ontologies = [{}];
             scope.$digest();
-            expect(scope.ontologies).toEqual([{}]); 
+            expect(scope.ontologies).not.toEqual([{}]); 
         });
     });
     describe('controller methods', function() {
@@ -97,14 +94,14 @@ describe('Class Preview directive', function() {
                 var result = controller.getPropList();
                 expect(_.isArray(result)).toBe(true);
                 expect(result.length).toBe(this.properties.length);
-                expect(ontologyManagerSvc.getEntityName.calls.count()).toBe(this.properties.length);
+                expect(ontologyManagerSvc.getBeautifulIRI.calls.count()).toBe(this.properties.length);
             });
             it('if the list is not full', function() {
                 controller.full = false;
                 var result = controller.getPropList();
                 expect(_.isArray(result)).toBe(true);
                 expect(result.length).toBe(controller.numPropPreview);
-                expect(ontologyManagerSvc.getEntityName.calls.count()).toBe(controller.numPropPreview);
+                expect(ontologyManagerSvc.getBeautifulIRI.calls.count()).toBe(controller.numPropPreview);
             });
         });
     });

@@ -133,20 +133,6 @@
             self.availableColumns = [];
             /**
              * @ngdoc property
-             * @name availableProps
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {Object[]}
-             *
-             * @description 
-             * `availableProps` holds an array of property objects from 
-             * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
-             * that haven't been mapped yet in the currently selected 
-             * {@link mappingManager.service:mappingManagerService#mapping mapping} for the current selected
-             * {@link mappingManager.service:mappingManagerService#selectedClassMappingId class mapping}.
-             */
-            self.availableProps = [];
-            /**
-             * @ngdoc property
              * @name availablePropsByClass
              * @propertyOf mapperState.service:mapperStateService
              * @type {Object}
@@ -157,17 +143,6 @@
              * the class mapping still has properties available to map.
              */
             self.availablePropsByClass = {};
-            /**
-             * @ngdoc property
-             * @name openedClasses
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {string[]}
-             *
-             * @description 
-             * `openedClasses` holds an array of class mapping ids indicating which ones should be 
-             * opened in the {@link classList.directive:classList classList}
-             */
-            self.openedClasses = [];
             /**
              * @ngdoc property
              * @name invalidOntology
@@ -204,17 +179,6 @@
             self.displayCancelConfirm = false;
             /**
              * @ngdoc property
-             * @name displayNewMappingConfirm
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `displayNewMappingConfirm` holds a boolean indicating whether or not the create new 
-             * mapping confirm overlay should be shown.
-             */
-            self.displayNewMappingConfirm = false;
-            /**
-             * @ngdoc property
              * @name changeOntology
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
@@ -227,17 +191,6 @@
             self.changeOntology = false;
             /**
              * @ngdoc property
-             * @name displayDeleteEntityConfirm
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `displayDeleteEntityConfirm` holds a boolean indicating whether or not the delete 
-             * entity confirm overlay should be shown.
-             */
-            self.displayDeleteEntityConfirm = false;
-            /**
-             * @ngdoc property
              * @name displayDeleteMappingConfirm
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
@@ -247,18 +200,6 @@
              * mapping confirm overlay should be shown.
              */
             self.displayDeleteMappingConfirm = false;
-            /**
-             * @ngdoc property
-             * @name previewOntology
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `previewOntology` holds a boolean indicating whether or not the 
-             * {@link ontologyPreviewOverlay.directive:ontologyPreviewOverlay ontologyPreviewOverlay}
-             * should be shown.
-             */
-            self.previewOntology = false;
             /**
              * @ngdoc property
              * @name editIriTemplate
@@ -296,17 +237,6 @@
             self.selectedPropMappingId = '';
             /**
              * @ngdoc property
-             * @name selectedProp
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {Object}
-             *
-             * @description 
-             * `selectedProp` holds the property object from {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
-             * of the currently selected property from the currently selected class 
-             */
-            self.selectedProp = undefined;
-            /**
-             * @ngdoc property
              * @name selectedColumn
              * @propertyOf mapperState.service:mapperStateService
              * @type {string}
@@ -325,16 +255,6 @@
              * `newProp` holds a boolean indicating whether or not the a new property is being mapped
              */
             self.newProp = false;
-            /**
-             * @ngdoc property
-             * @name deleteId
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {string}
-             *
-             * @description 
-             * `deleteId` holds a string with the IRI of the mapping entity to be deleted.
-             */
-            self.deleteId = '';
 
             /**
              * @ngdoc method
@@ -352,7 +272,6 @@
                 self.availableColumns = [];
                 self.availableProps = [];
                 originalMappingName = '';
-                self.openedClasses = [];
                 self.availablePropsByClass = {};
             }
             /**
@@ -383,78 +302,13 @@
             self.createMapping = function() {
                 self.editMapping = true;
                 self.newMapping = true;
-                // self.step = 0;
                 mm.mapping = {
                     name: '',
                     jsonld: []
                 };
                 mm.sourceOntologies = [];
-                // self.editMappingName = true;
                 self.resetEdit();
                 self.availablePropsByClass = {};
-            }
-            /**
-             * @ngdoc method
-             * @name cacheSourceOntologies
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description 
-             * Saves the current values of the source ontology id from 
-             * {@link mappingManager.service:mappingManagerService#mapping mapping} and 
-             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
-             */
-            self.cacheSourceOntologies = function() {
-                cachedOntologyId = mm.getSourceOntologyId(mm.mapping.jsonld);
-                cachedSourceOntologies = angular.copy(mm.sourceOntologies);
-            }
-            /**
-             * @ngdoc method
-             * @name clearCachedSourceOntologies
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description 
-             * Clears the saved values of the source ontology id and source ontologies.
-             */
-            self.clearCachedSourceOntologies = function() {
-                cachedOntologyId = '';
-                cachedSourceOntologies = undefined;
-            }
-            /**
-             * @ngdoc method
-             * @name restoreCachedSourceOntologies
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description 
-             * Sets the saved values of the source ontology id and source ontologies back to
-             * {@link mappingManager.service:mappingManagerService#mapping mapping} and 
-             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
-             */
-            self.restoreCachedSourceOntologies = function() {
-                mm.sourceOntologies = angular.copy(cachedSourceOntologies);
-                mm.setSourceOntology(mm.mapping.jsonld, cachedOntologyId);
-                self.clearCachedSourceOntologies();
-            }
-            /**
-             * @ngdoc method
-             * @name getCachedSourceOntologyId
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description 
-             * Gets the saved value of the source ontology id.
-             */
-            self.getCachedSourceOntologyId = function() {
-                return cachedOntologyId;
-            }
-            /**
-             * @ngdoc method
-             * @name getCachedSourceOntologies
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description 
-             * Gets the saved source ontologies.
-             */
-            self.getCachedSourceOntologies = function() {
-                return cachedSourceOntologies;
             }
             /**
              * @ngdoc method
@@ -474,6 +328,7 @@
                     .map(index => _.get(dm.filePreview.headers, index))
                     .value();
             }
+
             /**
              * @ngdoc method
              * @name updateAvailableColumns
@@ -494,21 +349,6 @@
                 }
                 self.availableColumns = _.difference(dm.filePreview.headers, mappedColumns);
             }
-            /**
-             * @ngdoc method
-             * @name updateAvailableProps
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description 
-             * Updates the list of {@link mapperState.service:mapperStateService#availableProps available properties}
-             * for the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping} and
-             * class mapping with the passed id.
-             *
-             * @param {string} classMappingId The id of the class mapping to retrieve the avilable properties of
-             */
-            self.updateAvailableProps = function(classMappingId) {
-                self.availableProps = self.getAvailableProps(classMappingId);
-            }
 
             /**
              * @ngdoc method
@@ -523,7 +363,7 @@
              * false otherwise.
              */
             self.hasAvailableProps = function(classMappingId) {
-                return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), false);
+                return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []).length > 0;
             }
 
             /**
@@ -538,7 +378,10 @@
              * @param {string} classMappingId The id of the class mapping to set the boolean value of
              */
             self.setAvailableProps = function(classMappingId) {
-                _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), self.getAvailableProps(classMappingId).length > 0);
+                var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
+                var classId = mm.getClassIdByMappingId(mm.mapping.jsonld, classMappingId);
+                var props = self.getClassProps(mm.sourceOntologies, classId);
+                _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop['@id']) < 0));
             }
 
             /**
@@ -555,35 +398,18 @@
              * for the class mapping.
              */
             self.getAvailableProps = function(classMappingId) {
-                var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
-                var classId = mm.getClassIdByMappingId(mm.mapping.jsonld, classMappingId);
-                var props = self.getClassProps(mm.sourceOntologies, classId);
-                return _.filter(props, prop => mappedProps.indexOf(prop['@id']) < 0);
+                return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []);
             }
             
             self.getClassProps = function(ontologies, classId) {
                 var props = [];
                 _.forEach(ontologies, ontology => {
-                    var classProps = _.filter(om.getClassProperties(ontology.entities, classId), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
-                    var noDomainProps = _.filter(om.getNoDomainProperties(ontology.entities), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
-                    props = _.union(props, classProps, noDomainProps);
+                    var classProps = _.filter(_.union(om.getClassProperties(ontology.entities, classId), om.getNoDomainProperties(ontology.entities)), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
+                    props = _.union(props, _.map(classProps, prop => {
+                        return {ontologyId: ontology.id, '@id': prop['@id']};
+                    }));
                 });
                 return props;
-            }
-            /**
-             * @ngdoc method
-             * @name changedMapping
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description 
-             * Tests whether the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping}, 
-             * that has just been updated, is a saved mapping and if so, adds a timestamp to the end of the name.
-             */
-            self.changedMapping = function() {
-                if (!self.newMapping && !originalMappingName) {
-                    originalMappingName = mm.mapping.name;
-                    mm.mapping.name = originalMappingName + '_' + Math.floor(Date.now() / 1000);
-                }
             }
         }
 })();

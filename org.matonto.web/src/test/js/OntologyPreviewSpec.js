@@ -46,10 +46,10 @@ describe('Ontology Preview directive', function() {
             scope.$digest();
             controller = this.element.controller('ontologyPreview');
         });
-        it('ontology should be two way bound', function() {
+        it('ontology should be one way bound', function() {
             controller.ontology = {id: ''};
             scope.$digest();
-            expect(scope.ontology).toEqual({id: ''});
+            expect(scope.ontology).not.toEqual({id: ''});
         });
     });
     describe('controller methods', function() {
