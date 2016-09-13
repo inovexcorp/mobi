@@ -66,13 +66,6 @@
             self.editMappingStep = 2;
 
             self.mappingSearchString = '';
-            self.displayCreateMapping = false;
-            self.displayDownloadMapping = false;
-            self.displayMappingConfig = false;
-            self.displayPropMappingOverlay = false;
-            self.displayDeletePropConfirm = false;
-            self.displayDeleteClassConfirm = false;
-
             /**
              * @ngdoc property
              * @name editMapping
@@ -177,18 +170,13 @@
              * overlay should be shown.
              */
             self.displayCancelConfirm = false;
-            /**
-             * @ngdoc property
-             * @name changeOntology
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `changeOntology` holds a boolean indicating whether or not the mapping page is
-             * changing the source ontology for the currently selected 
-             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
-             */
-            self.changeOntology = false;
+
+            self.displayCreateMapping = false;
+            self.displayDownloadMapping = false;
+            self.displayMappingConfig = false;
+            self.displayPropMappingOverlay = false;
+            self.displayDeletePropConfirm = false;
+            self.displayDeleteClassConfirm = false;
             /**
              * @ngdoc property
              * @name displayDeleteMappingConfirm
@@ -212,7 +200,6 @@
              * shown.
              */
             self.editIriTemplate = false;
-
             /**
              * @ngdoc property
              * @name selectedClassMappingId
@@ -235,16 +222,6 @@
              * property mapping.
              */
             self.selectedPropMappingId = '';
-            /**
-             * @ngdoc property
-             * @name selectedColumn
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {string}
-             *
-             * @description 
-             * `selectedColumn` holds a string with the header of the currently selected column
-             */
-            self.selectedColumn = '';
             /**
              * @ngdoc property
              * @name newProp
@@ -285,8 +262,6 @@
             self.resetEdit = function() {
                 self.selectedClassMappingId = '';
                 self.selectedPropMappingId = '';
-                self.selectedProp = undefined;
-                self.selectedColumn = '';
                 self.newProp = false;
             }
             /**
@@ -316,17 +291,13 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description 
-             * Finds the column headers matching all of the column indexes that haven't
-             * been mapped to data mappings yet in the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping}.
+             * Finds all of the column indexes that haven't been mapped to data mappings yet in the currently selected 
+             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
              * 
-             * @return {string[]} an array of header names of columns that haven't been 
-             * mapped yet
+             * @return {number[]} an array of column indexes that haven't been mapped yet
              */
             self.getMappedColumns = function() {
-                return _.chain(mm.getAllDataMappings(mm.mapping.jsonld))
-                    .map(dataMapping => parseInt(_.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'), 10))
-                    .map(index => _.get(dm.filePreview.headers, index))
-                    .value();
+                return _.map(mm.getAllDataMappings(mm.mapping.jsonld), dataMapping => _.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'));
             }
 
             /**
@@ -344,10 +315,10 @@
                 var mappedColumns = self.getMappedColumns();
                 if (self.selectedPropMappingId) {
                     var propMapping = _.find(mm.mapping.jsonld, {'@id': self.selectedPropMappingId});
-                    var index = parseInt(_.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'), 10);
-                    _.pull(mappedColumns, dm.filePreview.headers[index]);
+                    var index = _.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '-1');
+                    _.pull(mappedColumns, index);
                 }
-                self.availableColumns = _.difference(dm.filePreview.headers, mappedColumns);
+                self.availableColumns = _.difference(_.map(dm.filePreview.headers, (header, idx) => _.toString(idx)), mappedColumns);
             }
 
             /**
@@ -364,6 +335,10 @@
              */
             self.hasAvailableProps = function(classMappingId) {
                 return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []).length > 0;
+            }
+
+            self.removeAvailableProps = function(classMappingId) {
+                return _.unset(self.availablePropsByClass, encodeURIComponent(classMappingId));
             }
 
             /**

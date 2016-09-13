@@ -69,12 +69,6 @@
                     dvm.numPropPreview = 5;
                     dvm.full = false;
 
-                    dvm.createTitle = function() {
-                        return dvm.om.getEntityName(dvm.classObj);
-                    }
-                    dvm.createDescription = function() {
-                        return _.get(dvm.classObj, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.classObj, "['" + prefixes.dc + "description'][0]['@value']", ''));
-                    }
                     dvm.getProps = function() {
                         return dvm.state.getClassProps(dvm.ontologies, dvm.classObj['@id']);
                     }

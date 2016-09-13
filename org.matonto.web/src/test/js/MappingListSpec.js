@@ -95,6 +95,16 @@ describe('Mapping List directive', function() {
             scope.$digest();
             expect(mappingName.hasClass('active')).toBe(true);
         });
+        it('depending on the mapping search string', function() {
+            mappingManagerSvc.previousMappingNames = ['test1', 'test2'];
+            mapperStateSvc.mappingSearchString = 'test1';
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(1);
+
+            mapperStateSvc.mappingSearchString = 'test12';
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(0);
+        });
     });
     it('should call onClick when a mapping name is clicked', function() {
         mappingManagerSvc.previousMappingNames = ['test1'];

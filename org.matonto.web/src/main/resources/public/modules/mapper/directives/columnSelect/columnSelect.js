@@ -48,18 +48,27 @@
          */
         .directive('columnSelect', columnSelect);
 
-        function columnSelect() {
+        columnSelect.$inject = ['delimitedManagerService'];
+
+        function columnSelect(delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    columns: '='
+                    columns: '<'
                 },
                 bindToController: {
                     selectedColumn: '='
                 },
-                controller: angular.noop,
+                controller: function() {
+                    var dvm = this;
+                    dvm.dm = delimitedManagerService;
+
+                    dvm.getName = function(index) {
+                        return _.get(dvm.dm.filePreview.headers, parseInt(index, 10), '');
+                    }
+                },
                 templateUrl: 'modules/mapper/directives/columnSelect/columnSelect.html'
             }
         }

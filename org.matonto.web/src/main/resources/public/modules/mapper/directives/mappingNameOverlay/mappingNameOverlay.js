@@ -63,7 +63,7 @@
                     dvm.newName = _.get(dvm.mm.mapping, 'name', '');
 
                     dvm.set = function() {
-                        if (dvm.state.step === 0) {
+                        if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.step = dvm.state.fileUploadStep;
                             dvm.mm.mapping.jsonld = dvm.mm.createNewMapping();
                         }
@@ -71,7 +71,7 @@
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {
-                        if (dvm.state.step === 0) {
+                        if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.editMapping = false;
                             dvm.state.newMapping = false;
                             dvm.mm.mapping = undefined;

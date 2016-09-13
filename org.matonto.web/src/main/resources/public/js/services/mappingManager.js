@@ -396,7 +396,7 @@
              * @param {Object[]} ontology The ontology array to search for the property in
              * @param {string} classMappingId The id of the class mapping to add the data property mapping to
              * @param {string} propId The id of the data property in the ontology
-             * @param {number} columnIndex The column index to set the data property mapping's `columnIndex 
+             * @param {number} columnIndex The column index to set the data property mapping's `columnIndex` 
              * property to
              * @returns {Object[]} The edited mapping array
              */
@@ -405,26 +405,18 @@
                 // Check if class mapping exists and the property exists in the ontology
                 var propObj = ontologyManagerService.getEntity(ontology, propId);
                 if (entityExists(newMapping, classMappingId) && propObj && ontologyManagerService.isDataTypeProperty(propObj)) {
-                    var dataEntity = self.getDataMappingFromClass(newMapping, classMappingId, propId);
-                    // If the data property and mapping already exist, update the column index
-                    if (dataEntity) {
-                        dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
-                        _.remove(newMapping, {'@id': dataEntity['@id']});
-                    } else {
-                        // Add new data mapping id to data properties of class mapping
-                        var dataEntity = {
-                            '@id': prefixes.dataDelim + uuid.v4()
-                        };
-                        var classMapping = getEntityById(newMapping, classMappingId);
-                        // Sets the dataProperty key if not already present
-                        classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
-                        classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
-                        // Create data mapping
-                        dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
-                        dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
-                        dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                    }
-                    // Add/update data mapping
+                    // Add new data mapping id to data properties of class mapping
+                    var dataEntity = {
+                        '@id': prefixes.dataDelim + uuid.v4()
+                    };
+                    var classMapping = getEntityById(newMapping, classMappingId);
+                    // Sets the dataProperty key if not already present
+                    classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
+                    classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
+                    // Create data mapping
+                    dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
+                    dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
+                    dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
                     newMapping.push(dataEntity);
                 }
                 return newMapping;

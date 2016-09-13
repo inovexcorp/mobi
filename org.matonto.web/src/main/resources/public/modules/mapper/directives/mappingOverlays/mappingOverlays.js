@@ -87,7 +87,7 @@
                     }
                     dvm.deleteClass = function() {
                         dvm.mm.mapping.jsonld = dvm.mm.removeClass(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId);
-                        _.unset(dvm.state.availablePropsByClass, encodeURIComponent(dvm.state.selectedClassMappingId));
+                        dvm.state.removeAvailableProps(dvm.state.selectedClassMappingId);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld), '@id', '');
                     }

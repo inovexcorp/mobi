@@ -69,15 +69,6 @@ describe('Class Preview directive', function() {
             scope.$digest();
             controller = this.element.controller('classPreview');
         });
-        it('should create a title for classObj', function() {
-            var result = controller.createTitle();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.classObj);
-            expect(typeof result).toBe('string');
-        });
-        it('should create a description of the class', function() {
-            var result = controller.createDescription();
-            expect(typeof result).toBe('string');
-        });
         it('should get properties of the class from the ontologies', function() {
             var result = controller.getProps();
             expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(controller.ontologies, controller.classObj['@id']);

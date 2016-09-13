@@ -82,7 +82,6 @@
 
                     dvm.set = function() {
                         dvm.mm.mapping.jsonld = dvm.mm.editIriTemplate(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
-                        dvm.state.changedMapping();
                     }
                 },
                 templateUrl: 'modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html'

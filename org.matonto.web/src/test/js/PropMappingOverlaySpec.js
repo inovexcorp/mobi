@@ -27,7 +27,6 @@ describe('Prop Mapping Overlay directive', function() {
         mappingManagerSvc,
         mapperStateSvc,
         ontologyManagerSvc,
-        delimitedManagerSvc,
         controller;
 
     beforeEach(function() {
@@ -39,21 +38,19 @@ describe('Prop Mapping Overlay directive', function() {
         mockOntologyManager();
         mockDelimitedManager();
 
-        inject(function(_$compile_, _$rootScope_, _prefixes_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _prefixes_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             prefixes = _prefixes_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            delimitedManagerSvc = _delimitedManagerService_;
         });
     });
 
     describe('should initialize with the correct values', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: ['']};
         })
         it('if a new property mapping is being created', function() {
             mapperStateSvc.newProp = true;
@@ -65,7 +62,7 @@ describe('Prop Mapping Overlay directive', function() {
         });
         it('if a property mapping is being edited', function() {
             var prop = {};
-            var columnIndex = 0;
+            var columnIndex = '0';
             var propMapping = {'@id': 'propMap'};
             propMapping[prefixes.delim + 'columnIndex'] = [{'@value': columnIndex}];
             mappingManagerSvc.mapping.jsonld.push(propMapping);
@@ -76,13 +73,12 @@ describe('Prop Mapping Overlay directive', function() {
             scope.$digest();
             controller = element.controller('propMappingOverlay');
             expect(controller.selectedProp).toEqual(prop);
-            expect(controller.selectedColumn).toBe(delimitedManagerSvc.filePreview.headers[columnIndex]);
+            expect(controller.selectedColumn).toBe(columnIndex);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: ['']};
             this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('propMappingOverlay');
@@ -100,7 +96,7 @@ describe('Prop Mapping Overlay directive', function() {
         describe('should set the correct state for setting the property mapping', function() {
             beforeEach(function() {
                 controller.selectedProp = {'@id': 'prop'};
-                controller.selectedColumn = delimitedManagerSvc.filePreview.headers[0];
+                controller.selectedColumn = '0';
             });
             describe('if a new property mapping is being created', function() {
                 beforeEach(function() {
@@ -143,7 +139,7 @@ describe('Prop Mapping Overlay directive', function() {
             describe('if a property mapping is being edited', function() {
                 beforeEach(function() {
                     mapperStateSvc.newProp = false;
-                    this.originalIndex = 10;
+                    this.originalIndex = '10';
                     this.propMapping = {'@id': 'prop'};
                     this.propMapping[prefixes.delim + 'columnIndex'] = [{'@value': this.originalIndex}];
                     mappingManagerSvc.mapping.jsonld.push(this.propMapping);

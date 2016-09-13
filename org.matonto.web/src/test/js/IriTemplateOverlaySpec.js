@@ -87,7 +87,6 @@ describe('IRI Template Overlay directive', function() {
             controller.set();
             expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId, 
                 controller.beginsWith + controller.then, controller.endsWith.value);
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
