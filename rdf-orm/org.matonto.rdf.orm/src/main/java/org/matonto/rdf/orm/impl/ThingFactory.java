@@ -32,6 +32,8 @@ import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
+import java.util.*;
+
 /**
  * This is the core {@link OrmFactory} for {@link Thing} instances. It provides
  * a useful pattern for working with the {@link Thing} class. It is a OSGi
@@ -81,4 +83,7 @@ public class ThingFactory extends AbstractOrmFactory<Thing> {
     public IRI getTypeIRI() {
         return valueFactory.createIRI(Thing.TYPE);
     }
+
+    @Override
+    public Set<IRI> getParentTypeIRIs(){ return Collections.emptySet(); }
 }
