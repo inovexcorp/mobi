@@ -41,6 +41,8 @@ import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
 import spock.lang.Specification
 
+import java.nio.file.Paths
+
 class SimpleMappingManagerSpec extends Specification {
 
     def repository = Mock(Repository)
@@ -178,18 +180,20 @@ class SimpleMappingManagerSpec extends Specification {
 
     def "Create a Mapping using a valid File"() {
         setup:
-        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
-                .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
-        def mapping = service.createMapping(new File(getClass().getClassLoader()
-                .getResource("newestMapping.ttl").getFile()))
-        def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
-                .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
-        def versionedMapping = service.createMapping(new File(getClass().getClassLoader()
-                .getResource("newestVersionedMapping.jsonld").getFile()))
+        def mappingStream = getClass().getClassLoader().getResourceAsStream("newestMapping.ttl")
+        def mappingFile = Paths.get(getClass().getClassLoader().getResource("newestMapping.ttl").toURI()).toFile()
+        def versionedMappingStream = getClass().getClassLoader().getResourceAsStream("newestVersionedMapping.jsonld")
+        def versionedMappingFile = Paths.get(getClass().getClassLoader().getResource("newestVersionedMapping.jsonld")
+                .toURI()).toFile()
+
+        def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.TURTLE))
+        def actualMapping = service.createMapping(mappingFile)
+        def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+        def actualVersionedMapping = service.createMapping(versionedMappingFile)
 
         expect:
-        mapping.getModel() == model;
-        versionedMapping.getModel() == versionedModel;
+        actualMapping.getModel() == expectedModel;
+        actualVersionedMapping.getModel() == expectedVersionedModel;
     }
 
     def "Create a Mapping using a valid InputStream"() {
@@ -210,18 +214,20 @@ class SimpleMappingManagerSpec extends Specification {
 
     def "Create a Mapping using a valid JSON-LD String"() {
         setup:
-        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
-                .getResourceAsStream("newestMapping.jsonld"), "", RDFFormat.JSONLD))
-        def mapping = service.createMapping(new File(getClass().getClassLoader()
-                .getResource("newestMapping.jsonld").getFile()).getText("UTF-8"))
-        def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
-                .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
-        def versionedMapping = service.createMapping(new File(getClass().getClassLoader()
-                .getResource("newestVersionedMapping.jsonld").getFile()).getText("UTF-8"))
+        def mappingStream = getClass().getClassLoader().getResourceAsStream("newestMapping.jsonld")
+        def mappingFile = Paths.get(getClass().getClassLoader().getResource("newestMapping.jsonld").toURI()).toFile()
+        def versionedMappingStream = getClass().getClassLoader().getResourceAsStream("newestVersionedMapping.jsonld")
+        def versionedMappingFile = Paths.get(getClass().getClassLoader().getResource("newestVersionedMapping.jsonld")
+                .toURI()).toFile()
+
+        def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.JSONLD))
+        def actualMapping = service.createMapping(mappingFile.getText("UTF-8"))
+        def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+        def actualVersionedMapping = service.createMapping(versionedMappingFile.getText("UTF-8"))
 
         expect:
-        mapping.getModel() == model;
-        versionedMapping.getModel() == versionedModel;
+        actualMapping.getModel() == expectedModel;
+        actualVersionedMapping.getModel() == expectedVersionedModel;
     }
 
     def "Throw an exception when Mapping is invalid"() {
