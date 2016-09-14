@@ -172,6 +172,11 @@
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

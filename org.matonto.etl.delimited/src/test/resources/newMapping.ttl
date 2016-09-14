@@ -1,5 +1,5 @@
-@prefix delim-data: <http://matonto.org/data/delimited#> .
-@prefix delim: <http://matonto.org/ontologies/delimited/> .
+@prefix delim-data: <http://matonto.org/data/delimited/> .
+@prefix delim: <http://matonto.org/ontologies/delimited#> .
 @prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
 

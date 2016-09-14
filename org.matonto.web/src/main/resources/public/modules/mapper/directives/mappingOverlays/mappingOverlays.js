@@ -111,7 +111,7 @@
                         dvm.state.deleteId = '';
                     }
                     dvm.deleteMapping = function() {
-                        dvm.mm.deleteMapping(dvm.mm.mapping.name).then(() => {
+                        dvm.mm.deleteMapping(dvm.mm.mapping.id).then(() => {
                             dvm.mm.mapping = undefined;
                             dvm.mm.sourceOntologies = [];
                         }, errorMessage => {

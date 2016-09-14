@@ -46,7 +46,7 @@ describe('Finish Overlay directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: ''};
+            mappingManagerSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<finish-overlay></finish-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('finishOverlay');

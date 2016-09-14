@@ -42,6 +42,7 @@
         <module>itests-support</module>
         <module>itests-web</module>
         <module>itests-platform</module>
+        <module>itests-etl</module>
     </modules>
 
     <properties>

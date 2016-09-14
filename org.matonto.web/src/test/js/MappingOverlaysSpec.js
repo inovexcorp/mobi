@@ -149,11 +149,11 @@ describe('Mapping Overlays directive', function() {
             });
         });
         it('should delete a mapping', function() {
-            var name = 'test';
-            mappingManagerSvc.mapping.name = name;
+            var id = 'test';
+            mappingManagerSvc.mapping.id = id;
             controller.deleteMapping();
             scope.$apply();
-            expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(name);
+            expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(id);
             expect(mappingManagerSvc.mapping).toEqual(undefined);
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         });

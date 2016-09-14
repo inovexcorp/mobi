@@ -1,13 +1,16 @@
 package org.matonto.rdf.orm;
 
 import aQute.bnd.annotation.component.Reference;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -193,7 +196,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
     public T createNew(Resource resource, Model model, ValueFactory valueFactory,
                        ValueConverterRegistry valueConverterRegistry) {
         model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI),
-                valueFactory.createLiteral(typeIriString)));
+                valueFactory.createIRI(typeIriString)));
         return getExisting(resource, model, valueFactory, valueConverterRegistry);
     }
 

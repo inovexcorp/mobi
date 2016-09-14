@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  *
  * @author bdgould
  */
-@Component
+@Component(immediate = true)
 public class DefaultValueConverterRegistry implements ValueConverterRegistry {
 
     /**
@@ -194,7 +194,21 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
     @Override
     @SuppressWarnings("unchecked")
     public <T> ValueConverter<T> getValueConverter(final Class<T> type) {
-        return registry.containsKey(type) ? (ValueConverter<T>) registry.get(type).get(0) : null;
+        ValueConverter<T> result = null;
+        if (registry.containsKey(type)) {
+            result = (ValueConverter<T>) registry.get(type).get(0);
+        } else {
+            // Recurse on directly implemented interfaces
+            for (Class<?> clazz : type.getInterfaces()) {
+                result = (ValueConverter<T>) getValueConverter(clazz);
+                if (result != null) break;
+            }
+            // Recurse on super class
+            if (result == null && type.getSuperclass() !=null) {
+                result = (ValueConverter<T>) getValueConverter(type.getSuperclass());
+            }
+        }
+        return result;
     }
 
     /**

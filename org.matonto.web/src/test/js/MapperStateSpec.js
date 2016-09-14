@@ -38,7 +38,7 @@ describe('Mapper State service', function() {
             delimitedManagerSvc = _delimitedManagerService_;
         });
 
-        mappingManagerSvc.mapping = {jsonld: [], name: 'mapping'};
+        mappingManagerSvc.mapping = {jsonld: [], id: 'mapping'};
     });
 
     it('should initialize important variables', function() {
@@ -66,7 +66,7 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.editMapping).toBe(true);
         expect(mapperStateSvc.newMapping).toBe(true);
         expect(mapperStateSvc.step).toBe(0);
-        expect(mappingManagerSvc.mapping).toEqual({jsonld: [], name: ''});
+        expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: ''});
         expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.editMappingName).toBe(true);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -160,18 +160,18 @@ describe('Mapper State service', function() {
         expect(result).not.toContain(noDomainProps[0]);
         expect(result).toContain(noDomainProps[1]);
     });
-    it('should change the mapping name if editing a previous mapping', function() {
-        var name = mappingManagerSvc.mapping.name;
+    it('should change the mapping id if editing a previous mapping', function() {
+        var id = mappingManagerSvc.mapping.id;
         mapperStateSvc.newMapping = true;
         mapperStateSvc.changedMapping();
-        expect(mappingManagerSvc.mapping.name).toBe(name);
+        expect(mappingManagerSvc.mapping.id).toBe(id);
 
         mapperStateSvc.newMapping = false;
         mapperStateSvc.changedMapping();
-        expect(mappingManagerSvc.mapping.name).not.toBe(name);
+        expect(mappingManagerSvc.mapping.id).not.toBe(id);
 
-        var newName = mappingManagerSvc.mapping.name;
+        var newId = mappingManagerSvc.mapping.id;
         mapperStateSvc.changedMapping();
-        expect(mappingManagerSvc.mapping.name).toBe(newName);
+        expect(mappingManagerSvc.mapping.id).toBe(newId);
     });
 });

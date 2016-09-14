@@ -87,10 +87,10 @@ describe('Mapper Side Bar directive', function() {
             expect(mapperStateSvc.createMapping).toHaveBeenCalled();
         });
         it('should download a mapping', function() {
-            mappingManagerSvc.mapping = {name: 'test'};
+            mappingManagerSvc.mapping = {id: 'test'};
             controller.downloadMapping();
             scope.$digest();
-            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.name, 'jsonld');
+            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, 'jsonld');
         });
         it('should set the correct state for adding a property mapping', function() {
             mapperStateSvc.editingClassMappingId = 'test';
