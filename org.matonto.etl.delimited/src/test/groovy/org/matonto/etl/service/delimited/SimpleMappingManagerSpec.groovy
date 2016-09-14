@@ -176,22 +176,6 @@ class SimpleMappingManagerSpec extends Specification {
         mapping.getModel().contains(mappingIRI, vf.createIRI(Mapping.versionIRI_IRI), vf.createLiteral(versionIRI.stringValue(), vf.createIRI(XSD.ANYURI)));
     }
 
-//    def "Create a Mapping using a valid Model"() {
-//        setup:
-//        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader().getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
-//        def mapping = service.createMapping()
-//
-//        SimpleMapping mapping = new SimpleMapping(model, vf, mf);
-//        SimpleMapping versionedMapping = new SimpleMapping(versionedModel, vf, mf);
-//
-//        expect:
-//        mapping.asModel().equals(model);
-//        mapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).build());
-//        versionedMapping.asModel().equals(versionedModel);
-//        versionedMapping.getId().equals(new SimpleMappingId.Builder(vf).mappingIRI(mappingIRI).versionIRI(versionIRI)
-//                .build());
-//    }
-
     def "Create a Mapping using a valid File"() {
         setup:
         def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
