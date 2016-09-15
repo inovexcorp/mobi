@@ -24,7 +24,7 @@
     <div class="tree boxed full-height">
         <h3 class="list-title bg-primary">Mappings</h3>
         <ul>
-            <li ng-repeat="mappingName in dvm.mm.previousMappingNames"><a ng-click="dvm.onClick(mappingName)" ng-class="{'active': mappingName === dvm.mm.mapping.name}">{{mappingName}}</a></li>
+            <li ng-repeat="id in dvm.mm.mappingIds"><a ng-click="dvm.onClick(id)" ng-class="{'active': id === dvm.mm.mapping.id}">{{dvm.om.getBeautifulIRI(id)}}</a></li>
         </ul>
     </div>
 </section>

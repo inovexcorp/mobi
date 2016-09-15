@@ -49,9 +49,9 @@
          */
         .directive('mappingList', mappingList);
 
-        mappingList.$inject = ['mappingManagerService', 'mapperStateService'];
+        mappingList.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
 
-        function mappingList(mappingManagerService, mapperStateService) {
+        function mappingList(mappingManagerService, mapperStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -62,16 +62,17 @@
                     var openedMappings = [];
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
-                    dvm.onClick = function(mappingName) {
-                        var openedMapping = _.find(openedMappings, {name: mappingName});
+                    dvm.onClick = function(id) {
+                        var openedMapping = _.find(openedMappings, {id: id});
                         if (openedMapping) {
                             dvm.mm.mapping = openedMapping;
                         } else {
-                            dvm.mm.getMapping(mappingName).then(jsonld => {
+                            dvm.mm.getMapping(id).then(jsonld => {
                                 var mapping = {
                                     jsonld,
-                                    name: mappingName
+                                    id
                                 };
                                 dvm.mm.mapping = mapping;
                                 openedMappings.push(mapping);
@@ -79,7 +80,7 @@
                                 console.log(errorMessage);
                             });
                         }
-                        _.remove(openedMappings, mapping => dvm.mm.previousMappingNames.indexOf(mapping.name) < 0);
+                        _.remove(openedMappings, mapping => dvm.mm.mappingIds.indexOf(mapping.id) < 0);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingList/mappingList.html'

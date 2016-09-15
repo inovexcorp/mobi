@@ -65,7 +65,7 @@
                     dvm.dm = delimitedManagerService;
 
                     dvm.save = function() {
-                        dvm.mm.downloadMapping(dvm.mm.mapping.name, 'jsonld');
+                        dvm.mm.downloadMapping(dvm.mm.mapping.id, 'jsonld');
                         dvm.finish();
                     }
                     dvm.finish = function() {

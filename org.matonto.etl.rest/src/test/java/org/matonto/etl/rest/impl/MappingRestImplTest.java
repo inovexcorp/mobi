@@ -32,7 +32,10 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
+import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
+import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -41,6 +44,7 @@ import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.rio.RDFFormat;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;
@@ -48,39 +52,72 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.InputStream;
-import java.util.*;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRestImpl rest;
+    private static final String MAPPING_IRI = "http://test.org/test";
+
+    private ValueFactory factory = SimpleValueFactory.getInstance();
 
     @Mock
     MappingManager manager;
 
+    @Mock
+    MappingWrapper mappingWrapper;
+
+    @Mock
+    MappingId mappingId;
+
     @Override
     protected Application configureApp() throws Exception {
-        ValueFactory factory = SimpleValueFactory.getInstance();
+        ValueFactory valueFactory = SimpleValueFactory.getInstance();
+
         Model fakeModel = new LinkedHashModel();
-        fakeModel.add(factory.createIRI("http://test.org"), factory.createIRI("http://test.org/isTest"), factory.createLiteral(true));
+        fakeModel.add(valueFactory.createIRI(MAPPING_IRI), valueFactory.createIRI("http://test.org/isTest"), valueFactory.createLiteral(true));
+
         MockitoAnnotations.initMocks(this);
+
         rest = new MappingRestImpl();
         rest.setManager(manager);
+        rest.setFactory(valueFactory);
 
+        when(mappingId.getMappingIdentifier()).thenReturn(valueFactory.createIRI(MAPPING_IRI));
+        when(mappingWrapper.getModel()).thenReturn(fakeModel);
+        when(mappingWrapper.getId()).thenReturn(mappingId);
         when(manager.mappingExists(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("none"));
-        when(manager.createMapping(any(File.class))).thenReturn(new LinkedHashModel());
-        when(manager.createMapping(anyString())).thenReturn(new LinkedHashModel());
-        when(manager.storeMapping(any(Model.class), any(Resource.class))).thenReturn(true);
+        when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mappingWrapper);
+        when(manager.createMapping(anyString())).thenReturn(mappingWrapper);
+        when(manager.storeMapping(any(MappingWrapper.class))).thenReturn(true);
         when(manager.deleteMapping(any(Resource.class))).thenReturn(true);
-        when(manager.getMappingRegistry()).thenReturn(new HashSet<Resource>());
-        when(manager.createMappingIRI()).thenReturn(factory.createIRI("http://test.org"));
-        when(manager.createMappingIRI(anyString())).thenAnswer(i -> factory.createIRI("http://test.org/" + i.getArguments()[0]));
-        when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(fakeModel));
+        when(manager.getMappingRegistry()).thenReturn(new HashSet<>());
+        when(manager.retrieveMapping(any(Resource.class))).thenAnswer(i -> i.getArguments()[0].toString().contains("error") ? Optional.empty() : Optional.of(mappingWrapper));
+        when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
+            @Override
+            public Optional<IRI> getMappingIRI() {
+                return null;
+            }
+
+            @Override
+            public Optional<IRI> getVersionIRI() {
+                return null;
+            }
+
+            @Override
+            public Resource getMappingIdentifier() {
+                return valueFactory.createIRI(i.getArguments()[0].toString());
+            }
+        });
 
         return new ResourceConfig()
             .register(rest)
@@ -114,29 +151,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI().stringValue()));
-    }
-
-    @Test
-    public void putFileTest() {
-        FormDataMultiPart fd = new FormDataMultiPart();
-        InputStream content = getClass().getResourceAsStream("/mapping.jsonld");
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
-                content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-        Response response = target().path("mappings/test").request().put(Entity.entity(fd, MediaType
-                .MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI("test").stringValue()));
-
-        fd = new FormDataMultiPart();
-        content = getClass().getResourceAsStream("/mapping.jsonld");
-        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
-                content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-        response = target().path("mappings/none").request().put(Entity.entity(fd, MediaType
-                .MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(verify(manager).deleteMapping(manager.createMappingIRI("none")));
-        Assert.assertTrue(response.readEntity(String.class).contains(manager.createMappingIRI("none").stringValue()));
+        Assert.assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
     }
 
     @Test
@@ -153,7 +168,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getMappingsByIdsTest() {
-        List<String> ids = Arrays.asList("test1", "test2");
+        List<String> ids = Arrays.asList(factory.createIRI("http://test.org/test1").toString(),
+                factory.createIRI("http://test.org/test2").toString());
         WebTarget wt = target().path("mappings");
         for (String id : ids) {
             wt = wt.queryParam("ids", id);
@@ -167,7 +183,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }
 
-        ids = Arrays.asList("test1", "error");
+        ids = Arrays.asList(factory.createIRI("http://test.org/test1").toString(),
+                factory.createIRI("http://test.org/error").toString());
         wt = target().path("mappings");
         for (String id : ids) {
             wt = wt.queryParam("ids", id);
@@ -184,30 +201,35 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getMappingTest() {
-        Response response = target().path("mappings/test").request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+        Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
+            .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         Assert.assertEquals(200, response.getStatus());
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            JSONObject.fromObject(response.readEntity(String.class));
         } catch (Exception e) {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }
 
-        response = target().path("mappings/error").request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+        response = target().path("mappings/" + encode(factory.createIRI("http://test.org/error").toString())).request()
+                .accept(MediaType.APPLICATION_JSON_TYPE).get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void downloadMappingTest() {
-        Response response = target().path("mappings/test").request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+        Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
+                .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         Assert.assertEquals(200, response.getStatus());
 
-        response = target().path("mappings/error").request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
+        response = target().path("mappings/" + encode(factory.createIRI("http://test.org/error").toString()))
+                .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
     public void deleteMappingTest() {
-        Response response = target().path("mappings/test").request().delete();
+        Response response = target().path("mappings/" + encode(factory.createIRI(MAPPING_IRI).toString()))
+                .request().delete();
         Assert.assertEquals(200, response.getStatus());
         try {
             boolean result = response.readEntity(Boolean.class);
@@ -215,5 +237,15 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         } catch (Exception e) {
             Assert.fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
+
+    private String encode(String str) {
+        String encoded = null;
+        try {
+            encoded = URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return encoded;
     }
 }
