@@ -83,7 +83,7 @@ describe('Mapper State service', function() {
     });
     it('should update availableColumns depending on whether a property mapping has been selected', function() {
         spyOn(mapperStateSvc, 'getMappedColumns').and.returnValue(['0'])
-        delimitedManagerSvc.filePreview = {headers: ['', '']};
+        delimitedManagerSvc.dataRows = [['', '']];
         mapperStateSvc.updateAvailableColumns();
         expect(mapperStateSvc.availableColumns).not.toContain('0');
         expect(mapperStateSvc.availableColumns).toContain('1');

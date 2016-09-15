@@ -32,6 +32,8 @@ describe('Download Mapping Overlay directive', function() {
         module('downloadMappingOverlay');
         mockMappingManager();
         mockMapperState();
+        mockOntologyManager();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
@@ -43,14 +45,14 @@ describe('Download Mapping Overlay directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: ''};
+            mappingManagerSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<download-mapping-overlay></download-mapping-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('downloadMappingOverlay');
         });
         it('should download a mapping', function() {
             controller.download();
-            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.name, controller.downloadFormat);
+            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.downloadFormat);
             expect(mapperStateSvc.displayDownloadMapping).toBe(false);
         });
         it('should set the correct state for canceling', function() {

@@ -25,7 +25,6 @@ describe('Mapping Name Overlay directive', function() {
         scope,
         mappingManagerSvc,
         mapperStateSvc,
-        ontologyManagerSvc,
         controller;
 
     beforeEach(function() {
@@ -33,14 +32,13 @@ describe('Mapping Name Overlay directive', function() {
         module('mappingNameOverlay');
         mockMappingManager();
         mockMapperState();
-        mockOntologyManager();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -53,10 +51,10 @@ describe('Mapping Name Overlay directive', function() {
             scope.$digest();
             controller = this.element.controller('mappingNameOverlay');
         });
-        it('should set the correct state for setting the name', function() {
+        describe('should set the correct state for setting the name', function() {
             beforeEach(function() {
                 controller.newName = 'test';
-            })
+            });
             it('if it is the select mapping step', function() {
                 mapperStateSvc.step = mapperStateSvc.selectMappingStep;
                 controller.set();

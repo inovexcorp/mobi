@@ -207,6 +207,7 @@ describe('Mapping Manager service', function() {
         expect(doc.sourceOntology).toEqual([{'@id': 'ontology'}]);
     });
     it('should create a copy of a mapping', function() {
+        var mappingEntity = {'@id': 'originalMapping', '@type': [prefixes.delim + 'Mapping'], id: 'mapping'};
         var classMapping1 = {'@id': 'class1', 'id': 'class1'};
         var classMapping2 = {'@id': 'class2', 'id': 'class2'};
         var objectMapping = {'@id': 'object', 'id': 'object'};
@@ -219,9 +220,10 @@ describe('Mapping Manager service', function() {
             return entity.id === objectMapping.id;
         });
         var changedMapping = [classMapping1, classMapping2, objectMapping, dataMapping];
-        var mapping = angular.copy(changedMapping);
-        var result = mappingManagerSvc.copyMapping(mapping);
+        var mapping = _.concat(angular.copy(changedMapping), mappingEntity);
+        var result = mappingManagerSvc.copyMapping(mapping, 'newMapping');
         expect(result.length).toBe(mapping.length);
+        expect(_.find(result, {id: 'mapping'})['@id']).toBe('newMapping');
         _.forEach(changedMapping, entity => {
             var original = _.find(mapping, {'id': entity.id});
             expect(original['@id']).not.toBe(entity['@id']);
@@ -468,6 +470,62 @@ describe('Mapping Manager service', function() {
             $timeout.flush();
         });
     });
+    describe('should set sourceOntologies to the imports closure of specified ontology', function() {
+            beforeEach(function() {
+                mappingManagerSvc.mapping = {jsonld: []};
+                this.ontology = {id: 'ontology', entities: []};
+                this.importedOntology = {id: 'imported', entities: []};
+            });
+            it('unless an id was not passed', function() {
+                mappingManagerSvc.setSourceOntologies('');
+                $timeout.flush();
+                expect(mappingManagerSvc.sourceOntologies).toEqual([]);
+            });
+            describe('if the ontology is open', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.list = [{ontologyId: this.ontology.id, ontology: this.ontology.entities}];
+                    spyOn(mappingManagerSvc, 'getOntology');
+                });
+                it('unless an error occurs', function() {
+                    ontologyManagerSvc.getImportedOntologies.and.returnValue($q.reject('Error message'));
+                    mappingManagerSvc.setSourceOntologies();
+                    expect(mappingManagerSvc.getOntology).not.toHaveBeenCalled();
+                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.id);
+                    expect(mappingManagerSvc.sourceOntologies).toEqual([]);
+                });
+                it('successfully', function() {
+                    ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{ontologyId: this.importedOntology.id, ontology: this.importedOntology.entities}]));
+                    mappingManagerSvc.setSourceOntologies();
+                    $timeout.flush();
+                    expect(mappingManagerSvc.getOntology).not.toHaveBeenCalled();
+                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.id);
+                    expect(mappingManagerSvc.sourceOntologies).toContain(this.ontology);
+                    expect(mappingManagerSvc.sourceOntologies).toContain(this.importedOntology);
+                });
+            });
+            describe('if the ontology is not open', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{ontologyId: this.importedOntology.id, ontology: this.importedOntology.entities}]));
+                });
+                it('unless an error occurs', function() {
+                    spyOn(mappingManagerSvc, 'getOntology').and.returnValue($q.reject('Error message'));
+                    mappingManagerSvc.setSourceOntologies();
+                    $timeout.flush();
+                    expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontology.id);
+                    expect(ontologyManagerSvc.getImportedOntologies).not.toHaveBeenCalledWith();
+                    expect(mappingManagerSvc.sourceOntologies).toEqual([]);
+                });
+                it('successfully', function() {
+                    spyOn(mappingManagerSvc, 'getOntology').and.returnValue($q.when(this.ontology));
+                    mappingManagerSvc.setSourceOntologies();
+                    $timeout.flush();
+                    expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontology.id);
+                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.id);
+                    expect(mappingManagerSvc.sourceOntologies).toContain(this.ontology);
+                    expect(mappingManagerSvc.sourceOntologies).toContain(this.importedOntology);
+                });
+            });
+        });
     it('should get the id of the source ontology of a mapping', function() {
         var result = mappingManagerSvc.getSourceOntologyId([{'@id': 'mappingname', '@type': ['Mapping'], 'sourceOntology': [{'@id': 'ontology'}]}]);
         expect(result).toBe('ontology');

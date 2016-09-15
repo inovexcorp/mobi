@@ -167,7 +167,7 @@
              * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. Depending on the value 
              * of {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, either uses the first 
              * returned row as headers or generates headers of the form "Column " + index. Sets the value 
-             * of {@link delimitedManager.delimitedManager#filePreview filePreview}. Returns a Promise indicating the 
+             * of {@link delimitedManager.delimitedManager#dataRows dataRows}. Returns a Promise indicating the 
              * success of the REST call.
              * 
              * @param {number} rowEnd the number of rows to retrieve from the uploaded delimited file
@@ -279,11 +279,11 @@
              * set and {@link delimitedManager.service:delimitedManagerService#containsHeaders contain headers},
              * collects the header name from the first row. Otherwise, generates a name using the index.
              * 
-             * @param {number} index The index number of the column to retrieve the header name form
+             * @param {number/string} index The index number of the column to retrieve the header name from
              * @return {string} A header name for the column at the specified index
              */
             self.getHeader = function(index) {
-                return self.containsHeaders && self.dataRows ? _.get(self.dataRows[0], index, '') : `Column ${index}`;
+                return self.containsHeaders && self.dataRows ? _.get(self.dataRows[0], index, `Column ${index}`) : `Column ${index}`;
             }
 
             /**

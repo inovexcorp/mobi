@@ -24,7 +24,35 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name propMappingOverlay
+         *
+         * @description 
+         * The `propMappingOverlay` module only provides the `propMappingOverlay` directive which creates
+         * an overlay with functionality to create or edit a property mapping in the current
+         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         */
         .module('propMappingOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name propMappingOverlay.directive:propMappingOverlay
+         * @scope
+         * @restrict E
+         * @requires  prefixes.service:prefixes
+         * @requires  ontologyManager.service:ontologyManagerService
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         *
+         * @description 
+         * `propMappingOverlay` is a directive that creates an overlay with functionality to create or edit a  
+         * property mapping in the current {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * If the selected property in the {@link propSelect.directive:propSelect propSelect} is a data property,
+         * a {@link columnSelect.directive:columnSelect columnSelect} will appear to select the linked column index 
+         * for the data property mapping being created/edited. If the selected property is an object property,
+         * a description of the class the property links to will be displayed. The directive is replaced by the 
+         * contents of its template.
+         */
         .directive('propMappingOverlay', propMappingOverlay);
 
         propMappingOverlay.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
@@ -82,6 +110,7 @@
                             var propMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedPropMappingId});
                             if (dvm.mm.isDataMapping(propMapping)) {
                                 propMapping[prefixes.delim + 'columnIndex'][0]['@value'] = dvm.selectedColumn;
+                                _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId})
                             }
                             selectedClassMappingId = dvm.state.selectedClassMappingId;
                         }

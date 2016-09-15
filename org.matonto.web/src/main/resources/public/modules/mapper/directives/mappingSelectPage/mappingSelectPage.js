@@ -24,7 +24,35 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name mappingSelectPage
+         *
+         * @description 
+         * The `mappingSelectPage` module only provides the `mappingSelectPage` directive which creates
+         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the selecting and 
+         * previewing a mapping.
+         */
         .module('mappingSelectPage', [])
+        /**
+         * @ngdoc directive
+         * @name mappingSelectPage.directive:mappingSelectPage
+         * @scope
+         * @restrict E
+         * @requires $q
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires mappingManager.service:mappingManagerService
+         *
+         * @description 
+         * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns containing 
+         * {@link block.directive:block blocks} for selecting and previewing a mapping. The left column contains 
+         * a {@link mappingList.directive:mappingList mappingList} block for selecting the current
+         * {@link mappingManager.service:mappingManagerService#mapping mapping} and buttons for creating a mapping,
+         * deleting a mapping, and searching for a mapping. The right column contains a 
+         * {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons for editing
+         * running, and downloading the mapping. The directive is replaced by the contents of its template.
+         */
         .directive('mappingSelectPage', mappingSelectPage);
 
         mappingSelectPage.$inject = ['$q', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
@@ -66,29 +94,12 @@
                         dvm.state.displayDownloadMapping = true;
                     }
                     dvm.loadOntologyAndContinue = function() {
-                        var deferred = $q.defer();
-                        var ontologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
-                        var ontology = _.find(dvm.om.list, {ontologyId: ontologyId});
-                        if (ontology) {
-                            var obj = _.pick(ontology, ['ontologyId', 'ontology']);
-                            deferred.resolve({id: obj.ontologyId, entities: obj.ontology});
-                        } else {
-                            dvm.mm.getOntology(ontologyId).then(ontology => {
-                                deferred.resolve(ontology);
-                            });
-                        }
-                        deferred.promise.then(ontology => {
-                            dvm.om.getImportedOntologies(ontology.id).then(imported => {
-                                var importedOntologies = _.map(imported, obj => {
-                                    return {id: obj.ontologyId, entities: obj.ontology};
-                                });
-                                dvm.mm.sourceOntologies = _.concat(ontology, importedOntologies);
-                                if (dvm.mm.areCompatible()) {
-                                    dvm.state.step = dvm.state.fileUploadStep;                                
-                                } else {
-                                    dvm.state.invalidOntology = true;
-                                }
-                            });
+                        dvm.mm.setSourceOntologies(dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld)).then(() => {
+                            if (dvm.mm.areCompatible()) {
+                                dvm.state.step = dvm.state.fileUploadStep;                                
+                            } else {
+                                dvm.state.invalidOntology = true;
+                            }
                         });
                     }
                 }

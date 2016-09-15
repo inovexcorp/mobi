@@ -32,6 +32,7 @@ describe('Mapping Title directive', function() {
         module('mappingTitle');
         mockMappingManager();
         mockMapperState();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
@@ -43,7 +44,7 @@ describe('Mapping Title directive', function() {
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mappingManagerSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
             scope.$digest();
         });
@@ -61,7 +62,7 @@ describe('Mapping Title directive', function() {
         });
     });
     it('should set the correct state when the edit button is clicked', function() {
-        mappingManagerSvc.mapping = {name: '', jsonld: []};
+        mappingManagerSvc.mapping = {id: '', jsonld: []};
         mapperStateSvc.newMapping = true;
         var element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
         scope.$digest();

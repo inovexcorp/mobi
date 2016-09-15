@@ -68,6 +68,7 @@
                     dvm.dm = delimitedManagerService;
                     dvm.hotTable;
                     
+                    dvm.data = angular.copy(dvm.dm.dataRows);
                     dvm.settings = {
                         minCols: 50,
                         minRows: 50,
@@ -98,6 +99,11 @@
                             dvm.hotTable = hotRegisterer.getInstance('table');
                         }
                     };
+                    $scope.$watch('dvm.dm.dataRows', (newValue, oldValue) => {
+                        if (!_.isEqual(newValue, oldValue)) {
+                            dvm.data = angular.copy(newValue);
+                        }
+                    })
                     $scope.$watch('dvm.state.highlightIndex', (newValue, oldValue) => {
                         if (newValue !== oldValue) {
                             if (newValue) {

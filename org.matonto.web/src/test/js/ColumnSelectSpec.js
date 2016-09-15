@@ -47,7 +47,7 @@ describe('Column Select directive', function() {
         beforeEach(function() {
             scope.columns = [];
             scope.selectedColumn = '';
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
             scope.$digest();
         });
@@ -62,7 +62,7 @@ describe('Column Select directive', function() {
         beforeEach(function() {
             scope.columns = [];
             scope.selectedColumn = '';
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
             scope.$digest();
             controller = this.element.controller('columnSelect');
@@ -75,7 +75,7 @@ describe('Column Select directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);;
             scope.$digest();
         });

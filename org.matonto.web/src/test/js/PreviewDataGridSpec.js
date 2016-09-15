@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Mapping Overlay directive', function() {
+describe('Preview Data Grid directive', function() {
     var $compile,
         scope,
         delimitedManagerSvc,
@@ -33,6 +33,12 @@ describe('Create Mapping Overlay directive', function() {
         module('previewDataGrid');
         mockDelimitedManager();
         mockMapperState();
+
+        module(function($provide) {
+            $provide.service('hotRegisterer', function() {
+                this.getInstance = jasmine.createSpy('getInstance');
+            });
+        });
 
         inject(function(_$compile_, _$rootScope_, _delimitedManagerService_, _mapperStateService_) {
             $compile = _$compile_;
@@ -65,7 +71,7 @@ describe('Create Mapping Overlay directive', function() {
                 scope.$digest();
                 expect(controller.hotTable.countRows).toHaveBeenCalled();
                 expect(controller.hotTable.selectCell).toHaveBeenCalledWith(0, this.index, controller.hotTable.countRows() - 1, this.index, false);
-                expect(controller.hotTable.deselectCell).toHaveBeenCalled();
+                expect(controller.hotTable.deselectCell).not.toHaveBeenCalled();
             });
             it('if it does not have a value', function() {
                 mapperStateSvc.highlightIndex = `${this.index}`;
@@ -78,6 +84,7 @@ describe('Create Mapping Overlay directive', function() {
             });
         });
         it('whether the data has headers or not changes', function() {
+            delimitedManagerSvc.dataRows = [];
             delimitedManagerSvc.containsHeaders = false;
             scope.$digest();
             expect(controller.hotTable.render).toHaveBeenCalled();

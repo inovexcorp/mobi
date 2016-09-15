@@ -102,10 +102,17 @@
              * @type {Object[]}
              *
              * @description 
-             * `invalidProps` holds an array of property objects from 
-             * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
-             * that are mapped to non-existent column indexes in the currently selected 
-             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+             * `invalidProps` holds an array of objects representing property mappings in the 
+             * current {@link mappingManager.service:mappingManagerService#mapping mapping}
+             * that are mapped to non-existent column indexes in the currently loaded 
+             * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}. 
+             * The format of the objects is:
+             * ```
+             * {
+             *     '@id': 'propMappingId',
+             *     index: 0
+             * }
+             * ```
              */
             self.invalidProps = [];
             /**
@@ -367,6 +374,25 @@
             }
             /**
              * @ngdoc method
+             * @name setInvalidProps
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description 
+             * Validates the current {@link mappingManager.service:mappingManagerService#mapping mapping} against
+             * the currently loaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}
+             * and sets {@link mapperState.service:mapperStateService#invalidProps} to the list of data properties in 
+             * the mapping that link to columns that don't exist in the delimited data.
+             */
+            self.setInvalidProps = function() {
+                self.invalidProps = _.chain(mm.getAllDataMappings(mm.mapping.jsonld))
+                    .map(dataMapping => _.pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
+                    .forEach(obj => _.set(obj, 'index', parseInt(obj['@id', prefixes.delim + 'columnIndex'][0]['@value'], 10)))
+                    .filter(obj => obj.index > dm.dataRows[0].length - 1)
+                    .sortBy('index')
+                    .value();
+            }
+            /**
+             * @ngdoc method
              * @name getMappedColumns
              * @methodOf mapperState.service:mapperStateService
              *
@@ -379,17 +405,16 @@
             self.getMappedColumns = function() {
                 return _.map(mm.getAllDataMappings(mm.mapping.jsonld), dataMapping => _.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'));
             }
-
             /**
              * @ngdoc method
              * @name updateAvailableColumns
              * @methodOf mapperState.service:mapperStateService
              *
              * @description 
-             * Updates the list of {@link mapperState.service:mapperStateService#availableColumns "available columns"}
+             * Updates the list of {@link mapperState.service:mapperStateService#availableColumns available columns}
              * for the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping} 
-             * and saved file preview. If a data property mapping has been selected, adds the header 
-             * corresponding to its mapped column index from the available columns.
+             * and saved {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}. If a data 
+             * property mapping has been selected, adds the mapped column index back to the available columns.
              */
             self.updateAvailableColumns = function() {
                 var mappedColumns = self.getMappedColumns();
@@ -398,9 +423,8 @@
                     var index = _.get(propMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '-1');
                     _.pull(mappedColumns, index);
                 }
-                self.availableColumns = _.difference(_.map(dm.filePreview.headers, (header, idx) => _.toString(idx)), mappedColumns);
+                self.availableColumns = _.difference(_.map(_.range(0, dm.dataRows[0].length), idx => `${idx}`), mappedColumns);
             }
-
             /**
              * @ngdoc method
              * @name hasAvailableProps
@@ -416,7 +440,6 @@
             self.hasAvailableProps = function(classMappingId) {
                 return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []).length > 0;
             }
-
             /**
              * @ngdoc method
              * @name removeAvailableProps
@@ -432,7 +455,6 @@
             self.removeAvailableProps = function(classMappingId) {
                 _.unset(self.availablePropsByClass, encodeURIComponent(classMappingId));
             }
-
             /**
              * @ngdoc method
              * @name setAvailableProps
@@ -451,7 +473,6 @@
                 var props = self.getClassProps(mm.sourceOntologies, classId);
                 _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop['@id']) < 0));
             }
-
             /**
              * @ngdoc method
              * @name getAvailableProps
@@ -468,7 +489,6 @@
             self.getAvailableProps = function(classMappingId) {
                 return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []);
             }
-            
             /**
              * @ngdoc method
              * @name getClassProps

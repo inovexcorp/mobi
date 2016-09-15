@@ -37,6 +37,7 @@ describe('Mapping Overlays directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
+        injectSplitIRIFilter();
         
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;

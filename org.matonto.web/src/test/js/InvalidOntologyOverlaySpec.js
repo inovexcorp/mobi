@@ -24,8 +24,7 @@ describe('Invalid Ontology Overlay directive', function() {
     var $compile,
         scope,
         mappingManagerSvc,
-        mapperStateSvc,
-        ontologyManagerSvc;
+        mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,13 +32,13 @@ describe('Invalid Ontology Overlay directive', function() {
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 

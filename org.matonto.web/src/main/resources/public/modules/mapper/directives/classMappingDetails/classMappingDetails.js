@@ -65,6 +65,9 @@
                     dvm.om = ontologyManagerService;
                     dvm.dm = delimitedManagerService;
 
+                    dvm.isInvalid = function(propMapping) {
+                        return !!_.find(dvm.state.invalidProps, {'@id': propMapping['@id']});
+                    }
                     dvm.getIriTemplate = function() {
                         var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                         var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
@@ -82,8 +85,7 @@
                     dvm.getPropValue = function(propMapping) {
                         var propValue = '';
                         if (dvm.mm.isDataMapping(propMapping)) {
-                            propValue = dvm.dm.getHeader(parseInt(dvm.getLinkedColumnIndex(propMapping), 10));
-                            // propValue = dvm.dm.filePreview.headers[parseInt(dvm.getLinkedColumnIndex(propMapping), 10)];
+                            propValue = dvm.dm.getHeader(dvm.getLinkedColumnIndex(propMapping));
                         } else {
                             propValue = dvm.getClassName(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
                         }

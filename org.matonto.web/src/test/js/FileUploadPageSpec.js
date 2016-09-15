@@ -48,7 +48,7 @@ describe('File Upload Page directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mappingManagerSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
             scope.$digest();
             controller = this.element.controller('fileUploadPage');
@@ -64,9 +64,9 @@ describe('File Upload Page directive', function() {
             expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
         });
         it('should set the correct state for continuing to run a mapping', function() {
-            var mappingName = mappingManagerSvc.mapping.name;
+            var mappingId = mappingManagerSvc.mapping.id;
             controller.run();
-            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingName);
+            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingId);
             expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -81,7 +81,7 @@ describe('File Upload Page directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mappingManagerSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
             scope.$digest();
         });
@@ -127,7 +127,7 @@ describe('File Upload Page directive', function() {
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
-        mappingManagerSvc.mapping = {name: '', jsonld: []};
+        mappingManagerSvc.mapping = {id: '', jsonld: []};
         var element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
         scope.$digest();
         controller = element.controller('fileUploadPage');
@@ -139,7 +139,7 @@ describe('File Upload Page directive', function() {
     });
     describe('should call the correct function when clicking the continue button ', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mappingManagerSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
             scope.$digest();
             controller = this.element.controller('fileUploadPage');

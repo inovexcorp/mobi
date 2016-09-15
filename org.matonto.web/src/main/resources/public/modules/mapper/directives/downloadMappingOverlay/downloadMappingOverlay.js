@@ -68,7 +68,7 @@
                         dvm.state.displayDownloadMapping = false;
                     }
                     dvm.download = function() {
-                        dvm.mm.downloadMapping(dvm.mm.mapping.name, dvm.downloadFormat);
+                        dvm.mm.downloadMapping(dvm.mm.mapping.id, dvm.downloadFormat);
                         dvm.state.displayDownloadMapping = false;
                     }
                 },

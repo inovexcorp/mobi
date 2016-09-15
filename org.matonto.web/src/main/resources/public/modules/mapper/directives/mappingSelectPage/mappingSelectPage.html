@@ -44,7 +44,7 @@
 		<block has-header="true">
 			<block-header>
 				<div class="mapping-preview-header" ng-class="{'invisible': !dvm.mm.mapping}">
-					<span>{{dvm.mm.mapping.name}}</span>
+					<span>{{(dvm.mm.mapping.id | splitIRI).end}}</span>
 					<button class="btn btn-link pull-right download-btn" ng-click="dvm.downloadMapping()">
 						<i class="fa fa-download"></i>Download
 					</button>

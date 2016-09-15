@@ -59,8 +59,8 @@
 
 <confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
     class="delete-mapping"
-    header-text="'Delete ' + dvm.om.getBeautifulIRI(dvm.mm.mapping.id)"
+    header-text="'Delete ' + (dvm.mm.mapping.id | splitIRI).end"
     confirm-click="dvm.state.displayDeleteMappingConfirm = false; dvm.deleteMapping()"
     cancel-click="dvm.state.displayDeleteMappingConfirm = false"
     confirm-text="'Yes'"
-    cancel-text="'No'">Are you sure you want to delete <strong>{{dvm.om.getBeautifulIRI(dvm.mm.mapping.id)}}</strong>?</confirmation-overlay>
+    cancel-text="'No'">Are you sure you want to delete <strong>{{(dvm.mm.mapping.id | splitIRI).end}}</strong>?</confirmation-overlay>

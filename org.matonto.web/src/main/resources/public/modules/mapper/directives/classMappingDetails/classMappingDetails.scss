@@ -23,6 +23,13 @@
 				.prop-actions a {
 					margin-left: 10px;
 				}
+				&.invalid {
+					background-color: lighten($brand-danger, 30%);
+
+					&.active {
+						background-color: $brand-danger;
+					}
+				}
 				&.active {
 					.prop-actions a {
 						color: white;

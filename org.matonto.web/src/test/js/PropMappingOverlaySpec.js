@@ -155,9 +155,11 @@ describe('Prop Mapping Overlay directive', function() {
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                 });
                 it('and it is for a data property', function() {
+                    mapperStateSvc.invalidProps = [{'@id': controller.selectedProp['@id']}];
                     mappingManagerSvc.isDataMapping.and.returnValue(true);
                     controller.set();
                     expect(this.propMapping[prefixes.delim + 'columnIndex'][0]['@value']).not.toBe(this.originalIndex);
+                    expect(mapperStateSvc.invalidProps).not.toContain({'@id': controller.selectedProp['@id']});
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);

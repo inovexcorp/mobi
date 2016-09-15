@@ -24,7 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name fileUploadForm
+         *
+         * @description 
+         * The `fileUploadForm` module only provides the `fileUploadForm` directive which creates
+         * a form for uploading delimited data into MatOnto.
+         */
         .module('fileUploadForm', [])
+        /**
+         * @ngdoc directive
+         * @name fileUploadForm.directive:fileUploadForm
+         * @scope
+         * @restrict E
+         * @requires $q
+         * @requires prefixes.service:prefixes
+         * @requires delimitedManager.service:delimitedManagerService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires mappingManager.service:mappingManagerService
+         *
+         * @description 
+         * `fileUploadForm` is a directive that creates a form for uploaded delimited data into MatOnto
+         * using the {@link delimitedManager.service:delimitedManagerService delimitedManagerService}.
+         * If the chosen file is a SV file, the user must select a separator for the columns and selecting 
+         * a new value will automatically upload the file again. Tests whether the selected file is 
+         * compatiable with the current {@link mappingManager.service:mappingManagerService#mapping mapping}
+         * and outputs a list of any invalid data property mappings. The directive is replaced by the contents 
+         * of its template.
+         */
         .directive('fileUploadForm', fileUploadForm);
 
         fileUploadForm.$inject = ['$q', 'prefixes', 'delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
@@ -64,42 +93,17 @@
                                 dvm.errorMessage = '';
                                 return dvm.dm.previewFile(50);
                             }, errorMessage => $q.reject(errorMessage)).then(() => {
-                                if (!dvm.state.newMapping) {
-                                    testColumns();
-                                }
+                                dvm.state.setInvalidProps();
                             }, onError);
-                        }
-                    }
-                    dvm.updateContainsHeaders = function() {
-                        if (dvm.dm.filePreview) {
-                            if (dvm.dm.containsHeaders) {
-                                dvm.dm.filePreview.headers = dvm.dm.filePreview.rows[0];
-                            } else {
-                                dvm.dm.filePreview.headers = [];
-                                _.times(dvm.dm.filePreview.rows[0].length, index => {
-                                    dvm.dm.filePreview.headers.push('Column ' + (index + 1));
-                                });
-                            }
                         }
                     }
                     $scope.$watch('dvm.dm.separator', (newValue, oldValue) => {
                         if (newValue !== oldValue && !dvm.isExcel()) {
                             dvm.dm.previewFile(50).then(() => {
-                                if (!dvm.state.newMapping) {
-                                    testColumns();
-                                }
+                                dvm.state.setInvalidProps();
                             }, onError);
                         }
                     });
-
-                    function testColumns() {
-                        dvm.state.invalidProps = _.chain(dvm.mm.getAllDataMappings(dvm.mm.mapping.jsonld))
-                            .map(dataMapping => _.pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
-                            .forEach(obj => _.set(obj, 'index', parseInt(obj['@id', prefixes.delim + 'columnIndex'][0]['@value'], 10)))
-                            .filter(obj => obj.index > dvm.dm.dataRows[0].length - 1)
-                            .sortBy('index')
-                            .value();
-                    }
                     function onError(errorMessage) {
                         dvm.errorMessage = errorMessage;
                         dvm.dm.dataRows = undefined;

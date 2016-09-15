@@ -29,6 +29,7 @@
 			</block-header>
 			<block-content class="padding">
 				<file-upload-form></file-upload-form>
+				<p class="help-block" ng-if="dvm.state.editMapping && dvm.state.invalidProps.length > 0">Click continue to fix the mapping.</p>
 			</block-content>
 			<block-footer>
 				<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>

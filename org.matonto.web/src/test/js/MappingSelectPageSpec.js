@@ -36,6 +36,7 @@ describe('Mapping Select Page directive', function() {
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_, _$timeout_, _$q_) {
             $compile = _$compile_;
@@ -93,64 +94,20 @@ describe('Mapping Select Page directive', function() {
         describe('should load an ontology and continue', function() {
             beforeEach(function() {
                 mappingManagerSvc.mapping = {jsonld: []};
-                this.ontology = {id: 'ontology', entities: []};
-                this.importedOntology = {id: 'imported', entities: []};
-                mappingManagerSvc.getSourceOntologyId.and.returnValue(this.ontology.id);
-                ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{ontologyId: this.importedOntology.id, ontology: this.importedOntology.entities}]));
             });
-            describe('if the ontology is open', function() {
-                beforeEach(function() {
-                    ontologyManagerSvc.list = [{ontologyId: this.ontology.id, ontology: this.ontology.entities}];
-                });
-                it('if the ontology and mapping are compatiable', function() {
-                    mappingManagerSvc.areCompatible.and.returnValue(true);
-                    controller.loadOntologyAndContinue();
-                    $timeout.flush();
-                    expect(mappingManagerSvc.getOntology).not.toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.id);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.ontology);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.importedOntology);
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(false);
-                });
-                it('unless the ontology and mapping are incompatiable', function() {
-                    mappingManagerSvc.areCompatible.and.returnValue(false);
-                    controller.loadOntologyAndContinue();
-                    $timeout.flush();
-                    expect(mappingManagerSvc.getOntology).not.toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.id);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.ontology);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.importedOntology);
-                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(true);
-                });
+            it('if the ontology and mapping are compatiable', function() {
+                mappingManagerSvc.areCompatible.and.returnValue(true);
+                controller.loadOntologyAndContinue();
+                $timeout.flush();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
+                expect(mapperStateSvc.invalidOntology).toBe(false);
             });
-            describe('if the ontology is not open', function() {
-                beforeEach(function() {
-                    mappingManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
-                });
-                it('if the ontology and mapping are compatiable', function() {
-                    mappingManagerSvc.areCompatible.and.returnValue(true);
-                    controller.loadOntologyAndContinue();
-                    $timeout.flush();
-                    expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontology.id);
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.id);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.ontology);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.importedOntology);
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(false);
-                });
-                it('unless the ontology and mapping are incompatiable', function() {
-                    mappingManagerSvc.areCompatible.and.returnValue(false);
-                    controller.loadOntologyAndContinue();
-                    $timeout.flush();
-                    expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontology.id);
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.id);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.ontology);
-                    expect(mappingManagerSvc.sourceOntologies).toContain(this.importedOntology);
-                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(true);
-                });
+            it('unless the ontology and mapping are incompatiable', function() {
+                mappingManagerSvc.areCompatible.and.returnValue(false);
+                controller.loadOntologyAndContinue();
+                $timeout.flush();
+                expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
+                expect(mapperStateSvc.invalidOntology).toBe(true);
             });
         });
     });

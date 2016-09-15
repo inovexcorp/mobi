@@ -98,36 +98,20 @@ describe('File Upload Form directive', function() {
                     $timeout.flush();
                     expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(controller.fileObj);
                     expect(delimitedManagerSvc.previewFile).not.toHaveBeenCalled();
+                    expect(mapperStateSvc.setInvalidProps).not.toHaveBeenCalled();
                     expect(controller.errorMessage).toBe('Error message');
                     expect(delimitedManagerSvc.dataRows).toBeUndefined();
-                    // expect(delimitedManagerSvc.filePreview).toBeUndefined();
                     expect(mapperStateSvc.invalidProps).toEqual([]);
                 });
-                describe('successfully', function() {
-                    beforeEach(function() {
-                        this.invalidProps = mapperStateSvc.invalidProps;
-                        delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
-                    });
-                    it('if a new mapping is being created', function() {
-                        mapperStateSvc.newMapping = true;
-                        controller.upload();
-                        $timeout.flush();
-                        expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(controller.fileObj);
-                        expect(delimitedManagerSvc.fileName).not.toBe('');
-                        expect(controller.errorMessage).toBe('');
-                        expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
-                        expect(mapperStateSvc.invalidProps).toBe(this.invalidProps);
-                    });
-                    it('if a saved mapping is being used', function() {
-                        mapperStateSvc.newMapping = false;
-                        controller.upload();
-                        $timeout.flush();
-                        expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(controller.fileObj);
-                        expect(delimitedManagerSvc.fileName).not.toBe('');
-                        expect(controller.errorMessage).toBe('');
-                        expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
-                        expect(mapperStateSvc.invalidProps).not.toBe(this.invalidProps);
-                    });
+                it('successfully', function() {
+                    delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
+                    controller.upload();
+                    $timeout.flush();
+                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(controller.fileObj);
+                    expect(delimitedManagerSvc.fileName).not.toBe('');
+                    expect(controller.errorMessage).toBe('');
+                    expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
+                    expect(mapperStateSvc.setInvalidProps).toHaveBeenCalled();
                 });
             });
         });

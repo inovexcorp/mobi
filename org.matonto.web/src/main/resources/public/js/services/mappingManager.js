@@ -71,7 +71,7 @@
              * `mappingIds` holds an array of the local names of all saved mappings in the
              * MatOnto repository
              */
-            self.previousMappingIds = [];
+            self.mappingIds = [];
             /**
              * @ngdoc property
              * @name mapping
@@ -278,7 +278,8 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description 
-             * Creates a copy of a mapping using the passed new id.
+             * Creates a copy of a mapping using the passed new id, updating all ids to use the new
+             * mapping id.
              * 
              * @param {Object[]} mapping A mapping JSON-LD array
              * @param {string} newId The id of the new mapping
@@ -286,16 +287,20 @@
              */
             self.copyMapping = function(mapping, newId) {
                 var newMapping = angular.copy(mapping);
+                getMappingEntity(newMapping)['@id'] = newId;
                 var idTransforms = {};
                 _.forEach(self.getAllClassMappings(newMapping), classMapping => {
-                    _.set(idTransforms, encodeURIComponent(classMapping['@id']), prefixes.dataDelim + uuid.v4());
+                    _.set(idTransforms, encodeURIComponent(classMapping['@id']), newId + '/' + uuid.v4());
                     classMapping['@id'] = _.get(idTransforms, encodeURIComponent(classMapping['@id']));
+                    _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
+                        _.set(idTransforms, encodeURIComponent(propIdObj['@id']), newId + '/' + uuid.v4());
+                        propIdObj['@id'] = _.get(idTransforms, encodeURIComponent(propIdObj['@id']));
+                    });
                 });
                 _.forEach(_.concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
                     if (self.isObjectMapping(propMapping)) {
                         propMapping[prefixes.delim + 'classMapping'][0]['@id'] = _.get(idTransforms, encodeURIComponent(propMapping[prefixes.delim + 'classMapping'][0]['@id']));
                     }
-                    _.set(idTransforms, encodeURIComponent(propMapping['@id']), prefixes.dataDelim + uuid.v4());
                     propMapping['@id'] = _.get(idTransforms, encodeURIComponent(propMapping['@id']));
                 });
                 return newMapping;
@@ -320,7 +325,7 @@
                 if (ontologyManagerService.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontology, '@id', '')).toLowerCase();
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontologyManagerService.getOntologyEntity(self.getSourceOntology(newMapping).entities), '@id', '')).toLowerCase();
                     var classEntity = {
                         '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -392,7 +397,7 @@
                     var classMapping = getEntityById(newMapping, classMappingId);
                     // Sets the dataProperty key if not already present
                     classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
-                    classMapping[prefixes.delim + 'dataProperty'].push(dataEntity);
+                    classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
                     // Create data mapping
                     dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
                     dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
@@ -551,6 +556,53 @@
                 });
                 return deferred.promise;
             };
+            /**
+             * @ngdoc method
+             * @name setSourceOntologies
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Sets the list of source ontologies to the imports closure of the ontology with the passed
+             * id. If no id is passed or the ontologies are set successfully, returns a promise that 
+             * resolves to nothing; otherwise returns a promise that rejects with an error message.
+             * 
+             * @param {string} ontologyId The id of the ontology to collect the imports closure of
+             * @returns {Promise} A promise that resolves if no id is passed or the source ontologies
+             * are set; rejects otherwise
+             */
+            self.setSourceOntologies = function(ontologyId) {
+                if (!ontologyId) {
+                    return $q.when();
+                }
+                var deferred1 = $q.defer();
+                var deferred2 = $q.defer();
+                var ontology = _.find(ontologyManagerService.list, {ontologyId: ontologyId});
+                if (ontology) {
+                    var obj = _.pick(ontology, ['ontologyId', 'ontology']);
+                    deferred1.resolve({id: obj.ontologyId, entities: obj.ontology});
+                } else {
+                    self.getOntology(ontologyId).then(ontology => {
+                        deferred1.resolve(ontology);
+                    }, error => {
+                        deferred1.reject(error);
+                    });
+                }
+                deferred1.promise.then(ontology => {
+                    ontologyManagerService.getImportedOntologies(ontology.id).then(imported => {
+                        var importedOntologies = _.map(imported, obj => {
+                            return {id: obj.ontologyId, entities: obj.ontology};
+                        });
+                        self.sourceOntologies = _.concat(ontology, importedOntologies);
+                        deferred2.resolve();
+                    }, error => {
+                        deferred2.reject(error);
+                    });
+                }, error => {
+                    deferred2.reject(error);
+                });
+
+                return deferred2.promise;
+            }
             /**
              * @ngdoc method
              * @name getSourceOntologyId

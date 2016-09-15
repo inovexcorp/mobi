@@ -24,12 +24,41 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name editMappingPage
+         *
+         * @description 
+         * The `editMappingPage` module only provides the `editMappingPage` directive which creates
+         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the current 
+         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         */
         .module('editMappingPage', [])
+        /**
+         * @ngdoc directive
+         * @name editMappingPage.directive:editMappingPage
+         * @scope
+         * @restrict E
+         * @requires delimitedManager.service:delimitedManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires mappingManager.service:mappingManagerService
+         *
+         * @description 
+         * `editMappingPage` is a directive that creates a Bootstrap `row` div with two columns containing 
+         * {@link block.directive:block blocks} for editing the current 
+         * {@link mappingManager.service:mappingManagerService#mapping mapping}. The left column contains 
+         * either a block for {@link editMappingForm.directive:editMappingForm editing} the mapping or a 
+         * block for {@link rdfPreviewForm.directive:rdfPreviewForm previewing} the mapped data using the current 
+         * state of the mapping. The right column contains a 
+         * {@link previewDataGrid.directive:previewDataGrid preview} of the loaded delimited data. From here,
+         * the user can choose to save the mapping and optionally run it against the loaded delimited data.
+         * The directive is replaced by the contents of its template.
+         */
         .directive('editMappingPage', editMappingPage);
 
-        editMappingPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        editMappingPage.$inject = ['$q', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
 
-        function editMappingPage(mapperStateService, mappingManagerService, delimitedManagerService) {
+        function editMappingPage($q, mapperStateService, mappingManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,9 +72,19 @@
                     dvm.dm = delimitedManagerService;
 
                     dvm.save = function(run) {
-                        dvm.mm.uploadPut(dvm.mm.mapping.jsonld, dvm.mm.mapping.name).then(() => {
+                        var deferred = $q.defer();
+                        if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
+                            dvm.mm.deleteMapping(dvm.mm.mapping.id).then(() => {
+                                deferred.resolve();
+                            });
+                        } else {
+                            deferred.resolve();
+                        }
+                        deferred.promise.then(() => {
+                            return dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id);
+                        }).then(() => {
                             if (run) {
-                                dvm.dm.map(dvm.mm.mapping.name);
+                                dvm.dm.map(dvm.mm.mapping.id);
                             }
                             dvm.state.step = dvm.state.selectMappingStep;
                             dvm.state.initialize();

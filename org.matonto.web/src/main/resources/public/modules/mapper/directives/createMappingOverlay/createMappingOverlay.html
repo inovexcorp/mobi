@@ -25,17 +25,17 @@
         <h6>Create Mapping</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 
-        <mapping-name-input name="dvm.mm.mapping.name" required="true"></mapping-name-input>
+        <mapping-name-input name="dvm.newName" required="true"></mapping-name-input>
         <radio-button ng-model="dvm.mappingType" value="'new'" display-text="'Create new'"></radio-button>
-        <radio-button ng-model="dvm.mappingType" value="'saved'" display-text="'Create from saved'" is-disabled-when="dvm.mm.previousMappingNames.length === 0"></radio-button>
+        <radio-button ng-model="dvm.mappingType" value="'saved'" display-text="'Create from saved'" is-disabled-when="dvm.mm.mappingIds.length === 0"></radio-button>
         <div class="form-group">
           <select class="form-control" size="5" 
-              ng-model="dvm.savedMappingName" 
+              ng-model="dvm.savedMappingId" 
               ng-required="dvm.mappingType === 'saved'"
-              ng-disabled="dvm.mm.previousMappingNames.length === 0"
+              ng-disabled="dvm.mm.mappingIds.length === 0"
               ng-focus="dvm.mappingType = 'saved'">
-              <option class="no-values" ng-if="dvm.mm.previousMappingNames.length === 0" value="" disabled hidden></option>
-              <option ng-repeat="mapping in dvm.mm.previousMappingNames">{{mapping}}</option>
+              <option class="no-values" ng-if="dvm.mm.mappingIds.length === 0" value="" disabled hidden></option>
+              <option ng-repeat="id in dvm.mm.mappingIds" ng-value="id">{{(id | splitIRI).end}}</option>
           </select>
         </div>
         

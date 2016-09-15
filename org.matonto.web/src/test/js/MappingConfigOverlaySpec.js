@@ -38,6 +38,7 @@ describe('Mapping Config Overlay directive', function() {
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _$q_, _$timeout_) {
             $compile = _$compile_;
@@ -86,13 +87,13 @@ describe('Mapping Config Overlay directive', function() {
             controller = element.controller('mappingConfigOverlay');
             expect(controller.ontologies).toEqual({test: mappingManagerSvc.sourceOntologies});
             expect(controller.selectedOntologyId).toBe(sourceOntology.id);
-            expect(controller.classes).toEqual(classes);
-            expect(controller.selectedBaseClass).toEqual(classObj);
+            expect(controller.classes.length).toBe(classes.length);
+            expect(controller.selectedBaseClass).toEqual({ontologyId: sourceOntology.id, classObj: classObj});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mappingManagerSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('mappingConfigOverlay');
@@ -108,7 +109,7 @@ describe('Mapping Config Overlay directive', function() {
                 controller.ontologies[this.id] = [];
                 controller.selectOntology(this.id);
                 expect(controller.selectedOntologyId).toBe(this.id);
-                expect(controller.classes).toEqual(this.classes);
+                expect(controller.classes.length).toBe(this.classes.length);
                 expect(controller.selectedBaseClass).toBeUndefined();
             });
             describe('if it had not been opened', function() {
@@ -144,7 +145,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(controller.selectedOntologyId).toBe(this.id);
                     expect(controller.ontologies[this.id]).toContain(this.ontology);
                     expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.id);
-                    expect(controller.classes).toEqual(_.concat(this.classes, this.classes));
+                    expect(controller.classes.length).toBe(2 * this.classes.length);
                     expect(controller.selectedBaseClass).toBeUndefined();
                 });
             });
@@ -194,7 +195,7 @@ describe('Mapping Config Overlay directive', function() {
             it('if a configuration had already been set', function() {
                 mappingManagerSvc.getSourceOntologyId.and.returnValue('test');
                 controller.set();
-                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.name);
+                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
                 expect(mappingManagerSvc.sourceOntologies).toEqual(this.ontologies);
                 expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalled();
                 expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
@@ -226,7 +227,7 @@ describe('Mapping Config Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mappingManagerSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
         });

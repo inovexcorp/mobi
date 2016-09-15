@@ -192,22 +192,11 @@ function mockMappingManager() {
             this.mapping = undefined;
             this.sourceOntologies = [];
 
-            this.upload = jasmine.createSpy('uploadPut').and.callFake(function(mapping) {
-                return mapping ? $q.when('') : $q.reject('Something went wrong');
-            });
-            this.getMapping = jasmine.createSpy('getMapping').and.callFake(function(mappingName) {
-                return mappingName ? $q.when([]) : $q.reject('Something went wrong');
-            });
+            this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
+            this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
             this.downloadMapping = jasmine.createSpy('downloadMapping');
-            this.deleteMapping = jasmine.createSpy('deleteMapping').and.callFake(function(mappingName) {
-                return mappingName ? $q.when() : $q.reject('Something went wrong');
-            });
-            this.getMappingName = jasmine.createSpy('getMappingName').and.callFake(function(mappingId) {
-                return mappingId;
-            });
-            this.getMappingId = jasmine.createSpy('getMappingId').and.callFake(function(mappingName) {
-                return mappingName;
-            });
+            this.deleteMapping = jasmine.createSpy('deleteMapping').and.returnValue($q.when());
+            this.getMappingId = jasmine.createSpy('getMappingId').and.returnValue('');
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
             this.setSourceOntology = jasmine.createSpy('setSourceOntology').and.returnValue([]);
             this.copyMapping = jasmine.createSpy('copyMapping').and.returnValue([]);
@@ -222,6 +211,7 @@ function mockMappingManager() {
             this.isClassMapping = jasmine.createSpy('isClassMapping').and.returnValue(true);
             this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.returnValue([]);
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
+            this.setSourceOntologies = jasmine.createSpy('setSourceOntologies').and.returnValue($q.when());
             this.findSourceOntologyWithClass = jasmine.createSpy('findSourceOntologyWithClass').and.returnValue({});
             this.findSourceOntologyWithProp = jasmine.createSpy('findSourceOntologyWithProp').and.returnValue({});
             this.getSourceOntologyId = jasmine.createSpy('getSourceOntologyId').and.returnValue('');
@@ -301,6 +291,7 @@ function mockMapperState() {
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping');
+            this.setInvalidProps = jasmine.createSpy('setInvalidProps');
             this.updateAvailableColumns = jasmine.createSpy('updateAvailableColumns');
             this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');

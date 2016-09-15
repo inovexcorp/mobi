@@ -53,7 +53,7 @@ describe('Class Mapping Details directive', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: ['']};
+            delimitedManagerSvc.dataRows = [['']];
             this.element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
             scope.$digest();
             controller = this.element.controller('classMappingDetails');
@@ -114,8 +114,8 @@ describe('Class Mapping Details directive', function() {
         });
         describe('should get the value of a property', function() {
             it('if it is a data property mapping', function() {
-                var index = 0;
-                spyOn(controller, 'getLinkedColumnIndex').and.returnValue(`${index}`);
+                var index = '0';
+                spyOn(controller, 'getLinkedColumnIndex').and.returnValue(index);
                 mappingManagerSvc.isDataMapping.and.returnValue(true);
                 var result = controller.getPropValue({});
                 expect(delimitedManagerSvc.getHeader).toHaveBeenCalledWith(index)

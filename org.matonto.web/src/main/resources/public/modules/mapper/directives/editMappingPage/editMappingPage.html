@@ -31,8 +31,8 @@
 					</block-content>
 					<block-footer>
 						<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save</button>
-						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.save(true)" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save &amp; Run</button>
+						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
+						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.save(true)" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
 					</block-footer>
 				</block>
 			</tab>
@@ -43,8 +43,8 @@
 					</block-content>
 					<block-footer>
 						<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save</button>
-						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.save(true)" ng-disabled="!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1">Save &amp; Run</button>
+						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
+						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.save(true)" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
 					</block-footer>
 				</block>
 			</tab>
