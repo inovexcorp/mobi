@@ -81,14 +81,14 @@ describe('Class Mapping Details directive', function() {
         });
         describe('should get the linked column index of a property mapping', function() {
             beforeEach(function() {
-                this.columnIndex = 0;
+                this.columnIndex = '0';
                 this.propMapping = {};
                 this.propMapping[prefixes.delim + 'columnIndex'] = [{'@value': '' + this.columnIndex}];
             });
             it('unless it is for an object property', function() {
                 mappingManagerSvc.isDataMapping.and.returnValue(false);
                 var result = controller.getLinkedColumnIndex(this.propMapping);
-                expect(result).toBe(-1);
+                expect(result).toBe('');
             });
             it('if it is for an object property', function() {
                 mappingManagerSvc.isDataMapping.and.returnValue(true);
@@ -114,10 +114,12 @@ describe('Class Mapping Details directive', function() {
         });
         describe('should get the value of a property', function() {
             it('if it is a data property mapping', function() {
-                spyOn(controller, 'getLinkedColumnIndex').and.returnValue(0);
+                var index = 0;
+                spyOn(controller, 'getLinkedColumnIndex').and.returnValue(`${index}`);
                 mappingManagerSvc.isDataMapping.and.returnValue(true);
                 var result = controller.getPropValue({});
-                expect(result).toBe(delimitedManagerSvc.filePreview.headers[0]);
+                expect(delimitedManagerSvc.getHeader).toHaveBeenCalledWith(index)
+                expect(typeof result).toBe('string');
             });
             it('if it is an object property mapping', function() {
                 var className = 'class';
@@ -244,6 +246,7 @@ describe('Class Mapping Details directive', function() {
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         scope.$digest();
+        spyOn(controller, 'getLinkedColumnIndex');
 
         var propertyButton = angular.element(element.querySelectorAll('.prop-list button')[0]);
         propertyButton.triggerHandler('click');

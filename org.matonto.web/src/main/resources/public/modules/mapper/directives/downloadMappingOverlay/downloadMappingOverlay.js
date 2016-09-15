@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name downloadMappingOverlay
+         *
+         * @description 
+         * The `downloadMappingOverlay` module only provides the `downloadMappingOverlay` directive which creates
+         * an overlay with functionality to download the current 
+         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         */
         .module('downloadMappingOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name downloadMappingOverlay.directive:downloadMappingOverlay
+         * @scope
+         * @restrict E
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         *
+         * @description 
+         * `downloadMappingOverlay` is a directive that creates an overlay with functionality to download   
+         * the current {@link mappingManager.service:mappingManagerService#mapping mapping} in a variety of
+         * different formats using a {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect}.
+         * The directive is replaced by the contents of its template.
+         */
         .directive('downloadMappingOverlay', downloadMappingOverlay);
 
         downloadMappingOverlay.$inject = ['mappingManagerService', 'mapperStateService']

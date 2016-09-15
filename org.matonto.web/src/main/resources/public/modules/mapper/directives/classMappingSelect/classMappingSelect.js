@@ -24,7 +24,33 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classMappingSelect
+         *
+         * @description 
+         * The `classMappingSelect` module only provides the `classMappingSelect` directive which creates
+         * a `ui-select` with all the class mappings in the current 
+         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         */
         .module('classMappingSelect', [])
+        /**
+         * @ngdoc directive
+         * @name classMappingSelect.directive:classMappingSelect
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description 
+         * `classMappingSelect` is a directive that creates a div with `ui-select` containing all the class 
+         * mappings in the current {@link mappingManager.service:mappingManagerService#mapping mapping}. 
+         * The model for the `ui-select` will be the id of the selected class mapping. The directive is 
+         * replaced by the contents of its template.
+         *
+         * @param {Function} onChange A method to be called when the selected class mapping changes
+         * @param {string} bindModel The id of the selected class mapping
+         */
         .directive('classMappingSelect', classMappingSelect);
 
         classMappingSelect.$inject = ['mappingManagerService', 'ontologyManagerService'];

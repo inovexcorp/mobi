@@ -74,9 +74,9 @@
                     dvm.beginsWith = prefixEnd.slice(0, -1);
                     dvm.then = prefixEnd[prefixEnd.length - 1];
                     dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
-                    _.forEach(dvm.dm.filePreview.headers, (column, idx) => {
-                        dvm.localNameOptions.push({text: column, value: '${' + idx + '}'});
-                    });
+                    for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
+                        dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});
+                    };
                     var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']")});
                     dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 

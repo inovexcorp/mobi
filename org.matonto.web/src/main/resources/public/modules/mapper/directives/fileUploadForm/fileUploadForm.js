@@ -35,16 +35,17 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {},
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.dm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.errorMessage = '';
+                    dvm.fileObj = undefined;
 
                     dvm.isExcel = function() {
-                        var fileName = _.get(dvm.dm.fileObj, 'name');
+                        var fileName = _.get(dvm.fileObj, 'name', '');
                         return _.includes(fileName, 'xls');
                     }
                     dvm.getDataMappingName = function(dataMappingId) {
@@ -57,11 +58,11 @@
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.upload = function() {
-                        if (dvm.dm.fileObj) {
-                            dvm.dm.upload(dvm.dm.fileObj).then(data => {
+                        if (dvm.fileObj) {
+                            dvm.dm.upload(dvm.fileObj).then(data => {
                                 dvm.dm.fileName = data;
                                 dvm.errorMessage = '';
-                                return dvm.dm.previewFile(100);
+                                return dvm.dm.previewFile(50);
                             }, errorMessage => $q.reject(errorMessage)).then(() => {
                                 if (!dvm.state.newMapping) {
                                     testColumns();
@@ -69,23 +70,42 @@
                             }, onError);
                         }
                     }
-                    dvm.setUploadValidity = function(bool) {
-                        dvm.uploadForm.$setValidity('fileUploaded', bool);
+                    dvm.updateContainsHeaders = function() {
+                        if (dvm.dm.filePreview) {
+                            if (dvm.dm.containsHeaders) {
+                                dvm.dm.filePreview.headers = dvm.dm.filePreview.rows[0];
+                            } else {
+                                dvm.dm.filePreview.headers = [];
+                                _.times(dvm.dm.filePreview.rows[0].length, index => {
+                                    dvm.dm.filePreview.headers.push('Column ' + (index + 1));
+                                });
+                            }
+                        }
                     }
+                    $scope.$watch('dvm.dm.separator', (newValue, oldValue) => {
+                        if (newValue !== oldValue && !dvm.isExcel()) {
+                            dvm.dm.previewFile(50).then(() => {
+                                if (!dvm.state.newMapping) {
+                                    testColumns();
+                                }
+                            }, onError);
+                        }
+                    });
+
                     function testColumns() {
                         dvm.state.invalidProps = _.chain(dvm.mm.getAllDataMappings(dvm.mm.mapping.jsonld))
                             .map(dataMapping => _.pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
                             .forEach(obj => _.set(obj, 'index', parseInt(obj['@id', prefixes.delim + 'columnIndex'][0]['@value'], 10)))
-                            .filter(obj => obj.index > dvm.dm.filePreview.headers.length - 1)
+                            .filter(obj => obj.index > dvm.dm.dataRows[0].length - 1)
                             .sortBy('index')
                             .value();
                     }
                     function onError(errorMessage) {
                         dvm.errorMessage = errorMessage;
-                        dvm.dm.filePreview = undefined;
+                        dvm.dm.dataRows = undefined;
                         dvm.state.invalidProps = [];
                     }
-                },
+                }],
                 templateUrl: 'modules/mapper/directives/fileUploadForm/fileUploadForm.html'
             }
         }

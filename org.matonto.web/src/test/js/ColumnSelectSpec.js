@@ -73,23 +73,6 @@ describe('Column Select directive', function() {
             expect(scope.selectedColumn).toEqual('0');
         });
     });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            scope.columns = [];
-            scope.selectedColumn = '';
-            delimitedManagerSvc.filePreview = {headers: ['']};
-            this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('columnSelect');
-        });
-        it('should get the header name for a column index', function() {
-            var index = 0;
-            var result = controller.getName(_.toString(index));
-            expect(result).toBe(delimitedManagerSvc.filePreview.headers[index]);
-            result = controller.getName('1000');
-            expect(result).toBe('');
-        });
-    });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             delimitedManagerSvc.filePreview = {headers: []};

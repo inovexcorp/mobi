@@ -20,14 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="column-select">
-    <ui-select ng-model="dvm.selectedColumn">
-        <ui-select-match placeholder="{{columns.length ? 'Select a column' : 'No Available Columns'}}">
-            {{dvm.dm.getHeader(parseInt($select.selected, 10))}}
-        </ui-select-match>
-        <ui-select-choices repeat="column in columns | filter:$select.search">
-            <div ng-bind-html="dvm.dm.getHeader(parseInt(column, 10)) | highlight:$select.search | trusted"></div>
-        </ui-select-choices>
-    </ui-select>
-    <p class="help-block">Columns are saved by zero-based index</p>
+<div class="preview-data-grid full-height">
+  <hot-table hot-id="table" settings="dvm.settings" row-headers="true" col-headers="true" datarows="dvm.dm.dataRows"></hot-table>
 </div>

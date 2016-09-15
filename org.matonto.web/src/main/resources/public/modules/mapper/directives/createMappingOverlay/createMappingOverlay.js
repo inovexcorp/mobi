@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createMappingOverlay
+         *
+         * @description 
+         * The `createMappingOverlay` module only provides the `createMappingOverlay` directive which creates
+         * an overlay with functionality to create a new mapping two different ways.
+         */
         .module('createMappingOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createMappingOverlay.directive:createMappingOverlay
+         * @scope
+         * @restrict E
+         * @requires  $q
+         * @requires  mappingManager.service:mappingManagerService
+         * @requires  mapperState.service:mapperStateService
+         *
+         * @description 
+         * `createMappingOverlay` is a directive that creates an overlay with functionality to create a  
+         * new mapping either from scratch, or using a saved mappign as a template. The new mapping name
+         * set in the {@link mappingNameInput.directive:mappingNameInput mappingNameInput} must be unique. 
+         * The directive is replaced by the contents of its template.
+         */
         .directive('createMappingOverlay', createMappingOverlay);
 
         createMappingOverlay.$inject = ['$q', 'mappingManagerService', 'mapperStateService']

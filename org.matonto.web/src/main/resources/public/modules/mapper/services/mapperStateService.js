@@ -53,9 +53,6 @@
 
         function mapperStateService(prefixes, mappingManagerService, ontologyManagerService, delimitedManagerService) {
             var self = this;
-            var cachedOntologyId = '';
-            var cachedSourceOntologies = undefined;
-            var originalMappingName = '';
             var mm = mappingManagerService,
                 om = ontologyManagerService,
                 dm = delimitedManagerService;
@@ -65,7 +62,6 @@
             self.fileUploadStep = 1;
             self.editMappingStep = 2;
 
-            self.mappingSearchString = '';
             /**
              * @ngdoc property
              * @name editMapping
@@ -161,6 +157,76 @@
             self.editMappingName = false;
             /**
              * @ngdoc property
+             * @name displayCreateMapping
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description 
+             * `displayCreateMapping` holds a boolean indicating whether or not the 
+             * {@link createMappingOverlay.directive:createMappingOverlay create mapping overlay} 
+             * should be shown.
+             */
+            self.displayCreateMapping = false;
+            /**
+             * @ngdoc property
+             * @name displayDownloadMapping
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description 
+             * `displayDownloadMapping` holds a boolean indicating whether or not the 
+             * {@link downloadMappingOverlay.directive:downloadMappingOverlay download mapping overlay} 
+             * should be shown.
+             */
+            self.displayDownloadMapping = false;
+            /**
+             * @ngdoc property
+             * @name displayMappingConfig
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description 
+             * `displayMappingConfig` holds a boolean indicating whether or not the 
+             * {@link mappingConfigOverlay.directive:mappingConfigOverlay mapping configuration overlay} 
+             * should be shown.
+             */
+            self.displayMappingConfig = false;
+            /**
+             * @ngdoc property
+             * @name displayPropMappingOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description 
+             * `displayPropMappingOverlay` holds a boolean indicating whether or not the 
+             * {@link propMappingOverlay.directive:propMappingOverlay property mapping overlay} 
+             * should be shown.
+             */
+            self.displayPropMappingOverlay = false;
+            /**
+             * @ngdoc property
+             * @name displayDeletePropConfirm
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description 
+             * `displayDeletePropConfirm` holds a boolean indicating whether or not the delete property 
+             * mapping overlay should be shown.
+             */
+            self.displayDeletePropConfirm = false;
+            /**
+             * @ngdoc property
+             * @name displayDeleteClassConfirm
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description 
+             * `displayDeleteClassConfirm` holds a boolean indicating whether or not the delete class 
+             * mapping overlay should be shown.
+             */
+            self.displayDeleteClassConfirm = false;
+            /**
+             * @ngdoc property
              * @name displayCancelConfirm
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
@@ -170,13 +236,6 @@
              * overlay should be shown.
              */
             self.displayCancelConfirm = false;
-
-            self.displayCreateMapping = false;
-            self.displayDownloadMapping = false;
-            self.displayMappingConfig = false;
-            self.displayPropMappingOverlay = false;
-            self.displayDeletePropConfirm = false;
-            self.displayDeleteClassConfirm = false;
             /**
              * @ngdoc property
              * @name displayDeleteMappingConfirm
@@ -232,6 +291,28 @@
              * `newProp` holds a boolean indicating whether or not the a new property is being mapped
              */
             self.newProp = false;
+            /**
+             * @ngdoc property
+             * @name highlightIndex
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {string}
+             *
+             * @description 
+             * `highlightIndex` holds a string containing the index of the column to highlight
+             * in the {@link previewDataGrid.directive:previewDataGrid previewDataGrid}.
+             */
+            self.highlightIndex = '';
+            /**
+             * @ngdoc property
+             * @name highlmappingSearchStringightIndex
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {string}
+             *
+             * @description 
+             * `mappingSearchString` holds a string that will be used to filter the
+             * {@link mappingList.directive:mappingList mapping list}.
+             */
+            self.mappingSearchString = '';
 
             /**
              * @ngdoc method
@@ -247,8 +328,6 @@
                 self.step = 0;
                 self.invalidProps = [];
                 self.availableColumns = [];
-                self.availableProps = [];
-                originalMappingName = '';
                 self.availablePropsByClass = {};
             }
             /**
@@ -262,6 +341,7 @@
             self.resetEdit = function() {
                 self.selectedClassMappingId = '';
                 self.selectedPropMappingId = '';
+                self.highlightIndex = '';
                 self.newProp = false;
             }
             /**
@@ -337,8 +417,20 @@
                 return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []).length > 0;
             }
 
+            /**
+             * @ngdoc method
+             * @name removeAvailableProps
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description 
+             * Removes a key-value pair from {@link mapperState.service:mapperStateService#availablePropsByClass availablePropsByClass}
+             * using the passed class mapping id.
+             * 
+             * @param {string} classMappingId The id of a class mapping to remove from the available
+             * props list.
+             */
             self.removeAvailableProps = function(classMappingId) {
-                return _.unset(self.availablePropsByClass, encodeURIComponent(classMappingId));
+                _.unset(self.availablePropsByClass, encodeURIComponent(classMappingId));
             }
 
             /**
@@ -347,10 +439,11 @@
              * @methodOf mapperState.service:mapperStateService
              * 
              * @description 
-             * Sets a boolean value for a class mapping in {@link mapperState.service:mapperStateService#availablePropsByClass availablePropsByClass} 
-             * indicating whether the class mapping with the passed id has available properties to map.
+             * Sets the value for a class mapping in {@link mapperState.service:mapperStateService#availablePropsByClass availablePropsByClass} 
+             * to an array of objects representing properties that haven't been mapped for the class mapping 
+             * with the passed id
              * 
-             * @param {string} classMappingId The id of the class mapping to set the boolean value of
+             * @param {string} classMappingId The id of the class mapping to set the array of property objects for
              */
             self.setAvailableProps = function(classMappingId) {
                 var mappedProps = _.map(mm.getPropMappingsByClass(mm.mapping.jsonld, classMappingId), "['" + prefixes.delim + "hasProperty'][0]['@id']");
@@ -376,6 +469,20 @@
                 return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []);
             }
             
+            /**
+             * @ngdoc method
+             * @name getClassProps
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description 
+             * Collects a list of objects representing the properties that can be mapped for a class from
+             * a list of ontologies created by the {@link mappingManager.service:mappingManagerService mappingManagerService}.
+             * 
+             * @param {Object[]} ontologies A list of ontology objects to collect properties from
+             * @param {string} classId The id of the class to collect properties for
+             * @return {Object[]} An arrya of objects with the id and parent ontology id of properties
+             * tht can be mapped for the specified class.
+             */
             self.getClassProps = function(ontologies, classId) {
                 var props = [];
                 _.forEach(ontologies, ontology => {

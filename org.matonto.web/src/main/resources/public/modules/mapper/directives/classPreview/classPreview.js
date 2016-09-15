@@ -39,6 +39,7 @@
          * @scope
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires mapperState.service:mapperStateService
          * @requires prefixes.service:prefixes
          *
          * @description 
@@ -46,7 +47,9 @@
          * class and its properties. It displays the name of the class and the list of its properties.
          * The directive is replaced by the contents of its template.
          *
-         * @param {object} classObj the class object from an ontology to preview
+         * @param {Object} classObj the class object from an ontology to preview
+         * @param {Object[]} ontologies A list of ontologies containing the class and to pull properties
+         * from.
          */
         .directive('classPreview', classPreview);
 

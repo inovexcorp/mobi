@@ -109,7 +109,7 @@ describe('File Upload Page directive', function() {
             var continueButton = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
             expect(continueButton.attr('disabled')).toBeTruthy();
 
-            delimitedManagerSvc.fileObj = {};
+            delimitedManagerSvc.dataRows = [];
             scope.$digest();
             expect(continueButton.attr('disabled')).toBeFalsy();
 

@@ -53,7 +53,6 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.step).toBe(0);
         expect(mapperStateSvc.invalidProps).toEqual([]);
         expect(mapperStateSvc.availableColumns).toEqual([]);
-        expect(mapperStateSvc.availableProps).toEqual([]);
         expect(mapperStateSvc.availablePropsByClass).toEqual({});
     });
     it('should reset edit related variables', function() {

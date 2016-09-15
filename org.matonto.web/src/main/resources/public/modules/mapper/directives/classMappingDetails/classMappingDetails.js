@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classMappingDetails
+         *
+         * @description 
+         * The `classMappingDetails` module only provides the `classMappingDetails` directive which creates
+         * a number of different tools to view and edit information about a class mapping.
+         */
         .module('classMappingDetails', [])
+        /**
+         * @ngdoc directive
+         * @name classMappingDetails.directive:classMappingDetails
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description 
+         * `classMappingDetails` is a directive that creates a div with sections to view and edit information
+         * about the {@link mapperState.service:mapperStateService#selectedClassMappingId selected class mapping}.
+         * One section is for viewing and editing the IRI template of the class mapping. Another section is for
+         * view the list of property mappings associated with the class mapping, adding to that list, editing 
+         * items in the list, and removing from that list. The directive is replaced by the contents of its template.
+         */
         .directive('classMappingDetails', classMappingDetails);
 
         classMappingDetails.$inject = ['prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
@@ -59,7 +82,8 @@
                     dvm.getPropValue = function(propMapping) {
                         var propValue = '';
                         if (dvm.mm.isDataMapping(propMapping)) {
-                            propValue = dvm.dm.filePreview.headers[dvm.getLinkedColumnIndex(propMapping)];
+                            propValue = dvm.dm.getHeader(parseInt(dvm.getLinkedColumnIndex(propMapping), 10));
+                            // propValue = dvm.dm.filePreview.headers[parseInt(dvm.getLinkedColumnIndex(propMapping), 10)];
                         } else {
                             propValue = dvm.getClassName(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
                         }
@@ -69,7 +93,7 @@
                         return dvm.mm.isObjectMapping(propMapping) ? propMapping[prefixes.delim + 'classMapping'][0]['@id'] : '';
                     }
                     dvm.getLinkedColumnIndex = function(propMapping) {
-                        return dvm.mm.isDataMapping(propMapping) ? parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10) : -1;
+                        return dvm.mm.isDataMapping(propMapping) ? propMapping[prefixes.delim + 'columnIndex'][0]['@value'] : '';
                     }
                     dvm.switchClass = function(propMapping) {
                         if (dvm.mm.isObjectMapping(propMapping)) {

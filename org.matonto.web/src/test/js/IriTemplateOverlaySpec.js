@@ -60,7 +60,7 @@ describe('IRI Template Overlay directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [classMapping]
             };
-            delimitedManagerSvc.filePreview = {headers: ['a']};
+            delimitedManagerSvc.dataRows = [['a']];
             var element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('iriTemplateOverlay');
@@ -71,14 +71,15 @@ describe('IRI Template Overlay directive', function() {
                 delete opt['$$hashKey'];
             });
             expect(cleanOptions[0]).toEqual({text: 'UUID', value: '${UUID}'});
-            expect(cleanOptions).toContain({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
-            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
+            expect(delimitedManagerSvc.getHeader.calls.count()).toBe(delimitedManagerSvc.dataRows[0].length);
+            expect(cleanOptions).toContain({text: delimitedManagerSvc.getHeader(0), value: localName});
+            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.getHeader(0), value: localName});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('iriTemplateOverlay');
@@ -92,7 +93,7 @@ describe('IRI Template Overlay directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
         });

@@ -242,8 +242,7 @@ function mockMappingManager() {
 function mockDelimitedManager() {
     module(function($provide) {
         $provide.service('delimitedManagerService', function($q) {
-            this.fileObj = undefined;
-            this.filePreview = undefined;
+            this.dataRows = undefined;
             this.fileName = '';
             this.separator = ',';
             this.containsHeaders = true;
@@ -262,6 +261,7 @@ function mockDelimitedManager() {
             });
             this.map = jasmine.createSpy('map');
             this.reset = jasmine.createSpy('reset');
+            this.getHeader = jasmine.createSpy('getHeader').and.returnValue('');
         });
     });
 }

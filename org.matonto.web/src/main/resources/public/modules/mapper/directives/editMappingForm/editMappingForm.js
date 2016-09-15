@@ -24,7 +24,33 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name editMappingForm
+         *
+         * @description 
+         * The `editMappingForm` module only provides the `editMappingForm` directive which creates
+         * a form with different sections for editing the current 
+         * {@link mappingManager.service:mappingManagerService mapping}.
+         */
         .module('editMappingForm', [])
+        /**
+         * @ngdoc directive
+         * @name editMappingForm.directive:editMappingForm
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires mappingManager.service:mappingManagerService
+         *
+         * @description 
+         * `editMappingForm` is a directive that creates a div with a section to view and edit the 
+         * current {@link mappingManager.service:mappingManagerService mapping} configuration, a
+         * section to {@link classMappingSelect.directive:classMappingSelect select a class mapping} 
+         * and delete the selected class mapping, and 
+         * {@link classMappingDetails.directive:classMappingDetails class mapping details}. The 
+         * directive is replaced by the contents of its template.
+         */
         .directive('editMappingForm', editMappingForm);
 
         editMappingForm.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
