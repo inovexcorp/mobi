@@ -78,7 +78,7 @@
                         }
                     }
                     dvm.downloadMapping = function() {
-                        dvm.mm.downloadMapping(dvm.mm.mapping.name, 'jsonld');
+                        dvm.mm.downloadMapping(dvm.mm.mapping.id, 'jsonld');
                     }
                     dvm.addPropMapping = function() {
                         var classMappingId = dvm.state.selectedClassMappingId;

@@ -188,15 +188,12 @@ function mockOntologyManager() {
 function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
-            this.previousMappingNames = [];
+            this.mappingIds = [];
             this.mapping = undefined;
             this.sourceOntologies = [];
 
-            this.uploadPut = jasmine.createSpy('uploadPut').and.callFake(function(mapping, mappingName) {
-                return mapping ? $q.when(mappingName) : $q.reject('Something went wrong');
-            });
-            this.uploadPost = jasmine.createSpy('uploadPost').and.callFake(function(mapping) {
-                return mapping ? $q.when('mappingName') : $q.reject('Something went wrong');
+            this.upload = jasmine.createSpy('uploadPut').and.callFake(function(mapping) {
+                return mapping ? $q.when('') : $q.reject('Something went wrong');
             });
             this.getMapping = jasmine.createSpy('getMapping').and.callFake(function(mappingName) {
                 return mappingName ? $q.when([]) : $q.reject('Something went wrong');
@@ -204,6 +201,12 @@ function mockMappingManager() {
             this.downloadMapping = jasmine.createSpy('downloadMapping');
             this.deleteMapping = jasmine.createSpy('deleteMapping').and.callFake(function(mappingName) {
                 return mappingName ? $q.when() : $q.reject('Something went wrong');
+            });
+            this.getMappingName = jasmine.createSpy('getMappingName').and.callFake(function(mappingId) {
+                return mappingId;
+            });
+            this.getMappingId = jasmine.createSpy('getMappingId').and.callFake(function(mappingName) {
+                return mappingName;
             });
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
             this.setSourceOntology = jasmine.createSpy('setSourceOntology').and.returnValue([]);
@@ -232,6 +235,7 @@ function mockMappingManager() {
             this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.returnValue([]);
             this.getAllDataMappings = jasmine.createSpy('getAllDataMappings').and.returnValue([]);
             this.getDataMappingFromClass = jasmine.createSpy('getDataMappingFromClass').and.returnValue({});
+            this.getPropsLinkingToClass = jasmine.createSpy('getPropsLinkingToClass').and.returnValue([]);
             this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
         });
     });
@@ -352,7 +356,7 @@ function mockCatalogManager() {
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.delim = this.dataDelim = this.data = this.mappings = this.catalog = '';
+            this.owl = this.rdf = this.delim = this.data = this.mappings = this.catalog = '';
             this.rdfs = 'rdfs:';
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';

@@ -3,7 +3,7 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix uhtc: <http://matonto.org/ontologies/uhtc/> .
 
-csv-data:csvmap csv:prefix		"http://matonto.org/data#" ;
+csv-data:csvmap csv:prefix		"http://matonto.org/data#" .
 
 csv-data:col2 	rdf:type 		uhtc:Material ;
 				csv:hasProperty	csv-data:col3 ;

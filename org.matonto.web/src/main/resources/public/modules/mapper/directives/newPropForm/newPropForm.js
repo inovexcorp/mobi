@@ -103,7 +103,7 @@
                         dvm.set();
                         dvm.state.newProp = true;
                         dvm.state.selectedClassMappingId = classMappingId;
-                        dvm.state.updateAvailableProps();
+                        dvm.state.updateAvailableProps(dvm.state.selectedClassMappingId);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/newPropForm/newPropForm.html'

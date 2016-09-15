@@ -96,8 +96,10 @@
                     dvm.deleteEntity = function() {
                         if (dvm.isClassMapping(dvm.state.deleteId)) {
                             _.pull(dvm.state.openedClasses, dvm.state.deleteId);
+                            var classesToUpdate = _.map(dvm.mm.getPropsLinkingToClass(dvm.mm.mapping.jsonld, dvm.state.deleteId), prop => dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, prop['@id']));
                             dvm.mm.mapping.jsonld = dvm.mm.removeClass(dvm.mm.mapping.jsonld, dvm.state.deleteId);
                             _.unset(dvm.state.availablePropsByClass, encodeURIComponent(dvm.state.deleteId));
+                            _.forEach(classesToUpdate, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         } else {
                             var classMapping = dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId) 
                                 || dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId);
@@ -109,7 +111,7 @@
                         dvm.state.deleteId = '';
                     }
                     dvm.deleteMapping = function() {
-                        dvm.mm.deleteMapping(dvm.mm.mapping.name).then(() => {
+                        dvm.mm.deleteMapping(dvm.mm.mapping.id).then(() => {
                             dvm.mm.mapping = undefined;
                             dvm.mm.sourceOntologies = [];
                         }, errorMessage => {

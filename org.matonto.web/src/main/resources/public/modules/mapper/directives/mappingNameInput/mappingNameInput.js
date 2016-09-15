@@ -71,14 +71,14 @@
             return {
                 require: 'ngModel',
                 link: function(scope, el, attrs, ctrl) {
-                    var previousMappings = mappingManagerService.previousMappingNames;
+                    var previousMappings = mappingManagerService.mappingIds;
                     var getter = $parse(attrs.ngModel);
                     var value = getter(scope);
                     ctrl.$validators.uniqueName = function(modelValue, viewValue) {
                         if (ctrl.$isEmpty(modelValue)) {
                             return true;
                         }
-                        return viewValue === value || previousMappings.indexOf(viewValue) < 0;
+                        return viewValue === value || previousMappings.indexOf(mappingManagerService.getMappingId(viewValue)) < 0;
                     }
                 }
             }

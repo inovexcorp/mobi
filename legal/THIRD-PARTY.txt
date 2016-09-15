@@ -1,5 +1,5 @@
 
-Lists of 325 third-party dependencies.
+Lists of 322 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -58,7 +58,6 @@ Lists of 325 third-party dependencies.
      (The Apache Software License, Version 2.0) Bean Validation API (javax.validation:validation-api:1.1.0.Final - http://beanvalidation.org)
      (Common Development and Distribution License, Version 1.1) (GNU General Public License, Version 2 with Classpath Exception) javax.ws.rs-api (javax.ws.rs:javax.ws.rs-api:2.0.1 - http://jax-rs-spec.java.net)
      (Revised BSD License) JLine (jline:jline:2.13 - http://nexus.sonatype.org/oss-repository-hosting.html/jline)
-     (Common Public License Version 1.0) JUnit (junit:junit:4.11 - http://junit.org)
      (Eclipse Public License, Version 1.0) JUnit (junit:junit:4.12 - http://junit.org)
      (The Apache Software License, Version 2.0) Apache Log4j (log4j:log4j:1.2.17 - http://logging.apache.org/log4j/1.2/)
      (ISC License) logkit (logkit:logkit:1.0.1 - no url defined)
@@ -86,7 +85,6 @@ Lists of 325 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache HttpCore NIO (org.apache.httpcomponents:httpcore-nio:4.2.5 - http://hc.apache.org/httpcomponents-core-ga)
      (The Apache Software License, Version 2.0) Apache HttpCore OSGi bundle (org.apache.httpcomponents:httpcore-osgi:4.2.5 - http://hc.apache.org/httpcomponents-core-ga)
      (The Apache Software License, Version 2.0) HttpMime (org.apache.httpcomponents:httpmime:4.2.5 - http://hc.apache.org/httpcomponents-client)
-     (The Apache Software License, Version 2.0) Apache Karaf :: Assemblies :: Default Distribution (org.apache.karaf:apache-karaf:4.0.2 - http://www.apache.org/karaf/assemblies/apache-karaf/)
      (The Apache Software License, Version 2.0) Apache Karaf :: Client (org.apache.karaf:org.apache.karaf.client:4.0.2 - http://www.apache.org/karaf/org.apache.karaf.client/)
      (The Apache Software License, Version 2.0) Apache Karaf :: Exception (org.apache.karaf:org.apache.karaf.exception:4.0.2 - http://www.apache.org/karaf/org.apache.karaf.exception/)
      (The Apache Software License, Version 2.0) Apache Karaf :: Main (org.apache.karaf:org.apache.karaf.main:4.0.2 - http://www.apache.org/karaf/org.apache.karaf.main/)
@@ -130,7 +128,6 @@ Lists of 325 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: aopalliance (org.apache.servicemix.bundles:org.apache.servicemix.bundles.aopalliance:1.0_6 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.aopalliance/)
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: javax.inject (org.apache.servicemix.bundles:org.apache.servicemix.bundles.javax-inject:1_2 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.javax-inject/)
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: json-lib (org.apache.servicemix.bundles:org.apache.servicemix.bundles.json-lib:2.4_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.json-lib/)
-     (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: not-yet-commons-ssl (org.apache.servicemix.bundles:org.apache.servicemix.bundles.not-yet-commons-ssl:0.3.11_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.not-yet-commons-ssl/)
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: poi (org.apache.servicemix.bundles:org.apache.servicemix.bundles.poi:3.14_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.poi/)
      (The Apache Software License, Version 2.0) Apache Mina SSHD :: Core (org.apache.sshd:sshd-core:0.14.0 - http://www.apache.org/sshd/sshd-core/)
      (GNU Lesser General Public License, Version 2.1) BeanShell (org.beanshell:bsh:2.0b4 - no url defined)

@@ -101,14 +101,19 @@ describe('Mapping Overlays directive', function() {
         it('should delete an entity from the mapping', function() {
             beforeEach(function() {
                 mapperStateSvc.deleteId = 'test';
+                this.deleteId = mapperStateSvc.deleteId;
             });
             it('if it is a class mapping', function() {
+                var props = [{'@id': 'prop'}];
+                mappingManagerSvc.getPropsLinkingToClass.and.returnValue(props);
                 spyOn(controller, 'isClassMapping').and.returnValue(true);
                 mapperStateSvc.openedClasses = [mapperStateSvc.deleteId];
                 scope.$digest();
                 controller.deleteEntity();
-                expect(mapperStateSvc.openedClasses).not.toContain(deleteId);
-                expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
+                expect(mapperStateSvc.openedClasses).not.toContain(this.deleteId);
+                expect(mappingManagerSvc.getPropsLinkingToClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, this.deleteId);
+                expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, this.deleteId);
+                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(props.length);
                 expect(mappingManagerSvc.findClassWithDataMapping).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.removeProp).not.toHaveBeenCalled();
@@ -123,7 +128,7 @@ describe('Mapping Overlays directive', function() {
                 it('for a data property', function() {
                     controller.deleteEntity();
                     expect(mappingManagerSvc.removeClass).not.toHaveBeenCalledWith();
-                    expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
+                    expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, this.deleteId);
                     expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
                     expect(mappingManagerSvc.removeProp).toHaveBeenCalled();
                     expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
@@ -134,8 +139,8 @@ describe('Mapping Overlays directive', function() {
                     mappingManagerSvc.findClassWithDataMapping.and.returnValue(undefined);
                     controller.deleteEntity();
                     expect(mappingManagerSvc.removeClass).not.toHaveBeenCalledWith();
-                    expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
-                    expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, deleteId);
+                    expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, this.deleteId);
+                    expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, this.deleteId);
                     expect(mappingManagerSvc.removeProp).toHaveBeenCalled();
                     expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -144,11 +149,11 @@ describe('Mapping Overlays directive', function() {
             });
         });
         it('should delete a mapping', function() {
-            var name = 'test';
-            mappingManagerSvc.mapping.name = name;
+            var id = 'test';
+            mappingManagerSvc.mapping.id = id;
             controller.deleteMapping();
             scope.$apply();
-            expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(name);
+            expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(id);
             expect(mappingManagerSvc.mapping).toEqual(undefined);
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         });
