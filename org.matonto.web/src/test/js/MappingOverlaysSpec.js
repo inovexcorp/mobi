@@ -84,9 +84,14 @@ describe('Mapping Overlays directive', function() {
         it('should delete a class mapping from the mapping', function() {
             var classMappingId = mapperStateSvc.selectedClassMappingId;
             var baseClass = {'@id': 'base'};
+            var props = [{'@id': 'prop'}];
+            mappingManagerSvc.getPropsLinkingToClass.and.returnValue(props);
             mappingManagerSvc.getBaseClass.and.returnValue(baseClass);
             controller.deleteClass();
+            expect(mappingManagerSvc.getPropsLinkingToClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, classMappingId);
+            expect(mappingManagerSvc.findClassWithObjectMapping.calls.count()).toBe(props.length);
             expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, classMappingId);
+            expect(mapperStateSvc.getAvailableProps.calls.count()).toBe(props.length);
             expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(classMappingId);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(baseClass['@id']);
@@ -112,11 +117,11 @@ describe('Mapping Overlays directive', function() {
             expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
         });
         it('should delete a mapping', function() {
-            var name = 'test';
-            mappingManagerSvc.mapping.name = name;
+            var id = 'test';
+            mappingManagerSvc.mapping.id = id;
             controller.deleteMapping();
             scope.$apply();
-            expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(name);
+            expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(id);
             expect(mappingManagerSvc.mapping).toEqual(undefined);
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         });

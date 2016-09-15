@@ -78,7 +78,7 @@ describe('Mapping Name Input directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.previousMappingNames = ['test'];
+            mappingManagerSvc.mappingIds = ['test'];
             scope.name = '';
             scope.required = true;
             scope.isActive = true;
@@ -113,9 +113,9 @@ describe('Mapping Name Input directive', function() {
             scope.$digest();
             expect(isolatedScope.form.name.$error.pattern).toBe(true);
         });
-        it('with an error if the input is a previous mapping name', function() {
+        it('with an error if the input is a previous mapping id', function() {
             var isolatedScope = this.element.isolateScope();
-            isolatedScope.name = mappingManagerSvc.previousMappingNames[0];
+            isolatedScope.name = mappingManagerSvc.getMappingName(mappingManagerSvc.mappingIds[0]);
             scope.$digest();
             expect(isolatedScope.form.name.$error.uniqueName).toBe(true);
         });
@@ -126,9 +126,9 @@ describe('Mapping Name Input directive', function() {
             expect(isolatedScope.form.name.$error.maxlength).toBe(true);
         });
     });
-    it('should not show an error if first name passed is a previous mapping name', function() {
-        mappingManagerSvc.previousMappingNames = ['test'];
-        scope.name = 'test';
+    it('should not show an error if first name passed is a previous mapping id', function() {
+        mappingManagerSvc.mappingIds = ['test'];
+        scope.name = mappingManagerSvc.getMappingName('test');
         var form = $compile('<form></form>')(scope);
         var element = angular.element('<mapping-name-input name="name" required="required" is-active="isActive" focus-event="focusEvent()"></mapping-name-input>');
         form.append(element);

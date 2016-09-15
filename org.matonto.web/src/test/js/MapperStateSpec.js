@@ -43,7 +43,7 @@ describe('Mapper State service', function() {
             delimitedManagerSvc = _delimitedManagerService_;
         });
 
-        mappingManagerSvc.mapping = {jsonld: [], name: 'mapping'};
+        mappingManagerSvc.mapping = {jsonld: [], id: 'mapping'};
     });
 
     it('should initialize important variables', function() {
@@ -66,7 +66,7 @@ describe('Mapper State service', function() {
         mapperStateSvc.createMapping();
         expect(mapperStateSvc.editMapping).toBe(true);
         expect(mapperStateSvc.newMapping).toBe(true);
-        expect(mappingManagerSvc.mapping).toEqual({jsonld: [], name: ''});
+        expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: ''});
         expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
     });

@@ -261,10 +261,10 @@
              * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL to set the window 
              * location to.
              * 
-             * @param {string} mappingName the local name of a saved mapping
+             * @param {string} mappingId the IRI of a saved mapping
              */
-            self.map = function(mappingName) {
-                var queryString = '?format=jsonld&mappingName=' + mappingName + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
+            self.map = function(mappingId) {
+                var queryString = '?format=jsonld&mappingIRI=' + mappingId + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
                 $window.location = prefix + '/' + encodeURIComponent(self.fileName) + '/map' + queryString;
             }
 

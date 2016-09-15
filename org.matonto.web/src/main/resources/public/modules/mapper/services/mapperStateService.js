@@ -358,7 +358,7 @@
                 self.editMapping = true;
                 self.newMapping = true;
                 mm.mapping = {
-                    name: '',
+                    id: '',
                     jsonld: []
                 };
                 mm.sourceOntologies = [];
@@ -480,8 +480,8 @@
              * 
              * @param {Object[]} ontologies A list of ontology objects to collect properties from
              * @param {string} classId The id of the class to collect properties for
-             * @return {Object[]} An arrya of objects with the id and parent ontology id of properties
-             * tht can be mapped for the specified class.
+             * @return {Object[]} An array of objects with the id and parent ontology id of properties
+             * that can be mapped for the specified class.
              */
             self.getClassProps = function(ontologies, classId) {
                 var props = [];

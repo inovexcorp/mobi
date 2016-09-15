@@ -86,8 +86,16 @@
                         return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithProp(propId), 'entities'), propId));
                     }
                     dvm.deleteClass = function() {
+                        var classesToUpdate = _.map(dvm.mm.getPropsLinkingToClass(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId), prop => {
+                            var classMapping = dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, prop['@id']);
+                            return {
+                                classMappingId: classMapping['@id'],
+                                propMappingId: prop['@id']
+                            };
+                        });
                         dvm.mm.mapping.jsonld = dvm.mm.removeClass(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId);
                         dvm.state.removeAvailableProps(dvm.state.selectedClassMappingId);
+                        _.forEach(classesToUpdate, obj => _.remove(dvm.state.getAvailableProps(obj.classMappingId), {'@id': obj.propMappingId}));
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld), '@id', '');
                     }
@@ -101,7 +109,7 @@
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                     }
                     dvm.deleteMapping = function() {
-                        dvm.mm.deleteMapping(dvm.mm.mapping.name).then(() => {
+                        dvm.mm.deleteMapping(dvm.mm.mapping.id).then(() => {
                             dvm.mm.mapping = undefined;
                             dvm.mm.sourceOntologies = [];
                         }, errorMessage => {
