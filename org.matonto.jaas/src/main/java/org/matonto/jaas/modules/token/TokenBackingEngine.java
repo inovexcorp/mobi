@@ -327,7 +327,7 @@ public class TokenBackingEngine implements BackingEngine {
         try {
             users.load(new FileInputStream(usersFileString));
         } catch (IOException e) {
-            LOG.warn("Cannot open users file: " + usersFileString);
+            LOG.error("Cannot open users file: " + usersFileString);
         }
         return users;
     }
