@@ -47,9 +47,9 @@
          */
         .directive('invalidOntologyOverlay', invalidOntologyOverlay);
 
-        invalidOntologyOverlay.$inject = ['mapperStateService', 'mappingManagerService'];
+        invalidOntologyOverlay.$inject = ['mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function invalidOntologyOverlay(mapperStateService, mappingManagerService) {
+        function invalidOntologyOverlay(mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -59,6 +59,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.close = function() {
                         dvm.state.initialize();

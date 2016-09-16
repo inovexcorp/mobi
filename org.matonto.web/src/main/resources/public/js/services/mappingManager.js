@@ -63,15 +63,15 @@
 
             /**
              * @ngdoc property
-             * @name previousMappingNames
+             * @name mappingIds
              * @propertyOf mappingManager.service:mappingManagerService
              * @type {string[]}
              *
              * @description 
-             * `previousMappingNames` holds an array of the local names of all saved mappings in the
+             * `mappingIds` holds an array of the local names of all saved mappings in the
              * MatOnto repository
              */
-            self.previousMappingNames = [];
+            self.previousMappingIds = [];
             /**
              * @ngdoc property
              * @name mapping
@@ -107,14 +107,14 @@
             function initialize() {
                 $http.get(prefix, {})
                     .then(response => {
-                        self.previousMappingNames = _.map(response.data, name => name.replace(prefixes.mappings, ''));
+                        self.mappingIds = response.data;
                     });
             }
 
             // REST endpoint calls
             /**
              * @ngdoc method
-             * @name uploadPost
+             * @name upload
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
@@ -125,7 +125,7 @@
              * @param {Object[]} mapping The JSON-LD object of a mapping
              * @returns {Promise} A promise with the IRI of the uploaded mapping
              */
-            self.uploadPost = function(mapping) {
+            self.upload = function(mapping) {
                 var deferred = $q.defer(),
                     fd = new FormData(),
                     config = {
@@ -140,7 +140,7 @@
                 $rootScope.showSpinner = true;
                 $http.post(prefix, fd, config)
                     .then(response => {
-                        self.previousMappingNames.push(response.data.replace(prefixes.mappings, ''));
+                        self.mappingIds = _.union(self.mappingIds, [response.data]);
                         deferred.resolve(response.data);
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', ''));
@@ -149,44 +149,7 @@
                     });
                 return deferred.promise;
             }
-            /**
-             * @ngdoc method
-             * @name uploadPut
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Calls the PUT /matontorest/mappings/{mappingName} endpoint which uploads a mapping to 
-             * the MatOnto repository with the specified IRI. Returns a promise with the IRI of 
-             * the newly uploaded mapping.
-             * 
-             * @param {Object[]} mapping The JSON-LD object of a mapping
-             * @param {string} mappingName The IRI for the mapping with the user-defined local name
-             * @returns {Promise} A promise with the IRI of the uploaded mapping
-             */
-            self.uploadPut = function(mapping, mappingName) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
-                    config = {
-                        transformRequest: angular.identity,
-                        headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        }
-                    };
-                fd.append('jsonld', angular.toJson(mapping));
-
-                $rootScope.showSpinner = true;
-                $http.put(prefix + '/' + mappingName, fd, config)
-                    .then(response => {
-                        self.previousMappingNames = _.union(self.previousMappingNames, [mappingName]);
-                        deferred.resolve(response.data);
-                    }, response => {
-                        deferred.reject(_.get(response, 'statusText', ''));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
+            
             /**
              * @ngdoc method
              * @name getMapping
@@ -199,10 +162,10 @@
              * @param {string} mappingName The IRI for the mapping with the user-defined local name
              * @returns {Promise} A promise with the JSON-LD of the uploaded mapping
              */
-            self.getMapping = function(mappingName) {
+            self.getMapping = function(mappingId) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
-                $http.get(prefix + '/' + encodeURIComponent(mappingName))
+                $http.get(prefix + '/' + encodeURIComponent(mappingId))
                     .then(response => {
                         deferred.resolve(_.get(response.data, '@graph', []));
                     }, response => {
@@ -218,13 +181,14 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Calls the GET /matontorest/mappings/{mappingName} endpoint using the `window.open` function
+             * Calls the GET /matontorest/mappings/{mappingName} endpoint using the `window.location` function
              * which will start a download of the JSON-LD of a saved mapping.
              * 
              * @param {string} mappingName The IRI for the mapping with the user-defined local name
+             * @param {string} format the RDF serialization to retrieve the mapping in
              */
-            self.downloadMapping = function(mappingName, format) {
-                $window.location = prefix + '/' + mappingName + '?format=' + format;
+            self.downloadMapping = function(mappingId, format) {
+                $window.location = prefix + '/' + encodeURIComponent(mappingId) + '?format=' + format;
             }
             /**
              * @ngdoc method
@@ -238,12 +202,12 @@
              * @param {string} mappingName The IRI for the mapping with the user-defined local name
              * @returns {Promise} A promise with a boolean indication the success of the deletion.
              */
-            self.deleteMapping = function(mappingName) {
+            self.deleteMapping = function(mappingId) {
                 var deferred = $q.defer();
                 $rootScope.showSpinner = true;
-                $http.delete(prefix + '/' + encodeURIComponent(mappingName))
+                $http.delete(prefix + '/' + encodeURIComponent(mappingId))
                     .then(response => {
-                        _.pull(self.previousMappingNames, mappingName);
+                        _.pull(self.mappingIds, mappingId);
                         deferred.resolve();
                     }, response => {
                         deferred.reject(_.get(response, 'statusText', ''));
@@ -253,6 +217,21 @@
                 return deferred.promise;
             }
 
+            /**
+             * @ngdoc method
+             * @name getMappingId
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Creates a mapping id from the display (local) name of a mapping.
+             * 
+             * @param {string} mappingName The display (local) name of a mapping
+             * @return {string} A mapping id made from the display (local) name of a mapping
+             */
+            self.getMappingId = function(mappingName) {
+                return prefixes.mappings + mappingName;
+            }
+
             // Edit mapping methods 
             /**
              * @ngdoc method
@@ -260,17 +239,18 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Creates a new mapping array with only the document entity defined.
-             * 
+             * Creates a new mapping array with only the mapping entity defined with the passed IRI.
+             *
+             * @param {string} iri The IRI of the new mapping
              * @returns {Object[]} A new mapping array
              */
-            self.createNewMapping = function() {
+            self.createNewMapping = function(iri) {
                 var jsonld = [];
-                var documentEntity = {
-                    '@id': prefixes.dataDelim + 'Document',
-                    '@type': [prefixes.delim + 'Document']
+                var mappingEntity = {
+                    '@id': iri,
+                    '@type': [prefixes.delim + 'Mapping']
                 };
-                jsonld.push(documentEntity);
+                jsonld.push(mappingEntity);
                 return jsonld;
             }
             /**
@@ -288,8 +268,8 @@
              */
             self.setSourceOntology = function(mapping, ontologyId) {
                 var newMapping = angular.copy(mapping);
-                var documentEntity = getEntityById(newMapping, prefixes.dataDelim + 'Document');
-                documentEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
+                var mappingEntity = getMappingEntity(newMapping);
+                mappingEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
                 return newMapping;
             }
             /**
@@ -302,19 +282,19 @@
              * in the passed ontology. Returns a new copy of the mapping.
              * 
              * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {Object} ontology The ontology object to search for the class in
+             * @param {Object[]} ontology The ontology array to search for the class in
              * @param {string} classId The id of the class in the ontology
              * @returns {Object[]} The edited mapping array
              */
             self.addClass = function(mapping, ontology, classId) {
                 var newMapping = angular.copy(mapping);
                 // Check if class exists in ontology
-                if (ontologyManagerService.getClass(ontology, classId)) {
+                if (ontologyManagerService.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
                     var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontology, '@id', '')).toLowerCase();
                     var classEntity = {
-                        '@id': prefixes.dataDelim + uuid.v4(),
+                        '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
@@ -365,7 +345,7 @@
              * the mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {Object} ontology The ontology object to search for the property in
+             * @param {Object[]} ontology The ontology array to search for the property in
              * @param {string} classMappingId The id of the class mapping to add the data property mapping to
              * @param {string} propId The id of the data property in the ontology
              * @param {number} columnIndex The column index to set the data property mapping's `columnIndex 
@@ -374,10 +354,9 @@
              */
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
                 var newMapping = angular.copy(mapping);
-                // If class mapping doesn't exist or the property does not exist for that class,
-                // return the mapping
-                if (entityExists(newMapping, classMappingId) && ontologyManagerService.getClassProperty(ontology, 
-                    self.getClassIdByMappingId(newMapping, classMappingId), propId)) {
+                // Check if class mapping exists and the property exists in the ontology
+                var propObj = ontologyManagerService.getEntity(ontology, propId);
+                if (entityExists(newMapping, classMappingId) && propObj && ontologyManagerService.isDataTypeProperty(propObj)) {
                     var dataEntity = self.getDataMappingFromClass(newMapping, classMappingId, propId);
                     // If the data property and mapping already exist, update the column index
                     if (dataEntity) {
@@ -386,7 +365,7 @@
                     } else {
                         // Add new data mapping id to data properties of class mapping
                         var dataEntity = {
-                            '@id': prefixes.dataDelim + uuid.v4()
+                            '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
                         };
                         var classMapping = getEntityById(newMapping, classMappingId);
                         // Sets the dataProperty key if not already present
@@ -409,48 +388,41 @@
              *
              * @description
              * Adds a object property mapping to a mapping for the specified class mapping. The class mapping
-             * must already be in the mapping and the object property must exist in one of the passed ontologies. 
-             * Creates a class mapping for the range class of the object property. Returns a new copy of the mapping.
+             * must already be in the mapping and the object property must exist in the passed ontology. 
+             * Creates a class mapping for the range class of the object property. Returns a new copy of the 
+             * mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {Object[]} ontologies An array of ontology objects to search for the property and range class in
+             * @param {Object[]} ontology The ontology array to search for the property in
              * @param {string} classMappingId The id of the class mapping to add the object property mapping to
              * @param {string} propId The id of the object property in the ontology
              * @returns {Object[]} The edited mapping array
              */
-            self.addObjectProp = function(mapping, ontologies, classMappingId, propId) {
+            self.addObjectProp = function(mapping, ontology, classMappingId, propId) {
                 var newMapping = angular.copy(mapping);
-                // Check if class mapping exists
-                if (entityExists(newMapping, classMappingId)) {
-                    var classId = self.getClassIdByMappingId(newMapping, classMappingId);
-                    var ontology = ontologyManagerService.findOntologyWithClass(ontologies, classId);
-                    // Check if ontology exists with class
-                    if (ontology) {
-                        var propObj = ontologyManagerService.getClassProperty(ontology, classId, propId);
-                        // Check if object property exists for class in ontology
-                        if (propObj) {
-                            // Add new object mapping id to object properties of class mapping
-                            var dataEntity = {
-                                '@id': prefixes.dataDelim + uuid.v4()
-                            };
-                            var classMapping = getEntityById(newMapping, classMappingId);
-                            classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
-                            classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(dataEntity));
-                            // Find the range of the object property (currently only supports a single class)
-                            var rangeClass = propObj[prefixes.rdfs + 'range'][0]['@id'];
-                            var rangeOntology = ontologyManagerService.findOntologyWithClass(ontologies, rangeClass);
-                            var rangeClassMappings = getClassMappingsByClass(newMapping, rangeClass);
+                // Check if class mapping exists and object property exists in ontology
+                var propObj = ontologyManagerService.getEntity(ontology, propId);
+                if (entityExists(newMapping, classMappingId) && propObj && ontologyManagerService.isObjectProperty(propObj)) {
+                    // Add new object mapping id to object properties of class mapping
+                    var dataEntity = {
+                        '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
+                    };
+                    var classMapping = getEntityById(newMapping, classMappingId);
+                    classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
+                    classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(dataEntity));
+                    // Find the range of the object property (currently only supports a single class)
+                    var rangeClass = propObj[prefixes.rdfs + 'range'][0]['@id'];
+                    var rangeOntology = self.findSourceOntologyWithClass(rangeClass);
+                    var rangeClassMappings = getClassMappingsByClass(newMapping, rangeClass);
 
-                            // Create class mapping for range of object property
-                            newMapping = self.addClass(newMapping, rangeOntology, rangeClass);
-                            var newClassMapping = _.differenceBy(getClassMappingsByClass(newMapping, rangeClass), rangeClassMappings, '@id')[0];
-                            // Create object mapping
-                            dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
-                            dataEntity[prefixes.delim + 'classMapping'] = [{'@id': newClassMapping['@id']}];
-                            dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                            newMapping.push(dataEntity);
-                        }
-                    }
+                    // Create class mapping for range of object property
+                    newMapping = self.addClass(newMapping, rangeOntology.entities, rangeClass);
+                    var newClassMapping = _.differenceBy(getClassMappingsByClass(newMapping, rangeClass), rangeClassMappings, '@id')[0];
+                    // Create object mapping
+                    dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
+                    dataEntity[prefixes.delim + 'classMapping'] = [{'@id': newClassMapping['@id']}];
+                    dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                    newMapping.push(dataEntity);
                 }
                 return newMapping;
             }
@@ -503,10 +475,7 @@
                     // Collect class mapping and any object mappings that use the class mapping
                     var classMapping = getEntityById(newMapping, classMappingId);
                     var classId = self.getClassIdByMapping(classMapping);
-                    var objectMappings = _.filter(
-                        self.getAllObjectMappings(newMapping),
-                        ["['" + prefixes.delim + "classMapping'][0]['@id']", classMapping['@id']]
-                    );
+                    var objectMappings = self.getPropsLinkingToClass(newMapping, classMapping['@id']);
                     // If there are object mappings that use the class mapping, iterate through them
                     _.forEach(objectMappings, objectMapping => {
                         // Collect the class mapping that uses the object mapping
@@ -527,6 +496,141 @@
                 }
 
                 return newMapping;
+            }
+
+            // Source Ontology methods
+            /**
+             * @ngdoc method
+             * @name  getOntology
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Retrieves an ontology and structures it for the mappingManagerService with its id and the list of
+             * entities within it. Returns a Promise with the structured ontology.
+             * 
+             * @param {string} ontologyId The id of the ontology to retrieve
+             * @return {Promise} A Promise that resolves with a structured ontology if the call was successful;
+             * rejects otherwise
+             */
+            self.getOntology = function(ontologyId) {
+                $rootScope.showSpinner = true;
+                var deferred = $q.defer();
+                var onError = function(response) {
+                    deferred.reject(_.get(response, 'statusText', ''));
+                    $rootScope.showSpinner = false;
+                };
+                ontologyManagerService.getOntology(ontologyId).then(response => {
+                    if (_.get(response, 'status') === 200) {
+                        var obj = _.pick(response.data, ['ontology', 'id']);
+                        deferred.resolve({id: obj.id, entities: obj.ontology});
+                    } else {
+                        onError(response);
+                    }
+                }, onError).then(() => {
+                    $rootScope.showSpinner = false;
+                });
+                return deferred.promise;
+            };
+            /**
+             * @ngdoc method
+             * @name getSourceOntologyId
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects the source ontology id of the passed mapping.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @returns {string} The id of the source ontology of a mapping
+             */
+            self.getSourceOntologyId = function(mapping) {
+                return _.get(
+                    getMappingEntity(mapping),
+                    "['" + prefixes.delim + "sourceOntology'][0]['@id']",
+                    ''
+                );
+            }
+            /**
+             * @ngdoc method
+             * @name getSourceOntology
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Collects the source ontology of the passed mapping using the source ontology id and
+             * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies}.
+             *
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @returns {Object} The source ontology of a mapping
+             */
+            self.getSourceOntology = function(mapping) {
+                return _.find(self.sourceOntologies, {id: self.getSourceOntologyId(mapping)});
+            }
+            /**
+             * @ngdoc method
+             * @name findSourceOntologyWithClass
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Finds the ontology in the {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies}
+             * containing the class with the passed IRI.
+             * 
+             * @param {string} classIRI The IRI of the class to search for
+             * @return {Object} The ontology with the class with the passed IRI
+             */
+            self.findSourceOntologyWithClass = function(classIRI) {
+                return _.find(self.sourceOntologies, ontology => _.findIndex(ontologyManagerService.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
+            }
+            /**
+             * @ngdoc method
+             * @name findSourceOntologyWithProp
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Finds the ontology in the {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies}
+             * containing the property with the passed IRI.
+             * 
+             * @param {string} propertyIRI The IRI of the property to search for
+             * @return {Object} The ontology containing the property with the passed IRI
+             */
+            self.findSourceOntologyWithProp = function(propertyIRI) {
+                return _.find(self.sourceOntologies, ontology => {
+                    var properties = _.concat(ontologyManagerService.getDataTypeProperties(ontology.entities), ontologyManagerService.getObjectProperties(ontology.entities));
+                    return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
+                });
+            }
+            /**
+             * @ngdoc method
+             * @name areCompatible
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Tests whether the opened mapping is still compatible with its source ontologies. A mapping is 
+             * incompatible if mapped classes or properties no longer exist or mapped properties have changed 
+             * property type.
+             * 
+             * @return {boolean} True if the {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies}
+             * have not changed in an incompatible way; false otherwise
+             */
+            self.areCompatible = function() {
+                return !_.some(self.getAllClassMappings(self.mapping.jsonld), classMapping => {
+                    if (!self.findSourceOntologyWithClass(self.getClassIdByMapping(classMapping))) {
+                        return true;
+                    }
+                    return _.some(self.getPropMappingsByClass(self.mapping.jsonld, classMapping['@id']), propMapping => {
+                        var propId = self.getPropIdByMapping(propMapping);
+                        var ontology = self.findSourceOntologyWithProp(propId);
+                        if (!ontology) {
+                            return true;
+                        } else {
+                            var propObj = ontologyManagerService.getEntity(ontology.entities, propId);
+                            if (ontologyManagerService.isObjectProperty(propObj) && self.isDataMapping(propMapping)) {
+                                return true;
+                            }
+                            if (ontologyManagerService.isDataTypeProperty(propObj) && self.isObjectMapping(propMapping)) {
+                                return true;
+                            }
+                        }
+                    });
+                });
             }
 
             // Public helper methods
@@ -588,39 +692,6 @@
              */
             self.getPropIdByMapping = function(propMapping) {
                 return _.get(propMapping, "['" + prefixes.delim + "hasProperty'][0]['@id']", '');
-            }
-            /**
-             * @ngdoc method
-             * @name getSourceOntologyId
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Collects the source ontology id of the passed mapping.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @returns {string} The id of the source ontology of a mapping
-             */
-            self.getSourceOntologyId = function(mapping) {
-                return _.get(
-                    getEntityById(mapping, prefixes.dataDelim + 'Document'),
-                    "['" + prefixes.delim + "sourceOntology'][0]['@id']",
-                    ''
-                );
-            }
-            /**
-             * @ngdoc method
-             * @name getSourceOntology
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Collects the source ontology of the passed mapping using the source ontology id and
-             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @returns {Object} The source ontology of a mapping
-             */
-            self.getSourceOntology = function(mapping) {
-                return _.find(self.sourceOntologies, {matonto: {id: self.getSourceOntologyId(mapping)}});
             }
             /**
              * @ngdoc method
@@ -779,6 +850,24 @@
             } 
             /**
              * @ngdoc method
+             * @name getPropsLinkingToClass
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Finds all property mappings that link to the class mapping with the specified id.
+             * 
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {string} classMappingId The id of the class mapping to search for properties linking to
+             * @return {Object[]} The property mappings that link to the specified class mapping
+             */
+            self.getPropsLinkingToClass = function(mapping, classMappingId) {
+                return _.filter(
+                    self.getAllObjectMappings(mapping),
+                    ["['" + prefixes.delim + "classMapping'][0]['@id']", classMappingId]
+                );
+            }
+            /**
+             * @ngdoc method
              * @name getPropMappingTitle
              * @methodOf mappingManager.service:mappingManagerService
              *
@@ -830,6 +919,9 @@
             }
             function isType(entity, type) {
                 return _.get(entity, "['@type'][0]") === prefixes.delim + type;
+            }
+            function getMappingEntity(mapping) {
+                return _.get(getEntitiesByType(mapping, 'Mapping'), 0);
             }
         }
 })();

@@ -23,6 +23,23 @@ package org.matonto.etl.service.rdf;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
+import org.apache.log4j.Logger;
+import org.matonto.etl.api.rdf.RDFExportService;
+import org.matonto.rdf.api.*;
+import org.matonto.rdf.core.utils.Values;
+import org.matonto.repository.api.DelegatingRepository;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.base.RepositoryResult;
+import org.openrdf.model.impl.LinkedHashModel;
+import org.openrdf.repository.RepositoryException;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -31,24 +48,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.log4j.Logger;
-import org.matonto.etl.api.rdf.RDFExportService;
-import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Value;
-import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.utils.Values;
-import org.matonto.repository.api.DelegatingRepository;
-import org.matonto.repository.api.Repository;
-import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.base.RepositoryResult;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.rio.*;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 
 
 @Component(provide = RDFExportService.class)
@@ -147,7 +146,9 @@ public class RDFExportServiceImpl implements RDFExportService {
     @Override
     public File exportToFile(Model model, String filepath, RDFFormat format) throws IOException {
         File file = new File(filepath);
-        Rio.write(sesameModel(model), new FileWriter(file), format);
+
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
+        Rio.write(sesameModel(model), rdfWriter);
         return file;
     }
 

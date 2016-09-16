@@ -1,0 +1,192 @@
+@prefix : <http://matonto.org/ontologies/delimited#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://matonto.org/ontologies/delimited> a owl:Ontology .
+# 
+# 
+# #################################################################
+# #
+# #    Object Properties
+# #
+# #################################################################
+# 
+# 
+# http://matonto.org/ontologies/delimited#classMapping
+
+:classMapping a owl:ObjectProperty ;
+	rdfs:domain :ObjectMapping ;
+	rdfs:range :ClassMapping ;
+	rdfs:comment "Points to a Class Mapping that defines the object property will point to." .
+# 
+# http://matonto.org/ontologies/delimited#dataProperty
+
+:dataProperty a owl:ObjectProperty ;
+	rdfs:domain :ClassMapping ;
+	rdfs:range :DataMapping .
+# 
+# http://matonto.org/ontologies/delimited#hasProperty
+
+:hasProperty a owl:ObjectProperty ;
+	rdfs:domain :DataMapping , :ObjectMapping , :PropertyMapping ;
+	rdfs:range owl:Property ;
+	rdfs:comment "Defines the property that will be used when mapping the PropertyMapping to a class" .
+# 
+# http://matonto.org/ontologies/delimited#mapsTo
+
+:mapsTo a owl:ObjectProperty ;
+	rdfs:domain :PropertyMapping ;
+	rdfs:range owl:Thing ;
+	rdfs:comment "Defines the type that will be used when defining an object from this class mapping" .
+# 
+# http://matonto.org/ontologies/delimited#objectColumn
+
+:objectColumn a owl:ObjectProperty ;
+	rdfs:domain :PropertyMapping .
+# 
+# http://matonto.org/ontologies/delimited#objectProperty
+
+:objectProperty a owl:ObjectProperty ;
+	rdfs:domain :ClassMapping ;
+	rdfs:range :ObjectMapping .
+# 
+# http://matonto.org/ontologies/delimited#propertyMapping
+
+:propertyMapping a owl:ObjectProperty ;
+	rdfs:range :PropertyMapping .
+# 
+# http://matonto.org/ontologies/delimited#sourceOntology
+
+:sourceOntology a owl:ObjectProperty ;
+	rdfs:domain :Document ;
+	rdfs:range owl:Ontology ;
+	rdfs:comment "Defines the ontology that the mapping is based on." .
+# 
+# 
+# 
+# #################################################################
+# #
+# #    Data properties
+# #
+# #################################################################
+# 
+# 
+# http://matonto.org/ontologies/delimited#columnIndex
+
+:columnIndex a owl:DatatypeProperty ;
+	rdfs:domain :Cell , :DataMapping , :ObjectMapping ;
+	rdfs:range xsd:integer ;
+	rdfs:comment "The cells column. Starting at 0." .
+# 
+# http://matonto.org/ontologies/delimited#dataStart
+
+:dataStart a owl:DatatypeProperty ;
+	rdfs:domain :Document ;
+	rdfs:range xsd:integer ;
+	rdfs:comment "The row that the data starts. Used to avoid parsing headers incorrectly" .
+# 
+# http://matonto.org/ontologies/delimited#defaultPrefix
+
+:defaultPrefix a owl:DatatypeProperty ;
+	rdfs:subPropertyOf owl:topDataProperty ;
+	rdfs:domain :Document ;
+	rdfs:range xsd:string ;
+	rdfs:comment "The default prefix used for the document" .
+# 
+# http://matonto.org/ontologies/delimited#hasPrefix
+
+:hasPrefix a owl:DatatypeProperty ;
+	rdfs:domain :ClassMapping ;
+	rdfs:range xsd:string ;
+	rdfs:comment "The prefix used if the Cell is an instance" .
+# 
+# http://matonto.org/ontologies/delimited#index
+
+:index a owl:DatatypeProperty ;
+	rdfs:domain :Row ;
+	rdfs:range xsd:integer ;
+	rdfs:comment "The index of the row or column. Starts at 1" .
+# 
+# http://matonto.org/ontologies/delimited#isInstance
+
+:isInstance a owl:DatatypeProperty ;
+	rdfs:subPropertyOf owl:topDataProperty ;
+	rdfs:range xsd:boolean ;
+	rdfs:comment "If the column defines an instance that should be created" .
+# 
+# http://matonto.org/ontologies/delimited#localName
+
+:localName a owl:DatatypeProperty ;
+	rdfs:domain :ClassMapping .
+# 
+# http://matonto.org/ontologies/delimited#quoteCharacter
+
+:quoteCharacter a owl:DatatypeProperty ;
+	rdfs:domain :Document ;
+	rdfs:range xsd:string ;
+	rdfs:comment "The character used as quotes for cells" .
+# 
+# http://matonto.org/ontologies/delimited#rowIndex
+
+:rowIndex a owl:DatatypeProperty ;
+	rdfs:domain :Cell ;
+	rdfs:range xsd:integer ;
+	rdfs:comment "The row index of the cell. Starts at 1" .
+# 
+# http://matonto.org/ontologies/delimited#separator
+
+:separator a owl:DatatypeProperty ;
+	rdfs:domain :Document ;
+	rdfs:range xsd:string .
+# 
+# 
+# 
+# #################################################################
+# #
+# #    Classes
+# #
+# #################################################################
+# 
+# 
+# http://matonto.org/ontologies/delimited#Cell
+
+:Cell a owl:Class .
+# 
+# http://matonto.org/ontologies/delimited#ClassMapping
+
+:ClassMapping a owl:Class .
+# 
+# http://matonto.org/ontologies/delimited#DataMapping
+
+:DataMapping a owl:Class ;
+	rdfs:subClassOf :PropertyMapping .
+# 
+# http://matonto.org/ontologies/delimited#Document
+
+:Document a owl:Class .
+# 
+# http://matonto.org/ontologies/delimited#ObjectMapping
+
+:ObjectMapping a owl:Class ;
+	rdfs:subClassOf :PropertyMapping .
+# 
+# http://matonto.org/ontologies/delimited#PropertyMapping
+
+:PropertyMapping a owl:Class .
+# 
+# http://matonto.org/ontologies/delimited#Row
+
+:Row a owl:Class .
+# 
+# http://www.w3.org/2002/07/owl#Ontology
+
+owl:Ontology a owl:Class .
+# 
+# http://www.w3.org/2002/07/owl#Property
+
+owl:Property a owl:Class .
+# 
+# Generated by the OWL API (version 4.1.3.20151118-2017) https://github.com/owlcs/owlapi

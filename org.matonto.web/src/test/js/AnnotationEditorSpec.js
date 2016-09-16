@@ -29,6 +29,7 @@ describe('Annotation Editor directive', function() {
         module('templates');
         module('annotationEditor');
         mockStateManager();
+        injectRemoveMatontoFilter();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

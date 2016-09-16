@@ -25,7 +25,8 @@ describe('Finish Overlay directive', function() {
         scope,
         mappingManagerSvc,
         mapperStateSvc,
-        delimitedManagerSvc;
+        delimitedManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -34,26 +35,23 @@ describe('Finish Overlay directive', function() {
         mockMapperState();
         mockDelimitedManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: ''};
+            mappingManagerSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<finish-overlay></finish-overlay>'))(scope);
             scope.$digest();
+            controller = this.element.controller('finishOverlay');
         });
         it('should set the correct state for finishing', function() {
-            var controller = this.element.controller('finishOverlay');
             controller.finish();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -62,7 +60,6 @@ describe('Finish Overlay directive', function() {
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         });
         it('should set the correct state for saving and finishing', function() {
-            var controller = this.element.controller('finishOverlay');
             spyOn(controller, 'finish');
             controller.save();
             expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith('', 'jsonld');

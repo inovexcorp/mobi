@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Open Overlay directive', function() {
+describe('Ontology Close Overlay directive', function() {
     var $compile,
         scope,
         element,
@@ -96,17 +96,20 @@ describe('Ontology Open Overlay directive', function() {
         });
         describe('saveThenClose', function() {
             beforeEach(function() {
-                ontologyManagerSvc.edit.and.returnValue(deferred.promise);
+                ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
-                expect(ontologyManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
+                expect(stateManagerSvc.getUnsavedEntities).toHaveBeenCalledWith(stateManagerSvc.ontology);
+                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
+                    stateManagerSvc.getUnsavedEntities(stateManagerSvc.ontology));
             });
             it('when resolved, calls the correct controller function', function() {
                 controller.close = jasmine.createSpy('close');
-                deferred.resolve({});
+                deferred.resolve('id');
                 scope.$apply();
                 expect(controller.close).toHaveBeenCalled();
+                expect(stateManagerSvc.afterSave).toHaveBeenCalledWith('id');
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');
@@ -116,8 +119,8 @@ describe('Ontology Open Overlay directive', function() {
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.oi, stateManagerSvc.ontology.matonto.id);
-            expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.oi);
+            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+            expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
             expect(stateManagerSvc.showCloseOverlay).toBe(false);
         });
     });

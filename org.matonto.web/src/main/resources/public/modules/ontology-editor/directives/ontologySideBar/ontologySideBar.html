@@ -23,7 +23,7 @@
 <left-nav module-name="Ontology Editor" doc-url="http://docs.matonto.org/#ontology_editor">
     <left-nav-item on-click="dvm.sm.showSaveOverlay = true"
                    nav-title="Save All Changes"
-                   is-disabled-when="dvm.shouldSaveBeDisabled()"
+                   is-disabled-when="!dvm.shouldSaveBeEnabled()"
                    is-active-when="dvm.sm.showSaveOverlay">
         <i class="fa fa-floppy-o fa-fw"></i>
     </left-nav-item>
@@ -56,7 +56,7 @@
 
     <left-nav-item on-click="dvm.sm.showCreateClassOverlay = true"
                    nav-title="Create Class"
-                   is-disabled-when="dvm.sm.state.oi === undefined || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'class')"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'class')"
                    is-active-when="dvm.sm.showCreateClassOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">C</span>
@@ -66,7 +66,7 @@
 
     <left-nav-item on-click="dvm.sm.showCreatePropertyOverlay = true"
                    nav-title="Create Property"
-                   is-disabled-when="dvm.sm.state.oi === undefined || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'object' || dvm.sm.state.tab === 'datatype')"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'object' || dvm.sm.state.tab === 'datatype')"
                    is-active-when="dvm.sm.showCreatePropertyOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">P</span>
@@ -76,7 +76,7 @@
 
     <left-nav-item on-click="dvm.sm.showCreateAnnotationOverlay = true"
                    nav-title="Create Annotation"
-                   is-disabled-when="dvm.sm.state.oi === undefined || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'annotation')"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'annotation')"
                    is-active-when="dvm.sm.showCreateAnnotationOverlay">
           <span class="create-icon">
               <span class="fa-fw identifier">A</span>
@@ -84,16 +84,26 @@
           </span>
     </left-nav-item>
 
+    <left-nav-item on-click="dvm.sm.showCreateIndividualOverlay = true"
+                   nav-title="Create Individual"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'individual')"
+                   is-active-when="dvm.sm.showCreateIndividualOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier narrow">I</span>
+              <i class="fa fa-plus"></i>
+          </span>
+    </left-nav-item>
+
     <left-nav-item on-click="dvm.sm.showDownloadOverlay = true"
                    nav-title="Download Ontology"
-                   is-disabled-when="dvm.sm.state.oi === undefined"
+                   is-disabled-when="!dvm.sm.state.ontologyId"
                    is-active-when="dvm.sm.showDownloadOverlay">
         <i class="fa fa-download fa-fw"></i>
     </left-nav-item>
 
     <left-nav-item on-click="dvm.closeOntology()"
                    nav-title="Close Ontology"
-                   is-disabled-when="dvm.sm.state.oi === undefined"
+                   is-disabled-when="!dvm.sm.state.ontologyId"
                    is-active-when="dvm.sm.showCloseOverlay">
         <i class="fa fa-folder fa-fw"></i>
     </left-nav-item>
@@ -102,7 +112,7 @@
 
     <left-nav-item on-click="dvm.sm.showDeleteConfirmation = true"
                    nav-title="Delete Entity"
-                   is-disabled-when="dvm.sm.state.oi === undefined || dvm.sm.state.tab === 'annotation'"
+                   is-disabled-when="!dvm.sm.state.ontologyId || dvm.sm.state.tab === 'annotation'"
                    is-active-when="dvm.sm.showDeleteConfirmation">
         <i class="fa fa-trash-o fa-fw"></i>
     </left-nav-item>

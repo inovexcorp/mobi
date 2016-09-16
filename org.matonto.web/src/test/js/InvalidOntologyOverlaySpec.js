@@ -24,33 +24,33 @@ describe('Invalid Ontology Overlay directive', function() {
     var $compile,
         scope,
         mappingManagerSvc,
-        mapperStateSvc;
+        mapperStateSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('invalidOntologyOverlay');
         mockMappingManager();
         mockMapperState();
+        mockOntologyManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_) {
-            mappingManagerSvc = _mappingManagerService_;
-            mapperStateSvc = _mapperStateService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: ''};
+            mappingManagerSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
             scope.$digest();
+            controller = this.element.controller('invalidOntologyOverlay');
         });
         it('should set the correct state for closing the overlay', function() {
-            var controller = this.element.controller('invalidOntologyOverlay');
             controller.close();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.invalidOntology).toBe(false);

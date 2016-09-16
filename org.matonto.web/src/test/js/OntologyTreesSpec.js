@@ -53,14 +53,15 @@ describe('Ontology Trees directive', function() {
         });
         it('based on tab-buttons', function() {
             var buttons = element.find('tab-button');
-            expect(buttons.length).toBe(5);
+            expect(buttons.length).toBe(6);
         });
         _.forEach([
                 {tag: 'everything-tree', text: 'everything'},
                 {tag: 'class-tree', text: 'class'},
                 {tag: 'property-tree', text: 'object'},
                 {tag: 'property-tree', text: 'datatype'},
-                {tag: 'annotation-tree', text: 'annotation'}
+                {tag: 'annotation-tree', text: 'annotation'},
+                {tag: 'individual-tree', text: 'individual'}
             ], function(item) {
             it('based on ' + item.tag, function() {
                 stateManagerSvc.state.tab = item.text;

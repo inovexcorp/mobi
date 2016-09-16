@@ -149,7 +149,7 @@ describe('Ontology Editor directive', function() {
                 controller.getPreview();
             });
             it('calls the correct manager function', function() {
-                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], controller.serialization);
+                expect(ontologyManagerSvc.getPreview).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId, controller.serialization);
             });
             it('when resolved, sets the correct variable', function() {
                 deferred.resolve('success');
@@ -165,8 +165,8 @@ describe('Ontology Editor directive', function() {
         it('iriChanged calls the correct manager function and sets correct variable', function() {
             controller.form = {'$valid': false};
             controller.iriChanged();
-            expect(stateManagerSvc.ontology.matonto.isValid).toBe(false);
-            expect(stateManagerSvc.entityChanged).toHaveBeenCalledWith(stateManagerSvc.selected, stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
+            expect(stateManagerSvc.setValid).toHaveBeenCalledWith(stateManagerSvc.ontology, stateManagerSvc.state.entityIRI, controller.form.$valid);
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology, stateManagerSvc.state.entityIRI, true);
         });
     });
 });

@@ -71,7 +71,8 @@
                     dvm.dm = delimitedManagerService;
 
                     dvm.getSourceOntologyName = function() {
-                        return dvm.om.getEntityName(dvm.mm.getSourceOntology(_.get(dvm.mm.mapping, 'jsonld')));
+                        var sourceOntology = dvm.mm.getSourceOntology(_.get(dvm.mm.mapping, 'jsonld'));
+                        return sourceOntology ? dvm.om.getEntityName(dvm.om.getOntologyEntity(sourceOntology.entities)) : '';
                     }
                     dvm.changeOntology = function() {
                         dvm.state.changeOntology = true;
@@ -80,14 +81,14 @@
                     }
                     dvm.submit = function() {
                         var deferred = $q.defer();
-                        if (_.includes(dvm.mm.previousMappingNames, dvm.mm.mapping.name)) {
+                        if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
                             deferred.resolve();
                         } else {
-                            dvm.mm.uploadPut(dvm.mm.mapping.jsonld, dvm.mm.mapping.name)
+                            dvm.mm.upload(dvm.mm.mapping.jsonld)
                                 .then(() => deferred.resolve(), errorMessage => deferred.reject(errorMessage));
                         }
                         deferred.promise.then(() => {
-                            dvm.dm.map(dvm.mm.mapping.name);
+                            dvm.dm.map(dvm.mm.mapping.id);
                             dvm.state.resetEdit();
                             dvm.state.step = dvm.state.finishStep;
                             dvm.saveError = false;

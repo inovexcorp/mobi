@@ -1,0 +1,11 @@
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+
+select distinct ?type
+where {
+    graph ?graph {
+        ?individual rdf:type owl:NamedIndividual .
+        ?individual rdf:type ?type .
+        filter (?type != owl:NamedIndividual)
+    }
+}

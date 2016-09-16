@@ -54,9 +54,9 @@
          */
         .directive('fileUploadOverlay', fileUploadOverlay);
 
-        fileUploadOverlay.$inject = ['prefixes', 'delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        fileUploadOverlay.$inject = ['$q', 'prefixes', 'delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
 
-        function fileUploadOverlay(prefixes, delimitedManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
+        function fileUploadOverlay($q, prefixes, delimitedManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -82,13 +82,14 @@
                         return _.includes(fileName, 'xls');
                     }
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var ontology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
                         var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dataMappingId);
                         var classId = dvm.mm.getClassIdByMapping(
                             dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId)
                         );
-                        var propName = dvm.om.getEntityName(dvm.om.getClassProperty(ontology, classId, propId));
-                        var className = dvm.om.getEntityName(dvm.om.getClass(ontology, classId));
+                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId);
+                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId);
+                        var propName = dvm.om.getEntityName(dvm.om.getEntity(propOntology.entities, propId));
+                        var className = dvm.om.getEntityName(dvm.om.getEntity(classOntology.entities, classId));
                         return dvm.mm.getPropMappingTitle(className, propName);
                     }
                     dvm.upload = function() {
@@ -96,7 +97,7 @@
                             dvm.dm.fileName = data;
                             dvm.setUploadValidity(true);
                             return dvm.dm.previewFile(100);
-                        }, onError).then(() => {
+                        }, errorMessage => $q.reject(errorMessage)).then(() => {
                             if (!dvm.state.newMapping) {
                                 testColumns();
                             }
@@ -118,7 +119,7 @@
                             dvm.state.step = dvm.state.editMappingStep;
                             var classes = dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld);
                             dvm.state.selectedClassMappingId = _.get(classes, "[0]['@id']");
-                            dvm.state.updateAvailableProps();
+                            _.forEach(classes, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         }
                     }
                     dvm.setUploadValidity = function(bool) {

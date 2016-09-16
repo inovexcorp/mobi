@@ -64,7 +64,7 @@
                     dvm.om = ontologyManagerService;
 
                     dvm.noOntologies = function() {
-                        return _.concat(dvm.om.getList(), dvm.om.getOntologyIds()).length === 0;
+                        return _.concat(dvm.om.list, dvm.om.ontologyIds).length === 0;
                     }
                     dvm.mappingList = function() {
                         dvm.state.displayCancelConfirm = dvm.state.editMapping;
@@ -78,14 +78,14 @@
                         }
                     }
                     dvm.downloadMapping = function() {
-                        dvm.mm.downloadMapping(dvm.mm.mapping.name, 'jsonld');
+                        dvm.mm.downloadMapping(dvm.mm.mapping.id, 'jsonld');
                     }
                     dvm.addPropMapping = function() {
                         var classMappingId = dvm.state.selectedClassMappingId;
                         dvm.state.resetEdit();
                         dvm.state.newProp = true;
                         dvm.state.selectedClassMappingId = classMappingId;
-                        dvm.state.updateAvailableProps();
+                        dvm.state.updateAvailableProps(dvm.state.selectedClassMappingId);
                     }
                     dvm.deleteEntity = function() {
                         dvm.state.displayDeleteEntityConfirm = true;

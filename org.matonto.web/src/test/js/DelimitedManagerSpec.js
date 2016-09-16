@@ -117,15 +117,15 @@ describe('Delimited Manager service', function() {
         delimitedManagerSvc.fileName = 'test';
         delimitedManagerSvc.separator = ',';
         delimitedManagerSvc.containsHeaders = true;
-        var mappingFileName = 'mapping';
+        var mappingId = 'mapping';
         var format = 'jsonld';
         var params = createQueryString({
             'format': format,
-            'mappingName': mappingFileName,
+            'mappingIRI': mappingId,
             'containsHeaders': delimitedManagerSvc.containsHeaders, 
             'separator': delimitedManagerSvc.separator
         });
-        delimitedManagerSvc.map(mappingFileName, format);
+        delimitedManagerSvc.map(mappingId, format);
         expect(windowSvc.location).toEqual('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map' + params);
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {

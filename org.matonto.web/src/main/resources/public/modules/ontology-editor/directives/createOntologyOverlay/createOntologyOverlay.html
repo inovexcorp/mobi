@@ -24,28 +24,26 @@
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Create New OWL Ontology</h6>
-
         <!-- error -->
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-
-        <!-- new ontology iri -->
+        <!-- @id -->
         <div ng-class="{'has-error': dvm.form.iri.$error.pattern}" class="form-group">
             <custom-label muted-text="'*Required'">Ontology IRI</custom-label>
-            <input class="form-control" id="iri" name="iri" ng-model="dvm.iri" ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" required />
+            <input class="form-control" id="iri" name="iri" ng-model="dvm.ontology['@id']" ng-pattern="dvm.iriPattern"
+                   ng-change="dvm.iriHasChanged = true" required />
             <p ng-messages="dvm.form.iri.$error" class="error-msg">
                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
             </p>
         </div>
-
-        <!-- name -->
+        <!-- dcterms:title -->
         <div class="form-group">
             <custom-label muted-text="'*Required'">Name</custom-label>
-            <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
+            <input type="text" class="form-control" ng-model="dvm.ontology[dvm.prefixes.dcterms + 'title'][0]['@value']"
+                   ng-trim="false" ng-keyup="dvm.nameChanged()" required>
         </div>
-
-        <!-- description -->
-        <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
-
+        <!-- dcterms:description -->
+        <text-area ng-model="dvm.ontology[dvm.prefixes.dcterms + 'description'][0]['@value']"
+                   display-text="'Description'"></text-area>
         <!-- create ontology buttons -->
         <div class="btn-container clearfix">
             <custom-button is-disabled-when="dvm.form.$invalid" on-click="dvm.create()">Create</custom-button>

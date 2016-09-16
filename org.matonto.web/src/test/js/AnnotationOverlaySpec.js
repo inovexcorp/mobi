@@ -109,15 +109,29 @@ describe('Annotation Overlay directive', function() {
         });
         it('addAnnotation should call the appropriate manager functions', function() {
             controller.addAnnotation({}, 'value');
-            expect(annotationManagerSvc.add).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}), 'value');
+            expect(annotationManagerSvc.add).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}),
+                'value');
             expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
+                stateManagerSvc.state.entityIRI, true);
         });
         it('editAnnotation should call the appropriate manager functions', function() {
             controller.editAnnotation({}, 'value');
-            expect(annotationManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}), 'value', stateManagerSvc.annotationIndex);
+            expect(annotationManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}),
+                'value', stateManagerSvc.annotationIndex);
             expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
+                stateManagerSvc.state.entityIRI, true);
+        });
+        describe('getItemNamespace returns', function() {
+            it('item.namespace value when present', function() {
+                var result = controller.getItemNamespace({namespace: 'namespace'});
+                expect(result).toEqual('namespace');
+            });
+            it("'No namespace' when item.namespace is not present", function() {
+                var result = controller.getItemNamespace({});
+                expect(result).toEqual('No namespace');
+            });
         });
     });
 });

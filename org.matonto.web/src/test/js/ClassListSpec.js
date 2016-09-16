@@ -26,7 +26,8 @@ describe('Class List directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
-        delimitedManagerSvc;
+        delimitedManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -37,16 +38,13 @@ describe('Class List directive', function() {
         mockMapperState();
         mockDelimitedManager();
 
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -59,9 +57,9 @@ describe('Class List directive', function() {
             };
             this.element = $compile(angular.element('<class-list></class-list>'))(scope);
             scope.$digest();
+            controller = this.element.controller('classList');
         });
         it('should test whether a class has properties', function() {
-            var controller = this.element.controller('classList');
             var result = controller.hasProps('test');
             expect(result).toBe(false);
 
@@ -69,7 +67,6 @@ describe('Class List directive', function() {
             result = controller.hasProps('test');
         });
         it('should test whether a class is open', function() {
-            var controller = this.element.controller('classList');
             var result = controller.isOpen('test');
             expect(result).toBe(false);
 
@@ -78,21 +75,17 @@ describe('Class List directive', function() {
             expect(result).toBe(true);
         });
         it('should toggle whether a class is open', function() {
-            var controller = this.element.controller('classList');
             controller.toggleOpen('test');
             expect(mapperStateSvc.openedClasses).toContain('test');
             controller.toggleOpen('test');
             expect(mapperStateSvc.openedClasses).not.toContain('test');
         });
         it('should set the proper state for editing a class', function() {
-            var controller = this.element.controller('classList');
             controller.clickClass({'@id': ''});
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe('');
         });
         it('should set the proper state for editing a property', function() {
-            var controller = this.element.controller('classList');
             delimitedManagerSvc.filePreview.headers = [''];
             controller.clickProp({'@id': '', columnIndex: [{'@value': 0}]}, {'@id': ''});
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -102,51 +95,40 @@ describe('Class List directive', function() {
             expect(mapperStateSvc.selectedColumn).toBe('');
         });
         it('should set the proper state for adding a property', function() {
-            var controller = this.element.controller('classList');
             controller.clickAddProp({'@id': ''});
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.newProp).toBe(true);
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
+            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
             expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe('');
         });
         it('should retrieve the list of invalid property ids', function() {
             mapperStateSvc.invalidProps = [{'@id': ''}];
-            var controller = this.element.controller('classList');
             var result = controller.getInvalidPropIds();
             _.forEach(result, function(id, index) {
                 expect(id).toBe(mapperStateSvc.invalidProps[index]['@id']);
             });
         });
         it('should get a class title', function() {
-            var controller = this.element.controller('classList');
             spyOn(controller, 'getLinks');
             var result = controller.getClassTitle({'@id': ''});
             expect(controller.getLinks).toHaveBeenCalledWith({'@id': ''});
             expect(typeof result).toBe('string');
         });
         it('should get a property title', function() {
-            var controller = this.element.controller('classList');
-            var dataMapping = {'@type': 'DataMapping', 'columnIndex': [{'@value': 0}]};
-            var objectMapping = {'@type': 'ObjectMapping', 'classMapping': [{'@id': ''}]};
+            var dataMapping = {'columnIndex': [{'@value': 0}]};
+            var objectMapping = {'classMapping': [{'@id': ''}]};
             var result = controller.getPropTitle(objectMapping, {});
             expect(mappingManagerSvc.isObjectMapping).toHaveBeenCalledWith(objectMapping);
             expect(typeof result).toBe('string');
 
+            mappingManagerSvc.isObjectMapping.and.returnValue(false);
             result = controller.getPropTitle(dataMapping, {});
             expect(mappingManagerSvc.isDataMapping).toHaveBeenCalledWith(dataMapping);
             expect(typeof result).toBe('string');
         });
-        it('should test whether all properties have been mapped', function() {
-            var controller = this.element.controller('classList');
-            var result = controller.mappedAllProps({'@id': ''});
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
-            expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalled();
-            expect(typeof result).toBe('boolean');
-        });
         it('should get a list of properties linking to a class mapping', function() {
             mappingManagerSvc.mapping.jsonld.push({'@type': ['ObjectMapping'], 'classMapping': [{'@id': ''}]});
-            var controller = this.element.controller('classList');
             var result = controller.getLinks({'@id': ''});
             expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
@@ -155,7 +137,6 @@ describe('Class List directive', function() {
         it('should test whether a class mapping is linked to the selected property mapping', function() {
             mappingManagerSvc.mapping.jsonld.push({'@id': 'prop', '@type': ['ObjectMapping'], 'classMapping': [{'@id': ''}]})
             mapperStateSvc.selectedPropMappingId = 'prop';
-            var controller = this.element.controller('classList');
             var result = controller.isLinkedToSelectedProp('');
             expect(result).toBe(true);
 
@@ -201,7 +182,7 @@ describe('Class List directive', function() {
             expect(classList[0].childElementCount).toBe(classMappings.length);
         });
         it('depending on whether a class is selected', function() {
-            var controller = this.element.controller('classList');
+            controller = this.element.controller('classList');
             var classMappings = [{'@id': 'class'}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             scope.$digest();
@@ -222,7 +203,8 @@ describe('Class List directive', function() {
             expect(classItem.hasClass('active')).toBe(false);
         });
         it('depending on whether a class is open and has props', function() {
-            var controller = this.element.controller('classList');
+            controller = this.element.controller('classList');
+            spyOn(controller, 'getPropTitle').and.returnValue('');
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
@@ -240,17 +222,18 @@ describe('Class List directive', function() {
             expect(toggleBtn.hasClass('fa-minus-square-o')).toBe(false);
             expect(toggleBtn.hasClass('fa-plus-square-o')).toBe(true);
             expect(toggleBtn.hasClass('fa-square-o')).toBe(false);
-            expect(propList[0].childElementCount).toBe(1);
+            expect(propList[0].childElementCount).toBe(0);
           
             mapperStateSvc.openedClasses = [''];
             scope.$digest();
             expect(toggleBtn.hasClass('fa-minus-square-o')).toBe(true);
             expect(toggleBtn.hasClass('fa-plus-square-o')).toBe(false);
             expect(toggleBtn.hasClass('fa-square-o')).toBe(false);
-            expect(propList[0].childElementCount).toBe(propMappings.length + 1);
+            expect(propList[0].childElementCount).toBe(propMappings.length);
         });
         it('depending on whether a prop is selected', function() {
-            var controller = this.element.controller('classList');
+            controller = this.element.controller('classList');
+            spyOn(controller, 'getPropTitle').and.returnValue('');
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': 'prop'}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
@@ -269,24 +252,25 @@ describe('Class List directive', function() {
             expect(propItem.hasClass('active')).toBe(false);
         });
         it('depending on whether all properties have been mapped', function() {
-            var controller = this.element.controller('classList');
-            var classMappings = [{'@id': ''}];
+            controller = this.element.controller('classList');
+            spyOn(controller, 'getPropTitle').and.returnValue('');
+            var classMappings = [{'@id': 'class'}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
-            spyOn(controller, 'mappedAllProps').and.returnValue(true);
-            mapperStateSvc.openedClasses = [''];
+            mapperStateSvc.hasAvailableProps.and.returnValue(false);
+            mapperStateSvc.openedClasses = ['class'];
             scope.$digest();
-
             var propList = angular.element(this.element.querySelectorAll('ul.list ul.props')[0]);
             expect(propList.html()).not.toContain('Add Property');
 
-            controller.mappedAllProps.and.returnValue(false);
+            mapperStateSvc.hasAvailableProps.and.returnValue(true);
             scope.$digest();
             expect(propList.html()).toContain('Add Property');
         });
         it('if prop mapping is invalid', function() {
-            var controller = this.element.controller('classList');
+            controller = this.element.controller('classList');
+            spyOn(controller, 'getPropTitle').and.returnValue('');
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
@@ -299,18 +283,20 @@ describe('Class List directive', function() {
             expect(angular.element(propItem.querySelectorAll('a')[0]).hasClass('invalid')).toBe(true);
         });
         it('depending on whether a new property is being added', function() {
-            var classMappings = [{'@id': ''}];
+            var classMappings = [{'@id': 'class'}];
             var propMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             mapperStateSvc.newProp = true;
+            mapperStateSvc.hasAvailableProps.and.returnValue(true);
+            mapperStateSvc.selectedClassMappingId = 'class';
             scope.$digest();
 
             var addPropLink = this.element.querySelectorAll('ul.list ul.props li a:last-child')[0];
             expect(angular.element(addPropLink).hasClass('active')).toBe(true);
         });
         it('depending on whether a class mapping is linked to the selected property mapping', function() {
-            var controller = this.element.controller('classList');
+            controller = this.element.controller('classList');
             var classMappings = [{'@id': ''}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             spyOn(controller, 'isLinkedToSelectedProp').and.returnValue(true);
@@ -326,7 +312,7 @@ describe('Class List directive', function() {
         var classMapping = {'@id': ''};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
-        var controller = element.controller('classList');
+        controller = element.controller('classList');
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
         spyOn(controller, 'clickClass');
         mapperStateSvc.openedClasses = [''];
@@ -342,7 +328,7 @@ describe('Class List directive', function() {
         var classMapping = {'@id': ''};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
-        var controller = element.controller('classList');
+        controller = element.controller('classList');
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
         spyOn(controller, 'toggleOpen');
         mapperStateSvc.openedClasses = [''];
@@ -359,7 +345,8 @@ describe('Class List directive', function() {
         var propMapping = {'@id': ''};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
-        var controller = element.controller('classList');
+        controller = element.controller('classList');
+        spyOn(controller, 'getPropTitle').and.returnValue('');
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([propMapping]);
         spyOn(controller, 'clickProp');
@@ -373,14 +360,14 @@ describe('Class List directive', function() {
     it('should call clickAddProp when an add prop link is clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};
         delimitedManagerSvc.filePreview = {};
-        var classMapping = {'@id': ''};
+        var classMapping = {'@id': 'class'};
         var element = $compile(angular.element('<class-list></class-list>'))(scope);
         scope.$digest();
-        var controller = element.controller('classList');
+        controller = element.controller('classList');
         mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
-        spyOn(controller, 'mappedAllProps').and.returnValue(false);
         spyOn(controller, 'clickAddProp');
-        mapperStateSvc.openedClasses = [''];
+        mapperStateSvc.hasAvailableProps.and.returnValue(true);
+        mapperStateSvc.openedClasses = ['class'];
         scope.$digest();
 
         var addProp = angular.element(element.querySelectorAll('ul.list ul.props li a')[0]);

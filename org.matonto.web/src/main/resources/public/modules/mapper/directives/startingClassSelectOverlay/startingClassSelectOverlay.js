@@ -68,12 +68,12 @@
                     dvm.state = mapperStateService;
 
                     dvm.getOntologyId = function(classObj) {
-                        return _.get(dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, classObj['@id']), 'matonto.id', '');
+                        return _.get(dvm.mm.findSourceOntologyWithClass(classObj['@id']), 'id', '');
                     }
                     dvm.getClasses = function() {
                         var classes = [];
                         _.forEach(dvm.mm.sourceOntologies, ontology => {
-                            classes = _.concat(classes, dvm.om.getClasses(ontology));
+                            classes = _.concat(classes, dvm.om.getClasses(ontology.entities));
                         });
                         return classes;
                     }
@@ -86,11 +86,11 @@
                             dvm.state.changeOntology = false;
                             dvm.state.changedMapping();
                         }
-                        var ontology = dvm.om.findOntologyWithClass(dvm.mm.sourceOntologies, dvm.selectedClass['@id']);
-                        dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology, dvm.selectedClass['@id']);
+                        var ontology = dvm.mm.findSourceOntologyWithClass(dvm.selectedClass['@id']);
+                        dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology.entities, dvm.selectedClass['@id']);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = _.get(_.find(dvm.mm.mapping.jsonld, {'@type': [prefixes.delim + 'ClassMapping']}), '@id');
-                        dvm.state.updateAvailableProps();
+                        dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
                         dvm.state.step = dvm.state.editMappingStep;
                     }
                     dvm.back = function() {

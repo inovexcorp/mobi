@@ -28,27 +28,53 @@ import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
 import org.apache.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
+import org.matonto.etl.api.exception.MatOntoETLException;
+import org.matonto.etl.api.ontologies.delimited.ClassMapping;
+import org.matonto.etl.api.ontologies.delimited.ClassMappingFactory;
+import org.matonto.etl.api.ontologies.delimited.Property;
 import org.matonto.exception.MatOntoException;
-import org.matonto.persistence.utils.Models;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.Thing;
 import org.matonto.rest.util.CharsetUtils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component(provide = DelimitedConverter.class)
 public class DelimitedConverterImpl implements DelimitedConverter {
     private static final Logger LOGGER = Logger.getLogger(DelimitedConverterImpl.class);
+    private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
+    private static final String DEFAULT_PREFIX = "http://matonto.org/data/";
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
+    private ClassMappingFactory classMappingFactory;
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -58,6 +84,11 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
+    }
+
+    @Reference
+    public void setClassMappingFactory(ClassMappingFactory classMappingFactory) {
+        this.classMappingFactory = classMappingFactory;
     }
 
     @Override
@@ -129,24 +160,19 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         return convertedRDF;
     }
-
+    
     /**
-     * Converts a line of data into RDF using class mappings and adds it to the given Model.
-     * Resets the class mappings after iterating through class mappings so there are no
-     * duplicate class instances for the line.
+     * Processes a row of data into RDF using class mappings and adds it to the given Model.
      *
      * @param convertedRDF the model to hold the converted data
      * @param line the data to convert
      * @param classMappings the classMappings to use when converting the data
      */
     private void writeClassMappingsToModel(Model convertedRDF, String[] line, List<ClassMapping> classMappings) {
-        // Write each classMapping to the model
+        // Map holds ClassMappings to instance IRIs. Modified by writeClassToModel().
+        Map<Resource, IRI> mappedClasses = new HashMap<>();
         for (ClassMapping cm : classMappings) {
-            convertedRDF.addAll(writeClassToModel(cm, line));
-        }
-        //Reset classMappings
-        for (ClassMapping cm : classMappings) {
-            cm.setInstance(false);
+            convertedRDF.addAll(writeClassToModel(cm, line, mappedClasses));
         }
     }
 
@@ -160,101 +186,123 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     }
 
     /**
-     * Writes RDF statements based on a class mapping and a line of data from CSV.
+     * Creates a Model of RDF statements based on a class mapping and a line of data from CSV.
      *
      * @param cm       The ClassMapping object to guide the RDF creation
      * @param nextLine The line of CSV to be mapped
+     * @param mappedClasses The Map holding previously processed ClassMappings and their associated instance IRIs.
+     *                      Modified by this method.
      * @return A Model of RDF based on the line of CSV data
      */
-    Model writeClassToModel(ClassMapping cm, String[] nextLine) {
+    private Model writeClassToModel(ClassMapping cm, String[] nextLine, Map<Resource, IRI> mappedClasses) {
         Model convertedRDF = modelFactory.createModel();
-        //Generate new IRI if an instance of the class mapping has not been created in this row.
-        cm = createInstance(cm, nextLine);
-        //If there isn't enough data to create the local name, don't create the instance
-        if (!cm.isInstance()) {
+
+        Optional<String> nameOptional = generateLocalName(cm, nextLine);
+        if (!nameOptional.isPresent()) {
             return convertedRDF;
         }
 
-        IRI classInstance = cm.getIri();
-        convertedRDF.add(classInstance, valueFactory.createIRI(Delimited.TYPE.stringValue()),
-                valueFactory.createIRI(cm.getMapping()));
-        //Create the data properties
-        Map<Integer, String> dataProps = cm.getDataProperties();
-        for (Integer i : dataProps.keySet()) {
-            IRI property = valueFactory.createIRI(dataProps.get(i));
-            try {
-                convertedRDF.add(classInstance, property, valueFactory.createLiteral(nextLine[i]));
-            } catch (ArrayIndexOutOfBoundsException e) {
-                //Cell does not contain any data. No need to throw exception.
-                LOGGER.info("Missing data for " + classInstance + ": " + property);
-            }
+        IRI classInstance;
+        Iterator<String> prefixes = cm.getHasPrefix().iterator();
+        if (prefixes.hasNext()) {
+            classInstance = valueFactory.createIRI(prefixes.next() + nameOptional.get());
+        } else {
+            classInstance = valueFactory.createIRI(DEFAULT_PREFIX + nameOptional.get());
         }
 
-        //Create the object properties
-        Map<ClassMapping, String> objectProps = cm.getObjectProperties();
-        for (ClassMapping objectMapping : objectProps.keySet()) {
-            objectMapping = createInstance(objectMapping, nextLine);
+        Resource mapsToResource;
+        Iterator<Thing> mapsTo = cm.getMapsTo().iterator();
+        if (mapsTo.hasNext()) {
+            mapsToResource = mapsTo.next().getResource();
+        } else {
+            throw new MatOntoETLException("Invalid mapping configuration. Missing mapsTo property on " +
+                    cm.getResource());
+        }
 
-            //If there isn't enough data to create the local name, don't create the instance
-            IRI property = valueFactory.createIRI(objectProps.get(objectMapping));
-            if (objectMapping.isInstance()) {
-                convertedRDF.add(classInstance, property, objectMapping.getIri());
+        convertedRDF.add(classInstance, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
+                mapsToResource);
+        mappedClasses.put(cm.getResource(), classInstance);
+
+        cm.getDataProperty().forEach(dataMapping -> {
+            int columnIndex = dataMapping.getColumnIndex().iterator().next();
+            Property prop = dataMapping.getHasProperty().iterator().next();
+
+            if (columnIndex < nextLine.length && columnIndex >= 0) {
+                convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()),
+                        valueFactory.createLiteral(nextLine[columnIndex]));
+            } else {
+                LOGGER.warn(String.format("Column %d missing for %s: %s",
+                        columnIndex, classInstance.stringValue(), prop.getResource().stringValue()));
+            }
+        });
+
+        cm.getObjectProperty().forEach(objectMapping -> {
+            ClassMapping targetClassMapping;
+            Iterator<ClassMapping> classMappingIterator = objectMapping.getClassMapping().iterator();
+            if (classMappingIterator.hasNext()) {
+                targetClassMapping = classMappingIterator.next();
+            } else {
+                throw new MatOntoETLException("Invalid mapping configuration. Missing classMapping property on " +
+                        objectMapping.getResource());
             }
 
-        }
+            Property prop = objectMapping.getHasProperty().iterator().next();
+
+            IRI targetIri;
+            if (mappedClasses.containsKey(targetClassMapping.getResource())) {
+                targetIri = mappedClasses.get(targetClassMapping.getResource());
+            } else {
+                Optional<String> targetNameOptional = generateLocalName(targetClassMapping, nextLine);
+                if (!targetNameOptional.isPresent()) {
+                    return;
+                } else {
+                    targetIri = valueFactory.createIRI(targetClassMapping.getHasPrefix().iterator().next() +
+                            targetNameOptional.get());
+                    mappedClasses.put(targetClassMapping.getResource(), targetIri);
+                }
+            }
+
+            convertedRDF.add(classInstance, valueFactory.createIRI(prop.getResource().stringValue()), targetIri);
+        });
 
         return convertedRDF;
     }
 
     /**
-     * Creates a URI for the class mapping based off of a given line in a delimited file
-     * @param cm the class mapping object to create a URI for
-     * @param dataLine a Line in the delimited file
-     * @return An updated class mapping with setInstance true if it not already, and a URI created.
-     */
-    private ClassMapping createInstance(ClassMapping cm, String[] dataLine) {
-        if (!cm.isInstance()) {
-            String classLocalName = generateLocalName(cm.getLocalName(), dataLine);
-            cm.setIRI(valueFactory.createIRI(cm.getPrefix() + classLocalName));
-            if (!"_".equals(classLocalName)) {
-                cm.setInstance(true);
-            }
-        }
-
-        return cm;
-    }
-
-    /**
-     * Generates a local name for RDF Instances
+     * Generates a local name for RDF Instances. If no local name is configured in the ClassMapping, a random UUID
+     * is generated.
      *
-     * @param localNameTemplate The local name template given in the mapping file. See MatOnto Wiki for details
-     * @param currentLine       The current line in the CSV file in case data is used in the Local Name
+     * @param cm That ClassMapping from which to retrieve the local name template if it exists
+     * @param currentLine The current line in the CSV file in case data is used in the Local Name
      * @return The local name portion of a IRI used in RDF data
      */
-    String generateLocalName(String localNameTemplate, String[] currentLine) {
-        if ("".equals(localNameTemplate) || localNameTemplate == null) {
+    Optional<String> generateLocalName(ClassMapping cm, String[] currentLine) {
+        Optional<String> nameOptional = cm.getLocalName();
+
+        if (!nameOptional.isPresent() || nameOptional.get().equals("")) {
             //Only generate UUIDs when necessary. If you really have to waste a UUID go here: http://wasteaguid.info/
-            return generateUuid();
+            return Optional.of(generateUuid());
         }
-        Pattern pat = Pattern.compile("(\\$\\{)(\\d+|UUID)(\\})");
-        Matcher mat = pat.matcher(localNameTemplate);
+
+        Pattern pat = Pattern.compile(LOCAL_NAME_PATTERN);
+        Matcher mat = pat.matcher(nameOptional.get());
         StringBuffer result = new StringBuffer();
         while (mat.find()) {
-            if ("UUID".equals(mat.group(2))) {
+            if ("UUID".equals(mat.group(1))) {
                 //Once again, only generate UUIDs when necessary
                 mat.appendReplacement(result, generateUuid());
             } else {
-                int colIndex = Integer.parseInt(mat.group(2));
-                try {
+                int colIndex = Integer.parseInt(mat.group(1));
+                if (colIndex < currentLine.length && colIndex >= 0) {
                     mat.appendReplacement(result, currentLine[colIndex]);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    LOGGER.info("Data not available for local name. Using '_'");
-                    mat.appendReplacement(result, "_");
+                } else {
+                    LOGGER.warn(String.format("Missing data for local name from column %d", colIndex));
+                    return Optional.empty();
                 }
             }
         }
         mat.appendTail(result);
-        return result.toString();
+        return Optional.of(result.toString());
     }
 
     /**
@@ -266,89 +314,14 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     private ArrayList<ClassMapping> parseClassMappings(Model mappingModel) {
         ArrayList<ClassMapping> classMappings = new ArrayList<>();
 
-        Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(Delimited.TYPE.stringValue()),
-                valueFactory.createIRI(Delimited.CLASS_MAPPING_OBJ.stringValue()));
+        Model classMappingModel = mappingModel.filter(null, valueFactory.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
+                valueFactory.createIRI(ClassMapping.TYPE));
 
-        //Holds Reference to ClassMapping Object from IRI of ClassMapping in Model.
-        //Used to join Object Properties
-        Map<IRI,ClassMapping> uriToObject = new LinkedHashMap<>();
-
-        for (Resource classMappingReource : classMappingModel.subjects()) {
-            LOGGER.warn("Parsing mappings");
-            ClassMapping classMapping;
-
-            IRI classMappingIRI = valueFactory.createIRI(classMappingReource.stringValue());
-
-            if (uriToObject.containsKey(classMappingIRI)) {
-                classMapping = uriToObject.get(classMappingIRI);
-            } else {
-                classMapping = new ClassMapping();
-                uriToObject.put(classMappingIRI, classMapping);
-            }
-
-            //Parse the properties from the Class Mappings
-
-            //Prefix
-            Model prefixModel = mappingModel.filter(classMappingIRI,
-                    valueFactory.createIRI(Delimited.HAS_PREFIX.stringValue()), null);
-            if (!prefixModel.isEmpty()) {
-                classMapping.setPrefix(Models.objectString(prefixModel).get());
-            }
-
-            //Class that the Class Mapping Maps to
-            Model mapsToModel = mappingModel.filter(classMappingIRI,
-                    valueFactory.createIRI(Delimited.MAPS_TO.stringValue()), null);
-            if (!mapsToModel.isEmpty()) {
-                classMapping.setMapping(Models.objectString(mapsToModel).get());
-            }
-
-            //Local Name
-            Model localNameModel = mappingModel.filter(classMappingIRI,
-                    valueFactory.createIRI(Delimited.LOCAL_NAME.stringValue()), null);
-            if (!localNameModel.isEmpty()) {
-                classMapping.setLocalName(Models.objectString(localNameModel).get());
-            }
-
-            //Parse the data properties
-            Model dataPropertyModel = mappingModel.filter(classMappingIRI,
-                    valueFactory.createIRI(Delimited.DATA_PROPERTY.stringValue()), null);
-            dataPropertyModel.objects().forEach(dataProperty -> {
-                Model propertyModel = mappingModel.filter((IRI) dataProperty,
-                        valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
-                String property = Models.objectString(propertyModel).get();
-
-                Model indexModel = mappingModel.filter((IRI) dataProperty,
-                        valueFactory.createIRI(Delimited.COLUMN_INDEX.stringValue()), null);
-                Integer columnIndexInt = Integer.parseInt(Models.objectLiteral(indexModel).get().stringValue());
-
-                classMapping.addDataProperty(columnIndexInt, property);
-            });
-
-            //Parse the object properties
-            Model objectPropertyModel = mappingModel.filter(classMappingIRI,
-                    valueFactory.createIRI(Delimited.OBJECT_PROPERTY.stringValue()), null);
-            objectPropertyModel.forEach(s -> {
-
-                Model propertyModel = mappingModel.filter((IRI) s.getObject(),
-                        valueFactory.createIRI(Delimited.HAS_PROPERTY.stringValue()), null);
-                String property = Models.objectString(propertyModel).get();
-
-                Model classModel = mappingModel.filter((IRI) s.getObject(),
-                        valueFactory.createIRI(Delimited.CLASS_MAPPING_PROP.stringValue()), null);
-                IRI objectMappingResultIRI = Models.objectIRI(classModel).get();
-
-                if (uriToObject.containsKey(objectMappingResultIRI)) {
-                    classMapping.addObjectProperty(uriToObject.get(objectMappingResultIRI), property);
-                } else {
-                    ClassMapping objectMappingResult = new ClassMapping();
-                    classMapping.addObjectProperty(objectMappingResult, property);
-                    uriToObject.put(objectMappingResultIRI, objectMappingResult);
-                }
-            });
-
-
+        for (Resource classMappingResource : classMappingModel.subjects()) {
+            ClassMapping classMapping = classMappingFactory.getExisting(classMappingResource, mappingModel);
             classMappings.add(classMapping);
         }
+
         return classMappings;
     }
 

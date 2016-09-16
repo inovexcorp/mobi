@@ -40,13 +40,10 @@ describe('Starting Class Select Overlay directive', function() {
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
         
-        inject(function(_ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
@@ -62,14 +59,14 @@ describe('Starting Class Select Overlay directive', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
             var result = controller.getOntologyId({});
             expect(typeof result).toBe('string');
-            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalled();
+            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
         });
         it('should get the classes in the ontology and imported ontologies', function() {
             ontologyManagerSvc.getClasses.calls.reset();
             var controller = this.element.controller('startingClassSelectOverlay');
             var result = controller.getClasses();
             expect(ontologyManagerSvc.getClasses.calls.count()).toBe(mappingManagerSvc.sourceOntologies.length);
-            expect(Array.isArray(result)).toBe(true);
+            expect(_.isArray(result)).toBe(true);
         });
         it('should set the correct state for going back', function() {
             var controller = this.element.controller('startingClassSelectOverlay');
@@ -86,10 +83,9 @@ describe('Starting Class Select Overlay directive', function() {
             expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
             expect(mappingManagerSvc.setSourceOntology).not.toHaveBeenCalled();
             expect(mapperStateSvc.changedMapping).not.toHaveBeenCalled();
-            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalledWith(mappingManagerSvc.sourceOntologies, controller.selectedClass['@id']);
+            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(controller.selectedClass['@id']);
             expect(mappingManagerSvc.addClass).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
 
             mapperStateSvc.changeOntology = true;
@@ -99,10 +95,9 @@ describe('Starting Class Select Overlay directive', function() {
             expect(mappingManagerSvc.createNewMapping).toHaveBeenCalled();
             expect(mappingManagerSvc.setSourceOntology).toHaveBeenCalled();
             expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
-            expect(ontologyManagerSvc.findOntologyWithClass).toHaveBeenCalledWith(mappingManagerSvc.sourceOntologies, controller.selectedClass['@id']);
+            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(controller.selectedClass['@id']);
             expect(mappingManagerSvc.addClass).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.updateAvailableProps).toHaveBeenCalled();
             expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
         });
     });
