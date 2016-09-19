@@ -45,11 +45,14 @@ describe('Individual Tree directive', function() {
             settingsManagerSvc = _settingsManagerService_;
         });
 
-        ontologyManagerSvc.list = [{
-            id: '',
-            ontology: [{}],
-            classesWithIndividuals: ['class1']
-        }];
+        stateManagerSvc.listItem = {
+            classesWithIndividuals: [{
+                entityIRI: 'class1',
+                subEntities: [{
+                    entityIRI: 'class2'
+                }]
+            }]
+        }
         stateManagerSvc.getOpened.and.returnValue(true);
         stateManagerSvc.getIndividualsOpened.and.returnValue(true);
         ontologyManagerSvc.getClassIndividuals.and.returnValue(['individual1']);
@@ -73,27 +76,12 @@ describe('Individual Tree directive', function() {
         it('depending on the number of classes', function() {
             var classes = element.querySelectorAll('ul.class');
             var links = element.querySelectorAll('ul.class > li a');
-            expect(classes.length).toBe(ontologyManagerSvc.list[0].classesWithIndividuals.length);
-            expect(links.length).toBe(ontologyManagerSvc.list[0].classesWithIndividuals.length);
+            expect(classes.length).toBe(stateManagerSvc.listItem.classesWithIndividuals.length);
+            expect(links.length).toBe(stateManagerSvc.listItem.classesWithIndividuals.length*2);
         });
         it('depending on the number of individuals', function() {
-            var individuals = element.querySelectorAll('ul.individual');
-            var treeItems = element.querySelectorAll('ul.individual > tree-item');
-            expect(individuals.length).toBe(ontologyManagerSvc.getClassIndividuals().length);
-            expect(treeItems.length).toBe(ontologyManagerSvc.getClassIndividuals().length);
-        });
-        it('depending on whether an ontology is open', function() {
-            stateManagerSvc.getOpened.and.returnValue(false);
-            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
-            scope.$digest();
-            var container = angular.element(element.querySelectorAll('ul.ontology > .container'));
-            expect(container.length).toBe(0);
-
-            stateManagerSvc.getOpened.and.returnValue(true);
-            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
-            scope.$digest();
-            container = angular.element(element.querySelectorAll('ul.ontology > .container'));
-            expect(container.length).toBe(1);
+            var individuals = element.querySelectorAll('.individual');
+            expect(individuals.length).toBe(ontologyManagerSvc.getClassIndividuals().length*2);
         });
         it('depending on whether the individuals of a class are open', function() {
             stateManagerSvc.getIndividualsOpened.and.returnValue(false);

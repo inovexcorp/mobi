@@ -46,7 +46,7 @@ describe('Block content directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on .content', function() {
-            expect(element.hasClass('content')).toBe(true);
+            expect(element.hasClass('block-content')).toBe(true);
         });
     });
 });

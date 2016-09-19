@@ -20,7 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="selected-details clearfix">
-    <span class="entity-name">{{dvm.om.getEntityName(dvm.sm.selected)}}</span>
-    <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+<div class="selected-details">
+    <div ng-if="dvm.sm.selected">
+        <span class="entity-name">{{dvm.om.getEntityName(dvm.sm.selected)}}</span>
+        <static-iri iri="dvm.sm.selected['@id']" on-edit="dvm.sm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+    </div>
 </div>

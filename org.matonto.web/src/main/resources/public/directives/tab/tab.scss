@@ -10,19 +10,16 @@
         height: 52px;
         text-align: center;
 
-        a {
+        a,
+        .header {
             border-bottom: 2px solid transparent;
             color: $gray-lighter;
             display: inline-block;
             font-size: 1.125em;
             padding: 15px 15px 13px;
 
-            &:hover {
-                color: black;
-            }
-
             &.active {
-                border-color: blue;
+                border-color: $brand-primary;
                 color: black;
             }
         }

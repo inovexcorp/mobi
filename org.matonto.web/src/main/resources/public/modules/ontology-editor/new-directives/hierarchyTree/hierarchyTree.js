@@ -35,13 +35,11 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/new-directives/hierarchyTree/hierarchyTree.html',
                 scope: {
-                    editor: '@',
                     hierarchy: '='
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                 }

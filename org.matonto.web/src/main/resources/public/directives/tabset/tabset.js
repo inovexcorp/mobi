@@ -41,7 +41,11 @@
                     dvm.tabs = [];
 
                     dvm.addTab = function(tab) {
-                        dvm.tabs.push(tab);
+                        if (dvm.tabs.length && _.get(_.last(dvm.tabs), 'isLast')) {
+                            dvm.tabs.splice(dvm.tabs.length - 1, 0, tab);
+                        } else {
+                            dvm.tabs.push(tab);
+                        }
                     }
 
                     dvm.removeTab = function(tab) {

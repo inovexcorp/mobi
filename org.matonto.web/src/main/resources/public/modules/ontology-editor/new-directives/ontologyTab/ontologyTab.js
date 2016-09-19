@@ -40,14 +40,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-
-                    dvm.onClose = function() {
-                        console.log('close was clicked');
-                        dvm.om.list.pop();
-                    }
                 }
             }
         }

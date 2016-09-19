@@ -482,6 +482,34 @@ public interface OntologyRest {
     Response getOntologyClassHierarchy(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
+     * Returns the JSON object property hierarchy for the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return nested JSON structure that represents the object property hierarchy for the ontology with requested
+     *         ontology ID.
+     */
+    @GET
+    @Path("{ontologyid}/object-property-hierarchies")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getOntologyObjectPropertyHierarchy(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns the JSON data property hierarchy for the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return nested JSON structure that represents the data property hierarchy for the ontology with requested
+     *         ontology ID.
+     */
+    @GET
+    @Path("{ontologyid}/data-property-hierarchies")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getOntologyDataPropertyHierarchy(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
      * Returns classes with individuals defined in the ontology with the requested ontologyID.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
@@ -493,4 +521,20 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response getClassesWithIndividuals(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns JSON SPARQL query results containing statements with the requested entity IRI as the predicate of
+     * each statement.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param entityIRIStr the String representing the entity Resource IRI.
+     * @return JSON SPARQL query results.
+     */
+    @GET
+    @Path("{ontologyid}/entity-usages/{entityiri}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getEntityUsages(@PathParam("ontologyid") String ontologyIdStr,
+                             @PathParam("entityiri") String entityIRIStr);
 }

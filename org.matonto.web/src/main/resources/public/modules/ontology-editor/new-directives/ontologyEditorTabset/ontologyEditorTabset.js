@@ -27,9 +27,9 @@
         .module('ontologyEditorTabset', [])
         .directive('ontologyEditorTabset', ontologyEditorTabset);
 
-        ontologyEditorTabset.$inject = ['ontologyManagerService'];
+        ontologyEditorTabset.$inject = ['ontologyManagerService', 'stateManagerService'];
 
-        function ontologyEditorTabset(ontologyManagerService) {
+        function ontologyEditorTabset(ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,11 +38,18 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.om = ontologyManagerService;
+                    dvm.sm = stateManagerService;
 
-                    dvm.onClose = function() {
-                        console.log('close was clicked');
+                    dvm.onClose = function(ontologyId) {
+                        var ontology = dvm.om.getOntologyById(ontologyId);
+                        if (dvm.sm.hasChanges(ontology, ontologyId)) {
+                            dvm.sm.ontologyIdToClose = ontologyId;
+                            dvm.sm.showCloseOverlay = true;
+                        } else {
+                            dvm.sm.deleteState(ontologyId);
+                            dvm.om.closeOntology(ontologyId);
+                        }
                     }
                 }
             }

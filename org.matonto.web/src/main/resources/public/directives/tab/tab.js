@@ -34,8 +34,10 @@
                 require: '^^tabset',
                 transclude: true,
                 scope: {
-                    active: '=',
-                    heading: '@',
+                    active: '=?',
+                    heading: '<',
+                    isLast: '<',
+                    marked: '<',
                     onClick: '&',
                     onClose: '&?'
                 },

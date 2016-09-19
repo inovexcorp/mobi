@@ -55,14 +55,16 @@ describe('Object Select directive', function() {
     });
 
     beforeEach(function() {
-        scope.onChange = jasmine.createSpy('onChange');
         scope.displayText = 'test';
         scope.selectList = [];
         scope.mutedText = 'test';
-        scope.bindModel = [];
         scope.isDisabledWhen = false;
+        scope.isRequiredWhen = false;
+        scope.multiSelect = false;
+        scope.onChange = jasmine.createSpy('onChange');
+        scope.bindModel = [];
 
-        element = $compile(angular.element('<object-select on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></object-select>'))(scope);
+        element = $compile(angular.element('<object-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></object-select>'))(scope);
         scope.$digest();
     });
 
@@ -72,20 +74,35 @@ describe('Object Select directive', function() {
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
-        it('displayText should be two way bound', function() {
+        it('displayText should be one way bound', function() {
             isolatedScope.displayText = 'new';
             scope.$digest();
-            expect(scope.displayText).toEqual('new');
+            expect(scope.displayText).toEqual('test');
         });
-        it('mutedText should be two way bound', function() {
-            isolatedScope.mutedText = 'new';
-            scope.$digest();
-            expect(scope.mutedText).toEqual('new');
-        });
-        it('selectList should be two way bound', function() {
+        it('selectList should be one way bound', function() {
             isolatedScope.selectList = ['new'];
             scope.$digest();
-            expect(scope.selectList).toEqual(['new']);
+            expect(scope.selectList).toEqual([]);
+        });
+        it('isDisabledWhen should be one way bound', function() {
+            isolatedScope.isDisabledWhen = true;
+            scope.$digest();
+            expect(scope.isDisabledWhen).toEqual(false);
+        });
+        it('isRequiredWhen should be one way bound', function() {
+            isolatedScope.isRequiredWhen = true;
+            scope.$digest();
+            expect(scope.isRequiredWhen).toEqual(false);
+        });
+        it('multiSelect should be one way bound', function() {
+            isolatedScope.multiSelect = true;
+            scope.$digest();
+            expect(scope.multiSelect).toEqual(false);
+        });
+        it('mutedText should be one way bound', function() {
+            isolatedScope.mutedText = 'new';
+            scope.$digest();
+            expect(scope.mutedText).toEqual('test');
         });
         it('onChange should be called in parent scope', function() {
             isolatedScope.onChange();
@@ -226,7 +243,7 @@ describe('Object Select directive', function() {
         });
         describe('getBlankNodeValue should return', function() {
             beforeEach(function() {
-                stateManagerSvc.state.blankNodes = {
+                stateManagerSvc.listItem.blankNodes = {
                     '_:b1': 'prop',
                     '_:b2': 'class',
                     '_:b3': 'union',

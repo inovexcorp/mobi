@@ -29,6 +29,7 @@
                 <div ng-bind-html="prefix | escapeHTML | highlight:$select.search | trusted"></div>
             </ui-select-choices>
         </ui-select>
+        <button type="button" ng-click="dvm.sparql.queryRdf()"><i class="fa fa-play fa-fw"></i></button>
     </div>
     <ui-codemirror ng-model="dvm.sparql.queryString" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
 </form>

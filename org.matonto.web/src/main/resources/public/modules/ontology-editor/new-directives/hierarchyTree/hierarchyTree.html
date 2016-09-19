@@ -20,53 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!--
-<div class="tree class-tree scroll-without-buttons">
-    <strong>Classes</strong>
-    <ul ng-repeat="item in dvm.om.list track by item.ontologyId"
-        ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
-        <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
-                   ontology-id="item.ontologyId"
-                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
-                   on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
-                   has-children="dvm.om.hasClasses(item.ontology)"
-                   is-opened="opened"></tree-item>
-        <li class="container" ng-if="opened">
-            <ul ng-repeat="node in item.classHierarchy track by node.entityIRI"
-                ng-init="opened = dvm.sm.getOpened(item.ontologyId, node.entityIRI)"
-                ng-include="'tree_item'" ng-init="item = item; node = node; opened = opened"></ul>
-        </li>
-    </ul>
-    <script type="text/ng-template" id="tree_item">
-        <tree-item current-entity="dvm.om.getEntity(item.ontology, node.entityIRI)"
-                   ontology-id="item.ontologyId"
-                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === node.entityIRI"
-                   on-click="dvm.sm.selectItem('class-editor', node.entityIRI, item)"
-                   has-children="!!node.subEntities"
-                   is-opened="opened"></tree-item>
-        <li class="container" ng-if="opened && !!node.subEntities">
-            <ul ng-repeat="node in node.subEntities track by node.entityIRI"
-                ng-init="opened = dvm.sm.getOpened(item.ontologyId, node.entityIRI)"
-                 ng-include="'tree_item'" ng-init="item = item; node = node; opened = opened"></ul>
-        </li>
-    </script>
-</div>-->
-
-<div class="tree">
-    <ul ng-repeat="node in hierarchy track by node.entityIRI"
-        ng-init="opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, node.entityIRI)"
-        ng-include="'tree_item'" ng-init="node = node; opened = opened"></ul>
-    <script type="text/ng-template" id="tree_item">
+<div class="tree hierarchy-tree">
+    <ul ng-repeat="node in hierarchy track by node.entityIRI" ng-include="'hierarchy_item'"
+        ng-init="node = node; opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, node.entityIRI)"></ul>
+    <script type="text/ng-template" id="hierarchy_item">
         <tree-item current-entity="dvm.om.getEntity(dvm.sm.ontology, node.entityIRI)"
                    ontology-id="dvm.sm.state.ontologyId"
-                   is-active="dvm.sm.state.entityIRI === node.entityIRI"
-                   on-click="dvm.sm.selectItem({{editor}}, node.entityIRI, dvm.om.getListItemById(dvm.sm.state.ontologyId))"
-                   has-children="!!node.subEntities"
+                   is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
+                   on-click="dvm.sm.selectItem(node.entityIRI)"
+                   has-children="!!node.subEntities && node.subEntities.length"
                    is-opened="opened"></tree-item>
-        <li class="container" ng-if="opened && !!node.subEntities">
-            <ul ng-repeat="node in node.subEntities track by node.entityIRI"
-                ng-init="opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, node.entityIRI)"
-                ng-include="'tree_item'" ng-init="node = node; opened = opened"></ul>
+        <li class="container" ng-if="opened && !!node.subEntities && node.subEntities.length">
+            <ul ng-repeat="node in node.subEntities track by node.entityIRI" ng-include="'hierarchy_item'"
+                ng-init="node = node; opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, node.entityIRI)"></ul>
         </li>
     </script>
 </div>

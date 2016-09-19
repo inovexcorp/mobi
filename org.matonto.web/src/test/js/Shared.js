@@ -398,12 +398,11 @@ function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function() {
             this.states = {};
+            this.ontologyIdToClose = '';
             this.state = {
-                oi: 0,
-                ci: 0,
-                pi: 0,
                 ontologyId: '',
-                entityIRI: ''
+                entityIRI: '',
+                deletedEntities: []
             };
             this.ontology = {
                 '@id': 'id',
@@ -418,14 +417,28 @@ function mockStateManager() {
                     originalIri: 'iri'
                 }
             };
+            this.annotationSelect = '';
+            this.annotationValue = '';
+            this.annotationType = {'@id': ''};
             this.key = '';
             this.index = 0;
             this.annotationIndex = 0;
+            this.listItem = {
+                dataPropertyRange: [],
+                classHierarchy: [],
+                subClasses: [],
+                objectPropertyHierarchy: [],
+                subObjectProperties: [],
+                dataPropertyHierarchy: [],
+                subDataProperties: [],
+                blankNodes: {},
+                individuals: []
+            };
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
             this.setState = jasmine.createSpy('setState');
-            this.getState = jasmine.createSpy('getState').and.returnValue({oi: 0, ci: 0, pi: 0, ontologyId: '', entityIRI: ''});
+            this.getState = jasmine.createSpy('getState').and.returnValue({ontologyId: '', entityIRI: ''});
             this.setStateToNew = jasmine.createSpy('setStateToNew').and.returnValue(0);
             this.clearState = jasmine.createSpy('clearState');
             this.setUnsaved = jasmine.createSpy('setUnsaved');
@@ -446,6 +459,11 @@ function mockStateManager() {
             this.afterSave = jasmine.createSpy('afterSave');
             this.setIndividualsOpened = jasmine.createSpy('setIndividualsOpened');
             this.getIndividualsOpened = jasmine.createSpy('getIndividualsOpened').and.returnValue(false);
+            this.deleteState = jasmine.createSpy('deleteState');
+            this.getCreatedEntities = jasmine.createSpy('getCreatedEntities');
+            this.hasCreatedEntities = jasmine.createSpy('hasCreatedEntities');
+            this.addDeletedEntity = jasmine.createSpy('addDeletedEntity');
+            this.getActiveEntityIRI = jasmine.createSpy('getActiveEntityIRI');
         });
     });
 }
