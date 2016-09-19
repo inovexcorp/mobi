@@ -48,7 +48,7 @@ describe('Block footer directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
         it('based on .footer', function() {
-            expect(element.hasClass('footer')).toBe(true);
+            expect(element.hasClass('block-footer')).toBe(true);
         });
     });
 });

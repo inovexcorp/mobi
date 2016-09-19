@@ -22,6 +22,13 @@
   -->
 <div class="ontology-editor-tabset">
     <tabset>
-        <ontology-tab ng-repeat="item in dvm.om.list" list-item="item"></ontology-tab>
+        <tab ng-repeat="item in dvm.om.list" heading="dvm.om.getEntityName(dvm.om.getOntologyEntity(item.ontology))"
+             on-close="dvm.onClose(item.ontologyId)" active="dvm.sm.getState(item.ontologyId).active"
+             on-click="dvm.sm.setState(item.ontologyId)" marked="dvm.sm.hasChanges(item.ontology, item.ontologyId)">
+            <ontology-tab list-item="item"></ontology-tab>
+        </tab>
+        <tab active="dvm.sm.getState().active" on-click="dvm.sm.setState()" is-last="true">
+            <ontology-default-tab></ontology-default-tab>
+        </tab>
     </tabset>
 </div>

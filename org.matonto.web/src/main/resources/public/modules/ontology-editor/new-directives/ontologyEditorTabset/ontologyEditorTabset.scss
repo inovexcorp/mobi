@@ -6,5 +6,15 @@
 
     > .tabset > .tabset-headings {
         background-color: darkseagreen;
+
+        .heading.is-last .heading-text {
+            font-family: FontAwesome;
+            vertical-align: middle;
+            width: auto;
+
+            &:before {
+                content: '\f067';
+            }
+        }
     }
 }

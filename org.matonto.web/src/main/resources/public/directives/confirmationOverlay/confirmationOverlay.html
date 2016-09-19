@@ -22,16 +22,11 @@
   -->
 <div class="overlay" ng-class="{'sm': size === 'small', 'lg': size === 'large'}">
     <div class="content clearfix">
-        <!-- section header -->
         <h6>{{headerText}}</h6>
-
-        <!-- main content -->
         <div class="main" ng-transclude></div>
-
-        <!-- overlay buttons -->
         <div class="btn-container clearfix">
-            <button ng-click="confirmClick()" class="btn btn-primary pull-right">{{confirmText}}</button>
-            <button ng-click="cancelClick()" class="btn btn-default pull-right">{{cancelText}}</button>
+            <button class="btn btn-primary pull-right" ng-click="confirmClick()">{{confirmText}}</button>
+            <button class="btn btn-default pull-right" ng-click="cancelClick()">{{cancelText}}</button>
         </div>
     </div>
 </div>

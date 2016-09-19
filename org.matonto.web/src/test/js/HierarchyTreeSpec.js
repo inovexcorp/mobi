@@ -51,8 +51,7 @@ describe('Hierarchy Tree directive', function() {
         {
             entityIRI: 'class3'
         }];
-        scope.editor = 'editor-string';
-        element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" editor="editor"></hierarchy-tree>'))(scope);
+        element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy"></hierarchy-tree>'))(scope);
         scope.$digest();
     });
 
@@ -64,11 +63,6 @@ describe('Hierarchy Tree directive', function() {
             isolatedScope.hierarchy = [];
             scope.$digest();
             expect(scope.hierarchy).toEqual([]);
-        });
-        it('editor should be one way bound', function() {
-            isolatedScope.editor = '';
-            scope.$digest();
-            expect(scope.editor).toEqual('editor-string');
         });
     });
 

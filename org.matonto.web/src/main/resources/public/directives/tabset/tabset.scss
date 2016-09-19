@@ -8,29 +8,83 @@
     min-height: 0;
 
     > .tabset-headings {
+        display: flex;
+        flex-direction: row;
         height: 48px;
 
-        a {
+
+        .heading {
             background-color: $gray-lighter;
             border-top-left-radius: 10px;
             border-top-right-radius: 10px;
             color: black;
             display: inline-block;
+            flex-basis: auto;
+            flex-grow: 1;
             font-size: 1.125em;
             margin: 12px 0 0 8px;
             padding: 7px 15px;
             text-decoration: none;
+            max-width: min-content;
+            white-space: nowrap;
             @include noCopy();
 
             &.active {
                 background-color: white;
             }
 
-            i {
-                margin-left: 10px;
+            &:last-child {
+                margin-right: 10px;
+            }
+
+            .heading-text {
+                display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                vertical-align: top;
+                white-space: nowrap;
+                width: 100px;
+
+                &.marked {
+                    padding-right: 7px;
+                    position: relative;
+
+                    &:after {
+                        content: ' *';
+                        position: absolute;
+                        right: 0;
+                    }
+                }
+            }
+
+            .fa-stack {
+                height: 22px;
+                line-height: 22px;
+                vertical-align: top;
+                width: 22px;
+
+                .fa-times {
+                    top: -1px;
+                }
+
+                .fa-times-circle {
+                    font-size: 22px;
+                    visibility: hidden;
+                }
+
+                &:hover {
+                    .fa-times-circle {
+                        visibility: visible;
+                    }
+
+                    .fa-times {
+                        visibility: hidden;
+                    }
+                }
             }
         }
     }
+
     > .tabset-contents {
         flex: 1;
         height: 0;
@@ -40,10 +94,11 @@
         > .tabset-headings {
             background: white;
             box-shadow: 5px 5px 5px 0px $gray-light;
+            display: block;
             height: 52px;
             text-align: center;
 
-            a {
+            .heading {
                 background-color: white;
                 border-bottom: 2px solid transparent;
                 border-radius: 0;
@@ -54,6 +109,10 @@
                 &.active {
                     border-color: $brand-primary;
                     color: black;
+                }
+
+                .heading-text {
+                    width: auto;
                 }
             }
         }

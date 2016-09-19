@@ -16,6 +16,10 @@ body {
         cursor: pointer;
     }
 
+    textarea {
+        resize: vertical;
+    }
+
     /* Error message font */
     .error-msg {
         color: #f00;
@@ -229,6 +233,10 @@ ul {
     padding: 10px;
     @include noCopy();
 
+    .tree {
+        padding: 0;
+    }
+
     /* Anchor inherits the color of parent and fills container completely */
     a {
         color: inherit;
@@ -238,9 +246,10 @@ ul {
         padding: 3px 19px 3px 4px;
         position: relative;
         text-decoration: none;
+        text-overflow: ellipsis;
         vertical-align: top;
         width: 100%;
-        word-break: break-all;
+        white-space: nowrap;
 
         /* The tree node changes are unsaved */
         &.unsaved .unsaved-icon {
@@ -265,6 +274,14 @@ ul {
         /* adds some spacing to the right of the icons */
         > .fa.fa-fw {
             margin-right: 2px;
+
+            &.fa-minus-square-o:hover:before {
+                content: '\f146';
+            }
+
+            &.fa-plus-square-o:hover:before {
+                content: '\f0fe';
+            }
         }
     }
 

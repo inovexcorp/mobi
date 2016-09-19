@@ -56,6 +56,21 @@ describe('Tabset directive', function() {
         it('based on .tabset-contents', function() {
             expect(element.querySelectorAll('.tabset-contents').length).toBe(1);
         });
+        describe('if tab.marked is', function() {
+            beforeEach(function() {
+                controller = element.controller('tabset');
+            });
+            it('true', function() {
+                controller.tabs = [{id: 'tab1', marked: true}];
+                scope.$digest();
+                expect(element.querySelectorAll('.marked').length).toBe(1);
+            });
+            it('false', function() {
+                controller.tabs = [{id: 'tab1', marked: false}];
+                scope.$digest();
+                expect(element.querySelectorAll('.marked').length).toBe(0);
+            });
+        });
     });
     describe('controller methods', function() {
         beforeEach(function() {

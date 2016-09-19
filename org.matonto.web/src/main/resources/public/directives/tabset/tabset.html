@@ -22,8 +22,12 @@
   -->
 <div class="tabset" role="tabpanel">
     <div class="tabset-headings clearfix">
-        <a ng-repeat="tab in dvm.tabs" ng-click="dvm.select(tab); tab.onClick()" ng-class="{'active': tab.active}" class="heading">
-            <span>{{tab.heading}}</span><i ng-if="tab.onClose" ng-click="tab.onClose(); $event.stopPropagation()" class="fa fa-times"></i>
+        <a ng-repeat="tab in dvm.tabs" ng-click="dvm.select(tab); tab.onClick()" ng-class="{'active': tab.active, 'is-last': tab.isLast}" class="heading">
+            <span ng-class="{'marked': tab.marked}" class="heading-text">{{tab.heading}}</span>
+            <span ng-if="tab.onClose" ng-click="tab.onClose()" class="fa-stack">
+                <i class="fa fa-times fa-stack-1x"></i>
+                <i class="fa fa-times-circle fa-stack-2x text-danger"></i>
+            </span>
         </a>
     </div>
     <div class="tabset-contents" ng-transclude></div>

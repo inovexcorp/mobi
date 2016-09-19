@@ -97,12 +97,21 @@ describe('Ontology Close Overlay directive', function() {
         describe('saveThenClose', function() {
             beforeEach(function() {
                 ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
+                stateManagerSvc.getState.and.returnValue({deletedEntities: []});
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
-                expect(stateManagerSvc.getUnsavedEntities).toHaveBeenCalledWith(stateManagerSvc.ontology);
-                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
-                    stateManagerSvc.getUnsavedEntities(stateManagerSvc.ontology));
+                ontologyManagerSvc.getOntologyById.and.returnValue([]);
+                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
+                expect(stateManagerSvc.getUnsavedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
+                expect(stateManagerSvc.getCreatedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
+                expect(stateManagerSvc.getState).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
+                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(
+                    stateManagerSvc.ontologyIdToClose,
+                    stateManagerSvc.getUnsavedEntities(ontologyManagerSvc.getOntologyById()),
+                    stateManagerSvc.getCreatedEntities(ontologyManagerSvc.getOntologyById()),
+                    stateManagerSvc.getState().deletedEntities
+                );
             });
             it('when resolved, calls the correct controller function', function() {
                 controller.close = jasmine.createSpy('close');
@@ -119,8 +128,8 @@ describe('Ontology Close Overlay directive', function() {
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
-            expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+            expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
+            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
             expect(stateManagerSvc.showCloseOverlay).toBe(false);
         });
     });

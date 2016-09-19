@@ -80,6 +80,8 @@
                 subObjectProperties: [],
                 individuals: [],
                 classHierarchy: [],
+                dataPropertyHierarchy: [],
+                objectPropertyHierarchy: [],
                 classesWithIndividuals: [],
                 blankNodes: {}
             };
@@ -363,7 +365,7 @@
              * @param {Object[]} unsavedEntities The array of ontology entities with unsaved changes.
              * @returns {Promise} A promise with the ontology ID.
              */
-            self.saveChanges = function(ontologyId, unsavedEntities) {
+            self.saveChanges = function(ontologyId, unsavedEntities, createdEntities, deletedEntities) {
                 var deferred = $q.defer();
                 var promises = [];
                 var config = {};
@@ -382,13 +384,37 @@
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
                     }
                 });
+                _.forEach(createdEntities, entity => {
+                    var newEntity = $filter('removeMatonto')(entity);
+                    if (self.isClass(entity)) {
+                        promises.push(self.createClass(ontologyId, newEntity));
+                    } else if (self.isObjectProperty(entity)) {
+                        promises.push(self.createObjectProperty(ontologyId, newEntity));
+                    } else if (self.isDataTypeProperty(entity)) {
+                        promises.push(self.createDataTypeProperty(ontologyId, newEntity));
+                    } else if (self.isIndividual(entity)) {
+                        promises.push(self.createIndividual(ontologyId, newEntity));
+                    }
+                    _.set(entity, 'matonto.created', false);
+                });
+                _.forEach(deletedEntities, entity => {
+                    if (self.isClass(entity)) {
+                        promises.push(self.deleteClass(ontologyId, entity.matonto.originalIRI));
+                    } else if (self.isObjectProperty(entity)) {
+                        promises.push(self.deleteObjectProperty(ontologyId, entity.matonto.originalIRI));
+                    } else if (self.isDataTypeProperty(entity)) {
+                        promises.push(self.deleteDataTypeProperty(ontologyId, entity.matonto.originalIRI));
+                    } else if (self.isIndividual(entity)) {
+                        promises.push(self.deleteIndividual(ontologyId, entity.matonto.originalIRI));
+                    }
+                });
                 $q.all(promises)
-                    .then(response => {
-                        if (!_.some(response, {data: {updated: false}})) {
+                    .then(responses => {
+                        if (!_.some(responses, {data: {updated: false}})) {
                             self.updateClassHierarchies(ontologyId)
                                 .then(() => {
-                                    var newId = _.get(response, '[0].data.id');
-                                    if (!_.isEqual(ontologyId, newId)) {
+                                    var newId = _.get(_.find(responses, response => _.has(response, 'data.id')), 'data.id', ontologyId);
+                                    if (ontologyId !== newId) {
                                         self.setOntologyId(ontologyId, newId);
                                     }
                                     deferred.resolve(newId);
@@ -518,7 +544,7 @@
              */
             self.getOntologyIRI = function(ontology) {
                 var entity = self.getOntologyEntity(ontology);
-                return _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', ''));
+                return _.get(entity, '@id', _.get('matonto.originalIRI', _.get(entity, 'matonto.anonymous', '')));
             }
             /**
              * @ngdoc method
@@ -538,7 +564,7 @@
                 $http.delete(prefix + encodeURIComponent(ontologyId))
                     .then(response => {
                         if (_.get(response, 'data.deleted')) {
-                            _.remove(self.list, item => _.get(item, 'ontologyId') === ontologyId);
+                            _.remove(self.ontologyIds, id => id === ontologyId);
                             deferred.resolve();
                         } else {
                             deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
@@ -670,21 +696,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteClass = function(ontologyId, classIRI) {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                $http.delete(prefix + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classIRI))
-                    .then(response => {
-                        self.updateClassHierarchies(ontologyId)
-                            .then(() => {
-                                onDeleteSuccess(response, ontologyId, classIRI, 'subClasses', deferred);
-                            });
-                    }, response => {
-                        onDeleteError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/classes/' + encodeURIComponent(classIRI));
             }
             /**
              * @ngdoc method
@@ -698,30 +710,15 @@
              *
              * @param {string} ontologyId The ontology ID of the requested ontology.
              * @param {string} classJSON The JSON-LD representing the owl:Class to create.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
-             * class.
+             * @returns {Promise} A promise with the $http response of the POST.
              */
             self.createClass = function(ontologyId, classJSON) {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
                 var config = {
                     params: {
                         resourcejson: classJSON
                     }
                 };
-                $http.post(prefix + encodeURIComponent(ontologyId) + '/classes', null, config)
-                    .then(response => {
-                        self.updateClassHierarchies(ontologyId)
-                            .then(() => {
-                                onCreateSuccess(response, ontologyId, classJSON, 'subClasses', deferred);
-                            });
-                    }, response => {
-                        onCreateError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/classes', null, config);
             }
             /**
              * @ngdoc method
@@ -741,7 +738,9 @@
                 $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies')
                     .then(hierarchyResponse => {
                         if (_.get(hierarchyResponse, 'status') === 200) {
-                            self.getListItemById(ontologyId).classHierarchy = hierarchyResponse.data;
+                            var listItem = self.getListItemById(ontologyId);
+                            listItem.classHierarchy = hierarchyResponse.data.hierarchy;
+                            listItem.classIndex = hierarchyResponse.data.index;
                         }
                         deferred.resolve();
                     }, () => {
@@ -980,7 +979,6 @@
              * property.
              */
             self.createObjectProperty = function(ontologyId, propertyJSON) {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
                     params: {
@@ -992,9 +990,6 @@
                         onCreateSuccess(response, ontologyId, propertyJSON, 'subObjectProperties', deferred);
                     }, response => {
                         onCreateError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -1088,7 +1083,6 @@
              * property.
              */
             self.createDataTypeProperty = function(ontologyId, propertyJSON) {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
                     params: {
@@ -1100,9 +1094,6 @@
                         onCreateSuccess(response, ontologyId, propertyJSON, 'subDataProperties', deferred);
                     }, response => {
                         onCreateError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -1299,7 +1290,6 @@
              * property.
              */
             self.createIndividual = function(ontologyId, individualJSON) {
-                $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
                     params: {
@@ -1311,9 +1301,6 @@
                         onCreateSuccess(response, ontologyId, individualJSON, 'individuals', deferred);
                     }, response => {
                         onCreateError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
                     });
                 return deferred.promise;
             }
@@ -1515,6 +1502,33 @@
                     });
                 return deferred.promise;
             }
+            /**
+             * @ngdoc method
+             * @name getEntityUsages
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{ontologyId}/entity-usages/{entityIRI} endpoint which gets the
+             * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
+             *
+             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
+             * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
+             * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
+             */
+            self.getEntityUsages = function(ontologyId, entityIRI) {
+                var deferred = $q.defer();
+                $http.get(prefix + encodeURIComponent(ontologyId) + '/entity-usages/' + encodeURIComponent(entityIRI))
+                    .then(response => {
+                        if(_.get(response, 'status') === 200) {
+                            deferred.resolve(response.data.results.bindings);
+                        } else if (_.get(response, 'status') === 204) {
+                            deferred.resolve([]);
+                        } else {
+                            deferred.reject(response);
+                        }
+                    }, deferred.reject);
+                return deferred.promise;
+            }
 
             /* Private helper functions */
             function onCreateSuccess(response, ontologyId, entityJSON, arrayProperty, deferred) {
@@ -1682,7 +1696,9 @@
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/iris'),
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/imported-iris'),
                     $http.get(prefix + encodeURIComponent(ontologyId) + '/class-hierarchies'),
-                    $http.get(prefix + encodeURIComponent(ontologyId) + '/classes-with-individuals')
+                    $http.get(prefix + encodeURIComponent(ontologyId) + '/classes-with-individuals'),
+                    $http.get(prefix + encodeURIComponent(ontologyId) + '/data-property-hierarchies'),
+                    $http.get(prefix + encodeURIComponent(ontologyId) + '/object-property-hierarchies')
                 ]).then(response => {
                     var irisResponse = response[0];
                     if (_.get(irisResponse, 'status') === 200) {
@@ -1737,11 +1753,23 @@
                         }
                         var classHierarchyResponse = response[2];
                         if (_.get(classHierarchyResponse, 'status') === 200) {
-                            listItem.classHierarchy = classHierarchyResponse.data;
+                            listItem.classHierarchy = classHierarchyResponse.data.hierarchy;
+                            listItem.classIndex = classHierarchyResponse.data.index;
                         }
                         var classesWithIndividualsResponse = response[3];
                         if (_.get(classesWithIndividualsResponse, 'status') === 200) {
-                            listItem.classesWithIndividuals = classesWithIndividualsResponse.data;
+                            listItem.classesWithIndividuals = classesWithIndividualsResponse.data.hierarchy;
+                            listItem.classesWithIndividualsIndex = classesWithIndividualsResponse.data.index;
+                        }
+                        var dataPropertyHierarchyResponse = response[4];
+                        if (_.get(dataPropertyHierarchyResponse, 'status') === 200) {
+                            listItem.dataPropertyHierarchy = dataPropertyHierarchyResponse.data.hierarchy;
+                            listItem.dataPropertyIndex = dataPropertyHierarchyResponse.data.index;
+                        }
+                        var objectPropertyHierarchyResponse = response[5];
+                        if (_.get(objectPropertyHierarchyResponse, 'status') === 200) {
+                            listItem.objectPropertyHierarchy = objectPropertyHierarchyResponse.data.hierarchy;
+                            listItem.objectPropertyIndex = objectPropertyHierarchyResponse.data.index;
                         }
                         self.list.push(listItem);
                         deferred.resolve();
@@ -1764,7 +1792,6 @@
                     .then(() => {
                         $rootScope.showSpinner = false;
                     });
-                self.openOntology('http://data.qudt.org/qudt/owl/1.0.0/qudt.owl');
             }
             initialize();
         }

@@ -36,6 +36,9 @@ describe('Create Individual Overlay directive', function() {
         module('templates');
         module('createIndividualOverlay');
         injectCamelCaseFilter();
+        injectSplitIRIFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
         mockStateManager();
         mockResponseObj();
@@ -93,14 +96,14 @@ describe('Create Individual Overlay directive', function() {
         it('with a static iri', function() {
             expect(element.find('static-iri').length).toBe(1);
         });
-        it('with a string select', function() {
-            expect(element.find('string-select').length).toBe(1);
+        it('with a ui-select', function() {
+            expect(element.find('ui-select').length).toBe(1);
         });
         it('with an input for the individual name', function() {
             expect(element.querySelectorAll('input[name="name"]').length).toBe(1);
         });
         it('with custom buttoms to create and cancel', function() {
-            var buttons = element.find('custom-button');
+            var buttons = element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Create'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Create'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
@@ -141,27 +144,14 @@ describe('Create Individual Overlay directive', function() {
             expect(controller.iriHasChanged).toBe(true);
             expect(controller.individual['@id']).toBe('begin' + 'then' + 'end');
         });
-        describe('should create an individual', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.createIndividual.and.returnValue(deferred.promise);
-            });
-            it('unless an error occurs', function() {
-                deferred.reject('error');
-                controller.create();
-                $timeout.flush();
-                expect(controller.error).toBe('error');
-            });
-            it('successfully', function() {
-                var response = {entityIRI: 'iri', ontologyId: 'id'};
-                deferred.resolve(response);
-                controller.create();
-                $timeout.flush();
-                expect(stateManagerSvc.showCreateIndividualOverlay).toBe(false);
-                expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(response.ontologyId);
-                expect(stateManagerSvc.selectItem).toHaveBeenCalled();
-                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(response.ontologyId);
-                expect(stateManagerSvc.setOpened).toHaveBeenCalled();
-            });
+        it('should create an individual', function() {
+            ontologyManagerSvc.getListItemById.and.returnValue({individuals: [], classesWithIndividuals: []})
+            controller.individual = {'@id': 'id', '@type': []};
+            controller.create();
+            expect(_.indexOf(controller.individual['@type'], prefixes.owl + 'NamedIndividual')).not.toBe(-1);
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(stateManagerSvc.ontology, controller.individual);
+            expect(stateManagerSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id']);
+            expect(stateManagerSvc.showCreateIndividualOverlay).toBe(false);
         });
     });
 });

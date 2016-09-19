@@ -1,0 +1,100 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.open-ontology-tab {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .actions .form-inline {
+        font-size: 0;
+        padding: 9px;
+
+        .btn {
+            margin-left: 15px;
+        }
+    }
+
+    .list {
+        flex: 1;
+        margin: 0;
+        padding: 15px 0;
+
+        .open-ontology-content {
+            display: flex;
+            flex-direction: column;
+
+            .ontologies {
+                flex: 1;
+                height: 0;
+                padding: 15px;
+
+                .ontology {
+                    border-bottom: 1px solid $gray-lighter;
+                    cursor: pointer;
+                    display: flex;
+                    flex-direction: row;
+                    padding: 10px;
+
+                    &:last-child {
+                        border-bottom: none;
+                    }
+
+                    &:hover {
+                        background-color: $gray-lighter;
+                    }
+
+                    .details {
+                        flex: 1;
+
+                        .header {
+                            font-size: 1.25em;
+                            font-weight: normal;
+                            margin: 0 0 5px;
+                        }
+
+                        .description {
+                            margin: 0;
+                        }
+                    }
+
+                    .action-container {
+                        display: flex;
+                        align-items: center;
+                        padding: 0 10px;
+
+                        .delete {
+                            color: $gray-light;
+                            display: inline-block;
+                            text-decoration: none;
+
+                            &:hover {
+                                color: $gray;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        .paging-details {
+            padding: 0 15px;
+
+            .page-count {
+                float: left;
+                font-size: 1.125em;
+                line-height: 34px;
+                margin: 0;
+            }
+
+            .page-nav {
+                float: right;
+
+                .pagination {
+                    margin: 0;
+                    vertical-align: bottom;
+                }
+            }
+        }
+    }
+}

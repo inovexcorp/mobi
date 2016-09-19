@@ -42,7 +42,6 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.refresh = {};

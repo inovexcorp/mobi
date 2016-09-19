@@ -35,7 +35,9 @@
                 transclude: true,
                 scope: {
                     active: '=?',
-                    heading: '@',
+                    heading: '<',
+                    isLast: '<',
+                    marked: '<',
                     onClick: '&',
                     onClose: '&?'
                 },

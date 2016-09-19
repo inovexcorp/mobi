@@ -23,35 +23,29 @@
   -->
 
 <html ng-app="app">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="images/favicon.ico">
-    <title ng-bind="$state.current.data.title + ' | MatOnto'"></title>
-
-    <!-- inject:css -->
-    <!-- endinject -->
-</head>
-<body class="beta" ng-class="{'no-text': $root.noText}">
-
-<!-- Basic header, container, and footer for all states -->
-<div ng-hide="$state.current.name === 'login'" class="full-height">
-    <nav ui-view="nav"></nav>
-    <div class="main-page">
-        <custom-header page-title="$state.current.data.title"></custom-header>
-        <section ui-view="container" class="view-container full-height"></section>
-    </div>
-</div>
-<section ng-hide="$state.current.name !== 'login'" ui-view="container" class="view-container full-height"></section>
-<footer ui-view="footer"></footer>
-
-<!-- spinner -->
-<div class="spinner" ng-show="$root.showSpinner">
-    <i class="fa fa-4x fa-spin fa-spinner"></i>
-</div>
-
-<!-- inject:js -->
-<!-- endinject -->
-</body>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="images/favicon.ico">
+        <title ng-bind="$state.current.data.title + ' | MatOnto'"></title>
+        <!-- inject:css -->
+        <!-- endinject -->
+    </head>
+    <body ng-class="{'no-text': $root.noText}">
+        <div ng-hide="$state.current.name === 'login'" class="full-height">
+            <nav ui-view="nav"></nav>
+            <div class="main-page">
+                <custom-header page-title="$state.current.data.title"></custom-header>
+                <section ui-view="container" class="view-container full-height"></section>
+            </div>
+        </div>
+        <section ng-hide="$state.current.name !== 'login'" ui-view="container" class="view-container full-height"></section>
+        <footer ui-view="footer"></footer>
+        <div class="spinner" ng-show="$root.showSpinner">
+            <i class="fa fa-4x fa-spin fa-spinner"></i>
+        </div>
+        <!-- inject:js -->
+        <!-- endinject -->
+    </body>
 </html>

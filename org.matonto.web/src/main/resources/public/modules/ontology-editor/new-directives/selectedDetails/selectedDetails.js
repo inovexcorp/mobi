@@ -38,7 +38,6 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                 }
