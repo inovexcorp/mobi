@@ -25,6 +25,7 @@ package org.matonto.jaas.rest.impl;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.karaf.jaas.boot.ProxyLoginModule;
 import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.RolePrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
@@ -79,11 +80,14 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         rest = spy(new GroupRestImpl());
         rest.setRealm(realm);
 
-        when(rest.getFactory()).thenReturn(factory);
+        Map<String, Object> tokenOptions = new HashMap<>();
+        tokenOptions.put(ProxyLoginModule.PROPERTY_MODULE, UserRestImpl.TOKEN_MODULE);
+
+        when(factory.getModuleClass()).thenReturn(UserRestImpl.TOKEN_MODULE);
         when(factory.build(any(Map.class))).thenReturn(engine);
         when(realm.getEntries()).thenReturn(new AppConfigurationEntry[] {
                 new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
-                        new HashMap<>()),
+                        tokenOptions),
                 new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
                         new HashMap<>())});
         when(engine.listUsers()).thenReturn(users);
@@ -94,6 +98,8 @@ public class GroupRestImplTest extends MatontoRestTestNg {
         doNothing().when(engine).addGroupRole(anyString(), anyString());
         doNothing().when(engine).deleteGroup(anyString(), anyString());
         doNothing().when(engine).deleteGroupRole(anyString(), anyString());
+
+        rest.addEngineFactory(factory);
 
         rest.start();
 
