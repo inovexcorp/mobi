@@ -31,6 +31,7 @@ var src = './src/main/resources/public/',
 // NOTE: This is where we determine the order in which JS files are loaded
 var jsFiles = function(prefix) {
         return [
+            prefix + 'js/vendor/*.js',
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
             prefix + 'js/services/annotationManager.js',
@@ -61,7 +62,8 @@ var jsFiles = function(prefix) {
             prefix + 'angular-cookies/**/angular-cookies.min.js',
             prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
             prefix + 'angular-messages/**/angular-messages.min.js',
-            prefix + 'ui-select/**/select.min.js'
+            prefix + 'ui-select/**/select.min.js',
+            prefix + 'handsontable/**/handsontable.full.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -76,7 +78,8 @@ var jsFiles = function(prefix) {
             prefix + 'bootstrap/**/bootstrap.min.css',
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',
-            prefix + 'codemirror/**/codemirror.css'
+            prefix + 'codemirror/**/codemirror.css',
+            prefix + 'handsontable/**/handsontable.full.css'
         ]
     };
 

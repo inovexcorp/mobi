@@ -1,0 +1,21 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.edit-mapping-form {
+	display: flex;
+	flex-direction: column;
+	
+	.class-mapping-select-container {
+		display: flex;
+
+		.class-mapping-select {
+			flex: 1;
+		}
+	}
+	.class-mapping-details {
+		flex: 1;
+	}
+	ul.dl-horizontal {
+		margin-bottom: 0;
+	}
+}

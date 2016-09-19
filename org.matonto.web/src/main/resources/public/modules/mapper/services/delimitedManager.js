@@ -26,24 +26,24 @@
     angular
         /**
          * @ngdoc overview
-         * @name csvManager
+         * @name delimitedManager
          *
          * @description 
-         * The `csvManager` module only provides the `csvManagerService` service which
+         * The `delimitedManager` module only provides the `delimitedManagerService` service which
          * provides access to the MatOnto CSV REST endpoints and variable to hold data 
          * pertaining to the results of these endpoints.
          */
         .module('delimitedManager', [])
         /**
          * @ngdoc service
-         * @name csvManager.service:csvManagerService
+         * @name delimitedManager.service:delimitedManagerService
          * @requires $rootScope
          * @requires $http
          * @requires $q
          * @requires $window
          *
          * @description 
-         * `csvManagerService` is a service that provides access to the MatOnto CSV REST 
+         * `delimitedManagerService` is a service that provides access to the MatOnto CSV REST 
          * endpoints and various variables to hold data pertaining to the parameters 
          * passed to the endpoints and the results of the endpoints.
          */
@@ -55,76 +55,62 @@
             var self = this,
                 prefix = '/matontorest/delimited-files';
 
+
             /**
              * @ngdoc property
-             * @name csvManager.csvManagerService#fileObj
-             * @propertyOf csvManager.service:csvManagerService
-             * @type {Object}
-             * 
-             * @description
-             * `fileObj` holds the File object from a {@link file-input.directive:fileInput fileInput} 
-             * directive.
+             * @name delimitedManager.delimitedManagerService#dataRows
+             * @propertyOf delimitedManager.service:delimitedManagerService
+             * @type {string}
+             *
+             * @description 
+             * `dataRows` holds an array of a preview of delimited data. Set by the 
+             * POST /matontorest/delimited-files endpoint
              */
-            self.fileObj = undefined;
+            self.dataRows = undefined;
             /**
              * @ngdoc property
-             * @name csvManager.csvManagerService#filePreview
-             * @propertyOf csvManager.service:csvManagerService
-             * @type {Object}
-             * 
-             * @description
-             * `filePreview` holds an object which has the headers and rows set from a call to 
-             * GET /matontorest/csv/{fileName}. The structure of this object is:
-             * ```
-             * {
-             *     headers: ['Column 1'],
-             *     rows: [['Row 1'], ['Row 2']]
-             * }
-             * ```
-             */
-            self.filePreview = undefined;
-            /**
-             * @ngdoc property
-             * @name csvManager.csvManagerService#fileName
-             * @propertyOf csvManager.service:csvManagerService
+             * @name delimitedManager.delimitedManagerService#fileName
+             * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string}
              *
              * @description 
              * `fileName` holds a string with the name of the uploaded delimited file given 
-             * back from the POST /matontorest/csv endpoint and is used in all other CSV 
+             * back from the POST /matontorest/delimited-files endpoint 
              * endpoint calls.
              */
             self.fileName = '';
             /**
              * @ngdoc property
-             * @name csvManager.csvManagerService#separator
-             * @propertyOf csvManager.service:csvManagerService
+             * @name delimitedManager.delimitedManagerService#separator
+             * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string}
              *
              * @description 
              * `separator` holds a string with the character separating columns in the uploaded 
-             * delimited file if it is a CSV file. It is used in the GET /matontorest/csv/{fileName},
-             * the POST /matontorest/csv/{fileName}/map, and the GET /matontorest/csv/{fileName}/map 
+             * delimited file if it is an SV file. It is used in the GET /matontorest/delimited-files/{fileName},
+             * the POST /matontorest/delimited-files/{fileName}/map, and the 
+             * GET /matontorest/delimited-files/{fileName}/map 
              * endpoints calls.
              */
             self.separator = ',';
             /**
              * @ngdoc property
-             * @name csvManager.csvManagerService#containsHeaders
-             * @propertyOf csvManager.service:csvManagerService
+             * @name delimitedManager.delimitedManagerService#containsHeaders
+             * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {boolean}
              *
              * @description 
              * `separator` holds a boolean indicating whether the uploaded delimited file contains a
-             * header row or not. It is used in the GET /matontorest/csv/{fileName}, the POST 
-             * /matontorest/csv/{fileName}/map-preview, and the GET /matontorest/csv/{fileName}/map 
+             * header row or not. It is used in the GET /matontorest/delimited-files/{fileName}, the POST 
+             * /matontorest/delimited-files/{fileName}/map-preview, and the 
+             * GET /matontorest/delimited-files/{fileName}/map 
              * endpoints calls.
              */
             self.containsHeaders = true;
             /**
              * @ngdoc property
-             * @name csvManager.csvManagerService#preview
-             * @propertyOf csvManager.service:csvManagerService
+             * @name delimitedManager.delimitedManagerService#preview
+             * @propertyOf delimitedManager.service:delimitedManagerService
              * @type {string/Object}
              *
              * @description 
@@ -132,17 +118,28 @@
              * {@link rdfPreview.directive:rdfPreview RDF Preview} directive.
              */
             self.preview = '';
+            /**
+             * @ngdoc property
+             * @name delimitedManager.delimitedManagerService#serializeFormat
+             * @propertyOf delimitedManager.service:delimitedManagerService
+             * @type {string/Object}
+             *
+             * @description
+             * `serializeFormat` holds a string containing the format for the preview to be used in the
+             * {@link rdfPreview.directive:rdfPreview RDF Preview} directive.
+             */
+            self.serializeFormat = 'turtle';
 
             /**
              * @ngdoc method
-             * @name csvManager.csvManagerService#upload
-             * @methodOf csvManager.service:csvManagerService
+             * @name delimitedManager.delimitedManagerService#upload
+             * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description 
-             * Makes a call to POST /matontorest/csv to upload the passed File object to the repository.
+             * Makes a call to POST /matontorest/delimited-files to upload the passed File object to the repository.
              * Returns the resulting file name is a promise.
              * 
-             * @param {object} file a File object to upload (should be a CSV or Excel file)
+             * @param {object} file a File object to upload (should be a SV or Excel file)
              * @return {Promise} A Promise that resolves to the name of the uploaded delimited file.
              */
             self.upload = function(file) {
@@ -172,16 +169,16 @@
 
             /**
              * @ngdoc method
-             * @name csvManager.csvManagerService#previewFile
-             * @methodOf csvManager.service:csvManagerService
+             * @name delimitedManager.delimitedManagerService#previewFile
+             * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description 
-             * Makes a call to GET /matontorest/csv/{fileName} to retrieve the passed in number of rows 
-             * of an uploaded delimited file. Uses {@link csvManager.csvManager#separator separator} and 
-             * {@link csvManager.csvManager#fileName fileName} to make the call. Depending on the value 
-             * of {@link csvManager.csvManager#containsHeaders containsHeaders}, either uses the first 
+             * Makes a call to GET /matontorest/cdelimited-filessv/{fileName} to retrieve the passed in number of rows 
+             * of an uploaded delimited file. Uses {@link delimitedManager.delimitedManager#separator separator} and 
+             * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. Depending on the value 
+             * of {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, either uses the first 
              * returned row as headers or generates headers of the form "Column " + index. Sets the value 
-             * of {@link csvManager.csvManager#filePreview filePreview}. Returns a Promise indicating the 
+             * of {@link delimitedManager.delimitedManager#dataRows dataRows}. Returns a Promise indicating the 
              * success of the REST call.
              * 
              * @param {number} rowEnd the number of rows to retrieve from the uploaded delimited file
@@ -201,24 +198,14 @@
                 $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
                     .then(response => {
                         if (response.data.length === 0) {
-                            self.filePreview = undefined;
+                            self.dataRows = undefined;
                             deferred.reject("No rows were found");
                         } else {
-                            self.filePreview = {};
-                            if (self.containsHeaders) {
-                                self.filePreview.headers = response.data[0];
-                                self.filePreview.rows = _.drop(response.data, 1);
-                            } else {
-                                self.filePreview.headers = [];
-                                _.times(response.data[0].length, index => {
-                                    self.filePreview.headers.push('Column ' + (index + 1));
-                                });
-                                self.filePreview.rows = response.data;
-                            }
+                            self.dataRows = response.data;
                             deferred.resolve();
                         }
                     }, response => {
-                        self.filePreview = undefined;
+                        self.dataRows = undefined;
                         deferred.reject(_.get(response, 'statusText', ''));
                     }).then(() => {
                         $rootScope.showSpinner = false;
@@ -229,15 +216,15 @@
 
             /**
              * @ngdoc method
-             * @name csvManager.csvManagerService#previewMap
-             * @methodOf csvManager.service:csvManagerService
+             * @name delimitedManager.delimitedManagerService#previewMap
+             * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description 
-             * Makes a call to POST /matontorest/csv/{fileName}/map-preview to retrieve the first 10 rows of 
+             * Makes a call to POST /matontorest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of 
              * delimited data mapped into RDF data using the passed in JSON-LD mapping and returns the RDF 
-             * data in the passed in format. Uses {@link csvManager.csvManager#separator separator},
-             * {@link csvManager.csvManager#containsHeaders containsHeaders}, and
-             * {@link csvManager.csvManager#fileName fileName} to make the call. If the format is "jsonld," 
+             * data in the passed in format. Uses {@link delimitedManager.delimitedManager#separator separator},
+             * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
+             * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. If the format is "jsonld," 
              * sends the request with an Accept header of "applciation/jsond". Otherwise, sends the request 
              * with an Accept header of "text/plain". Returns a Promise with the result of the endpoint call.
              * 
@@ -273,41 +260,58 @@
 
             /**
              * @ngdoc method
-             * @name csvManager.service:csvManagerService#map
-             * @methodOf csvManager.service:csvManagerService
+             * @name delimitedManager.service:delimitedManagerService#map
+             * @methodOf delimitedManager.service:delimitedManagerService
              * 
              * @description 
-             * Opens the current window to the location of GET /matontorest/csv/{fileName}/map which
+             * Opens the current window to the location of GET /matontorest/delimited-files/{fileName}/map which
              * will start a file download of the complete mapped delimited data  in JSON-LD format
              * of an uploaded delimited file using a saved mapping specified by the passed in mapping 
-             * name. Uses {@link csvManager.csvManager#separator separator},
-             * {@link csvManager.csvManager#containsHeaders containsHeaders}, and
-             * {@link csvManager.csvManager#fileName fileName} to create the URL to set the window 
+             * name. Uses {@link delimitedManager.delimitedManager#separator separator},
+             * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
+             * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL to set the window 
              * location to.
              * 
-             * @param {string} mappingName the local name of a saved mapping
+             * @param {string} mappingId the IRI of a saved mapping
              */
-            self.map = function(mappingName) {
-                var queryString = '?format=jsonld&mappingName=' + mappingName + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
+            self.map = function(mappingId) {
+                var queryString = '?format=jsonld&mappingIRI=' + mappingId + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
                 $window.location = prefix + '/' + encodeURIComponent(self.fileName) + '/map' + queryString;
             }
 
             /**
              * @ngdoc method
-             * @name csvManager.service:csvManagerService#reset
-             * @methodOf csvManager.service:csvManagerService
+             * @name getHeader
+             * @methodOf delimitedManager.service:delimitedManagerService
+             *
+             * @description 
+             * Retrieves the header name of a column based on its index. If 
+             * {@link delimitedManager.service:delimitedManagerService#dataRows data rows} have been
+             * set and {@link delimitedManager.service:delimitedManagerService#containsHeaders contain headers},
+             * collects the header name from the first row. Otherwise, generates a name using the index.
+             * 
+             * @param {number/string} index The index number of the column to retrieve the header name from
+             * @return {string} A header name for the column at the specified index
+             */
+            self.getHeader = function(index) {
+                return self.containsHeaders && self.dataRows ? _.get(self.dataRows[0], index, `Column ${index}`) : `Column ${index}`;
+            }
+
+            /**
+             * @ngdoc method
+             * @name delimitedManager.service:delimitedManagerService#reset
+             * @methodOf delimitedManager.service:delimitedManagerService
              * 
              * @description 
-             * Resets the values of {@link csvManager.csvManager#fileObj fileObj}
-             * {@link csvManager.csvManager#filePreview filePreview},
-             * {@link csvManager.csvManager#fileName fileName},
-             * {@link csvManager.csvManager#separator separator}, and
-             * {@link csvManager.csvManager#containsHeaders containsHeaders} back to their default
+             * Resets the values of {@link delimitedManager.delimitedManager#dataRows dataRows}
+             * {@link delimitedManager.delimitedManager#preview preview},
+             * {@link delimitedManager.delimitedManager#fileName fileName},
+             * {@link delimitedManager.delimitedManager#separator separator}, and
+             * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders} back to their default
              * values.
              */
             self.reset = function() {
-                self.fileObj = undefined;
-                self.filePreview = undefined;
+                self.dataRows = undefined;
                 self.fileName = '';
                 self.separator = ',';
                 self.containsHeaders = true;

@@ -1492,9 +1492,11 @@
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
-                            deferred.reject(response);
+                            deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                         }
-                    }, deferred.reject)
+                    }, response => {
+                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage))
+                    })
                     .then(() => {
                         $rootScope.showSpinner = false;
                     });
