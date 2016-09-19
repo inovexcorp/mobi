@@ -204,7 +204,7 @@ public class UserRestImplTest extends MatontoRestTestNg {
         Response response = target().path("users/testUser")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(401, response.getStatus());
+        Assert.assertEquals(400, response.getStatus());
     }
 
     @Test
