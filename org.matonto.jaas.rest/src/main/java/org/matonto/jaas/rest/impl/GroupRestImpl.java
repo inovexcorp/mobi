@@ -108,12 +108,12 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response createGroup(String groupName) {
-        if (findGroup(groupName).isPresent()) {
-            throw ErrorUtils.sendError("Group already exists", Response.Status.BAD_REQUEST);
-        }
-
         if (groupName == null) {
             throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        if (findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group already exists", Response.Status.BAD_REQUEST);
         }
 
         engine.createGroup(groupName);
@@ -123,8 +123,13 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response getGroup(String groupName) {
-        Map.Entry<GroupPrincipal, String> group = findGroup(groupName)
-                .orElseThrow(() -> ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        Map.Entry<GroupPrincipal, String> group = findGroup(groupName).orElseThrow(() ->
+                ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+
         JSONObject obj = new JSONObject();
         obj.put("name", group.getKey().getName());
         obj.put("roles", JSONArray.fromObject(group.getValue().split(",")));
@@ -133,16 +138,21 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response updateGroup(String groupName) {
+        // TODO: Implement
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
     public Response deleteGroup(String groupName) {
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findGroup(groupName).isPresent()) {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
 
-        List<UserPrincipal> users = engine.listUsers();
+        // Engine will delete group when no users are left in it
         engine.listUsers().stream()
                 .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
                 .map(UserPrincipal::getName)
@@ -157,18 +167,27 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response getGroupRoles(String groupName) {
-        Map.Entry<GroupPrincipal, String> group = findGroup(groupName)
-                .orElseThrow(() -> ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
-        JSONArray roles = JSONArray.fromObject(group.getValue().split(","));
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
 
+        Map.Entry<GroupPrincipal, String> group = findGroup(groupName).orElseThrow(() ->
+                ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+
+        JSONArray roles = JSONArray.fromObject(group.getValue().split(","));
         return Response.status(200).entity(roles.toString()).build();
     }
 
     @Override
     public Response addGroupRole(String groupName, String role) {
+        if (groupName == null || role == null) {
+            throw ErrorUtils.sendError("Both groupName and role must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findGroup(groupName).isPresent()) {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
+
         logger.info("Adding role " + role + " to group " + groupName);
         engine.addGroupRole(groupName, role);
         return Response.ok().build();
@@ -176,6 +195,10 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response removeGroupRole(String groupName, String role) {
+        if (groupName == null || role == null) {
+            throw ErrorUtils.sendError("Both groupName and role must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findGroup(groupName).isPresent()) {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }

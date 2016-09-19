@@ -133,6 +133,9 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response getUser(String username) {
+        if (username == null) {
+            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+        }
         UserPrincipal user = findUser(username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         return Response.status(200).entity(user.getName()).build();
