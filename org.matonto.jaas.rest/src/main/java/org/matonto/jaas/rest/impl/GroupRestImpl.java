@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class GroupRestImpl implements GroupRest {
@@ -206,6 +207,26 @@ public class GroupRestImpl implements GroupRest {
         logger.info("Removing role " + role + " from group " + groupName);
         engine.deleteGroupRole(groupName, role);
         return Response.ok().build();
+    }
+
+    @Override
+    public Response getGroupUsers(String groupName) {
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        if (!findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
+        }
+
+        List<String> users = engine.listUsers().stream()
+                .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
+                .map(UserPrincipal::getName)
+                .collect(Collectors.toList());
+        logger.info("Deleted group " + groupName);
+
+        JSONArray usersJsonArray = JSONArray.fromObject(users);
+        return Response.status(200).entity(usersJsonArray.toString()).build();
     }
 
     private Optional<Map.Entry<GroupPrincipal, String>> findGroup(String groupName) {

@@ -132,4 +132,17 @@ public interface GroupRest {
     @RolesAllowed("admin")
     @ApiOperation("Remove role from a MatOnto group")
     Response removeGroupRole(@PathParam("groupId") String groupName, @QueryParam("role") String role);
+
+    /**
+     * Retrieves the list of users for the specified group in MatOnto.
+     *
+     * @param groupName the name of the group to retrieve users from
+     * @return a Response with a JSON array of the users of the group in MatOnto
+     */
+    @GET
+    @Path("{groupId}/users")
+    @RolesAllowed("admin")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation("List users of a MatOnto group")
+    Response getGroupUsers(@PathParam("groupId") String groupName);
 }
