@@ -73,11 +73,12 @@ public interface UserRest {
     Response getUser(@PathParam("userId") String username);
 
     /**
-     * Updates the information of the specified user in MatOnto. If no password is passed,
-     * it will be reset to "123". Only the user being updated or an admin can make this request.
+     * Updates the information of the specified user in MatOnto. Only the user being updated or an admin can make
+     * this request.
      *
      * @param context the context of the request
      * @param username the current username of the user to update
+     * @param currentPassword the current password of the user to update
      * @param newUsername a new username for the user
      * @param newPassword a new password for the user
      * @return a Response indicating the success or failure of the request
@@ -88,8 +89,9 @@ public interface UserRest {
     @ApiOperation("Update a MatOnto user's information")
     Response updateUser(@Context ContainerRequestContext context,
                         @PathParam("userId") String username,
+                        @QueryParam("currentPassword") String currentPassword,
                         @QueryParam("username") String newUsername,
-                        @DefaultValue("123") @QueryParam("password") String newPassword);
+                        @QueryParam("newPassword") String newPassword);
 
     /**
      * Removes the specified user from MatOnto. Only the user being deleted or an admin
@@ -186,20 +188,4 @@ public interface UserRest {
     @RolesAllowed("admin")
     @ApiOperation("Remove a MatOnto user from a group")
     Response removeUserGroup(@PathParam("userId") String username, @QueryParam("group") String group);
-
-    /**
-     * Checks the passed password against the saved user's password. Only the user whose
-     * password is being checked or an admin can make this request.
-     *
-     * @param context the context of the request
-     * @param username the username of the user to check the password of
-     * @param password the password to test
-     * @return a Response with a boolean indicating whether the passwords match
-     */
-    @POST
-    @Path("{userId}/password")
-    @RolesAllowed("user")
-    @ApiOperation("Checks a password against the saved usre passed")
-    Response checkPassword(@Context ContainerRequestContext context,
-                           @PathParam("userId") String username, @QueryParam("password") String password);
 }

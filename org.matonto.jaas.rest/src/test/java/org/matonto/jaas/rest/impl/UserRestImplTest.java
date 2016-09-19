@@ -24,6 +24,7 @@ package org.matonto.jaas.rest.impl;
  */
 
 import net.sf.json.JSONArray;
+import org.apache.karaf.jaas.boot.ProxyLoginModule;
 import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.RolePrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
@@ -36,7 +37,6 @@ import org.matonto.jaas.modules.token.TokenBackingEngine;
 import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.Test;
 
@@ -46,11 +46,22 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.Principal;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.contains;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class UserRestImplTest extends MatontoRestTestNg {
     private UserRestImpl rest;
@@ -76,11 +87,14 @@ public class UserRestImplTest extends MatontoRestTestNg {
         rest = spy(new UserRestImpl());
         rest.setRealm(realm);
 
-        when(rest.getFactory()).thenReturn(factory);
+        Map<String, Object> tokenOptions = new HashMap<>();
+        tokenOptions.put(ProxyLoginModule.PROPERTY_MODULE, UserRestImpl.TOKEN_MODULE);
+
+        when(factory.getModuleClass()).thenReturn(UserRestImpl.TOKEN_MODULE);
         when(factory.build(any(Map.class))).thenReturn(engine);
         when(realm.getEntries()).thenReturn(new AppConfigurationEntry[] {
                 new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
-                        new HashMap<>()),
+                        tokenOptions),
                 new AppConfigurationEntry("loginModule", AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL,
                         new HashMap<>())});
         when(engine.listUsers()).thenReturn(users);
@@ -94,6 +108,9 @@ public class UserRestImplTest extends MatontoRestTestNg {
         doNothing().when(engine).deleteUser(anyString());
         doNothing().when(engine).deleteGroup(anyString(), anyString());
         doNothing().when(engine).deleteRole(anyString(), anyString());
+        doReturn(true).when(rest).isAuthorizedUser(any(), any());
+
+        rest.addEngineFactory(factory);
 
         rest.start();
 
@@ -159,14 +176,19 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void updateUserTest() {
+        doReturn(true).when(rest).validPassword("testUser", "ABC");
+
         Response response = target().path("users/testUser")
-                .queryParam("password", "XYZ")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
         verify(engine).addUser("testUser", "XYZ");
 
         response = target().path("users/testUser")
-                .queryParam("username", "testUser1").queryParam("password", "XYZ")
+                .queryParam("username", "testUser1")
+                .queryParam("currentPassword", "ABC")
+                .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
         verify(engine).addUser("testUser1", "XYZ");
@@ -175,6 +197,42 @@ public class UserRestImplTest extends MatontoRestTestNg {
         verify(engine, atLeastOnce()).deleteUser("testUser");
         verify(engine, times(groups.size())).addGroup(eq("testUser1"), anyString());
         verify(engine, times(roles.size())).addRole(eq("testUser1"), anyString());
+    }
+
+    @Test
+    public void updateUserWithoutCurrentPasswordReturns401() {
+        Response response = target().path("users/testUser")
+                .queryParam("newPassword", "XYZ")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(401, response.getStatus());
+    }
+
+    @Test
+    public void updateUserNoChange() {
+        doReturn(true).when(rest).validPassword("testUser", "ABC");
+
+        Response response = target().path("users/testUser")
+                .queryParam("currentPassword", "ABC")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        verify(engine).addUser("testUser", "ABC");
+    }
+
+    @Test
+    public void updateUserChangeUsername() {
+        doReturn(true).when(rest).validPassword("testUser", "ABC");
+
+        Response response = target().path("users/testUser")
+                .queryParam("username", "testUser2")
+                .queryParam("currentPassword", "ABC")
+                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+        Assert.assertEquals(200, response.getStatus());
+        verify(engine).addUser("testUser2", "ABC");
+        verify(engine, atLeastOnce()).listGroups(any(UserPrincipal.class));
+        verify(engine, atLeastOnce()).listRoles(any(UserPrincipal.class));
+        verify(engine, atLeastOnce()).deleteUser("testUser");
+        verify(engine, times(groups.size())).addGroup(eq("testUser2"), anyString());
+        verify(engine, times(roles.size())).addRole(eq("testUser2"), anyString());
     }
 
     @Test
@@ -264,23 +322,6 @@ public class UserRestImplTest extends MatontoRestTestNg {
 
         response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().delete();
-        Assert.assertEquals(400, response.getStatus());
-    }
-
-    @Test
-    public void checkPasswordTest() {
-        Response response = target().path("users/testUser/password").queryParam("password", "123")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(response.readEntity(Boolean.class));
-
-        response = target().path("users/testUser/password").queryParam("password", "error")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
-        Assert.assertEquals(200, response.getStatus());
-        Assert.assertTrue(!response.readEntity(Boolean.class));
-
-        response = target().path("users/error/password").queryParam("password", "123")
-                .request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(400, response.getStatus());
     }
 }

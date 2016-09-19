@@ -102,7 +102,9 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package></Export-Package>
+                        <Export-Package>
+                            org.matonto.web.security.util
+                        </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
