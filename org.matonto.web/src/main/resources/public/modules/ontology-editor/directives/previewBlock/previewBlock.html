@@ -20,12 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="form-group">
-    <select class="form-control" ng-model="bindModel">
-        <option value="">Select a format</option>
-        <option value="turtle">Turtle</option>
-        <option value="owl/xml">OWL/XML</option>
-        <option value="rdf/xml">RDF/XML</option>
-        <option value="jsonld">JSON-LD</option>
-    </select>
+<div class="preview-block">
+    <block>
+        <block-header>Preview</block-header>
+        <block-content class="preview-content">
+            <div class="form-inline">
+                <serialization-select ng-model="dvm.serialization"></serialization-select>
+                <button type="button" class="btn btn-primary" ng-click="dvm.getPreview()"
+                        ng-disabled="!dvm.serialization">Refresh</button>
+            </div>
+            <div class="textarea-wrapper">
+                <ui-codemirror ng-if="dvm.activePage.preview" ng-model="dvm.activePage.preview" ui-codemirror-opts="dvm.options"></ui-codemirror>
+            </div>
+        </block-content>
+    </block>
 </div>

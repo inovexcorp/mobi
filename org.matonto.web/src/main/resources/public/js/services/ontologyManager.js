@@ -136,6 +136,22 @@
                 prefixes.owl + 'DatatypeProperty',
                 prefixes.owl + 'ObjectProperty'
             ];
+            /**
+             * @ngdoc property
+             * @name ontologyProperties
+             * @propertyOf ontologyManager.service:ontologyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * `ontologyProperties` holds an array of the property types available to be added to the ontology entity
+             * within the ontology.
+             */
+            self.ontologyProperties = _.map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], item => {
+                return {
+                    'namespace': prefixes.owl,
+                    'localName': item
+                }
+            });
 
             /**
              * @ngdoc method
@@ -1751,6 +1767,7 @@
                                 );
                             });
                         }
+                        _.pullAllWith(listItem.annotations, self.ontologyProperties, compareListItems);
                         var classHierarchyResponse = response[2];
                         if (_.get(classHierarchyResponse, 'status') === 200) {
                             listItem.classHierarchy = classHierarchyResponse.data.hierarchy;

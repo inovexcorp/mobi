@@ -46,14 +46,8 @@
                 width: 100px;
 
                 &.marked {
-                    padding-right: 7px;
-                    position: relative;
-
-                    &:after {
-                        content: ' *';
-                        position: absolute;
-                        right: 0;
-                    }
+                    color: $brand-primary;
+                    font-weight: bold;
                 }
             }
 

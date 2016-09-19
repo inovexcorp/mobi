@@ -74,6 +74,7 @@
             'ontologyTab',
             'ontologyEditorTabset',
             'ontologyPropertiesBlock',
+            'ontologyPropertyOverlay',
             'openOntologyTab',
             'overviewTab',
             'previewBlock',
