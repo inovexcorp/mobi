@@ -54,7 +54,6 @@ import java.util.Map;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.contains;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -100,8 +99,6 @@ public class UserRestImplTest extends MatontoRestTestNg {
         when(engine.listUsers()).thenReturn(users);
         when(engine.listGroups(any(UserPrincipal.class))).thenReturn(groups);
         when(engine.listRoles(any(Principal.class))).thenReturn(roles);
-        when(engine.checkPassword(anyString(), anyString())).thenReturn(true);
-        when(engine.checkPassword(anyString(), contains("error"))).thenReturn(false);
         doNothing().when(engine).addUser(anyString(), anyString());
         doNothing().when(engine).addGroup(anyString(), anyString());
         doNothing().when(engine).addRole(anyString(), anyString());
