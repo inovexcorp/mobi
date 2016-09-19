@@ -118,12 +118,12 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response createUser(String username, String password) {
-        if (findUser(username).isPresent()) {
-            throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
-        }
-
         if (username == null || password == null) {
             throw ErrorUtils.sendError("Both a username and password must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        if (findUser(username).isPresent()) {
+            throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
         }
 
         engine.addUser(username, password);
@@ -133,27 +133,30 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response getUser(String username) {
-        Optional<UserPrincipal> optUser = findUser(username);
-        if (!optUser.isPresent()) {
-            throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
-        }
-        return Response.status(200).entity(optUser.get().getName()).build();
+        UserPrincipal user = findUser(username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        return Response.status(200).entity(user.getName()).build();
     }
 
     @Override
     public Response updateUser(ContainerRequestContext context, String currentUsername, String currentPassword,
                                String newUsername, String newPassword) {
+        if (currentUsername == null || currentPassword == null) {
+            throw ErrorUtils.sendError("Both currentUsername and currentPassword must be provided",
+                    Response.Status.BAD_REQUEST);
+        }
+
         if (!isAuthorizedUser(context, currentUsername)) {
             throw ErrorUtils.sendError("User is not authorized to make this request with these parameters",
                     Response.Status.FORBIDDEN);
         }
 
-        if (currentPassword == null || !validPassword(currentUsername, currentPassword)) {
+        if (!validPassword(currentUsername, currentPassword)) {
             throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
 
-        UserPrincipal user = findUser(currentUsername)
-                .orElseThrow(() -> ErrorUtils.sendError("User " + currentUsername + " not found", Response.Status.BAD_REQUEST));
+        UserPrincipal user = findUser(currentUsername).orElseThrow(() ->
+                ErrorUtils.sendError("User " + currentUsername + " not found", Response.Status.BAD_REQUEST));
 
         // If changing username, get current groups and roles then delete user
         List<GroupPrincipal> groups = new ArrayList<>();
@@ -184,12 +187,18 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response deleteUser(ContainerRequestContext context, String username) {
+        if (username == null) {
+            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!isAuthorizedUser(context, username)) {
             throw ErrorUtils.sendError("Not authorized", Response.Status.UNAUTHORIZED);
         }
+
         if (!findUser(username).isPresent()) {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+
         engine.deleteUser(username);
         logger.info("Deleted user " + username);
         return Response.ok().build();
@@ -197,8 +206,13 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response getUserRoles(String username) {
-        UserPrincipal user = findUser(username)
-                .orElseThrow(() -> ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        if (username == null) {
+            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        UserPrincipal user = findUser(username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+
         JSONArray roles = new JSONArray();
         engine.listRoles(user).stream()
                 .map(RolePrincipal::getName)
@@ -209,9 +223,14 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response addUserRole(String username, String role) {
+        if (username == null || role == null) {
+            throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findUser(username).isPresent()) {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+
         logger.info("Adding role " + role + " to user " + username);
         engine.addRole(username, role);
         return Response.ok().build();
@@ -219,9 +238,14 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response removeUserRole(String username, String role) {
+        if (username == null || role == null) {
+            throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findUser(username).isPresent()) {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+
         logger.info("Removing role " + role + " from user " + username);
         engine.deleteRole(username, role);
         return Response.ok().build();
@@ -229,8 +253,12 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response listUserGroups(String username) {
-        UserPrincipal user = findUser(username)
-                .orElseThrow(() -> ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        if (username == null) {
+            throw ErrorUtils.sendError("username must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        UserPrincipal user = findUser(username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
 
         logger.info("Listing groups for " + username);
         JSONArray groups = new JSONArray();
@@ -243,9 +271,14 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response addUserGroup(String username, String group) {
+        if (username == null || group == null) {
+            throw ErrorUtils.sendError("Both username and group must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findUser(username).isPresent()) {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+
         logger.info("Adding user " + username + " to group " + group);
         engine.addGroup(username, group);
         return Response.ok().build();
@@ -253,9 +286,14 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response removeUserGroup(String username, String group) {
+        if (username == null || group == null) {
+            throw ErrorUtils.sendError("Both username and group must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findUser(username).isPresent()) {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
+
         logger.info("Removing user " + username + " from group " + group);
         engine.deleteGroup(username, group);
         return Response.ok().build();
@@ -295,6 +333,12 @@ public class UserRestImpl implements UserRest {
         return user.equals(username) || roles.contains("admin");
     }
 
+    /**
+     * Authenticates the username with the password.
+     * @param username the username to authenticate
+     * @param password the password with which to authenticate
+     * @return true if an only if the password authenticates the user
+     */
     boolean validPassword(String username, String password) {
         Subject subject = new Subject();
         String realmName = realm.getName();
