@@ -67,15 +67,21 @@ describe('RDF Preview Form directive', function() {
                     delimitedManagerSvc.previewMap.and.returnValue($q.when(this.preview));
                 });
                 it('if format is JSON-LD', function() {
-                    controller.serializeFormat = 'jsonld';
+                    delimitedManagerSvc.serializeFormat = 'jsonld';
+                    this.element = $compile(angular.element('<rdf-preview-form></rdf-preview-form>'))(scope);
+                    scope.$digest();
+                    controller = this.element.controller('rdfPreviewForm');
                     controller.generatePreview();
                     $timeout.flush();
                     expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeFormat);
-                    expect(controller.editorOptions.mode).toBe('application/json');
-                    expect(delimitedManagerSvc.preview).toBe(this.preview);
+                    expect(controller.editorOptions.mode).toBe('application/ld+json');
+                    expect(delimitedManagerSvc.preview).toBe(JSON.stringify(this.preview));
                 });
                 it('if format is turtle', function() {
-                    controller.serializeFormat = 'turtle';
+                    delimitedManagerSvc.serializeFormat = 'turtle';
+                    this.element = $compile(angular.element('<rdf-preview-form></rdf-preview-form>'))(scope);
+                    scope.$digest();
+                    controller = this.element.controller('rdfPreviewForm');
                     controller.generatePreview();
                     $timeout.flush();
                     expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeFormat);
@@ -83,7 +89,10 @@ describe('RDF Preview Form directive', function() {
                     expect(delimitedManagerSvc.preview).toBe(this.preview);
                 });
                 it('if format is RDF/XML', function() {
-                    controller.serializeFormat = 'rdf/xml';
+                    delimitedManagerSvc.serializeFormat = 'rdf/xml';
+                    this.element = $compile(angular.element('<rdf-preview-form></rdf-preview-form>'))(scope);
+                    scope.$digest();
+                    controller = this.element.controller('rdfPreviewForm');
                     controller.generatePreview();
                     $timeout.flush();
                     expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeFormat);

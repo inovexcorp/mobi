@@ -65,6 +65,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.dm = delimitedManagerService;
+
+                    dvm.compare = function(actual, expected) {
+                        return _.includes(_.toUpper(dvm.dm.getHeader(actual)), _.toUpper(expected));
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/columnSelect/columnSelect.html'
             }

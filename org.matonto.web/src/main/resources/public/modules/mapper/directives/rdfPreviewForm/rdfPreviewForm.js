@@ -65,30 +65,36 @@
                     var dvm = this;
                     dvm.dm = delimitedManagerService;
                     dvm.mm = mappingManagerService;
-                    dvm.serializeFormat = 'turtle';
+                    dvm.serializeFormat = angular.copy(dvm.dm.serializeFormat);
                     dvm.errorMessage = '';
                     dvm.editorOptions = {
-                        mode: 'text/turtle',
                         readOnly: 'nocursor',
                         indentUnit: 2,
                         lineWrapping: true
                     };
 
+                    function setMode() {
+                        if (dvm.serializeFormat === 'turtle') {
+                            dvm.editorOptions.mode = 'text/turtle';
+                        } else if (dvm.serializeFormat === 'jsonld') {
+                            dvm.editorOptions.mode = 'application/ld+json';
+                        } else if (dvm.serializeFormat === 'rdf/xml') {
+                            dvm.editorOptions.mode = 'application/xml';
+                        }
+                    }
+
                     dvm.generatePreview = function() {
                         dvm.dm.previewMap(dvm.mm.mapping.jsonld, dvm.serializeFormat).then(preview => {
-                            dvm.dm.preview = _.toString(preview);
-                            if (dvm.serializeFormat === 'turtle') {
-                                dvm.editorOptions.mode = 'text/turtle';
-                            } else if (dvm.serializeFormat === 'jsonld') {
-                                dvm.editorOptions.mode = 'application/json';
-                            } else if (dvm.serializeFormat === 'rdf/xml') {
-                                dvm.editorOptions.mode = 'application/xml';
-                            }
+                            setMode();
+                            dvm.dm.preview = (dvm.serializeFormat === 'jsonld') ? JSON.stringify(preview) : _.toString(preview);
+                            dvm.dm.serializeFormat = dvm.serializeFormat;
                         }, errorMessage => {
                             dvm.errorMessage = errorMessage;
                             dvm.dm.preview = '';
                         });
                     }
+
+                    setMode();
                 },
                 templateUrl: 'modules/mapper/directives/rdfPreviewForm/rdfPreviewForm.html'
             }

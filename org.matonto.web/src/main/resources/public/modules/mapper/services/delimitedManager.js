@@ -118,6 +118,17 @@
              * {@link rdfPreview.directive:rdfPreview RDF Preview} directive.
              */
             self.preview = '';
+            /**
+             * @ngdoc property
+             * @name delimitedManager.delimitedManagerService#serializeFormat
+             * @propertyOf delimitedManager.service:delimitedManagerService
+             * @type {string/Object}
+             *
+             * @description
+             * `serializeFormat` holds a string containing the format for the preview to be used in the
+             * {@link rdfPreview.directive:rdfPreview RDF Preview} directive.
+             */
+            self.serializeFormat = 'turtle';
 
             /**
              * @ngdoc method

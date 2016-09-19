@@ -30,12 +30,12 @@
 			<dd>{{dvm.getBaseClassName()}}</dd>
 		</dl>
 	</div>
-  <div class="form-group">
-    <custom-label>Class</custom-label>
-    <div class="class-mapping-select-container">
-      <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
-      <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId || (dvm.state.selectedClassMappingId === dvm.mm.getBaseClass(dvm.mm.mapping.jsonld)['@id'])"><i class="fa fa-trash"></i></button>
+    <div class="form-group">
+        <custom-label>Class</custom-label>
+        <div class="class-mapping-select-container">
+            <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
+            <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId || (dvm.state.selectedClassMappingId === dvm.mm.getBaseClass(dvm.mm.mapping.jsonld)['@id'])"><i class="fa fa-trash"></i></button>
+        </div>
     </div>
-  </div>
-  <class-mapping-details ng-if="dvm.state.selectedClassMappingId"></class-mapping-details>
+    <class-mapping-details ng-if="dvm.state.selectedClassMappingId"></class-mapping-details>
 </form>

@@ -83,13 +83,11 @@
                         return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId), 'entities'), classId));
                     }
                     dvm.getPropValue = function(propMapping) {
-                        var propValue = '';
                         if (dvm.mm.isDataMapping(propMapping)) {
-                            propValue = dvm.dm.getHeader(dvm.getLinkedColumnIndex(propMapping));
+                            return dvm.dm.getHeader(dvm.getLinkedColumnIndex(propMapping));
                         } else {
-                            propValue = dvm.getClassName(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
+                            return dvm.getClassName(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
                         }
-                        return propValue;
                     }
                     dvm.getLinkedClassId = function(propMapping) {
                         return dvm.mm.isObjectMapping(propMapping) ? propMapping[prefixes.delim + 'classMapping'][0]['@id'] : '';

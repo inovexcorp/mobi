@@ -24,7 +24,7 @@
 					margin-left: 10px;
 				}
 				&.invalid {
-					background-color: lighten($brand-danger, 30%);
+					background-color: $brand-danger-light;
 
 					&.active {
 						background-color: $brand-danger;

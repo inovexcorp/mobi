@@ -34,8 +34,8 @@
               ng-required="dvm.mappingType === 'saved'"
               ng-disabled="dvm.mm.mappingIds.length === 0"
               ng-focus="dvm.mappingType = 'saved'">
-              <option class="no-values" ng-if="dvm.mm.mappingIds.length === 0" value="" disabled hidden></option>
-              <option ng-repeat="id in dvm.mm.mappingIds" ng-value="id">{{(id | splitIRI).end}}</option>
+              <option ng-if="dvm.mm.mappingIds.length === 0" class="no-values" value="" disabled hidden></option>
+              <option ng-repeat="id in dvm.mm.mappingIds" value="{{id}}">{{(id | splitIRI).end}}</option>
           </select>
         </div>
         

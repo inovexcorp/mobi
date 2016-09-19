@@ -25,7 +25,7 @@
         <ui-select-match placeholder="{{columns.length ? 'Select a column' : 'No Available Columns'}}">
             {{dvm.dm.getHeader($select.selected)}}
         </ui-select-match>
-        <ui-select-choices repeat="column in columns | filter:$select.search">
+        <ui-select-choices repeat="column in columns | filter:$select.search:dvm.compare">
             <div ng-bind-html="dvm.dm.getHeader(column) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
