@@ -177,6 +177,11 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>jaas.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
             <version>${project.version}</version>
         </dependency>

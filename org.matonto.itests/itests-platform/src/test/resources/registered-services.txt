@@ -3,4 +3,7 @@
 (&(objectClass=org.matonto.sparql.rest.SparqlRest))
 (&(objectClass=org.matonto.etl.api.delimited.DelimitedConverter))
 (&(objectClass=org.matonto.rdf.orm.impl.ThingFactory))
+(&(objectClass=org.matonto.sparql.rest.SparqlRest))
+(&(objectClass=org.matonto.jaas.rest.GroupRest))
+(&(objectClass=org.matonto.jaas.rest.UserRest))
 
