@@ -29,6 +29,7 @@
             'angular-uuid',
             'ngAnimate',
             'ngCookies',
+            'ngHandsontable',
             'ngMessages',
             'ui.codemirror',
             'ui.router',

@@ -71,7 +71,7 @@
              * `mappingIds` holds an array of the local names of all saved mappings in the
              * MatOnto repository
              */
-            self.previousMappingIds = [];
+            self.mappingIds = [];
             /**
              * @ngdoc property
              * @name mapping
@@ -274,6 +274,39 @@
             }
             /**
              * @ngdoc method
+             * @name copyMapping
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Creates a copy of a mapping using the passed new id, updating all ids to use the new
+             * mapping id.
+             * 
+             * @param {Object[]} mapping A mapping JSON-LD array
+             * @param {string} newId The id of the new mapping
+             * @return {Object[]} A copy of the passed mapping with the new id
+             */
+            self.copyMapping = function(mapping, newId) {
+                var newMapping = angular.copy(mapping);
+                getMappingEntity(newMapping)['@id'] = newId;
+                var idTransforms = {};
+                _.forEach(self.getAllClassMappings(newMapping), classMapping => {
+                    _.set(idTransforms, encodeURIComponent(classMapping['@id']), newId + '/' + uuid.v4());
+                    classMapping['@id'] = _.get(idTransforms, encodeURIComponent(classMapping['@id']));
+                    _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
+                        _.set(idTransforms, encodeURIComponent(propIdObj['@id']), newId + '/' + uuid.v4());
+                        propIdObj['@id'] = _.get(idTransforms, encodeURIComponent(propIdObj['@id']));
+                    });
+                });
+                _.forEach(_.concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
+                    if (self.isObjectMapping(propMapping)) {
+                        propMapping[prefixes.delim + 'classMapping'][0]['@id'] = _.get(idTransforms, encodeURIComponent(propMapping[prefixes.delim + 'classMapping'][0]['@id']));
+                    }
+                    propMapping['@id'] = _.get(idTransforms, encodeURIComponent(propMapping['@id']));
+                });
+                return newMapping;
+            }
+            /**
+             * @ngdoc method
              * @name addClass
              * @methodOf mappingManager.service:mappingManagerService
              *
@@ -292,7 +325,7 @@
                 if (ontologyManagerService.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontology, '@id', '')).toLowerCase();
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(_.get(ontologyManagerService.getOntologyEntity(self.getSourceOntology(newMapping).entities), '@id', '')).toLowerCase();
                     var classEntity = {
                         '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
@@ -348,7 +381,7 @@
              * @param {Object[]} ontology The ontology array to search for the property in
              * @param {string} classMappingId The id of the class mapping to add the data property mapping to
              * @param {string} propId The id of the data property in the ontology
-             * @param {number} columnIndex The column index to set the data property mapping's `columnIndex 
+             * @param {number} columnIndex The column index to set the data property mapping's `columnIndex` 
              * property to
              * @returns {Object[]} The edited mapping array
              */
@@ -357,26 +390,18 @@
                 // Check if class mapping exists and the property exists in the ontology
                 var propObj = ontologyManagerService.getEntity(ontology, propId);
                 if (entityExists(newMapping, classMappingId) && propObj && ontologyManagerService.isDataTypeProperty(propObj)) {
-                    var dataEntity = self.getDataMappingFromClass(newMapping, classMappingId, propId);
-                    // If the data property and mapping already exist, update the column index
-                    if (dataEntity) {
-                        dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
-                        _.remove(newMapping, {'@id': dataEntity['@id']});
-                    } else {
-                        // Add new data mapping id to data properties of class mapping
-                        var dataEntity = {
-                            '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
-                        };
-                        var classMapping = getEntityById(newMapping, classMappingId);
-                        // Sets the dataProperty key if not already present
-                        classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
-                        classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
-                        // Create data mapping
-                        dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
-                        dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
-                        dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                    }
-                    // Add/update data mapping
+                    // Add new data mapping id to data properties of class mapping
+                    var dataEntity = {
+                        '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
+                    };
+                    var classMapping = getEntityById(newMapping, classMappingId);
+                    // Sets the dataProperty key if not already present
+                    classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
+                    classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
+                    // Create data mapping
+                    dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
+                    dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
+                    dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
                     newMapping.push(dataEntity);
                 }
                 return newMapping;
@@ -531,6 +556,53 @@
                 });
                 return deferred.promise;
             };
+            /**
+             * @ngdoc method
+             * @name setSourceOntologies
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Sets the list of source ontologies to the imports closure of the ontology with the passed
+             * id. If no id is passed or the ontologies are set successfully, returns a promise that 
+             * resolves to nothing; otherwise returns a promise that rejects with an error message.
+             * 
+             * @param {string} ontologyId The id of the ontology to collect the imports closure of
+             * @returns {Promise} A promise that resolves if no id is passed or the source ontologies
+             * are set; rejects otherwise
+             */
+            self.setSourceOntologies = function(ontologyId) {
+                if (!ontologyId) {
+                    return $q.when();
+                }
+                var deferred1 = $q.defer();
+                var deferred2 = $q.defer();
+                var ontology = _.find(ontologyManagerService.list, {ontologyId: ontologyId});
+                if (ontology) {
+                    var obj = _.pick(ontology, ['ontologyId', 'ontology']);
+                    deferred1.resolve({id: obj.ontologyId, entities: obj.ontology});
+                } else {
+                    self.getOntology(ontologyId).then(ontology => {
+                        deferred1.resolve(ontology);
+                    }, error => {
+                        deferred1.reject(error);
+                    });
+                }
+                deferred1.promise.then(ontology => {
+                    ontologyManagerService.getImportedOntologies(ontology.id).then(imported => {
+                        var importedOntologies = _.map(imported, obj => {
+                            return {id: obj.ontologyId, entities: obj.ontology};
+                        });
+                        self.sourceOntologies = _.concat(ontology, importedOntologies);
+                        deferred2.resolve();
+                    }, error => {
+                        deferred2.reject(error);
+                    });
+                }, error => {
+                    deferred2.reject(error);
+                });
+
+                return deferred2.promise;
+            }
             /**
              * @ngdoc method
              * @name getSourceOntologyId
@@ -880,6 +952,23 @@
              */
             self.getPropMappingTitle = function(className, propName) {
                 return className + ': ' + propName;
+            }
+            /**
+             * @ngdoc method
+             * @name getBaseClass
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description 
+             * Finds the base class of a mapping by finding the class mapping that isn't used by an
+             * object property mapping. 
+             * 
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @return {Object} The base class mapping object 
+             */
+            self.getBaseClass = function(mapping) {
+                var classes = self.getAllClassMappings(mapping);
+                var usedClasses = _.map(self.getAllObjectMappings(mapping), "['" + prefixes.delim + "classMapping'][0]['@id']");
+                return _.get(_.filter(classes, classMap => !_.includes(usedClasses, classMap['@id'])), '0');
             }
 
             // Private helper methods

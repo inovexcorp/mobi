@@ -63,7 +63,8 @@
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {
-                    props: '=',
+                    props: '<',
+                    isDisabledWhen: '=',
                     onChange: '&'
                 },
                 bindToController: {

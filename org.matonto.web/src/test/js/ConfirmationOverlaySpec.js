@@ -113,8 +113,8 @@ describe('Confirmation Overlay directive', function() {
             expect(this.element.hasClass('lg')).toBe(false);
             expect(this.element.hasClass('sm')).toBe(true);
         });
-        it('with custom buttons for canceling and confirming', function() {
-            var buttons = this.element.find('custom-button');
+        it('with buttons for canceling and confirming', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(2);
             expect([scope.cancelText, scope.confirmText].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect([scope.cancelText, scope.confirmText].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);

@@ -49,7 +49,8 @@
     "bootstrap": "^3.3.6",
     "codemirror": "^5.14.2",
     "font-awesome": "^4.5.0",
+    "handsontable": "^0.27.0",
     "lodash": "^4.6.0",
-    "ui-select": "^0.13.3"
+    "ui-select": "^0.19.3"
   }
 }

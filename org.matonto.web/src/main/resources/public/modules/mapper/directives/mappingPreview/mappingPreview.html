@@ -20,32 +20,27 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<section class="mapping-preview col-xs-8 full-height" ng-show="dvm.state.step === 0">
-    <div class="boxed full-height">
-        <div ng-if="!dvm.state.editMapping && !dvm.mm.mapping">
-            <p class="lead">Welcome to the Mapping Tool!</p>
-            <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking on a button in the left menu or a mapping name in the list.</p>
-        </div>
-        <div ng-if="!dvm.state.editMapping && dvm.mm.mapping">
-            <custom-button on-click="dvm.useMapping()" is-disabled-when="!dvm.ontologyExists()">Use</custom-button>
-            <h1>{{dvm.om.getBeautifulIRI(dvm.mm.mapping.id)}}</h1>
-            
-            <h3>Source Ontology</h3>
-            <p class="source-ontology" ng-class="{'text-danger': !dvm.ontologyExists()}" title="{{dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld)}}">{{dvm.om.getBeautifulIRI(dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld))}} <span ng-if="!dvm.ontologyExists()" class="text-muted">(This ontology could not be found)</span></p>
+<div class="mapping-preview">
+    <div ng-if="!dvm.state.editMapping && !dvm.mm.mapping">
+        <p class="lead">Welcome to the Mapping Tool!</p>
+        <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking on a button in the left menu or a mapping name in the list.</p>
+    </div>
+    <div ng-if="!dvm.state.editMapping && dvm.mm.mapping">
+        <h3>Source Ontology</h3>
+        <p class="source-ontology" ng-class="{'text-danger': !dvm.ontologyExists()}" title="{{dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld)}}">{{dvm.om.getBeautifulIRI(dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld))}} <span ng-if="!dvm.ontologyExists()" class="text-muted">(This ontology could not be found)</span></p>
 
-            <h3>Mapped Classes and Properties</h3>
-            <div class="class-list">
-                <ul class="list">
-                    <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld)">
-                        {{dvm.getClassName(classMapping)}}
-                        <ul class="props">
-                            <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id'])">
-                                {{dvm.getPropName(propMapping)}}{{dvm.mm.isDataMapping(propMapping) ? ' - Column ' + dvm.getColumnIndex(propMapping) : ''}}
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
+        <h3>Mapped Classes and Properties</h3>
+        <div class="class-list">
+            <ul class="list">
+                <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld)">
+                    {{dvm.getClassName(classMapping)}}
+                    <ul class="props">
+                        <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.mm.mapping.jsonld, classMapping['@id'])">
+                            {{dvm.getPropName(propMapping)}}{{dvm.mm.isDataMapping(propMapping) ? ' - Column ' + dvm.getColumnIndex(propMapping) : ''}}
+                        </li>
+                    </ul>
+                </li>
+            </ul>
         </div>
     </div>
-</section>
+</div>

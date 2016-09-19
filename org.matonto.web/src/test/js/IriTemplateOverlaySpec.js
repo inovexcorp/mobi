@@ -60,7 +60,7 @@ describe('IRI Template Overlay directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [classMapping]
             };
-            delimitedManagerSvc.filePreview = {headers: ['a']};
+            delimitedManagerSvc.dataRows = [['a']];
             var element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('iriTemplateOverlay');
@@ -71,14 +71,15 @@ describe('IRI Template Overlay directive', function() {
                 delete opt['$$hashKey'];
             });
             expect(cleanOptions[0]).toEqual({text: 'UUID', value: '${UUID}'});
-            expect(cleanOptions).toContain({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
-            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
+            expect(delimitedManagerSvc.getHeader.calls.count()).toBe(delimitedManagerSvc.dataRows[0].length);
+            expect(cleanOptions).toContain({text: delimitedManagerSvc.getHeader(0), value: localName});
+            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.getHeader(0), value: localName});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('iriTemplateOverlay');
@@ -87,13 +88,12 @@ describe('IRI Template Overlay directive', function() {
             controller.set();
             expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId, 
                 controller.beginsWith + controller.then, controller.endsWith.value);
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
         });
@@ -127,8 +127,8 @@ describe('IRI Template Overlay directive', function() {
             var endsWith = angular.element(this.element.querySelectorAll('.template-ends-with select')[0]);
             expect(endsWith.find('option').length).toBe(controller.localNameOptions.length);
         });
-        it('with custom buttons to cancel and set', function() {
-            var buttons = this.element.find('custom-button');
+        it('with buttons to cancel and set', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);

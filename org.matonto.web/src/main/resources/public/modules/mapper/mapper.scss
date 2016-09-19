@@ -1,73 +1,7 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-$overlay-height: 450px;
-$list-padding: 10px;
-$list-padding-neg: -10px;
-
-.float-container {
-    overflow: hidden;
-}
-.header-link {
-    font-size: 14px;
-}
 .mapper {
-
-    > .row {
-        padding-left: $sidebar-width;
-    }
-    .boxed {
-        padding: $list-padding;
-    }
-    .mapping-list .list-title {
-        margin: $list-padding-neg $list-padding-neg 0 $list-padding-neg;
-    }
-    .ontology-preview-overlay {
-        .content {
-            max-height: $overlay-height;
-        }
-    }
-    .ontology-select-overlay {
-        .content {
-            min-height: $overlay-height;
-        }
-        .ontology-select, 
-        .ontology-preview {
-            width: 50%;
-            float: left;
-            height: ($overlay-height - 75);
-            padding: 0.5em;
-            margin-bottom: 0;
-
-            .ui-select-choices-row {
-                position: relative;
-                i {
-                    float: right;
-                }
-            }
-        }
-    }
-    .starting-class-select-overlay {
-        .content {
-            min-height: $overlay-height;
-        }
-        .class-select, 
-        .class-preview {
-            width: 50%;
-            float: left;
-            height: ($overlay-height - 75);
-            padding: 0.5em;
-            margin-bottom: 0;
-        }
-    }
-    .mapping-name-overlay {
-        .content {
-            min-height: $overlay-height;
-        }
-        .form-group {
-            height: ($overlay-height - 75);
-            padding: 0.5em;
-            margin-bottom: 0;
-        }
-    }
+    background-color: $gray-lighter;
+    height: 100%;
 }
