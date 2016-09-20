@@ -43,6 +43,7 @@ import org.matonto.rdf.orm.generate.SourceGenerator;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -110,7 +111,7 @@ public class SourceGeneratorTest {
             SourceGenerator.toSource(
                     GraphReadingUtility.readOntology(new File("src/test/resources/foaf.rdf"),
                             "http://xmlns.com/foaf/0.1/"),
-                    "http://xmlns.com/foaf/0.1/", "target/generated-test-sources");
+                    "http://xmlns.com/foaf/0.1/", "target/generated-test-sources", new ArrayList<>());
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
