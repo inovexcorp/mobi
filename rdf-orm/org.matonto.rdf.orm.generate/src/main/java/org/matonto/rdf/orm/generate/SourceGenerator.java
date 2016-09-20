@@ -512,6 +512,13 @@ public class SourceGenerator {
                         } else {
                             referenceOntologies.stream().forEach(refOnt -> {
                                 if (refOnt.containsClass(extending)) {
+                                    if (refOnt.getSourceGenerator() == null) {
+                                        try {
+                                            refOnt.generateSource(referenceOntologies);
+                                        }catch(Exception e){
+                                            issues.add("Problem generating referenced data: "+e.getMessage());
+                                        }
+                                    }
                                     clazz._implements(refOnt.getSourceGenerator().getCodeModel()._getClass(refOnt.getClassName(extending)));
                                     this.classMethodIriMap.putAll(refOnt.getSourceGenerator().getClassMethodIriMap());
                                 }
