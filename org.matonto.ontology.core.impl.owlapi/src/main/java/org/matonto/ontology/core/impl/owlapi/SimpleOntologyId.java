@@ -31,6 +31,7 @@ import org.matonto.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
 import java.util.Optional;
+import java.util.UUID;
 
 
 public class SimpleOntologyId implements OntologyId {
@@ -38,6 +39,8 @@ public class SimpleOntologyId implements OntologyId {
     private Resource identifier;
     private OWLOntologyID ontologyId;
     private ValueFactory factory;
+
+    private static final String DEFAULT_PREFIX = "http://matonto.org/ontologies/";
 
     public static class Builder {
         private Resource identifier;
@@ -96,7 +99,7 @@ public class SimpleOntologyId implements OntologyId {
             ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(),
                     com.google.common.base.Optional.absent());
         } else {
-            this.identifier = factory.createBNode();
+            this.identifier = factory.createIRI(DEFAULT_PREFIX + UUID.randomUUID());
             ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(),
                     com.google.common.base.Optional.absent());
         }
