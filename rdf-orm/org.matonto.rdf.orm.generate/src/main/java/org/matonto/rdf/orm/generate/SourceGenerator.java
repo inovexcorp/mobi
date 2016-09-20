@@ -76,6 +76,9 @@ public class SourceGenerator {
         }
         this.model = ontologyGraph;
         this.packageName = outputPackage;
+        // LOG if we're not referencing an imported ontology.
+        checkImports(this.model, this.referenceOntologies);
+        this.referenceOntologies.stream().forEach(ont -> checkImports(ont.getOntologyModel(), this.referenceOntologies));
         // Built interfaces...
         generateIndividualInterfaces();
         // Link the interfaces inheritence-wise.
@@ -86,6 +89,25 @@ public class SourceGenerator {
         generateImplementations();
         // Build factories.
         generateFactories();
+    }
+
+    /**
+     * Simple method to LOG some warnings if we aren't importing referenced ontologies.
+     */
+    private static void checkImports(final Model checkingModel, final List<ReferenceOntology> referenceOntologies) {
+        checkingModel.filter(null, OWL.IMPORTS, null).stream().forEach(stmt -> {
+            boolean contains = false;
+            for (ReferenceOntology refOnt : referenceOntologies) {
+                Optional<org.openrdf.model.Resource> resource = refOnt.getOntologyModel().filter(null, RDF.TYPE, OWL.ONTOLOGY).stream().filter(ontStmt -> ontStmt.getSubject().equals(stmt.getObject())).map(ontStmt -> ontStmt.getSubject()).findFirst();
+                if (resource.isPresent()) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) {
+                LOG.warn(String.format("Potential error: Generate ontology '%s' specifies that it imports '%s', but it isn't referenced", stmt.getSubject().stringValue(), stmt.getObject().stringValue()));
+            }
+        });
     }
 
     public static void toSource(final Model model, final String outputPackage, final String location, final Collection<ReferenceOntology> referencedOntologies)
@@ -237,9 +259,6 @@ public class SourceGenerator {
             interfaceClass._implements().forEachRemaining(parentInterface -> {
                 recurseImplementations(impl, parentInterface);
             });
-        } else if (interfaceClass.isReference()) {
-            System.out.println("HERE (" + impl.name() + " - " + interfaceClass.name() + "): " + interfaceClass._package().name() + " - " + interfaceClass.getClass().getName());
-//            generateFieldAccessorsForEachInterfaceMethod(impl, interfaceClass);
         }
     }
 
@@ -267,7 +286,6 @@ public class SourceGenerator {
                         codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
                         impl.dotclass()).javadoc().add("The default implementation for this interface");
             } catch (Exception e) {
-                e.printStackTrace();
                 issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
             }
         });
@@ -287,7 +305,6 @@ public class SourceGenerator {
             }
             // Generate setter.
             else if (interfaceMethod.name().startsWith("set")) {
-                // TODO
                 generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
             }
         });
@@ -317,7 +334,7 @@ public class SourceGenerator {
             // JDocComment jdoc = method.javadoc();
             // jdoc.add("");
         } else {
-            LOG.warn("Avoided dupliace setter method: " + interfaceMethod.name() + " on class: " + impl.name());
+            LOG.warn("Avoided duplicate setter method: " + interfaceMethod.name() + " on class: " + impl.name());
         }
     }
 
@@ -332,7 +349,7 @@ public class SourceGenerator {
             // jdoc.add("");
             convertValueBody(interfaceClass, interfaceMethod, impl, method);
         } else {
-            LOG.warn("Avoided dupliace getter method: " + interfaceMethod.name() + " on class: " + impl.name());
+            LOG.warn("Avoided duplicate getter method: " + interfaceMethod.name() + " on class: " + impl.name());
         }
     }
 
