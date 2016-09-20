@@ -24,9 +24,7 @@ package org.matonto.rdf.orm.generate.plugin;
  */
 
 import org.apache.maven.plugins.annotations.Parameter;
-import org.sonatype.inject.Parameters;
 
-import java.util.List;
 
 public class Ontology {
 

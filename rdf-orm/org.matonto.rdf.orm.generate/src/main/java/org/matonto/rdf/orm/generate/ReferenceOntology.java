@@ -23,7 +23,6 @@ package org.matonto.rdf.orm.generate;
  * #L%
  */
 
-import com.sun.codemodel.JCodeModel;
 import org.openrdf.model.IRI;
 import org.openrdf.model.Model;
 import org.openrdf.model.vocabulary.OWL;

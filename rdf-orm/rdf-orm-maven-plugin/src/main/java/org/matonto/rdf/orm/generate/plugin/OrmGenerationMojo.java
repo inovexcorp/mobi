@@ -1,7 +1,6 @@
 package org.matonto.rdf.orm.generate.plugin;
 
 
-import org.apache.commons.collections.functors.ExceptionClosure;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
