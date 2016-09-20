@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.1.28</version>
+    <version>1.1.29</version>
 
     <packaging>pom</packaging>
 
@@ -54,7 +54,7 @@
         <ontology.openrdf.version>2.8.6</ontology.openrdf.version>
         <openrdf.version>4.0.1</openrdf.version>
         <owlapi.version>4.1.3</owlapi.version>
-        <karaf.version>4.0.2</karaf.version>
+        <karaf.version>4.0.6</karaf.version>
         <httpclient.version>4.5.2</httpclient.version>
         <jaxrs.version>2.0.1</jaxrs.version>
         <swagger.version>1.5.7</swagger.version>
