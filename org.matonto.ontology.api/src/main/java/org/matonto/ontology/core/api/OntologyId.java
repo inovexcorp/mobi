@@ -43,7 +43,7 @@ public interface OntologyId {
      * <ol>
      *     <li>If a Version IRI is present, the ontology identifier will match the Version IRI</li>
      *     <li>Else if an Ontology IRI is present, the ontology identifier will match the Ontology IRI</li>
-     *     <li>Else if neither are present, the ontology identifier will be a system generated blank node</li>
+     *     <li>Else if neither are present, the ontology identifier will be a system generated IRI</li>
      * </ol>
      *
      * @return The Resource that represents the ontology identifier.

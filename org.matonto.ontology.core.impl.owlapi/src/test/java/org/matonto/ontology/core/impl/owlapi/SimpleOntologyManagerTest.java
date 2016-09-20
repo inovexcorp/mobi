@@ -23,18 +23,6 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.mock;
-import static org.junit.Assert.assertEquals;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
-
-import java.io.File;
-import java.io.InputStream;
-import java.nio.file.Paths;
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +39,19 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.Optional;
+
+import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.mock;
+import static org.junit.Assert.assertEquals;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.replay;
+
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({SimpleOntologyValues.class, SimpleOntologyId.class})
@@ -64,7 +65,7 @@ public class SimpleOntologyManagerTest {
     OWLOntology owlOntology;
     OntologyId ontologyIdMock;
     Ontology ontology;
-    BNode bNodeMock;
+    IRI idMock;
     IRI ontologyIRI;
     IRI versionIRI;
     org.semanticweb.owlapi.model.IRI owlOntologyIRI;
@@ -80,7 +81,7 @@ public class SimpleOntologyManagerTest {
         owlManager = mock(OWLOntologyManager.class);
         owlOntology = mock(OWLOntology.class);
         ontologyIdMock = mock(OntologyId.class);       
-        bNodeMock = mock(BNode.class);
+        idMock = mock(IRI.class);
         owlOntologyIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         owlVersionIRI = mock(org.semanticweb.owlapi.model.IRI.class);
 
@@ -102,25 +103,26 @@ public class SimpleOntologyManagerTest {
         expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVersionIRI).anyTimes();
         expect(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).andReturn(ontologyIRI).anyTimes();
         expect(SimpleOntologyValues.matontoIRI(owlVersionIRI)).andReturn(versionIRI).anyTimes();
-        
-        expect(factory.createBNode()).andReturn(bNodeMock).anyTimes();
     }
     
     @Test
     public void testCreateOntologyIdWithNoParam() throws Exception {
+        expect(factory.createIRI(anyString())).andReturn(idMock).anyTimes();
+
         replay(factory);
         
         SimpleOntologyManager manager = new SimpleOntologyManager();
         manager.setValueFactory(factory);
         ontologyIdMock = manager.createOntologyId();
-        assertEquals(bNodeMock, ontologyIdMock.getOntologyIdentifier());
+        assertEquals(idMock, ontologyIdMock.getOntologyIdentifier());
         assertEquals(Optional.empty(), ontologyIdMock.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyIdMock.getVersionIRI());
     } 
     
     @Test
     public void testCreateOntologyIdWithBNode() throws Exception {
-        replay(factory, bNodeMock);
+        BNode bNodeMock = mock(BNode.class);
+        replay(factory, idMock, bNodeMock);
         
         SimpleOntologyManager manager = new SimpleOntologyManager();
         manager.setValueFactory(factory);
