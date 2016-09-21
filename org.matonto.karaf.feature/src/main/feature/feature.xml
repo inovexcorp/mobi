@@ -62,7 +62,8 @@
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-core/2.6.3</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/2.6.3</bundle>
     </feature>
-    <feature name="matonto" description="MatOnto Platform Bundles" version="${project.version}">
+    <feature name="matonto-core" description="MatOnto Core Platform Bundles" version="${project.version}">
+        <feature prerequisite="true">jaas</feature>
         <feature prerequisite="true">http</feature>
         <feature prerequisite="true">pax-http-whiteboard</feature>
         <feature prerequisite="true">obr</feature>
@@ -71,34 +72,41 @@
         <feature prerequisite="true">jax-rs-provider-gson</feature>
         <feature prerequisite="true">jax-rs-provider-multipart</feature>
         <feature prerequisite="true">jax-rs-provider-security</feature>
+        <feature prerequisite="true">matonto-deps</feature>
         <bundle start-level="80">mvn:org.matonto/api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rest.util/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/etl.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.delimited/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.rdf/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/etl.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/ontology.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.core.impl.owlapi/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/ontology.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/persistence.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/persistence.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/persistence.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.impl.sesame/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/repository.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/repository.impl.sesame/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/catalog.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
+    </feature>
+    <feature name="matonto-cli" description="MatOnto CLI Bundles" version="${project.version}">
+        <feature prerequisite="true">matonto-core</feature>
+        <bundle start-level="80">mvn:org.matonto/etl.cli/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/ontology.cli/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/persistence.cli/${project.version}</bundle>
+    </feature>
+    <feature name="matonto-web" description="MatOnto Web Bundles" version="${project.version}">
+        <feature prerequisite="true">matonto-core</feature>
+        <bundle start-level="80">mvn:org.matonto/etl.rest/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/ontology.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/swagger.ui/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/sparql.rest/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/catalog.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/catalog.rest/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
     </feature>
 </features>
