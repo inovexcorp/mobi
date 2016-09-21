@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.29</version>
+        <version>1.2.0</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -47,12 +47,12 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.api</artifactId>
-                <version>1.1.23</version>
+                <version>1.1.29</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.utils</artifactId>
-                <version>1.1.23</version>
+                <version>1.1.29</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
@@ -63,6 +63,12 @@
                 <groupId>org.matonto</groupId>
                 <artifactId>rdf.orm.generate</artifactId>
                 <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>edu.washington.cs.types.checker</groupId>
+                        <artifactId>checker-framework</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -75,21 +81,10 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>rdf.impl.sesame</artifactId>
-                <version>1.1.23</version>
+                <version>1.1.29</version>
                 <scope>test</scope>
             </dependency>
 
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>rdf.orm.generate</artifactId>
-                <version>${project.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>edu.washington.cs.types.checker</groupId>
-                        <artifactId>checker-framework</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
