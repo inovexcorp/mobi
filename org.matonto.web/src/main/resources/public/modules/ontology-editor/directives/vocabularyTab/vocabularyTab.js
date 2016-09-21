@@ -24,16 +24,16 @@
     'use strict';
 
     angular
-        .module('uploadOntologyTab', [])
-        .directive('uploadOntologyTab', uploadOntologyTab);
+        .module('vocabularyTab', [])
+        .directive('vocabularyTab', vocabularyTab);
 
-        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        vocabularyTab.$inject = ['ontologyManagerService', 'stateManagerService'];
 
-        function uploadOntologyTab($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
+        function vocabularyTab(ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/uploadOntologyTab/uploadOntologyTab.html',
+                templateUrl: 'modules/ontology-editor/directives/vocabularyTab/vocabularyTab.html',
                 scope: {
                     listItem: '='
                 },
@@ -42,18 +42,6 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-
-                    dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file)
-                            .then(ontologyId => {
-                                var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), 'ontology');
-                                dvm.sm.setState(ontologyId);
-                                dvm.sm.showUploadTab = false;
-                            }, response => {
-                                dvm.error = response.statusText;
-                            });
-                    }
                 }
             }
         }

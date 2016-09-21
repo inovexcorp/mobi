@@ -20,18 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="preview-block">
-    <block>
-        <block-header>Preview</block-header>
-        <block-content class="preview-content">
-            <div class="form-inline">
-                <serialization-select ng-model="dvm.activePage.serialization"></serialization-select>
-                <button type="button" class="btn btn-primary" ng-click="dvm.getPreview()"
-                        ng-disabled="!dvm.activePage.serialization">Refresh</button>
+<div class="concepts-tab row">
+    <concept-hierarchy-block class="col-xs-3"></concept-hierarchy-block>
+    <div class="col-xs-9 editor">
+        <selected-details></selected-details>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="row vertical-half">
+                    <annotation-block class="col-xs-12"></annotation-block>
+                </div>
+                <div class="row vertical-half">
+                    <relationships-block class="col-xs-12" relationship-list="dvm.om.conceptRelationshipList"></relationships-block>
+                </div>
             </div>
-            <div class="textarea-wrapper">
-                <ui-codemirror ng-if="dvm.activePage.preview" ng-model="dvm.activePage.preview" ui-codemirror-opts="dvm.options"></ui-codemirror>
-            </div>
-        </block-content>
-    </block>
+        </div>
+    </div>
 </div>

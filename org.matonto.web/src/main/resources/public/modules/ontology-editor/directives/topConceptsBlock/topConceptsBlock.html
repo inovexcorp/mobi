@@ -20,13 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="form-group">
-    <custom-label>Serialization</custom-label>
-    <select class="form-control" ng-model="bindModel">
-        <option value="">Select a format</option>
-        <option ng-value="'turtle'">Turtle</option>
-        <option ng-value="'owl/xml'">OWL/XML</option>
-        <option ng-value="'rdf/xml'">RDF/XML</option>
-        <option ng-value="'jsonld'">JSON-LD</option>
-    </select>
+<div class="top-concepts-block">
+    <block>
+        <block-header>
+            <span>Top Concepts</span><a class="pull-right" ng-click="dvm.sm.showAddTopConceptOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Top Concept</a>
+        </block-header>
+        <block-content>
+
+        </block-content>
+    </block>
+    <add-top-concept-overlay ng-if="dvm.sm.showAddTopConceptOverlay"></add-top-concept-overlay>
 </div>

@@ -24,16 +24,22 @@
     'use strict';
 
     angular
-        .module('serializationSelect', [])
-        .directive('serializationSelect', serializationSelect);
+        .module('conceptsTab', [])
+        .directive('conceptsTab', conceptsTab);
 
-        function serializationSelect() {
+        conceptsTab.$inject = ['stateManagerService', 'ontologyManagerService', 'prefixes'];
+
+        function conceptsTab(stateManagerService, ontologyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/old-directives/serializationSelect/serializationSelect.html',
-                scope: {
-                    bindModel: '=ngModel'
+                templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    dvm.sm = stateManagerService;
+                    dvm.om = ontologyManagerService;
                 }
             }
         }

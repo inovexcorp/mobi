@@ -41,37 +41,33 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.activePage = dvm.sm.getActivePage();
-                    dvm.serialization = angular.copy(dvm.activePage.serialization);
                     dvm.options = {
+                        mode: dvm.activePage.mode,
                         lineNumbers: true,
                         lineWrapping: true,
                         readOnly: 'nocursor'
                     };
 
-                    function setMode() {
-                        if (dvm.serialization === 'turtle') {
+                    function setMode(serialization) {
+                        if (serialization === 'turtle') {
                             dvm.options.mode = 'text/turtle';
-                        } else if (dvm.serialization === 'jsonld') {
+                        } else if (serialization === 'jsonld') {
                             dvm.options.mode = 'application/ld+json';
                         } else {
                             dvm.options.mode = 'application/xml';
                         }
+                        dvm.activePage.mode = angular.copy(dvm.options.mode);
                     }
 
                     dvm.getPreview = function() {
-                        setMode();
-                        dvm.om.getPreview(dvm.sm.state.ontologyId, dvm.serialization)
+                        setMode(dvm.activePage.serialization);
+                        dvm.om.getPreview(dvm.sm.state.ontologyId, dvm.activePage.serialization)
                             .then(response => {
                                 dvm.activePage.preview = response;
                             }, response => {
                                 dvm.activePage.preview = response;
-                            })
-                            .then(() => {
-                                dvm.activePage.serialization = dvm.serialization;
                             });
                     }
-
-                    setMode();
                 }
             }
         }

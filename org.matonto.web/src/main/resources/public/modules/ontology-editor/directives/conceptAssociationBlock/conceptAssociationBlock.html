@@ -1,0 +1,60 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="concept-association-block">
+    <block>
+        <block-header>
+            <span>Schemes</span><a class="pull-right" ng-click="dvm.sm.showCreateConceptSchemeOverlay = true"><i class="fa fa-plus"></i><span>Create Scheme</span></a>
+        </block-header>
+        <!--<block-search></block-search>-->
+        <block-content>
+            <div class="tree">
+                <ul ng-repeat="scheme in dvm.om.getConceptSchemes(dvm.sm.ontology) track by scheme.matonto.originalIRI"
+                    ng-init="opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, scheme.matonto.originalIRI)">
+                    <tree-item current-entity="scheme"
+                               ontology-id="dvm.sm.state.ontologyId"
+                               is-active="dvm.sm.getActiveEntityIRI() === scheme.matonto.originalIRI"
+                               on-click="dvm.sm.selectItem(scheme.matonto.originalIRI)"
+                               has-children="!!scheme[dvm.prefixes.skos + 'hasTopConcept'].length"
+                               is-opened="opened"></tree-item>
+                    <li class="container" ng-if="opened">
+                        <ul>
+                            <tree-item ng-repeat="concept in scheme[dvm.prefixes.skos + 'hasTopConcept'] track by $index"
+                                       ontology-id="dvm.sm.state.ontologyId"
+                                       current-entity="dvm.om.getEntity(dvm.sm.ontology, concept['@id'])"
+                                       is-active="dvm.sm.getActiveEntityIRI() === concept['@id']"
+                                       on-click="dvm.sm.selectItem(concept['@id'])"></tree-item>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </block-content>
+        <block-footer class="centered">
+            <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
+        </block-footer>
+    </block>
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Class'" confirm-click="dvm.deleteClass()"
+                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+        <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+    </confirmation-overlay>
+    <create-concept-scheme-overlay ng-if="dvm.sm.showCreateConceptSchemeOverlay"></create-concept-scheme-overlay>
+</div>

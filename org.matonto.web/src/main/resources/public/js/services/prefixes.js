@@ -56,5 +56,6 @@
         self.mappings = 'http://matonto.org/mappings/';
         self.catalog = 'http://matonto.org/ontologies/catalog#';
         self.foaf = 'http://xmlns.com/foaf/0.1/';
+        self.skos = 'http://www.w3.org/2004/02/skos/core#';
     }
 })();

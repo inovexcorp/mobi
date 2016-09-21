@@ -20,19 +20,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="association-block">
+<div class="concept-association-block">
     <block>
-        <block-header>Class-Property Associations</block-header>
+        <block-header>
+            <span>Concepts</span><a class="pull-right" ng-click="dvm.sm.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Create Concept</span></a>
+        </block-header>
         <!--<block-search></block-search>-->
         <block-content>
-            <everything-tree></everything-tree>
+            <hierarchy-tree hierarchy="dvm.sm.listItem.conceptHierarchy"></hierarchy-tree>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Concept</span></button>
         </block-footer>
     </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Entity'" confirm-click="dvm.deleteEntity()"
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Class'" confirm-click="dvm.deleteClass()"
                           cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
         <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id']}}</strong>?</p>
     </confirmation-overlay>
+    <create-concept-overlay ng-if="dvm.sm.showCreateConceptOverlay"></create-concept-overlay>
 </div>

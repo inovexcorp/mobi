@@ -71,8 +71,7 @@
                         }
                         dvm.om.createOntology(dvm.ontology)
                             .then(response => {
-                                dvm.sm.addState(response.ontologyId, response.entityIRI, 'project',
-                                    dvm.om.getListItemById(response.ontologyId));
+                                dvm.sm.addState(response.ontologyId, response.entityIRI, 'ontology');
                                 dvm.sm.setState(response.ontologyId);
                                 dvm.sm.showNewTab = false;
                             }, errorMessage => {

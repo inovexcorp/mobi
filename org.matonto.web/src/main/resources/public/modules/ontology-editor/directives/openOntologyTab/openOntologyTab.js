@@ -46,12 +46,11 @@
                     dvm.limit = 20;
                     dvm.filteredIds = dvm.om.ontologyIds;
 
-                    dvm.open = function(id) {
-                        dvm.om.openOntology(id)
+                    dvm.open = function open(id, type) {
+                        dvm.om.openOntology(id, type)
                             .then(ontologyId => {
                                 var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), 'project',
-                                    listItem);
+                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), type);
                                 dvm.sm.setState(ontologyId);
                             }, errorMessage => {
                                 dvm.error = errorMessage;
@@ -78,6 +77,11 @@
                                 response => dvm.showDeleteConfirmation = false,
                                 errorMessage => dvm.errorMessage = errorMessage
                             );
+                    }
+
+                    dvm.download = function(id) {
+                        dvm.sm.downloadId = id;
+                        dvm.sm.showDownloadOverlay = true;
                     }
 
                     $scope.$watch(

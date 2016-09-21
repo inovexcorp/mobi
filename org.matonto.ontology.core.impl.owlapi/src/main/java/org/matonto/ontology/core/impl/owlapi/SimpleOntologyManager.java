@@ -85,6 +85,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String GET_SUB_OBJECT_PROPERTIES_OF;
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
     private static final String GET_ENTITY_USAGES;
+    private static final String GET_CONCEPT_RELATIONSHIPS;
     private static final String GRAPH_BINDING = "graph";
     private static final String ENTITY_BINDING = "entity";
 
@@ -124,6 +125,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_ENTITY_USAGES = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-entity-usages.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-relationships.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -574,6 +583,14 @@ public class SimpleOntologyManager implements OntologyManager {
         TupleQuery query = conn.prepareTupleQuery(GET_ENTITY_USAGES);
         query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
         query.setBinding(ENTITY_BINDING, factory.createIRI(entityIRIStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getConceptRelationships(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_CONCEPT_RELATIONSHIPS);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
         return query.evaluate();
     }
 }

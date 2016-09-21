@@ -44,9 +44,15 @@
                 vertical-align: top;
                 white-space: nowrap;
                 width: 100px;
+            }
 
-                &.marked {
+            &.marked {
+                .heading-text,
+                .fa-times {
                     color: $brand-primary;
+                }
+
+                .heading-text {
                     font-weight: bold;
                 }
             }

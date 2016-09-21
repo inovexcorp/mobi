@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.1.23-SNAPSHOT</version>
+            <version>1.1.28-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>

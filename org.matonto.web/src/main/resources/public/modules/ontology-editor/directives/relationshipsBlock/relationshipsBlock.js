@@ -24,30 +24,24 @@
     'use strict';
 
     angular
-        .module('ontologyDownloadOverlay', [])
-        .directive('ontologyDownloadOverlay', ontologyDownloadOverlay);
+        .module('relationshipsBlock', [])
+        .directive('relationshipsBlock', relationshipsBlock);
 
-        ontologyDownloadOverlay.$inject = ['REGEX', 'stateManagerService', 'ontologyManagerService'];
+        relationshipsBlock.$inject = ['stateManagerService', 'ontologyManagerService'];
 
-        function ontologyDownloadOverlay(REGEX, stateManagerService, ontologyManagerService) {
+        function relationshipsBlock(stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/old-directives/ontologyDownloadOverlay/ontologyDownloadOverlay.html',
-                scope: {},
+                templateUrl: 'modules/ontology-editor/directives/relationshipsBlock/relationshipsBlock.html',
+                scope: {
+                    relationshipList: '<'
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
-                    dvm.fileNamePattern = REGEX.FILENAME;
-                    dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.fileName = dvm.om.getBeautifulIRI(dvm.om.getOntologyIRI(dvm.sm.ontology)).replace(' ', '_');
-
-                    dvm.download = function() {
-                        dvm.om.downloadOntologyFile(dvm.sm.state.ontologyId, dvm.serialization, dvm.fileName);
-                        dvm.sm.showDownloadOverlay = false;
-                    }
+                    dvm.sm = stateManagerService;
                 }
             }
         }

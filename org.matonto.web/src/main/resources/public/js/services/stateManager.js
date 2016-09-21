@@ -32,19 +32,7 @@
         function stateManagerService($rootScope, ontologyManagerService, updateRefsService) {
             var self = this;
             self.states = [];
-            self.newState = {
-                tab: 'open',
-                active: true,
-                open: {
-                    active: true
-                },
-                create: {
-                    active: false
-                },
-                upload: {
-                    active: false
-                }
-            }
+            self.newState = {active: true};
             self.om = ontologyManagerService;
             self.ontology = {};
             self.selected = {};
@@ -154,27 +142,47 @@
             self.setSelected = function(entityIRI) {
                 self.selected = self.om.getEntity(self.ontology, entityIRI);
             }
-            self.addState = function(ontologyId, entityIRI, tab) {
+            self.addState = function(ontologyId, entityIRI, type) {
+                var tabs = {};
                 var newState = {
                     ontologyId: ontologyId,
                     active: false,
-                    project: {
-                        active: true,
-                        entityIRI: entityIRI
-                    },
-                    overview: {
-                        active: false
-                    },
-                    classes: {
-                        active: false
-                    },
-                    properties: {
-                        active: false
-                    },
-                    individuals: {
-                        active: false
+                    type: type
+                }
+                if (type === 'ontology') {
+                    tabs = {
+                        project: {
+                            active: true,
+                            entityIRI: entityIRI
+                        },
+                        overview: {
+                            active: false
+                        },
+                        classes: {
+                            active: false
+                        },
+                        properties: {
+                            active: false
+                        },
+                        individuals: {
+                            active: false
+                        }
+                    }
+                } else if (type === 'vocabulary') {
+                    tabs = {
+                        project: {
+                            active: true,
+                            entityIRI: entityIRI
+                        },
+                        schemes: {
+                            active: false
+                        },
+                        concepts: {
+                            active: false
+                        }
                     }
                 }
+                _.merge(newState, tabs);
                 self.states.push(newState);
             }
             self.setState = function(ontologyId) {

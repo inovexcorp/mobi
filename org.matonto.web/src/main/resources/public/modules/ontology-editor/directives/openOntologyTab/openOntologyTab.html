@@ -35,13 +35,15 @@
             <block>
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.open(id)" ng-repeat="id in dvm.filteredIds | orderBy | limitTo:dvm.limit:dvm.begin">
+                        <div class="ontology" ng-click="dvm.open(id, 'ontology')" ng-repeat="id in dvm.filteredIds | orderBy | limitTo:dvm.limit:dvm.begin">
                             <div class="details">
                                 <h2 class="header" ng-bind-html="(id | splitIRI).end | beautify | highlight:dvm.filterText | trusted"></h2>
                                 <p class="text-muted description" ng-bind-html="id | highlight:dvm.filterText | trusted"></p>
                             </div>
                             <div class="action-container">
-                                <a ng-click="dvm.showDeleteConfirmationOverlay(id); $event.stopPropagation()" class="delete"><i class="fa fa-2x fa-trash-o"></i></a>
+                                <a ng-click="dvm.download(id); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-download"></i></a>
+                                <a ng-click="dvm.open(id, 'vocabulary'); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-book"></i></a>
+                                <a ng-click="dvm.showDeleteConfirmationOverlay(id); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                             </div>
                         </div>
                         <p ng-if="!dvm.filteredIds.length" class="text-info message">

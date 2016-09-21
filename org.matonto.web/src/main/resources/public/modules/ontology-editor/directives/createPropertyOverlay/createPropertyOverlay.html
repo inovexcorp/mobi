@@ -27,7 +27,7 @@
         <static-iri iri="dvm.property['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <form name="dvm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
             <div class="form-group">
-                <custom-label muted-text="'*Required'">Name</custom-label>
+                <custom-label>Name</custom-label>
                 <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                        ng-model="dvm.property[dvm.prefixes.dcterms + 'title'][0]['@value']">
             </div>

@@ -24,36 +24,22 @@
     'use strict';
 
     angular
-        .module('uploadOntologyTab', [])
-        .directive('uploadOntologyTab', uploadOntologyTab);
+        .module('topConceptsBlock', [])
+        .directive('topConceptsBlock', topConceptsBlock);
 
-        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        topConceptsBlock.$inject = ['stateManagerService', 'ontologyManagerService'];
 
-        function uploadOntologyTab($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
+        function topConceptsBlock(stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/uploadOntologyTab/uploadOntologyTab.html',
-                scope: {
-                    listItem: '='
-                },
+                templateUrl: 'modules/ontology-editor/directives/topConceptsBlock/topConceptsBlock.html',
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-
-                    dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file)
-                            .then(ontologyId => {
-                                var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), 'ontology');
-                                dvm.sm.setState(ontologyId);
-                                dvm.sm.showUploadTab = false;
-                            }, response => {
-                                dvm.error = response.statusText;
-                            });
-                    }
                 }
             }
         }

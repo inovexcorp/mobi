@@ -20,21 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<li ng-class="{'invalid': dvm.currentEntity.matonto.valid === false}">
+<li class="tree-item" ng-class="{'invalid': dvm.currentEntity.matonto.valid === false}">
     <a ng-if="!hasChildren" ng-click="onClick()"
        ng-class="{'unsaved': dvm.currentEntity.matonto.unsaved, 'active': isActive}">
         <i class="fa fa-fw {{dvm.currentEntity.matonto.icon || 'fa-square-o'}}"></i>
-            <strong ng-if="isBold">{{dvm.getTreeDisplay()}}</strong>
-            <span ng-if="!isBold">{{dvm.getTreeDisplay()}}</span>
-        <i ng-show="dvm.currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
+            <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
     </a>
     <a ng-if="hasChildren" ng-click="onClick()" ng-dblclick="dvm.toggleOpen()"
        ng-class="{'unsaved': dvm.currentEntity.matonto.unsaved, 'active': isActive}">
         <i class="fa fa-fw"
            ng-class="{'fa-minus-square-o': dvm.isOpened, 'fa-plus-square-o': !dvm.isOpened}"
            ng-click="dvm.toggleOpen(); $event.stopPropagation()"></i>
-            <strong ng-if="isBold">{{dvm.getTreeDisplay()}}</strong>
-            <span ng-if="!isBold">{{dvm.getTreeDisplay()}}</span>
-        <i ng-show="dvm.currentEntity.matonto.unsaved" class="fa fa-check unsaved-icon pull-right"></i>
+            <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
     </a>
 </li>

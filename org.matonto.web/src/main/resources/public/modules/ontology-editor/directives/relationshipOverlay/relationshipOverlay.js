@@ -24,40 +24,47 @@
     'use strict';
 
     angular
-        .module('annotationOverlay', [])
-        .directive('annotationOverlay', annotationOverlay);
+        .module('relationshipOverlay', [])
+        .directive('relationshipOverlay', relationshipOverlay);
 
-        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'annotationManagerService', 'stateManagerService'];
+        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'stateManagerService'];
 
-        function annotationOverlay(responseObj, ontologyManagerService, annotationManagerService, stateManagerService) {
+        function relationshipOverlay($filter, responseObj, ontologyManagerService, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html',
-                scope: {},
+                templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.html',
+                scope: {
+                    relationshipList: '<'
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.am = annotationManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = stateManagerService;
+                    dvm.concepts = [];
+                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.sm.ontology);
+                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.sm.ontology);
 
                     function closeAndMark() {
                         dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.selected.matonto.originalIRI, true);
-                        dvm.sm.showAnnotationOverlay = false;
+                        dvm.sm.showRelationshipOverlay = false;
                     }
 
-                    dvm.addAnnotation = function() {
-                        dvm.am.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
-                            _.get(dvm.sm.annotationType, '@id'));
+                    dvm.addRelationship = function() {
+                        var axiom = dvm.ro.getItemIri(dvm.relationship);
+                        if (_.has(dvm.sm.selected, axiom)) {
+                            dvm.sm.selected[axiom] = _.union(dvm.sm.selected[axiom], dvm.values);
+                        } else {
+                            dvm.sm.selected[axiom] = dvm.values;
+                        }
                         closeAndMark();
                     }
 
-                    dvm.editAnnotation = function() {
-                        dvm.am.edit(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
-                            dvm.sm.annotationIndex, _.get(dvm.sm.annotationType, '@id'));
-                        closeAndMark();
+                    dvm.getIRINamespace = function(item) {
+                        var split = $filter('splitIRI')(item);
+                        return split.begin + split.then;
                     }
 
                     dvm.getItemNamespace = function(item) {

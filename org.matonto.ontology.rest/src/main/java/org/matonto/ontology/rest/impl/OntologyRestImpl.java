@@ -520,6 +520,13 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(200).entity(response.toString()).build();
     }
 
+    @Override
+    public Response getConceptHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getConceptRelationships(ontologyIdStr);
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
     private JSONObject getHierarchy(TupleQueryResult queryResults) {
         Map<String, List<String>> results = new HashMap<>();
         Map<String, Set<String>> index = new HashMap<>();

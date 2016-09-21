@@ -125,4 +125,6 @@ public interface OntologyManager {
     TupleQueryResult getClassesWithIndividuals(String ontologyIdStr);
 
     TupleQueryResult getEntityUsages(String ontologyIdStr, String entityIRIStr);
+
+    TupleQueryResult getConceptRelationships(String ontologyIdStr);
 }
