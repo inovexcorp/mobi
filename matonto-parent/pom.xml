@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
 
     <packaging>pom</packaging>
 
@@ -424,4 +424,11 @@
             <url>http://nexus.matonto.org/repository/matonto-public/</url>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>matonto.hanover.releases</id>
+            <url>http://nexus.matonto.org/repository/matonto-public/</url>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
