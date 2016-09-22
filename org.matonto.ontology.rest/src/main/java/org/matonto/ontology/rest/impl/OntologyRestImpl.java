@@ -38,6 +38,7 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
+import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.persistence.utils.Values;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
@@ -516,12 +517,34 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getOntologyClassHierarchy(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getSubClassesOf(ontologyIdStr);
-        JSONArray response = getHierarchy(queryResults);
+        JSONObject response = getHierarchy(queryResults);
         return Response.status(200).entity(response.toString()).build();
     }
 
-    private JSONArray getHierarchy(TupleQueryResult queryResults) {
+    @Override
+    public Response getOntologyObjectPropertyHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getSubObjectPropertiesOf(ontologyIdStr);
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getOntologyDataPropertyHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getSubDatatypePropertiesOf(ontologyIdStr);
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getConceptHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getConceptRelationships(ontologyIdStr);
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    private JSONObject getHierarchy(TupleQueryResult queryResults) {
         Map<String, List<String>> results = new HashMap<>();
+        Map<String, Set<String>> index = new HashMap<>();
         Set<String> topLevel = new HashSet<>();
         Set<String> lowerLevel = new HashSet<>();
         queryResults.forEach(queryResult -> {
@@ -542,17 +565,29 @@ public class OntologyRestImpl implements OntologyRest {
                             }
                         });
                     }
+                    if (index.containsKey(valueString)) {
+                        index.get(valueString).add(keyString);
+                    } else {
+                        index.put(valueString, new HashSet<String>() {
+                            {
+                                add(keyString);
+                            }
+                        });
+                    }
                 } else {
                     results.put(key.stringValue(), new ArrayList<>());
                 }
             }
         });
         topLevel.removeAll(lowerLevel);
-        JSONArray response = new JSONArray();
+        JSONObject response = new JSONObject();
+        JSONArray hierarchy = new JSONArray();
         topLevel.forEach(classIRI -> {
             JSONObject item = getHierarchyItem(classIRI, results);
-            response.add(item);
+            hierarchy.add(item);
         });
+        response.put("hierarchy", hierarchy);
+        response.put("index", JSONObject.fromObject(index));
         return response;
     }
 
@@ -570,8 +605,14 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getClassesWithIndividuals(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getClassesWithIndividuals(ontologyIdStr);
-        JSONArray response = new JSONArray();
-        queryResults.forEach(queryResult -> response.add(Iterables.get(queryResult, 0).getValue().stringValue()));
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getEntityUsages(String ontologyIdStr, String entityIRIStr) {
+        TupleQueryResult queryResults = manager.getEntityUsages(ontologyIdStr, entityIRIStr);
+        JSONObject response = JSONQueryResults.getResponse(queryResults);
         return Response.status(200).entity(response.toString()).build();
     }
 

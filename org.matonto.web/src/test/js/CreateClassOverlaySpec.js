@@ -36,6 +36,7 @@ describe('Create Class Overlay directive', function() {
         mockPrefixes();
         injectRegexConstant();
         injectCamelCaseFilter();
+        injectSplitIRIFilter();
         mockOntologyManager();
         mockStateManager();
         mockPrefixes();
@@ -104,15 +105,19 @@ describe('Create Class Overlay directive', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.clazz['@id']).toBe('begin' + 'then' + 'end');
         });
-        describe('create', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.createClass.and.returnValue(deferred.promise);
-                controller.clazz = {'@id': 'class-iri'};
-                controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
-                controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
-                controller.create();
-            });
-            it('calls the correct manager function', function() {
+        it('create calls the correct manager functions', function() {
+            ontologyManagerSvc.getListItemById.and.returnValue({subClasses: [], classHierarchy: []});
+            controller.clazz = {'@id': 'class-iri'};
+            controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
+            controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+            controller.create();
+            expect(_.get(controller.clazz, 'matonto.originalIRI')).toEqual(controller.clazz['@id']);
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(stateManagerSvc.ontology, controller.clazz);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
+            expect(stateManagerSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
+            expect(stateManagerSvc.showCreateClassOverlay).toBe(false);
+
+            /*it('calls the correct manager function', function() {
                 expect(ontologyManagerSvc.createClass).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId,
                     controller.clazz);
             });
@@ -120,18 +125,13 @@ describe('Create Class Overlay directive', function() {
                 deferred.resolve({entityIRI: 'entityIRI', ontologyId: 'ontologyId'});
                 scope.$apply();
                 expect(stateManagerSvc.showCreateClassOverlay).toBe(false);
-                expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith('ontologyId');
-                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('class-editor', 'entityIRI',
-                    ontologyManagerSvc.getListItemById('ontologyId'));
-                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith('ontologyId');
-                expect(stateManagerSvc.setOpened).toHaveBeenCalledWith('ontologyId',
-                    ontologyManagerSvc.getOntologyIRI('ontologyId'), true);
+                expect(stateManagerSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');
                 scope.$apply();
                 expect(controller.error).toBe('error');
-            });
+            });*/
         });
     });
 });

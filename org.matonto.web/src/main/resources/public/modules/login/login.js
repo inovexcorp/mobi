@@ -34,9 +34,9 @@
 
         vm.login = function(isValid) {
             loginManagerService.login(isValid, vm.form.username, vm.form.password)
-                .then(function() {
+                .then(() => {
                     vm.errorMessage = '';
-                }, function(errorMessage) {
+                }, errorMessage => {
                     vm.errorMessage = errorMessage;
                 });
         }

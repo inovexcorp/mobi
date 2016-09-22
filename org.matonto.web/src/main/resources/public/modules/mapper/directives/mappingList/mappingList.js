@@ -42,16 +42,17 @@
          * @requires  mapperState.service:mapperStateService
          *
          * @description 
-         * `mappingList` is a directive that creates a "boxed" div with an unordered list of the 
+         * `mappingList` is a directive that creates a div with an unordered list of the 
          * all the saved mappings in the repository. Each mapping name is clickable and sets the
-         * selected mapping for the mapping tool. The directive is replaced by the contents of 
-         * its template.
+         * selected mapping for the mapping tool. The list will also be filtered by the 
+         * {@link mapperState.service:mapperStateService#mappingSearchString mappingSearchString}.
+         * The directive is replaced by the contents of its template.
          */
         .directive('mappingList', mappingList);
 
-        mappingList.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
+        mappingList.$inject = ['mappingManagerService', 'mapperStateService'];
 
-        function mappingList(mappingManagerService, mapperStateService, ontologyManagerService) {
+        function mappingList(mappingManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -62,7 +63,6 @@
                     var openedMappings = [];
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
 
                     dvm.onClick = function(id) {
                         var openedMapping = _.find(openedMappings, {id: id});

@@ -36,9 +36,9 @@
                 templateUrl: 'modules/ontology-editor/directives/stringSelect/stringSelect.html',
                 scope: {
                     onChange: '&',
-                    displayText: '=',
-                    selectList: '=',
-                    mutedText: '='
+                    displayText: '<',
+                    selectList: '<',
+                    mutedText: '<'
                 },
                 bindToController: {
                     bindModel: '=ngModel'
@@ -55,10 +55,10 @@
                     }
 
                     dvm.disableChoice = function(item) {
-                        if (_.isEqual(item, prefixes.owl + 'DataTypeProperty')) {
+                        if (_.isEqual(item, prefixes.owl + 'DatatypeProperty')) {
                             return _.indexOf(dvm.bindModel, prefixes.owl + 'ObjectProperty') !== -1;
                         } else if (_.isEqual(item, prefixes.owl + 'ObjectProperty')) {
-                            return _.indexOf(dvm.bindModel, prefixes.owl + 'DataTypeProperty') !== -1;
+                            return _.indexOf(dvm.bindModel, prefixes.owl + 'DatatypeProperty') !== -1;
                         }
                         return false;
                     }

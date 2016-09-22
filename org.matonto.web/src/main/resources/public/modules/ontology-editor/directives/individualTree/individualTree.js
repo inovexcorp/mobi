@@ -39,7 +39,6 @@
                 controller: function() {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
-
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
 

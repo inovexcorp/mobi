@@ -29,6 +29,7 @@
             'angular-uuid',
             'ngAnimate',
             'ngCookies',
+            'ngHandsontable',
             'ngMessages',
             'ui.codemirror',
             'ui.router',
@@ -38,6 +39,7 @@
             'beautify',
             'camelCase',
             'escapeHTML',
+            'prefixation',
             'removeIriFromArray',
             'removeMatonto',
             'showProperties',
@@ -45,18 +47,21 @@
             'trusted',
 
             /* Custom Directives */
+            'block',
+            'blockContent',
+            'blockFooter',
+            'blockHeader',
+            'blockSearch',
             'circleButton',
             'confirmationOverlay',
-            'customButton',
+            'customHeader',
             'customLabel',
             'errorDisplay',
             'fileInput',
-            'leftNav',
-            'leftNavItem',
             'pagination',
             'radioButton',
-            'tabButton',
-            'tabButtonContainer',
+            'tab',
+            'tabset',
             'textArea',
             'textInput',
 
@@ -79,6 +84,7 @@
             'prefixes',
             'responseObj',
             'settingsManager',
+            'stateManager',
             'updateRefs'
         ])
         .constant('_', window._)
@@ -92,14 +98,14 @@
             // We have to invoke the service at least once
         });
 
-        beforeUnload.$inject = ['$window', 'ontologyManagerService'];
+        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'stateManagerService'];
 
-        function beforeUnload($window, ontologyManagerService) {
+        function beforeUnload($window, ontologyManagerService, stateManagerService) {
             $window.onbeforeunload = function(e) {
-                var hasUnsavedChanges = _.some(ontologyManagerService.list, listItem => {
-                    return _.some(_.get(listItem, 'ontology', []), {matonto: {unsaved: true}});
+                var hasChanges = _.some(ontologyManagerService.list, listItem => {
+                    return stateManagerService.hasChanges(_.get(listItem, 'ontology'), _.get(listItem, 'ontologyId'));
                 });
-                if (hasUnsavedChanges) {
+                if (hasChanges) {
                     return true;
                 }
             }

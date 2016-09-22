@@ -62,7 +62,7 @@
                 replace: true,
                 scope: {},
                 bindToController: {
-                    ontology: '='
+                    ontology: '<'
                 },
                 controller: function() {
                     var dvm = this;
@@ -71,11 +71,10 @@
                     dvm.full = false;
 
                     dvm.createTitle = function() {
-                        return dvm.om.getEntityName(dvm.om.getOntologyEntity(dvm.ontology.entities));
+                        return dvm.om.getEntityName(dvm.om.getOntologyEntity(_.get(dvm.ontology, 'entities')));
                     }
                     dvm.createDescription = function() {
-                        var ontologyEntity = dvm.om.getOntologyEntity(dvm.ontology.entities);
-                        return _.get(ontologyEntity, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(ontologyEntity, "['" + prefixes.dc + "description'][0]['@value']", ''));
+                        return dvm.om.getEntityDescription(dvm.om.getOntologyEntity(_.get(dvm.ontology, 'entities')));
                     }
                     dvm.getImports = function() {
                         var ontologyEntity = dvm.om.getOntologyEntity(dvm.ontology.entities);

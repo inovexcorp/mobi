@@ -55,7 +55,8 @@
                 '$$hashKey',
                 'originalIRI',
                 'unsaved',
-                'valid'
+                'valid',
+                'ontologyId'
             ];
 
         /**
@@ -76,42 +77,78 @@
         self.update = function(obj, old, fresh) {
             var freshSplit = $filter('splitIRI')(fresh);
             // iterates over all of the properties of the object
-            _.forOwn(obj, function(value, key) {
+            _.forOwn(obj, (value, key) => {
                 var excluded = _.indexOf(exclude, key);
-
                 // replaces the key if it is the old value
-                if(key === old && excluded === -1) {
+                if (key === old && excluded === -1) {
                     delete obj[key];
                     obj[fresh] = value;
                 }
-
-                if(!(excluded !== -1 || !obj[key])) {
+                if (!(excluded !== -1 || !obj[key])) {
                     // checks all items in the array
-                    if(_.isArray(value)) {
-                        _.forEach(value, function(item, index) {
+                    if (_.isArray(value)) {
+                        _.forEach(value, (item, index) => {
                             // checks to see if it contains the old value
-                            if(item === old) {
+                            if (item === old) {
                                 obj[key][index] = fresh;
                             }
                             // not a string, so update it
-                            else if(responseObj.validateItem(item) && responseObj.getItemIri(item) === old) {
+                            else if (responseObj.validateItem(item) && responseObj.getItemIri(item) === old) {
                                 obj[key][index].localName = freshSplit.end;
                                 obj[key][index].namespace = freshSplit.begin + freshSplit.then;
                             }
                             // not a string, so update it
-                            else if(typeof item !== 'string') {
+                            else if (typeof item !== 'string') {
                                 self.update(obj[key][index], old, fresh);
                             }
                         });
                     }
                     // objects need to be updated
-                    else if(typeof value === 'object') {
+                    else if (typeof value === 'object') {
                         self.update(obj[key], old, fresh);
                     }
                     // change string value if it matches
-                    else if(value === old) {
+                    else if (value === old) {
                         obj[key] = fresh;
                     }
+                }
+            });
+        }
+        /**
+         * @ngdoc method
+         * @name remove
+         * @methodOf updateRefs.service:updateRefsService
+         *
+         * @description
+         * Removes every instance of a specific key in an object from
+         * {@link ontologyManager.service:ontologyManager ontologyManager}. It directly
+         * affects the passed in object instead of creating a new copy.
+         *
+         * @param {Object} obj An object from {@link ontologyManager.service:ontologyManager ontologyManager}.
+         * Presumably it is an ontology object.
+         * @param {string} word The original string that will be removed
+         */
+        self.remove = function(obj, word) {
+            _.forOwn(obj, (value, key) => {
+                if (_.isArray(value)) {
+                    _.remove(value, item => item === word);
+                    _.forEach(value, (item, index) => {
+                        if (typeof item !== 'string') {
+                            self.remove(item, word);
+                        }
+                    });
+                    _.remove(value, item =>
+                        _.isEqual(item, {}) || (_.keys(item).length === 1 && _.has(item, '$$hashKey')));
+                    if (!value.length) {
+                        _.unset(obj, key);
+                    }
+                } else if (typeof value === 'object') {
+                    self.remove(value, word);
+                    if (_.isEqual(value, {})) {
+                        _.unset(obj, key);
+                    }
+                } else if (value === word) {
+                    _.unset(obj, key);
                 }
             });
         }

@@ -81,7 +81,7 @@
 
                     $http.get('/matontorest/user/login', config)
                         .then(function(response) {
-                            if(response.status === 200 && response.data.scope !== anon) {
+                            if (response.status === 200 && response.data.scope !== anon) {
                                 $state.go('root.home');
                                 deferred.resolve(true);
                             } else {
@@ -138,7 +138,7 @@
                 }
                 return $http.get('/matontorest/user/current')
                     .then(function(response) {
-                        if(response.status === 200 && response.data.scope !== anon) {
+                        if (response.status === 200 && response.data.scope !== anon) {
                             return $q.when();
                         } else {
                             return handleError(response.data);

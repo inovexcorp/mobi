@@ -2,6 +2,10 @@
 @import "./src/main/resources/public/css/variables";
 
 .login {
+    left: 0;
+    position: absolute;
+    width: 100%;
+
     /* Style for the box around the login form */
     .form-container {
         border-radius: 10px;

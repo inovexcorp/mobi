@@ -118,5 +118,13 @@ public interface OntologyManager {
 
     TupleQueryResult getSubClassesOf(String ontologyIdStr);
 
+    TupleQueryResult getSubDatatypePropertiesOf(String ontologyIdStr);
+
+    TupleQueryResult getSubObjectPropertiesOf(String ontologyIdStr);
+
     TupleQueryResult getClassesWithIndividuals(String ontologyIdStr);
+
+    TupleQueryResult getEntityUsages(String ontologyIdStr, String entityIRIStr);
+
+    TupleQueryResult getConceptRelationships(String ontologyIdStr);
 }

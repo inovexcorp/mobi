@@ -38,13 +38,12 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
                     dvm.sm = stateManagerService;
 
                     function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.getActiveEntityIRI(), true);
                         dvm.sm.showDataPropertyOverlay = false;
                     }
 

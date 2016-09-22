@@ -33,6 +33,7 @@ describe('Property Values directive', function() {
         module('propertyValues');
         injectBeautifyFilter();
         mockResponseObj();
+        mockStateManager();
 
         inject(function(_$compile_, _$rootScope_, _responseObj_) {
             $compile = _$compile_;
