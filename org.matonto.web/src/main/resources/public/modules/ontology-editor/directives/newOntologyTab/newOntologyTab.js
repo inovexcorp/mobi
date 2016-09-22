@@ -47,6 +47,7 @@
                     dvm.iriPattern = REGEX.IRI;
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.type = 'ontology';
                     dvm.ontology = {
                         '@id': prefix,
                         '@type': [prefixes.owl + 'Ontology'],
@@ -69,9 +70,9 @@
                         if (dvm.ontology[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.ontology, prefixes.dcterms + 'description');
                         }
-                        dvm.om.createOntology(dvm.ontology)
+                        dvm.om.createOntology(dvm.ontology, dvm.type)
                             .then(response => {
-                                dvm.sm.addState(response.ontologyId, response.entityIRI, 'ontology');
+                                dvm.sm.addState(response.ontologyId, response.entityIRI, dvm.type);
                                 dvm.sm.setState(response.ontologyId);
                                 dvm.sm.showNewTab = false;
                             }, errorMessage => {

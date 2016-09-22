@@ -35,14 +35,13 @@
             <block>
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.open(id, 'ontology')" ng-repeat="id in dvm.filteredIds | orderBy | limitTo:dvm.limit:dvm.begin">
+                        <div class="ontology" ng-click="dvm.openId = id; dvm.showOpenOverlay = true" ng-repeat="id in dvm.filteredIds | orderBy | limitTo:dvm.limit:dvm.begin">
                             <div class="details">
                                 <h2 class="header" ng-bind-html="(id | splitIRI).end | beautify | highlight:dvm.filterText | trusted"></h2>
                                 <p class="text-muted description" ng-bind-html="id | highlight:dvm.filterText | trusted"></p>
                             </div>
                             <div class="action-container">
                                 <a ng-click="dvm.download(id); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-download"></i></a>
-                                <a ng-click="dvm.open(id, 'vocabulary'); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-book"></i></a>
                                 <a ng-click="dvm.showDeleteConfirmationOverlay(id); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                             </div>
                         </div>
@@ -54,7 +53,7 @@
                 </block-content>
                 <block-footer>
                     <div class="paging-details clearfix">
-                        <p class="page-count">Showing {{(dvm.begin + 1) | number}} to {{(dvm.filteredIds.length < (dvm.begin + dvm.limit) ? dvm.filteredIds.length : (dvm.begin + dvm.limit)) | number}} of {{dvm.filteredIds.length | number}}</p>
+                        <p class="page-count">Showing {{(dvm.filteredIds.length > 0 ? (dvm.begin + 1) : 0) | number}} to {{(dvm.filteredIds.length < (dvm.begin + dvm.limit) ? dvm.filteredIds.length : (dvm.begin + dvm.limit)) | number}} of {{dvm.filteredIds.length | number}}</p>
                         <pagination links="{'prev': dvm.begin !== 0, 'next': (dvm.begin + dvm.limit) < dvm.filteredIds.length}" current-page="dvm.begin / dvm.limit" get-page="dvm.getPage(direction)"></pagination>
                     </div>
                 </block-footer>
@@ -65,5 +64,18 @@
                           cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <p>Are you sure that you want to delete <strong>{{dvm.ontologyId}}</strong>?</p>
+    </confirmation-overlay>
+    <confirmation-overlay ng-if="dvm.showOpenOverlay" header-text="'Open'" confirm-click="dvm.open(dvm.openId, dvm.type)"
+                          cancel-click="dvm.showOpenOverlay = false" confirm-text="'Open'" cancel-text="'Cancel'">
+        <div class="type-container">
+            <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type"
+                    ng-dblclick="dvm.open(dvm.openId, dvm.type)">
+                <i class="fa fa-fw fa-file-code-o fa-2x"></i><span class="text">Ontology Editor</span>
+            </button>
+            <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type"
+                    ng-dblclick="dvm.open(dvm.openId, dvm.type)">
+                <i class="fa fa-fw fa-file-text-o fa-2x"></i><span class="text">Vocabulary Editor</span>
+            </button>
+        </div>
     </confirmation-overlay>
 </div>

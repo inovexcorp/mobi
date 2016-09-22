@@ -45,6 +45,7 @@
                     dvm.begin = 0;
                     dvm.limit = 20;
                     dvm.filteredIds = dvm.om.ontologyIds;
+                    dvm.type = 'ontology';
 
                     dvm.open = function open(id, type) {
                         dvm.om.openOntology(id, type)

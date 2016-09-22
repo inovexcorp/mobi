@@ -42,12 +42,13 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
+                    dvm.type = 'ontology';
 
                     dvm.upload = function() {
-                        dvm.om.uploadThenGet(dvm.file)
+                        dvm.om.uploadThenGet(dvm.file, dvm.type)
                             .then(ontologyId => {
                                 var listItem = dvm.om.getListItemById(ontologyId);
-                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), 'ontology');
+                                dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
                                 dvm.sm.setState(ontologyId);
                                 dvm.sm.showUploadTab = false;
                             }, response => {

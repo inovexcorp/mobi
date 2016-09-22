@@ -2,7 +2,24 @@
 @import "./src/main/resources/public/css/variables";
 
 .sparql {
-    > .row {
-        padding-left: $sidebar-width;
+    background-color: $gray-lighter;
+    height: 100%;
+
+    > .tabset > .tabset-headings {
+        background-color: darkseagreen;
+    }
+
+    .row {
+        display: flex;
+        flex-direction: column;
+
+        .block-container {
+            flex: 1;
+            margin-bottom: 15px;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
     }
 }

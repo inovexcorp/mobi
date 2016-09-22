@@ -25,7 +25,9 @@
             margin: 12px 0 0 8px;
             padding: 7px 15px;
             text-decoration: none;
-            max-width: min-content;
+            max-width:         min-content;
+            max-width:    -moz-min-content;
+            max-width: -webkit-min-content;
             white-space: nowrap;
             @include noCopy();
 
@@ -43,7 +45,7 @@
                 text-overflow: ellipsis;
                 vertical-align: top;
                 white-space: nowrap;
-                width: 100px;
+                max-width: 100px;
             }
 
             &.marked {
@@ -112,6 +114,7 @@
                 }
 
                 .heading-text {
+                    max-width: none;
                     width: auto;
                 }
             }

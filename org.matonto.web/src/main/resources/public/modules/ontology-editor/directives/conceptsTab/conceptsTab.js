@@ -36,11 +36,27 @@
                 templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
-                }
+                    dvm.relationshipList = [];
+                    dvm.schemeRelationshipList = [
+                        {
+                            namespace: prefixes.skos,
+                            localName: 'hasTopConcept',
+                            values: 'conceptList'
+                        }
+                    ];
+
+                    $scope.$watch('dvm.sm.selected', function(newValue) {
+                        if (dvm.om.isConcept(dvm.sm.selected)) {
+                            dvm.relationshipList = dvm.om.conceptRelationshipList;
+                        } else if (dvm.om.isConceptScheme(dvm.sm.selected)) {
+                            dvm.relationshipList = dvm.schemeRelationshipList;
+                        }
+                    });
+                }]
             }
         }
 })();

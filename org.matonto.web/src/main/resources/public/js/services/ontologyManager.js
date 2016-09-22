@@ -331,23 +331,27 @@
              * @param {File} file The ontology file.
              * @returns {Promise} A promise with the ontology ID or error message.
              */
-            self.uploadThenGet = function(file) {
+            self.uploadThenGet = function(file, type) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onError = function(response) {
                     deferred.reject(response);
                     $rootScope.showSpinner = false;
                 };
+                var onAddSuccess = function(ontologyId) {
+                    $rootScope.showSpinner = false;
+                    deferred.resolve(ontologyId);
+                }
                 var onUploadSuccess = function(ontologyId) {
                     self.getOntology(ontologyId)
                         .then(response => {
                             if (_.get(response, 'status') === 200 && _.has(response, 'data.id')
                                 && _.has(response, 'data.ontology')) {
-                                addOntologyToList(response.data.id, response.data.ontology)
-                                    .then(() => {
-                                        $rootScope.showSpinner = false;
-                                        deferred.resolve(ontologyId);
-                                    });
+                                if (type === 'ontology') {
+                                    addOntologyToList(response.data.id, response.data.ontology).then(() => onAddSuccess(ontologyId));
+                                } else if (type === 'vocabulary') {
+                                    addVocabularyToList(response.data.id, response.data.ontology).then(() => onAddSuccess(ontologyId));
+                                }
                             } else {
                                 onError(response);
                             }
@@ -695,7 +699,7 @@
              * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
              * ontology.
              */
-            self.createOntology = function(ontologyJSON, type) {
+            self.createOntology = function(ontologyJSON, type='ontology') {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var config = {
@@ -707,8 +711,8 @@
                     .then(response => {
                         if (_.has(response, 'data.persisted') && _.has(response, 'data.ontologyId')) {
                             _.set(ontologyJSON, 'matonto.originalIRI', ontologyJSON['@id']);
-
-                            var listItem = angular.copy(listItemTemplate);
+                            var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate)
+                                : angular.copy(vocabularyListItemTemplate);
                             listItem.ontology.push(ontologyJSON);
                             listItem.ontologyId = response.data.ontologyId;
                             self.list.push(listItem);

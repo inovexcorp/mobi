@@ -68,16 +68,16 @@
                     animation-fill-mode: both;
 
             &:nth-child(2) {
+                -webkit-animation-delay: .125s;
+                        animation-delay: .125s;
+            }
+            &:nth-child(3) {
                 -webkit-animation-delay: .25s;
                         animation-delay: .25s;
             }
-            &:nth-child(3) {
+            &:nth-child(4) {
                 -webkit-animation-delay: .5s;
                         animation-delay: .5s;
-            }
-            &:nth-child(4) {
-                -webkit-animation-delay: .75s;
-                        animation-delay: .75s;
             }
         }
     }

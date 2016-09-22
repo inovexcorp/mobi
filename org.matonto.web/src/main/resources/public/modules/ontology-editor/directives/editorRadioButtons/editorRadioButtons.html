@@ -20,19 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="concept-schemes-tab row">
-    <concept-association-block class="col-xs-3"></concept-association-block>
-    <div class="col-xs-9 editor">
-        <selected-details></selected-details>
-        <div class="row">
-            <div class="col-xs-12">
-                <div class="row vertical-half">
-                    <annotation-block class="col-xs-12"></annotation-block>
-                </div>
-                <div class="row vertical-half">
-                    <relationships-block class="col-xs-12" relationship-list="dvm.relationshipList"></relationships-block>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="editor-radio-buttons">
+    <custom-label>Open in</custom-label>
+    <radio-button ng-model="bindModel" value="'ontology'" display-text="'Ontology Editor'"></radio-button>
+    <radio-button ng-model="bindModel" value="'vocabulary'" display-text="'Vocabulary Editor'"></radio-button>
 </div>

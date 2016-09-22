@@ -97,4 +97,35 @@
             }
         }
     }
+
+    .type-container {
+        display: flex;
+        flex-direction: row;
+
+        .type {
+            background: $gray-lighter;
+            border: 2px solid $gray-light;
+            border-radius: 10px;
+            display: flex;
+            flex: 1;
+            margin-right: 15px;
+            outline: 0;
+            padding: 15px;
+
+            &:last-child {
+                margin-right: 0;
+            }
+
+            .text {
+                font-size: 1.25em;
+                flex: 1;
+            }
+
+            &.active {
+                background: $brand-primary;
+                border-color: darken($brand-primary, 10%);
+                color: white;
+            }
+        }
+    }
 }

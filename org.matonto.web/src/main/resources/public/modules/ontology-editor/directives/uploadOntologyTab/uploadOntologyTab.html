@@ -35,6 +35,7 @@
                             <file-input id="file" name="file" ng-model="dvm.file"
                                         accept=".owl,.ttl,.xml,.jsonld,.owx,.rdf"></file-input>
                         </div>
+                        <editor-radio-buttons ng-model="dvm.type"></editor-radio-buttons>
                         <div class="btn-container clearfix">
                             <button type="button" class="btn btn-primary pull-right" ng-click="dvm.upload()"
                                     ng-disabled="!dvm.file">Upload</button>
