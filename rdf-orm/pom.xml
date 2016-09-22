@@ -63,6 +63,12 @@
                 <groupId>org.matonto</groupId>
                 <artifactId>rdf.orm.generate</artifactId>
                 <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>edu.washington.cs.types.checker</groupId>
+                        <artifactId>checker-framework</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -79,17 +85,6 @@
                 <scope>test</scope>
             </dependency>
 
-            <dependency>
-                <groupId>org.matonto</groupId>
-                <artifactId>rdf.orm.generate</artifactId>
-                <version>${project.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>edu.washington.cs.types.checker</groupId>
-                        <artifactId>checker-framework</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
