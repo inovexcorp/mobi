@@ -38,8 +38,8 @@
 
             function commonDelete(entityIRI) {
                 self.sm.addDeletedEntity();
-                self.om.removeEntity(self.sm.ontology, entityIRI);
                 self.ur.remove(self.sm.ontology, self.sm.selected['@id']);
+                self.om.removeEntity(self.sm.ontology, entityIRI);
                 self.sm.unSelectItem();
             }
 
@@ -48,7 +48,8 @@
                 var split = $filter('splitIRI')(angular.copy(entityIRI));
                 _.remove(_.get(self.sm.listItem, 'subClasses'), {namespace:split.begin + split.then, localName: split.end});
                 _.pull(_.get(self.sm.listItem, 'classesWithIndividuals'), entityIRI);
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'classHierarchy'), entityIRI);
+                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'classHierarchy'), entityIRI,
+                    _.get(self.sm.listItem, 'classIndex'));
                 commonDelete(entityIRI);
             }
 
@@ -56,7 +57,8 @@
                 var entityIRI = self.sm.getActiveEntityIRI();
                 var split = $filter('splitIRI')(angular.copy(entityIRI));
                 _.remove(_.get(self.sm.listItem, 'subObjectProperties'), entityIRI);
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'objectPropertyHierarchy'), entityIRI);
+                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'objectPropertyHierarchy'), entityIRI,
+                    _.get(self.sm.listItem, 'objectPropertyIndex'));
                 commonDelete(entityIRI);
             }
 
@@ -64,7 +66,8 @@
                 var entityIRI = self.sm.getActiveEntityIRI();
                 var split = $filter('splitIRI')(angular.copy(entityIRI));
                 _.remove(_.get(self.sm.listItem, 'subDataProperties'), entityIRI);
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'dataPropertyHierarchy'), entityIRI);
+                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'dataPropertyHierarchy'), entityIRI,
+                    _.get(self.sm.listItem, 'dataPropertyIndex'));
                 commonDelete(entityIRI);
             }
         }

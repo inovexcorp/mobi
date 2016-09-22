@@ -49,7 +49,6 @@
             'classAxioms',
             'classesTab',
             'classHierarchyBlock',
-            'conceptAssociationBlock',
             'conceptHierarchyBlock',
             'conceptsTab',
             'createAnnotationOverlay',

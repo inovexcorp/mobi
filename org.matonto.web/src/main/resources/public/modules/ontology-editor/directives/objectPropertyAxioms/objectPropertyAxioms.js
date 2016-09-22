@@ -57,7 +57,7 @@
                             values: 'subObjectProperties'
                         },
                         {
-                            namespace: prefixes.owl,
+                            namespace: prefixes.rdfs,
                             localName: 'subPropertyOf',
                             values: 'subObjectProperties'
                         },

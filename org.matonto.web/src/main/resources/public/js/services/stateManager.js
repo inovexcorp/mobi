@@ -252,69 +252,48 @@
             self.isSavable = function(ontology, ontologyId) {
                 return self.hasChanges(ontology, ontologyId) && !self.hasInvalidEntities(ontology);
             }
-            self.deleteEntityFromHierarchy = function(hierarchy, entityIRI) {
+            self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
                 var deletedEntity;
-                function removeHierarchyItem(hierarchy) {
-                    _.forEach(hierarchy, hierarchyItem => {
-                        _.remove(hierarchy, hierarchyItem => {
-                            if (hierarchyItem.entityIRI === entityIRI) {
-                                deletedEntity = angular.copy(hierarchyItem);
-                                return true;
-                            }
-                        });
-                        if (_.has(hierarchyItem, 'subEntities')) {
-                            removeHierarchyItem(hierarchyItem.subEntities);
+                var paths = self.getPathsTo(indexObject, entityIRI);
+                _.forEach(paths, path => {
+                    if (path.length === 1) {
+                        deletedEntity = _.remove(hierarchy, {entityIRI: path.shift()})[0];
+                    } else if (path.length > 1) {
+                        var current = _.find(hierarchy, {entityIRI: path.shift()});
+                        while (path.length > 1) {
+                            current = _.find(current.subEntities, {entityIRI: path.shift()});
+                            console.log(current);
                         }
-                    });
-                }
-                removeHierarchyItem(hierarchy);
-            }
-            self.getPathsTo = function(index, entityIRI) {
-                var paths = [];
-                if (_.has(index, entityIRI)) {
-                    _.forEach(index[entityIRI], parentIRI => {
-                        paths.push(getPathTo(index, parentIRI) + '.' + entityIRI);
-                    });
-                }
-                return paths;
-            }
-            /*function updatePath(path, parentIRI) {
-                if (path) {
-                    return {
-                        entityIRI: parentIRI,
-                        subEntities: [path]
+                        deletedEntity = _.remove(current.subEntities, {entityIRI: path.shift()})[0];
+                        if (!current.subEntities.length) {
+                            _.unset(current, 'subEntities');
+                        }
                     }
-                } else {
-                    return {
-                        entityIRI: parentIRI
+                });
+                _.unset(indexObject, entityIRI);
+                updateRefsService.remove(indexObject, entityIRI);
+                _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
+                    var paths = self.getPathsTo(indexObject, hierarchyItem.entityIRI);
+                    if (paths.length === 1 && paths[0].length === 1) {
+                        hierarchy.push(hierarchyItem);
+                        _.unset(indexObject, hierarchyItem.entityIRI);
                     }
-                }
+                });
             }
-            function getPathTo(index, entityIRI, path) {
-                if (_.has(index, entityIRI)) {
-                    return getPathTo(index, index[entityIRI][0], updatePath(path, entityIRI));
-                } else {
-                    return updatePath(path, entityIRI);
-                }
-            }
-            self.getPathsTo = function(index, entityIRI) {
-                var paths = [];
-                if (_.has(index, entityIRI)) {
-                    _.forEach(index[entityIRI], parentIRI => {
-                        paths.push(getPathTo(index, parentIRI, {entityIRI}));
+            self.getPathsTo = function(indexObject, entityIRI) {
+                var result = [];
+                if (_.has(indexObject, entityIRI)) {
+                    _.forEach(indexObject[entityIRI], parentIRI => {
+                        var paths = self.getPathsTo(indexObject, parentIRI);
+                        _.forEach(paths, path => {
+                            path.push(entityIRI);
+                            result.push(path);
+                        });
                     });
-                }
-                return paths;
-            }*/
-            function updatePath(path, parentIRI) {
-                return path ? parentIRI + '.' + path : parentIRI;
-            }
-            function getPathTo(index, entityIRI, path) {
-                if (_.has(index, entityIRI)) {
-                    return getPathTo(index, index[entityIRI][0], updatePath(path, entityIRI));
                 } else {
-                    return updatePath(path, entityIRI);
+                    result.push([entityIRI]);
                 }
+                return result;
             }
             function setVariables(ontologyId, entityIRI) {
                 self.ontology = self.om.getOntologyById(ontologyId);

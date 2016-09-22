@@ -44,8 +44,12 @@
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.deleteClass = function() {
-                        dvm.utils.deleteClass();
+                    dvm.deleteEntity = function() {
+                        if (dvm.om.isConcept(dvm.sm.selected)) {
+                            dvm.utils.deleteConcept();
+                        } else if (dvm.om.isConceptScheme(dvm.sm.selected)) {
+                            dvm.utils.deleteConceptScheme();
+                        }
                         dvm.showDeleteConfirmation = false;
                     }
                 }

@@ -25,7 +25,6 @@
         <block-header>
             <span>Property Hierarchies</span><a ng-click="dvm.sm.showCreatePropertyOverlay = true" class="pull-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
-        <block-search></block-search>
         <block-content class="tree" ng-init="dataPropertiesOpened = dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId);
                                              objectPropertiesOpened = dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)">
             <ul ng-if="dvm.sm.listItem.dataPropertyHierarchy.length">

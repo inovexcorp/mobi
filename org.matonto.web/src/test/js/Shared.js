@@ -350,6 +350,15 @@ function mockPrefixes() {
     });
 }
 
+function mockUpdateRefs() {
+    module(function($provide) {
+        $provide.service('updateRefsService', function() {
+            this.update = jasmine.createSpy('update');
+            this.remove = jasmine.createSpy('remove');
+        });
+    });
+}
+
 function mockSparqlManager() {
     module(function($provide) {
         $provide.service('sparqlManagerService', function($q) {

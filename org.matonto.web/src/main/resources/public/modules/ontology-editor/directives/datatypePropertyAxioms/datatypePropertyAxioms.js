@@ -57,7 +57,7 @@
                             values: 'subDataProperties'
                         },
                         {
-                            namespace: prefixes.owl,
+                            namespace: prefixes.rdfs,
                             localName: 'subPropertyOf',
                             values: 'subDataProperties'
                         },
