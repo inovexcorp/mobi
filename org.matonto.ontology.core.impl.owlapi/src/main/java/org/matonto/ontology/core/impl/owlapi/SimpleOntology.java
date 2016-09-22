@@ -24,12 +24,16 @@ package org.matonto.ontology.core.impl.owlapi;
  */
 
 import com.google.common.base.Optional;
-
 import org.apache.commons.io.IOUtils;
-import org.matonto.ontology.core.api.*;
+import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.Individual;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
@@ -39,14 +43,38 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.openrdf.model.util.Models;
-import org.openrdf.rio.*;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.WriterConfig;
 import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.formats.*;
-import org.semanticweb.owlapi.io.*;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
+import org.semanticweb.owlapi.io.IRIDocumentSource;
+import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
+import org.semanticweb.owlapi.io.OWLParser;
+import org.semanticweb.owlapi.io.OWLParserFactory;
+import org.semanticweb.owlapi.io.StringDocumentSource;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.MissingImportEvent;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
+import org.semanticweb.owlapi.model.MissingImportListener;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyID;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
@@ -56,13 +84,20 @@ import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 
 
@@ -74,6 +109,7 @@ public class SimpleOntology implements Ontology {
     private OntologyManager ontologyManager;
     private Set<Annotation> ontoAnnotations;
     private Set<Annotation> annotations;
+    private Set<AnnotationProperty> annotationProperties;
     private Set<IRI> missingImports = new HashSet<>();
 
     //Owlapi variables
@@ -261,6 +297,14 @@ public class SimpleOntology implements Ontology {
             getAnnotations();
         }
         return annotations;
+    }
+
+    @Override
+    public Set<AnnotationProperty> getAllAnnotationProperties() throws MatontoOntologyException {
+        if (annotationProperties == null) {
+            getAnnotationProperties();
+        }
+        return annotationProperties;
     }
 
     @Override
@@ -463,4 +507,14 @@ public class SimpleOntology implements Ontology {
         walker.walkStructure(visitor);
     }
 
+    private void getAnnotationProperties() throws MatontoOntologyException {
+        if (owlOntology == null) {
+            throw new MatontoOntologyException("ontology is null");
+        }
+        annotationProperties = new HashSet<>();
+
+        annotationProperties = owlOntology.getAnnotationPropertiesInSignature().stream()
+                .map(SimpleOntologyValues::matontoAnnotationProperty)
+                .collect(Collectors.toSet());
+    }
 }
