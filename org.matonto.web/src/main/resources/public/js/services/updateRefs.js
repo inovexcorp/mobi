@@ -137,7 +137,8 @@
                             self.remove(item, word);
                         }
                     });
-                    _.remove(value, item => _.isEqual(item, {}));
+                    _.remove(value, item =>
+                        _.isEqual(item, {}) || (_.keys(item).length === 1 && _.has(item, '$$hashKey')));
                     if (!value.length) {
                         _.unset(obj, key);
                     }

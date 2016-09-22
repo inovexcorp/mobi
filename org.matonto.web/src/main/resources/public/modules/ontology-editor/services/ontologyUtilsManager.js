@@ -38,8 +38,8 @@
 
             function commonDelete(entityIRI) {
                 self.sm.addDeletedEntity();
-                self.ur.remove(self.sm.ontology, self.sm.selected['@id']);
                 self.om.removeEntity(self.sm.ontology, entityIRI);
+                self.ur.remove(self.sm.ontology, self.sm.selected['@id']);
                 self.sm.unSelectItem();
             }
 
@@ -68,6 +68,22 @@
                 _.remove(_.get(self.sm.listItem, 'subDataProperties'), entityIRI);
                 self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'dataPropertyHierarchy'), entityIRI,
                     _.get(self.sm.listItem, 'dataPropertyIndex'));
+                commonDelete(entityIRI);
+            }
+
+            self.deleteConcept = function() {
+                var entityIRI = self.sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(angular.copy(entityIRI));
+                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'conceptHierarchy'), entityIRI,
+                    _.get(self.sm.listItem, 'conceptIndex'));
+                commonDelete(entityIRI);
+            }
+
+            self.deleteConceptScheme = function() {
+                var entityIRI = self.sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(angular.copy(entityIRI));
+                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'conceptHierarchy'), entityIRI,
+                    _.get(self.sm.listItem, 'conceptIndex'));
                 commonDelete(entityIRI);
             }
         }

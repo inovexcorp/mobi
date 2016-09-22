@@ -93,7 +93,7 @@
                 ontologyId: '',
                 annotations: defaultAnnotations,
                 conceptHierarchy: [],
-                concentIndex: {}
+                conceptIndex: {}
             };
 
             /**
@@ -1885,10 +1885,10 @@
                 var joiningWord;
                 if (_.has(blankNode, prefixes.owl + 'unionOf')) {
                     list = _.get(blankNode[prefixes.owl + 'unionOf'], "[0]['@list']", []);
-                    joiningWord = 'or';
+                    joiningWord = ' or ';
                 } else if (_.has(blankNode, prefixes.owl + 'intersectionOf')) {
                     list = _.get(blankNode[prefixes.owl + 'intersectionOf'], "[0]['@list']", []);
-                    joiningWord = 'and';
+                    joiningWord = ' and ';
                 }
                 if (list.length) {
                     readableText = _.join(_.map(list, item => {

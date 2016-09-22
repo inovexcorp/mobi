@@ -36,15 +36,32 @@
                 templateUrl: 'modules/ontology-editor/directives/usagesBlock/usagesBlock.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
 
+                    function getBindings() {
+                        var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');
+                        return _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
+                            return _.indexOf(deletedIRIs, _.get(usage, 's.value')) !== -1
+                                || _.indexOf(deletedIRIs, _.get(usage, 'o.value')) !== -1
+                                || _.indexOf(deletedIRIs, _.get(usage, 'p.value')) !== -1;
+                        });
+                    }
+
+                    dvm.bindings = getBindings();
+
                     dvm.getBindingDisplay = function(binding) {
                         return $filter('splitIRI')(binding).end;
                     }
-                }
+
+                    $scope.$watch(function() {
+                        return dvm.sm.state[dvm.sm.getActiveKey()].usages;
+                    },function() {
+                        dvm.bindings = getBindings();
+                    });
+                }]
             }
         }
 })();
