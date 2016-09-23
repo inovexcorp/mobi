@@ -57,7 +57,10 @@
                         }],
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
-                        }]
+                        }],
+                        matonto: {
+                            created: true
+                        }
                     }
 
                     dvm.nameChanged = function() {
@@ -76,7 +79,8 @@
                         dvm.sm.showCreatePropertyOverlay = false;
                         dvm.sm.selectItem('property-editor', response.entityIRI,
                             dvm.om.getListItemById(response.ontologyId));
-                        //TODO: figure out how to open up where this property is listed
+                        // TODO: figure out how to open up where this property is listed
+                        // Potentially easier with the getPath function I'm working on
                     }
 
                     function onCreateError(errorMessage) {
@@ -92,13 +96,23 @@
                                 _.unset(dvm.property, prefixes.rdfs + axiom);
                             }
                         });
+                        _.set(dvm.property, 'matonto.originalIRI', dvm.property['@id']);
+                        // add the entity to the ontology
+                        dvm.om.addEntity(dvm.sm.ontology, dvm.property);
+                        // update relevant lists
+                        var split = $filter('splitIRI')(dvm.property['@id']);
+                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            dvm.om.createObjectProperty(dvm.sm.state.ontologyId, dvm.property)
-                                .then(onCreateSuccess, onCreateError);
+                            _.get(listItem, 'subObjectProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(listItem, 'objectPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         } else {
-                            dvm.om.createDataTypeProperty(dvm.sm.state.ontologyId, dvm.property)
-                                .then(onCreateSuccess, onCreateError);
+                            _.get(listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
+                            _.get(listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         }
+                        // select the new class
+                        dvm.sm.selectItem(_.get(dvm.property, '@id'));
+                        // hide the overlay
+                        dvm.sm.showCreatePropertyOverlay = false;
                     }
                 }
             }

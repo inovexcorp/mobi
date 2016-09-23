@@ -85,69 +85,10 @@ describe('Mapping Preview directive', function() {
             expect(ontologyManagerSvc.getBeautifulIRI).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
-        describe('should set the correct state for using a mapping', function() {
-            beforeEach(function() {
-                this.ontology = {ontologyId: 'test', ontology: []};
-                mappingManagerSvc.getSourceOntologyId.and.returnValue(this.ontology.ontologyId);
-            });
-            describe('if the source ontology is already open', function() {
-                beforeEach(function() {
-                    ontologyManagerSvc.list = [this.ontology];
-                });
-                it('unless the mapping and source ontologies are incompatible', function() {
-                    mappingManagerSvc.areCompatible.and.returnValue(false);
-                    controller.useMapping();
-                    $timeout.flush();
-                    expect(mapperStateSvc.editMapping).toBe(true);
-                    expect(mapperStateSvc.newMapping).toBe(false);
-                    expect(mappingManagerSvc.getOntology).not.toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.ontologyId);
-                    expect(mappingManagerSvc.sourceOntologies).toContain({id: this.ontology.ontologyId, entities: this.ontology.ontology});
-                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(true);
-                });
-                it('and the mapping and source ontologies are compatible', function() {
-                    controller.useMapping();
-                    $timeout.flush();
-                    expect(mapperStateSvc.editMapping).toBe(true);
-                    expect(mapperStateSvc.newMapping).toBe(false);
-                    expect(mappingManagerSvc.getOntology).not.toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontology.ontologyId);
-                    expect(mappingManagerSvc.sourceOntologies).toContain({id: this.ontology.ontologyId, entities: this.ontology.ontology});
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(false);
-                });
-            });
-            describe('if the source ontology is not open', function() {
-                it('unless the mapping and source ontologies are incompatible', function() {
-                    mappingManagerSvc.areCompatible.and.returnValue(false);
-                    controller.useMapping();
-                    $timeout.flush();
-                    expect(mapperStateSvc.editMapping).toBe(true);
-                    expect(mapperStateSvc.newMapping).toBe(false);
-                    expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontology.ontologyId);
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalled();
-                    expect(mappingManagerSvc.sourceOntologies.length).not.toBe(0);
-                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(true);
-                });
-                it('and the mapping and source ontologies are compatible', function() {
-                    controller.useMapping();
-                    $timeout.flush();
-                    expect(mapperStateSvc.editMapping).toBe(true);
-                    expect(mapperStateSvc.newMapping).toBe(false);
-                    expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontology.ontologyId);
-                    expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalled();
-                    expect(mappingManagerSvc.sourceOntologies.length).not.toBe(0);
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.invalidOntology).toBe(false);
-                });
-            });
-        });
         it('should get the column index of a data mapping', function() {
             var propMapping = {'columnIndex': [{'@value': '0'}]};
             var result = controller.getColumnIndex(propMapping);
-            expect(result).toBe(0);
+            expect(result).toBe('0');
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -157,20 +98,17 @@ describe('Mapping Preview directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-preview')).toBe(true);
-            expect(this.element.querySelectorAll('.boxed').length).toBe(1);
         });
         it('depending on whether a mapping has been selected', function() {
             mappingManagerSvc.mapping = undefined;
             scope.$digest();
             expect(this.element.querySelectorAll('.lead').length).toBe(1);
-            expect(this.element.find('custom-button').length).toBe(0);
             expect(this.element.querySelectorAll('.class-list').length).toBe(0);
             expect(this.element.querySelectorAll('.list').length).toBe(0);
 
             mappingManagerSvc.mapping = {jsonld: []};
             scope.$digest();
             expect(this.element.querySelectorAll('.lead').length).toBe(0);
-            expect(this.element.find('custom-button').length).toBe(1);
             expect(this.element.querySelectorAll('.class-list').length).toBe(1);
             expect(this.element.querySelectorAll('.list').length).toBe(1);
         });

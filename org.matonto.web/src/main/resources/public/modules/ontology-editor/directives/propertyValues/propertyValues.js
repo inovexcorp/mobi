@@ -27,9 +27,9 @@
         .module('propertyValues', [])
         .directive('propertyValues', propertyValues);
 
-        propertyValues.$inject = ['responseObj'];
+        propertyValues.$inject = ['responseObj', 'stateManagerService'];
 
-        function propertyValues(responseObj) {
+        function propertyValues(responseObj, stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -37,16 +37,25 @@
                 scope: {
                     property: '=',
                     entity: '=',
-                    edit: '&',
-                    remove: '&'
+                    edit: '&?',
+                    remove: '&?'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
+                    dvm.sm = stateManagerService;
 
                     dvm.isBlankNode = function(id) {
                         return typeof id === 'string' && _.includes(id, '_:b');
+                    }
+
+                    dvm.getBlankNodeValue = function(id) {
+                        var result;
+                        if (dvm.isBlankNode(id)) {
+                            result = _.get(dvm.sm.listItem.blankNodes, id, id);
+                        }
+                        return result;
                     }
                 }
             }

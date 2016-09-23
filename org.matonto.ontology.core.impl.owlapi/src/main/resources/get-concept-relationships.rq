@@ -1,0 +1,39 @@
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix skos: <http://www.w3.org/2004/02/skos/core#>
+
+select ?parent ?child
+where {
+    graph ?graph {
+        {
+            ?parent rdf:type skos:Concept
+            optional {
+                ?child skos:broaderTransitive ?parent
+            }
+            optional {
+                ?child skos:broader ?parent
+            }
+            optional {
+                ?child skos:broadMatch ?parent
+            }
+            optional {
+                ?child ^skos:narrowerTransitive ?parent
+            }
+            optional {
+                ?child ^skos:narrower ?parent
+            }
+            optional {
+                ?child ^skos:narrowMatch ?parent
+            }
+        }
+        union
+        {
+            ?parent rdf:type skos:ConceptScheme
+            optional {
+                ?child ^skos:hasTopConcept ?parent
+            }
+            optional {
+                ?child skos:topConceptOf ?parent
+            }
+        }
+    }
+}

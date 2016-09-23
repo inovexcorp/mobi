@@ -76,7 +76,7 @@ describe('Datatype Property Overlay directive', function() {
                 scope.$digest();
 
                 var header = angular.element(element.find('h6')[0]);
-                var buttons = element.querySelectorAll('custom-button:not([type])');
+                var buttons = element.querySelectorAll('button.btn-primary');
                 expect(header.text().trim()).toBe(test.header);
                 expect(buttons.length).toBe(1);
                 expect(angular.element(buttons[0]).text().trim()).toBe(test.button);
@@ -110,16 +110,18 @@ describe('Datatype Property Overlay directive', function() {
                 expect(stateManagerSvc.selected.prop).toBeDefined();
                 expect(stateManagerSvc.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(stateManagerSvc.showDataPropertyOverlay).toBe(false);
-                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
-                    stateManagerSvc.state.entityIRI, true);
+                expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
+                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                    stateManagerSvc.getActiveEntityIRI(), true);
             });
             it('without a type', function() {
                 controller.addProperty({}, this.value);
                 expect(stateManagerSvc.selected.prop).toBeDefined();
                 expect(stateManagerSvc.selected.prop).toContain({'@value': this.value});
                 expect(stateManagerSvc.showDataPropertyOverlay).toBe(false);
-                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
-                    stateManagerSvc.state.entityIRI, true);
+                expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
+                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                    stateManagerSvc.getActiveEntityIRI(), true);
             });
             
         });
@@ -135,21 +137,24 @@ describe('Datatype Property Overlay directive', function() {
                 controller.editProperty({}, this.value, type);
                 expect(stateManagerSvc.selected.prop[stateManagerSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
                 expect(stateManagerSvc.showDataPropertyOverlay).toBe(false);
-                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
-                    stateManagerSvc.state.entityIRI, true);
+                expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
+                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                    stateManagerSvc.getActiveEntityIRI(), true);
 
                 controller.editProperty({}, this.value);
                 expect(stateManagerSvc.selected.prop[stateManagerSvc.propertyIndex]).toEqual({'@value': this.value});
                 expect(stateManagerSvc.showDataPropertyOverlay).toBe(false);
-                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
-                    stateManagerSvc.state.entityIRI, true);
+                expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
+                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                    stateManagerSvc.getActiveEntityIRI(), true);
             });
             it('if the type has not changed', function() {
                 controller.editProperty({}, this.value);
                 expect(stateManagerSvc.selected.prop[stateManagerSvc.propertyIndex]).toEqual({'@value': this.value});
                 expect(stateManagerSvc.showDataPropertyOverlay).toBe(false);
-                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
-                    stateManagerSvc.state.entityIRI, true);
+                expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
+                expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                    stateManagerSvc.getActiveEntityIRI(), true);
             });
         });
         it('should return the namespace is present', function() {

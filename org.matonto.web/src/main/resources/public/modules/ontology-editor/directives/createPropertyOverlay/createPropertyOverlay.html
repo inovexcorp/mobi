@@ -22,47 +22,28 @@
   -->
 <div class="overlay">
     <div class="content">
-        <!-- section header -->
         <h6>Create New OWL Property</h6>
-        <!-- error -->
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <!-- @id -->
         <static-iri iri="dvm.property['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <form name="dvm.createPropertyForm" class="clearfix" novalidate autocomplete="off">
-            <!-- dcterms:title -->
             <div class="form-group">
-                <custom-label muted-text="'*Required'">Name</custom-label>
+                <custom-label>Name</custom-label>
                 <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                        ng-model="dvm.property[dvm.prefixes.dcterms + 'title'][0]['@value']">
             </div>
-            <!-- @type -->
-            <string-select ng-model="dvm.property['@type']"
-                           display-text="'Type'"
-                           muted-text="'*Required'"
-                           on-change="dvm.property[dvm.prefixes.rdfs + 'range'] = []"
-                           select-list="dvm.om.propertyTypes"></string-select>
-            <!-- dcterms:description -->
+            <string-select ng-model="dvm.property['@type']" display-text="'Type'" select-list="dvm.om.propertyTypes"
+                           on-change="dvm.property[dvm.prefixes.rdfs + 'range'] = []"></string-select>
             <text-area ng-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
-                       display-text="'Description'"></text-area>
-            <!-- rdfs:domain -->
-            <object-select ng-model="dvm.property[dvm.prefixes.rdfs + 'domain']"
-                           display-text="'Domain'"
-                           select-list="dvm.sm.state.subClasses"></object-select>
-            <!-- rdfs:range -->
-            <object-select ng-if="dvm.om.isObjectProperty(dvm.property)"
-                           ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
-                           display-text="'Range'"
-                           select-list="dvm.sm.state.subClasses"></object-select>
-            <object-select ng-if="dvm.om.isDataTypeProperty(dvm.property)"
-                           ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
-                           display-text="'Range'"
-                           select-list="dvm.sm.state.dataPropertyRange"></object-select>
-            <!-- create property buttons -->
+                       display-text="'Description'" muted-text="'(Optional)'"></text-area>
+            <object-select ng-model="dvm.property[dvm.prefixes.rdfs + 'domain']" display-text="'Domain'"
+                           muted-text="'(Optional)'" select-list="dvm.sm.listItem.subClasses"></object-select>
+            <object-select ng-if="dvm.om.isObjectProperty(dvm.property)" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
+                           display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.sm.listItem.subClasses"></object-select>
+            <object-select ng-if="dvm.om.isDataTypeProperty(dvm.property)" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
+                           display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.sm.listItem.dataPropertyRange"></object-select>
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="dvm.createPropertyForm.$invalid || !dvm.property['@type'].length"
-                               on-click="dvm.create()">Create</custom-button>
-                <custom-button on-click="dvm.sm.showCreatePropertyOverlay = false"
-                               type="'secondary'">Cancel</custom-button>
+                <button class="btn btn-primary pull-right" ng-disabled="dvm.createPropertyForm.$invalid || !dvm.property['@type'].length" ng-click="dvm.create()">Create</button>
+                <button class="btn btn-default pull-right" ng-click="dvm.sm.showCreatePropertyOverlay = false">Cancel</button>
             </div>
         </form>
     </div>

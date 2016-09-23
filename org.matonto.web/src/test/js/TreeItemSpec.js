@@ -118,9 +118,9 @@ describe('Tree Item directive', function() {
                     var anchors = element.find('a');
                     expect(anchors.length).toBe(1);
                 });
-                it('and it has two icons', function() {
+                it('and it has one icons', function() {
                     var icons = element.find('i');
-                    expect(icons.length).toBe(2);
+                    expect(icons.length).toBe(1);
                 });
             });
             describe('is true', function() {
@@ -132,9 +132,9 @@ describe('Tree Item directive', function() {
                     var anchors = element.find('a');
                     expect(anchors.length).toBe(1);
                 });
-                it('and it has two icons', function() {
+                it('and it has one icons', function() {
                     var icons = element.find('i');
-                    expect(icons.length).toBe(2);
+                    expect(icons.length).toBe(1);
                 });
                 it('and it has an anchor with a double click attribute', function() {
                     var anchors = element.querySelectorAll('[ng-dblclick]');
@@ -160,13 +160,13 @@ describe('Tree Item directive', function() {
             it('is true', function() {
                 scope.isBold = true;
                 scope.$digest();
-                var strong = element.find('strong');
+                var strong = element.querySelectorAll('.bold');
                 expect(strong.length).toBe(1);
             });
             it('is false', function() {
                 scope.isBold = false;
                 scope.$digest();
-                var strong = element.find('strong');
+                var strong = element.querySelectorAll('.bold');
                 expect(strong.length).toBe(0);
             });
         });

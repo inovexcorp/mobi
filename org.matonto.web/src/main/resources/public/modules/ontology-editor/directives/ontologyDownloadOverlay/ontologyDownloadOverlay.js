@@ -27,9 +27,9 @@
         .module('ontologyDownloadOverlay', [])
         .directive('ontologyDownloadOverlay', ontologyDownloadOverlay);
 
-        ontologyDownloadOverlay.$inject = ['REGEX', 'stateManagerService', 'ontologyManagerService'];
+        ontologyDownloadOverlay.$inject = ['$filter', 'REGEX', 'stateManagerService', 'ontologyManagerService'];
 
-        function ontologyDownloadOverlay(REGEX, stateManagerService, ontologyManagerService) {
+        function ontologyDownloadOverlay($filter, REGEX, stateManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,10 +42,10 @@
                     dvm.fileNamePattern = REGEX.FILENAME;
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.fileName = dvm.om.getBeautifulIRI(dvm.om.getOntologyIRI(dvm.sm.ontology)).replace(' ', '_');
+                    dvm.fileName = $filter('splitIRI')(dvm.sm.downloadId).end;
 
                     dvm.download = function() {
-                        dvm.om.downloadOntologyFile(dvm.sm.state.ontologyId, dvm.serialization, dvm.fileName);
+                        dvm.om.downloadOntologyFile(dvm.sm.downloadId, dvm.serialization, dvm.fileName);
                         dvm.sm.showDownloadOverlay = false;
                     }
                 }

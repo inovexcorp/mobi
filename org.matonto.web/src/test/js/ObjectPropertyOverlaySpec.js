@@ -49,8 +49,8 @@ describe('Object Property Overlay directive', function() {
         });
     });
 
-    it('intializes with the correct selected value object', function() {
-        stateManagerSvc.state = {individuals: [{}]};
+    it('initializes with the correct selected value object', function() {
+        stateManagerSvc.listItem = {individuals: [{}]};
         stateManagerSvc.propertyValue = 'indiv';
         responseObj.getItemIri.and.returnValue('indiv');
         element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);
@@ -86,7 +86,7 @@ describe('Object Property Overlay directive', function() {
                 scope.$digest();
 
                 var header = angular.element(element.find('h6')[0]);
-                var buttons = element.querySelectorAll('custom-button:not([type])');
+                var buttons = element.querySelectorAll('button.btn-primary');
                 expect(header.text().trim()).toBe(test.header);
                 expect(buttons.length).toBe(1);
                 expect(angular.element(buttons[0]).text().trim()).toBe(test.button);
@@ -113,8 +113,9 @@ describe('Object Property Overlay directive', function() {
             expect(stateManagerSvc.selected.prop).toBeDefined();
             expect(stateManagerSvc.selected.prop).toContain(value);
             expect(stateManagerSvc.showObjectPropertyOverlay).toBe(false);
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
-                stateManagerSvc.state.entityIRI, true);
+            expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                stateManagerSvc.getActiveEntityIRI(), true);
         });
         it('should edit an object property', function() {
             var value = {'@id': 'value'};
@@ -124,8 +125,9 @@ describe('Object Property Overlay directive', function() {
             controller.editProperty({}, value);
             expect(stateManagerSvc.selected.prop[stateManagerSvc.propertyIndex]).toEqual(value);
             expect(stateManagerSvc.showObjectPropertyOverlay).toBe(false);
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.state.ontology,
-                stateManagerSvc.state.entityIRI, true);
+            expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                stateManagerSvc.getActiveEntityIRI(), true);
         });
         it('should return the namespace is present', function() {
             var result = controller.getItemNamespace({namespace: 'namespace'});

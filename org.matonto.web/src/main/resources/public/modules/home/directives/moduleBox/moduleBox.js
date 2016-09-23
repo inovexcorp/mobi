@@ -34,9 +34,9 @@
                 transclude: true,
                 templateUrl: 'modules/home/directives/moduleBox/moduleBox.html',
                 scope: {
-                    backgroundColor: '@',
-                    headerText: '@',
-                    iconName: '@'
+                    backgroundColor: '<',
+                    headerText: '<',
+                    iconName: '<'
                 }
             }
         }

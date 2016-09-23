@@ -43,17 +43,17 @@ describe('Pagination directive', function() {
             this.element = $compile(angular.element('<pagination links="links" current-page="currentPage" get-page="getPage(direction)"></pagination>'))(scope);
             scope.$digest();
         });
-        it('links should be two way bound', function() {
+        it('links should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.links = {prev: 'prev'};
             scope.$digest();
-            expect(scope.links).toEqual({prev: 'prev'});
+            expect(scope.links).toEqual({});
         });
-        it('currentPage should be two way bound', function() {
+        it('currentPage should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.currentPage = 1;
             scope.$digest();
-            expect(scope.currentPage).toBe(1);
+            expect(scope.currentPage).toBe(0);
         });
         it('getPage should be called in parent scope when invoked', function() {
             var isolatedScope = this.element.isolateScope();

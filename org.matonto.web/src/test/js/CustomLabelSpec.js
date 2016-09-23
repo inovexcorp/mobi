@@ -54,16 +54,15 @@ describe('Custom Label directive', function() {
 
             this.element = $compile(angular.element('<custom-label muted-text="mutedText"></custom-label>'))(scope);
             scope.$digest();
-            this.firstChild = angular.element(this.element.children()[0]);
         });
         it('for wrapping containers', function() {
-            expect(this.firstChild.hasClass('control-label')).toBe(true);
+            expect(this.element.hasClass('control-label')).toBe(true);
         });
         it('with small text if there is muted text', function() {
-            expect(this.firstChild.find('small').length).toBe(0);
+            expect(this.element.find('small').length).toBe(0);
             scope.mutedText = 'Muted';
             scope.$digest();
-            expect(this.firstChild.find('small').length).toBe(1);
+            expect(this.element.find('small').length).toBe(1);
         });
     });
 });

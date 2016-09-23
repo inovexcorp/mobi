@@ -33,27 +33,27 @@
             var self = this;
             var prefix = '/matontorest/ontologies/';
 
-            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], function(item) {
+            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => {
                 return {
-                    'namespace': prefixes.rdfs,
-                    'localName': item
+                    namespace: prefixes.rdfs,
+                    localName: item
                 }
             });
-            var owlAnnotations = _.map(['deprecated', 'versionInfo', 'priorVersion', 'backwardCompatibleWith',
-                'incompatibleWith'], function(item) {
+            var dcAnnotations = _.map(['description', 'title'], item => {
                 return {
-                    'namespace': prefixes.owl,
-                    'localName': item
+                    namespace: prefixes.dcterms,
+                    localName: item
                 }
             });
-            var dcAnnotations = _.map(['description', 'title'], function(item) {
+            var defaultAnnotations = _.concat(angular.copy(rdfsAnnotations), angular.copy(dcAnnotations));
+
+            self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
+                'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {
                 return {
-                    'namespace': prefixes.dcterms,
-                    'localName': item
+                    namespace: prefixes.skos,
+                    localName: item
                 }
             });
-            var defaultAnnotations = _.concat(angular.copy(rdfsAnnotations), angular.copy(owlAnnotations),
-                angular.copy(dcAnnotations));
 
             self.getDefaultAnnotations = function() {
                 return angular.copy(defaultAnnotations);
@@ -66,9 +66,12 @@
                 }
             }
 
-            self.add = function(entity, prop, value) {
+            self.add = function(entity, prop, value, type) {
                 if (prop) {
                     var annotation = {'@value': value};
+                    if (type) {
+                        annotation['@type'] = type;
+                    }
                     if (_.has(entity, prop)) {
                         entity[prop].push(annotation);
                     } else {
@@ -77,9 +80,14 @@
                 }
             }
 
-            self.edit = function(entity, prop, value, index) {
+            self.edit = function(entity, prop, value, index, type) {
                 if (prop) {
-                    entity[prop][index]['@value'] = value;
+                    var annotation = entity[prop][index];
+                    annotation['@value'] = value;
+
+                    if (type) {
+                        annotation['@type'] = type;
+                    }
                 }
             }
 

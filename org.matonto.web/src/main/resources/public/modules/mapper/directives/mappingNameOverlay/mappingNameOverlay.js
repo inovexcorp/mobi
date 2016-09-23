@@ -48,9 +48,9 @@
          */
         .directive('mappingNameOverlay', mappingNameOverlay);
 
-        mappingNameOverlay.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService']
+        mappingNameOverlay.$inject = ['$filter', 'mappingManagerService', 'mapperStateService']
 
-        function mappingNameOverlay(mappingManagerService, mapperStateService, ontologyManagerService) {
+        function mappingNameOverlay($filter, mappingManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -60,12 +60,11 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
-                    dvm.newName = dvm.om.getBeautifulIRI(_.get(dvm.mm.mapping, 'id', ''));
+                    dvm.newName = $filter('splitIRI')(_.get(dvm.mm.mapping, 'id', '')).end;
 
                     dvm.set = function() {
                         var iri = dvm.mm.getMappingId(dvm.newName);
-                        if (dvm.state.step === 0) {
+                        if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.step = dvm.state.fileUploadStep;
                             dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(iri);
                         }
@@ -73,7 +72,7 @@
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {
-                        if (dvm.state.step === 0) {
+                        if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.editMapping = false;
                             dvm.state.newMapping = false;
                             dvm.mm.mapping = undefined;
