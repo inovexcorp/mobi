@@ -70,6 +70,11 @@
                         if (dvm.ontology[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.ontology, prefixes.dcterms + 'description');
                         }
+                        if (dvm.type === 'vocabulary') {
+                            dvm.ontology[prefixes.owl + 'imports'] = [{
+                                '@id': prefixes.skos
+                            }];
+                        }
                         dvm.om.createOntology(dvm.ontology, dvm.type)
                             .then(response => {
                                 dvm.sm.addState(response.ontologyId, response.entityIRI, dvm.type);

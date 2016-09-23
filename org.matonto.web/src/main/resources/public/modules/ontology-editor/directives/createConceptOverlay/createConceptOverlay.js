@@ -89,6 +89,7 @@
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.concept['@id']);
                         var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                        _.get(listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay
