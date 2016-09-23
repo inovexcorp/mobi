@@ -33,19 +33,27 @@
             var self = this;
             var prefix = '/matontorest/ontologies/';
 
-            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], function(item) {
+            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => {
                 return {
-                    'namespace': prefixes.rdfs,
-                    'localName': item
+                    namespace: prefixes.rdfs,
+                    localName: item
                 }
             });
-            var dcAnnotations = _.map(['description', 'title'], function(item) {
+            var dcAnnotations = _.map(['description', 'title'], item => {
                 return {
-                    'namespace': prefixes.dcterms,
-                    'localName': item
+                    namespace: prefixes.dcterms,
+                    localName: item
                 }
             });
             var defaultAnnotations = _.concat(angular.copy(rdfsAnnotations), angular.copy(dcAnnotations));
+
+            self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
+                'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {
+                return {
+                    namespace: prefixes.skos,
+                    localName: item
+                }
+            });
 
             self.getDefaultAnnotations = function() {
                 return angular.copy(defaultAnnotations);

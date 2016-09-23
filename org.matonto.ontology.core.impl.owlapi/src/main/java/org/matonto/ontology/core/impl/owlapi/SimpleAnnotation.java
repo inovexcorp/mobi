@@ -27,10 +27,9 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.rdf.api.Value;
 
+import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
-import javax.annotation.Nonnull;
 
 
 public class SimpleAnnotation implements Annotation {
@@ -46,7 +45,7 @@ public class SimpleAnnotation implements Annotation {
         this.property = property;
         this.value = value;
         if (annotations != null) {
-            this.annotations = new TreeSet<Annotation>(annotations);
+            this.annotations = new HashSet<>(annotations);
         }
     }
 

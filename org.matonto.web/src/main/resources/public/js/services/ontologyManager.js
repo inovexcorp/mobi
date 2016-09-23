@@ -239,6 +239,23 @@
                     values: 'conceptList'
                 }
             ];
+            /**
+             * @ngdoc property
+             * @name schemeRelationshipList
+             * @propertyOf ontologyManager.service:ontologyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * `schemeRelationshipList` holds an array of the relationships that skos:ConceptSchemes can have with other
+             * entities.
+             */
+            self.schemeRelationshipList = [
+                {
+                    namespace: prefixes.skos,
+                    localName: 'hasTopConcept',
+                    values: 'conceptList'
+                }
+            ];
 
             /**
              * @ngdoc method
@@ -1927,7 +1944,6 @@
                                 );
                             });
                         }
-                        _.pullAllWith(listItem.annotations, self.ontologyProperties, compareListItems);
                         var classHierarchyResponse = response[2];
                         if (_.get(classHierarchyResponse, 'status') === 200) {
                             listItem.classHierarchy = classHierarchyResponse.data.hierarchy;
@@ -1948,6 +1964,11 @@
                             listItem.objectPropertyHierarchy = objectPropertyHierarchyResponse.data.hierarchy;
                             listItem.objectPropertyIndex = objectPropertyHierarchyResponse.data.index;
                         }
+                        _.pullAllWith(
+                            listItem.annotations,
+                            _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
+                            compareListItems
+                        );
                         self.list.push(listItem);
                         deferred.resolve();
                     } else {
@@ -1968,9 +1989,12 @@
                 ]).then(response => {
                     var irisResponse = response[0];
                     if (_.get(irisResponse, 'status') === 200) {
+                        listItem.subDataProperties = _.get(irisResponse, 'data.dataProperties');
+                        listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
                         listItem.annotations = _.unionWith(
                             _.get(irisResponse, 'data.annotationProperties'),
                             defaultAnnotations,
+                            angular.copy(annotationManagerService.skosAnnotations),
                             _.isMatch
                         );
                         listItem.dataPropertyRange = _.unionWith(
@@ -1986,6 +2010,16 @@
                                     listItem.annotations,
                                     compareListItems
                                 );
+                                listItem.subDataProperties = _.unionWith(
+                                    addOntologyIdToArray(iriList.dataProperties, iriList.id),
+                                    listItem.subDataProperties,
+                                    compareListItems
+                                );
+                                listItem.subObjectProperties = _.unionWith(
+                                    addOntologyIdToArray(iriList.objectProperties, iriList.id),
+                                    listItem.subObjectProperties,
+                                    compareListItems
+                                );
                             });
                         }
                         var conceptHierarchyResponse = response[2];
@@ -1993,7 +2027,12 @@
                             listItem.conceptHierarchy = conceptHierarchyResponse.data.hierarchy;
                             listItem.conceptIndex = conceptHierarchyResponse.data.index;
                         }
-                        _.pullAllWith(listItem.annotations, self.ontologyProperties, compareListItems);
+                        _.pullAllWith(
+                            listItem.annotations,
+                            _.concat(self.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
+                                angular.copy(self.conceptRelationshipList), angular.copy(self.schemeRelationshipList)),
+                            compareListItems
+                        );
                         self.list.push(listItem);
                         deferred.resolve();
                     } else {

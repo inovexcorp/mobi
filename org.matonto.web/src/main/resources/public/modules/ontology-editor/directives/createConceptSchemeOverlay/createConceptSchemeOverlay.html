@@ -37,7 +37,7 @@
                     <ui-select-match placeholder="Select Concept(s)">
                         <span title="{{$item}}">{{($item | splitIRI).end}}</span>
                     </ui-select-match>
-                    <ui-select-choices group-by="dvm.getIRINamespace"repeat="{'@id': iri} as iri in dvm.om.getConceptIRIs(dvm.sm.ontology) | filter:$select.search | orderBy:'localName' track by iri">
+                    <ui-select-choices group-by="dvm.getIRINamespace" repeat="{'@id': iri} as iri in dvm.om.getConceptIRIs(dvm.sm.ontology) | filter:$select.search | orderBy:'localName' track by iri">
                         <div title="{{iri}}" ng-bind-html="(iri | splitIRI).end | highlight: $select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>

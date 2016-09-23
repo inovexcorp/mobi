@@ -41,19 +41,12 @@
                     dvm.sm = stateManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.relationshipList = [];
-                    dvm.schemeRelationshipList = [
-                        {
-                            namespace: prefixes.skos,
-                            localName: 'hasTopConcept',
-                            values: 'conceptList'
-                        }
-                    ];
 
                     $scope.$watch('dvm.sm.selected', function(newValue) {
                         if (dvm.om.isConcept(dvm.sm.selected)) {
                             dvm.relationshipList = dvm.om.conceptRelationshipList;
                         } else if (dvm.om.isConceptScheme(dvm.sm.selected)) {
-                            dvm.relationshipList = dvm.schemeRelationshipList;
+                            dvm.relationshipList = dvm.om.schemeRelationshipList;
                         }
                     });
                 }]

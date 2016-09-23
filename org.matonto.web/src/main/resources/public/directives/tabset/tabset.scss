@@ -5,7 +5,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 0;
+
 
     > .tabset-headings {
         display: flex;
@@ -90,8 +90,8 @@
 
     > .tabset-contents {
         flex: 1;
-        height: 0;
         min-height: 0;
+
     }
 
     &.centered {

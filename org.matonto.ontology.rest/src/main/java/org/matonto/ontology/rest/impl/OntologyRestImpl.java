@@ -35,13 +35,17 @@ import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.persistence.utils.Values;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.BNode;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
@@ -52,15 +56,26 @@ import org.openrdf.rio.helpers.JSONLDSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -605,12 +620,19 @@ public class OntologyRestImpl implements OntologyRest {
      * Gets Annotation JSONArray.
      */
     private JSONObject getAnnotationArray(@Nonnull Ontology ontology) {
-        List<IRI> iris = ontology.getAllAnnotations()
+        Set<IRI> iris = new HashSet<>();
+
+        iris.addAll(ontology.getAllAnnotations()
                 .stream()
                 .map(Annotation::getProperty)
                 .map(Entity::getIRI)
-                .collect(Collectors.toList());
-        
+                .collect(Collectors.toSet()));
+
+        iris.addAll(ontology.getAllAnnotationProperties()
+                .stream()
+                .map(AnnotationProperty::getIRI)
+                .collect(Collectors.toSet()));
+
         JSONObject object = new JSONObject();
         object.put("annotationProperties", iriListToJsonArray(iris));
         return object;
@@ -739,7 +761,7 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
-    private JSONArray iriListToJsonArray(@Nonnull List<IRI> iris) {
+    private JSONArray iriListToJsonArray(@Nonnull Collection<IRI> iris) {
         if (iris.isEmpty()) {
             return new JSONArray();
         }
