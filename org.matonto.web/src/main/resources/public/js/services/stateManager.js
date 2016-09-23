@@ -262,7 +262,6 @@
                         var current = _.find(hierarchy, {entityIRI: path.shift()});
                         while (path.length > 1) {
                             current = _.find(current.subEntities, {entityIRI: path.shift()});
-                            console.log(current);
                         }
                         deletedEntity = _.remove(current.subEntities, {entityIRI: path.shift()})[0];
                         if (!current.subEntities.length) {
