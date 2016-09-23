@@ -70,11 +70,15 @@
         <div class="type-container">
             <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type"
                     ng-dblclick="dvm.open(dvm.openId, dvm.type)">
-                <i class="fa fa-fw fa-file-code-o fa-2x"></i><span class="text">Ontology Editor</span>
+                <div class="text-wrapper">
+                    <i class="fa fa-fw fa-file-code-o fa-2x"></i><span class="text">Ontology Editor</span>
+                </div>
             </button>
             <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type"
                     ng-dblclick="dvm.open(dvm.openId, dvm.type)">
-                <i class="fa fa-fw fa-file-text-o fa-2x"></i><span class="text">Vocabulary Editor</span>
+                <div class="text-wrapper">
+                    <i class="fa fa-fw fa-file-text-o fa-2x"></i><span class="text">Vocabulary Editor</span>
+                </div>
             </button>
         </div>
     </confirmation-overlay>

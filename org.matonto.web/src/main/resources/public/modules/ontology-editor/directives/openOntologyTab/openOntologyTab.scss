@@ -17,7 +17,9 @@
 
     .list {
         flex: 1;
+        height: 0;
         margin: 0;
+        min-height: 0;
         padding: 15px 0;
 
         .open-ontology-content {
@@ -27,6 +29,7 @@
             .ontologies {
                 flex: 1;
                 height: 0;
+                min-height: 0;
                 padding: 15px;
 
                 .ontology {
@@ -106,7 +109,6 @@
             background: $gray-lighter;
             border: 2px solid $gray-light;
             border-radius: 10px;
-            display: flex;
             flex: 1;
             margin-right: 15px;
             outline: 0;
@@ -116,9 +118,16 @@
                 margin-right: 0;
             }
 
-            .text {
-                font-size: 1.25em;
-                flex: 1;
+            .text-wrapper {
+                display: flex;
+                flex-direction: row;
+
+                .text {
+                    font-size: 1.25em;
+                    flex: 1;
+                    min-width: 0;
+                    width: 0;
+                }
             }
 
             &.active {

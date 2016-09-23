@@ -116,7 +116,7 @@
                     }
                 },
                 data: {
-                    title: 'Mapper'
+                    title: 'Mapping Tool'
                 }
             })
             .state('root.settings', {
@@ -138,7 +138,7 @@
                     }
                 },
                 data: {
-                    title: 'SPARQL'
+                    title: 'SPARQL Editor'
                 }
             });
 

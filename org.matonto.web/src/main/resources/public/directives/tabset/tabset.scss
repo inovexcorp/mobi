@@ -21,7 +21,8 @@
             display: inline-block;
             flex-basis: auto;
             flex-grow: 1;
-            font-size: 1.125em;
+            font-size: 16px;
+            line-height: 22px;
             margin: 12px 0 0 8px;
             padding: 7px 15px;
             text-decoration: none;
@@ -90,6 +91,7 @@
     > .tabset-contents {
         flex: 1;
         height: 0;
+        min-height: 0;
     }
 
     &.centered {
