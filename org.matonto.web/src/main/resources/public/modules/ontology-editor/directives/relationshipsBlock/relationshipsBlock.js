@@ -34,8 +34,9 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/relationshipsBlock/relationshipsBlock.html',
-                scope: {
-                    relationshipList: '<'
+                scope: {},
+                bindToController: {
+                    relationshipList: '='
                 },
                 controllerAs: 'dvm',
                 controller: function() {
