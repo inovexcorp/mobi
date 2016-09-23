@@ -1057,19 +1057,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteObjectProperty = function(ontologyId, propertyIRI) {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                $http.delete(prefix + encodeURIComponent(ontologyId) + '/object-properties/'
-                    + encodeURIComponent(propertyIRI))
-                    .then(response => {
-                        onDeleteSuccess(response, ontologyId, propertyIRI, 'subObjectProperties', deferred);
-                    }, response => {
-                        onDeleteError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/object-properties/' + encodeURIComponent(propertyIRI));
             }
             /**
              * @ngdoc method
@@ -1087,19 +1075,12 @@
              * property.
              */
             self.createObjectProperty = function(ontologyId, propertyJSON) {
-                var deferred = $q.defer();
                 var config = {
                     params: {
                         resourcejson: propertyJSON
                     }
                 };
-                $http.post(prefix + encodeURIComponent(ontologyId) + '/object-properties', null, config)
-                    .then(response => {
-                        onCreateSuccess(response, ontologyId, propertyJSON, 'subObjectProperties', deferred);
-                    }, response => {
-                        onCreateError(response, deferred);
-                    });
-                return deferred.promise;
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/object-properties', null, config);
             }
             /**
              * @ngdoc method
@@ -1161,19 +1142,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteDataTypeProperty = function(ontologyId, propertyIRI) {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                $http.delete(prefix + encodeURIComponent(ontologyId) + '/data-properties/'
-                    + encodeURIComponent(propertyIRI))
-                    .then(response => {
-                        onDeleteSuccess(response, ontologyId, propertyIRI, 'subDataProperties', deferred);
-                    }, response => {
-                        onDeleteError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/data-properties/' + encodeURIComponent(propertyIRI));
             }
             /**
              * @ngdoc method
@@ -1191,19 +1160,12 @@
              * property.
              */
             self.createDataTypeProperty = function(ontologyId, propertyJSON) {
-                var deferred = $q.defer();
                 var config = {
                     params: {
                         resourcejson: propertyJSON
                     }
                 };
-                $http.post(prefix + encodeURIComponent(ontologyId) + '/data-properties', null, config)
-                    .then(response => {
-                        onCreateSuccess(response, ontologyId, propertyJSON, 'subDataProperties', deferred);
-                    }, response => {
-                        onCreateError(response, deferred);
-                    });
-                return deferred.promise;
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/data-properties', null, config);
             }
             /**
              * @ngdoc method
@@ -1369,18 +1331,7 @@
              * @returns {Promise} A promise with a boolean indicating the success of the deletion.
              */
             self.deleteIndividual = function(ontologyId, individualIRI) {
-                $rootScope.showSpinner = true;
-                var deferred = $q.defer();
-                $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/'
-                    + encodeURIComponent(individualIRI)).then(response => {
-                        onDeleteSuccess(response, ontologyId, individualIRI, 'individuals', deferred);
-                    }, response => {
-                        onDeleteError(response, deferred);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
+                return $http.delete(prefix + encodeURIComponent(ontologyId) + '/named-individuals/' + encodeURIComponent(individualIRI));
             }
             /**
              * @ngdoc method
@@ -1398,19 +1349,12 @@
              * property.
              */
             self.createIndividual = function(ontologyId, individualJSON) {
-                var deferred = $q.defer();
                 var config = {
                     params: {
                         resourcejson: individualJSON
                     }
                 };
-                $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config)
-                    .then(response => {
-                        onCreateSuccess(response, ontologyId, individualJSON, 'individuals', deferred);
-                    }, response => {
-                        onCreateError(response, deferred);
-                    });
-                return deferred.promise;
+                return $http.post(prefix + encodeURIComponent(ontologyId) + '/named-individuals', null, config);
             }
             /**
              * @ngdoc method
@@ -1757,7 +1701,7 @@
             }
 
             /* Private helper functions */
-            function onCreateSuccess(response, ontologyId, entityJSON, arrayProperty, deferred) {
+            /*function onCreateSuccess(response, ontologyId, entityJSON, arrayProperty, deferred) {
                 if (_.get(response, 'data.added')) {
                     _.set(entityJSON, 'matonto.originalIRI', entityJSON['@id']);
                     self.addEntity(self.getOntologyById(ontologyId), entityJSON);
@@ -1792,7 +1736,7 @@
             }
             function onDeleteError(response, deferred) {
                 deferred.reject(_.get(response, 'data.error', defaultErrorMessage));
-            }
+            }*/
             function updateModels(response) {
                 if(_.has(response, 'data.models', [])) {
                     _.forEach(response.data.models, model => {

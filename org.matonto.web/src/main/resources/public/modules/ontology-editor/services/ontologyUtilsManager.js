@@ -66,8 +66,13 @@
                 var entityIRI = self.sm.getActiveEntityIRI();
                 var split = $filter('splitIRI')(angular.copy(entityIRI));
                 _.remove(_.get(self.sm.listItem, 'subDataProperties'), entityIRI);
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'dataPropertyHierarchy'), entityIRI,
-                    _.get(self.sm.listItem, 'dataPropertyIndex'));
+                commonDelete(entityIRI);
+            }
+
+            self.deleteIndividual = function() {
+                var entityIRI = self.sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(angular.copy(entityIRI));
+                _.remove(_.get(self.sm.listItem, 'individuals'), entityIRI);
                 commonDelete(entityIRI);
             }
 

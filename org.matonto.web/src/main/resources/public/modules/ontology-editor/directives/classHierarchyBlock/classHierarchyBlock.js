@@ -27,10 +27,9 @@
         .module('classHierarchyBlock', [])
         .directive('classHierarchyBlock', classHierarchyBlock);
 
-        classHierarchyBlock.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService',
-            'ontologyUtilsManagerService'];
+        classHierarchyBlock.$inject = ['stateManagerService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function classHierarchyBlock($filter, stateManagerService, ontologyManagerService, ontologyUtilsManagerService) {
+        function classHierarchyBlock(stateManagerService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,

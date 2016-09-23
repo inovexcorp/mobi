@@ -80,7 +80,10 @@
                         var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         _.get(listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
                         var classesWithIndividuals = _.get(listItem, 'classesWithIndividuals');
-                        _.forEach(dvm.individual['@type'], type => classesWithIndividuals.push({entityIRI: type}));
+                        _.forEach(dvm.individual['@type'], type => {
+                            _.set(listItem, 'classesWithIndividuals', _.union(classesWithIndividuals,
+                                [{ entityIRI: type }]));
+                        });
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.om.addEntity(dvm.sm.ontology, dvm.individual);

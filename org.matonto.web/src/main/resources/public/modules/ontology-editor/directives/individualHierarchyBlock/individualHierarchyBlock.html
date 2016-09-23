@@ -25,7 +25,6 @@
         <block-header>
             <span>Individuals Hierarchy</span><a class="pull-right" ng-click="dvm.sm.showCreateIndividualOverlay = true"><i class="fa fa-plus"></i><span>Create Individual</span></a>
         </block-header>
-        <block-search></block-search>
         <block-content>
             <individual-tree></individual-tree>
         </block-content>
@@ -33,4 +32,8 @@
             <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Individual</span></button>
         </block-footer>
     </block>
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Individual'" confirm-click="dvm.deleteIndividual()"
+                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+        <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+    </confirmation-overlay>
 </div>
