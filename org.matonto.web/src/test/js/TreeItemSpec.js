@@ -201,7 +201,7 @@ describe('Tree Item directive', function() {
                 settingsManagerSvc.getTreeDisplay.and.returnValue('pretty');
                 element = $compile(angular.element('<tree-item ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity);
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity, stateManagerSvc.state.type);
             });
         });
         describe('toggleOpen', function() {

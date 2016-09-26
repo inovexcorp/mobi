@@ -49,7 +49,7 @@
                     dvm.properties = _.union(dvm.ontologyProperties, dvm.annotations);
 
                     function markAndClose() {
-                        dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.selected.matonto.originalIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
                         dvm.sm.showOntologyPropertyOverlay = false;
                     }
 

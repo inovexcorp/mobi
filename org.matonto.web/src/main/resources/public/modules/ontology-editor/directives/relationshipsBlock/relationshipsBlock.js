@@ -43,6 +43,12 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
+
+                    dvm.openRemoveOverlay = function(key, index) {
+                        dvm.sm.key = key;
+                        dvm.sm.index = index;
+                        dvm.sm.showRemoveOverlay = true;
+                    }
                 }
             }
         }

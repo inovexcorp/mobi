@@ -2,6 +2,10 @@
 @import "./src/main/resources/public/css/variables";
 
 .home {
+    max-height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+
     h1 {
         font-size: 5em;
         margin: 0;

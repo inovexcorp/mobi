@@ -22,11 +22,12 @@
   -->
 <div class="ontology-editor-tabset">
     <tabset>
-        <tab ng-repeat="item in dvm.om.list" heading="dvm.om.getEntityName(dvm.om.getOntologyEntity(item.ontology))"
+        <tab ng-repeat="item in dvm.om.list" heading="dvm.om.getEntityName(dvm.om.getOntologyEntity(item.ontology, type))"
              on-close="dvm.onClose(item.ontologyId)" active="dvm.sm.getState(item.ontologyId).active"
-             on-click="dvm.sm.setState(item.ontologyId)" marked="dvm.sm.hasChanges(item.ontology, item.ontologyId)">
-            <ontology-tab ng-if="dvm.sm.getState(item.ontologyId).type === 'ontology'" list-item="item"></ontology-tab>
-            <vocabulary-tab ng-if="dvm.sm.getState(item.ontologyId).type === 'vocabulary'" list-item="item"></vocabulary-tab>
+             on-click="dvm.sm.setState(item.ontologyId)" marked="dvm.sm.hasChanges(item.ontology, item.ontologyId)"
+             ng-init="type = dvm.sm.getState(item.ontologyId).type">
+            <ontology-tab ng-if="type === 'ontology'" list-item="item"></ontology-tab>
+            <vocabulary-tab ng-if="type === 'vocabulary'" list-item="item"></vocabulary-tab>
         </tab>
         <tab active="dvm.sm.getState().active" on-click="dvm.sm.setState()" is-last="true">
             <ontology-default-tab></ontology-default-tab>

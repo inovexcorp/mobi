@@ -22,7 +22,7 @@
   -->
 <div class="clearfix">
     <tab-button-container>
-        <tab-button is-active="dvm.sm.state.editorTab === 'basic'" on-click="dvm.sm.setEditorTab('basic')">{{dvm.om.getEntityName(dvm.sm.selected)}}</tab-button>
+        <tab-button is-active="dvm.sm.state.editorTab === 'basic'" on-click="dvm.sm.setEditorTab('basic')">{{dvm.om.getEntityName(dvm.sm.selected, dvm.sm.state.type)}}</tab-button>
         <tab-button is-active="dvm.sm.state.editorTab === 'axioms'" on-click="dvm.sm.setEditorTab('axioms')">Axioms</tab-button>
     </tab-button-container>
 

@@ -45,12 +45,12 @@
                 _.unset(self.state, 'deletedEntities');
             }
 
-            self.setUnsaved = function(ontology, entityIRI, isUnsaved) {
-                _.set(self.om.getEntity(ontology, entityIRI), 'matonto.unsaved', isUnsaved);
+            self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {
+                _.set(self.om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', isUnsaved);
             }
 
-            self.getUnsaved = function(ontology, entityIRI) {
-                return _.get(self.om.getEntity(ontology, entityIRI), 'matonto.unsaved', false);
+            self.getUnsaved = function(ontologyId, entityIRI) {
+                return _.get(self.om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', false);
             }
 
             self.hasUnsavedEntities = function(ontology) {
@@ -69,12 +69,12 @@
                 return _.filter(ontology, {matonto:{created: true}});
             }
 
-            self.setValid = function(ontology, entityIRI, isValid) {
-                _.set(self.om.getEntity(ontology, entityIRI), 'matonto.valid', isValid);
+            self.setValid = function(ontologyId, entityIRI, isValid) {
+                _.set(self.om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
             }
 
-            self.getValid = function(ontology, entityIRI) {
-                return _.get(self.om.getEntity(ontology, entityIRI), 'matonto.valid', true);
+            self.getValid = function(ontologyId, entityIRI) {
+                return _.get(self.om.getEntityById(ontologyId, entityIRI), 'matonto.valid', true);
             }
 
             self.hasInvalidEntities = function(ontology) {
@@ -140,7 +140,7 @@
                 self.setUnsaved(self.ontology, self.getActiveEntityIRI(), true);
             }
             self.setSelected = function(entityIRI) {
-                self.selected = self.om.getEntity(self.ontology, entityIRI);
+                self.selected = self.om.getEntityById(self.listItem.ontologyId, entityIRI);
             }
             self.addState = function(ontologyId, entityIRI, type) {
                 var tabs = {};
@@ -191,8 +191,8 @@
                     self.state = self.newState;
                 } else {
                     self.state = _.find(self.states, {ontologyId});
-                    setVariables(ontologyId, self.getActiveEntityIRI());
                     self.listItem = self.om.getListItemById(ontologyId);
+                    setVariables(ontologyId, self.getActiveEntityIRI());
                 }
                 self.state.active = true;
             }

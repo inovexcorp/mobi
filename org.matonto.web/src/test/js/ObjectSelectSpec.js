@@ -186,11 +186,11 @@ describe('Object Select directive', function() {
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
-                ontologyManagerService.getEntity.and.returnValue({});
+                ontologyManagerService.getEntityById.and.returnValue({});
                 spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
-                ontologyManagerService.getEntity.and.returnValue({'@id': 'id'});
+                ontologyManagerService.getEntityById.and.returnValue({'@id': 'id'});
                 var result = controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });
@@ -218,13 +218,13 @@ describe('Object Select directive', function() {
                 it('when getEntityName is undefined', function() {
                     ontologyManagerService.getEntityName.and.returnValue(undefined);
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}, stateManagerSvc.state.type); // The value of getEntity
                     expect(result).toEqual('test'); // The value of getItemIri
                 });
                 it('when getEntityName is defined', function() {
                     ontologyManagerService.getEntityName.and.returnValue('new');
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}, stateManagerSvc.state.type); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
                 });
             });

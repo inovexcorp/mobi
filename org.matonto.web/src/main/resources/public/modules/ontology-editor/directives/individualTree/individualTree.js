@@ -44,7 +44,7 @@
 
                     dvm.getTreeDisplay = function(entity) {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(entity);
+                            return dvm.om.getEntityName(entity, dvm.sm.state.type);
                         }
                         return _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', ''));
                     }

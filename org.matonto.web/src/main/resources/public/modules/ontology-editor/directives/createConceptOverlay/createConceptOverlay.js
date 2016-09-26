@@ -75,7 +75,7 @@
 
                     dvm.create = function() {
                         _.forEach(dvm.schemes, scheme => {
-                            var entity = dvm.om.getEntity(dvm.sm.ontology, scheme['@id']);
+                            var entity = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, scheme['@id']);
                             if (_.has(entity, prefixes.skos + 'hasTopConcept')) {
                                 entity[prefixes.skos + 'hasTopConcept'].push({'@id': dvm.concept['@id']});
                             } else {

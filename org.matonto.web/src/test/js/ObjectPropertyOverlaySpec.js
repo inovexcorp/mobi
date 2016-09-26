@@ -114,7 +114,7 @@ describe('Object Property Overlay directive', function() {
             expect(stateManagerSvc.selected.prop).toContain(value);
             expect(stateManagerSvc.showObjectPropertyOverlay).toBe(false);
             expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.listItem.ontologyId,
                 stateManagerSvc.getActiveEntityIRI(), true);
         });
         it('should edit an object property', function() {
@@ -126,7 +126,7 @@ describe('Object Property Overlay directive', function() {
             expect(stateManagerSvc.selected.prop[stateManagerSvc.propertyIndex]).toEqual(value);
             expect(stateManagerSvc.showObjectPropertyOverlay).toBe(false);
             expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.listItem.ontologyId,
                 stateManagerSvc.getActiveEntityIRI(), true);
         });
         it('should return the namespace is present', function() {
