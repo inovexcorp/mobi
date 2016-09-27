@@ -27,9 +27,9 @@
         .module('objectPropertyAxioms', [])
         .directive('objectPropertyAxioms', objectPropertyAxioms);
 
-        objectPropertyAxioms.$inject = ['stateManagerService', 'prefixes'];
+        objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService'];
 
-        function objectPropertyAxioms(stateManagerService, prefixes) {
+        function objectPropertyAxioms(ontologyStateService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,40 +38,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.prefixes = prefixes;
-                    dvm.sm = stateManagerService;
-                    dvm.axiomList = [
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'domain',
-                            values: 'subClasses'
-                        },
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'range',
-                            values: 'subClasses'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'equivalentProperty',
-                            values: 'subObjectProperties'
-                        },
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'subPropertyOf',
-                            values: 'subObjectProperties'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'inverseOf',
-                            values: 'subObjectProperties'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'disjointWith',
-                            values: 'subObjectProperties'
-                        }
-                    ];
+                    dvm.sm = ontologyStateService;
+                    dvm.pm = propertyManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.sm.key = key;

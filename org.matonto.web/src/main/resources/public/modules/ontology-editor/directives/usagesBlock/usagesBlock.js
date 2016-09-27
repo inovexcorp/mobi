@@ -27,9 +27,9 @@
         .module('usagesBlock', [])
         .directive('usagesBlock', usagesBlock);
 
-        usagesBlock.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService'];
+        usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService'];
 
-        function usagesBlock($filter, stateManagerService, ontologyManagerService) {
+        function usagesBlock($filter, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     function getBindings() {
                         var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');

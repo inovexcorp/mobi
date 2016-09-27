@@ -279,14 +279,15 @@ function mockMapperState() {
             this.displayDeleteClassConfirm = false;
             this.displayDeletePropConfirm = false;
             this.displayDeleteMappingConfirm = false;
-            this.displayCreateMapping = false;
-            this.displayDownloadMapping = false;
-            this.displayMappingConfig = false;
+            this.displayCreateMappingOverlay = false;
+            this.displayDownloadMappingOverlay = false;
+            this.displayMappingConfigOverlay = false;
             this.displayPropMappingOverlay = false;
             this.editIriTemplate = false;
             this.selectedClassMappingId = '';
             this.selectedPropMappingId = '';
             this.newProp = false;
+            this.highlightIndexes = [];
 
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
@@ -392,9 +393,9 @@ function mockSettingsManager() {
     });
 }
 
-function mockStateManager() {
+function mockOntologyState() {
     module(function($provide) {
-        $provide.service('stateManagerService', function() {
+        $provide.service('ontologyStateService', function() {
             this.states = {};
             this.ontologyIdToClose = '';
             this.state = {
@@ -477,9 +478,9 @@ function mockResponseObj() {
     });
 }
 
-function mockAnnotationManager() {
+function mockPropertyManager() {
     module(function($provide) {
-        $provide.service('annotationManagerService', function($q) {
+        $provide.service('propertyManagerService', function($q) {
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
             this.add = jasmine.createSpy('add');

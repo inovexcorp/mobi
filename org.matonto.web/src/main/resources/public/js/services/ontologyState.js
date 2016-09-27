@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('stateManager', [])
-        .service('stateManagerService', stateManagerService);
+        .module('ontologyState', [])
+        .service('ontologyStateService', ontologyStateService);
 
-        stateManagerService.$inject = ['$rootScope', 'ontologyManagerService', 'updateRefsService'];
+        ontologyStateService.$inject = ['$rootScope', 'ontologyManagerService', 'updateRefsService'];
 
-        function stateManagerService($rootScope, ontologyManagerService, updateRefsService) {
+        function ontologyStateService($rootScope, ontologyManagerService, updateRefsService) {
             var self = this;
             self.states = [];
             self.newState = {active: true};
@@ -174,9 +174,6 @@
                             active: true,
                             entityIRI: entityIRI
                         },
-                        schemes: {
-                            active: false
-                        },
                         concepts: {
                             active: false
                         }
@@ -213,7 +210,7 @@
                 _.remove(self.states, {ontologyId});
             }
             self.getActiveKey = function() {
-                return _.findKey(self.state, ['active', true]);
+                return _.findKey(self.state, ['active', true], 'project');
             }
             self.getActivePage = function() {
                 return self.state[self.getActiveKey()];
@@ -228,8 +225,6 @@
                     self.om.getEntityUsages(self.state.ontologyId, entityIRI)
                         .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
                             response => _.set(self.getActivePage(), 'usages', []));
-                } else if (!entityIRI) {
-                    self.selected = undefined;
                 }
             }
             self.unSelectItem = function() {

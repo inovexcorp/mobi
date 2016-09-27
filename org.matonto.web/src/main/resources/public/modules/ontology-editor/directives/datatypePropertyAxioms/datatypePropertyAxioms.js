@@ -27,9 +27,9 @@
         .module('datatypePropertyAxioms', [])
         .directive('datatypePropertyAxioms', datatypePropertyAxioms);
 
-        datatypePropertyAxioms.$inject = ['stateManagerService', 'prefixes'];
+        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService'];
 
-        function datatypePropertyAxioms(stateManagerService, prefixes) {
+        function datatypePropertyAxioms(ontologyStateService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,35 +38,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.prefixes = prefixes;
-                    dvm.sm = stateManagerService;
-                    dvm.axiomList = [
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'domain',
-                            values: 'subClasses'
-                        },
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'range',
-                            values: 'dataPropertyRange'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'equivalentProperty',
-                            values: 'subDataProperties'
-                        },
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'subPropertyOf',
-                            values: 'subDataProperties'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'disjointWith',
-                            values: 'subDataProperties'
-                        }
-                    ];
+                    dvm.sm = ontologyStateService;
+                    dvm.pm = propertyManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.sm.key = key;

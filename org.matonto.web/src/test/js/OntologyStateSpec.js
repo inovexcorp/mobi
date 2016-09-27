@@ -20,20 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('State Manager service', function() {
-    var stateManagerSvc;
+describe('Ontology State service', function() {
+    var ontologyStateSvc;
     var updateRefsSvc;
     var hierarchy;
     var indexObject;
     var expectedPaths;
 
     beforeEach(function() {
-        module('stateManager');
+        module('ontologyState');
         mockOntologyManager();
         mockUpdateRefs();
 
-        inject(function(stateManagerService, _updateRefsService_) {
-            stateManagerSvc = stateManagerService;
+        inject(function(ontologyStateService, _updateRefsService_) {
+            ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
         });
 
@@ -92,14 +92,14 @@ describe('State Manager service', function() {
 
     describe('getPathsTo', function() {
         it('should return all paths to provided node', function() {
-            var result = stateManagerSvc.getPathsTo(indexObject, 'node3a');
+            var result = ontologyStateSvc.getPathsTo(indexObject, 'node3a');
             expect(result.length).toBe(3);
-            expect(_.isEqual(_.sortBy(result), _.sortBy(expectedPaths))).toBe(true);
+            expect(_.sortBy(result)).toEqual(_.sortBy(expectedPaths));
         });
     });
     describe('deleteEntityFromHierarchy', function() {
         it('should delete the entity from the hierarchy tree', function() {
-            stateManagerSvc.deleteEntityFromHierarchy(hierarchy, 'node3a', indexObject);
+            ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node3a', indexObject);
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
                 subEntities: [{
@@ -127,7 +127,7 @@ describe('State Manager service', function() {
             });
         });
         /*it('should move the subEntities if required', function() {
-            stateManagerSvc.deleteEntityFromHierarchy(hierarchy, 'node2a', indexObject);
+            ontologyStateSvc.deleteEntityFromHierarchy(hierarchy, 'node2a', indexObject);
             expect(hierarchy).toEqual([{
                 entityIRI: 'node1a',
                 subEntities: [{

@@ -84,7 +84,7 @@ describe('Tabset directive', function() {
             var tab = {id: 'tab1'};
             controller.tabs = [tab];
             controller.removeTab(tab);
-            expect(controller.tabs.length).toBe(0);
+            expect(controller.tabs).not.toContain(tab);
         });
         it('select sets the active property to true for passed in tab and false for the others', function() {
             var tab1 = {id: 'tab1', active: true};

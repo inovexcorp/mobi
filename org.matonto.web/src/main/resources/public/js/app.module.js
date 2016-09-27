@@ -77,14 +77,14 @@
             'webtop',
 
             /* Custom Services */
-            'annotationManager',
             'catalogManager',
             'mappingManager',
             'ontologyManager',
+            'ontologyState',
             'prefixes',
+            'propertyManager',
             'responseObj',
             'settingsManager',
-            'stateManager',
             'updateRefs'
         ])
         .constant('_', window._)
@@ -98,12 +98,12 @@
             // We have to invoke the service at least once
         });
 
-        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'stateManagerService'];
+        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'ontologyStateService'];
 
-        function beforeUnload($window, ontologyManagerService, stateManagerService) {
+        function beforeUnload($window, ontologyManagerService, ontologyStateService) {
             $window.onbeforeunload = function(e) {
                 var hasChanges = _.some(ontologyManagerService.list, listItem => {
-                    return stateManagerService.hasChanges(_.get(listItem, 'ontology'), _.get(listItem, 'ontologyId'));
+                    return ontologyStateService.hasChanges(_.get(listItem, 'ontology'), _.get(listItem, 'ontologyId'));
                 });
                 if (hasChanges) {
                     return true;

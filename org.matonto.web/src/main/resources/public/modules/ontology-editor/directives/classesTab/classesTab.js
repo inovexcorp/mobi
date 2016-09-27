@@ -27,34 +27,12 @@
         .module('classesTab', [])
         .directive('classesTab', classesTab);
 
-        classesTab.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService'];
-
-        function classesTab($filter, stateManagerService, ontologyManagerService) {
+        function classesTab() {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/classesTab/classesTab.html',
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.sm = stateManagerService;
-                    dvm.om = ontologyManagerService;
-
-                    dvm.deleteClass = function() {
-                        var entityIRI = dvm.sm.getActiveEntityIRI();
-                        dvm.sm.addDeletedEntity();
-                        dvm.om.removeEntity(dvm.sm.ontology, entityIRI);
-                        var split = $filter('splitIRI')(angular.copy(entityIRI));
-                        _.remove(_.get(dvm.sm.listItem, 'subClasses'), {namespace:split.begin + split.then, localName: split.end});
-                        _.pull(_.get(dvm.sm.listItem, 'classesWithIndividuals'), entityIRI);
-                        var classHierarchy
-                        var result = dvm.sm.deleteEntityFromHierarchy(_.get(dvm.sm.listItem, 'classHierarchy'), entityIRI);
-                        console.log(result);
-                        dvm.sm.unSelectItem();
-                        dvm.showDeleteConfirmation = false;
-                    }
-                }
+                scope: {}
             }
         }
 })();

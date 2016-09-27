@@ -53,11 +53,11 @@ describe('Download Mapping Overlay directive', function() {
         it('should download a mapping', function() {
             controller.download();
             expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.downloadFormat);
-            expect(mapperStateSvc.displayDownloadMapping).toBe(false);
+            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(false);
         });
         it('should set the correct state for canceling', function() {
             controller.cancel();
-            expect(mapperStateSvc.displayDownloadMapping).toBe(false);
+            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {

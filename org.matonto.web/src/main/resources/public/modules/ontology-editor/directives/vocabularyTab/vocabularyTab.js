@@ -27,21 +27,19 @@
         .module('vocabularyTab', [])
         .directive('vocabularyTab', vocabularyTab);
 
-        vocabularyTab.$inject = ['ontologyManagerService', 'stateManagerService'];
+        vocabularyTab.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-        function vocabularyTab(ontologyManagerService, stateManagerService) {
+        function vocabularyTab(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/vocabularyTab/vocabularyTab.html',
-                scope: {
-                    listItem: '='
-                },
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

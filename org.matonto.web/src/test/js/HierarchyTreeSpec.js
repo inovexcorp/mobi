@@ -27,21 +27,21 @@ describe('Hierarchy Tree directive', function() {
         scope,
         element,
         isolatedScope,
-        stateManagerSvc;
+        ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('hierarchyTree');
-        mockStateManager();
+        mockOntologyState();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
-        stateManagerSvc.getOpened.and.returnValue(true);
+        ontologyStateSvc.getOpened.and.returnValue(true);
         scope.hierarchy = [{
             entityIRI: 'class1',
             subEntities: [{
@@ -59,10 +59,18 @@ describe('Hierarchy Tree directive', function() {
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
-        it('hierarchy should be two way bound', function() {
+        it('hierarchy should be one way bound', function() {
             isolatedScope.hierarchy = [];
             scope.$digest();
-            expect(scope.hierarchy).toEqual([]);
+            expect(scope.hierarchy).toEqual([{
+                entityIRI: 'class1',
+                subEntities: [{
+                    entityIRI: 'class2'
+                }]
+            },
+            {
+                entityIRI: 'class3'
+            }]);
         });
     });
 

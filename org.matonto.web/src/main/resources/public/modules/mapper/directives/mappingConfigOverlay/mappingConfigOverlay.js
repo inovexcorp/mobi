@@ -129,10 +129,10 @@
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = _.get(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), "[0]['@id']");
                         dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
-                        dvm.state.displayMappingConfig = false;
+                        dvm.state.displayMappingConfigOverlay = false;
                     }
                     dvm.cancel = function() {
-                        dvm.state.displayMappingConfig = false;
+                        dvm.state.displayMappingConfigOverlay = false;
                     }
                     function getClasses(ontologies) {
                         var classes = [];
