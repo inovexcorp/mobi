@@ -20,8 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="settings-pages row full-height">
-    <settings-page ng-if="dvm.state.showSettings"></settings-page>
-    <change-password-page ng-if="dvm.state.showChangePassword"></change-password-page>
-    <user-information-page ng-if="dvm.state.showUserInfo"></user-information-page>
+<div class="settings-tabset full-height">
+	<tabset>
+	    <tabset class="centered">
+	    	<tab heading="'Profile'" active="true">
+          <profile-tab></profile-tab>
+        </tab>
+        <tab heading="'Password'">
+          <password-tab></password-tab>
+        </tab>
+        <!-- <tab heading="'Preferences'">
+          <preferences-tab></preferences-tab>
+        </tab> -->
+	    </tabset>
+	</tabset>
 </div>

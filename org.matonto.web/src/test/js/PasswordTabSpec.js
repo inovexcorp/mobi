@@ -31,7 +31,7 @@ describe('Change Password Page directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('changePasswordPage');
+        module('passwordTab');
         mockUserManager();
         mockLoginManager();
 
@@ -48,55 +48,37 @@ describe('Change Password Page directive', function() {
     it('should initialize with the current user', function() {
         loginManagerSvc.currentUser = 'user';
         userManagerSvc.users = [{username: 'user'}];
-        var element = $compile(angular.element('<change-password-page></change-password-page>'))(scope);
+        var element = $compile(angular.element('<password-tab></password-tab>'))(scope);
         scope.$digest();
-        controller = element.controller('changePasswordPage');
+        controller = element.controller('passwordTab');
         expect(controller.currentUser).toEqual(userManagerSvc.users[0]);
     });
     describe('controller methods', function() {
         beforeEach(function() {
             loginManagerSvc.currentUser = 'user';
             userManagerSvc.users = [{username: 'user'}];
-            this.element = $compile(angular.element('<change-password-page></change-password-page>'))(scope);
+            this.element = $compile(angular.element('<password-tab></password-tab>'))(scope);
             scope.$digest();
-            controller = this.element.controller('changePasswordPage');
+            controller = this.element.controller('passwordTab');
         });
         describe('should save changes to the user password', function() {
             beforeEach(function() {
                 controller.currentPassword = 'test';
             });
-            it('unless the current password is incorrect', function() {
-                userManagerSvc.checkPassword.and.returnValue($q.reject('Error message'));
+            it('unless an error occurs', function() {
+                userManagerSvc.updateUser.and.returnValue($q.reject('Error message'));
                 controller.save();
                 $timeout.flush();
-                expect(userManagerSvc.checkPassword).toHaveBeenCalledWith(loginManagerSvc.currentUser, controller.currentPassword);
-                expect(controller.form.currentPassword.$invalid).toBe(true);
+                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, {}, controller.currentPassword, controller.password);
                 expect(controller.success).toBe(false);
                 expect(controller.errorMessage).toBe('Error message');
             });
-            describe('if the current password is correct', function() {
-                beforeEach(function() {
-                    controller.password = 'test';
-                })
-                it('unless an error occurs', function() {
-                    userManagerSvc.updateUser.and.returnValue($q.reject('Error message'));
-                    controller.save();
-                    $timeout.flush();
-                    expect(userManagerSvc.checkPassword).toHaveBeenCalledWith(loginManagerSvc.currentUser, controller.currentPassword);
-                    expect(controller.form.currentPassword.$invalid).toBe(false);
-                    expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, undefined, controller.password);
-                    expect(controller.success).toBe(false);
-                    expect(controller.errorMessage).toBe('Error message');
-                });
-                it('and no errors occur', function() {
-                    controller.save();
-                    $timeout.flush();
-                    expect(userManagerSvc.checkPassword).toHaveBeenCalledWith(loginManagerSvc.currentUser, controller.currentPassword);
-                    expect(controller.form.currentPassword.$invalid).toBe(false);
-                    expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, undefined, controller.password);
-                    expect(controller.success).toBe(true);
-                    expect(controller.errorMessage).toBe('');
-                });
+            it('successfully', function() {
+                controller.save();
+                $timeout.flush();
+                expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, {}, controller.currentPassword, controller.password);
+                expect(controller.success).toBe(true);
+                expect(controller.errorMessage).toBe('');
             });
         });
     });
@@ -104,11 +86,23 @@ describe('Change Password Page directive', function() {
         beforeEach(function() {
             loginManagerSvc.currentUser = 'user';
             userManagerSvc.users = [{username: 'user'}];
-            this.element = $compile(angular.element('<change-password-page></change-password-page>'))(scope);
+            this.element = $compile(angular.element('<password-tab></password-tab>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('change-password-page')).toBe(true);
+            expect(this.element.hasClass('password-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.col-xs-6').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-offset-3').length).toBe(1);
+        });
+        it('with a block', function() {
+            expect(this.element.find('block').length).toBe(1);
+        });
+        it('with a block content', function() {
+            expect(this.element.find('block-content').length).toBe(1);
+        });
+        it('with a block footer', function() {
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a password confirm input', function() {
             expect(this.element.find('password-confirm-input').length).toBe(1);
@@ -116,7 +110,7 @@ describe('Change Password Page directive', function() {
         it('depending on whether an error has occured', function() {
             expect(this.element.find('error-display').length).toBe(0);
 
-            controller = this.element.controller('changePasswordPage');
+            controller = this.element.controller('passwordTab');
             controller.errorMessage = 'Test';
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
@@ -124,7 +118,7 @@ describe('Change Password Page directive', function() {
         it('depending on whether the password was saved successfully', function() {
             expect(this.element.querySelectorAll('.text-success').length).toBe(0);
 
-            controller = this.element.controller('changePasswordPage');
+            controller = this.element.controller('passwordTab');
             controller.success = true;
             scope.$digest();
             expect(this.element.querySelectorAll('.text-success').length).toBe(1);
@@ -133,29 +127,29 @@ describe('Change Password Page directive', function() {
             var currentPassword = angular.element(this.element.querySelectorAll('.current-password')[0]);
             expect(currentPassword.hasClass('has-error')).toBe(false);
 
-            controller = this.element.controller('changePasswordPage');
+            controller = this.element.controller('passwordTab');
             controller.form.currentPassword.$touched = true;
             scope.$digest();
             expect(currentPassword.hasClass('has-error')).toBe(true);
         });
         it('depending on the form validity', function() {
-            expect(this.element.querySelectorAll('.save-btn').attr('disabled')).toBeTruthy();
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
 
-            controller = this.element.controller('changePasswordPage');
+            controller = this.element.controller('passwordTab');
             controller.form.$invalid = false;
             scope.$digest();
-            expect(this.element.querySelectorAll('.save-btn').attr('disabled')).toBeFalsy();
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeFalsy();
         });
     });
     it('should save changes when the save button is clicked', function() {
         loginManagerSvc.currentUser = 'user';
         userManagerSvc.users = [{username: 'user'}];
-        var element = $compile(angular.element('<change-password-page></change-password-page>'))(scope);
+        var element = $compile(angular.element('<password-tab></password-tab>'))(scope);
         scope.$digest();
-        controller = element.controller('changePasswordPage');
+        controller = element.controller('passwordTab');
         spyOn(controller, 'save');
 
-        var button = angular.element(element.querySelectorAll('.save-btn')[0]);
+        var button = angular.element(element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
         expect(controller.save).toHaveBeenCalled();
     });

@@ -26,29 +26,34 @@
     angular
         /**
          * @ngdoc overview
-         * @name userInformationPage
+         * @name profileTab
          *
          * @description 
-         * The `userInformationPage` module only provides the `userInformationPage` directive which 
-         * creates a "page" for editing information of the currently ogged in user.
+         * The `profileTab` module only provides the `profileTab` directive which creates 
+         * a Bootstrap `row` with a form allowing the current user to change their profile
+         * information.
          */
-        .module('userInformationPage', [])
+        .module('profileTab', [])
         /**
          * @ngdoc directive
-         * @name userInformationPage.directive:userInformationPage
+         * @name profileTab.directive:profileTab
          * @scope
          * @restrict E
+         * @requires userManager.service:userManagerService
+         * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `userInformationPage` is a directive that creates a div that will hold a form to 
-         * edit the information of the currently logged in user. Currently it simply provides a 
-         * welcome message to the user. The directive is replaced by the content of its template.
+         * `profileTab` is a directive that creates a Bootstrap `row` with a 
+         * {@link block.directive:block block} that will eventually contain a form allowing the 
+         * current user to change their profile information. However, since profile information 
+         * is not currently being stored, the directive simply displays a welcome message. The 
+         * directive is replaced by the content of its template.
          */
-        .directive('userInformationPage', userInformationPage);
+        .directive('profileTab', profileTab);
 
-        userInformationPage.$inject = ['userManagerService', 'loginManagerService'];
+        profileTab.$inject = ['userManagerService', 'loginManagerService'];
 
-        function userInformationPage(userManagerService, loginManagerService) {
+        function profileTab(userManagerService, loginManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -60,7 +65,7 @@
                     dvm.lm = loginManagerService;
                     dvm.currentUser = _.find(dvm.um.users, {username: dvm.lm.currentUser});
                 },
-                templateUrl: 'modules/settings/directives/userInformationPage/userInformationPage.html'
+                templateUrl: 'modules/settings/directives/profileTab/profileTab.html'
             }
         }
 })();

@@ -20,7 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="user-information-page col-xs-12">
-    <h1>{{dvm.currentUser.username}}</h1>
-    <p>Welcome {{dvm.currentUser.username}}! Use the icons on the left to change your password and your account settings.</p>
+<div class="profile-tab row">
+    <div class="col-xs-6 col-xs-offset-3">
+        <block class="full-height">
+            <block-content class="padding">
+                <h1>{{dvm.currentUser.username}}</h1>
+                <p>Welcome {{dvm.currentUser.username}}! Use the tabs above to change your password and your account settings.</p>
+            </block-content>
+        </block>
+    </div>
 </div>

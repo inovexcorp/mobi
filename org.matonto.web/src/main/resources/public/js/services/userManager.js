@@ -213,17 +213,21 @@
              * {@link userManager.service:userManagerService#users users} list appropriately.
              * 
              * @param {string} username the username of the user to retrieve
-             * @param {string} newUsername the new username to give the user
-             * @param {string} password the new password to give the user
+             * @param {Object} newUserInfo an object containing all the new user information to 
+             * save. The structure of the object will be similar to the structure of the user 
+             * objects in the {@link userManager.service:userManagerService#users users list}
+             * @param {string} password the current password of the user
+             * @param {string} [newPassword=''] the new password to save for the user 
              * @return {Promise} A Promise that resolves if the request was successful; rejects 
              * with an error message otherwise
              */
-            self.updateUser = function(username, newUsername, password) {
+            self.updateUser = function(username, newUserInfo, password, newPassword) {
                 var deferred = $q.defer(),
                     config = {
                         params: {
-                            username: newUsername,
-                            password: password
+                            username: _.get(newUserInfo, 'username'),
+                            currentPassword: password,
+                            newPassword: newPassword
                         }
                     };
 
@@ -232,48 +236,8 @@
                     .then(response => {
                         deferred.resolve();
                         var original = _.find(self.users, {username: username});
-                        if (newUsername) {
-                            _.set(original, 'username', newUsername);
-                        }
-                    }, error => {
-                        deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
-                    }).then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-                return deferred.promise;
-            }
-
-            /**
-             * @ngdoc method
-             * @name checkPassword
-             * @methodOf userManager.service:userManagerService
-             *
-             * @description 
-             * Calls the POST /matontorest/users/{userId}/password endpoint to test a passed
-             * password against the saved password of a MatOnto user specified by the passed 
-             * username. Returns a Promise that resolves if the two passwords match and rejects 
-             * with an error message if they do not match or something went wrong.
-             * 
-             * @param {string} username the username of the user to check the password of
-             * @param {string} password the password to test aginst the saved password of the user
-             * @return {Promise} A Promise that resolves if the passwords match; rejects 
-             * with an error message otherwise
-             */
-            self.checkPassword = function(username, password) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            password: password
-                        }
-                    };
-
-                $rootScope.showSpinner = true;
-                $http.post(userPrefix + '/' + username + '/password', null, config)
-                    .then(response => {
-                        if (response.data) {
-                            deferred.resolve();                        
-                        } else {
-                            deferred.reject('Password does not match saved password. Please try again.');
+                        if (_.has(newUserInfo, 'username')) {
+                            _.set(original, 'username', newUserInfo.username);
                         }
                     }, error => {
                         deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));

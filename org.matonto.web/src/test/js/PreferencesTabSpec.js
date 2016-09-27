@@ -20,14 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Settings Page directive', function() {
+describe('Preferences Tab directive', function() {
     var $compile,
         scope,
         settingsManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('settingsPage');
+        module('preferencesTab');
         mockSettingsManager();
 
         inject(function(_settingsManagerService_, _$compile_, _$rootScope_) {
@@ -39,11 +39,11 @@ describe('Settings Page directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<settings-page></settings-page>'))(scope);
+            this.element = $compile(angular.element('<preferences-tab></preferences-tab>'))(scope);
             scope.$digest();
         });
         it('should save the settings entered', function() {
-            var controller = this.element.controller('settingsPage');
+            var controller = this.element.controller('preferencesTab');
             controller.settings = {};
             controller.save();
             expect(settingsManagerSvc.setSettings).toHaveBeenCalledWith(controller.settings);
@@ -51,11 +51,23 @@ describe('Settings Page directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<settings-page></settings-page>'))(scope);
+            this.element = $compile(angular.element('<preferences-tab></preferences-tab>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('settings-page')).toBe(true);
+            expect(this.element.hasClass('preferences-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.col-xs-6').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-offset-3').length).toBe(1);
+        });
+        it('with a block', function() {
+            expect(this.element.find('block').length).toBe(1);
+        });
+        it('with a block content', function() {
+            expect(this.element.find('block-content').length).toBe(1);
+        });
+        it('with a block footer', function() {
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a settings container', function() {
             expect(this.element.find('settings-container').length).toBe(1);
@@ -64,16 +76,16 @@ describe('Settings Page directive', function() {
             expect(this.element.find('custom-setting').length).toBe(2);
         });
         it('with a button to save', function() {
-            expect(this.element.find('button').text().trim()).toBe('Save');
+            expect(this.element.querySelectorAll('block-footer button').text().trim()).toBe('Save');
         });
     });
     it('should save when the save button is clicked', function() {
-        var element = $compile(angular.element('<settings-page></settings-page>'))(scope);
+        var element = $compile(angular.element('<preferences-tab></preferences-tab>'))(scope);
         scope.$digest();
-        var controller = element.controller('settingsPage');
+        var controller = element.controller('preferencesTab');
         spyOn(controller, 'save');
 
-        var saveBtn = angular.element(element.find('button')[0]);
+        var saveBtn = angular.element(element.querySelectorAll('block-footer button')[0]);
         saveBtn.triggerHandler('click');
         expect(controller.save).toHaveBeenCalled();
     });

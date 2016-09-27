@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User Information Page directive', function() {
+describe('Profile Tab directive', function() {
     var $compile,
         scope,
         userManagerSvc,
@@ -29,7 +29,7 @@ describe('User Information Page directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('userInformationPage');
+        module('profileTab');
         mockUserManager();
         mockLoginManager();
 
@@ -44,20 +44,20 @@ describe('User Information Page directive', function() {
     it('should initialize with the current user', function() {
         loginManagerSvc.currentUser = 'user';
         userManagerSvc.users = [{username: 'user'}];
-        var element = $compile(angular.element('<user-information-page></user-information-page>'))(scope);
+        var element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
         scope.$digest();
-        controller = element.controller('userInformationPage');
+        controller = element.controller('profileTab');
         expect(controller.currentUser).toEqual(userManagerSvc.users[0]);
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             loginManagerSvc.currentUser = 'user';
             userManagerSvc.users = [{username: 'user'}];
-            this.element = $compile(angular.element('<user-information-page></user-information-page>'))(scope);
+            this.element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('user-information-page')).toBe(true);
+            expect(this.element.hasClass('profile-tab')).toBe(true);
         });
     });
 });

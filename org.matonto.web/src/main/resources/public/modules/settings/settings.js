@@ -26,15 +26,11 @@
     angular
         .module('settings', [
             /* Custom directives */
-            'changePasswordPage',
             'customSetting',
+            'passwordTab',
+            'preferencesTab',
+            'profileTab',
             'settingsContainer',
-            'settingsPage',
-            'settingsPages',
-            'settingsSideBar',
-            'userInformationPage',
-
-            /* Custom services */
-            'settingsState'
+            'settingsTabset'
         ]);
 })();

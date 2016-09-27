@@ -27,18 +27,20 @@
         /**
          * @ngdoc overview
          * @name loginManager
+         * @requires userManager
          *
          * @description 
          * The `loginManager` module only provides the `loginManagerService` service which
          * provides utilities to log into and log out of MatOnto.
          */
-        .module('loginManager', [])
+        .module('loginManager', ['userManager'])
         /**
          * @ngdoc service
          * @name loginManager.service:loginManagerService
          * @requires $http
          * @requires $q
          * @requires $state
+         * @requires userManager.service:userManagerService
          *
          * @description 
          * `loginManagerService` is a service that provides access to the MatOnto login REST 
@@ -46,9 +48,9 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state'];
+        loginManagerService.$inject = ['$q', '$http', '$state', 'userManagerService'];
 
-        function loginManagerService($q, $http, $state) {
+        function loginManagerService($q, $http, $state, userManagerService) {
             var self = this,
                 anon = 'self anon';
 

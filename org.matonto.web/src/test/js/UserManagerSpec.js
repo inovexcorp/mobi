@@ -152,7 +152,7 @@ describe('User Manager service', function() {
             $httpBackend.flush();
             userManagerSvc.users = [{username: 'username'}];
             params = {
-                password: 'password',
+                currentPassword: 'password',
                 username: 'newUsername'
             };
         });
@@ -161,7 +161,7 @@ describe('User Manager service', function() {
             $httpBackend.whenPUT('/matontorest/users/' + username + createQueryString(params)).respond(function(method, url, data, headers) {
                 return [400, '', {}, 'Error Message'];
             });
-            userManagerSvc.updateUser(username, params.username, params.password).then(function(response) {
+            userManagerSvc.updateUser(username, _.pick(params, 'username'), params.currentPassword).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -173,7 +173,7 @@ describe('User Manager service', function() {
         it('if there is a new username', function(done) {
             var username = userManagerSvc.users[0].username;
             $httpBackend.whenPUT('/matontorest/users/' + username + createQueryString(params)).respond(200, [])
-            userManagerSvc.updateUser(username, params.username, params.password).then(function(response) {
+            userManagerSvc.updateUser(username, _.pick(params, 'username'), params.currentPassword).then(function(response) {
                 expect(_.find(userManagerSvc.users, {username: username})).toBeFalsy();
                 expect(_.find(userManagerSvc.users, {username: params.username})).toBeTruthy();
                 done();
@@ -184,52 +184,9 @@ describe('User Manager service', function() {
             var username = userManagerSvc.users[0].username;
             delete params.username;
             $httpBackend.whenPUT('/matontorest/users/' + username + createQueryString(params)).respond(200, [])
-            userManagerSvc.updateUser(username, params.username, params.password).then(function(response) {
+            userManagerSvc.updateUser(username, _.pick(params, 'username'), params.currentPassword).then(function(response) {
                 expect(_.find(userManagerSvc.users, {username: params.username})).toBeFalsy();
                 expect(_.find(userManagerSvc.users, {username: username})).toBeTruthy();
-                done();
-            });
-            $httpBackend.flush();
-        });
-    });
-    describe('should check a password against a user password', function() {
-        beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
-            params = {
-                password: 'password'
-            };
-            this.username = 'user';
-        });
-        it('unless there is an error', function(done) {
-            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(function(method, url, data, headers) {
-                return [400, '', {}, 'Error Message'];
-            });
-            userManagerSvc.checkPassword(this.username, params.password).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('correctly if they match', function(done) {
-            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(200, true)
-            userManagerSvc.checkPassword(this.username, params.password).then(function(response) {
-                expect(true).toBe(true);
-                done();
-            });
-            $httpBackend.flush();
-        });
-        it('correctly if they do not match', function(done) {
-            $httpBackend.whenPOST('/matontorest/users/' + this.username + '/password' + createQueryString(params)).respond(200, false)
-            userManagerSvc.checkPassword(this.username, params.password).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Password does not match saved password. Please try again.');
                 done();
             });
             $httpBackend.flush();

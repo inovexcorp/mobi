@@ -26,30 +26,33 @@
     angular
         /**
          * @ngdoc overview
-         * @name settingsPage
+         * @name preferencesTab
          *
          * @description 
-         * The `settingsPage` module only provides the `settingsPage` directive which creates 
-         * a "page" containing a form for changing user settings.
+         * The `preferencesTab` module only provides the `preferencesTab` directive which creates 
+         * a Bootstrap `row` with a form allowing the current user to their preferences.
          */
-        .module('settingsPage', [])
+        .module('preferencesTab', [])
         /**
          * @ngdoc directive
-         * @name settingsPage.directive:settingsPage
+         * @name preferencesTab.directive:preferencesTab
          * @scope
          * @restrict E
+         * @requires settingsManager.service:settingsManagerService
          *
          * @description
-         * `settingsPage` is a directive that creates a div with a form for changing the settings in 
-         * {@link settingManager.service:settingsManagerService settingManagerService} using 
-         * {@link customSetting.directive:customSetting customSetting} directives and a save button. 
-         * The directive is replaced by the content of its template.
+         * `preferencesTab` is a directive that creates a Bootstrap `row` with a 
+         * {@link block.directive:block block} containing a form allowing the current user to 
+         * change their display preferences. The preferences are displayed using a 
+         * {@link settingsContainer.directive:settingsContainer settingsContainer} and several
+         * {@link customSettings.directive:customSettings customSettings}. The directive is 
+         * replaced by the content of its template.
          */
-        .directive('settingsPage', settingsPage);
+        .directive('preferencesTab', preferencesTab);
 
-        settingsPage.$inject = ['settingsManagerService'];
+        preferencesTab.$inject = ['settingsManagerService'];
 
-        function settingsPage(settingsManagerService) {
+        function preferencesTab(settingsManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,7 +67,7 @@
                         dvm.sm.setSettings(dvm.settings);
                     }
                 },
-                templateUrl: 'modules/settings/directives/settingsPage/settingsPage.html'
+                templateUrl: 'modules/settings/directives/preferencesTab/preferencesTab.html'
             }
         }
 })();

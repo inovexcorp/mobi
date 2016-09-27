@@ -30,6 +30,7 @@ describe('Login Manager service', function() {
 
     beforeEach(function() {
         module('loginManager');
+        mockUserManager();
 
         module(function($provide) {
             $provide.service('$state', function() {
@@ -37,7 +38,7 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _userManagerService_) {
             loginManagerSvc = loginManagerService;
             $httpBackend = _$httpBackend_;
             state = _$state_;

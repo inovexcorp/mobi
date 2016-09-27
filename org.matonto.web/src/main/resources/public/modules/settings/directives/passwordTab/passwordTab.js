@@ -26,33 +26,34 @@
     angular
         /**
          * @ngdoc overview
-         * @name changePasswordPage
+         * @name passwordTab
          *
          * @description 
-         * The `changePasswordPage` module only provides the `changePasswordPage` directive which creates
-         * a settings "page" with a form for changing the password of the currently logged in user.
+         * The `passwordTab` module only provides the `passwordTab` directive which creates 
+         * a Bootstrap `row` with a form allowing the current user to change their password.
          */
-        .module('changePasswordPage', [])
+        .module('passwordTab', [])
         /**
          * @ngdoc directive
-         * @name changePasswordPage.directive:changePasswordPage
+         * @name passwordTab.directive:passwordTab
          * @scope
          * @restrict E
-         * @requires  $q
-         * @requires  userManager.service:userManagerService
-         * @requires  loginManager.service:loginManagerService
+         * @requires userManager.service:userManagerService
+         * @requires loginManager.service:loginManagerService
          *
-         * @description 
-         * `changePasswordPage` is a directive that creates a div containing a form to change the password 
-         * of the user that is currently logged in. The directive contains a 
-         * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput} to perform 
-         * confirmation of the new password. The directive is replaced by the contents of its template.
+         * @description
+         * `passwordTab` is a directive that creates a Bootstrap `row` with a 
+         * {@link block.directive:block block} containing a form allowing the current user to 
+         * change their password. The user must enter their current password in order to make 
+         * a change. The new password is confirmed within a 
+         * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput}. The 
+         * directive is replaced by the content of its template.
          */
-        .directive('changePasswordPage', changePasswordPage);
+        .directive('passwordTab', passwordTab);
 
-        changePasswordPage.$inject = ['$q', 'userManagerService', 'loginManagerService'];
+        passwordTab.$inject = ['$q', 'userManagerService', 'loginManagerService'];
 
-        function changePasswordPage($q, userManagerService, loginManagerService) {
+        function passwordTab($q, userManagerService, loginManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -65,13 +66,7 @@
                     dvm.currentUser = _.find(dvm.um.users, {username: dvm.lm.currentUser});
 
                     dvm.save = function() {
-                        dvm.um.checkPassword(dvm.currentUser.username, dvm.currentPassword).then(response => {
-                            dvm.form.currentPassword.$setValidity('matchesSavedPassword', true);
-                            return dvm.um.updateUser(dvm.currentUser.username, undefined, dvm.password);
-                        }, error => {
-                            dvm.form.currentPassword.$setValidity('matchesSavedPassword', false);
-                            return $q.reject(error);
-                        }).then(response => {
+                        dvm.um.updateUser(dvm.currentUser.username, {}, dvm.currentPassword, dvm.password).then(response => {
                             dvm.errorMessage = '';
                             dvm.success = true;
                         }, error => {
@@ -80,7 +75,7 @@
                         });
                     }
                 },
-                templateUrl: 'modules/settings/directives/changePasswordPage/changePasswordPage.html'
+                templateUrl: 'modules/settings/directives/passwordTab/passwordTab.html'
             }
         }
 })();

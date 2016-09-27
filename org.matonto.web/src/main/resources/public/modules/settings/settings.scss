@@ -2,6 +2,8 @@
 @import "./src/main/resources/public/css/variables";
 
 .settings {
+    background-color: $gray-lighter;
+    
     &>.row {
       padding-left: 39px; 
     }
