@@ -22,34 +22,25 @@
   -->
 <div class="overlay">
     <form name="dvm.annotationForm" class="content clearfix" novalidate autocomplete="off">
-        <!-- section header -->
         <h6>{{dvm.sm.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h6>
-
-        <!-- annotation list -->
         <div class="form-group">
             <label class="control-label">Annotation</label>
             <ui-select ng-model="dvm.sm.annotationSelect" ng-disabled="dvm.sm.editingAnnotation">
                 <ui-select-match placeholder="Select an annotation">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.om.getItemNamespace" repeat="annotation in dvm.sm.ontology.matonto.annotations | filter: $select.search | orderBy:'localName'">
+                <ui-select-choices group-by="dvm.getItemNamespace" repeat="annotation in dvm.sm.listItem.annotations | filter: $select.search | orderBy:'localName'">
                     <div ng-bind-html="annotation.localName | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>
-
-        <!-- value -->
         <text-area ng-model="dvm.sm.annotationValue" display-text="'Value'"></text-area>
-
-        <!-- annotation buttons -->
+        <!--<object-select ng-model="dvm.sm.annotationType" display-text="'Type'" multi-select="false"
+                       select-list="dvm.sm.listItem.dataPropertyRange"></object-select>-->
         <div class="btn-container clearfix">
-            <custom-button ng-if="!dvm.sm.editingAnnotation"
-                           is-disabled-when="dvm.annotationForm.$invalid || dvm.sm.annotationSelect === 'default' || !dvm.sm.annotationValue"
-                           on-click="dvm.addAnnotation(dvm.sm.annotationSelect, dvm.sm.annotationValue)">Add</custom-button>
-
-            <custom-button ng-if="dvm.sm.editingAnnotation"
-                           is-disabled-when="dvm.annotationForm.$invalid || !dvm.sm.annotationValue"
-                           on-click="dvm.editAnnotation(dvm.sm.annotationSelect, dvm.sm.annotationValue)">Edit</custom-button>
-
-            <custom-button on-click="dvm.sm.showAnnotationOverlay = false;" type="'secondary'">Cancel</custom-button>
+            <button class="btn btn-primary pull-right" ng-if="!dvm.sm.editingAnnotation" ng-click="dvm.addAnnotation()"
+                    ng-disabled="dvm.annotationForm.$invalid || dvm.sm.annotationSelect === undefined || !dvm.sm.annotationValue">Add</button>
+            <button class="btn btn-primary pull-right" ng-if="dvm.sm.editingAnnotation" ng-click="dvm.editAnnotation()"
+                    ng-disabled="dvm.annotationForm.$invalid || !dvm.sm.annotationValue">Edit</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.sm.showAnnotationOverlay = false;">Cancel</button>
         </div>
     </form>
 </div>

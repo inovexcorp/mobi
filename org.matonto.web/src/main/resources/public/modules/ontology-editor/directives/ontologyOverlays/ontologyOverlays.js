@@ -42,34 +42,32 @@
                     dvm.om = ontologyManagerService;
                     dvm.am = annotationManagerService;
 
-                    dvm.deleteEntity = function() {
-                        dvm.om.delete(dvm.sm.ontology.matonto.id, dvm.sm.selected.matonto.originalIri, dvm.sm.state)
-                            .then(function(response) {
-                                dvm.error = '';
-                                dvm.sm.showDeleteConfirmation = false;
-                                if(response.selectOntology) {
-                                    dvm.sm.setTreeTab('everything');
-                                    dvm.sm.selectItem('ontology-editor', dvm.sm.state.oi);
-                                } else {
-                                    dvm.sm.clearState(dvm.sm.state.oi);
-                                }
-                            }, function(errorMessage) {
-                                dvm.error = errorMessage;
-                            });
+                    function onError(errorMessage) {
+                        dvm.error = errorMessage;
                     }
 
                     dvm.save = function() {
-                        dvm.om.edit(dvm.sm.ontology.matonto.id, dvm.sm.state)
-                            .then(function(state) {
+                        dvm.om.saveChanges(dvm.sm.state.ontologyId, dvm.sm.getUnsavedEntities(dvm.sm.ontology),
+                            dvm.sm.getCreatedEntities(dvm.sm.ontology), dvm.sm.state.deletedEntities)
+                            .then(newId => {
+                                dvm.sm.afterSave(newId);
                                 dvm.sm.showSaveOverlay = false;
-                                dvm.sm.state = state;
-                            });
+                            }, onError);
                     }
 
                     dvm.removeAnnotation = function() {
                         dvm.am.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
-                        dvm.sm.entityChanged(dvm.sm.selected, dvm.sm.ontology.matonto.id, dvm.sm.state);
-                        dvm.sm.showRemoveAnnotationOverlay = false;
+                        dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.selected.matonto.originalIRI, true);
+                        dvm.sm.showRemoveOverlay = false;
+                    }
+
+                    dvm.removeIndividualProperty = function() {
+                        _.pullAt(dvm.sm.selected[dvm.sm.key], dvm.sm.index);
+                        if (!dvm.sm.selected[dvm.sm.key].length) {
+                            _.unset(dvm.sm.selected, dvm.sm.key);
+                        }
+                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
+                        dvm.sm.showRemoveIndividualPropertyOverlay = false;
                     }
                 }
             }

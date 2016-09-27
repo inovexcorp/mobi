@@ -1,0 +1,41 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="concept-hierarchy-block">
+    <block>
+        <block-header>
+            <span>Concepts</span><a class="pull-right" ng-click="dvm.sm.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Concept</span></a><a class="pull-right" ng-click="dvm.sm.showCreateConceptSchemeOverlay = true"><i class="fa fa-plus"></i><span>Scheme</span></a>
+        </block-header>
+        <block-content>
+            <hierarchy-tree hierarchy="dvm.sm.listItem.conceptHierarchy"></hierarchy-tree>
+        </block-content>
+        <block-footer class="centered">
+            <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
+        </block-footer>
+    </block>
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Class'" confirm-click="dvm.deleteEntity()"
+                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+        <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+    </confirmation-overlay>
+    <create-concept-scheme-overlay ng-if="dvm.sm.showCreateConceptSchemeOverlay"></create-concept-scheme-overlay>
+    <create-concept-overlay ng-if="dvm.sm.showCreateConceptOverlay"></create-concept-overlay>
+</div>

@@ -28,12 +28,13 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.12-SNAPSHOT</version>
+        <version>1.2.4-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>repository.impl.sesame</artifactId>
+    <packaging>bundle</packaging>
 
     <name>${project.groupId}.${project.artifactId}</name>
 
@@ -41,17 +42,17 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.0.34</version>
+            <version>1.1.29</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.0.34</version>
+            <version>1.1.29</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.0.6</version>
+            <version>1.1.29</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -88,15 +89,27 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>bnd-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>bnd-process</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>MatOnto Repository Sesame Impl</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>
+                            org.matonto.repository.api; provide:=true,
+                            org.matonto.repository.base; provide:=true,
+                            org.matonto.repository.config; provide:=true,
+                            org.matonto.query.api; provide:=true,
+                            org.matonto.query; provide:=true
+                        </Export-Package>
+                        <_metatype>*</_metatype>
+                        <Service-Component>*</Service-Component>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
     </build>

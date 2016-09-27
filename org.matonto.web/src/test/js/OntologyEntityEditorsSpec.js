@@ -47,7 +47,7 @@ describe('Ontology Entity Editors directive', function() {
         it('for an ontology-entity-editors', function() {
             expect(element.prop('tagName')).toBe('ONTOLOGY-ENTITY-EDITORS');
         });
-        _.forEach(['default-tab', 'ontology-editor', 'class-editor', 'property-editor', 'annotation-editor'], function(item) {
+        _.forEach(['default-tab', 'ontology-editor', 'class-editor', 'property-editor', 'annotation-editor', 'individual-editor'], function(item) {
             it('based on ' + item, function() {
                 stateManagerSvc.state.editor = item;
                 scope.$digest();

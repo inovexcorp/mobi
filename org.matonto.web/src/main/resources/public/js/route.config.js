@@ -56,7 +56,7 @@
                     authenticate: authenticate
                 },
                 views: {
-                    header: {
+                    nav: {
                         templateUrl: 'modules/nav/nav.html'
                     },
                     footer: {
@@ -116,7 +116,7 @@
                     }
                 },
                 data: {
-                    title: 'Mapper'
+                    title: 'Mapping Tool'
                 }
             })
             .state('root.settings', {
@@ -138,7 +138,7 @@
                     }
                 },
                 data: {
-                    title: 'SPARQL'
+                    title: 'SPARQL Editor'
                 }
             }).state('root.user-management', {
                 url: '/user-management',

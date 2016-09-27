@@ -32,6 +32,7 @@ describe('Ontology Download Overlay directive', function() {
         module('templates');
         module('ontologyDownloadOverlay');
         injectRegexConstant();
+        injectSplitIRIFilter();
         mockStateManager();
         mockOntologyManager();
 
@@ -101,7 +102,8 @@ describe('Ontology Download Overlay directive', function() {
             controller.serialization = 'serialization';
             controller.fileName = 'fileName';
             controller.download();
-            expect(ontologyManagerSvc.download).toHaveBeenCalledWith(stateManagerSvc.ontology['@id'], 'serialization', 'fileName')
+            expect(ontologyManagerSvc.downloadOntologyFile).toHaveBeenCalledWith(stateManagerSvc.downloadId,
+                'serialization', 'fileName');
             expect(stateManagerSvc.showDownloadOverlay).toBe(false);
         });
     });

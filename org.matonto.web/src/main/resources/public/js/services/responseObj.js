@@ -50,7 +50,7 @@
         /**
          * @ngdoc method
          * @name getItemIri
-         * @methodOf responseObj.responseObj
+         * @methodOf responseObj.service:responseObj
          * 
          * @description
          * Retrieves an item's IRI by combining the namespace and local name. If the 
@@ -61,18 +61,16 @@
          */
         self.getItemIri = function(item) {
             var iri = '';
-
             if(self.validateItem(item)) {
                 iri = item.namespace + item.localName;
             }
-
             return iri;
         }
 
         /**
          * @ngdoc method
          * @name validateItem
-         * @methodOf responseObj.responseObj
+         * @methodOf responseObj.service:responseObj
          *
          * @description 
          * Checks whether the item passed in is a valid object with a namespace and local name.
@@ -82,7 +80,7 @@
          * otherwise
          */
         self.validateItem = function(item) {
-            return (item && item.hasOwnProperty('namespace') && item.hasOwnProperty('localName')) ? true : false;
+            return _.has(item, 'namespace') && _.has(item, 'localName');
         }
     }
 })();

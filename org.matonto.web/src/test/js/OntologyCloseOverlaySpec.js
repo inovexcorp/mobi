@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Open Overlay directive', function() {
+describe('Ontology Close Overlay directive', function() {
     var $compile,
         scope,
         element,
@@ -96,17 +96,29 @@ describe('Ontology Open Overlay directive', function() {
         });
         describe('saveThenClose', function() {
             beforeEach(function() {
-                ontologyManagerSvc.edit.and.returnValue(deferred.promise);
+                ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
+                stateManagerSvc.getState.and.returnValue({deletedEntities: []});
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
-                expect(ontologyManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.ontology.matonto.id, stateManagerSvc.state);
+                ontologyManagerSvc.getOntologyById.and.returnValue([]);
+                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
+                expect(stateManagerSvc.getUnsavedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
+                expect(stateManagerSvc.getCreatedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
+                expect(stateManagerSvc.getState).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
+                expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(
+                    stateManagerSvc.ontologyIdToClose,
+                    stateManagerSvc.getUnsavedEntities(ontologyManagerSvc.getOntologyById()),
+                    stateManagerSvc.getCreatedEntities(ontologyManagerSvc.getOntologyById()),
+                    stateManagerSvc.getState().deletedEntities
+                );
             });
             it('when resolved, calls the correct controller function', function() {
                 controller.close = jasmine.createSpy('close');
-                deferred.resolve({});
+                deferred.resolve('id');
                 scope.$apply();
                 expect(controller.close).toHaveBeenCalled();
+                expect(stateManagerSvc.afterSave).toHaveBeenCalledWith('id');
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');
@@ -116,8 +128,8 @@ describe('Ontology Open Overlay directive', function() {
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.state.oi, stateManagerSvc.ontology.matonto.id);
-            expect(stateManagerSvc.clearState).toHaveBeenCalledWith(stateManagerSvc.state.oi);
+            expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
+            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
             expect(stateManagerSvc.showCloseOverlay).toBe(false);
         });
     });

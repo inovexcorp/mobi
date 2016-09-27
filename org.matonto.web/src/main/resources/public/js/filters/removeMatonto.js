@@ -20,9 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/*
- *  TODO: For testing purposes only. Remove for release versions.
- */
 (function() {
     'use strict';
 
@@ -32,9 +29,7 @@
 
     function removeMatonto() {
         return function(obj) {
-            var temp = angular.copy(obj);
-            delete temp.matonto;
-            return temp;
+            return _.omit(angular.copy(obj), 'matonto');
         }
     }
 })();

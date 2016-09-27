@@ -38,10 +38,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.om = ontologyManagerService;
                     dvm.sm = stateManagerService;
-                    dvm.ontologies = dvm.om.getList();
                 }
             }
         }

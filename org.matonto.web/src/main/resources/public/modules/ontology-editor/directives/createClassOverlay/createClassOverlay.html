@@ -22,31 +22,20 @@
   -->
 <div class="overlay">
     <div class="content">
-        <!-- section header -->
         <h6>Create New OWL Class</h6>
-
-        <!-- error -->
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-
-        <!-- static iri -->
-        <static-iri iri="dvm.iri"
-                    on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
-
+        <static-iri iri="dvm.clazz['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
-            <!-- name -->
             <div class="form-group">
-                <custom-label muted-text="'*Required'">Name</custom-label>
-                <input type="text" class="form-control" ng-model="dvm.name" ng-trim="false" ng-keyup="dvm.nameChanged()" required>
+                <custom-label>Name</custom-label>
+                <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
+                       ng-model="dvm.clazz[dvm.prefixes.dcterms + 'title'][0]['@value']">
             </div>
-
-            <!-- description -->
-            <text-area ng-model="dvm.description" display-text="'Description'"></text-area>
-
-            <!-- create class buttons -->
+            <text-area ng-model="dvm.clazz[dvm.prefixes.dcterms + 'description'][0]['@value']"
+                       display-text="'Description'" muted-text="'(Optional)'"></text-area>
             <div class="btn-container clearfix">
-                <custom-button is-disabled-when="dvm.form.$invalid" on-click="dvm.create()">Create</custom-button>
-
-                <custom-button on-click="dvm.sm.showCreateClassOverlay = false" type="'secondary'">Cancel</custom-button>
+                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Create</button>
+                <button class="btn btn-default pull-right" ng-click="dvm.sm.showCreateClassOverlay = false">Cancel</button>
             </div>
         </form>
     </div>

@@ -23,85 +23,82 @@
 describe('Class Preview directive', function() {
     var $compile,
         scope,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        mapperStateSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
         module('classPreview');
         mockPrefixes();
         mockOntologyManager();
+        mockMapperState();
 
-        inject(function(_ontologyManagerService_) {
-            ontologyManagerSvc = _ontologyManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            mapperStateSvc = _mapperStateService_;
         });
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         beforeEach(function() {
             scope.classObj = {};
-
-            this.element = $compile(angular.element('<class-preview class-obj="classObj"></class-preview>'))(scope);
+            scope.ontologies = [];
+            this.element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
             scope.$digest();
+            controller = this.element.controller('classPreview');
         });
-
-        it('classObj should be two way bound', function() {
-            var controller = this.element.controller('classPreview');
-            controller.classObj = {matonto: {}};
+        it('classObj should be one way bound', function() {
+            controller.classObj = {'@id': ''};
             scope.$digest();
-            expect(scope.classObj).toEqual({matonto: {}});
+            expect(scope.classObj).not.toEqual({'@id': ''});
+        });
+        it('ontologies should be one way bound', function() {
+            controller.ontologies = [{}];
+            scope.$digest();
+            expect(scope.ontologies).not.toEqual([{}]); 
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.classObj = {matonto: {properties: [{}]}};
-
-            this.element = $compile(angular.element('<class-preview class-obj="classObj"></class-preview>'))(scope);
+            scope.classObj = {'@id': ''};
+            scope.ontologies = [];
+            this.element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
             scope.$digest();
+            controller = this.element.controller('classPreview');
         });
-        it('should create a title for classObj', function() {
-            var controller = this.element.controller('classPreview');
-            var result = controller.createTitle();
-
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.classObj);
-            expect(typeof result).toBe('string');
-        });
-        it('should create a description of the ontology', function() {
-            var controller = this.element.controller('classPreview');
-            var result = controller.createDescription();
-            expect(typeof result).toBe('string');
-        });
-        it('should get classes from the ontology', function() {
-            var controller = this.element.controller('classPreview');
+        it('should get properties of the class from the ontologies', function() {
             var result = controller.getProps();
-            expect(Array.isArray(result)).toBe(true);
-            expect(result).toEqual(controller.classObj.matonto.properties);
+            expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(controller.ontologies, controller.classObj['@id']);
+            expect(_.isArray(result)).toBe(true);
         });
-        it('should get the list of classes to display', function() {
-            ontologyManagerSvc.getEntityName.calls.reset();
-            var controller = this.element.controller('classPreview');
-            controller.classObj = {matonto: {properties: [{}, {}, {}, {}, {}, {}, {}]}};
-            controller.full = false;
-            var result = controller.getPropList();
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(controller.numPropPreview);
-            expect(ontologyManagerSvc.getEntityName.calls.count()).toBe(controller.numPropPreview);
-           
-            ontologyManagerSvc.getEntityName.calls.reset();
-            controller.full = true;
-            result = controller.getPropList();
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(controller.classObj.matonto.properties.length);
-            expect(ontologyManagerSvc.getEntityName.calls.count()).toBe(controller.classObj.matonto.properties.length);
+        describe('should get the list of properties to display', function() {
+            beforeEach(function() {
+                this.properties = [{}, {}, {}, {}, {}, {}, {}];
+                spyOn(controller, 'getProps').and.returnValue(this.properties);
+                ontologyManagerSvc.getEntityName.calls.reset();
+            });
+            it('if the list is full', function() {
+                controller.full = true;
+                var result = controller.getPropList();
+                expect(_.isArray(result)).toBe(true);
+                expect(result.length).toBe(this.properties.length);
+                expect(ontologyManagerSvc.getBeautifulIRI.calls.count()).toBe(this.properties.length);
+            });
+            it('if the list is not full', function() {
+                controller.full = false;
+                var result = controller.getPropList();
+                expect(_.isArray(result)).toBe(true);
+                expect(result.length).toBe(controller.numPropPreview);
+                expect(ontologyManagerSvc.getBeautifulIRI.calls.count()).toBe(controller.numPropPreview);
+            });
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<class-preview class-obj="classObj"></class-preview>'))(scope);
+            this.element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
@@ -109,25 +106,27 @@ describe('Class Preview directive', function() {
         });
         it('depending on whether classObj was passed', function() {
             expect(this.element.children().length).toBe(0);
-
             scope.classObj = {};
             scope.$digest();
             expect(this.element.children().length).toBe(1);
         });
         it('depending on whether classObj has any properties', function() {
-            scope.classObj = {matonto: {properties: []}};
+            controller = this.element.controller('classPreview');
+            scope.classObj = {};
             scope.$digest();
             var propList = angular.element(this.element.querySelectorAll('ul')[0]);
             expect(propList.html()).toContain('None');
 
-            scope.classObj = {matonto: {properties: [{}]}};
+            var properties = [{}];
+            spyOn(controller, 'getProps').and.returnValue(properties);
             scope.$digest();
             expect(propList.html()).not.toContain('None');
-            expect(propList.children().length).toBe(scope.classObj.matonto.properties.length);
+            expect(propList.children().length).toBe(properties.length);
         });
         it('depending on how many properties are showing', function() {
-            var controller = this.element.controller('classPreview');
-            scope.classObj = {matonto: {properties: [{}, {}, {}, {}, {}, {}]}};
+            controller = this.element.controller('classPreview');
+            spyOn(controller, 'getProps').and.returnValue([{}, {}, {}, {}, {}, {}]);
+            scope.classObj = {};
             scope.$digest();
             var link = angular.element(this.element.querySelectorAll('a.header-link')[0]);
             expect(link.text()).toBe('See More');
@@ -136,10 +135,12 @@ describe('Class Preview directive', function() {
             expect(link.text()).toBe('See Less');
         });
         it('with the correct number of list items for properties', function() {
-            var controller = this.element.controller('classPreview');
-            scope.classObj = {matonto: {properties: [{}, {}, {}, {}, {}]}};
+            controller = this.element.controller('classPreview');
+            var properties = [{}, {}, {}, {}, {}];
+            spyOn(controller, 'getProps').and.returnValue([{}, {}, {}, {}, {}]);
+            scope.classObj = {};
             scope.$digest();
-            expect(this.element.querySelectorAll('.props li').length).toBe(scope.classObj.matonto.properties.length);
+            expect(this.element.querySelectorAll('.props li').length).toBe(properties.length);
         });
     });
 });

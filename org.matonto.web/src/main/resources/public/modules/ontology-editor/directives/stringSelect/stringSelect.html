@@ -22,11 +22,12 @@
   -->
 <div class="form-group">
     <custom-label muted-text="mutedText">{{displayText}}</custom-label>
-    <ui-select multiple ng-model="dvm.bindModel" on-select="changeEvent()" on-remove="changeEvent()">
+    <ui-select multiple ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()">
         <ui-select-match placeholder="{{'Select ' + displayText}}">
             <span title="{{$item}}">{{($item | splitIRI).end}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="dvm.om.getItemNamespace" repeat="item in selectList | removeIriFromArray:bindModel | filter:$select.search">
+        <ui-select-choices group-by="dvm.getItemNamespace" ui-disable-choice="dvm.disableChoice(item)"
+                           repeat="item in selectList | removeIriFromArray:bindModel | filter:$select.search">
             <div ng-bind-html="(item | splitIRI).end | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>

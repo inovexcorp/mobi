@@ -24,35 +24,36 @@
     'use strict';
 
     angular
-        .module('annotationManager', ['responseObj', 'splitIRI', 'prefixes'])
-        .service('annotationManagerService', annotationManagerService)
-        .filter('showAnnotations', showAnnotations);
+        .module('annotationManager', [])
+        .service('annotationManagerService', annotationManagerService);
 
-        annotationManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'responseObj', 'prefixes'];
+        annotationManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'prefixes'];
 
-        function annotationManagerService($rootScope, $filter, $q, $http, responseObj, prefixes) {
+        function annotationManagerService($rootScope, $filter, $q, $http, prefixes) {
             var self = this;
             var prefix = '/matontorest/ontologies/';
 
-            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], function(item) {
+            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => {
                 return {
-                    'namespace': prefixes.rdfs,
-                    'localName': item
+                    namespace: prefixes.rdfs,
+                    localName: item
                 }
             });
-            var owlAnnotations = _.map(['deprecated', 'versionInfo', 'priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], function(item) {
+            var dcAnnotations = _.map(['description', 'title'], item => {
                 return {
-                    'namespace': prefixes.owl,
-                    'localName': item
+                    namespace: prefixes.dcterms,
+                    localName: item
                 }
             });
-            var dcAnnotations = _.map(['description', 'title'], function(item) {
+            var defaultAnnotations = _.concat(angular.copy(rdfsAnnotations), angular.copy(dcAnnotations));
+
+            self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
+                'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {
                 return {
-                    'namespace': prefixes.dcterms,
-                    'localName': item
+                    namespace: prefixes.skos,
+                    localName: item
                 }
             });
-            var defaultAnnotations = _.concat(angular.copy(rdfsAnnotations), angular.copy(owlAnnotations), angular.copy(dcAnnotations));
 
             self.getDefaultAnnotations = function() {
                 return angular.copy(defaultAnnotations);
@@ -60,16 +61,18 @@
 
             self.remove = function(entity, key, index) {
                 _.pullAt(entity[key], index);
-
-                if(!entity[key].length) {
+                if (!entity[key].length) {
                     delete entity[key];
                 }
             }
 
-            self.add = function(entity, prop, value) {
-                if(prop) {
+            self.add = function(entity, prop, value, type) {
+                if (prop) {
                     var annotation = {'@value': value};
-                    if(_.has(entity, prop)) {
+                    if (type) {
+                        annotation['@type'] = type;
+                    }
+                    if (_.has(entity, prop)) {
                         entity[prop].push(annotation);
                     } else {
                         entity[prop] = [annotation];
@@ -77,63 +80,45 @@
                 }
             }
 
-            self.edit = function(entity, prop, value, index) {
-                if(prop) {
-                    entity[prop][index]['@value'] = value;
+            self.edit = function(entity, prop, value, index, type) {
+                if (prop) {
+                    var annotation = entity[prop][index];
+                    annotation['@value'] = value;
+
+                    if (type) {
+                        annotation['@type'] = type;
+                    }
                 }
             }
 
-            self.create = function(ontology, iri) {
+            self.create = function(ontologyId, annotationIRIs, iri) {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
-                var annotationjson = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
-                if(_.findIndex(ontology.matonto.jsAnnotations, annotationjson) === -1) {
+                var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
+                if (_.indexOf(annotationIRIs, iri) === -1) {
                     var config = {
                         params: {
-                            annotationjson: annotationjson
+                            annotationjson: annotationJSON
                         }
                     }
-                    $http.post(prefix + encodeURIComponent(ontology.matonto.id) + '/annotations', null, config)
-                        .then(function(response) {
-                            if(_.get(response, 'status') === 200) {
-                                var split = $filter('splitIRI')(iri);
-                                ontology.matonto.annotations.push({namespace: split.begin + split.then, localName: split.end});
-                                ontology.matonto.jsAnnotations.push(annotationjson);
-                                deferred.resolve(response);
+                    $http.post(prefix + encodeURIComponent(ontologyId) + '/annotations', null, config)
+                        .then(response => {
+                            if (_.get(response, 'status') === 200) {
+                                deferred.resolve(annotationJSON);
                             } else {
                                 deferred.reject(_.get(response, 'statusText'));
                             }
-                        }, function(response) {
+                        }, response => {
                             deferred.reject(_.get(response, 'statusText'));
                         })
-                        .then(function() {
+                        .then(() => {
                             $rootScope.showSpinner = false;
                         });
                 } else {
                     deferred.reject('This ontology already has an OWL Annotation declared with that IRI.');
                     $rootScope.showSpinner = false;
                 }
-
                 return deferred.promise;
-            }
-        }
-
-        showAnnotations.$inject = ['responseObj'];
-
-        function showAnnotations(responseObj) {
-            return function(entity, annotations) {
-                var arr = [];
-
-                if(_.isArray(annotations)) {
-                    arr = _.filter(annotations, function(annotation) {
-                        if(responseObj.validateItem(annotation)) {
-                            var annotationIri = responseObj.getItemIri(annotation);
-                            return _.has(entity, annotationIri);
-                        }
-                    });
-                }
-
-                return arr;
             }
         }
 })();

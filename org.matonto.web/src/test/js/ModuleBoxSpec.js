@@ -41,7 +41,7 @@ describe('Module Box directive', function() {
             scope.headerText = 'header';
             scope.iconName = 'icon';
 
-            element = $compile(angular.element('<module-box background-color="{{backgroundColor}}" header-text="{{headerText}}" icon-name="{{iconName}}"></module-box>'))(scope);
+            element = $compile(angular.element('<module-box background-color="backgroundColor" header-text="headerText" icon-name="iconName"></module-box>'))(scope);
             scope.$digest();
         });
 
@@ -70,7 +70,7 @@ describe('Module Box directive', function() {
             scope.headerText = 'header';
             scope.iconName = 'icon';
 
-            element = $compile(angular.element('<module-box background-color="{{backgroundColor}}" header-text="{{headerText}}" icon-name="{{iconName}}"></module-box>'))(scope);
+            element = $compile(angular.element('<module-box background-color="backgroundColor" header-text="headerText" icon-name="iconName"></module-box>'))(scope);
             scope.$digest();
         });
         it('for div tag', function() {

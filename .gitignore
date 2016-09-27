@@ -19,3 +19,5 @@ node_modules/
 *.log
 .DS_Store
 */docs/
+dependency-reduced-pom.xml
+

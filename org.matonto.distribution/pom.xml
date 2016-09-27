@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.12-SNAPSHOT</version>
+        <version>1.2.4-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -47,6 +47,7 @@
             mvn:org.matonto/index.dependency/${project.version}/xml \
             mvn:org.matonto/index.sesame4/${project.version}/xml
         </obr.urls>
+        <deploy.bundles.version></deploy.bundles.version>
     </properties>
 
     <dependencies>
@@ -97,6 +98,14 @@
             <artifactId>spring</artifactId>
             <classifier>features</classifier>
             <version>${karaf.version}</version>
+            <type>xml</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>karaf.feature</artifactId>
+            <classifier>features</classifier>
+            <version>${project.version}</version>
             <type>xml</type>
             <scope>runtime</scope>
         </dependency>
@@ -181,9 +190,24 @@
                         <feature>jax-rs-provider-multipart</feature>
                         <feature>jax-rs-provider-gson</feature>
                         <feature>jax-rs-provider-security</feature>
+
+                        <!-- MatOnto Features -->
+                        <feature>matonto-deps</feature>
+                        <feature>matonto-core</feature>
+                        <feature>matonto-cli</feature>
+                        <feature>matonto-web</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release-build</id>
+            <properties>
+                <deploy.bundles.version>,${project.version}</deploy.bundles.version>
+            </properties>
+        </profile>
+    </profiles>
 </project>

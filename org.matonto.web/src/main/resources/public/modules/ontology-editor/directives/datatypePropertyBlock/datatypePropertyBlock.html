@@ -1,0 +1,34 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="datatype-properties-block annotation-block">
+    <block>
+        <block-header>
+            <span>Datatype Properties</span><a ng-if="dvm.sm.selected" ng-click="dvm.openAddDataPropOverlay()" class="pull-right"><i class="fa fa-fw fa-plus"></i>Add Datatype Property</a>
+        </block-header>
+        <block-content>
+            <property-values ng-repeat="property in dvm.sm.selected | showProperties:dvm.sm.listItem.subDataProperties | orderBy:'localName'"
+                             property="property" entity="dvm.sm.selected" edit="dvm.editDataProp(property, index)"
+                             remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
+        </block-content>
+    </block>
+</div>

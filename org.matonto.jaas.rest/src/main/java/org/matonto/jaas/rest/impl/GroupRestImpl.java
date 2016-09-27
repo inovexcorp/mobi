@@ -25,48 +25,78 @@ package org.matonto.jaas.rest.impl;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.karaf.jaas.boot.ProxyLoginModule;
 import org.apache.karaf.jaas.boot.principal.GroupPrincipal;
 import org.apache.karaf.jaas.boot.principal.UserPrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.karaf.jaas.modules.BackingEngine;
-import org.matonto.jaas.modules.token.TokenBackingEngine;
-import org.matonto.jaas.modules.token.TokenBackingEngineFactory;
+import org.apache.karaf.jaas.modules.BackingEngineFactory;
 import org.matonto.jaas.rest.GroupRest;
 import org.matonto.rest.util.ErrorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.ws.rs.core.Response;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.ws.rs.core.Response;
+import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class GroupRestImpl implements GroupRest {
     protected JaasRealm realm;
-    protected TokenBackingEngine engine;
+    protected Map<String, BackingEngineFactory> engineFactories = new HashMap<>();
+    protected BackingEngine engine;
     private final Logger logger = LoggerFactory.getLogger(GroupRestImpl.class);
+    static final String TOKEN_MODULE = "org.matonto.jaas.modules.token.TokenLoginModule";
 
     @Reference(target = "(realmId=matonto)")
     protected void setRealm(JaasRealm realm) {
         this.realm = realm;
     }
 
-    @Activate
-    protected void start() {
-        AppConfigurationEntry[] entries = realm.getEntries();
-        BackingEngine be = getFactory().build(entries[1].getOptions());
-        if (be instanceof TokenBackingEngine) {
-            engine = (TokenBackingEngine) be;
-        }
+    @Reference(type = '*', dynamic = true)
+    protected void addEngineFactory(BackingEngineFactory engineFactory) {
+        this.engineFactories.put(engineFactory.getModuleClass(), engineFactory);
     }
 
-    protected TokenBackingEngineFactory getFactory() {
-        return new TokenBackingEngineFactory();
+    protected void removeEngineFactory(BackingEngineFactory engineFactory) {
+        this.engineFactories.remove(engineFactory.getModuleClass());
+    }
+
+    @Activate
+    protected void start() {
+        // Get ApplicationConfigEntry
+        AppConfigurationEntry entry = null;
+        for (AppConfigurationEntry configEntry : realm.getEntries()) {
+            if (configEntry.getOptions().get(ProxyLoginModule.PROPERTY_MODULE).equals(TOKEN_MODULE)) {
+                entry = configEntry;
+                break;
+            }
+        }
+
+        if (entry == null) throw new IllegalStateException("TokenLoginModule not registered with realm.");
+
+        // Get TokenBackingEngineFactory
+        BackingEngineFactory engineFactory;
+        if (engineFactories.containsKey(TOKEN_MODULE)) {
+            engineFactory = engineFactories.get(TOKEN_MODULE);
+        } else {
+            throw new IllegalStateException("Cannot find BackingEngineFactory service for TokenLoginModule.");
+        }
+
+        engine = engineFactory.build(entry.getOptions());
+    }
+
+    @Modified
+    protected void update() {
+        start();
     }
 
     @Override
@@ -79,12 +109,12 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response createGroup(String groupName) {
-        if (findGroup(groupName).isPresent()) {
-            throw ErrorUtils.sendError("Group already exists", Response.Status.BAD_REQUEST);
-        }
-
         if (groupName == null) {
             throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        if (findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group already exists", Response.Status.BAD_REQUEST);
         }
 
         engine.createGroup(groupName);
@@ -94,8 +124,13 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response getGroup(String groupName) {
-        Map.Entry<GroupPrincipal, String> group = findGroup(groupName)
-                .orElseThrow(() -> ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        Map.Entry<GroupPrincipal, String> group = findGroup(groupName).orElseThrow(() ->
+                ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+
         JSONObject obj = new JSONObject();
         obj.put("name", group.getKey().getName());
         obj.put("roles", JSONArray.fromObject(group.getValue().split(",")));
@@ -104,16 +139,21 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response updateGroup(String groupName) {
+        // TODO: Implement
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @Override
     public Response deleteGroup(String groupName) {
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findGroup(groupName).isPresent()) {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
 
-        List<UserPrincipal> users = engine.listUsers();
+        // Engine will delete group when no users are left in it
         engine.listUsers().stream()
                 .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
                 .map(UserPrincipal::getName)
@@ -128,18 +168,27 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response getGroupRoles(String groupName) {
-        Map.Entry<GroupPrincipal, String> group = findGroup(groupName)
-                .orElseThrow(() -> ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
-        JSONArray roles = JSONArray.fromObject(group.getValue().split(","));
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
 
+        Map.Entry<GroupPrincipal, String> group = findGroup(groupName).orElseThrow(() ->
+                ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST));
+
+        JSONArray roles = JSONArray.fromObject(group.getValue().split(","));
         return Response.status(200).entity(roles.toString()).build();
     }
 
     @Override
     public Response addGroupRole(String groupName, String role) {
+        if (groupName == null || role == null) {
+            throw ErrorUtils.sendError("Both groupName and role must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findGroup(groupName).isPresent()) {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
+
         logger.info("Adding role " + role + " to group " + groupName);
         engine.addGroupRole(groupName, role);
         return Response.ok().build();
@@ -147,6 +196,10 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response removeGroupRole(String groupName, String role) {
+        if (groupName == null || role == null) {
+            throw ErrorUtils.sendError("Both groupName and role must be provided", Response.Status.BAD_REQUEST);
+        }
+
         if (!findGroup(groupName).isPresent()) {
             throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
         }
@@ -154,6 +207,26 @@ public class GroupRestImpl implements GroupRest {
         logger.info("Removing role " + role + " from group " + groupName);
         engine.deleteGroupRole(groupName, role);
         return Response.ok().build();
+    }
+
+    @Override
+    public Response getGroupUsers(String groupName) {
+        if (groupName == null) {
+            throw ErrorUtils.sendError("Group name must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        if (!findGroup(groupName).isPresent()) {
+            throw ErrorUtils.sendError("Group not found", Response.Status.BAD_REQUEST);
+        }
+
+        List<String> users = engine.listUsers().stream()
+                .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
+                .map(UserPrincipal::getName)
+                .collect(Collectors.toList());
+        logger.info("Deleted group " + groupName);
+
+        JSONArray usersJsonArray = JSONArray.fromObject(users);
+        return Response.status(200).entity(usersJsonArray.toString()).build();
     }
 
     private Optional<Map.Entry<GroupPrincipal, String>> findGroup(String groupName) {

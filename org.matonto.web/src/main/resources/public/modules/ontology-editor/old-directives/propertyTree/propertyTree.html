@@ -1,0 +1,43 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="tree scroll-without-buttons">
+    <strong>{{headerText}}</strong>
+    <ul ng-repeat="item in dvm.om.list track by item.ontologyId"
+        ng-init="opened = dvm.sm.getOpened(item.ontologyId, dvm.om.getOntologyIRI(item.ontology))">
+        <tree-item current-entity="dvm.om.getOntologyEntity(item.ontology)"
+                   ontology-id="item.ontologyId"
+                   is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === dvm.om.getOntologyIRI(item.ontology)"
+                   on-click="dvm.sm.selectItem('ontology-editor', dvm.om.getOntologyIRI(item.ontology), item)"
+                   has-children="dvm.hasProperties(item.ontology)"
+                   is-opened="opened"></tree-item>
+        <li class="container" ng-if="opened">
+            <ul>
+                <tree-item ng-repeat="property in dvm.getProperties(item.ontology) track by property.matonto.originalIRI"
+                           current-entity="property"
+                           ontology-id="item.ontologyId"
+                           is-active="dvm.sm.state.ontologyId === item.ontologyId && dvm.sm.state.entityIRI === property.matonto.originalIRI"
+                           on-click="dvm.sm.selectItem('property-editor', property.matonto.originalIRI, item)"></tree-item>
+            </ul>
+        </li>
+    </ul>
+</div>

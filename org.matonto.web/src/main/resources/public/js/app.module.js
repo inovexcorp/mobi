@@ -29,6 +29,7 @@
             'angular-uuid',
             'ngAnimate',
             'ngCookies',
+            'ngHandsontable',
             'ngMessages',
             'ui.bootstrap',
             'ui.codemirror',
@@ -39,26 +40,31 @@
             'beautify',
             'camelCase',
             'escapeHTML',
+            'prefixation',
             'removeIriFromArray',
             'removeMatonto',
+            'showProperties',
             'splitIRI',
             'trusted',
 
             /* Custom Directives */
+            'block',
+            'blockContent',
+            'blockFooter',
+            'blockHeader',
+            'blockSearch',
             'checkbox',
             'circleButton',
             'confirmationOverlay',
-            'customButton',
+            'customHeader',
             'customLabel',
             'errorDisplay',
             'fileInput',
-            'leftNav',
-            'leftNavItem',
             'pagination',
             'passwordConfirmInput',
             'radioButton',
-            'tabButton',
-            'tabButtonContainer',
+            'tab',
+            'tabset',
             'textArea',
             'textInput',
 
@@ -84,6 +90,8 @@
             'responseObj',
             'settingsManager',
             'updateRefs',
+            'stateManager',
+            'updateRefs'
             'userManager'
         ])
         .constant('_', window._)
@@ -92,19 +100,21 @@
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
             'FILENAME': /^[\w\-. ]+$/
         })
-        .factory('beforeUnload', beforeUnload)
+        .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
-            // We have to invoke the factory at least once
+            // We have to invoke the service at least once
         });
 
-        beforeUnload.$inject = ['$window', 'ontologyManagerService'];
+        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'stateManagerService'];
 
-        function beforeUnload($window, ontologyManagerService) {
+        function beforeUnload($window, ontologyManagerService, stateManagerService) {
             $window.onbeforeunload = function(e) {
-                if(ontologyManagerService.getChangedEntries().length) {
+                var hasChanges = _.some(ontologyManagerService.list, listItem => {
+                    return stateManagerService.hasChanges(_.get(listItem, 'ontology'), _.get(listItem, 'ontologyId'));
+                });
+                if (hasChanges) {
                     return true;
                 }
             }
-            return {};
         }
 })();

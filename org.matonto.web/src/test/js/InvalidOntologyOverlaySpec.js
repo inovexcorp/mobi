@@ -31,26 +31,25 @@ describe('Invalid Ontology Overlay directive', function() {
         module('invalidOntologyOverlay');
         mockMappingManager();
         mockMapperState();
+        mockOntologyManager();
+        injectSplitIRIFilter();
 
-        inject(function(_mappingManagerService_, _mapperStateService_) {
-            mappingManagerSvc = _mappingManagerService_;
-            mapperStateSvc = _mapperStateService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
         });
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: ''};
+            mappingManagerSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
             scope.$digest();
+            controller = this.element.controller('invalidOntologyOverlay');
         });
         it('should set the correct state for closing the overlay', function() {
-            var controller = this.element.controller('invalidOntologyOverlay');
             controller.close();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.invalidOntology).toBe(false);
@@ -67,8 +66,8 @@ describe('Invalid Ontology Overlay directive', function() {
             expect(this.element.hasClass('invalid-ontology-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
-        it('with a custom button for closing', function() {
-            var buttons = this.element.find('custom-button');
+        it('with a button for closing', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(1);
             expect(angular.element(buttons[0]).text()).toContain('Close');
         });

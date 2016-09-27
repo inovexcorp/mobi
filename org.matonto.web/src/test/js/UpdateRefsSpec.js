@@ -89,4 +89,37 @@ describe('Update Refs service', function() {
         updateRefsSvc.update(obj, 'test/0', 'aaa/1');
         expect(obj).toEqual(result);
     });
+    it('should remove all objects that reference the provided string', function() {
+        var obj = {
+            'id1': 'remove',
+            arr: [
+                {
+                    'id2': 'remove'
+                }
+            ],
+            arr2: [
+                {
+                    'id3': 'remove'
+                },
+                {
+                    'id4': 'no-remove'
+                }
+            ],
+            arr3: ['remove', 'no-remove'],
+            arr4: ['remove'],
+            'id5': {
+                'id6': 'remove'
+            }
+        };
+        var result = {
+            arr2: [
+                {
+                    'id4': 'no-remove'
+                }
+            ],
+            arr3: ['no-remove']
+        };
+        updateRefsSvc.remove(obj, 'remove');
+        expect(obj).toEqual(result);
+    });
 });

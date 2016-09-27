@@ -23,7 +23,8 @@
 describe('Prop Select directive', function() {
     var $compile,
         scope,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -35,13 +36,10 @@ describe('Prop Select directive', function() {
             $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
         });
 
-        inject(function(_ontologyManagerService_) {
-            ontologyManagerSvc = _ontologyManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -50,25 +48,31 @@ describe('Prop Select directive', function() {
             scope.props = [];
             scope.selectedProp = '';
             scope.onChange = jasmine.createSpy('onChange');
-
             this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
             scope.$digest();
         });
-
-        it('props should be two way bound', function() {
+        it('props should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.props = [{}];
             scope.$digest();
-            expect(scope.props).toEqual([{}]);
+            expect(scope.props).not.toEqual([{}]);
         });
         it('onChange should be called in the parent scope', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.onChange();
-
             expect(scope.onChange).toHaveBeenCalled();
         });
+    });
+    describe('controller bound variable', function() {
+        beforeEach(function() {
+            scope.props = [];
+            scope.selectedProp = '';
+            scope.onChange = jasmine.createSpy('onChange');
+            this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
+            scope.$digest();
+            controller = this.element.controller('propSelect');
+        });
         it('selectedProp should be two way bound', function() {
-            var controller = this.element.controller('propSelect');
             controller.selectedProp = 'test';
             scope.$digest();
             expect(scope.selectedProp).toEqual('test');

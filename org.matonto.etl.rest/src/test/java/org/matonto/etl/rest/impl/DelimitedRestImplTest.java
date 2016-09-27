@@ -26,7 +26,12 @@ package org.matonto.etl.rest.impl;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -37,14 +42,17 @@ import org.junit.Assert;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
+import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
+import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.when;
 import org.testng.annotations.Test;
 
 import javax.ws.rs.client.Entity;
@@ -57,10 +65,19 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 public class DelimitedRestImplTest extends MatontoRestTestNg {
     private DelimitedRestImpl rest;
+    private static final String MAPPING_IRI = "http://test.org";
 
     @Mock
     DelimitedConverter converter;
@@ -68,17 +85,38 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     @Mock
     MappingManager manager;
 
+    @Mock
+    MappingWrapper mappingWrapper;
+
     @Override
     protected Application configureApp() throws Exception {
+        ValueFactory factory = SimpleValueFactory.getInstance();
         MockitoAnnotations.initMocks(this);
         rest = new DelimitedRestImpl();
         rest.setDelimitedConverter(converter);
         rest.setMappingManager(manager);
+        rest.setFactory(factory);
 
+        when(mappingWrapper.getModel()).thenReturn(new LinkedHashModel());
         when(converter.convert(any(SVConfig.class))).thenReturn(new LinkedHashModel());
         when(converter.convert(any(ExcelConfig.class))).thenReturn(new LinkedHashModel());
-        when(manager.createMappingIRI(anyString())).thenReturn(String::new);
-        when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(new LinkedHashModel()));
+        when(manager.retrieveMapping(any(Resource.class))).thenReturn(Optional.of(mappingWrapper));
+        when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
+            @Override
+            public Optional<IRI> getMappingIRI() {
+                return null;
+            }
+
+            @Override
+            public Optional<IRI> getVersionIRI() {
+                return null;
+            }
+
+            @Override
+            public Resource getMappingIdentifier() {
+                return factory.createIRI(i.getArguments()[0].toString());
+            }
+        });
 
         rest.start();
 
@@ -206,7 +244,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     @Test
     public void mapWithoutMappingTest() {
         String mapping = "";
-        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingName", mapping)
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", mapping)
                 .request().get();
         Assert.assertEquals(400, response.getStatus());
 
@@ -218,7 +256,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     public void mapCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
-        String body = testMap(fileName, "test", null);
+        String body = testMap(fileName, MAPPING_IRI, null);
         isJsonld(body);
     }
 
@@ -231,7 +269,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
-        String body = testMap(fileName, "test", params);
+        String body = testMap(fileName, MAPPING_IRI, params);
         isNotJsonld(body);
     }
 
@@ -240,7 +278,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, "test", null);
+        String body = testMap(fileName, MAPPING_IRI, null);
         isJsonld(body);
     }
     @Test
@@ -252,14 +290,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, "test", params);
+        String body = testMap(fileName, MAPPING_IRI, params);
         isNotJsonld(body);
     }
 
     @Test
     public void mapNonexistentDelimitedTest() {
-        Response response = target().path("delimited-files/error/map").queryParam("mappingName", "test").request()
-                .get();
+        Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", MAPPING_IRI)
+                .request().get();
         Assert.assertEquals(400, response.getStatus());
     }
 
@@ -272,7 +310,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
         Assert.assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
 
-        testMap(fileName, "test", params);
+        testMap(fileName, MAPPING_IRI, params);
         Assert.assertFalse(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
     }
 
@@ -373,14 +411,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     }
 
     private String testMap(String fileName, String mappingName, Map<String, Object> params) {
-        WebTarget wt = target().path("delimited-files/" + fileName + "/map").queryParam("mappingName", mappingName);
+        WebTarget wt = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", mappingName);
         if (params != null) {
             for (String k : params.keySet()) {
                 wt = wt.queryParam(k, params.get(k));
             }
         }
         Response response = wt.request().get();
-        Assert.assertEquals(200, response.getStatus());
+        Assert.assertEquals(response.getEntity().toString(), 200, response.getStatus());
         return response.readEntity(String.class);
     }
 

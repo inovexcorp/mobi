@@ -49,8 +49,8 @@
         </div>
         
         <div class="btn-container clearfix">
-            <custom-button on-click="dvm.state.editIriTemplate = false" pull="'left'" type="'secondary'">Cancel</custom-button>
-            <custom-button on-click="dvm.state.editIriTemplate = false; dvm.set()" is-disabled-when="iriTemplateForm.$invalid">Set</custom-button>
+            <button class="btn btn-primary pull-right" ng-click="dvm.state.editIriTemplate = false; dvm.set()" ng-disabled="iriTemplateForm.$invalid">Set</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.state.editIriTemplate = false">Cancel</button>
         </div>
     </form>
 </div>

@@ -64,8 +64,8 @@
                 restrict: 'E',
                 replace: true,
                 scope: {
-                    links: '=',
-                    currentPage: '=',
+                    links: '<',
+                    currentPage: '<',
                     getPage: '&'
                 },
                 templateUrl: 'directives/pagination/pagination.html'

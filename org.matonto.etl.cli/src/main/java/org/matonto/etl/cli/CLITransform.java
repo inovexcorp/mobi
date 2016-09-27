@@ -103,8 +103,17 @@ public class CLITransform implements Action {
         File newFile = new File(file);
         File mappingFile = new File(mappingFileLocation);
 
-        if (!newFile.exists() && !mappingFile.exists()) {
-            System.out.println("Files do not exist.");
+        if (!newFile.exists()) {
+            String msg = "Delimited input file does not exist.";
+            LOGGER.error(msg);
+            System.out.println(msg);
+            return null;
+        }
+
+        if (!mappingFile.exists()) {
+            String msg = "Mapping input file does not exist.";
+            LOGGER.error(msg);
+            System.out.println(msg);
             return null;
         }
 
@@ -140,7 +149,7 @@ public class CLITransform implements Action {
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            LOGGER.error(e);
+            LOGGER.error("Unspecified error in transformation.", e);
         }
 
         return null;

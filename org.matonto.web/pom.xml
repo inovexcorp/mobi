@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.12-SNAPSHOT</version>
+        <version>1.2.4-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -80,19 +80,24 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas</artifactId>
-            <version>1.0.46</version>
+            <version>1.1.29</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>web.security</artifactId>
+            <version>1.1.29</version>
         </dependency>
 
         <!-- REST Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.rest</artifactId>
-            <version>1.0.34</version>
+            <version>1.2.3</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.rest</artifactId>
-            <version>1.1.6</version>
+            <version>1.1.29</version>
         </dependency>
     </dependencies>
 
@@ -155,6 +160,33 @@
                     </instructions>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/classes/build/modules/nav</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/public/modules/nav</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>*.html</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
         <resources>
@@ -176,7 +208,7 @@
 
     <profiles>
         <profile>
-            <id>prod</id>
+            <id>release-build</id>
             <properties>
                 <build.env>prod</build.env>
             </properties>

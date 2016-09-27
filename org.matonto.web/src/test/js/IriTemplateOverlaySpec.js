@@ -26,7 +26,8 @@ describe('IRI Template Overlay directive', function() {
         prefixes,
         mappingManagerSvc,
         mapperStateSvc,
-        delimitedManagerSvc;
+        delimitedManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -36,15 +37,12 @@ describe('IRI Template Overlay directive', function() {
         mockMappingManager();
         mockDelimitedManager();
 
-        inject(function(_mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
         });
     });
 
@@ -62,10 +60,10 @@ describe('IRI Template Overlay directive', function() {
             mappingManagerSvc.mapping = {
                 jsonld: [classMapping]
             };
-            delimitedManagerSvc.filePreview = {headers: ['a']};
+            delimitedManagerSvc.dataRows = [['a']];
             var element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
-            var controller = element.controller('iriTemplateOverlay');
+            controller = element.controller('iriTemplateOverlay');
             expect(controller.beginning).toBe('/');
             expect(controller.beginsWith).toBe('test');
             expect(controller.then).toBe('/');
@@ -73,29 +71,29 @@ describe('IRI Template Overlay directive', function() {
                 delete opt['$$hashKey'];
             });
             expect(cleanOptions[0]).toEqual({text: 'UUID', value: '${UUID}'});
-            expect(cleanOptions).toContain({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
-            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.filePreview.headers[0], value: localName});
+            expect(delimitedManagerSvc.getHeader.calls.count()).toBe(delimitedManagerSvc.dataRows[0].length);
+            expect(cleanOptions).toContain({text: delimitedManagerSvc.getHeader(0), value: localName});
+            expect(controller.endsWith).toEqual({text: delimitedManagerSvc.getHeader(0), value: localName});
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
+            controller = this.element.controller('iriTemplateOverlay');
         });
         it('should correctly set the iri template', function() {
-            var controller = this.element.controller('iriTemplateOverlay');
             controller.set();
             expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId, 
                 controller.beginsWith + controller.then, controller.endsWith.value);
-            expect(mapperStateSvc.changedMapping).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             mappingManagerSvc.mapping = {jsonld: []};
-            delimitedManagerSvc.filePreview = {headers: []};
+            delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
         });
@@ -109,7 +107,7 @@ describe('IRI Template Overlay directive', function() {
         it('with the correct classes for errors', function() {
             var failTests = ['/', '#', '?', ':', 'test/', '/test', 'test#', '#test', 'test?', '?test', 'test:', ':test', 'test#test', 'test?test', 'test:test'];
             var successTests = ['test', 'test/test', 'TEST_test', 'test.test'];
-            var controller = this.element.controller('iriTemplateOverlay');
+            controller = this.element.controller('iriTemplateOverlay');
             var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with')[0]);
             expect(beginsWith.hasClass('has-error')).toBe(true);
             
@@ -125,12 +123,12 @@ describe('IRI Template Overlay directive', function() {
             });
         });
         it('with the correct number of options for ends with', function() {
-            var controller = this.element.controller('iriTemplateOverlay');
+            controller = this.element.controller('iriTemplateOverlay');
             var endsWith = angular.element(this.element.querySelectorAll('.template-ends-with select')[0]);
             expect(endsWith.find('option').length).toBe(controller.localNameOptions.length);
         });
-        it('with custom buttons to cancel and set', function() {
-            var buttons = this.element.find('custom-button');
+        it('with buttons to cancel and set', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);

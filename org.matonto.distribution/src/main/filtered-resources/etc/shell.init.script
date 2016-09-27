@@ -1,4 +1,4 @@
-#Place any startup scripting in here. To deploy an obr bundle, use:
+#Place any startup scripting in here. To deploy an obr bundle use:
 #wait -t 5000 obr
 #obr:start <bundle-name>
 
@@ -7,30 +7,30 @@
 matonto-deploy-bundles = {
     obr:url-refresh
     obr:start -d \
-        org.matonto.persistence.api \
-        org.matonto.persistence.cli \
-        org.matonto.rdf.impl.sesame \
-        org.matonto.repository.impl.sesame \
-        org.matonto.repository.impl.core \
-        org.matonto.etl.api \
-        org.matonto.etl.cli \
-        org.matonto.etl.delimited \
-        org.matonto.etl.rdf \
-        org.matonto.etl.rest \
-        org.matonto.ontology.api \
-        org.matonto.ontology.cli \
-        org.matonto.ontology.core.impl.owlapi \
-        org.matonto.ontology.rest \
-        org.matonto.catalog.api \
-        org.matonto.catalog.impl \
-        org.matonto.catalog.rest \
-        org.matonto.swagger.ui \
-        org.matonto.web \
-        org.matonto.web.security \
-        org.matonto.sparql.rest \
-        org.matonto.jaas \
-        org.matonto.jaas.rest \
-        com.eclipsesource.jaxrs.swagger-all 
+        org.matonto.persistence.api${deploy.bundles.version} \
+        org.matonto.persistence.cli${deploy.bundles.version} \
+        org.matonto.rdf.impl.sesame${deploy.bundles.version} \
+        org.matonto.repository.impl.sesame${deploy.bundles.version} \
+        org.matonto.repository.impl.core${deploy.bundles.version} \
+        org.matonto.etl.api${deploy.bundles.version} \
+        org.matonto.etl.cli${deploy.bundles.version} \
+        org.matonto.etl.delimited${deploy.bundles.version} \
+        org.matonto.etl.rdf${deploy.bundles.version} \
+        org.matonto.etl.rest${deploy.bundles.version} \
+        org.matonto.ontology.api${deploy.bundles.version} \
+        org.matonto.ontology.cli${deploy.bundles.version} \
+        org.matonto.ontology.core.impl.owlapi${deploy.bundles.version} \
+        org.matonto.ontology.rest${deploy.bundles.version} \
+        org.matonto.catalog.api${deploy.bundles.version} \
+        org.matonto.catalog.impl${deploy.bundles.version} \
+        org.matonto.catalog.rest${deploy.bundles.version} \
+        org.matonto.swagger.ui${deploy.bundles.version} \
+        org.matonto.web${deploy.bundles.version} \
+        org.matonto.web.security${deploy.bundles.version} \
+        org.matonto.sparql.rest${deploy.bundles.version} \
+        org.matonto.jaas${deploy.bundles.version} \
+        org.matonto.jaas.rest${deploy.bundles.version} \
+        com.eclipsesource.jaxrs.swagger-all
 }
 
 

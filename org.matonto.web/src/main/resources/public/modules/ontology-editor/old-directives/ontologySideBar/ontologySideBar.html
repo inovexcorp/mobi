@@ -1,0 +1,119 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<left-nav module-name="Ontology Editor" doc-url="http://docs.matonto.org/#ontology_editor">
+    <left-nav-item on-click="dvm.sm.showSaveOverlay = true"
+                   nav-title="Save All Changes"
+                   is-disabled-when="!dvm.shouldSaveBeEnabled()"
+                   is-active-when="dvm.sm.showSaveOverlay">
+        <i class="fa fa-floppy-o fa-fw"></i>
+    </left-nav-item>
+
+    <li class="separator"></li>
+
+    <left-nav-item on-click="dvm.sm.showOpenOverlay = true"
+                   nav-title="Open Ontology"
+                   is-disabled-when="!dvm.sm.ontologyIds.length"
+                   is-active-when="dvm.sm.showOpenOverlay">
+        <i class="fa fa-folder-open fa-fw"></i>
+    </left-nav-item>
+
+    <left-nav-item on-click="dvm.sm.showUploadOverlay = true"
+                   nav-title="Upload Ontology"
+                   is-active-when="dvm.sm.showUploadOverlay">
+        <i class="fa fa-upload fa-fw"></i>
+    </left-nav-item>
+
+    <left-nav-item on-click="dvm.sm.showCreateOntologyOverlay = true"
+                   nav-title="Create Ontology"
+                   is-active-when="dvm.sm.showCreateOntologyOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">O</span>
+              <i class="fa fa-plus"></i>
+          </span>
+    </left-nav-item>
+
+    <li class="separator"></li>
+
+    <left-nav-item on-click="dvm.sm.showCreateClassOverlay = true"
+                   nav-title="Create Class"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'class')"
+                   is-active-when="dvm.sm.showCreateClassOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">C</span>
+              <i class="fa fa-plus"></i>
+          </span>
+    </left-nav-item>
+
+    <left-nav-item on-click="dvm.sm.showCreatePropertyOverlay = true"
+                   nav-title="Create Property"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'object' || dvm.sm.state.tab === 'datatype')"
+                   is-active-when="dvm.sm.showCreatePropertyOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">P</span>
+              <i class="fa fa-plus"></i>
+          </span>
+    </left-nav-item>
+
+    <left-nav-item on-click="dvm.sm.showCreateAnnotationOverlay = true"
+                   nav-title="Create Annotation"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'annotation')"
+                   is-active-when="dvm.sm.showCreateAnnotationOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier">A</span>
+              <i class="fa fa-plus"></i>
+          </span>
+    </left-nav-item>
+
+    <left-nav-item on-click="dvm.sm.showCreateIndividualOverlay = true"
+                   nav-title="Create Individual"
+                   is-disabled-when="!dvm.sm.state.ontologyId || !(dvm.sm.state.tab === 'everything' || dvm.sm.state.tab === 'individual')"
+                   is-active-when="dvm.sm.showCreateIndividualOverlay">
+          <span class="create-icon">
+              <span class="fa-fw identifier narrow">I</span>
+              <i class="fa fa-plus"></i>
+          </span>
+    </left-nav-item>
+
+    <left-nav-item on-click="dvm.sm.showDownloadOverlay = true"
+                   nav-title="Download Ontology"
+                   is-disabled-when="!dvm.sm.state.ontologyId"
+                   is-active-when="dvm.sm.showDownloadOverlay">
+        <i class="fa fa-download fa-fw"></i>
+    </left-nav-item>
+
+    <left-nav-item on-click="dvm.closeOntology()"
+                   nav-title="Close Ontology"
+                   is-disabled-when="!dvm.sm.state.ontologyId"
+                   is-active-when="dvm.sm.showCloseOverlay">
+        <i class="fa fa-folder fa-fw"></i>
+    </left-nav-item>
+
+    <li class="separator"></li>
+
+    <left-nav-item on-click="dvm.sm.showDeleteConfirmation = true"
+                   nav-title="Delete Entity"
+                   is-disabled-when="!dvm.sm.state.ontologyId || dvm.sm.state.tab === 'annotation'"
+                   is-active-when="dvm.sm.showDeleteConfirmation">
+        <i class="fa fa-trash-o fa-fw"></i>
+    </left-nav-item>
+</left-nav>

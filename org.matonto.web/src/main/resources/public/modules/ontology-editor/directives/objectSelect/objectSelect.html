@@ -22,11 +22,21 @@
   -->
 <div class="form-group">
     <custom-label muted-text="mutedText">{{displayText}}</custom-label>
-    <ui-select multiple ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()" ng-disabled="isDisabledWhen">
+    <!-- Multi Object Select -->
+    <ui-select ng-if="multiSelect" multiple ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()" ng-disabled="isDisabledWhen" ng-required="isRequiredWhen">
         <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.isBlankNode($item['@id'])">
             <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.getBlankNodeValue($item['@id']) || ($item['@id'] | splitIRI).end || $item.localName}}</span>
         </ui-select-match>
         <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in selectList | removeIriFromArray:bindModel | filter:$select.search | orderBy:'localName'">
+            <div title="{{dvm.getTooltipDisplay(item)}}" ng-bind-html="item.localName | highlight:$select.search | trusted"></div>
+        </ui-select-choices>
+    </ui-select>
+    <!-- Single Object Select -->
+    <ui-select ng-if="!multiSelect" ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()" ng-disabled="isDisabledWhen" ng-required="isRequiredWhen">
+        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.isBlankNode($select.selected['@id'])">
+            <span title="{{dvm.getTooltipDisplay($select.selected)}}">{{dvm.getBlankNodeValue($select.selected['@id']) || ($select.selected['@id'] | splitIRI).end || $select.selected.localName}}</span>
+        </ui-select-match>
+        <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in selectList | filter:$select.search | orderBy:'localName'">
             <div title="{{dvm.getTooltipDisplay(item)}}" ng-bind-html="item.localName | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>

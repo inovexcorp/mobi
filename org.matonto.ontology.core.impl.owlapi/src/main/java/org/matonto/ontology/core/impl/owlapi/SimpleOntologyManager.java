@@ -29,6 +29,8 @@ import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
+import org.apache.commons.io.IOUtils;
+import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -36,6 +38,8 @@ import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Models;
 import org.matonto.persistence.utils.Statements;
+import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.IRI;
 import org.matonto.repository.api.Repository;
@@ -76,6 +80,65 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
     private SesameTransformer transformer;
     private ModelFactory modelFactory;
+    private static final String GET_SUB_CLASSES_OF;
+    private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
+    private static final String GET_SUB_OBJECT_PROPERTIES_OF;
+    private static final String GET_CLASSES_WITH_INDIVIDUALS;
+    private static final String GET_ENTITY_USAGES;
+    private static final String GET_CONCEPT_RELATIONSHIPS;
+    private static final String GRAPH_BINDING = "graph";
+    private static final String ENTITY_BINDING = "entity";
+
+    static {
+        try {
+            GET_SUB_CLASSES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_SUB_DATATYPE_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-datatype-properties-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_SUB_OBJECT_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-object-properties-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CLASSES_WITH_INDIVIDUALS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-classes-with-individuals.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_ENTITY_USAGES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-entity-usages.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-relationships.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+    }
 
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
@@ -390,19 +453,31 @@ public class SimpleOntologyManager implements OntologyManager {
                     conn.getStatements(entityResource, null, null, ontologyResource);
             RepositoryResult<Statement> entityObjectStatements =
                     conn.getStatements(null, null, entityResource, ontologyResource);
+            RepositoryResult<Statement> entityPredicateStatements =
+                    conn.getStatements(null, factory.createIRI(entityResource.stringValue()), null, ontologyResource);
 
             Set<Statement> cachedObjectStatements = new HashSet<>();
+            Set<Statement> cachedPredicateStatements = new HashSet<>();
             Set<String> changedIriStrings = new HashSet<>();
             Set<org.openrdf.model.Model> changedModels = new HashSet<>();
 
             for (Statement stmt : entityObjectStatements) {
-                changedIriStrings.add(stmt.getSubject().stringValue());
+                if (!(stmt.getSubject() instanceof BNode)) {
+                    changedIriStrings.add(stmt.getSubject().stringValue());
+                }
                 cachedObjectStatements.add(stmt);
+            }
+            for (Statement stmt : entityPredicateStatements) {
+                if (!(stmt.getSubject() instanceof BNode)) {
+                    changedIriStrings.add(stmt.getSubject().stringValue());
+                }
+                cachedPredicateStatements.add(stmt);
             }
             changedEntities.put("iris", changedIriStrings);
 
             conn.remove(entitySubjectStatements, ontologyResource);
             conn.remove(cachedObjectStatements, ontologyResource);
+            conn.remove(cachedPredicateStatements, ontologyResource);
 
             for (String iriString : changedIriStrings) {
                 RepositoryResult<Statement> changedEntity =
@@ -468,5 +543,54 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public SesameTransformer getTransformer() {
         return transformer;
+    }
+
+    @Override
+    public TupleQueryResult getSubClassesOf(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_SUB_CLASSES_OF);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getSubObjectPropertiesOf(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_SUB_OBJECT_PROPERTIES_OF);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getSubDatatypePropertiesOf(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_SUB_DATATYPE_PROPERTIES_OF);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getClassesWithIndividuals(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_CLASSES_WITH_INDIVIDUALS);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getEntityUsages(String ontologyIdStr, String entityIRIStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_ENTITY_USAGES);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        query.setBinding(ENTITY_BINDING, factory.createIRI(entityIRIStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getConceptRelationships(String ontologyIdStr) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_CONCEPT_RELATIONSHIPS);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
     }
 }

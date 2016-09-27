@@ -95,7 +95,7 @@ describe('Annotation Overlay directive', function() {
                 stateManagerSvc.editingAnnotation = test.value;
                 scope.$digest();
 
-                var buttons = element.querySelectorAll('custom-button:not([type])');
+                var buttons = element.querySelectorAll('button.btn-primary');
                 expect(buttons.length).toBe(1);
                 expect(buttons[0].innerHTML).toBe(test.result);
             });
@@ -108,16 +108,34 @@ describe('Annotation Overlay directive', function() {
             controller = element.controller('annotationOverlay');
         });
         it('addAnnotation should call the appropriate manager functions', function() {
-            controller.addAnnotation({}, 'value');
-            expect(annotationManagerSvc.add).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}), 'value');
+            controller.addAnnotation();
+            expect(resObj.getItemIri).toHaveBeenCalledWith(stateManagerSvc.annotationSelect);
+            expect(annotationManagerSvc.add).toHaveBeenCalledWith(stateManagerSvc.selected,
+                resObj.getItemIri(stateManagerSvc.annotationSelect), stateManagerSvc.annotationValue,
+                stateManagerSvc.annotationType['@id']);
             expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                stateManagerSvc.selected.matonto.originalIRI, true);
         });
         it('editAnnotation should call the appropriate manager functions', function() {
-            controller.editAnnotation({}, 'value');
-            expect(annotationManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.selected, resObj.getItemIri({}), 'value', stateManagerSvc.annotationIndex);
+            controller.editAnnotation();
+            expect(resObj.getItemIri).toHaveBeenCalledWith(stateManagerSvc.annotationSelect);
+            expect(annotationManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.selected,
+                resObj.getItemIri(stateManagerSvc.annotationSelect), stateManagerSvc.annotationValue,
+                stateManagerSvc.annotationIndex, stateManagerSvc.annotationType['@id']);
             expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(stateManagerSvc.entityChanged).toHaveBeenCalled();
+            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.ontology,
+                stateManagerSvc.selected.matonto.originalIRI, true);
+        });
+        describe('getItemNamespace returns', function() {
+            it('item.namespace value when present', function() {
+                var result = controller.getItemNamespace({namespace: 'namespace'});
+                expect(result).toEqual('namespace');
+            });
+            it("'No namespace' when item.namespace is not present", function() {
+                var result = controller.getItemNamespace({});
+                expect(result).toEqual('No namespace');
+            });
         });
     });
 });
