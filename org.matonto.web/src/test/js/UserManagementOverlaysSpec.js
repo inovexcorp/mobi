@@ -145,15 +145,6 @@ describe('User Management Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('add-group-overlay').length).toBe(0);
         });
-        it('depending on whether members are being added', function() {
-            userStateSvc.showAddMembers = true;
-            scope.$digest();
-            expect(this.element.find('add-members-overlay').length).toBe(1);
-
-            userStateSvc.showAddMembers = false;
-            scope.$digest();
-            expect(this.element.find('add-members-overlay').length).toBe(0);
-        });
         it('depending on whether deleting an user or group should be confirmed', function() {
             userStateSvc.showDeleteConfirm = true;
             scope.$digest();

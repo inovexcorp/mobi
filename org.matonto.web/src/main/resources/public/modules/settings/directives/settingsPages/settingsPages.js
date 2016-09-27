@@ -32,7 +32,7 @@
          * The `settingsPages` module only provides the `settingsPages` directive which creates 
          * a container for all pages for the settings module.
          */
-        .module('settingsPagess', [])
+        .module('settingsPages', [])
         /**
          * @ngdoc directive
          * @name settingsPages.directive:settingsPages
@@ -47,11 +47,11 @@
          * {@link changePasswordPage.directive:changePasswordPage changePasswordPage}.
          * The directive is replaced by the content of its template.
          */
-        .directive('settingsPagess', settingsPagess);
+        .directive('settingsPages', settingsPages);
 
-        settingsPagess.$inject = ['settingsStateService'];
+        settingsPages.$inject = ['settingsStateService'];
 
-        function settingsPagess(settingsStateService) {
+        function settingsPages(settingsStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -61,7 +61,7 @@
                     var dvm = this;
                     dvm.state = settingsStateService;
                 },
-                templateUrl: 'modules/settings/directives/settingsPagess/settingsPagess.html'
+                templateUrl: 'modules/settings/directives/settingsPages/settingsPages.html'
             }
         }
 })();

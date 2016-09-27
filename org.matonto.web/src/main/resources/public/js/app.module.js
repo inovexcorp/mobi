@@ -91,7 +91,7 @@
             'settingsManager',
             'updateRefs',
             'stateManager',
-            'updateRefs'
+            'updateRefs',
             'userManager'
         ])
         .constant('_', window._)

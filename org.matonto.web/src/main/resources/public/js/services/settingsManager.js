@@ -35,7 +35,7 @@
         .module('settingsManager', [])
         /**
          * @ngdoc service
-         * @name settingsManager.service:settingsManagerServce
+         * @name settingsManager.service:settingsManagerService
          * @requires $window
          * @requires $cookies
          * @requires prefixes.service:prefixes
@@ -68,7 +68,7 @@
 
             /**
              * @ngdoc method
-             * @name settingsManager.service:settingsManagerService#getSettings
+             * @name getSettings
              * @methodOf settingsManager.service:settingsManagerService
              * 
              * @description 
@@ -82,8 +82,8 @@
 
             /**
              * @ngdoc method
-             * @name settingsManagerService:settingsManagerService#setSettings
-             * @methodOf settingsManagerService:settingsManagerService
+             * @name setSettings
+             * @methodOf settingsManager.service:settingsManagerService
              *
              * @description 
              * Replaces the saved settings object and cookie with a new settings object.
@@ -101,7 +101,7 @@
 
             /**
              * @ngdoc method
-             * @name settingsManager.service:settingsManagerService#getTreeDisplay
+             * @name getTreeDisplay
              * @methodOf settingsManager.service:settingsManagerService
              * 
              * @description 
@@ -115,7 +115,7 @@
 
             /**
              * @ngdoc method
-             * @name settingsManager.service:settingsManagerService#getTooltipDisplay
+             * @name getTooltipDisplay
              * @methodOf settingsManager.service:settingsManagerService
              * 
              * @description 

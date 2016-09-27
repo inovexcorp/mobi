@@ -35,7 +35,7 @@
         .module('userManager', [])
         /**
          * @ngdoc service
-         * @name userManager.service:userManagerServce
+         * @name userManager.service:userManagerService
          * @requires $rootScope
          * @requires $http
          * @requires $q
@@ -87,7 +87,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#setUsers
+             * @name setUsers
              * @methodOf userManager.service:userManagerService
              * 
              * @description 
@@ -111,7 +111,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#setGroups
+             * @name setGroups
              * @methodOf userManager.service:userManagerService
              * 
              * @description 
@@ -135,7 +135,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#addUser
+             * @name addUser
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -173,7 +173,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#getUser
+             * @name getUser
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -202,7 +202,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#updateUser
+             * @name updateUser
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -245,7 +245,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#checkPassword
+             * @name checkPassword
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -285,7 +285,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#deleteUser
+             * @name deleteUser
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -317,7 +317,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#addUserRole
+             * @name addUserRole
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -355,7 +355,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#deleteUserRole
+             * @name deleteUserRole
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -393,7 +393,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#addUserGroup
+             * @name addUserGroup
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -430,7 +430,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#deleteUserGroup
+             * @name deleteUserGroup
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -468,7 +468,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#addGroup
+             * @name addGroup
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -504,7 +504,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#getGroup
+             * @name getGroup
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -533,7 +533,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#deleteGroup
+             * @name deleteGroup
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -564,7 +564,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#addGroupRole
+             * @name addGroupRole
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -602,7 +602,7 @@
 
             /**
              * @ngdoc method
-             * @name userManager.service:userManagerService#deleteGroupRole
+             * @name deleteGroupRole
              * @methodOf userManager.service:userManagerService
              *
              * @description 
@@ -640,7 +640,7 @@
 
             /**
              * @ngdoc method 
-             * @name userManager.service:userManagerService#isAdmin
+             * @name isAdmin
              * @methodOf userManager.service:userManagerService
              *
              * @description 
