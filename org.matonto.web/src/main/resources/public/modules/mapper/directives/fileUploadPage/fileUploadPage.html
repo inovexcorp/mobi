@@ -29,7 +29,16 @@
 			</block-header>
 			<block-content class="padding">
 				<file-upload-form></file-upload-form>
-				<p class="help-block" ng-if="dvm.state.editMapping && dvm.state.invalidProps.length > 0">Click continue to fix the mapping.</p>
+				<mapping-preview ng-if="!dvm.state.editMapping"></mapping-preview>
+				<div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">
+			        <h3 class="error-msg">Missing Columns</h3>
+			        <ul>
+			            <li ng-repeat="columnObj in dvm.state.invalidProps">
+			                Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
+			            </li>
+			        </ul>
+					<p class="help-block">Click continue to fix the mapping.</p>
+			    </div>
 			</block-content>
 			<block-footer>
 				<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>

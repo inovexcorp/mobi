@@ -51,9 +51,9 @@
          */
         .directive('mappingPreview', mappingPreview);
 
-        mappingPreview.$inject = ['$q', 'prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
+        mappingPreview.$inject = ['$q', 'prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
 
-        function mappingPreview($q, prefixes, mappingManagerService, mapperStateService, ontologyManagerService) {
+        function mappingPreview($q, prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,6 +64,7 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.dm = delimitedManagerService;
 
                     dvm.ontologyExists = function() {
                         var objs = angular.copy(dvm.om.list);
@@ -78,6 +79,9 @@
                     }
                     dvm.getColumnIndex = function(propMapping) {
                         return propMapping[prefixes.delim + 'columnIndex'][0]['@value'];
+                    }
+                    dvm.isInvalid = function(propMappingId) {
+                        return !!_.find(dvm.state.invalidProps, {'@id': propMappingId});
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingPreview/mappingPreview.html'

@@ -76,6 +76,7 @@
                     }
                     dvm.run = function() {
                         dvm.state.mappingSearchString = '';
+                        dvm.state.highlightIndexes = dvm.state.getMappedColumns();
                         dvm.loadOntologyAndContinue();
                     }
                     dvm.edit = function() {

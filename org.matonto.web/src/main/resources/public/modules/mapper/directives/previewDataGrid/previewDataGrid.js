@@ -76,41 +76,39 @@
                         readOnlyCellClassName: 'text',
                         disableVisualSelection: 'current',
                         multiSelect: false,
-                        currentColClassName: 'highlight',
                         fillHandle: false,
                         outsideClickDeselects: false,
                         cells: (row, col, prop) => {
                             var props = {};
-                            if (row === 0) {
-                                props.renderer = (hotInstance, el, row, col, prop, value) => {
-                                    if (dvm.dm.containsHeaders && dvm.dm.dataRows) {
-                                        el.className = 'header';
-                                    }
-                                    el.innerHTML = value;
-                                    return el;
-                                };
-                            }
+                            props.renderer = (hotInstance, el, row, col, prop, value) => {
+                                var classes = [];
+                                if (row === 0 && dvm.dm.containsHeaders && dvm.dm.dataRows) {
+                                    classes.push('header');
+                                }
+                                if (_.includes(dvm.state.highlightIndexes, '' + col)) {
+                                    classes.push('highlight-col');
+                                }
+                                el.className = _.join(classes, ' ');
+                                el.innerHTML = value;
+                                return el;
+                            };
                             return props;
                         },
                         onBeforeOnCellMouseDown: (event, coords) => {
                             event.stopImmediatePropagation();
                         },
-                        onAfterInit: () => {
-                            dvm.hotTable = hotRegisterer.getInstance('table');
+                        onAfterInit: function() {
+                            dvm.hotTable = this;
                         }
                     };
                     $scope.$watch('dvm.dm.dataRows', (newValue, oldValue) => {
                         if (!_.isEqual(newValue, oldValue)) {
                             dvm.data = angular.copy(newValue);
                         }
-                    })
-                    $scope.$watch('dvm.state.highlightIndex', (newValue, oldValue) => {
-                        if (newValue !== oldValue) {
-                            if (newValue) {
-                                dvm.hotTable.selectCell(0, parseInt(newValue, 10), dvm.hotTable.countRows() - 1, parseInt(newValue, 10), false);
-                            } else {
-                                dvm.hotTable.deselectCell();
-                            }
+                    });
+                    $scope.$watch('dvm.state.highlightIndexes', (newValue, oldValue) => {
+                        if (!_.isEqual(newValue, oldValue)) {
+                            dvm.hotTable.render();
                         }
                     });
                     $scope.$watch('dvm.dm.containsHeaders', (newValue, oldValue) => {

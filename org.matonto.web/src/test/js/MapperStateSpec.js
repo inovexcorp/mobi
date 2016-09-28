@@ -59,6 +59,7 @@ describe('Mapper State service', function() {
         mapperStateSvc.resetEdit();
         expect(mapperStateSvc.selectedClassMappingId).toBe('');
         expect(mapperStateSvc.selectedPropMappingId).toBe('');
+        expect(mapperStateSvc.highlightIndexes).toEqual([]);
         expect(mapperStateSvc.newProp).toBe(false);
     });
     it('should set all variables for creating a new mapping', function() {

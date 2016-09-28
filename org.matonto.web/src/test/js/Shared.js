@@ -287,6 +287,7 @@ function mockMapperState() {
             this.selectedClassMappingId = '';
             this.selectedPropMappingId = '';
             this.newProp = false;
+            this.highlightIndexes = [];
 
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
