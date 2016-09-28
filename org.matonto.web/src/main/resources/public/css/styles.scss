@@ -556,38 +556,32 @@ body {
     padding: 15px;
 }
 
-.ontology-tab,
-.vocabulary-tab {
-    height: 100%;
-    position: relative;
+.circle-save-button {
+    bottom: 30px;
+    position: absolute;
+    right: 30px;
+    z-index: 10;
 
-    .save-button {
-        bottom: 30px;
-        position: absolute;
-        right: 30px;
-        z-index: 10;
+    &.ng-enter {
+        -webkit-transition: 0.25s linear all;
+                transition: 0.25s linear all;
+        opacity: 0;
+        transform: rotate(0) scale(0);
 
-        &.ng-enter {
-            -webkit-transition: 0.25s linear all;
-                    transition: 0.25s linear all;
-            opacity: 0;
-            transform: rotate(0) scale(0);
-
-            &.ng-enter-active {
-                opacity: 1;
-                transform: rotate(360deg) scale(1);
-            }
-        }
-        &.ng-leave {
-            -webkit-transition: 0.25s linear all;
-                    transition: 0.25s linear all;
+        &.ng-enter-active {
             opacity: 1;
             transform: rotate(360deg) scale(1);
+        }
+    }
+    &.ng-leave {
+        -webkit-transition: 0.25s linear all;
+                transition: 0.25s linear all;
+        opacity: 1;
+        transform: rotate(360deg) scale(1);
 
-            &.ng-leave-active {
-                opacity: 0;
-                transform: rotate(0) scale(0);
-            }
+        &.ng-leave-active {
+            opacity: 0;
+            transform: rotate(0) scale(0);
         }
     }
 }

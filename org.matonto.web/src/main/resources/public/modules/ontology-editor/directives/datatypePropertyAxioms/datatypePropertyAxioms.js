@@ -27,9 +27,9 @@
         .module('datatypePropertyAxioms', [])
         .directive('datatypePropertyAxioms', datatypePropertyAxioms);
 
-        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes'];
+        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService'];
 
-        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, prefixes) {
+        function datatypePropertyAxioms(ontologyStateService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,

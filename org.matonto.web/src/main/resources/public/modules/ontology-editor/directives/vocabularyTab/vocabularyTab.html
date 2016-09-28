@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="vocabulary-tab">
+<div class="vocabulary-tab ontology-tab">
     <tabset class="centered">
         <tab heading="'Project'" active="dvm.sm.state.project.active"
              on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI)">
@@ -31,7 +31,7 @@
             <concepts-tab></concepts-tab>
         </tab>
     </tabset>
-    <button class="btn btn-primary btn-circle save-button" ng-click="dvm.sm.showSaveOverlay = true" ng-if="dvm.sm.isSavable(dvm.sm.ontology, dvm.sm.state.ontologyId)">
+    <button class="btn btn-primary btn-circle circle-save-button" ng-click="dvm.sm.showSaveOverlay = true" ng-if="dvm.sm.isSavable(dvm.sm.ontology, dvm.sm.state.ontologyId)">
         <i class="fa fa-floppy-o fa-fw"></i>
     </button>
 </div>
