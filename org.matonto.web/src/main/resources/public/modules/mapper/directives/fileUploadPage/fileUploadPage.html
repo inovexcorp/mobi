@@ -21,36 +21,36 @@
   #L%
   -->
 <div class="file-upload-page row">
-	<div class="col-xs-5">
-		<mapping-title></mapping-title>
-		<block has-header="true">
-			<block-header>
-				<span>Upload File</span>
-			</block-header>
-			<block-content class="padding">
-				<file-upload-form></file-upload-form>
-				<mapping-preview ng-if="!dvm.state.editMapping"></mapping-preview>
-				<div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">
-			        <h3 class="error-msg">Missing Columns</h3>
-			        <ul>
-			            <li ng-repeat="columnObj in dvm.state.invalidProps">
-			                Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
-			            </li>
-			        </ul>
-					<p class="help-block">Click continue to fix the mapping.</p>
-			    </div>
-			</block-content>
-			<block-footer>
-				<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-				<button class="btn btn-primary pull-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.run()" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
-			</block-footer>
-		</block>
-	</div>
-	<div class="col-xs-7">
-		<block>
-			<block-content>
-				<preview-data-grid></preview-data-grid>
-			</block-content>
-		</block>
-	</div>
+    <div class="col-xs-5">
+        <mapping-title></mapping-title>
+        <block has-header="true">
+            <block-header>
+                <span>Upload File</span>
+            </block-header>
+            <block-content class="padding">
+                <file-upload-form></file-upload-form>
+                <mapping-preview ng-if="!dvm.state.editMapping"></mapping-preview>
+                <div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">
+                    <h3 class="error-msg">Missing Columns</h3>
+                    <ul>
+                        <li ng-repeat="columnObj in dvm.state.invalidProps">
+                            Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
+                        </li>
+                    </ul>
+                    <p class="help-block">Click continue to fix the mapping.</p>
+                </div>
+            </block-content>
+            <block-footer>
+                <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+                <button class="btn btn-primary pull-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.run()" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
+            </block-footer>
+        </block>
+    </div>
+    <div class="col-xs-7">
+        <block>
+            <block-content>
+                <preview-data-grid></preview-data-grid>
+            </block-content>
+        </block>
+    </div>
 </div>

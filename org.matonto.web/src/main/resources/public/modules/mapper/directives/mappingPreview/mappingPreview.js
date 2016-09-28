@@ -38,10 +38,11 @@
          * @name mappingPreview.directive:mappingPreview
          * @scope
          * @restrict E
-         * @requires  $q
+         * @requires  prefixes.service:prefixes
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with 
@@ -51,9 +52,9 @@
          */
         .directive('mappingPreview', mappingPreview);
 
-        mappingPreview.$inject = ['$q', 'prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
+        mappingPreview.$inject = ['prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
 
-        function mappingPreview($q, prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
+        function mappingPreview(prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -81,7 +82,7 @@
                         return propMapping[prefixes.delim + 'columnIndex'][0]['@value'];
                     }
                     dvm.isInvalid = function(propMappingId) {
-                        return !!_.find(dvm.state.invalidProps, {'@id': propMappingId});
+                        return _.some(dvm.state.invalidProps, {'@id': propMappingId});
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingPreview/mappingPreview.html'

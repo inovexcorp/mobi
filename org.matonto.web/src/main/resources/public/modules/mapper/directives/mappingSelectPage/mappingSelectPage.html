@@ -21,48 +21,48 @@
   #L%
   -->
 <div class="mapping-select-page row">
-	<div class="col-xs-4">
-		<block has-header="true">
-			<block-header>
-				<span>Mappings</span>
-				<button class="btn btn-link pull-right" ng-click="dvm.createMapping()">
-					<i class="fa fa-plus"></i>Create Mapping
-				</button>
-			</block-header>
-			<block-search ng-model="dvm.state.mappingSearchString" clear-event="dvm.state.mappingSearchString = ''"></block-search>
-			<block-content>
-				<mapping-list></mapping-list>
-			</block-content>
-			<block-footer class="centered">
-				<button class="btn btn-link" ng-click="dvm.deleteMapping()" ng-disabled="!dvm.mm.mapping">
-					<i class="fa fa-trash"></i>Delete Mapping
-				</button>
-			</block-footer>
-		</block>
-	</div>
-	<div class="col-xs-8">
-		<block has-header="true">
-			<block-header>
-				<div class="mapping-preview-header" ng-class="{'invisible': !dvm.mm.mapping}">
-					<span>{{(dvm.mm.mapping.id | splitIRI).end}}</span>
-					<button class="btn btn-link pull-right download-btn" ng-click="dvm.downloadMapping()">
-						<i class="fa fa-download"></i>Download
-					</button>
-					<button class="btn btn-link pull-right run-btn" ng-click="dvm.run()" ng-disabled="!dvm.ontologyExists()">
-						<i class="fa fa-play-circle-o"></i>Run
-					</button>
-					<button class="btn btn-link pull-right edit-btn" ng-click="dvm.edit()" ng-disabled="!dvm.ontologyExists()">
-						<i class="fa fa-pencil"></i>Edit
-					</button>
-				</div>
-			</block-header>
-			<block-content class="padding">
-				<div ng-if="!dvm.mm.mapping">
-			        <p class="lead">Welcome to the Mapping Tool!</p>
-			        <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
-			    </div>
-				<mapping-preview ng-if="dvm.mm.mapping"></mapping-preview>
-			</block-content>
-		</block>
-	</div>
+    <div class="col-xs-4">
+        <block has-header="true">
+            <block-header>
+                <span>Mappings</span>
+                <button class="btn btn-link pull-right" ng-click="dvm.createMapping()">
+                    <i class="fa fa-plus"></i>Create Mapping
+                </button>
+            </block-header>
+            <block-search ng-model="dvm.state.mappingSearchString" clear-event="dvm.state.mappingSearchString = ''"></block-search>
+            <block-content>
+                <mapping-list></mapping-list>
+            </block-content>
+            <block-footer class="centered">
+                <button class="btn btn-link" ng-click="dvm.deleteMapping()" ng-disabled="!dvm.mm.mapping">
+                    <i class="fa fa-trash"></i>Delete Mapping
+                </button>
+            </block-footer>
+        </block>
+    </div>
+    <div class="col-xs-8">
+        <block has-header="true">
+            <block-header>
+                <div class="mapping-preview-header" ng-class="{'invisible': !dvm.mm.mapping}">
+                    <span>{{(dvm.mm.mapping.id | splitIRI).end}}</span>
+                    <button class="btn btn-link pull-right download-btn" ng-click="dvm.downloadMapping()">
+                        <i class="fa fa-download"></i>Download
+                    </button>
+                    <button class="btn btn-link pull-right run-btn" ng-click="dvm.run()" ng-disabled="!dvm.ontologyExists()">
+                        <i class="fa fa-play-circle-o"></i>Run
+                    </button>
+                    <button class="btn btn-link pull-right edit-btn" ng-click="dvm.edit()" ng-disabled="!dvm.ontologyExists()">
+                        <i class="fa fa-pencil"></i>Edit
+                    </button>
+                </div>
+            </block-header>
+            <block-content class="padding">
+                <div ng-if="!dvm.mm.mapping">
+                    <p class="lead">Welcome to the Mapping Tool!</p>
+                    <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
+                </div>
+                <mapping-preview ng-if="dvm.mm.mapping"></mapping-preview>
+            </block-content>
+        </block>
+    </div>
 </div>
