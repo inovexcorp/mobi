@@ -109,6 +109,7 @@
                             _.get(listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
                             _.get(listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         }
+                        _.set(_.get(listItem, 'index'), dvm.property['@id'], dvm.sm.ontology.length - 1);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay

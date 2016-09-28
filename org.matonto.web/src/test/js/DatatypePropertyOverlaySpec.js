@@ -111,7 +111,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                     ontologyStateSvc.getActiveEntityIRI(), true);
             });
             it('without a type', function() {
@@ -120,7 +120,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop).toContain({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                     ontologyStateSvc.getActiveEntityIRI(), true);
             });
             
@@ -138,14 +138,14 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                     ontologyStateSvc.getActiveEntityIRI(), true);
 
                 controller.editProperty({}, this.value);
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                     ontologyStateSvc.getActiveEntityIRI(), true);
             });
             it('if the type has not changed', function() {
@@ -153,7 +153,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
                 expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+                expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                     ontologyStateSvc.getActiveEntityIRI(), true);
             });
         });

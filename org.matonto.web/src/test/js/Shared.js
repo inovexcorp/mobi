@@ -181,6 +181,7 @@ function mockOntologyManager() {
             this.editIRI = jasmine.createSpy('editIRI');
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
+            this.getEntityById = jasmine.createSpy('getEntityById');
         });
     });
 }
@@ -431,7 +432,8 @@ function mockOntologyState() {
                 dataPropertyHierarchy: [],
                 subDataProperties: [],
                 blankNodes: {},
-                individuals: []
+                individuals: [],
+                index: {}
             };
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');

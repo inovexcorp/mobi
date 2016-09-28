@@ -113,7 +113,7 @@ describe('Ontology Overlays directive', function() {
             controller.removeProperty();
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, ontologyStateSvc.key,
                 ontologyStateSvc.index);
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                 ontologyStateSvc.selected.matonto.originalIRI, true);
             expect(ontologyStateSvc.showRemoveOverlay).toBe(false);
         });
@@ -124,13 +124,13 @@ describe('Ontology Overlays directive', function() {
             controller.removeIndividualProperty();
             expect(ontologyStateSvc.selected.key).toBeDefined();
             expect(ontologyStateSvc.selected.key).not.toContain('value0');
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.state.ontology,
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                 ontologyStateSvc.state.entityIRI, true);
             expect(ontologyStateSvc.showRemoveIndividualPropertyOverlay).toBe(false);
 
             controller.removeIndividualProperty();
             expect(ontologyStateSvc.selected.key).toBeUndefined();
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.state.ontology,
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                 ontologyStateSvc.state.entityIRI, true);
             expect(ontologyStateSvc.showRemoveIndividualPropertyOverlay).toBe(false);
         });

@@ -75,7 +75,7 @@
 
                     dvm.create = function() {
                         _.forEach(dvm.schemes, scheme => {
-                            var entity = dvm.om.getEntity(dvm.sm.ontology, scheme['@id']);
+                            var entity = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, scheme['@id']);
                             if (_.has(entity, prefixes.skos + 'hasTopConcept')) {
                                 entity[prefixes.skos + 'hasTopConcept'].push({'@id': dvm.concept['@id']});
                             } else {
@@ -89,6 +89,7 @@
                         // update relevant lists
                         var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         _.get(listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
+                        _.set(_.get(listItem, 'index'), dvm.concept['@id'], dvm.sm.ontology.length - 1);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay

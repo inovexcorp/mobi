@@ -59,7 +59,7 @@
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(dvm.currentEntity);
+                            return dvm.om.getEntityName(dvm.currentEntity, dvm.sm.state.type);
                         }
                         return getCurrentEntityIRI();
                     }

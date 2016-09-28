@@ -34,6 +34,9 @@ where {
             optional {
                 ?child skos:topConceptOf ?parent
             }
+            optional {
+                ?child skos:inScheme ?parent
+            }
         }
     }
 }
