@@ -77,7 +77,7 @@
                         _.forEach(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         dvm.state.step = dvm.state.editMappingStep;
                         if (dvm.state.newMapping) {
-                            dvm.state.displayMappingConfig = true;
+                            dvm.state.displayMappingConfigOverlay = true;
                         }
                     }
                     dvm.run = function() {

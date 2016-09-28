@@ -81,7 +81,7 @@ describe('Mapping Select Page directive', function() {
         it('should set the correct state for creating a new mapping', function() {
             controller.createMapping();
             expect(mapperStateSvc.createMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.displayCreateMapping).toBe(true);
+            expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
         })
         it('should set the correct state for deleting a mapping', function() {
             controller.deleteMapping();
@@ -89,7 +89,7 @@ describe('Mapping Select Page directive', function() {
         });
         it('should set the correct state for downloading a mapping', function() {
             controller.downloadMapping();
-            expect(mapperStateSvc.displayDownloadMapping).toBe(true);
+            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(true);
         });
         describe('should load an ontology and continue', function() {
             beforeEach(function() {

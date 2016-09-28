@@ -279,9 +279,9 @@ function mockMapperState() {
             this.displayDeleteClassConfirm = false;
             this.displayDeletePropConfirm = false;
             this.displayDeleteMappingConfirm = false;
-            this.displayCreateMapping = false;
-            this.displayDownloadMapping = false;
-            this.displayMappingConfig = false;
+            this.displayCreateMappingOverlay = false;
+            this.displayDownloadMappingOverlay = false;
+            this.displayMappingConfigOverlay = false;
             this.displayPropMappingOverlay = false;
             this.editIriTemplate = false;
             this.selectedClassMappingId = '';

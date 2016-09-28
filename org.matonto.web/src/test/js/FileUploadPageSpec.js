@@ -66,7 +66,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-                expect(mapperStateSvc.displayMappingConfig).toBe(true);
+                expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
             });
             it('if a saved mapping is being edited', function() {
                 mapperStateSvc.newMapping = false;
@@ -74,7 +74,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-                expect(mapperStateSvc.displayMappingConfig).not.toBe(true);
+                expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
             });
         });
         it('should set the correct state for continuing to run a mapping', function() {
