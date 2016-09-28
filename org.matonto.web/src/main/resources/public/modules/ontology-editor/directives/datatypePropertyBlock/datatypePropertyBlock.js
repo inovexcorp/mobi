@@ -27,9 +27,9 @@
         .module('datatypePropertyBlock', [])
         .directive('datatypePropertyBlock', datatypePropertyBlock);
 
-        datatypePropertyBlock.$inject = ['$filter', 'stateManagerService', 'responseObj'];
+        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj'];
 
-        function datatypePropertyBlock($filter, stateManagerService, responseObj) {
+        function datatypePropertyBlock(ontologyStateService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.openAddDataPropOverlay = function() {
                         dvm.sm.editingProperty = false;

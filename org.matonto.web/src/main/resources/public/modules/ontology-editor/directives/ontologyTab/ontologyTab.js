@@ -27,21 +27,18 @@
         .module('ontologyTab', [])
         .directive('ontologyTab', ontologyTab);
 
-        ontologyTab.$inject = ['ontologyManagerService', 'stateManagerService'];
+        ontologyTab.$inject = ['ontologyStateService'];
 
-        function ontologyTab(ontologyManagerService, stateManagerService) {
+        function ontologyTab(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyTab/ontologyTab.html',
-                scope: {
-                    listItem: '='
-                },
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

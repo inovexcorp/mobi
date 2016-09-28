@@ -25,27 +25,27 @@ describe('Everything Tree directive', function() {
         scope,
         element,
         controller,
-        stateManagerSvc,
+        ontologyStateSvc,
         ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('everythingTree');
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
         });
         ontologyManagerSvc.getClasses.and.returnValue(['class1']);
         ontologyManagerSvc.getClassProperties.and.returnValue(['property1']);
         ontologyManagerSvc.getNoDomainProperties.and.returnValue(['property1']);
         ontologyManagerSvc.hasNoDomainProperties.and.returnValue(true);
-        stateManagerSvc.getOpened.and.returnValue(true);
-        stateManagerSvc.getNoDomainsOpened.and.returnValue(true);
+        ontologyStateSvc.getOpened.and.returnValue(true);
+        ontologyStateSvc.getNoDomainsOpened.and.returnValue(true);
     });
 
     describe('replaces the element with the correct html', function() {

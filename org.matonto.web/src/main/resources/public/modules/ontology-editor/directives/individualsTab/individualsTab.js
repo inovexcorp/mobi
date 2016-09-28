@@ -27,20 +27,12 @@
         .module('individualsTab', [])
         .directive('individualsTab', individualsTab);
 
-        individualsTab.$inject = ['stateManagerService', 'ontologyManagerService'];
-
-        function individualsTab(stateManagerService, ontologyManagerService) {
+        function individualsTab() {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/individualsTab/individualsTab.html',
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.sm = stateManagerService;
-                    dvm.om = ontologyManagerService;
-                }
+                scope: {}
             }
         }
 })();

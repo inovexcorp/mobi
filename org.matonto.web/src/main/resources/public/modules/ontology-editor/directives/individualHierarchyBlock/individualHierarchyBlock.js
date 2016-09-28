@@ -27,9 +27,9 @@
         .module('individualHierarchyBlock', [])
         .directive('individualHierarchyBlock', individualHierarchyBlock);
 
-        individualHierarchyBlock.$inject = ['stateManagerService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        individualHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function individualHierarchyBlock(stateManagerService, ontologyManagerService, ontologyUtilsManagerService) {
+        function individualHierarchyBlock(ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = stateManagerService;
-                    dvm.om = ontologyManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.utils = ontologyUtilsManagerService;
 
                     dvm.deleteIndividual = function() {

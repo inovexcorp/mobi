@@ -24,7 +24,7 @@ describe('Annotation Block directive', function() {
     var $compile,
         scope,
         element,
-        stateManagerSvc,
+        ontologyStateSvc,
         ontologyManagerSvc,
         controller;
 
@@ -35,21 +35,21 @@ describe('Annotation Block directive', function() {
         injectBeautifyFilter();
         injectSplitIRIFilter();
         injectShowPropertiesFilter();
-        mockStateManager();
+        mockOntologyState();
         mockOntologyManager();
         mockResponseObj();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _responseObj_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            stateManagerSvc.selected = {
+            ontologyStateSvc.selected = {
                 'prop1': [{'@id': 'value1'}],
                 'prop2': [{'@value': 'value2'}]
             };
@@ -67,7 +67,7 @@ describe('Annotation Block directive', function() {
         it('based on listed anotations', function() {
             var annotations = element.find('property-values');
             expect(annotations.length).toBe(2);
-            stateManagerSvc.selected = undefined;
+            ontologyStateSvc.selected = undefined;
             scope.$digest();
             annotations = element.find('property-values');
             expect(annotations.length).toBe(0);
@@ -81,31 +81,31 @@ describe('Annotation Block directive', function() {
         });
         it('openAddOverlay sets the correct manager values', function() {
             controller.openAddOverlay();
-            expect(stateManagerSvc.editingAnnotation).toBe(false);
-            expect(stateManagerSvc.annotationSelect).toEqual(undefined);
-            expect(stateManagerSvc.annotationValue).toBe('');
-            expect(stateManagerSvc.annotationIndex).toBe(0);
-            expect(stateManagerSvc.showAnnotationOverlay).toBe(true);
+            expect(ontologyStateSvc.editingAnnotation).toBe(false);
+            expect(ontologyStateSvc.annotationSelect).toEqual(undefined);
+            expect(ontologyStateSvc.annotationValue).toBe('');
+            expect(ontologyStateSvc.annotationIndex).toBe(0);
+            expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
         });
         it('openRemoveOverlay sets the correct manager values', function() {
             controller.openRemoveOverlay('key', 1);
-            expect(stateManagerSvc.key).toBe('key');
-            expect(stateManagerSvc.index).toBe(1);
-            expect(stateManagerSvc.showRemoveOverlay).toBe(true);
+            expect(ontologyStateSvc.key).toBe('key');
+            expect(ontologyStateSvc.index).toBe(1);
+            expect(ontologyStateSvc.showRemoveOverlay).toBe(true);
         });
         it('editClicked sets the correct manager values', function() {
             var annotationIRI = 'prop1';
-            stateManagerSvc.selected = {
+            ontologyStateSvc.selected = {
                 'prop1': [{'@value': 'value', '@type': 'type'}]
             };
-            stateManagerSvc.listItem.dataPropertyRange = ['type'];
+            ontologyStateSvc.listItem.dataPropertyRange = ['type'];
             controller.editClicked(annotationIRI, 0);
-            expect(stateManagerSvc.editingAnnotation).toBe(true);
-            expect(stateManagerSvc.annotationSelect).toEqual(annotationIRI);
-            expect(stateManagerSvc.annotationValue).toBe(stateManagerSvc.selected[annotationIRI][0]['@value']);
-            expect(stateManagerSvc.annotationIndex).toBe(0);
-            expect(stateManagerSvc.annotationType).toBe(stateManagerSvc.selected[annotationIRI][0]['@type']);
-            expect(stateManagerSvc.showAnnotationOverlay).toBe(true);
+            expect(ontologyStateSvc.editingAnnotation).toBe(true);
+            expect(ontologyStateSvc.annotationSelect).toEqual(annotationIRI);
+            expect(ontologyStateSvc.annotationValue).toBe(ontologyStateSvc.selected[annotationIRI][0]['@value']);
+            expect(ontologyStateSvc.annotationIndex).toBe(0);
+            expect(ontologyStateSvc.annotationType).toBe(ontologyStateSvc.selected[annotationIRI][0]['@type']);
+            expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
         });
     });
 });
