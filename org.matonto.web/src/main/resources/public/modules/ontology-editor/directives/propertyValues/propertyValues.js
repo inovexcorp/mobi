@@ -27,9 +27,9 @@
         .module('propertyValues', [])
         .directive('propertyValues', propertyValues);
 
-        propertyValues.$inject = ['responseObj', 'stateManagerService'];
+        propertyValues.$inject = ['responseObj', 'ontologyStateService'];
 
-        function propertyValues(responseObj, stateManagerService) {
+        function propertyValues(responseObj, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,7 +44,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.isBlankNode = function(id) {
                         return typeof id === 'string' && _.includes(id, '_:b');

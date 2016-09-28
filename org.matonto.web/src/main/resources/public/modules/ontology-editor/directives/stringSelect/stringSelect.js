@@ -55,9 +55,9 @@
                     }
 
                     dvm.disableChoice = function(item) {
-                        if (_.isEqual(item, prefixes.owl + 'DatatypeProperty')) {
+                        if (item === prefixes.owl + 'DatatypeProperty') {
                             return _.indexOf(dvm.bindModel, prefixes.owl + 'ObjectProperty') !== -1;
-                        } else if (_.isEqual(item, prefixes.owl + 'ObjectProperty')) {
+                        } else if (item === prefixes.owl + 'ObjectProperty') {
                             return _.indexOf(dvm.bindModel, prefixes.owl + 'DatatypeProperty') !== -1;
                         }
                         return false;

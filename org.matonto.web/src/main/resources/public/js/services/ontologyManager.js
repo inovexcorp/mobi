@@ -45,7 +45,7 @@
          * @requires $filter
          * @requires prefixes.service:prefixes
          * @requires uuid
-         * @requires annotationManger.service:annotationManagerService
+         * @requires propertyManager.service:propertyManagerService
          *
          * @description
          * `ontologyManagerService` is a service that provides access to the MatOnto ontology REST
@@ -55,10 +55,10 @@
         .service('ontologyManagerService', ontologyManagerService);
 
         ontologyManagerService.$inject = ['$rootScope', '$window', '$http', '$q', '$timeout', '$filter', 'prefixes',
-            'uuid', 'annotationManagerService'];
+            'uuid', 'propertyManagerService'];
 
         function ontologyManagerService($rootScope, $window, $http, $q, $timeout, $filter, prefixes, uuid,
-            annotationManagerService) {
+            propertyManagerService) {
             var self = this;
             var prefix = '/matontorest/ontologies/';
             var defaultDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int',
@@ -68,12 +68,11 @@
                     'localName': item
                 }
             });
-            var defaultAnnotations = annotationManagerService.getDefaultAnnotations();
             var defaultErrorMessage = defaultErrorMessage;
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
-                annotations: defaultAnnotations,
+                annotations: [],
                 dataPropertyRange: defaultDatatypes,
                 subClasses: [],
                 subDataProperties: [],
@@ -91,7 +90,7 @@
             var vocabularyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
-                annotations: defaultAnnotations,
+                annotations: [],
                 conceptHierarchy: [],
                 conceptIndex: {}
             };
@@ -172,73 +171,23 @@
              * `conceptRelationshipList` holds an array of the relationships that skos:Concepts can have with other
              * entities.
              */
-            self.conceptRelationshipList = [
-                {
-                    namespace: prefixes.skos,
-                    localName: 'broaderTransitive',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'broader',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'broadMatch',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'narrowerTransitive',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'narrower',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'narrowMatch',
-                    values: 'conceptList'
-                },
-                {
+            var conceptListRelationships = _.map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive',
+                'narrower', 'narrowMatch', 'related', 'relatedMatch', 'semanticRelation', 'mappingRelation',
+                'closeMatch', 'exactMatch'], item => {
+                    return {
+                        namespace: prefixes.skos,
+                        localName: item,
+                        values: 'conceptList'
+                    }
+                });
+            self.conceptRelationshipList = _.concat(
+                conceptListRelationships,
+                [{
                     namespace: prefixes.skos,
                     localName: 'inScheme',
                     values: 'schemeList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'related',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'relatedMatch',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'semanticRelation',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'mappingRelation',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'closeMatch',
-                    values: 'conceptList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'exactMatch',
-                    values: 'conceptList'
-                }
-            ];
+                }]
+            );
             /**
              * @ngdoc property
              * @name schemeRelationshipList
@@ -348,7 +297,7 @@
              * @param {File} file The ontology file.
              * @returns {Promise} A promise with the ontology ID or error message.
              */
-            self.uploadThenGet = function(file, type) {
+            self.uploadThenGet = function(file, type='ontology') {
                 $rootScope.showSpinner = true;
                 var deferred = $q.defer();
                 var onError = function(response) {
@@ -1593,9 +1542,9 @@
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
-                            deferred.reject(response);
+                            deferred.reject();
                         }
-                    }, deferred.reject);
+                    }, () => deferred.reject());
                 return deferred.promise;
             }
             /**
@@ -1659,101 +1608,65 @@
             }
             /**
              * @ngdoc method
-             * @name isConcept
+             * @name isConceptScheme
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided entity is an skos:Concept entity. Returns a boolean.
+             * Checks if the provided entity is an skos:ConceptScheme entity. Returns a boolean.
              *
              * @param {Object} entity The entity you want to check.
-             * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
+             * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
              */
             self.isConceptScheme = function(entity) {
                 return _.includes(_.get(entity, '@type', []), prefixes.skos + 'ConceptScheme');
             }
             /**
              * @ngdoc method
-             * @name hasConcepts
+             * @name hasConceptSchemes
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Checks if the provided ontology contains any skos:Concept entities. Returns a boolean.
+             * Checks if the provided ontology contains any skos:ConceptScheme entities. Returns a boolean.
              *
              * @param {Object[]} ontology The ontology you want to check.
-             * @returns {boolean} Returns true if there are any skos:Concept entities in the ontology, otherwise returns
-             * false.
+             * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontology, otherwise
+             * returns false.
              */
             self.hasConceptSchemes = function(ontology) {
                 return _.some(ontology, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
-             * @name getConcepts
+             * @name getConceptSchemes
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:Concept entities within the provided ontology that are not blank nodes. Returns
-             * an Object[].
+             * Gets the list of all skos:ConceptScheme entities within the provided ontology that are not blank nodes.
+             * Returns an Object[].
              *
              * @param {Object[]} ontology The ontology you want to check.
-             * @returns {Object[]} An array of all skos:Concept entities within the ontology.
+             * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontology.
              */
             self.getConceptSchemes = function(ontology) {
                 return _.filter(ontology, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
-             * @name getConceptIRIs
+             * @name getConceptSchemeIRIs
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets the list of all skos:Concept entity IRIs within the provided ontology that are not blank nodes.
+             * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontology that are not blank nodes.
              * Returns an string[].
              *
              * @param {Object[]} ontology The ontology you want to check.
-             * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontology.
+             * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
             self.getConceptSchemeIRIs = function(ontology) {
                 return _.map(self.getConceptSchemes(ontology), 'matonto.originalIRI');
             }
 
             /* Private helper functions */
-            /*function onCreateSuccess(response, ontologyId, entityJSON, arrayProperty, deferred) {
-                if (_.get(response, 'data.added')) {
-                    _.set(entityJSON, 'matonto.originalIRI', entityJSON['@id']);
-                    self.addEntity(self.getOntologyById(ontologyId), entityJSON);
-                    var split = $filter('splitIRI')(entityJSON['@id']);
-                    var listItem = self.getListItemById(ontologyId);
-                    if (_.has(listItem, arrayProperty)) {
-                        listItem[arrayProperty].push({namespace:split.begin + split.then, localName: split.end});
-                    }
-                    deferred.resolve({
-                        entityIRI: entityJSON['@id'],
-                        ontologyId: ontologyId
-                    });
-                } else {
-                    onCreateError(response, deferred);
-                }
-            }
-            function onCreateError(response, deferred) {
-                deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-            }
-            function onDeleteSuccess(response, ontologyId, entityIRI, arrayProperty, deferred) {
-                if (_.get(response, 'data.deleted')) {
-                    self.removeEntity(self.getOntologyById(ontologyId), entityIRI);
-                    updateModels(response);
-                    var split = $filter('splitIRI')(entityIRI);
-                    var listItem = self.getListItemById(ontologyId);
-                    _.remove(_.get(listItem, arrayProperty), {namespace:split.begin + split.then,
-                        localName: split.end});
-                    deferred.resolve();
-                } else {
-                    deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
-                }
-            }
-            function onDeleteError(response, deferred) {
-                deferred.reject(_.get(response, 'data.error', defaultErrorMessage));
-            }*/
             function updateModels(response) {
                 if(_.has(response, 'data.models', [])) {
                     _.forEach(response.data.models, model => {
@@ -1897,7 +1810,7 @@
                     if (_.get(irisResponse, 'status') === 200) {
                         listItem.annotations = _.unionWith(
                             _.get(irisResponse, 'data.annotationProperties'),
-                            defaultAnnotations,
+                            propertyManagerService.defaultAnnotations,
                             _.isMatch
                         );
                         listItem.subClasses = _.get(irisResponse, 'data.classes');
@@ -1993,8 +1906,8 @@
                         listItem.subObjectProperties = _.get(irisResponse, 'data.objectProperties');
                         listItem.annotations = _.unionWith(
                             _.get(irisResponse, 'data.annotationProperties'),
-                            defaultAnnotations,
-                            angular.copy(annotationManagerService.skosAnnotations),
+                            propertyManagerService.defaultAnnotations,
+                            angular.copy(propertyManagerService.skosAnnotations),
                             _.isMatch
                         );
                         listItem.dataPropertyRange = _.unionWith(

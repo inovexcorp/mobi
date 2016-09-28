@@ -133,18 +133,17 @@
                 if (_.isArray(value)) {
                     _.remove(value, item => item === word);
                     _.forEach(value, (item, index) => {
-                        if (typeof item !== 'string') {
+                        if (!_.isString(item)) {
                             self.remove(item, word);
                         }
                     });
-                    _.remove(value, item =>
-                        _.isEqual(item, {}) || (_.keys(item).length === 1 && _.has(item, '$$hashKey')));
+                    _.remove(value, item => _.isEmpty(item));
                     if (!value.length) {
                         _.unset(obj, key);
                     }
-                } else if (typeof value === 'object') {
+                } else if (_.isPlainObject(value)) {
                     self.remove(value, word);
-                    if (_.isEqual(value, {})) {
+                    if (_.isEmpty(value) || (_.keys(value).length === 1 && _.has(value, '$$hashKey'))) {
                         _.unset(obj, key);
                     }
                 } else if (value === word) {

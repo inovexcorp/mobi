@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('annotationManager', [])
-        .service('annotationManagerService', annotationManagerService);
+        .module('propertyManager', [])
+        .service('propertyManagerService', propertyManagerService);
 
-        annotationManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'prefixes'];
+        propertyManagerService.$inject = ['$rootScope', '$filter', '$q', '$http', 'prefixes'];
 
-        function annotationManagerService($rootScope, $filter, $q, $http, prefixes) {
+        function propertyManagerService($rootScope, $filter, $q, $http, prefixes) {
             var self = this;
             var prefix = '/matontorest/ontologies/';
 
@@ -45,7 +45,7 @@
                     localName: item
                 }
             });
-            var defaultAnnotations = _.concat(angular.copy(rdfsAnnotations), angular.copy(dcAnnotations));
+            self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations);
 
             self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
                 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {
@@ -55,9 +55,85 @@
                 }
             });
 
-            self.getDefaultAnnotations = function() {
-                return angular.copy(defaultAnnotations);
-            }
+            self.classAxiomList = [
+                {
+                    namespace: prefixes.rdfs,
+                    localName: 'subClassOf',
+                    valuesKey: 'subClasses'
+                },
+                {
+                    namespace: prefixes.owl,
+                    localName: 'disjointWith',
+                    valuesKey: 'subClasses'
+                },
+                {
+                    namespace: prefixes.owl,
+                    localName: 'equivalentClass',
+                    valuesKey: 'subClasses'
+                }
+            ];
+
+
+            self.datatypeAxiomList = [
+                {
+                    namespace: prefixes.rdfs,
+                    localName: 'domain',
+                    valuesKey: 'subClasses'
+                },
+                {
+                    namespace: prefixes.rdfs,
+                    localName: 'range',
+                    valuesKey: 'dataPropertyRange'
+                },
+                {
+                    namespace: prefixes.owl,
+                    localName: 'equivalentProperty',
+                    valuesKey: 'subDataProperties'
+                },
+                {
+                    namespace: prefixes.rdfs,
+                    localName: 'subPropertyOf',
+                    valuesKey: 'subDataProperties'
+                },
+                {
+                    namespace: prefixes.owl,
+                    localName: 'disjointWith',
+                    valuesKey: 'subDataProperties'
+                }
+            ];
+
+            self.objectAxiomList = [
+                {
+                    namespace: prefixes.rdfs,
+                    localName: 'domain',
+                    valuesKey: 'subClasses'
+                },
+                {
+                    namespace: prefixes.rdfs,
+                    localName: 'range',
+                    valuesKey: 'subClasses'
+                },
+                {
+                    namespace: prefixes.owl,
+                    localName: 'equivalentProperty',
+                    valuesKey: 'subObjectProperties'
+                },
+                {
+                    namespace: prefixes.rdfs,
+                    localName: 'subPropertyOf',
+                    valuesKey: 'subObjectProperties'
+                },
+                {
+                    namespace: prefixes.owl,
+                    localName: 'inverseOf',
+                    valuesKey: 'subObjectProperties'
+                },
+                {
+                    namespace: prefixes.owl,
+                    localName: 'disjointWith',
+                    valuesKey: 'subObjectProperties'
+                }
+            ];
 
             self.remove = function(entity, key, index) {
                 _.pullAt(entity[key], index);

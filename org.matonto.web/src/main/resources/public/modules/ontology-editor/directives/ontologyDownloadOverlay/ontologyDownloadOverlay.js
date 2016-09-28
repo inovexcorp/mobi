@@ -27,9 +27,9 @@
         .module('ontologyDownloadOverlay', [])
         .directive('ontologyDownloadOverlay', ontologyDownloadOverlay);
 
-        ontologyDownloadOverlay.$inject = ['$filter', 'REGEX', 'stateManagerService', 'ontologyManagerService'];
+        ontologyDownloadOverlay.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'ontologyManagerService'];
 
-        function ontologyDownloadOverlay($filter, REGEX, stateManagerService, ontologyManagerService) {
+        function ontologyDownloadOverlay($filter, REGEX, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,7 @@
                     var dvm = this;
 
                     dvm.fileNamePattern = REGEX.FILENAME;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.fileName = $filter('splitIRI')(dvm.sm.downloadId).end;
 

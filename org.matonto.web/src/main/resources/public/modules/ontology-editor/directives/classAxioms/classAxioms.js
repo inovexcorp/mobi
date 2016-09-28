@@ -27,9 +27,9 @@
         .module('classAxioms', [])
         .directive('classAxioms', classAxioms);
 
-        classAxioms.$inject = ['stateManagerService', 'prefixes'];
+        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService'];
 
-        function classAxioms(stateManagerService, prefixes) {
+        function classAxioms(ontologyStateService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,25 +38,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.prefixes = prefixes;
-                    dvm.sm = stateManagerService;
-                    dvm.axiomList = [
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'subClassOf',
-                            values: 'subClasses'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'disjointWith',
-                            values: 'subClasses'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'equivalentClass',
-                            values: 'subClasses'
-                        }
-                    ];
+                    dvm.sm = ontologyStateService;
+                    dvm.pm = propertyManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.sm.key = key;

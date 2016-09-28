@@ -25,7 +25,7 @@ describe('Ontology Close Overlay directive', function() {
         scope,
         element,
         controller,
-        stateManagerSvc,
+        ontologyStateSvc,
         ontologyManagerSvc,
         deferred;
 
@@ -33,14 +33,14 @@ describe('Ontology Close Overlay directive', function() {
         module('templates');
         module('ontologyCloseOverlay');
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
         });
 
@@ -97,20 +97,20 @@ describe('Ontology Close Overlay directive', function() {
         describe('saveThenClose', function() {
             beforeEach(function() {
                 ontologyManagerSvc.saveChanges.and.returnValue(deferred.promise);
-                stateManagerSvc.getState.and.returnValue({deletedEntities: []});
+                ontologyStateSvc.getState.and.returnValue({deletedEntities: []});
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
                 ontologyManagerSvc.getOntologyById.and.returnValue([]);
-                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
-                expect(stateManagerSvc.getUnsavedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
-                expect(stateManagerSvc.getCreatedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
-                expect(stateManagerSvc.getState).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
+                expect(ontologyManagerSvc.getOntologyById).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
+                expect(ontologyStateSvc.getUnsavedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
+                expect(ontologyStateSvc.getCreatedEntities).toHaveBeenCalledWith(ontologyManagerSvc.getOntologyById());
+                expect(ontologyStateSvc.getState).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
                 expect(ontologyManagerSvc.saveChanges).toHaveBeenCalledWith(
-                    stateManagerSvc.ontologyIdToClose,
-                    stateManagerSvc.getUnsavedEntities(ontologyManagerSvc.getOntologyById()),
-                    stateManagerSvc.getCreatedEntities(ontologyManagerSvc.getOntologyById()),
-                    stateManagerSvc.getState().deletedEntities
+                    ontologyStateSvc.ontologyIdToClose,
+                    ontologyStateSvc.getUnsavedEntities(ontologyManagerSvc.getOntologyById()),
+                    ontologyStateSvc.getCreatedEntities(ontologyManagerSvc.getOntologyById()),
+                    ontologyStateSvc.getState().deletedEntities
                 );
             });
             it('when resolved, calls the correct controller function', function() {
@@ -118,7 +118,7 @@ describe('Ontology Close Overlay directive', function() {
                 deferred.resolve('id');
                 scope.$apply();
                 expect(controller.close).toHaveBeenCalled();
-                expect(stateManagerSvc.afterSave).toHaveBeenCalledWith('id');
+                expect(ontologyStateSvc.afterSave).toHaveBeenCalledWith('id');
             });
             it('when rejected, sets the correct variable', function() {
                 deferred.reject('error');
@@ -128,9 +128,9 @@ describe('Ontology Close Overlay directive', function() {
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
-            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(stateManagerSvc.ontologyIdToClose);
-            expect(stateManagerSvc.showCloseOverlay).toBe(false);
+            expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
+            expect(ontologyManagerSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.ontologyIdToClose);
+            expect(ontologyStateSvc.showCloseOverlay).toBe(false);
         });
     });
 });

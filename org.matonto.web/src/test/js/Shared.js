@@ -392,9 +392,9 @@ function mockSettingsManager() {
     });
 }
 
-function mockStateManager() {
+function mockOntologyState() {
     module(function($provide) {
-        $provide.service('stateManagerService', function() {
+        $provide.service('ontologyStateService', function() {
             this.states = {};
             this.ontologyIdToClose = '';
             this.state = {
@@ -477,9 +477,9 @@ function mockResponseObj() {
     });
 }
 
-function mockAnnotationManager() {
+function mockPropertyManager() {
     module(function($provide) {
-        $provide.service('annotationManagerService', function($q) {
+        $provide.service('propertyManagerService', function($q) {
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
             this.add = jasmine.createSpy('add');

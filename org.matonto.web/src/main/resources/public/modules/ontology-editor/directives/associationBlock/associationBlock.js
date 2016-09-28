@@ -27,9 +27,9 @@
         .module('associationBlock', [])
         .directive('associationBlock', associationBlock);
 
-        associationBlock.$inject = ['stateManagerService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        associationBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function associationBlock(stateManagerService, ontologyManagerService, ontologyUtilsManagerService) {
+        function associationBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
 
