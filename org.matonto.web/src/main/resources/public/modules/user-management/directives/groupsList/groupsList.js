@@ -59,21 +59,26 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {},
+                scope: {
+                    groups: '<'
+                },
                 controller: function() {
                     var dvm = this;
                     dvm.state = userStateService;
                     dvm.um = userManagerService;
                     dvm.lm = loginManagerService;
 
-                    dvm.editGroup = function(group) {
+                    dvm.onClick = function(group) {
+                        dvm.state.selectedGroup = group;
+                    }
+                    /*dvm.editGroup = function(group) {
                         dvm.state.selectedGroup = group;
                         dvm.state.showGroupsList = false;
                         dvm.state.editGroup = true;
                     }
                     dvm.getGroups = function() {
                         return dvm.full ? dvm.um.groups : _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
-                    }
+                    }*/
                 },
                 templateUrl: 'modules/user-management/directives/groupsList/groupsList.html'
             }

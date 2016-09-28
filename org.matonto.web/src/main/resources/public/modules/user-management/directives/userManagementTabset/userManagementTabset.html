@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="groups-list tree scroll-without-buttons">
-    <ul>
-        <li ng-repeat="group in groups">
-            <a ng-click="dvm.onClick(group)" ng-class="{'active': group.name === dvm.state.selectedGroup.name}">
-                {{group.name}}
-                <span class="member-count"><i class="fa fa-users"></i> {{group.members.length}}</span>
-            </a>
-        </li>
-    </ul>
+<div class="user-management-tabset full-height">
+	<tabset>
+      <tab heading="'Groups'" active="dvm.state.showGroupsList">
+        <groups-tab></groups-tab>
+      </tab>
+      <tab heading="'Users'" active="dvm.state.showUsersList">
+        <users-tab></users-tab>
+      </tab>
+	</tabset>
 </div>

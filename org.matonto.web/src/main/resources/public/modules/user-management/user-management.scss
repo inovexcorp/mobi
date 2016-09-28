@@ -2,9 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .user-management {
-    &>.row {
-      padding-left: 39px; 
-    }
+    background-color: $gray-lighter;
 
     .table {
         tr {

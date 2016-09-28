@@ -24,25 +24,24 @@
     'use strict';
 
     angular
-        .module('user-management', [
-            /* Custom directives */
-            // 'addGroupOverlay',
-            // 'addUserOverlays',
-            // 'groupEditor',
-            // 'groupsList',
-            // 'groupsPage',
-            'groupsTab',
-            // 'memberTable',
-            // 'userEditor',
-            // 'userManagementOverlays',
-            // 'userManagementSideBar',
-            'userManagementTabset',
-            // 'userPermissionsInput',
-            // 'usersList',
-            // 'usersPage',
-            'usersTab',
+        .module('usersTab', [])
+        .directive('usersTab', usersTab);
 
-            /* Custom services */
-            'userState'
-        ]);
+        usersTab.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
+
+        function usersTab(userStateService, userManagerService, loginManagerService) {
+            return {
+                restrict: 'E',
+                controllerAs: 'dvm',
+                replace: true,
+                scope: {},
+                controller: function() {
+                    var dvm = this;
+                    dvm.state = userStateService;
+                    dvm.um = userManagerService;
+                    dvm.lm = loginManagerService;
+                },
+                templateUrl: 'modules/user-management/directives/usersTab/usersTab.html'
+            }
+        }
 })();

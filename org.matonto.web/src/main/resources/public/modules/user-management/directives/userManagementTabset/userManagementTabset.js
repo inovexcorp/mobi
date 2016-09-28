@@ -24,25 +24,22 @@
     'use strict';
 
     angular
-        .module('user-management', [
-            /* Custom directives */
-            // 'addGroupOverlay',
-            // 'addUserOverlays',
-            // 'groupEditor',
-            // 'groupsList',
-            // 'groupsPage',
-            'groupsTab',
-            // 'memberTable',
-            // 'userEditor',
-            // 'userManagementOverlays',
-            // 'userManagementSideBar',
-            'userManagementTabset',
-            // 'userPermissionsInput',
-            // 'usersList',
-            // 'usersPage',
-            'usersTab',
+        .module('userManagementTabset', [])
+        .directive('userManagementTabset', userManagementTabset);
 
-            /* Custom services */
-            'userState'
-        ]);
+        userManagementTabset.$inject = ['userStateService'];
+
+        function userManagementTabset(userStateService) {
+            return {
+                restrict: 'E',
+                replace: true,
+                templateUrl: 'modules/user-management/directives/userManagementTabset/userManagementTabset.html',
+                scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    dvm.state = userStateService;
+                }
+            }
+        }
 })();
