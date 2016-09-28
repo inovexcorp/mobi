@@ -53,15 +53,29 @@ describe('File Upload Page directive', function() {
             scope.$digest();
             controller = this.element.controller('fileUploadPage');
         });
-        it('should set the correct state for continuing to edit a mapping', function() {
-            var baseClass = {'@id': 'base'};
-            var classMappings = [{}];
-            mappingManagerSvc.getBaseClass.and.returnValue(baseClass);
-            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
-            controller.edit();
-            expect(mapperStateSvc.selectedClassMappingId).toBe(baseClass['@id']);
-            expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(classMappings.length);
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+        describe('should set the correct state for continuing to edit a mapping', function() {
+            beforeEach(function() {
+                this.baseClass = {'@id': 'base'};
+                this.classMappings = [{}];
+                mappingManagerSvc.getBaseClass.and.returnValue(this.baseClass);
+                mappingManagerSvc.getAllClassMappings.and.returnValue(this.classMappings);
+            });
+            it('if a new mapping is being created', function() {
+                mapperStateSvc.newMapping = true;
+                controller.edit();
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+                expect(mapperStateSvc.displayMappingConfig).toBe(true);
+            });
+            it('if a saved mapping is being edited', function() {
+                mapperStateSvc.newMapping = false;
+                controller.edit();
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+                expect(mapperStateSvc.displayMappingConfig).not.toBe(true);
+            });
         });
         it('should set the correct state for continuing to run a mapping', function() {
             var mappingId = mappingManagerSvc.mapping.id;

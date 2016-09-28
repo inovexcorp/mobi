@@ -76,6 +76,9 @@
                         dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld), '@id', '');
                         _.forEach(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         dvm.state.step = dvm.state.editMappingStep;
+                        if (dvm.state.newMapping) {
+                            dvm.state.displayMappingConfig = true;
+                        }
                     }
                     dvm.run = function() {
                         dvm.dm.map(dvm.mm.mapping.id);
