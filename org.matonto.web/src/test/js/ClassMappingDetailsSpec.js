@@ -246,11 +246,12 @@ describe('Class Mapping Details directive', function() {
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         scope.$digest();
-        spyOn(controller, 'getLinkedColumnIndex');
+        spyOn(controller, 'getLinkedColumnIndex').and.returnValue('0');
 
         var propertyButton = angular.element(element.querySelectorAll('.prop-list button')[0]);
         propertyButton.triggerHandler('click');
         expect(mapperStateSvc.selectedPropMappingId).toBe(property['@id']);
+        expect(mapperStateSvc.highlightIndexes).toEqual(['0']);
     });
     it('should call switchClass when a property is double clicked', function() {
         mappingManagerSvc.mapping = {jsonld: []};

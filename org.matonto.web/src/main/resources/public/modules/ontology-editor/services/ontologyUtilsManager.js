@@ -27,71 +27,67 @@
         .module('ontologyUtilsManager', [])
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$filter', 'ontologyManagerService', 'stateManagerService',
+        ontologyUtilsManagerService.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService',
             'updateRefsService'];
 
-        function ontologyUtilsManagerService($filter, ontologyManagerService, stateManagerService, updateRefsService) {
+        function ontologyUtilsManagerService($filter, ontologyManagerService, ontologyStateService, updateRefsService) {
             var self = this;
-            self.om = ontologyManagerService;
-            self.sm = stateManagerService;
-            self.ur = updateRefsService;
+            var om = ontologyManagerService;
+            var sm = ontologyStateService;
+            var ur = updateRefsService;
 
             function commonDelete(entityIRI) {
-                self.sm.addDeletedEntity();
-                self.om.removeEntity(self.sm.ontology, entityIRI);
-                self.ur.remove(self.sm.ontology, self.sm.selected['@id']);
-                self.sm.unSelectItem();
+                sm.addDeletedEntity();
+                om.removeEntity(sm.ontology, entityIRI);
+                ur.remove(sm.ontology, sm.selected['@id']);
+                sm.unSelectItem();
             }
 
             self.deleteClass = function() {
-                var entityIRI = self.sm.getActiveEntityIRI();
-                var split = $filter('splitIRI')(angular.copy(entityIRI));
-                _.remove(_.get(self.sm.listItem, 'subClasses'), {namespace:split.begin + split.then, localName: split.end});
-                _.pull(_.get(self.sm.listItem, 'classesWithIndividuals'), entityIRI);
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'classHierarchy'), entityIRI,
-                    _.get(self.sm.listItem, 'classIndex'));
+                var entityIRI = sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(entityIRI);
+                _.remove(_.get(sm.listItem, 'subClasses'), {namespace:split.begin + split.then, localName: split.end});
+                _.pull(_.get(sm.listItem, 'classesWithIndividuals'), entityIRI);
+                sm.deleteEntityFromHierarchy(_.get(sm.listItem, 'classHierarchy'), entityIRI,
+                    _.get(sm.listItem, 'classIndex'));
                 commonDelete(entityIRI);
             }
 
             self.deleteObjectProperty = function() {
-                var entityIRI = self.sm.getActiveEntityIRI();
-                var split = $filter('splitIRI')(angular.copy(entityIRI));
-                _.remove(_.get(self.sm.listItem, 'subObjectProperties'), entityIRI);
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'objectPropertyHierarchy'), entityIRI,
-                    _.get(self.sm.listItem, 'objectPropertyIndex'));
+                var entityIRI = sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(entityIRI);
+                _.remove(_.get(sm.listItem, 'subObjectProperties'), entityIRI);
+                sm.deleteEntityFromHierarchy(_.get(sm.listItem, 'objectPropertyHierarchy'), entityIRI,
+                    _.get(sm.listItem, 'objectPropertyIndex'));
                 commonDelete(entityIRI);
             }
 
             self.deleteDataTypeProperty = function() {
-                var entityIRI = self.sm.getActiveEntityIRI();
-                var split = $filter('splitIRI')(angular.copy(entityIRI));
-                _.remove(_.get(self.sm.listItem, 'subDataProperties'), entityIRI);
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'dataPropertyHierarchy'), entityIRI,
-                    _.get(self.sm.listItem, 'dataPropertyIndex'));
+                var entityIRI = sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(entityIRI);
+                _.remove(_.get(sm.listItem, 'subDataProperties'), entityIRI);
+                sm.deleteEntityFromHierarchy(_.get(sm.listItem, 'dataPropertyHierarchy'), entityIRI,
+                    _.get(sm.listItem, 'dataPropertyIndex'));
                 commonDelete(entityIRI);
             }
 
             self.deleteIndividual = function() {
-                var entityIRI = self.sm.getActiveEntityIRI();
-                var split = $filter('splitIRI')(angular.copy(entityIRI));
-                _.remove(_.get(self.sm.listItem, 'individuals'), entityIRI);
+                var entityIRI = sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(entityIRI);
+                _.remove(_.get(sm.listItem, 'individuals'), entityIRI);
                 commonDelete(entityIRI);
             }
 
             self.deleteConcept = function() {
-                var entityIRI = self.sm.getActiveEntityIRI();
-                var split = $filter('splitIRI')(angular.copy(entityIRI));
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'conceptHierarchy'), entityIRI,
-                    _.get(self.sm.listItem, 'conceptIndex'));
+                var entityIRI = sm.getActiveEntityIRI();
+                var split = $filter('splitIRI')(entityIRI);
+                sm.deleteEntityFromHierarchy(_.get(sm.listItem, 'conceptHierarchy'), entityIRI,
+                    _.get(sm.listItem, 'conceptIndex'));
                 commonDelete(entityIRI);
             }
 
             self.deleteConceptScheme = function() {
-                var entityIRI = self.sm.getActiveEntityIRI();
-                var split = $filter('splitIRI')(angular.copy(entityIRI));
-                self.sm.deleteEntityFromHierarchy(_.get(self.sm.listItem, 'conceptHierarchy'), entityIRI,
-                    _.get(self.sm.listItem, 'conceptIndex'));
-                commonDelete(entityIRI);
+                self.deleteConcept();
             }
         }
 })();

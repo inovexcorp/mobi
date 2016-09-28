@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="class-axioms">
-    <property-values ng-repeat="axiom in dvm.sm.selected | showProperties:dvm.axiomList | orderBy:'localName'"
+    <property-values ng-repeat="axiom in dvm.sm.selected | showProperties:dvm.pm.classAxiomList | orderBy:'localName'"
                      property="axiom" entity="dvm.sm.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
-    <axiom-overlay ng-if="dvm.sm.showAxiomOverlay" axiom-list="dvm.axiomList"></axiom-overlay>
+    <axiom-overlay ng-if="dvm.sm.showAxiomOverlay" axiom-list="dvm.pm.classAxiomList"></axiom-overlay>
 </div>

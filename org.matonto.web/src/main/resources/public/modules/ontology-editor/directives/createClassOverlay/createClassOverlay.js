@@ -27,9 +27,9 @@
         .module('createClassOverlay', [])
         .directive('createClassOverlay', createClassOverlay);
 
-        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function createClassOverlay($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
+        function createClassOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,7 +42,7 @@
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
                         dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),

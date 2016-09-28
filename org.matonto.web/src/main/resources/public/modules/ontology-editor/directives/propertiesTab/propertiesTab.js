@@ -27,20 +27,12 @@
         .module('propertiesTab', [])
         .directive('propertiesTab', propertiesTab);
 
-        propertiesTab.$inject = ['stateManagerService', 'ontologyManagerService'];
-
-        function propertiesTab(stateManagerService, ontologyManagerService) {
+        function propertiesTab() {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/propertiesTab/propertiesTab.html',
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.sm = stateManagerService;
-                    dvm.om = ontologyManagerService;
-                }
+                scope: {}
             }
         }
 })();

@@ -27,9 +27,9 @@
         .module('datatypePropertyOverlay', [])
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
-        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'stateManagerService'];
+        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService'];
 
-        function datatypePropertyOverlay(responseObj, ontologyManagerService, stateManagerService) {
+        function datatypePropertyOverlay(responseObj, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,7 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     function closeAndMark() {
                         dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.getActiveEntityIRI(), true);

@@ -27,9 +27,9 @@
         .module('selectedDetails', [])
         .directive('selectedDetails', selectedDetails);
 
-        selectedDetails.$inject = ['ontologyManagerService', 'stateManagerService'];
+        selectedDetails.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-        function selectedDetails(ontologyManagerService, stateManagerService) {
+        function selectedDetails(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                 }
             }

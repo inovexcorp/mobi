@@ -61,27 +61,10 @@ describe('Preview Data Grid directive', function() {
             controller = this.element.controller('previewDataGrid');
             controller.hotTable = hotTable;
         });
-        describe('the highlight index changes', function() {
-            beforeEach(function() {
-                this.index = 0;
-            })
-            it('if it has a value', function() {
-                controller.hotTable.deselectCell.calls.reset();
-                mapperStateSvc.highlightIndex = `${this.index}`;
-                scope.$digest();
-                expect(controller.hotTable.countRows).toHaveBeenCalled();
-                expect(controller.hotTable.selectCell).toHaveBeenCalledWith(0, this.index, controller.hotTable.countRows() - 1, this.index, false);
-                expect(controller.hotTable.deselectCell).not.toHaveBeenCalled();
-            });
-            it('if it does not have a value', function() {
-                mapperStateSvc.highlightIndex = `${this.index}`;
-                scope.$digest();
-                controller.hotTable.selectCell.calls.reset();
-                mapperStateSvc.highlightIndex = '';
-                scope.$digest();
-                expect(controller.hotTable.deselectCell).toHaveBeenCalled();
-                expect(controller.hotTable.selectCell).not.toHaveBeenCalled();
-            });
+        it('the highlight indexes change', function() {
+            mapperStateSvc.highlightIndexes = ['0'];
+            scope.$digest();
+            expect(controller.hotTable.render).toHaveBeenCalled();
         });
         it('whether the data has headers or not changes', function() {
             delimitedManagerSvc.dataRows = [];
