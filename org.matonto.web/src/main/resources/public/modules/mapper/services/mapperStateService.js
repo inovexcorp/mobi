@@ -300,15 +300,15 @@
             self.newProp = false;
             /**
              * @ngdoc property
-             * @name highlightIndex
+             * @name highlightIndexes
              * @propertyOf mapperState.service:mapperStateService
-             * @type {string}
+             * @type {string[]}
              *
              * @description 
-             * `highlightIndex` holds a string containing the index of the column to highlight
+             * `highlightIndexes` holds an array of strings containing column indexes to highlight
              * in the {@link previewDataGrid.directive:previewDataGrid previewDataGrid}.
              */
-            self.highlightIndex = '';
+            self.highlightIndexes = [];
             /**
              * @ngdoc property
              * @name highlmappingSearchStringightIndex
@@ -348,7 +348,7 @@
             self.resetEdit = function() {
                 self.selectedClassMappingId = '';
                 self.selectedPropMappingId = '';
-                self.highlightIndex = '';
+                self.highlightIndexes = [];
                 self.newProp = false;
             }
             /**
@@ -400,10 +400,10 @@
              * Finds all of the column indexes that haven't been mapped to data mappings yet in the currently selected 
              * {@link mappingManager.service:mappingManagerService#mapping mapping}.
              * 
-             * @return {number[]} an array of column indexes that haven't been mapped yet
+             * @return {string[]} an array of strings of column indexes that haven't been mapped yet
              */
             self.getMappedColumns = function() {
-                return _.map(mm.getAllDataMappings(mm.mapping.jsonld), dataMapping => _.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", '0'));
+                return _.map(mm.getAllDataMappings(mm.mapping.jsonld), dataMapping => _.get(dataMapping, "['" + prefixes.delim + "columnIndex'][0]['@value']", ''));
             }
             /**
              * @ngdoc method
