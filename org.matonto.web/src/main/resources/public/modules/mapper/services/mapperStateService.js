@@ -164,40 +164,40 @@
             self.editMappingName = false;
             /**
              * @ngdoc property
-             * @name displayCreateMapping
+             * @name displayCreateMappingOverlay
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
              *
              * @description 
-             * `displayCreateMapping` holds a boolean indicating whether or not the 
+             * `displayCreateMappingOverlay` holds a boolean indicating whether or not the 
              * {@link createMappingOverlay.directive:createMappingOverlay create mapping overlay} 
              * should be shown.
              */
-            self.displayCreateMapping = false;
+            self.displayCreateMappingOverlay = false;
             /**
              * @ngdoc property
-             * @name displayDownloadMapping
+             * @name displayDownloadMappingOverlay
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
              *
              * @description 
-             * `displayDownloadMapping` holds a boolean indicating whether or not the 
+             * `displayDownloadMappingOverlay` holds a boolean indicating whether or not the 
              * {@link downloadMappingOverlay.directive:downloadMappingOverlay download mapping overlay} 
              * should be shown.
              */
-            self.displayDownloadMapping = false;
+            self.displayDownloadMappingOverlay = false;
             /**
              * @ngdoc property
-             * @name displayMappingConfig
+             * @name displayMappingConfigOverlay
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
              *
              * @description 
-             * `displayMappingConfig` holds a boolean indicating whether or not the 
+             * `displayMappingConfigOverlay` holds a boolean indicating whether or not the 
              * {@link mappingConfigOverlay.directive:mappingConfigOverlay mapping configuration overlay} 
              * should be shown.
              */
-            self.displayMappingConfig = false;
+            self.displayMappingConfigOverlay = false;
             /**
              * @ngdoc property
              * @name displayPropMappingOverlay

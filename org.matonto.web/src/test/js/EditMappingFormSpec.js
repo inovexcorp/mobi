@@ -136,7 +136,7 @@ describe('Edit Mapping Form directive', function() {
 
         var editConfigLink = angular.element(element.querySelectorAll('.mapping-config custom-label a')[0]);
         editConfigLink.triggerHandler('click');
-        expect(mapperStateSvc.displayMappingConfig).toBe(true);
+        expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
     });
     it('should set the correct state when delete class button is clicked', function() {
         mappingManagerSvc.mapping = {name: '', jsonld: []};
