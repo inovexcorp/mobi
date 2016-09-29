@@ -126,7 +126,8 @@
              *      individuals: [],
              *      classesWithIndividuals: [],
              *      subClasses: [],
-             *      blankNodes: {}
+             *      blankNodes: {},
+             *      index: {}
              * }
              * ```
              */
@@ -1396,24 +1397,24 @@
             }
             /**
              * @ngdoc method
-             * @name getEntityByOntologyId
+             * @name getEntityById
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
              * Gets entity with the provided IRI from the ontology linked to the provided ontologyId in the MatOnto
              * repository. Returns the entity Object.
              *
-             * @param {String} ontologyId The ontologyId linked to the ontology you want to check.
+             * @param {string} ontologyId The ontologyId linked to the ontology you want to check.
              * @param {string} entityIRI The IRI of the entity that you want.
              * @returns {Object} An Object which represents the requested entity.
              */
             self.getEntityById = function(ontologyId, entityIRI) {
-                var index = self.getListItemById(ontologyId).index;
+                var index = _.get(self.getListItemById(ontologyId), 'index');
                 var ontology = self.getOntologyById(ontologyId);
                 if (_.has(index, entityIRI)) {
                     return ontology[_.get(index, entityIRI)];
                 } else {
-                    return self.getEntity(self.getOntologyById(ontologyId), entityIRI);
+                    return self.getEntity(ontology, entityIRI);
                 }
             }
             /**

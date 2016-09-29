@@ -432,7 +432,8 @@ function mockOntologyState() {
                 dataPropertyHierarchy: [],
                 subDataProperties: [],
                 blankNodes: {},
-                individuals: []
+                individuals: [],
+                index: {}
             };
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
