@@ -45,7 +45,7 @@
                     dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.sm.propertyValue);
 
                     function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.getActiveEntityIRI(), true);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.getActiveEntityIRI(), true);
                         dvm.sm.showObjectPropertyOverlay = false;
                     }
 

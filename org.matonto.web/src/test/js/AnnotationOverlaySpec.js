@@ -114,7 +114,7 @@ describe('Annotation Overlay directive', function() {
                 resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
                 ontologyStateSvc.annotationType['@id']);
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                 ontologyStateSvc.selected.matonto.originalIRI, true);
         });
         it('editAnnotation should call the appropriate manager functions', function() {
@@ -124,7 +124,7 @@ describe('Annotation Overlay directive', function() {
                 resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
                 ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id']);
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
                 ontologyStateSvc.selected.matonto.originalIRI, true);
         });
         describe('getItemNamespace returns', function() {

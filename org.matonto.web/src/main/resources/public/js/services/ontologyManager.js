@@ -126,7 +126,8 @@
              *      individuals: [],
              *      classesWithIndividuals: [],
              *      subClasses: [],
-             *      blankNodes: {}
+             *      blankNodes: {},
+             *      index: {}
              * }
              * ```
              */
@@ -1396,6 +1397,28 @@
             }
             /**
              * @ngdoc method
+             * @name getEntityById
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets entity with the provided IRI from the ontology linked to the provided ontologyId in the MatOnto
+             * repository. Returns the entity Object.
+             *
+             * @param {string} ontologyId The ontologyId linked to the ontology you want to check.
+             * @param {string} entityIRI The IRI of the entity that you want.
+             * @returns {Object} An Object which represents the requested entity.
+             */
+            self.getEntityById = function(ontologyId, entityIRI) {
+                var index = _.get(self.getListItemById(ontologyId), 'index');
+                var ontology = self.getOntologyById(ontologyId);
+                if (_.has(index, entityIRI)) {
+                    return ontology[_.get(index, entityIRI)];
+                } else {
+                    return self.getEntity(ontology, entityIRI);
+                }
+            }
+            /**
+             * @ngdoc method
              * @name removeEntity
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -1451,7 +1474,7 @@
              * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
              */
-            self.getEntityName = function(entity) {
+            self.getEntityName = function(entity, type='ontology') {
                 var result = _.get(entity, "['" + prefixes.rdfs + "label'][0]['@value']") || _.get(entity, "['"
                     + prefixes.dcterms + "title'][0]['@value']") || _.get(entity, "['" + prefixes.dc
                     + "title'][0]['@value']");
@@ -1461,6 +1484,10 @@
                     } else {
                         result = _.get(entity, 'matonto.anonymous');
                     }
+                }
+                if (type === 'vocabulary') {
+                    result = _.get(entity, "['" + prefixes.skos + "prefLabel'][0]['@value']") || _.get(entity, "['"
+                        + prefixes.skos + "altLabel'][0]['@value']") || result;
                 }
                 return result;
             }
@@ -1774,9 +1801,11 @@
             function setupListItem(ontologyId, ontology, template) {
                 var listItem = angular.copy(template);
                 var blankNodes = {};
-                _.forEach(ontology, entity => {
+                var index = {};
+                _.forEach(ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
+                        _.set(index, entity['@id'], i);
                     } else {
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
@@ -1793,6 +1822,7 @@
                 listItem.ontologyId = ontologyId;
                 listItem.ontology = ontology;
                 listItem.blankNodes = blankNodes;
+                listItem.index = index;
                 return listItem;
             }
             function addOntologyToList(ontologyId, ontology) {

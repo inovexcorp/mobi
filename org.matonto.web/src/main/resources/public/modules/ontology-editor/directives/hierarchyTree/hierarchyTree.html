@@ -24,7 +24,7 @@
     <ul ng-repeat="node in hierarchy track by node.entityIRI" ng-include="'hierarchy_item'"
         ng-init="node = node; opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, node.entityIRI)"></ul>
     <script type="text/ng-template" id="hierarchy_item">
-        <tree-item current-entity="dvm.om.getEntity(dvm.sm.ontology, node.entityIRI)"
+        <tree-item current-entity="dvm.om.getEntityById(dvm.sm.listItem.ontologyId, node.entityIRI)"
                    ontology-id="dvm.sm.state.ontologyId"
                    is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
                    on-click="dvm.sm.selectItem(node.entityIRI)"

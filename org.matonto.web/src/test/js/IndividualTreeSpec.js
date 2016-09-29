@@ -109,8 +109,8 @@ describe('Individual Tree directive', function() {
                 scope.$digest();
                 controller = element.controller('individualTree');
                 var result = controller.getTreeDisplay({});
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({});
-                expect(result).toBe(ontologyManagerSvc.getEntityName({}));
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type);
+                expect(result).toBe(ontologyManagerSvc.getEntityName({}, ontologyStateSvc.state.type));
             });
             it('for full IRI', function() {
                 var entity = {matonto: {originalIRI: 'test'}};

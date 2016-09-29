@@ -43,7 +43,7 @@
                     dvm.sm = ontologyStateService;
 
                     function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.getActiveEntityIRI(), true);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.getActiveEntityIRI(), true);
                         dvm.sm.showDataPropertyOverlay = false;
                     }
 
