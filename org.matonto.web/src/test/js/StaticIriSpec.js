@@ -25,21 +25,21 @@ describe('Static IRI directive', function() {
         $filter,
         scope,
         element,
-        stateManagerSvc,
+        ontologyStateSvc,
         controller;
 
     beforeEach(function() {
         module('templates');
         module('staticIri');
-        mockStateManager();
+        mockOntologyState();
         mockOntologyManager();
         injectSplitIRIFilter();
         injectRegexConstant();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _$filter_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             $filter = _$filter_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
@@ -76,7 +76,7 @@ describe('Static IRI directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            stateManagerSvc.showIriOverlay = true;
+            ontologyStateSvc.showIriOverlay = true;
             scope.$digest();
         });
         it('for a STATIC-IRI', function() {
@@ -101,8 +101,8 @@ describe('Static IRI directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            stateManagerSvc.ontology.matonto.iriBegin = 'begin';
-            stateManagerSvc.ontology.matonto.iriThen = 'then';
+            ontologyStateSvc.ontology.matonto.iriBegin = 'begin';
+            ontologyStateSvc.ontology.matonto.iriThen = 'then';
             controller = element.controller('staticIri');
         });
         it('setVariables changes the passed in variable', function() {
@@ -128,15 +128,15 @@ describe('Static IRI directive', function() {
             expect(controller.iriEnd).toBe('new');
         });
         it('afterEdit update ontologyIriBegin and ontologyIriThen and sets showIriOverlay to false', function() {
-            stateManagerSvc.showIriOverlay = true;
+            ontologyStateSvc.showIriOverlay = true;
             controller.iriBegin = 'new';
             controller.iriThen = 'new';
             controller.afterEdit();
-            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(stateManagerSvc.state.ontologyId);
-            var listItem = ontologyManagerSvc.getListItemById(stateManagerSvc.state.ontologyId);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId);
+            var listItem = ontologyManagerSvc.getListItemById(ontologyStateSvc.state.ontologyId);
             expect(listItem.iriBegin).toBe('new');
             expect(listItem.iriThen).toBe('new');
-            expect(stateManagerSvc.showIriOverlay).toBe(false);
+            expect(ontologyStateSvc.showIriOverlay).toBe(false);
         });
         it('check $watch', function() {
             controller.setVariables = jasmine.createSpy('setVariables');

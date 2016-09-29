@@ -76,6 +76,7 @@
                     }
                     dvm.run = function() {
                         dvm.state.mappingSearchString = '';
+                        dvm.state.highlightIndexes = dvm.state.getMappedColumns();
                         dvm.loadOntologyAndContinue();
                     }
                     dvm.edit = function() {
@@ -85,13 +86,13 @@
                     }
                     dvm.createMapping = function() {
                         dvm.state.createMapping();
-                        dvm.state.displayCreateMapping = true;
+                        dvm.state.displayCreateMappingOverlay = true;
                     }
                     dvm.deleteMapping = function() {
                         dvm.state.displayDeleteMappingConfirm = true;
                     }
                     dvm.downloadMapping = function() {
-                        dvm.state.displayDownloadMapping = true;
+                        dvm.state.displayDownloadMappingOverlay = true;
                     }
                     dvm.loadOntologyAndContinue = function() {
                         dvm.mm.setSourceOntologies(dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld)).then(() => {

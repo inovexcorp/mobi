@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'stateManagerService'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService'];
 
-        function axiomOverlay(responseObj, ontologyManagerService, stateManagerService) {
+        function axiomOverlay(responseObj, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,7 +42,7 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     function closeAndMark() {
                         dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);

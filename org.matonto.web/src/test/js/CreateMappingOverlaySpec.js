@@ -79,7 +79,7 @@ describe('Create Mapping Overlay directive', function() {
                 expect(mappingManagerSvc.mapping.jsonld).toBeDefined();
                 expect(mappingManagerSvc.setSourceOntologies).toHaveBeenCalled();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                expect(mapperStateSvc.displayCreateMapping).toBe(false);
+                expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
             });
             describe('if a copy of a mapping is being created', function() {
                 beforeEach(function() {
@@ -125,7 +125,7 @@ describe('Create Mapping Overlay directive', function() {
                     expect(mappingManagerSvc.setSourceOntologies).toHaveBeenCalled();
                     expect(mapperStateSvc.mappingSearchString).toBe('');
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                    expect(mapperStateSvc.displayCreateMapping).toBe(false);
+                    expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
                 });
             });
         });
@@ -134,7 +134,7 @@ describe('Create Mapping Overlay directive', function() {
             expect(mapperStateSvc.editMapping).toBe(false);
             expect(mapperStateSvc.newMapping).toBe(false);
             expect(mappingManagerSvc.mapping).toBeUndefined();
-            expect(mapperStateSvc.displayCreateMapping).toBe(false);
+            expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {

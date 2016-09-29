@@ -54,9 +54,9 @@
          */
         .directive('fileUploadPage', fileUploadPage);
 
-        fileUploadPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        fileUploadPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'ontologyManagerService'];
 
-        function fileUploadPage(mapperStateService, mappingManagerService, delimitedManagerService) {
+        function fileUploadPage(mapperStateService, mappingManagerService, delimitedManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -68,7 +68,17 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.om = ontologyManagerService;
 
+                    dvm.getDataMappingName = function(dataMappingId) {
+                        var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dataMappingId);
+                        var classId = dvm.mm.getClassIdByMapping(dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId));
+                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId);
+                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId);
+                        var propName = dvm.om.getEntityName(dvm.om.getEntity(propOntology.entities, propId));
+                        var className = dvm.om.getEntityName(dvm.om.getEntity(classOntology.entities, classId));
+                        return dvm.mm.getPropMappingTitle(className, propName);
+                    }
                     dvm.cancel = function() {
                     	dvm.state.displayCancelConfirm = true;
                     }
@@ -76,6 +86,9 @@
                         dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld), '@id', '');
                         _.forEach(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         dvm.state.step = dvm.state.editMappingStep;
+                        if (dvm.state.newMapping) {
+                            dvm.state.displayMappingConfigOverlay = true;
+                        }
                     }
                     dvm.run = function() {
                         dvm.dm.map(dvm.mm.mapping.id);

@@ -27,9 +27,9 @@
         .module('previewBlock', [])
         .directive('previewBlock', previewBlock);
 
-        previewBlock.$inject = ['stateManagerService', 'ontologyManagerService'];
+        previewBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function previewBlock(stateManagerService, ontologyManagerService) {
+        function previewBlock(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.activePage = dvm.sm.getActivePage();
                     dvm.options = {

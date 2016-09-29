@@ -26,7 +26,7 @@ describe('Tree Item directive', function() {
         scope,
         element,
         controller,
-        stateManagerSvc,
+        ontologyStateSvc,
         ontologyManagerSvc,
         settingsManagerSvc;
 
@@ -36,13 +36,13 @@ describe('Tree Item directive', function() {
         injectRegexConstant();
         mockSettingsManager();
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _settingsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _settingsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             settingsManagerSvc = _settingsManagerService_;
         });
@@ -201,7 +201,7 @@ describe('Tree Item directive', function() {
                 settingsManagerSvc.getTreeDisplay.and.returnValue('pretty');
                 element = $compile(angular.element('<tree-item ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity, stateManagerSvc.state.type);
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity, ontologyStateSvc.state.type);
             });
         });
         describe('toggleOpen', function() {
@@ -209,7 +209,7 @@ describe('Tree Item directive', function() {
                 scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
                 scope.$digest();
                 controller.toggleOpen();
-                expect(stateManagerSvc.setOpened).toHaveBeenCalledWith(controller.ontologyId, controller.currentEntity.matonto.originalIRI, controller.isOpened);
+                expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(controller.ontologyId, controller.currentEntity.matonto.originalIRI, controller.isOpened);
             });
             it('should return true when not set', function() {
                 controller.isOpened = undefined;

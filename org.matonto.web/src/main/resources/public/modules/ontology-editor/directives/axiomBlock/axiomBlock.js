@@ -27,9 +27,9 @@
         .module('axiomBlock', [])
         .directive('axiomBlock', axiomBlock);
 
-        axiomBlock.$inject = ['stateManagerService', 'ontologyManagerService'];
+        axiomBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function axiomBlock(stateManagerService, ontologyManagerService) {
+        function axiomBlock(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

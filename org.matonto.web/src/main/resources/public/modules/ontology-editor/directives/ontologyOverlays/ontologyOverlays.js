@@ -27,9 +27,9 @@
         .module('ontologyOverlays', [])
         .directive('ontologyOverlays', ontologyOverlays);
 
-        ontologyOverlays.$inject = ['stateManagerService', 'ontologyManagerService', 'annotationManagerService'];
+        ontologyOverlays.$inject = ['ontologyStateService', 'ontologyManagerService', 'propertyManagerService'];
 
-        function ontologyOverlays(stateManagerService, ontologyManagerService, annotationManagerService) {
+        function ontologyOverlays(ontologyStateService, ontologyManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/ontologyOverlays/ontologyOverlays.html',
@@ -38,9 +38,9 @@
                 controller: function() {
                     var dvm = this;
 
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.am = annotationManagerService;
+                    dvm.pm = propertyManagerService;
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
@@ -55,8 +55,8 @@
                             }, onError);
                     }
 
-                    dvm.removeAnnotation = function() {
-                        dvm.am.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
+                    dvm.removeProperty = function() {
+                        dvm.pm.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
                         dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
                         dvm.sm.showRemoveOverlay = false;
                     }

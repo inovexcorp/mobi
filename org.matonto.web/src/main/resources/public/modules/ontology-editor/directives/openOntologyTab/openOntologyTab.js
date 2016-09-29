@@ -27,9 +27,9 @@
         .module('openOntologyTab', [])
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'stateManagerService'];
+        openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService'];
 
-        function openOntologyTab($filter, ontologyManagerService, stateManagerService) {
+        function openOntologyTab($filter, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,20 +41,20 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.begin = 0;
                     dvm.limit = 20;
                     dvm.filteredIds = dvm.om.ontologyIds;
                     dvm.type = 'ontology';
 
-                    dvm.open = function open(id, type) {
+                    dvm.open = function(id, type) {
                         dvm.om.openOntology(id, type)
                             .then(ontologyId => {
                                 var listItem = dvm.om.getListItemById(ontologyId);
                                 dvm.sm.addState(ontologyId, dvm.om.getOntologyIRI(listItem.ontology), type);
                                 dvm.sm.setState(ontologyId);
                             }, errorMessage => {
-                                dvm.error = errorMessage;
+                                dvm.errorMessage = errorMessage;
                             });
                     }
 

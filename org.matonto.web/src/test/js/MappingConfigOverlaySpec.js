@@ -204,7 +204,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                 expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                 expect(mappingManagerSvc.mapping.jsond).not.toBe(this.originalMapping);
-                expect(mapperStateSvc.displayMappingConfig).toBe(false);
+                expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
             });
             it('if a configuration had not been set before', function() {
                 mappingManagerSvc.getSourceOntologyId.and.returnValue('');
@@ -222,7 +222,7 @@ describe('Mapping Config Overlay directive', function() {
         });
         it('should set the correct state for canceling', function() {
             controller.cancel();
-            expect(mapperStateSvc.displayMappingConfig).toBe(false);
+            expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {

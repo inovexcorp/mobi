@@ -25,7 +25,7 @@ describe('Object Property Overlay directive', function() {
         scope,
         element,
         controller,
-        stateManagerSvc,
+        ontologyStateSvc,
         ontologyManagerSvc,
         responseObj;
 
@@ -37,21 +37,21 @@ describe('Object Property Overlay directive', function() {
         injectTrustedFilter();
         injectRemoveIriFromArrayFilter();
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockResponseObj();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             responseObj = _responseObj_;
         });
     });
 
     it('initializes with the correct selected value object', function() {
-        stateManagerSvc.listItem = {individuals: [{}]};
-        stateManagerSvc.propertyValue = 'indiv';
+        ontologyStateSvc.listItem = {individuals: [{}]};
+        ontologyStateSvc.propertyValue = 'indiv';
         responseObj.getItemIri.and.returnValue('indiv');
         element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);
         scope.$digest();
@@ -82,7 +82,7 @@ describe('Object Property Overlay directive', function() {
                 }
             ];
             _.forEach(tests, function(test) {
-                stateManagerSvc.editingProperty = test.value;
+                ontologyStateSvc.editingProperty = test.value;
                 scope.$digest();
 
                 var header = angular.element(element.find('h6')[0]);
@@ -107,27 +107,27 @@ describe('Object Property Overlay directive', function() {
         });
         it('should add an object property', function() {
             var value = {'@id': 'value'};
-            stateManagerSvc.selected = {};
+            ontologyStateSvc.selected = {};
             responseObj.getItemIri.and.returnValue('prop');
             controller.addProperty({}, value);
-            expect(stateManagerSvc.selected.prop).toBeDefined();
-            expect(stateManagerSvc.selected.prop).toContain(value);
-            expect(stateManagerSvc.showObjectPropertyOverlay).toBe(false);
-            expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.listItem.ontologyId,
-                stateManagerSvc.getActiveEntityIRI(), true);
+            expect(ontologyStateSvc.selected.prop).toBeDefined();
+            expect(ontologyStateSvc.selected.prop).toContain(value);
+            expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                ontologyStateSvc.getActiveEntityIRI(), true);
         });
         it('should edit an object property', function() {
             var value = {'@id': 'value'};
-            stateManagerSvc.selected = {prop: [{}]};
-            stateManagerSvc.propertyIndex = 0;
+            ontologyStateSvc.selected = {prop: [{}]};
+            ontologyStateSvc.propertyIndex = 0;
             responseObj.getItemIri.and.returnValue('prop');
             controller.editProperty({}, value);
-            expect(stateManagerSvc.selected.prop[stateManagerSvc.propertyIndex]).toEqual(value);
-            expect(stateManagerSvc.showObjectPropertyOverlay).toBe(false);
-            expect(stateManagerSvc.getActiveEntityIRI).toHaveBeenCalled();
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.listItem.ontologyId,
-                stateManagerSvc.getActiveEntityIRI(), true);
+            expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual(value);
+            expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                ontologyStateSvc.getActiveEntityIRI(), true);
         });
         it('should return the namespace is present', function() {
             var result = controller.getItemNamespace({namespace: 'namespace'});

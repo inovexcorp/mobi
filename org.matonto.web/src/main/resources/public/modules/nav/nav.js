@@ -41,7 +41,7 @@
         ];
 
         vm.toggle = function() {
-            $rootScope.noText = !$rootScope.noText;
+            $rootScope.collapsedNav = !$rootScope.collapsedNav;
         }
     }
 })();

@@ -25,8 +25,8 @@ describe('Annotation Overlay directive', function() {
         scope,
         element,
         controller,
-        stateManagerSvc,
-        annotationManagerSvc;
+        ontologyStateSvc,
+        propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,15 +35,15 @@ describe('Annotation Overlay directive', function() {
         injectHighlightFilter();
         injectTrustedFilter();
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockResponseObj();
-        mockAnnotationManager();
+        mockPropertyManager();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _annotationManagerService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            stateManagerSvc = _stateManagerService_;
-            annotationManagerSvc = _annotationManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
+            propertyManagerSvc = _propertyManagerService_;
             resObj = _responseObj_;
         });
     });
@@ -72,7 +72,7 @@ describe('Annotation Overlay directive', function() {
                 }
             ];
             _.forEach(tests, function(test) {
-                stateManagerSvc.editingAnnotation = test.value;
+                ontologyStateSvc.editingAnnotation = test.value;
                 scope.$digest();
 
                 var header = element.find('h6');
@@ -92,7 +92,7 @@ describe('Annotation Overlay directive', function() {
                 }
             ];
             _.forEach(tests, function(test) {
-                stateManagerSvc.editingAnnotation = test.value;
+                ontologyStateSvc.editingAnnotation = test.value;
                 scope.$digest();
 
                 var buttons = element.querySelectorAll('button.btn-primary');
@@ -109,23 +109,23 @@ describe('Annotation Overlay directive', function() {
         });
         it('addAnnotation should call the appropriate manager functions', function() {
             controller.addAnnotation();
-            expect(resObj.getItemIri).toHaveBeenCalledWith(stateManagerSvc.annotationSelect);
-            expect(annotationManagerSvc.add).toHaveBeenCalledWith(stateManagerSvc.selected,
-                resObj.getItemIri(stateManagerSvc.annotationSelect), stateManagerSvc.annotationValue,
-                stateManagerSvc.annotationType['@id']);
-            expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.listItem.ontologyId,
-                stateManagerSvc.selected.matonto.originalIRI, true);
+            expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
+            expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
+                ontologyStateSvc.annotationType['@id']);
+            expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                ontologyStateSvc.selected.matonto.originalIRI, true);
         });
         it('editAnnotation should call the appropriate manager functions', function() {
             controller.editAnnotation();
-            expect(resObj.getItemIri).toHaveBeenCalledWith(stateManagerSvc.annotationSelect);
-            expect(annotationManagerSvc.edit).toHaveBeenCalledWith(stateManagerSvc.selected,
-                resObj.getItemIri(stateManagerSvc.annotationSelect), stateManagerSvc.annotationValue,
-                stateManagerSvc.annotationIndex, stateManagerSvc.annotationType['@id']);
-            expect(stateManagerSvc.showAnnotationOverlay).toBe(false);
-            expect(stateManagerSvc.setUnsaved).toHaveBeenCalledWith(stateManagerSvc.listItem.ontologyId,
-                stateManagerSvc.selected.matonto.originalIRI, true);
+            expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
+            expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue,
+                ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id']);
+            expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
+            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
+                ontologyStateSvc.selected.matonto.originalIRI, true);
         });
         describe('getItemNamespace returns', function() {
             it('item.namespace value when present', function() {

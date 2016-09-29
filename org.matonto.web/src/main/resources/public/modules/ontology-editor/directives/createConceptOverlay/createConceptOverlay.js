@@ -27,9 +27,9 @@
         .module('createConceptOverlay', [])
         .directive('createConceptOverlay', createConceptOverlay);
 
-        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function createConceptOverlay($filter, ontologyManagerService, stateManagerService, prefixes) {
+        function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,7 @@
                     var dvm = this;
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.schemes = [];
                     dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
                         dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
@@ -87,9 +87,9 @@
                         // add the entity to the ontology
                         dvm.om.addEntity(dvm.sm.ontology, dvm.concept);
                         // update relevant lists
-                        var split = $filter('splitIRI')(dvm.concept['@id']);
                         var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
                         _.get(listItem, 'conceptHierarchy').push({'entityIRI': dvm.concept['@id']});
+                        _.set(_.get(listItem, 'index'), dvm.concept['@id'], dvm.sm.ontology.length - 1);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay

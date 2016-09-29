@@ -81,7 +81,7 @@ describe('Mapping Select Page directive', function() {
         it('should set the correct state for creating a new mapping', function() {
             controller.createMapping();
             expect(mapperStateSvc.createMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.displayCreateMapping).toBe(true);
+            expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
         })
         it('should set the correct state for deleting a mapping', function() {
             controller.deleteMapping();
@@ -89,7 +89,7 @@ describe('Mapping Select Page directive', function() {
         });
         it('should set the correct state for downloading a mapping', function() {
             controller.downloadMapping();
-            expect(mapperStateSvc.displayDownloadMapping).toBe(true);
+            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(true);
         });
         describe('should load an ontology and continue', function() {
             beforeEach(function() {
@@ -128,9 +128,6 @@ describe('Mapping Select Page directive', function() {
         it('with a mapping list', function() {
             expect(this.element.find('mapping-list').length).toBe(1);
         });
-        it('with a mapping preview', function() {
-            expect(this.element.find('mapping-preview').length).toBe(1);
-        });
         it('with a block search header for the mapping list', function() {
             expect(this.element.querySelectorAll('.col-xs-4 block-search').length).toBe(1);
         });
@@ -155,11 +152,13 @@ describe('Mapping Select Page directive', function() {
             var mappingHeader = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .mapping-preview-header')[0]);
             expect(deleteButton.attr('disabled')).toBeTruthy();
             expect(mappingHeader.hasClass('invisible')).toBe(true);
+            expect(this.element.find('mapping-preview').length).toBe(0);
 
             mappingManagerSvc.mapping = {};
             scope.$digest();
             expect(deleteButton.attr('disabled')).toBeFalsy();
             expect(mappingHeader.hasClass('invisible')).toBe(false);
+            expect(this.element.find('mapping-preview').length).toBe(1);
         });
         it('depending on whether the mapping source ontology exists', function() {
             var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link.edit-btn')[0]);

@@ -27,9 +27,9 @@
         .module('conceptsTab', [])
         .directive('conceptsTab', conceptsTab);
 
-        conceptsTab.$inject = ['stateManagerService', 'ontologyManagerService', 'prefixes'];
+        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function conceptsTab(stateManagerService, ontologyManagerService, prefixes) {
+        function conceptsTab(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.relationshipList = [];
 

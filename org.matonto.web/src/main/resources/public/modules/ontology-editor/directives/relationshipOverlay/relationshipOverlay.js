@@ -27,9 +27,9 @@
         .module('relationshipOverlay', [])
         .directive('relationshipOverlay', relationshipOverlay);
 
-        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'stateManagerService'];
+        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService'];
 
-        function relationshipOverlay($filter, responseObj, ontologyManagerService, stateManagerService) {
+        function relationshipOverlay($filter, responseObj, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,7 +42,7 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.concepts = [];
                     dvm.conceptList = dvm.om.getConceptIRIs(dvm.sm.ontology);
                     dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.sm.ontology);
@@ -54,11 +54,7 @@
 
                     dvm.addRelationship = function() {
                         var axiom = dvm.ro.getItemIri(dvm.relationship);
-                        if (_.has(dvm.sm.selected, axiom)) {
-                            dvm.sm.selected[axiom] = _.union(dvm.sm.selected[axiom], dvm.values);
-                        } else {
-                            dvm.sm.selected[axiom] = dvm.values;
-                        }
+                        dvm.sm.selected[axiom] = _.union(_.get(dvm.sm.selected, axiom, []), dvm.values);
                         closeAndMark();
                     }
 
