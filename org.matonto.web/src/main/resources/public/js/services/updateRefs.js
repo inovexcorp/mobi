@@ -137,19 +137,22 @@
                             self.remove(item, word);
                         }
                     });
-                    _.remove(value, item => _.isEmpty(item));
+                    _.remove(value, item => checkValue(item));
                     if (!value.length) {
                         _.unset(obj, key);
                     }
                 } else if (_.isPlainObject(value)) {
                     self.remove(value, word);
-                    if (_.isEmpty(value) || (_.keys(value).length === 1 && _.has(value, '$$hashKey'))) {
+                    if (checkValue(value)) {
                         _.unset(obj, key);
                     }
                 } else if (value === word) {
                     _.unset(obj, key);
                 }
             });
+        }
+        function checkValue(value) {
+            return _.isEmpty(value) || (_.keys(value).length === 1 && _.has(value, '$$hashKey'));
         }
     }
 })();
