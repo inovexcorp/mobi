@@ -93,7 +93,6 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${ontology.openrdf.version}</version>
         </dependency>
     </dependencies>
 

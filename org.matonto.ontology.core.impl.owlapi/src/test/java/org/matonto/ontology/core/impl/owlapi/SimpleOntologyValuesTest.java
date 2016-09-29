@@ -23,24 +23,9 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.mock;
-import static org.junit.Assert.*;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.mockStaticPartial;
-import static org.powermock.api.easymock.PowerMock.replay;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.AnonymousIndividual;
 import org.matonto.ontology.core.api.NamedIndividual;
@@ -54,12 +39,12 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
-
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
-
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.NodeID;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
@@ -73,6 +58,20 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplString;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.mockStaticPartial;
+import static org.powermock.api.easymock.PowerMock.replay;
 
 
 
@@ -369,8 +368,8 @@ public class SimpleOntologyValuesTest {
         IRI moIRI = mock(IRI.class);
         IRI mvIRI = mock(IRI.class);
         
-        expect(owlId.getOntologyIRI()).andReturn(com.google.common.base.Optional.of(oIRI)).anyTimes();
-        expect(owlId.getVersionIRI()).andReturn(com.google.common.base.Optional.of(vIRI)).anyTimes();
+        expect(owlId.getOntologyIRI()).andReturn(Optional.of(oIRI)).anyTimes();
+        expect(owlId.getVersionIRI()).andReturn(Optional.of(vIRI)).anyTimes();
         expect(moIRI.stringValue()).andReturn("http://www.test.com/ontology").anyTimes();
         expect(mvIRI.stringValue()).andReturn("http://www.test.com/ontology/1.0.0").anyTimes();
         

@@ -38,7 +38,6 @@
     <packaging>bundle</packaging>
 
     <properties>
-        <jackson.version>2.6.3</jackson.version>
         <powermock.version>1.6.4</powermock.version>
     </properties>
 
@@ -46,12 +45,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.2.2</version>
+            <version>1.2.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.1.29</version>
+            <version>1.2.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -73,18 +72,6 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-queryresultio-api</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-queryresultio-binary</artifactId>
-            <version>${ontology.openrdf.version}</version>
         </dependency>
 
         <!-- Owlapi dependencies -->
@@ -102,12 +89,10 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
 
 
@@ -170,10 +155,6 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Ontology Core OWLAPI Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Import-Package>
-                            org.openrdf.*;version="[2.7,2.9)",
-                            *
-                        </Import-Package>
                         <Export-Package>
                             org.matonto.ontology.core.api; provide:=true,
                             org.matonto.ontology.core.api.axiom; provide:=true,
