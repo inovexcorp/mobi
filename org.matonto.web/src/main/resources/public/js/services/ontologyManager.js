@@ -72,7 +72,7 @@
             var ontologyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
-                annotations: [],
+                annotations: angular.copy(propertyManagerService.defaultAnnotations),
                 dataPropertyRange: defaultDatatypes,
                 subClasses: [],
                 subDataProperties: [],
@@ -90,7 +90,7 @@
             var vocabularyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
-                annotations: [],
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations)),
                 conceptHierarchy: [],
                 conceptIndex: {}
             };
