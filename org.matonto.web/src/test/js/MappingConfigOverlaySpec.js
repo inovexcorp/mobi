@@ -88,7 +88,7 @@ describe('Mapping Config Overlay directive', function() {
             expect(controller.ontologies).toEqual({test: mappingManagerSvc.sourceOntologies});
             expect(controller.selectedOntologyId).toBe(sourceOntology.id);
             expect(controller.classes.length).toBe(classes.length);
-            expect(controller.selectedBaseClass).toEqual({ontologyId: sourceOntology.id, classObj: classObj});
+            expect(controller.selectedBaseClass).toEqual(classObj);
         });
     });
     describe('controller methods', function() {

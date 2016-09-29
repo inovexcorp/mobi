@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingConfigOverlay
          *
-         * @description 
+         * @description
          * The `mappingConfigOverlay` module only provides the `mappingConfigOverlay` directive which creates
          * an overlay with functionality to edit the configuration of the current
          * {@link mappingManager.service:mappingManagerService#mapping mapping}.
@@ -44,11 +44,11 @@
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
-         * `mappingConfigOverlay` is a directive that creates an overlay with functionality to edit the  
+         * @description
+         * `mappingConfigOverlay` is a directive that creates an overlay with functionality to edit the
          * configuration of the current {@link mappingManager.service:mappingManagerService#mapping mapping}.
          * The configuration consists of the source ontology and the base class. If editing a mapping that already
-         * has those two set, a new mapping will be created with the new settings. The directive is replaced by 
+         * has those two set, a new mapping will be created with the new settings. The directive is replaced by
          * the contents of its template.
          */
         .directive('mappingConfigOverlay', mappingConfigOverlay);
@@ -81,10 +81,10 @@
                             _.set(dvm.ontologies, encodeURIComponent(dvm.selectedOntologyId), dvm.mm.sourceOntologies);
                             dvm.classes = getClasses(dvm.mm.sourceOntologies);
                             var classId = dvm.mm.getClassIdByMapping(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld));
-                            dvm.selectedBaseClass = _.find(dvm.classes, {classObj: {'@id': classId}});
+                            dvm.selectedBaseClass = _.get(_.find(dvm.classes, {classObj: {'@id': classId}}), 'classObj');
                         }
                     }
-                    
+
                     dvm.selectOntology = function(ontologyId) {
                         if (_.has(dvm.ontologies, encodeURIComponent(ontologyId))) {
                             dvm.selectedOntologyId = ontologyId;
