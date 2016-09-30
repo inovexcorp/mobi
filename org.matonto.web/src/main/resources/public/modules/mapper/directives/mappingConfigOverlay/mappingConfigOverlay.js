@@ -119,16 +119,20 @@
                         return _.get(dvm.ontologies, encodeURIComponent(ontologyId));
                     }
                     dvm.set = function() {
-                        if (dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld)) {
-                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(dvm.mm.mapping.id);
+                        var originalSourceOntologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
+                        if (originalSourceOntologyId !== dvm.selectedOntologyId || _.get(dvm.selectedBaseClass, '@id', '') !== dvm.mm.getClassIdByMapping(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld))) {
+                            if (originalSourceOntologyId) {
+                                dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(dvm.mm.mapping.id);
+                            }
+                            dvm.mm.sourceOntologies = dvm.getOntologyClosure(dvm.selectedOntologyId);
+                            dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, dvm.selectedOntologyId);
+                            var ontology = dvm.mm.findSourceOntologyWithClass(dvm.selectedBaseClass['@id']);
+                            dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology.entities, dvm.selectedBaseClass['@id']);
+                            dvm.state.resetEdit();
+                            dvm.state.selectedClassMappingId = _.get(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), "[0]['@id']");
+                            dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
                         }
-                        dvm.mm.sourceOntologies = dvm.getOntologyClosure(dvm.selectedOntologyId);
-                        dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, dvm.selectedOntologyId);
-                        var ontology = dvm.mm.findSourceOntologyWithClass(dvm.selectedBaseClass['@id']);
-                        dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology.entities, dvm.selectedBaseClass['@id']);
-                        dvm.state.resetEdit();
-                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), "[0]['@id']");
-                        dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
+
                         dvm.state.displayMappingConfigOverlay = false;
                     }
                     dvm.cancel = function() {
