@@ -27,9 +27,9 @@
         .module('objectPropertyAxioms', [])
         .directive('objectPropertyAxioms', objectPropertyAxioms);
 
-        objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService'];
+        objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes'];
 
-        function objectPropertyAxioms(ontologyStateService, propertyManagerService) {
+        function objectPropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,9 +42,26 @@
                     dvm.pm = propertyManagerService;
 
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.sm.key = key;
-                        dvm.sm.index = index;
-                        dvm.sm.showRemoveOverlay = true;
+                        dvm.key = key;
+                        dvm.index = index;
+                        dvm.showRemoveOverlay = true;
+                    }
+
+                    dvm.updateHierarchy = function(axiom, values) {
+                        if (_.get(axiom, 'localName') === 'subPropertyOf') {
+                            _.forEach(values, value => {
+                                dvm.sm.addEntityToHierarchy(dvm.sm.listItem.objectPropertyHierarchy,
+                                    dvm.sm.selected.matonto.originalIRI, dvm.ro.getItemIri(value),
+                                    dvm.sm.listItem.objectPropertyIndex);
+                            });
+                        }
+                    }
+
+                    dvm.removeFromHierarchy = function(axiomObject) {
+                        if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
+                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.objectPropertyHierarchy,
+                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.objectPropertyIndex);
+                        }
                     }
                 }
             }

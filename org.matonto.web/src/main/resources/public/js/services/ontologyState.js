@@ -247,6 +247,51 @@
             self.isSavable = function(ontology, ontologyId) {
                 return self.hasChanges(ontology, ontologyId) && !self.hasInvalidEntities(ontology);
             }
+            self.addEntityToHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
+                var hierarchyItem = {entityIRI};
+                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                if (pathsToEntity.length) {
+                    if (pathsToEntity[0].length > 1) {
+                        var path = pathsToEntity[0];
+                        hierarchyItem = _.find(hierarchy, {entityIRI: path.shift()});
+                        while (path.length > 0) {
+                            hierarchyItem = _.find(hierarchyItem.subEntities, {entityIRI: path.shift()});
+                        }
+                    } else if (_.some(hierarchy, {entityIRI})) {
+                        hierarchyItem = _.remove(hierarchy, {entityIRI})[0];
+                    }
+                }
+                if (parentIRI) {
+                    _.forEach(getParentEntities(hierarchy, parentIRI, indexObject), parent => {
+                        if (_.has(parent, 'subEntities')) {
+                            parent.subEntities.push(hierarchyItem);
+                        } else {
+                            _.set(parent, 'subEntities', [hierarchyItem]);
+                        }
+                    });
+                } else {
+                    hierarchy.push(hierarchyItem);
+                }
+                if (_.has(indexObject, entityIRI)) {
+                    indexObject[entityIRI] = _.union(indexObject[entityIRI], [parentIRI]);
+                } else {
+                    _.set(indexObject, entityIRI, [parentIRI]);
+                }
+            }
+            self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
+                var deletedEntity;
+                _.forEach(getParentEntities(hierarchy, parentIRI, indexObject), parent => {
+                    deletedEntity = _.remove(parent.subEntities, {entityIRI})[0];
+                    if (!parent.subEntities.length) {
+                        _.unset(parent, 'subEntities');
+                    }
+                });
+                _.remove(indexObject[entityIRI], item => item === parentIRI);
+                if (!indexObject[entityIRI].length) {
+                    _.unset(indexObject, entityIRI);
+                    hierarchy.push(deletedEntity);
+                }
+            }
             self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
                 var deletedEntity;
                 var paths = self.getPathsTo(indexObject, entityIRI);
@@ -266,6 +311,21 @@
                 });
                 _.unset(indexObject, entityIRI);
                 updateRefsService.remove(indexObject, entityIRI);
+                checkDeletedSubEntities(deletedEntity);
+            }
+            function getParentEntities(hierarchy, parentIRI, indexObject) {
+                var results = [];
+                var pathsToParent = self.getPathsTo(indexObject, parentIRI);
+                _.forEach(pathsToParent, path => {
+                    var parent = _.find(hierarchy, {entityIRI: path.shift()});
+                    while (path.length > 0) {
+                        parent = _.find(parent.subEntities, {entityIRI: path.shift()});
+                    }
+                    results.push(parent);
+                });
+                return results;
+            }
+            function checkDeletedSubEntities(deletedEntity) {
                 _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
                     var paths = self.getPathsTo(indexObject, hierarchyItem.entityIRI);
                     if (paths.length === 1 && paths[0].length === 1) {

@@ -51,9 +51,9 @@
                     }
 
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.sm.key = key;
-                        dvm.sm.index = index;
-                        dvm.sm.showRemoveOverlay = true;
+                        dvm.key = key;
+                        dvm.index = index;
+                        dvm.showRemoveOverlay = true;
                     }
 
                     dvm.editClicked = function(annotation, index) {

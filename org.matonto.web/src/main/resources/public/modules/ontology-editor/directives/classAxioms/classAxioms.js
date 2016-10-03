@@ -27,9 +27,9 @@
         .module('classAxioms', [])
         .directive('classAxioms', classAxioms);
 
-        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService'];
+        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes'];
 
-        function classAxioms(ontologyStateService, propertyManagerService) {
+        function classAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,11 +40,29 @@
                     var dvm = this;
                     dvm.sm = ontologyStateService;
                     dvm.pm = propertyManagerService;
+                    dvm.ro = responseObj;
 
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.sm.key = key;
-                        dvm.sm.index = index;
-                        dvm.sm.showRemoveOverlay = true;
+                        dvm.key = key;
+                        dvm.index = index;
+                        dvm.showRemoveOverlay = true;
+                    }
+
+                    dvm.updateHierarchy = function(axiom, values) {
+                        if (_.get(axiom, 'localName') === 'subClassOf') {
+                            _.forEach(values, value => {
+                                dvm.sm.addEntityToHierarchy(dvm.sm.listItem.classHierarchy,
+                                    dvm.sm.selected.matonto.originalIRI, dvm.ro.getItemIri(value),
+                                    dvm.sm.listItem.classIndex);
+                            });
+                        }
+                    }
+
+                    dvm.removeFromHierarchy = function(axiomObject) {
+                        if (prefixes.rdfs + 'subClassOf' === dvm.key) {
+                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.classHierarchy,
+                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.classIndex);
+                        }
                     }
                 }
             }

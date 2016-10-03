@@ -24,30 +24,36 @@
     'use strict';
 
     angular
-        .module('relationshipsBlock', [])
-        .directive('relationshipsBlock', relationshipsBlock);
+        .module('removePropertyOverlay', [])
+        .directive('removePropertyOverlay', removePropertyOverlay);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService'];
 
-        function relationshipsBlock(ontologyStateService, ontologyManagerService) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/relationshipsBlock/relationshipsBlock.html',
+                templateUrl: 'modules/ontology-editor/directives/removePropertyOverlay/removePropertyOverlay.html',
                 scope: {},
                 bindToController: {
-                    relationshipList: '='
+                    index: '<',
+                    key: '<',
+                    onSubmit: '&?',
+                    overlayFlag: '='
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
+                    dvm.pm = propertyManagerService;
 
-                    dvm.openRemoveOverlay = function(key, index) {
-                        dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
+                    dvm.removeProperty = function() {
+                        if (dvm.onSubmit) {
+                            dvm.onSubmit({parentIRI: dvm.sm.selected[dvm.key][dvm.index]});
+                        }
+                        dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
+                        dvm.overlayFlag = false;
                     }
                 }
             }
