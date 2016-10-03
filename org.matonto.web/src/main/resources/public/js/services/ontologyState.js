@@ -137,7 +137,7 @@
                 var newIRI = iriBegin + iriThen + iriEnd;
                 updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
                 self.selected['@id'] = newIRI;
-                self.setUnsaved(self.ontology, self.getActiveEntityIRI(), true);
+                self.setUnsaved(self.state.ontologyId, self.getActiveEntityIRI(), true);
             }
             self.setSelected = function(entityIRI) {
                 self.selected = self.om.getEntityById(self.listItem.ontologyId, entityIRI);
