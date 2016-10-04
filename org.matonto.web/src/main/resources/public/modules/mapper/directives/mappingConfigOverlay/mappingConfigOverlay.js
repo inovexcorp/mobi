@@ -39,7 +39,6 @@
          * @name mappingConfigOverlay.directive:mappingConfigOverlay
          * @scope
          * @restrict E
-         * @requires  $q
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService

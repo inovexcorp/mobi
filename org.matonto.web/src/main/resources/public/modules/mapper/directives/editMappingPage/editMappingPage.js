@@ -56,9 +56,9 @@
          */
         .directive('editMappingPage', editMappingPage);
 
-        editMappingPage.$inject = ['$q', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        editMappingPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
 
-        function editMappingPage($q, mapperStateService, mappingManagerService, delimitedManagerService) {
+        function editMappingPage(mapperStateService, mappingManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -71,31 +71,26 @@
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
 
-                    dvm.save = function(run) {
-                        var deferred = $q.defer();
+                    dvm.save = function() {
                         if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
-                            dvm.mm.deleteMapping(dvm.mm.mapping.id).then(() => {
-                                deferred.resolve();
-                            });
+                            dvm.mm.deleteMapping(dvm.mm.mapping.id)
+                                .then(() => dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id))
+                                .then(() => saveMapping());
                         } else {
-                            deferred.resolve();
+                            dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id)
+                                .then(() => saveMapping());
                         }
-                        deferred.promise.then(() => {
-                            return dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id);
-                        }).then(() => {
-                            if (run) {
-                                dvm.dm.map(dvm.mm.mapping.id);
-                            }
-                            dvm.state.step = dvm.state.selectMappingStep;
-                            dvm.state.initialize();
-                            dvm.state.resetEdit();
-                            dvm.mm.mapping = undefined;
-                            dvm.mm.sourceOntologies = [];
-                            dvm.dm.reset();
-                        });
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;
+                    }
+                    function saveMapping() {
+                        dvm.state.step = dvm.state.selectMappingStep;
+                        dvm.state.initialize();
+                        dvm.state.resetEdit();
+                        dvm.mm.mapping = undefined;
+                        dvm.mm.sourceOntologies = [];
+                        dvm.dm.reset();
                     }
                 }
             }

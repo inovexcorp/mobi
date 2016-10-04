@@ -90,15 +90,6 @@
                             dvm.state.displayMappingConfigOverlay = true;
                         }
                     }
-                    dvm.run = function() {
-                        dvm.dm.map(dvm.mm.mapping.id);
-                        dvm.state.step = dvm.state.selectMappingStep;
-                        dvm.state.initialize();
-                        dvm.state.resetEdit();
-                        dvm.mm.mapping = undefined;
-                        dvm.mm.sourceOntologies = [];
-                        dvm.dm.reset();
-                    }
                 }
             }
         }

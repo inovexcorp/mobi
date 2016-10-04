@@ -90,7 +90,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
             });
         });
-        it('should set the correct state for continuing to run a mapping', function() {
+        /*it('should set the correct state for continuing to run a mapping', function() {
             var mappingId = mappingManagerSvc.mapping.id;
             controller.run();
             expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingId);
@@ -100,7 +100,7 @@ describe('File Upload Page directive', function() {
             expect(mappingManagerSvc.mapping).toBeUndefined();
             expect(mappingManagerSvc.sourceOntologies).toEqual([]);
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-        });
+        });*/
         it('should set the correct state for canceling', function() {
             controller.cancel();
             expect(mapperStateSvc.displayCancelConfirm).toBe(true);
@@ -191,10 +191,9 @@ describe('File Upload Page directive', function() {
             expect(controller.edit).toHaveBeenCalled();
         });
         it('if a mapping is not being edited', function() {
-            spyOn(controller, 'run');
             mapperStateSvc.editMapping = false;
             this.continueButton.triggerHandler('click');
-            expect(controller.run).toHaveBeenCalled();
+            expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
         });
     });
 });

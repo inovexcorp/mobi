@@ -265,7 +265,7 @@
              * 
              * @description 
              * Opens the current window to the location of GET /matontorest/delimited-files/{fileName}/map which
-             * will start a file download of the complete mapped delimited data  in JSON-LD format
+             * will start a file download of the complete mapped delimited data in the specified format
              * of an uploaded delimited file using a saved mapping specified by the passed in mapping 
              * name. Uses {@link delimitedManager.delimitedManager#separator separator},
              * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
@@ -273,9 +273,14 @@
              * location to.
              * 
              * @param {string} mappingId the IRI of a saved mapping
+             * @param {string} format the RDF format for the mapped data
+             * @param {string} fileName the file name for the downloaded mapped data
              */
-            self.map = function(mappingId) {
-                var queryString = '?format=jsonld&mappingIRI=' + mappingId + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
+            self.map = function(mappingId, format, fileName) {
+                var queryString = '?format=' + format + '&mappingIRI=' + mappingId + '&containsHeaders=' + self.containsHeaders + '&separator=' + self.separator;
+                if (fileName) {
+                    queryString += '&fileName=' + fileName;
+                }
                 $window.location = prefix + '/' + encodeURIComponent(self.fileName) + '/map' + queryString;
             }
 

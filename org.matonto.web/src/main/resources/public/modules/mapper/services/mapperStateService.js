@@ -187,6 +187,17 @@
              */
             self.displayDownloadMappingOverlay = false;
             /**
+             * @ngdoc method
+             * @name displayRunMappingOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Boolean}
+             *
+             * @description 
+             * `displayRunMappingOverlay` holds a boolean indicatin whether or not the
+             * {@link runMappingOverlay.directive:runMappingOverlay run mapping overlay} should be shown.
+             */
+            self.displayRunMappingOverlay = false;
+            /**
              * @ngdoc property
              * @name displayMappingConfigOverlay
              * @propertyOf mapperState.service:mapperStateService
