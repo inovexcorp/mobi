@@ -52,8 +52,8 @@
                         if (_.get(axiom, 'localName') === 'subPropertyOf') {
                             _.forEach(values, value => {
                                 dvm.sm.addEntityToHierarchy(dvm.sm.listItem.dataPropertyHierarchy,
-                                    dvm.sm.selected.matonto.originalIRI, dvm.ro.getItemIri(value),
-                                    dvm.sm.listItem.dataPropertyIndex);
+                                    dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.dataPropertyIndex,
+                                    dvm.ro.getItemIri(value));
                             });
                         }
                     }

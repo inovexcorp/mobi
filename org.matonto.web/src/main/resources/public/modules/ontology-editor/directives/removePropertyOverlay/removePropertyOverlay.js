@@ -49,7 +49,7 @@
 
                     dvm.removeProperty = function() {
                         if (dvm.onSubmit) {
-                            dvm.onSubmit({parentIRI: dvm.sm.selected[dvm.key][dvm.index]});
+                            dvm.onSubmit({axiomObject: dvm.sm.selected[dvm.key][dvm.index]});
                         }
                         dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
                         dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);

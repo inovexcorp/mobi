@@ -247,7 +247,7 @@
             self.isSavable = function(ontology, ontologyId) {
                 return self.hasChanges(ontology, ontologyId) && !self.hasInvalidEntities(ontology);
             }
-            self.addEntityToHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
+            self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
                 var hierarchyItem = {entityIRI};
                 var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
                 if (pathsToEntity.length) {
@@ -258,38 +258,33 @@
                             hierarchyItem = _.find(hierarchyItem.subEntities, {entityIRI: path.shift()});
                         }
                     } else if (_.some(hierarchy, {entityIRI})) {
-                        hierarchyItem = _.remove(hierarchy, {entityIRI})[0];
+                        hierarchyItem = _.remove(hierarchy, hierarchyItem)[0];
                     }
                 }
                 if (parentIRI) {
-                    _.forEach(getParentEntities(hierarchy, parentIRI, indexObject), parent => {
-                        if (_.has(parent, 'subEntities')) {
-                            parent.subEntities.push(hierarchyItem);
-                        } else {
-                            _.set(parent, 'subEntities', [hierarchyItem]);
-                        }
-                    });
+                    _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent =>
+                        parent.subEntities = _.union(_.get(parent, 'subEntities', []), [hierarchyItem]));
                 } else {
                     hierarchy.push(hierarchyItem);
                 }
-                if (_.has(indexObject, entityIRI)) {
-                    indexObject[entityIRI] = _.union(indexObject[entityIRI], [parentIRI]);
-                } else {
-                    _.set(indexObject, entityIRI, [parentIRI]);
-                }
+                indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
             }
             self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
                 var deletedEntity;
-                _.forEach(getParentEntities(hierarchy, parentIRI, indexObject), parent => {
-                    deletedEntity = _.remove(parent.subEntities, {entityIRI})[0];
-                    if (!parent.subEntities.length) {
-                        _.unset(parent, 'subEntities');
+                _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent => {
+                    if (_.has(parent, 'subEntities')) {
+                        deletedEntity = _.remove(parent.subEntities, {entityIRI})[0];
+                        if (!parent.subEntities.length) {
+                            _.unset(parent, 'subEntities');
+                        }
                     }
                 });
-                _.remove(indexObject[entityIRI], item => item === parentIRI);
-                if (!indexObject[entityIRI].length) {
-                    _.unset(indexObject, entityIRI);
-                    hierarchy.push(deletedEntity);
+                if (_.has(indexObject, entityIRI)) {
+                    _.remove(indexObject[entityIRI], item => item === parentIRI);
+                    if (!indexObject[entityIRI].length) {
+                        _.unset(indexObject, entityIRI);
+                        hierarchy.push(deletedEntity);
+                    }
                 }
             }
             self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
@@ -313,15 +308,15 @@
                 updateRefsService.remove(indexObject, entityIRI);
                 checkDeletedSubEntities(deletedEntity);
             }
-            function getParentEntities(hierarchy, parentIRI, indexObject) {
+            function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
-                var pathsToParent = self.getPathsTo(indexObject, parentIRI);
-                _.forEach(pathsToParent, path => {
-                    var parent = _.find(hierarchy, {entityIRI: path.shift()});
+                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                _.forEach(pathsToEntity, path => {
+                    var entity = _.find(hierarchy, {entityIRI: path.shift()});
                     while (path.length > 0) {
-                        parent = _.find(parent.subEntities, {entityIRI: path.shift()});
+                        entity = _.find(entity.subEntities, {entityIRI: path.shift()});
                     }
-                    results.push(parent);
+                    results.push(entity);
                 });
                 return results;
             }

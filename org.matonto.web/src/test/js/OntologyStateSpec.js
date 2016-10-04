@@ -181,7 +181,7 @@ describe('Ontology State service', function() {
     describe('addEntityToHierarchy', function() {
         describe('should add the entity to the single proper location in the tree', function() {
             it('where the parent entity has subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', 'node1a', indexObject);
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node1a');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -232,7 +232,7 @@ describe('Ontology State service', function() {
                 });
             });
             it('where the parent does not have subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', 'node3c', indexObject);
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3c');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -285,7 +285,7 @@ describe('Ontology State service', function() {
         });
         describe('should add the entity to the multiple proper locations in the tree', function() {
             it('where the parent entity has subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', 'node3b', indexObject);
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3b');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -339,7 +339,7 @@ describe('Ontology State service', function() {
                 });
             });
             it('where the parent does not have subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', 'node3a', indexObject);
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'new-node', indexObject, 'node3a');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -401,7 +401,7 @@ describe('Ontology State service', function() {
         });
         describe('should add the same hierarchy structure to the new area', function() {
             it('when not at the root level', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node2b', 'node1b', indexObject);
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node2b', indexObject, 'node1b');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{
@@ -454,7 +454,7 @@ describe('Ontology State service', function() {
                 });
             });
             it('when at the root level', function() {
-                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node1b', 'node1a', indexObject);
+                ontologyStateSvc.addEntityToHierarchy(hierarchy, 'node1b', indexObject, 'node1a');
                 expect(hierarchy).toEqual([{
                     entityIRI: 'node1a',
                     subEntities: [{

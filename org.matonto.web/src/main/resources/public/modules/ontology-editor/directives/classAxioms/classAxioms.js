@@ -52,8 +52,8 @@
                         if (_.get(axiom, 'localName') === 'subClassOf') {
                             _.forEach(values, value => {
                                 dvm.sm.addEntityToHierarchy(dvm.sm.listItem.classHierarchy,
-                                    dvm.sm.selected.matonto.originalIRI, dvm.ro.getItemIri(value),
-                                    dvm.sm.listItem.classIndex);
+                                    dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.classIndex,
+                                    dvm.ro.getItemIri(value));
                             });
                         }
                     }

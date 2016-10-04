@@ -24,5 +24,5 @@
     <property-values ng-repeat="axiom in dvm.sm.selected | showProperties:dvm.pm.datatypeAxiomList | orderBy:'localName'"
                      property="axiom" entity="dvm.sm.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
     <axiom-overlay ng-if="dvm.sm.showAxiomOverlay" axiom-list="dvm.pm.datatypeAxiomList" on-submit="dvm.updateHierarchy(axiom, values)"></axiom-overlay>
-    <remove-property-overlay overlay-flag="dvm.showRemoveOverlay" ng-if="dvm.showRemoveOverlay" index="dvm.index" key="dvm.key" on-submit="dvm.removeFromHierarchy(parentIRI)"></remove-property-overlay>
+    <remove-property-overlay overlay-flag="dvm.showRemoveOverlay" ng-if="dvm.showRemoveOverlay" index="dvm.index" key="dvm.key" on-submit="dvm.removeFromHierarchy(axiomObject)"></remove-property-overlay>
 </div>
