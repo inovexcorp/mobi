@@ -41,7 +41,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    function getBindings() {
+                    function getResults() {
                         var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');
                         var filteredBindings = _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
                             return _.indexOf(deletedIRIs, _.get(usage, 's.value')) !== -1
@@ -61,7 +61,7 @@
                         return results;
                     }
 
-                    dvm.results = getBindings();
+                    dvm.results = getResults();
 
                     dvm.getBindingDisplay = function(binding) {
                         return $filter('splitIRI')(binding).end;
@@ -70,7 +70,7 @@
                     $scope.$watch(function() {
                         return dvm.sm.state[dvm.sm.getActiveKey()].usages;
                     },function() {
-                        dvm.results = getBindings();
+                        dvm.results = getResults();
                     });
                 }]
             }
