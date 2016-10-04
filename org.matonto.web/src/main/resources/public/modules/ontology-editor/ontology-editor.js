@@ -74,6 +74,7 @@
             'propertyHierarchyBlock',
             'relationshipOverlay',
             'relationshipsBlock',
+            'removePropertyOverlay',
             'selectedDetails',
             'serializationSelect',
             'staticIri',

@@ -71,7 +71,7 @@ describe('Ontology Overlays directive', function() {
         });
         it('based on confirmation-overlays', function() {
             var confirmations = element.find('confirmation-overlay');
-            expect(confirmations.length).toBe(3);
+            expect(confirmations.length).toBe(2);
         });
         _.forEach(['annotation-overlay', 'datatype-property-overlay', 'object-property-overlay',
         'ontology-download-overlay', 'create-annotation-overlay', 'create-class-overlay', 'create-property-overlay',
@@ -108,14 +108,6 @@ describe('Ontology Overlays directive', function() {
                 expect(ontologyStateSvc.showSaveOverlay).toBe(false);
                 expect(ontologyStateSvc.afterSave).toHaveBeenCalledWith('id');
             });
-        });
-        it('removeProperty calls the correct manager functions and sets the correct manager variables', function() {
-            controller.removeProperty();
-            expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, ontologyStateSvc.key,
-                ontologyStateSvc.index);
-            expect(ontologyStateSvc.setUnsaved).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyId,
-                ontologyStateSvc.selected.matonto.originalIRI, true);
-            expect(ontologyStateSvc.showRemoveOverlay).toBe(false);
         });
         it('removeIndividualProperty calls the correct manager functions and sets the correct manager variables', function() {
             ontologyStateSvc.selected = {key: ['value0', 'value1']};

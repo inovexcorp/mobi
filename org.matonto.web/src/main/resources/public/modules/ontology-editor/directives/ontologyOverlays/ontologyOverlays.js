@@ -55,12 +55,6 @@
                             }, onError);
                     }
 
-                    dvm.removeProperty = function() {
-                        dvm.pm.remove(dvm.sm.selected, dvm.sm.key, dvm.sm.index);
-                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
-                        dvm.sm.showRemoveOverlay = false;
-                    }
-
                     dvm.removeIndividualProperty = function() {
                         _.pullAt(dvm.sm.selected[dvm.sm.key], dvm.sm.index);
                         if (!dvm.sm.selected[dvm.sm.key].length) {

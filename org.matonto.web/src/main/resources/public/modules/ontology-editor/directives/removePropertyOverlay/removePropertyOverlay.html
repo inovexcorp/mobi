@@ -20,9 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="datatype-property-axioms">
-    <property-values ng-repeat="axiom in dvm.sm.selected | showProperties:dvm.pm.datatypeAxiomList | orderBy:'localName'"
-                     property="axiom" entity="dvm.sm.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
-    <axiom-overlay ng-if="dvm.sm.showAxiomOverlay" axiom-list="dvm.pm.datatypeAxiomList" on-submit="dvm.updateHierarchy(axiom, values)"></axiom-overlay>
-    <remove-property-overlay overlay-flag="dvm.showRemoveOverlay" ng-if="dvm.showRemoveOverlay" index="dvm.index" key="dvm.key" on-submit="dvm.removeFromHierarchy(axiomObject)"></remove-property-overlay>
+<div class="overlay">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+        <h6>Remove</h6>
+        <div class="main">
+            <p>Are you sure you want to remove:<br><strong>{{dvm.key}}</strong></p>
+            <p>with value:<br><strong>{{dvm.sm.selected[dvm.key][dvm.index]['@value'] || dvm.sm.selected[dvm.key][0]['@id']}}</strong></p>
+            <p>from:<br><strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+        </div>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.removeProperty()">Yes</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.overlayFlag = false">No</button>
+        </div>
+    </form>
 </div>
