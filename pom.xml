@@ -81,6 +81,7 @@
         <module>org.matonto.jaas.rest</module>
         <module>org.matonto.karaf.feature</module>
         <module>org.matonto.rdf.orm.ontologies</module>
+        <module>org.matonto.versioning.api</module>
         <module>rdf-orm</module>
     </modules>
 

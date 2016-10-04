@@ -1,0 +1,52 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix : <http://matonto.org/ontologies/versioning#>.
+@base <http://matonto.org/ontologies/versioning#>.
+
+<http://matonto.org/ontologies/versioning> a owl:Ontology;
+    owl:versionIRI <http://matonto.org/ontologies/versioning/1.1>;
+    owl:imports <http://www.w3.org/ns/prov#>;
+    rdfs:label "The MatOnto Versioning Ontology"@en;
+    rdfs:comment "The MatOnto versioning ontology describes how versioning is handled within the MatOnto framework."@en;
+    dct:creator [foaf:name "Jordan Lewis"];
+    foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
+    dct:modified "2016-07-13"^^xsd:date.
+
+# Commit
+
+:Commit a owl:Class;
+    rdfs:subClassOf prov:Activity;
+    rdfs:label "Commit"@en;
+    rdfs:comment "The provenance describing a commit activity made on a Resource."@en.
+
+# In Progress Commit
+
+:InProgressCommit a owl:Class;
+    rdfs:subClassOf :Commit;
+    rdfs:label "In Progress Commit"@en;
+    rdfs:comment "The provenance describing a commit activity that is currently being made on a Resource."@en.
+
+# Revision
+
+:Revision a owl:Class;
+    rdfs:subClassOf prov:Entity;
+    rdfs:label "Revision"@en;
+    rdfs:comment "The entity created by a user's Commit."@en.
+
+:additions a owl:ObjectProperty;
+    rdfs:label "additions"@en;
+    rdfs:comment "Links the IRI of a graph containing the statements that were added with the described Revision."@en;
+    rdfs:domain :Revision;
+    rdfs:range rdfs:Resource.
+
+:deletions a owl:ObjectProperty;
+    rdfs:label "deletions"@en;
+    rdfs:comment "Links the IRI of a graph containing the statements that were deleted with the described Revision."@en;
+    rdfs:domain :Revision;
+    rdfs:range rdfs:Resource.

@@ -1,0 +1,85 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix dc: <http://purl.org/dc/elements/1.1/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix prov: <http://www.w3.org/ns/prov-o#>.
+@prefix voaf: <http://purl.org/vocommons/voaf#>.
+@prefix : <http://matonto.org/ontologies/user/management#>.
+@base <http://matonto.org/ontologies/user/management#>.
+
+<http://matonto.org/ontologies/user/management> a owl:Ontology, voaf:Vocabulary;
+    owl:versionIRI <http://matonto.org/ontologies/user/management/1.0>;
+    owl:imports <http://www.w3.org/ns/prov-o#>, <http://xmlns.com/foaf/0.1>;
+    rdfs:label "The MatOnto user management ontology"@en;
+    rdfs:comment "The MatOnto user management ontology describes how users are expressed within the MatOnto framework."@en;
+    dct:creator [foaf:name "Jordan Lewis"];
+    foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
+    dct:modified "2016-07-21"^^xsd:date.
+
+# User
+
+:User a rdfs:Class, owl:Class;
+    rdfs:subClassOf foaf:Person, prov:Agent;
+    rdfs:label "User"@en;
+    rdfs:comment "A person who uses the MatOnto framework"@en.
+
+:password a rdf:Property, owl:DatatypeProperty;
+    rdfs:label "password"@en;
+    rdfs:comment "Contains the SHA-1 hash of the User's password."@en;
+    rdfs:domain :User;
+    rdfs:range rdfs:Literal.
+
+:settings a rdf:Property, owl:ObjectProperty;
+    rdfs:label "settings"@en;
+    rdfs:comment "Lists out all the specific user Settings."@en;
+    rdfs:domain :User;
+    rdfs:range :Settings.
+
+# Group
+
+:Group a rdfs:Class, owl:Class;
+    rdfs:subClassOf foaf:Group;
+    rdfs:label "Group"@en;
+    rdfs:comment "A group defined within the MatOnto framework."@en.
+
+# Settings
+
+:Settings a rdfs:Class, owl:Class;
+    rdfs:label "Settings"@en;
+    rdfs:comment "The personal settings that a User has chosen."@en.
+
+# Ontology Settings
+
+:OntologySettings a rdfs:Class, owl:Class;
+    rdfs:subClassOf :Settings;
+    rdfs:label "Ontology Settings"@en;
+    rdfs:comment "The personal ontology editor settings that a User has chosen."@en.
+
+:dropDownTooltipDisplay a rdf:Property, owl:DatatypeProperty;
+    rdfs:label "drop down tooltip display"@en;
+    rdfs:comment "The display type shown when you hover over items in the dropdown."@en;
+    rdfs:domain :OntologySettings;
+    rdfs:range rdfs:Literal.
+
+:treeItemDisplay a rdf:Property, owl:DatatypeProperty;
+    rdfs:label "tree item display"@en;
+    rdfs:comment "The display type shown in the tree view."@en;
+    rdfs:domain :OntologySettings;
+    rdfs:range rdfs:Literal.
+
+# Role
+
+:Role a owl:Class, rdfs:Class ;
+    rdfs:label "Role"@en ;
+    rdfs:comment "A user role in MatOnto."@en ;
+    rdfs:subClassOf foaf:Agent .
+
+:hasRole a rdf:Property, owl:ObjectProperty ;
+    rdfs:label "hasRole"@en ;
+    rdfs:comment "A role that the described User or Group embodies. If a Group has a Role, all Users in that Group have that Role."@en ;
+    rdfs:domain :User, :Group ;
+    #rdfs:domain [a owl:Class; owl:unionOf(:User :Group)] ;
+    rdfs:range :Role .

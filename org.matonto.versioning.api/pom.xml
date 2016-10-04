@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  rdf.orm.ontologies
+  versioning.api
   $Id:$
   $HeadURL:$
   %%
@@ -11,12 +11,12 @@
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
@@ -33,9 +33,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rdf.orm.ontologies</artifactId>
-    <name>${project.groupId}.${project.artifactId}</name>
-
+    <artifactId>versioning.api</artifactId>
     <packaging>bundle</packaging>
 
     <dependencies>
@@ -46,10 +44,18 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>1.1.26</version>
+            <version>1.1.28-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>1.1.28-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -59,13 +65,11 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto RDF ORM Ontologies</Bundle-Name>
+                        <Bundle-Name>MatOnto Versioning API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.ontologies.*,
-                            org.matonto.vocabularies.xsd
+                            org.matonto.versioning.api*
                         </Export-Package>
-                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
@@ -86,18 +90,16 @@
                         <configuration>
                             <generates>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/rdfs.owl</ontologyFile>
-                                    <outputPackage>org.matonto.ontologies.rdfs</outputPackage>
+                                    <ontologyFile>${project.basedir}/src/main/resources/matonto_versioning.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.versioning.api.ontologies.versioning</outputPackage>
                                 </ontology>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/foaf.owl</ontologyFile>
-                                    <outputPackage>org.matonto.ontologies.foaf</outputPackage>
-                                </ontology>
+                            </generates>
+                            <references>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/prov-o.ttl</ontologyFile>
                                     <outputPackage>org.matonto.ontologies.provo</outputPackage>
                                 </ontology>
-                            </generates>
+                            </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>
@@ -105,4 +107,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

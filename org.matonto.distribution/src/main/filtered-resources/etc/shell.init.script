@@ -30,6 +30,8 @@ matonto-deploy-bundles = {
         org.matonto.sparql.rest${deploy.bundles.version} \
         org.matonto.jaas${deploy.bundles.version} \
         org.matonto.jaas.rest${deploy.bundles.version} \
+        org.matonto.rdf.orm.ontologies${deploy.bundles.version} \
+        org.matonto.versioning.api${deploy.bundles.version} \
         com.eclipsesource.jaxrs.swagger-all
 }
 
