@@ -2,11 +2,10 @@
 @import "./src/main/resources/public/css/variables";
 
 .usages-block {
-    .block-content {
-        padding: 10px;
-
-        .predicate {
-            color: $brand-primary;
-        }
+    .predicate {
+        color: $brand-primary;
+    }
+    .selected {
+        font-weight: bold;
     }
 }

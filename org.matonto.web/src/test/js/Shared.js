@@ -108,6 +108,12 @@ function injectRemoveMatontoFilter() {
     });
 }
 
+function injectPrefixationFilter() {
+    module(function($provide) {
+        $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter'));
+    });
+}
+
 function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
