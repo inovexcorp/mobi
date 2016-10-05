@@ -63,8 +63,6 @@
                     dvm.close = function() {
                         dvm.state.initialize();
                         dvm.state.invalidOntology = false;
-                        dvm.mm.mapping = undefined;
-                        dvm.mm.sourceOntologies = [];
                     }
                 },
                 templateUrl: 'modules/mapper/directives/invalidOntologyOverlay/invalidOntologyOverlay.html'

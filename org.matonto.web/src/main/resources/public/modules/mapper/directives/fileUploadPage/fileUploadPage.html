@@ -42,7 +42,7 @@
             </block-content>
             <block-footer>
                 <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                <button class="btn btn-primary pull-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.run()" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
+                <button class="btn btn-primary pull-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
             </block-footer>
         </block>
     </div>

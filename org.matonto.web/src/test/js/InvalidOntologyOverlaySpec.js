@@ -53,8 +53,6 @@ describe('Invalid Ontology Overlay directive', function() {
             controller.close();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.invalidOntology).toBe(false);
-            expect(mappingManagerSvc.mapping).toEqual(undefined);
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
         });
     });
     describe('replaces the element with the correct html', function() {

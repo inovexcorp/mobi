@@ -201,7 +201,7 @@ public class DelimitedRestImpl implements DelimitedRest {
 
     @Override
     public Response etlFile(String fileName, String mappingIRI, String format, boolean containsHeaders,
-                            String separator) {
+                            String separator, String downloadFileName) {
         if (mappingIRI == null || mappingIRI.equals("")) {
             throw ErrorUtils.sendError("Must provide the name of an uploaded mapping", Response.Status.BAD_REQUEST);
         }
@@ -246,7 +246,8 @@ public class DelimitedRestImpl implements DelimitedRest {
         };
         String fileExtension = getRDFFormat(format).getDefaultFileExtension();
         String mimeType = getRDFFormat(format).getDefaultMIMEType();
-        Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
+        String dataFileName = downloadFileName == null ? fileName : downloadFileName;
+        Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + dataFileName
                 +  "." + fileExtension).header("Content-Type", mimeType).build();
 
         // Remove temp file

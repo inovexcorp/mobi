@@ -38,7 +38,7 @@ describe('Mapping Overlays directive', function() {
         mockMapperState();
         mockDelimitedManager();
         injectSplitIRIFilter();
-        
+
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -60,8 +60,6 @@ describe('Mapping Overlays directive', function() {
             controller.reset();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toBe(undefined);
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         });
         it('should get the name of a class mapping', function() {
