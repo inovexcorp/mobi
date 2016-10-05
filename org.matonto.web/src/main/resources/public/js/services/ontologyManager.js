@@ -85,14 +85,16 @@
                 objectPropertyHierarchy: [],
                 objectPropertyIndex: {},
                 classesWithIndividuals: [],
-                blankNodes: {}
+                blankNodes: {},
+                index: {}
             };
             var vocabularyListItemTemplate = {
                 ontology: [],
                 ontologyId: '',
                 annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations)),
                 conceptHierarchy: [],
-                conceptIndex: {}
+                conceptIndex: {},
+                index: {}
             };
 
             /**
@@ -1805,7 +1807,7 @@
                 _.forEach(ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         _.set(entity, 'matonto.originalIRI', entity['@id']);
-                        _.set(index, entity['@id'], i);
+                        index[entity['@id']] = i;
                     } else {
                         _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
