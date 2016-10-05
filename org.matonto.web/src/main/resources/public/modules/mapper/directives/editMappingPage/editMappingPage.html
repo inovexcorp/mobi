@@ -22,41 +22,41 @@
   -->
 <div class="edit-mapping-page row">
     <div class="col-xs-5">
-		<mapping-title></mapping-title>
-		<tabset class="edit-tabs">
-			<tab heading="'Edit'" active="true">
-				<block>
-					<block-content class="padding">
+        <mapping-title></mapping-title>
+        <tabset class="edit-tabs">
+            <tab heading="'Edit'" active="true">
+                <block>
+                    <block-content class="padding">
                         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-						<edit-mapping-form></edit-mapping-form>
-					</block-content>
-					<block-footer>
-						<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
-						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
-					</block-footer>
-				</block>
-			</tab>
-			<tab heading="'Preview'">
-				<block>
-					<block-content class="padding">
+                        <edit-mapping-form></edit-mapping-form>
+                    </block-content>
+                    <block-footer>
+                        <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                    </block-footer>
+                </block>
+            </tab>
+            <tab heading="'Preview'">
+                <block>
+                    <block-content class="padding">
                         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-						<rdf-preview-form></rdf-preview-form>
-					</block-content>
-					<block-footer>
-						<button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-						<button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
-						<button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
-					</block-footer>
-				</block>
-			</tab>
-		</tabset>
-	</div>
-	<div class="col-xs-7">
-		<block>
-			<block-content>
+                        <rdf-preview-form></rdf-preview-form>
+                    </block-content>
+                    <block-footer>
+                        <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(!dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld) && dvm.mm.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                    </block-footer>
+                </block>
+            </tab>
+        </tabset>
+    </div>
+    <div class="col-xs-7">
+        <block>
+            <block-content>
                 <preview-data-grid></preview-data-grid>
-			</block-content>
+            </block-content>
         </block>
-	</div>
+    </div>
 </div>
