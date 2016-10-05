@@ -41,16 +41,27 @@
                     dvm.om = ontologyManagerService;
                     dvm.sm = ontologyStateService;
 
-                    function getBindings() {
+                    function getResults() {
                         var deletedIRIs = _.map(dvm.sm.state.deletedEntities, 'matonto.originalIRI');
-                        return _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
+                        var filteredBindings = _.reject(dvm.sm.state[dvm.sm.getActiveKey()].usages, usage => {
                             return _.indexOf(deletedIRIs, _.get(usage, 's.value')) !== -1
                                 || _.indexOf(deletedIRIs, _.get(usage, 'o.value')) !== -1
                                 || _.indexOf(deletedIRIs, _.get(usage, 'p.value')) !== -1;
                         });
+                        var results = {};
+                        _.forEach(filteredBindings, binding => {
+                            if (_.has(binding, 'p')) {
+                                results[binding.p.value] = _.union(_.get(results, binding.p.value, []),
+                                    [{subject: binding.s.value, predicate: binding.p.value, object: dvm.sm.selected['@id']}]);
+                            } else if (_.has(binding, 'o')) {
+                                results[dvm.sm.selected['@id']] = _.union(_.get(results, dvm.sm.selected['@id'], []),
+                                    [{subject: binding.s.value, predicate: dvm.sm.selected['@id'], object: binding.o.value}]);
+                            }
+                        });
+                        return results;
                     }
 
-                    dvm.bindings = getBindings();
+                    dvm.results = getResults();
 
                     dvm.getBindingDisplay = function(binding) {
                         return $filter('splitIRI')(binding).end;
@@ -59,7 +70,7 @@
                     $scope.$watch(function() {
                         return dvm.sm.state[dvm.sm.getActiveKey()].usages;
                     },function() {
-                        dvm.bindings = getBindings();
+                        dvm.results = getResults();
                     });
                 }]
             }
