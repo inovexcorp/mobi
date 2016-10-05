@@ -44,7 +44,7 @@
             </ui-select>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.addAxiom()"
+            <button class="btn btn-primary pull-right" ng-click="dvm.addAxiom(); onSubmit({axiom: dvm.axiom, values: dvm.values})"
                     ng-disabled="dvm.axiomForm.$invalid || dvm.axiom === undefined || !dvm.values.length">Add</button>
             <button class="btn btn-default pull-right" ng-click="dvm.sm.showAxiomOverlay = false">Cancel</button>
         </div>

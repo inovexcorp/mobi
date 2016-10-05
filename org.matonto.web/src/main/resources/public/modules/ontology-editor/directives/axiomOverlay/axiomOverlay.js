@@ -35,7 +35,8 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/axiomOverlay/axiomOverlay.html',
                 scope: {
-                    axiomList: '<'
+                    axiomList: '<',
+                    onSubmit: '&?'
                 },
                 controllerAs: 'dvm',
                 controller: function() {

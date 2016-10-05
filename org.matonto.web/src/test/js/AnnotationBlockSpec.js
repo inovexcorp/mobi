@@ -64,13 +64,19 @@ describe('Annotation Block directive', function() {
             var icon = element.querySelectorAll('.fa-plus');
             expect(icon.length).toBe(1);
         });
-        it('based on listed anotations', function() {
+        it('based on listed annotations', function() {
             var annotations = element.find('property-values');
             expect(annotations.length).toBe(2);
             ontologyStateSvc.selected = undefined;
             scope.$digest();
             annotations = element.find('property-values');
             expect(annotations.length).toBe(0);
+        });
+        it('based on remove-property-overlay', function() {
+            element.controller('annotationBlock').showRemoveOverlay = true;
+            scope.$digest();
+            var overlay = element.find('remove-property-overlay');
+            expect(overlay.length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -89,9 +95,9 @@ describe('Annotation Block directive', function() {
         });
         it('openRemoveOverlay sets the correct manager values', function() {
             controller.openRemoveOverlay('key', 1);
-            expect(ontologyStateSvc.key).toBe('key');
-            expect(ontologyStateSvc.index).toBe(1);
-            expect(ontologyStateSvc.showRemoveOverlay).toBe(true);
+            expect(controller.key).toBe('key');
+            expect(controller.index).toBe(1);
+            expect(controller.showRemoveOverlay).toBe(true);
         });
         it('editClicked sets the correct manager values', function() {
             var annotationIRI = 'prop1';
