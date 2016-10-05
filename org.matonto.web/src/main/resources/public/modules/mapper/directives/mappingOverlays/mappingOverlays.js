@@ -73,8 +73,6 @@
                     dvm.reset = function() {
                         dvm.state.initialize();
                         dvm.state.resetEdit();
-                        dvm.mm.mapping = undefined;
-                        dvm.mm.sourceOntologies = [];
                         dvm.dm.reset();
                     }
                     dvm.getClassName = function(classMappingId) {

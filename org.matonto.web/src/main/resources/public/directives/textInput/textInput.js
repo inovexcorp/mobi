@@ -66,8 +66,10 @@
                 scope: {
                     bindModel: '=ngModel',
                     changeEvent: '&',
-                    displayText: '=',
-                    mutedText: '='
+                    displayText: '<',
+                    mutedText: '<',
+                    required: '<',
+                    name: '<'
                 },
                 templateUrl: 'directives/textInput/textInput.html'
             }

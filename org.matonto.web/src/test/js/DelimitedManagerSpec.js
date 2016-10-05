@@ -90,6 +90,7 @@ describe('Delimited Manager service', function() {
         });
     });
     it('should return mapped data from an uploaded delimited file', function() {
+        var fileName = 'test';
         delimitedManagerSvc.fileName = 'test';
         delimitedManagerSvc.separator = ',';
         delimitedManagerSvc.containsHeaders = true;
@@ -99,9 +100,10 @@ describe('Delimited Manager service', function() {
             'format': format,
             'mappingIRI': mappingId,
             'containsHeaders': delimitedManagerSvc.containsHeaders, 
-            'separator': delimitedManagerSvc.separator
+            'separator': delimitedManagerSvc.separator,
+            'fileName': fileName
         });
-        delimitedManagerSvc.map(mappingId, format);
+        delimitedManagerSvc.map(mappingId, format, fileName);
         expect(windowSvc.location).toEqual('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map' + params);
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {

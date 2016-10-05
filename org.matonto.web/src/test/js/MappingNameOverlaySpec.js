@@ -125,5 +125,36 @@ describe('Mapping Name Overlay directive', function() {
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
+        it('depending on the validity of the form', function() {
+            controller = this.element.controller('mappingNameOverlay');
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            controller.mappingNameForm.$setValidity('test', false);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+    });
+    it('should call cancel when the cancel button is clicked', function() {
+        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        var element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('mappingNameOverlay');
+        spyOn(controller, 'cancel');
+
+        var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        cancelButton.triggerHandler('click');
+        expect(controller.cancel).toHaveBeenCalled();
+    });
+    it('should call set when the set button is clicked', function() {
+        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        var element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('mappingNameOverlay');
+        spyOn(controller, 'set');
+
+        var runButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        runButton.triggerHandler('click');
+        expect(controller.set).toHaveBeenCalled();
     });
 });
