@@ -306,7 +306,13 @@
                 });
                 _.unset(indexObject, entityIRI);
                 updateRefsService.remove(indexObject, entityIRI);
-                checkDeletedSubEntities(deletedEntity);
+                _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
+                    var paths = self.getPathsTo(indexObject, hierarchyItem.entityIRI);
+                    if (paths.length === 1 && paths[0].length === 1) {
+                        hierarchy.push(hierarchyItem);
+                        _.unset(indexObject, hierarchyItem.entityIRI);
+                    }
+                });
             }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
@@ -319,15 +325,6 @@
                     results.push(entity);
                 });
                 return results;
-            }
-            function checkDeletedSubEntities(deletedEntity) {
-                _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
-                    var paths = self.getPathsTo(indexObject, hierarchyItem.entityIRI);
-                    if (paths.length === 1 && paths[0].length === 1) {
-                        hierarchy.push(hierarchyItem);
-                        _.unset(indexObject, hierarchyItem.entityIRI);
-                    }
-                });
             }
             self.getPathsTo = function(indexObject, entityIRI) {
                 var result = [];
