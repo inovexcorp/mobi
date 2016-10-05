@@ -27,6 +27,7 @@
 			<tab heading="'Edit'" active="true">
 				<block>
 					<block-content class="padding">
+                        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 						<edit-mapping-form></edit-mapping-form>
 					</block-content>
 					<block-footer>
@@ -39,6 +40,7 @@
 			<tab heading="'Preview'">
 				<block>
 					<block-content class="padding">
+                        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 						<rdf-preview-form></rdf-preview-form>
 					</block-content>
 					<block-footer>

@@ -193,7 +193,7 @@
              * @type {Boolean}
              *
              * @description 
-             * `displayRunMappingOverlay` holds a boolean indicatin whether or not the
+             * `displayRunMappingOverlay` holds a boolean indicating whether or not the
              * {@link runMappingOverlay.directive:runMappingOverlay run mapping overlay} should be shown.
              */
             self.displayRunMappingOverlay = false;
@@ -338,7 +338,9 @@
              * @methodOf mapperState.service:mapperStateService
              * 
              * @description 
-             * Sets the main state variables back to their default values.
+             * Sets the main state variables back to their default values and resets the values of
+             * {@link mappingManager.service:mappingManagerService#mapping mapping} and
+             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
              */
             self.initialize = function() {
                 self.editMapping = false;
@@ -347,6 +349,8 @@
                 self.invalidProps = [];
                 self.availableColumns = [];
                 self.availablePropsByClass = {};
+                mm.mapping = undefined;
+                mm.sourceOntologies = [];
             }
             /**
              * @ngdoc method

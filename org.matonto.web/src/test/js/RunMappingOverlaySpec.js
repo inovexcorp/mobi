@@ -27,6 +27,7 @@ describe('Run Mapping Overlay directive', function() {
         mapperStateSvc,
         delimitedManagerSvc,
         $timeout,
+        $q,
         controller;
 
     beforeEach(function() {
@@ -37,13 +38,14 @@ describe('Run Mapping Overlay directive', function() {
         mockDelimitedManager();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _$timeout_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
             $timeout = _$timeout_;
+            $q = _$q_;
         });
     });
 
@@ -56,40 +58,70 @@ describe('Run Mapping Overlay directive', function() {
         });
         describe('should set the correct state for running mapping', function() {
             beforeEach(function() {
-                this.mapping = angular.copy(mappingManagerSvc.mapping);
+                mapperStateSvc.displayRunMappingOverlay = true;
             });
             describe('if it is also being saved', function() {
                 beforeEach(function() {
                     mapperStateSvc.editMapping = true;
                 });
-                it('and it already exists', function() {
-                    mappingManagerSvc.mappingIds = [mappingManagerSvc.mapping.id];
-                    controller.run();
-                    $timeout.flush();
-                    expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(this.mapping.id);
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(this.mapping.jsonld, this.mapping.id);
-                    expect(delimitedManagerSvc.map).toHaveBeenCalledWith(this.mapping.id, controller.format, controller.fileName);
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-                    expect(mapperStateSvc.initialize).toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mappingManagerSvc.mapping).toBeUndefined();
-                    expect(mappingManagerSvc.sourceOntologies).toEqual([]);
-                    expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
+                describe('and it already exists', function() {
+                    beforeEach(function() {
+                        mappingManagerSvc.mappingIds = [mappingManagerSvc.mapping.id];
+                    });
+                    it('unless an error occurs', function() {
+                        var step = mapperStateSvc.step;
+                        mappingManagerSvc.deleteMapping.and.returnValue($q.reject('Error message'));
+                        controller.run();
+                        $timeout.flush();
+                        expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
+                        expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                        expect(delimitedManagerSvc.map).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.step).toBe(step);
+                        expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
+                        expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
+                    });
+                    it('successfully', function() {
+                        controller.run();
+                        $timeout.flush();
+                        expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
+                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
+                        expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.format, controller.fileName);
+                        expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                        expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                        expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
+                    });
                 });
-                it('and does not exist yet', function() {
-                    controller.run();
-                    $timeout.flush();
-                    expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(this.mapping.jsonld, this.mapping.id);
-                    expect(delimitedManagerSvc.map).toHaveBeenCalledWith(this.mapping.id, controller.format, controller.fileName);
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-                    expect(mapperStateSvc.initialize).toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mappingManagerSvc.mapping).toBeUndefined();
-                    expect(mappingManagerSvc.sourceOntologies).toEqual([]);
-                    expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
+                describe('and does not exist yet', function() {
+                    it('unless an error occurs', function() {
+                        var step = mapperStateSvc.step;
+                        mappingManagerSvc.upload.and.returnValue($q.reject('Error message'));
+                        controller.run();
+                        $timeout.flush();
+                        expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
+                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
+                        expect(delimitedManagerSvc.map).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.step).toBe(step);
+                        expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
+                        expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
+                    });
+                    it('successfully', function() {
+                        controller.run();
+                        $timeout.flush();
+                        expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
+                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
+                        expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.format, controller.fileName);
+                        expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                        expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                        expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
+                    });
                 });
             });
             it('if it is not being saved', function() {
@@ -97,12 +129,10 @@ describe('Run Mapping Overlay directive', function() {
                 controller.run();
                 expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(this.mapping.id, controller.format, controller.fileName);
+                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.format, controller.fileName);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                 expect(mapperStateSvc.initialize).toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                expect(mappingManagerSvc.mapping).toBeUndefined();
-                expect(mappingManagerSvc.sourceOntologies).toEqual([]);
                 expect(delimitedManagerSvc.reset).toHaveBeenCalled();
                 expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
             });

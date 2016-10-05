@@ -62,11 +62,9 @@
                         if (dvm.state.editMapping) {
                             if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
                                 dvm.mm.deleteMapping(dvm.mm.mapping.id)
-                                    .then(() => dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id), errorMessage => dvm.errorMessage = errorMessage)
-                                    .then(() => runMapping(), errorMessage => dvm.errorMessage = errorMessage);
+                                    .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
                             } else {
-                                dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id)
-                                    .then(() => runMapping(), errorMessage => dvm.errorMessage = errorMessage);
+                                saveMapping();
                             }
                         } else {
                             runMapping();
@@ -75,13 +73,15 @@
                     dvm.cancel = function() {
                         dvm.state.displayRunMappingOverlay = false;
                     }
+                    function saveMapping() {
+                        dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id)
+                            .then(() => runMapping(), errorMessage => dvm.errorMessage = errorMessage);
+                    }
                     function runMapping() {
                         dvm.dm.map(dvm.mm.mapping.id, dvm.format, dvm.fileName);
                         dvm.state.step = dvm.state.selectMappingStep;
                         dvm.state.initialize();
                         dvm.state.resetEdit();
-                        dvm.mm.mapping = undefined;
-                        dvm.mm.sourceOntologies = [];
                         dvm.dm.reset();
                         dvm.state.displayRunMappingOverlay = false;
                     }

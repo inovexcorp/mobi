@@ -70,27 +70,28 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.errorMessage = '';
 
                     dvm.save = function() {
                         if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
                             dvm.mm.deleteMapping(dvm.mm.mapping.id)
-                                .then(() => dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id))
-                                .then(() => saveMapping());
+                                .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
                         } else {
-                            dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id)
-                                .then(() => saveMapping());
+                            saveMapping();
                         }
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;
                     }
                     function saveMapping() {
-                        dvm.state.step = dvm.state.selectMappingStep;
-                        dvm.state.initialize();
-                        dvm.state.resetEdit();
-                        dvm.mm.mapping = undefined;
-                        dvm.mm.sourceOntologies = [];
-                        dvm.dm.reset();
+                        dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id)
+                            .then(() => {
+                                dvm.errorMessage = '';
+                                dvm.state.step = dvm.state.selectMappingStep;
+                                dvm.state.initialize();
+                                dvm.state.resetEdit();
+                                dvm.dm.reset();
+                            }, errorMessage => dvm.errorMessage = errorMessage);
                     }
                 }
             }

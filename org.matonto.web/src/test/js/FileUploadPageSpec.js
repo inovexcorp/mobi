@@ -90,17 +90,6 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
             });
         });
-        /*it('should set the correct state for continuing to run a mapping', function() {
-            var mappingId = mappingManagerSvc.mapping.id;
-            controller.run();
-            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingId);
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-            expect(mapperStateSvc.initialize).toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toBeUndefined();
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
-            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-        });*/
         it('should set the correct state for canceling', function() {
             controller.cancel();
             expect(mapperStateSvc.displayCancelConfirm).toBe(true);
