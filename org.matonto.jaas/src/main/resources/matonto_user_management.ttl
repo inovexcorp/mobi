@@ -17,7 +17,7 @@
     rdfs:comment "The MatOnto user management ontology describes how users are expressed within the MatOnto framework."@en;
     dct:creator [foaf:name "Jordan Lewis"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2016-07-21"^^xsd:date.
+    dct:modified "2016-10-05"^^xsd:date.
 
 # User
 
@@ -26,7 +26,13 @@
     rdfs:label "User"@en;
     rdfs:comment "A person who uses the MatOnto framework"@en.
 
-:password a rdf:Property, owl:DatatypeProperty;
+:username a rdf:Property, owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "username"@en;
+    rdfs:comment "Contains the username for the User."@en;
+    rdfs:domain :User;
+    rdfs:range rdfs:Literal.
+
+:password a rdf:Property, owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "password"@en;
     rdfs:comment "Contains the SHA-1 hash of the User's password."@en;
     rdfs:domain :User;
@@ -58,13 +64,13 @@
     rdfs:label "Ontology Settings"@en;
     rdfs:comment "The personal ontology editor settings that a User has chosen."@en.
 
-:dropDownTooltipDisplay a rdf:Property, owl:DatatypeProperty;
+:dropDownTooltipDisplay a rdf:Property, owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "drop down tooltip display"@en;
     rdfs:comment "The display type shown when you hover over items in the dropdown."@en;
     rdfs:domain :OntologySettings;
     rdfs:range rdfs:Literal.
 
-:treeItemDisplay a rdf:Property, owl:DatatypeProperty;
+:treeItemDisplay a rdf:Property, owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "tree item display"@en;
     rdfs:comment "The display type shown in the tree view."@en;
     rdfs:domain :OntologySettings;
@@ -77,9 +83,20 @@
     rdfs:comment "A user role in MatOnto."@en ;
     rdfs:subClassOf foaf:Agent .
 
-:hasRole a rdf:Property, owl:ObjectProperty ;
-    rdfs:label "hasRole"@en ;
-    rdfs:comment "A role that the described User or Group embodies. If a Group has a Role, all Users in that Group have that Role."@en ;
-    rdfs:domain :User, :Group ;
-    #rdfs:domain [a owl:Class; owl:unionOf(:User :Group)] ;
+#:hasRole a rdf:Property, owl:ObjectProperty ;
+#    rdfs:label "hasRole"@en ;
+#    rdfs:comment "A role that the described User or Group embodies. If a Group has a Role, all Users in that Group have that Role."@en ;
+#    rdfs:domain [a owl:Class; owl:unionOf(:User :Group)] ;
+#    rdfs:range :Role .
+
+:hasUserRole a rdf:Property, owl:ObjectProperty ;
+    rdfs:label "hasUserRole"@en ;
+    rdfs:comment "A Role that the described User embodies."@en ;
+    rdfs:domain :User ;
+    rdfs:range :Role .
+
+:hasGroupRole a rdf:Property, owl:ObjectProperty ;
+    rdfs:label "hasGroupRole"@en ;
+    rdfs:comment "A Role that the described Group embodies. If a Group has a Role, all Users in that Group have that Role"@en ;
+    rdfs:domain :Group ;
     rdfs:range :Role .

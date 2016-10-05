@@ -16,7 +16,7 @@
     rdfs:comment "The MatOnto versioning ontology describes how versioning is handled within the MatOnto framework."@en;
     dct:creator [foaf:name "Jordan Lewis"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2016-07-13"^^xsd:date.
+    dct:modified "2016-10-05"^^xsd:date.
 
 # Commit
 
@@ -39,13 +39,13 @@
     rdfs:label "Revision"@en;
     rdfs:comment "The entity created by a user's Commit."@en.
 
-:additions a owl:ObjectProperty;
+:additions a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "additions"@en;
     rdfs:comment "Links the IRI of a graph containing the statements that were added with the described Revision."@en;
     rdfs:domain :Revision;
     rdfs:range rdfs:Resource.
 
-:deletions a owl:ObjectProperty;
+:deletions a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "deletions"@en;
     rdfs:comment "Links the IRI of a graph containing the statements that were deleted with the described Revision."@en;
     rdfs:domain :Revision;
