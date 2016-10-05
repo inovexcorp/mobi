@@ -22,7 +22,7 @@
   -->
 <div class="property-values">
     <h5 ng-click="isClosed = !isClosed" class="clearfix">
-        {{property.localName | beautify}} <small>&lt;{{dvm.ro.getItemIri(property)}}&gt;</small><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+        <p class="text">{{property.localName | beautify}} <small>&lt;{{dvm.ro.getItemIri(property)}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
     </h5>
     <div class="value-container" ng-repeat="value in entity[dvm.ro.getItemIri(property)]" ng-hide="isClosed">
         <span class="value-display">{{dvm.getBlankNodeValue(value['@id']) || value['@id'] || value['@value']}}<small ng-if="value['@type']" class="text-muted type-display">[type: {{value['@type'] | prefixation}}]</small></span>
