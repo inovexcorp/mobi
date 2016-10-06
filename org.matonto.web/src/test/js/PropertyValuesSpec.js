@@ -24,10 +24,7 @@ describe('Property Values directive', function() {
     var $compile,
         scope,
         element,
-        responseObj,
-        controller,
-        ontologyManagerSvc,
-        ontologyStateSvc;
+        responseObj;
 
 
     beforeEach(function() {
@@ -35,15 +32,13 @@ describe('Property Values directive', function() {
         module('propertyValues');
         injectBeautifyFilter();
         mockResponseObj();
-        mockOntologyState();
-        mockOntologyManager();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             responseObj = _responseObj_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            ontologyStateSvc = _ontologyStateService_;
+            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
     });
 
@@ -96,6 +91,10 @@ describe('Property Values directive', function() {
             expect(values.length).toBe(2);
         });
         it('depending on whether a value is a blank node', function() {
+            ontologyUtilsManagerSvc.isBlankNodeString.and.callFake(function(string) {
+                return string === '_:b0';
+            });
+            scope.$digest();
             var editButtons = element.querySelectorAll('.value-container [title=Edit]');
             expect(editButtons.length).toBe(1);
             var deleteButtons = element.querySelectorAll('.value-container [title=Delete]');
@@ -115,82 +114,6 @@ describe('Property Values directive', function() {
             expect(icon.hasClass('fa-chevron-down')).toBe(true);
             _.forEach(values, function(value) {
                 expect(angular.element(value).hasClass('ng-hide')).toBe(true);
-            });
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)"></property-values>'))(scope);
-            scope.$digest();
-            controller = element.controller('propertyValues');
-        });
-        it('tests whether an id is a blank node', function() {
-            var falseTests = ['', [], {}, true, false, undefined, null, 0, 1];
-            var result;
-            _.forEach(falseTests, function(test) {
-                result = controller.isBlankNode(test);
-                expect(result).toBe(false);
-            });
-            
-            result = controller.isBlankNode('_:b');
-            expect(result).toBe(true);
-        });
-        describe('getBlankNodeValue returns', function() {
-            beforeEach(function() {
-                ontologyStateSvc.listItem.blankNodes = {key1: 'value1'};
-            });
-            it('value for the key provided contained in the object', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                expect(controller.getBlankNodeValue('key1')).toEqual(ontologyStateSvc.listItem.blankNodes['key1']);
-            });
-            it('key for the key provided not contained in the object', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(true);
-                expect(controller.getBlankNodeValue('key2')).toEqual('key2');
-            });
-            it('undefined if isBlankNode returns false', function() {
-                spyOn(controller, 'isBlankNode').and.returnValue(false);
-                expect(controller.getBlankNodeValue('key1')).toEqual(undefined);
-            });
-        });
-        it('isLinkable returns proper value', function() {
-            ontologyStateSvc.listItem.index = {iri: 0, '_:b': 1};
-            expect(controller.isLinkable('iri')).toEqual(true);
-            expect(controller.isLinkable('word')).toEqual(false);
-            spyOn(controller, 'isBlankNode').and.returnValue(true);
-            expect(controller.isLinkable('_:b')).toEqual(false);
-        });
-        describe('goTo calls the proper manager functions with correct parameters', function() {
-            it('when it is a vocabulary', function() {
-                ontologyStateSvc.listItem.type = 'vocabulary';
-                controller.goTo('iri');
-                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            });
-            describe('when it is not a vocabulary', function() {
-                beforeEach(function() {
-                    ontologyStateSvc.listItem.type = 'ontology';
-                });
-                it('and is a class', function() {
-                    ontologyManagerSvc.isClass.and.returnValue(true);
-                    controller.goTo('iri');
-                    expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
-                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                });
-                it('and is a property', function() {
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isProperty.and.returnValue(true);
-                    controller.goTo('iri');
-                    expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
-                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                });
-                it('and is an individual', function() {
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isProperty.and.returnValue(false);
-                    ontologyManagerSvc.isIndividual.and.returnValue(true);
-                    controller.goTo('iri');
-                    expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
-                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                });
             });
         });
     });

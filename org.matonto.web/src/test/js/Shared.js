@@ -476,6 +476,23 @@ function mockOntologyState() {
     });
 }
 
+function mockOntologyUtilsManager() {
+    module(function($provide) {
+        $provide.service('ontologyUtilsManagerService', function() {
+            this.deleteClass = jasmine.createSpy('deleteClass');
+            this.deleteObjectProperty = jasmine.createSpy('deleteObjectProperty');
+            this.deleteDataTypeProperty = jasmine.createSpy('deleteDataTypeProperty');
+            this.deleteIndividual = jasmine.createSpy('deleteIndividual');
+            this.deleteConcept = jasmine.createSpy('deleteConcept');
+            this.deleteConceptScheme = jasmine.createSpy('deleteConceptScheme');
+            this.isBlankNodeString = jasmine.createSpy('isBlankNodeString');
+            this.getBlankNodeValue = jasmine.createSpy('getBlankNodeValue');
+            this.isLinkable = jasmine.createSpy('isLinkable');
+            this.goTo = jasmine.createSpy('goTo');
+        });
+    });
+}
+
 function mockResponseObj() {
     module(function($provide) {
         $provide.service('responseObj', function() {

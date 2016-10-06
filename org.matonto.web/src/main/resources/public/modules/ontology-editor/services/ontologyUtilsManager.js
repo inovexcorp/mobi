@@ -96,5 +96,39 @@
             self.deleteConceptScheme = function() {
                 self.deleteConcept();
             }
+
+            self.isBlankNodeString = function(id) {
+                return _.isString(id) && _.includes(id, '_:b');
+            }
+
+            self.getBlankNodeValue = function(id) {
+                var result;
+                if (self.isBlankNodeString(id)) {
+                    result = _.get(sm.listItem.blankNodes, id, id);
+                }
+                return result;
+            }
+
+            self.isLinkable = function(id) {
+                return _.has(sm.listItem.index, id) && !self.isBlankNodeString(id);
+            }
+
+            self.goTo = function(iri) {
+                var entity = om.getEntityById(sm.listItem.ontologyId, iri);
+                if (sm.listItem.type === 'vocabulary') {
+                    commonGoTo('concepts', iri);
+                } else if (om.isClass(entity)) {
+                    commonGoTo('classes', iri);
+                } else if (om.isProperty(entity)) {
+                    commonGoTo('properties', iri);
+                } else if (om.isIndividual(entity)) {
+                    commonGoTo('individuals', iri);
+                }
+            }
+
+            function commonGoTo(key, iri) {
+                sm.setActivePage(key);
+                sm.selectItem(iri);
+            }
         }
 })();
