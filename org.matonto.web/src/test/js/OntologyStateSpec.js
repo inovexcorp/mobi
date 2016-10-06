@@ -22,6 +22,7 @@
  */
 describe('Ontology State service', function() {
     var ontologyStateSvc;
+    var ontologyManagerSvc;
     var updateRefsSvc;
     var hierarchy;
     var indexObject;
@@ -32,9 +33,10 @@ describe('Ontology State service', function() {
         mockOntologyManager();
         mockUpdateRefs();
 
-        inject(function(ontologyStateService, _updateRefsService_) {
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         /*
@@ -589,6 +591,45 @@ describe('Ontology State service', function() {
                 'node3a': ['node2a', 'node2b', 'node3b'],
                 'node3b': ['node2c', 'node1b'],
                 'node3c': ['node2a']
+            });
+        });
+    });
+    describe('goTo calls the proper manager functions with correct parameters', function() {
+        beforeEach(function() {
+            spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: ''});
+            spyOn(ontologyStateSvc, 'setActivePage');
+            spyOn(ontologyStateSvc, 'selectItem');
+        });
+        it('when it is a vocabulary', function() {
+            ontologyStateSvc.listItem = {type: 'vocabulary'};
+            ontologyStateSvc.goTo('iri');
+            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+        });
+        describe('when it is not a vocabulary', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem = {type: 'ontology'};
+            });
+            it('and is a class', function() {
+                ontologyManagerSvc.isClass.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+            });
+            it('and is a property', function() {
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isProperty.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+            });
+            it('and is an individual', function() {
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isProperty.and.returnValue(false);
+                ontologyManagerSvc.isIndividual.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             });
         });
     });
