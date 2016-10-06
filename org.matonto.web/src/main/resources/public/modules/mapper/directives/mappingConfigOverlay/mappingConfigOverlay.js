@@ -31,7 +31,7 @@
          * @description
          * The `mappingConfigOverlay` module only provides the `mappingConfigOverlay` directive which creates
          * an overlay with functionality to edit the configuration of the current
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('mappingConfigOverlay', [])
         /**
@@ -45,7 +45,7 @@
          *
          * @description
          * `mappingConfigOverlay` is a directive that creates an overlay with functionality to edit the
-         * configuration of the current {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * configuration of the current {@link mapperState.service:mapperStateService#mapping mapping}.
          * The configuration consists of the source ontology and the base class. If editing a mapping that already
          * has those two set, a new mapping will be created with the new settings. The directive is replaced by
          * the contents of its template.

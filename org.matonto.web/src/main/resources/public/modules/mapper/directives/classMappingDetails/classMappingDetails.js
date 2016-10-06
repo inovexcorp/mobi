@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name classMappingDetails
          *
-         * @description 
+         * @description
          * The `classMappingDetails` module only provides the `classMappingDetails` directive which creates
          * a number of different tools to view and edit information about a class mapping.
          */
@@ -38,14 +38,17 @@
          * @name classMappingDetails.directive:classMappingDetails
          * @scope
          * @restrict E
+         * @requires mappingManager.service:mappingManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires delimitedManager.service:delimitedManagerService
          * @requires ontologyManager.service:ontologyManagerService
          * @requires prefixes.service:prefixes
          *
-         * @description 
+         * @description
          * `classMappingDetails` is a directive that creates a div with sections to view and edit information
          * about the {@link mapperState.service:mapperStateService#selectedClassMappingId selected class mapping}.
          * One section is for viewing and editing the IRI template of the class mapping. Another section is for
-         * view the list of property mappings associated with the class mapping, adding to that list, editing 
+         * view the list of property mappings associated with the class mapping, adding to that list, editing
          * items in the list, and removing from that list. The directive is replaced by the contents of its template.
          */
         .directive('classMappingDetails', classMappingDetails);

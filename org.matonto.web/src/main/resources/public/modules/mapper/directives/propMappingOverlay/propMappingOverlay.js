@@ -31,7 +31,7 @@
          * @description
          * The `propMappingOverlay` module only provides the `propMappingOverlay` directive which creates
          * an overlay with functionality to create or edit a property mapping in the current
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('propMappingOverlay', [])
         /**
@@ -46,7 +46,7 @@
          *
          * @description
          * `propMappingOverlay` is a directive that creates an overlay with functionality to create or edit a
-         * property mapping in the current {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * property mapping in the current {@link mapperState.service:mapperStateService#mapping mapping}.
          * If the selected property in the {@link propSelect.directive:propSelect propSelect} is a data property,
          * a {@link columnSelect.directive:columnSelect columnSelect} will appear to select the linked column index
          * for the data property mapping being created/edited. If the selected property is an object property,

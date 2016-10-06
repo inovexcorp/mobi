@@ -28,11 +28,11 @@
          * @ngdoc overview
          * @name rdfPreviewForm
          *
-         * @description 
+         * @description
          * The `rdfPreviewForm` module only provides the `rdfPreviewForm` directive which creates
-         * a form for creating a preview of the loaded 
+         * a form for creating a preview of the loaded
          * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} with the current
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('rdfPreviewForm', [])
         /**
@@ -43,12 +43,12 @@
          * @requires delimitedManager.service:delimitedManagerService
          * @requires mappingManager.service:mappingManagerService
          *
-         * @description 
+         * @description
          * `rdfPreviewForm` is a directive that creates a form with controls to select an RDF
          * {@link mapperSerializationSelect.directive:mapperSerializationSelect serialization}
-         * and a `code-mirror` to view a preview of the loaded 
+         * and a `code-mirror` to view a preview of the loaded
          * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} mapped by the
-         * current {@link mappingManager.service:mappingManagerService#mapping mapping}. The directive is 
+         * current {@link mapperState.service:mapperStateService#mapping mapping}. The directive is
          * replaced by the contents of its template.
          */
         .directive('rdfPreviewForm', rdfPreviewForm);

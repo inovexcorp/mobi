@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingList
          *
-         * @description 
+         * @description
          * The `mappingList` module only provides the `mappingList` directive which creates
          * a "boxed" area with a list of saved mappings in the repository.
          */
@@ -41,10 +41,11 @@
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
-         * `mappingList` is a directive that creates a div with an unordered list of the 
+         * @description
+         * `mappingList` is a directive that creates a div with an unordered list of the
          * all the saved mappings in the repository. Each mapping name is clickable and sets the
-         * selected mapping for the mapping tool. The list will also be filtered by the 
+         * selected {@link mapperState.service:mapperStateService#mapping mapping} for the mapping
+         * tool. The list will also be filtered by the
          * {@link mapperState.service:mapperStateService#mappingSearchString mappingSearchString}.
          * The directive is replaced by the contents of its template.
          */

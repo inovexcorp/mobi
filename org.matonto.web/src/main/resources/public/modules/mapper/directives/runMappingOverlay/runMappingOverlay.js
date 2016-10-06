@@ -27,6 +27,10 @@
         /**
          * @ngdoc overview
          * @name runMappingOverlay
+         *
+         * @description
+         * The `runMappingOverlay` module only provides the `runMappingOverlay` directive which creates
+         * an overlay with settings for the results of running a mapping.
          */
         .module('runMappingOverlay', [])
         /**
@@ -38,6 +42,14 @@
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
+         *
+         * @description
+         * `runMappingOverlay` is a directive that creates an overlay containing a configuration settings
+         * for the result of running the currently selected {mapperState.service:mapperStateService#mapping mapping}
+         * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
+         * This includes a {@link textInput.directive:textInput text input} for the file name of the downloaded
+         * mapped data and a {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect}
+         * for the RDF format of the mapped data. The directive is replaced by the contents of its template.
          */
         .directive('runMappingOverlay', runMappingOverlay);
 

@@ -28,10 +28,10 @@
          * @ngdoc overview
          * @name editMappingPage
          *
-         * @description 
+         * @description
          * The `editMappingPage` module only provides the `editMappingPage` directive which creates
-         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the current 
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the current
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('editMappingPage', [])
         /**
@@ -43,13 +43,13 @@
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
          *
-         * @description 
-         * `editMappingPage` is a directive that creates a Bootstrap `row` div with two columns containing 
-         * {@link block.directive:block blocks} for editing the current 
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}. The left column contains 
-         * either a block for {@link editMappingForm.directive:editMappingForm editing} the mapping or a 
-         * block for {@link rdfPreviewForm.directive:rdfPreviewForm previewing} the mapped data using the current 
-         * state of the mapping. The right column contains a 
+         * @description
+         * `editMappingPage` is a directive that creates a Bootstrap `row` div with two columns containing
+         * {@link block.directive:block blocks} for editing the current
+         * {@link mapperState.service:mapperStateService#mapping mapping}. The left column contains
+         * either a block for {@link editMappingForm.directive:editMappingForm editing} the mapping or a
+         * block for {@link rdfPreviewForm.directive:rdfPreviewForm previewing} the mapped data using the current
+         * state of the mapping. The right column contains a
          * {@link previewDataGrid.directive:previewDataGrid preview} of the loaded delimited data. From here,
          * the user can choose to save the mapping and optionally run it against the loaded delimited data.
          * The directive is replaced by the contents of its template.

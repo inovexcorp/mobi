@@ -48,7 +48,7 @@
          * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns containing
          * {@link block.directive:block blocks} for selecting and previewing a mapping. The left column contains
          * a {@link mappingList.directive:mappingList mappingList} block for selecting the current
-         * {@link mappingManager.service:mappingManagerService#mapping mapping} and buttons for creating a mapping,
+         * {@link mapperState.service:mapperStateService#mapping mapping} and buttons for creating a mapping,
          * deleting a mapping, and searching for a mapping. The right column contains a
          * {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons for editing
          * running, and downloading the mapping. The directive is replaced by the contents of its template.

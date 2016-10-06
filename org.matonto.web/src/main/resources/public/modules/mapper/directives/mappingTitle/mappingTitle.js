@@ -28,10 +28,10 @@
          * @ngdoc overview
          * @name mappingTitle
          *
-         * @description 
-         * The `mappingTitle` module only provides the `mappingTitle` directive 
+         * @description
+         * The `mappingTitle` module only provides the `mappingTitle` directive
          * which creates a div containing the name of the current
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}
+         * {@link mapperState.service:mapperStateService#mapping mapping}
          * and a button to edit the mapping name.
          */
         .module('mappingTitle', [])
@@ -42,10 +42,10 @@
          * @restrict E
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
-         * `mappingTitle` is a directive which creates a div with the name of the current 
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}. If the current mapping is
-         * a brand new mapping, there is also an edit button for changing the mapping name. The directive is 
+         * @description
+         * `mappingTitle` is a directive which creates a div with the name of the current
+         * {@link mapperState.service:mapperStateService#mapping mapping}. If the current mapping is
+         * a brand new mapping, there is also an edit button for changing the mapping name. The directive is
          * replaced by the contents of its template.
          */
         .directive('mappingTitle', mappingTitle);

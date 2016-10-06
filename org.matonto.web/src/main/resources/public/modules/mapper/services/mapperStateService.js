@@ -65,7 +65,7 @@
             /**
              * @ngdoc property
              * @name mapping
-             * @propertyOf mappingManager.service:mappingManagerService
+             * @propertyOf mapperState.service:mapperStateService
              * @type {Object}
              *
              * @description
@@ -82,7 +82,7 @@
             /**
              * @ngdoc property
              * @name sourceOntologies
-             * @propertyOf mappingManager.service:mappingManagerService
+             * @propertyOf mapperState.service:mapperStateService
              * @type {Object[]}
              *
              * @description
@@ -91,7 +91,6 @@
              * imports closure of that ontology.
              */
             self.sourceOntologies = [];
-
             /**
              * @ngdoc property
              * @name editMapping
@@ -133,7 +132,7 @@
              *
              * @description
              * `invalidProps` holds an array of objects representing property mappings in the
-             * current {@link mappingManager.service:mappingManagerService#mapping mapping}
+             * current {@link mapperState.service:mapperStateService#mapping mapping}
              * that are mapped to non-existent column indexes in the currently loaded
              * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
              * The format of the objects is:
@@ -154,7 +153,7 @@
              * @description
              * `availableColumns` holds an array of the header strings for all the columns
              * that haven't been mapped yet in the currently selected
-             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+             * {@link mapperState.service:mapperStateService#mapping mapping}.
              */
             self.availableColumns = [];
             /**
@@ -165,7 +164,7 @@
              *
              * @description
              * `availablePropsByClass` holds a object with keys for the class mappings in the currently selected
-             * {@link mappingManager.service:mappingManagerService#mapping mapping} and values indicating whether
+             * {@link mapperState.service:mapperStateService#mapping mapping} and values indicating whether
              * the class mapping still has properties available to map.
              */
             self.availablePropsByClass = {};
@@ -177,7 +176,7 @@
              *
              * @description
              * `invalidOntology` holds a boolean indicating whether or not the source ontology for the
-             * currently selected {@link mappingManager.service:mappingManagerService#mapping mapping} is
+             * currently selected {@link mapperState.service:mapperStateService#mapping mapping} is
              * incompatible.
              */
             self.invalidOntology = false;
@@ -369,8 +368,8 @@
              *
              * @description
              * Sets the main state variables back to their default values and resets the values of
-             * {@link mappingManager.service:mappingManagerService#mapping mapping} and
-             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies}.
+             * {@link mapperState.service:mapperStateService#mapping mapping} and
+             * {@link mapperState.service:mapperStateService#sourceOntologies sourceOntologies}.
              */
             self.initialize = function() {
                 self.editMapping = false;
@@ -402,8 +401,8 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Sets the state variables, {@link mappingManager.service:mappingManagerService#mapping mapping}, and
-             * {@link mappingManager.service:mappingManagerService#sourceOntologies sourceOntologies} to indicate creating
+             * Sets the state variables, {@link mapperState.service:mapperStateService#mapping mapping}, and
+             * {@link mapperState.service:mapperStateService#sourceOntologies sourceOntologies} to indicate creating
              * a new mapping.
              */
             self.createMapping = function() {
@@ -423,7 +422,7 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Validates the current {@link mappingManager.service:mappingManagerService#mapping mapping} against
+             * Validates the current {@link mapperState.service:mapperStateService#mapping mapping} against
              * the currently loaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}
              * and sets {@link mapperState.service:mapperStateService#invalidProps} to the list of data properties in
              * the mapping that link to columns that don't exist in the delimited data.
@@ -443,7 +442,7 @@
              *
              * @description
              * Finds all of the column indexes that haven't been mapped to data mappings yet in the currently selected
-             * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+             * {@link mapperState.service:mapperStateService#mapping mapping}.
              *
              * @return {string[]} an array of strings of column indexes that haven't been mapped yet
              */
@@ -457,7 +456,7 @@
              *
              * @description
              * Updates the list of {@link mapperState.service:mapperStateService#availableColumns available columns}
-             * for the currently selected {@link mappingManager.service:mappingManagerService#mapping mapping}
+             * for the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
              * and saved {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}. If a data
              * property mapping has been selected, adds the mapped column index back to the available columns.
              */
@@ -524,7 +523,7 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Retrieves an array of property objects from the current {@link mappingManager.service:mappingManagerService#mapping mapping}
+             * Retrieves an array of property objects from the current {@link mapperState.service:mapperStateService#mapping mapping}
              * representing the properties that the class mapping with the passed id hasn't used yet.
              *
              * @param {string} classMappingId The id of the class mapping to retrieve available properties of

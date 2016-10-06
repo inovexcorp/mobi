@@ -384,22 +384,24 @@
              *
              * @description
              * Adds a object property mapping to a mapping for the specified class mapping. The class mapping
-             * must already be in the mapping and the object property must exist in the passed ontology.
-             * Creates a class mapping for the range class of the object property. Returns a new copy of the
-             * mapping.
+             * and the range class mapping must already be in the mapping, the object property must exist in
+             * the passed ontology, and the object property range must match the type of the range class mapping.
+             * Returns a new copy of the mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {Object[]} ontology The ontology array to search for the property in
              * @param {string} classMappingId The id of the class mapping to add the object property mapping to
              * @param {string} propId The id of the object property in the ontology
+             * @param {string} rangeClassMappingId The id of the class mapping to set as the range of the new
+             * object property mapping
              * @returns {Object[]} The edited mapping array
              */
             self.addObjectProp = function(mapping, ontology, classMappingId, propId, rangeClassMappingId) {
                 var newMapping = angular.copy(mapping);
-                // Check if class mapping exists, range class mapping exists, object property exists in ontology, 
+                // Check if class mapping exists, range class mapping exists, object property exists in ontology,
                 // and object property range matches the range class mapping
                 var propObj = ontologyManagerService.getEntity(ontology, propId);
-                if (entityExists(newMapping, classMappingId) && entityExists(newMapping, rangeClassMappingId) && propObj && ontologyManagerService.isObjectProperty(propObj) 
+                if (entityExists(newMapping, classMappingId) && entityExists(newMapping, rangeClassMappingId) && propObj && ontologyManagerService.isObjectProperty(propObj)
                         && propObj[prefixes.rdfs + 'range'][0]['@id'] === getEntityById(newMapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
                     var dataEntity = {
@@ -408,6 +410,7 @@
                     var classMapping = getEntityById(newMapping, classMappingId);
                     classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
                     classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(dataEntity));
+                    // Create object mapping
                     dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
                     dataEntity[prefixes.delim + 'classMapping'] = [{'@id': rangeClassMappingId}];
                     dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
@@ -495,7 +498,13 @@
              *
              * @description
              * Retrieves an ontology and structures it for the mappingManagerService with its id and the list of
-             * entities within it. Returns a Promise with the structured ontology.
+             * entities within it. Returns a Promise with the structured ontology. The structure looks like:
+             * ```
+             * {
+             *    id: 'http://example.com/ontology',
+             *    entities: []
+             * }
+             * ```
              *
              * @param {string} ontologyId The id of the ontology to retrieve
              * @return {Promise} A Promise that resolves with a structured ontology if the call was successful;
@@ -522,17 +531,18 @@
             };
             /**
              * @ngdoc method
-             * @name setSourceOntologies
+             * @name getSourceOntologies
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Sets the list of source ontologies to the imports closure of the ontology with the passed
-             * id. If no id is passed or the ontologies are set successfully, returns a promise that
-             * resolves to nothing; otherwise returns a promise that rejects with an error message.
+             * Gets the list of source ontologies from the imports closure of the ontology with the passed
+             * id. If no id is passed, returns a promise with an empty array. If the ontologies are found
+             * successfully, returns a promise the source ontologies. Otherwise, returns a promise that
+             * rejects with an error message.
              *
              * @param {string} ontologyId The id of the ontology to collect the imports closure of
-             * @returns {Promise} A promise that resolves if no id is passed or the source ontologies
-             * are set; rejects otherwise
+             * @returns {Promise} A promise that resolves to an array of objects if no id is passed or the
+             * source ontologies are found; rejects otherwise
              */
             self.getSourceOntologies = function(ontologyId) {
                 if (!ontologyId) {
@@ -591,13 +601,15 @@
              *
              * @description
              * Collects the source ontology of the passed mapping using the source ontology id and
-             * {@link mappingManager.mappingManagerService#sourceOntologies sourceOntologies}.
+             * the passed list of structured ontologies.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {Object[]} ontologies The list of ontologies to search through to find the
+             * source ontology
              * @returns {Object} The source ontology of a mapping
              */
-            self.getSourceOntology = function(mapping, sourceOntologies) {
-                return _.find(sourceOntologies, {id: self.getSourceOntologyId(mapping)});
+            self.getSourceOntology = function(mapping, ontologies) {
+                return _.find(ontologies, {id: self.getSourceOntologyId(mapping)});
             }
             /**
              * @ngdoc method
@@ -605,14 +617,15 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Finds the ontology in the {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies}
-             * containing the class with the passed IRI.
+             * Finds the ontology in the passed list of structured ontologies that contains the class
+             * with the passed IRI.
              *
              * @param {string} classIRI The IRI of the class to search for
+             * @param {Object[]} ontologies The list of ontologies to search for the class in
              * @return {Object} The ontology with the class with the passed IRI
              */
-            self.findSourceOntologyWithClass = function(classIRI, sourceOntologies) {
-                return _.find(sourceOntologies, ontology => _.findIndex(ontologyManagerService.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
+            self.findSourceOntologyWithClass = function(classIRI, ontologies) {
+                return _.find(ontologies, ontology => _.findIndex(ontologyManagerService.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
             }
             /**
              * @ngdoc method
@@ -620,14 +633,15 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Finds the ontology in the {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies}
-             * containing the property with the passed IRI.
+             * Finds the ontology in the passed list of structured ontologies that contains the property
+             * with the passed IRI.
              *
              * @param {string} propertyIRI The IRI of the property to search for
+             * @param {Object[]} ontologies The list of ontologies to search for the property in
              * @return {Object} The ontology containing the property with the passed IRI
              */
-            self.findSourceOntologyWithProp = function(propertyIRI, sourceOntologies) {
-                return _.find(sourceOntologies, ontology => {
+            self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
+                return _.find(ontologies, ontology => {
                     var properties = _.concat(ontologyManagerService.getDataTypeProperties(ontology.entities), ontologyManagerService.getObjectProperties(ontology.entities));
                     return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
@@ -638,21 +652,23 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Tests whether the opened mapping is still compatible with its source ontologies. A mapping is
+             * Tests whether a mapping is compatible with the passed listed of structured ontologies. A mapping is
              * incompatible if mapped classes or properties no longer exist or mapped properties have changed
              * property type.
              *
-             * @return {boolean} True if the {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies}
-             * have not changed in an incompatible way; false otherwise
+             * @param {Object[]} mapping The mapping JSON-LD array
+             * @param {Object[]} ontololgies The array of ontologies to test for compatibililty with
+             * @return {boolean} True if the passed list of ontologies have not changed in an incompatible way;
+             * false otherwise
              */
-            self.areCompatible = function(mapping, sourceOntologies) {
+            self.areCompatible = function(mapping, ontologies) {
                 return !_.some(self.getAllClassMappings(mapping), classMapping => {
-                    if (!self.findSourceOntologyWithClass(self.getClassIdByMapping(classMapping), sourceOntologies)) {
+                    if (!self.findSourceOntologyWithClass(self.getClassIdByMapping(classMapping), ontologies)) {
                         return true;
                     }
                     return _.some(self.getPropMappingsByClass(mapping, classMapping['@id']), propMapping => {
                         var propId = self.getPropIdByMapping(propMapping);
-                        var ontology = self.findSourceOntologyWithProp(propId, sourceOntologies);
+                        var ontology = self.findSourceOntologyWithProp(propId, ontologies);
                         if (!ontology) {
                             return true;
                         } else {

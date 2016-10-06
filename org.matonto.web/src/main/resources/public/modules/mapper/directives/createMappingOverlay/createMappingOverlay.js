@@ -39,6 +39,7 @@
          * @scope
          * @restrict E
          * @requires  $q
+         * @requires  $filter
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *

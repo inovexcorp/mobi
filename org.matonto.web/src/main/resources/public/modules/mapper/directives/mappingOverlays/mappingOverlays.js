@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingOverlays
          *
-         * @description 
+         * @description
          * The `mappingOverlays` module only provides the `mappingOverlays` directive which creates
          * all the overlays used in the mapping tool.
          */
@@ -43,8 +43,8 @@
          * @requires  mapperState.service:mapperStateService
          * @requires  delimitedManager.service:delimitedManagerService
          *
-         * @description 
-         * `mappingOverlays` is a directive that creates all of the overlay used in the mapping tool. 
+         * @description
+         * `mappingOverlays` is a directive that creates all of the overlays used in the mapping tool.
          * Those overlays are {@link mappingNameOverlay.directive:mappingNameOverlay mappingNameOverlay},
          * {@link iriTemplateOverlay.directive:iriTemplateOverlay iriTemplateOverlay},
          * {@link invalidOntologyOverlay.directive:invalidOntologyOverlay invalidOntologyOverlay},
@@ -52,6 +52,7 @@
          * {@link downloadMappingOverlay.directive:downloadMappingOverlay downloadMappingOverlay},
          * {@link mappingConfigOverlay.directive:mappingConfigOverlay mappingConfigOverlay},
          * {@link propMappingOverlay.directive:propMappingOverlay propMappingOverlay},
+         * {@link runMappingOverlay.directive:runMappingOverlay runMappingOverlay},
          * and several {@link confirmationOverlay.directive:confirmationOverlay confirmationOverlays}.
          */
         .directive('mappingOverlays', mappingOverlays);
