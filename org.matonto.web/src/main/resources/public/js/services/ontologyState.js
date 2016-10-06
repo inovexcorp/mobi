@@ -215,6 +215,12 @@
             self.getActivePage = function() {
                 return self.state[self.getActiveKey()];
             }
+            self.setActivePage = function(key) {
+                if (_.has(self.state, key)) {
+                    self.getActivePage().active = false;
+                    self.state[key].active = true;
+                }
+            }
             self.getActiveEntityIRI = function() {
                 return self.getActivePage().entityIRI;
             }

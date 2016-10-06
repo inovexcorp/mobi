@@ -25,7 +25,9 @@ describe('Property Values directive', function() {
         scope,
         element,
         responseObj,
-        controller;
+        controller,
+        ontologyManagerSvc,
+        ontologyStateSvc;
 
 
     beforeEach(function() {
@@ -34,11 +36,14 @@ describe('Property Values directive', function() {
         injectBeautifyFilter();
         mockResponseObj();
         mockOntologyState();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             responseObj = _responseObj_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
         });
     });
 
@@ -129,6 +134,64 @@ describe('Property Values directive', function() {
             
             result = controller.isBlankNode('_:b');
             expect(result).toBe(true);
+        });
+        describe('getBlankNodeValue returns', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem.blankNodes = {key1: 'value1'};
+            });
+            it('value for the key provided contained in the object', function() {
+                spyOn(controller, 'isBlankNode').and.returnValue(true);
+                expect(controller.getBlankNodeValue('key1')).toEqual(ontologyStateSvc.listItem.blankNodes['key1']);
+            });
+            it('key for the key provided not contained in the object', function() {
+                spyOn(controller, 'isBlankNode').and.returnValue(true);
+                expect(controller.getBlankNodeValue('key2')).toEqual('key2');
+            });
+            it('undefined if isBlankNode returns false', function() {
+                spyOn(controller, 'isBlankNode').and.returnValue(false);
+                expect(controller.getBlankNodeValue('key1')).toEqual(undefined);
+            });
+        });
+        it('isLinkable returns proper value', function() {
+            ontologyStateSvc.listItem.index = {iri: 0, '_:b': 1};
+            expect(controller.isLinkable('iri')).toEqual(true);
+            expect(controller.isLinkable('word')).toEqual(false);
+            spyOn(controller, 'isBlankNode').and.returnValue(true);
+            expect(controller.isLinkable('_:b')).toEqual(false);
+        });
+        describe('goTo calls the proper manager functions with correct parameters', function() {
+            it('when it is a vocabulary', function() {
+                ontologyStateSvc.listItem.type = 'vocabulary';
+                controller.goTo('iri');
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+            });
+            describe('when it is not a vocabulary', function() {
+                beforeEach(function() {
+                    ontologyStateSvc.listItem.type = 'ontology';
+                });
+                it('and is a class', function() {
+                    ontologyManagerSvc.isClass.and.returnValue(true);
+                    controller.goTo('iri');
+                    expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
+                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                });
+                it('and is a property', function() {
+                    ontologyManagerSvc.isClass.and.returnValue(false);
+                    ontologyManagerSvc.isProperty.and.returnValue(true);
+                    controller.goTo('iri');
+                    expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
+                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                });
+                it('and is an individual', function() {
+                    ontologyManagerSvc.isClass.and.returnValue(false);
+                    ontologyManagerSvc.isProperty.and.returnValue(false);
+                    ontologyManagerSvc.isIndividual.and.returnValue(true);
+                    controller.goTo('iri');
+                    expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
+                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                });
+            });
         });
     });
     it('should call edit when the appropriate button is clicked', function() {
