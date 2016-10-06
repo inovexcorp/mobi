@@ -230,18 +230,14 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Sets the `sourceOntology` property to a mapping's Document entity. Returns a new copy
-             * of the mapping.
+             * Sets the `sourceOntology` property to a mapping's `Mapping` entity.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} ontologyId The id of the ontology to set as the source ontology
-             * @returns {Object[]} The edited mapping array
              */
             self.setSourceOntology = function(mapping, ontologyId) {
-                var newMapping = angular.copy(mapping);
-                var mappingEntity = getMappingEntity(newMapping);
+                var mappingEntity = getMappingEntity(mapping);
                 mappingEntity[prefixes.delim + 'sourceOntology'] = [{'@id': ontologyId}];
-                return newMapping;
             }
             /**
              * @ngdoc method
@@ -282,32 +278,32 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Adds a class mapping to a mapping based on the given class Id. The class must be present
-             * in the passed ontology. Returns a new copy of the mapping.
+             * Adds a class mapping to a mapping based on the given class id. The class must be present
+             * in the passed ontology.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {Object[]} ontology The ontology array to search for the class in
              * @param {string} classId The id of the class in the ontology
-             * @returns {Object[]} The edited mapping array
+             * @returns {Object} The new class mapping object
              */
             self.addClass = function(mapping, ontology, classId) {
-                var newMapping = angular.copy(mapping);
+                var classEntity = undefined;
                 // Check if class exists in ontology
                 if (ontologyManagerService.getEntity(ontology, classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(newMapping)).toLowerCase();
-                    var classEntity = {
-                        '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4(),
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
+                    classEntity = {
+                        '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
                     classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
                     classEntity[prefixes.delim + 'localName'] = [{'@value': '${UUID}'}];
-                    newMapping.push(classEntity);
+                    mapping.push(classEntity);
                 }
 
-                return newMapping;
+                return classEntity;
             }
             /**
              * @ngdoc method
@@ -316,26 +312,22 @@
              *
              * @description
              * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `hasPrefix`
-             * and `localName` properties of the class mapping. Returns a new copy of the mapping.
+             * and `localName` properties of the class mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping whose IRI template will be edited
              * @param {string} prefixEnd The new end of the prefix
              * @param {string} localNamePattern The new local name pattern. Must be in the following format:
              * `${index/UUID}`
-             * @returns {Object[]} The edited mapping array
              */
             self.editIriTemplate = function(mapping, classMappingId, prefixEnd, localNamePattern) {
-                var newMapping = angular.copy(mapping);
                 // Check if class mapping exists in mapping
-                if (entityExists(newMapping, classMappingId)) {
-                    var classMapping = getEntityById(newMapping, classMappingId);
-                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(newMapping)).toLowerCase();
+                if (entityExists(mapping, classMappingId)) {
+                    var classMapping = getEntityById(mapping, classMappingId);
+                    var ontologyDataName = ontologyManagerService.getBeautifulIRI(self.getSourceOntologyId(mapping)).toLowerCase();
                     classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + prefixEnd}];
                     classMapping[prefixes.delim + 'localName'] = [{'@value': localNamePattern}];
                 }
-
-                return newMapping
             }
             /**
              * @ngdoc method
@@ -345,8 +337,7 @@
              * @description
              * Adds a data property mapping to a mapping for the specified class mapping. The class mapping
              * must already be in the mapping and the data property must exist in the passed ontology. Sets
-             * the `columnIndex` of the data property mapping to the passed index. Returns a new copy of
-             * the mapping.
+             * the `columnIndex` of the data property mapping to the passed index.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {Object[]} ontology The ontology array to search for the property in
@@ -354,18 +345,18 @@
              * @param {string} propId The id of the data property in the ontology
              * @param {number} columnIndex The column index to set the data property mapping's `columnIndex`
              * property to
-             * @returns {Object[]} The edited mapping array
+             * @returns {Object} The new data property mapping object
              */
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
-                var newMapping = angular.copy(mapping);
+                var dataEntity;
                 // Check if class mapping exists and the property exists in the ontology
                 var propObj = ontologyManagerService.getEntity(ontology, propId);
-                if (entityExists(newMapping, classMappingId) && propObj && ontologyManagerService.isDataTypeProperty(propObj)) {
+                if (entityExists(mapping, classMappingId) && propObj && ontologyManagerService.isDataTypeProperty(propObj)) {
                     // Add new data mapping id to data properties of class mapping
-                    var dataEntity = {
-                        '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
+                    dataEntity = {
+                        '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
                     };
-                    var classMapping = getEntityById(newMapping, classMappingId);
+                    var classMapping = getEntityById(mapping, classMappingId);
                     // Sets the dataProperty key if not already present
                     classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
                     classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
@@ -373,9 +364,10 @@
                     dataEntity['@type'] = [prefixes.delim + 'DataMapping'];
                     dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
                     dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                    newMapping.push(dataEntity);
+                    mapping.push(dataEntity);
                 }
-                return newMapping;
+
+                return dataEntity;
             }
             /**
              * @ngdoc method
@@ -386,7 +378,6 @@
              * Adds a object property mapping to a mapping for the specified class mapping. The class mapping
              * and the range class mapping must already be in the mapping, the object property must exist in
              * the passed ontology, and the object property range must match the type of the range class mapping.
-             * Returns a new copy of the mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {Object[]} ontology The ontology array to search for the property in
@@ -394,29 +385,30 @@
              * @param {string} propId The id of the object property in the ontology
              * @param {string} rangeClassMappingId The id of the class mapping to set as the range of the new
              * object property mapping
-             * @returns {Object[]} The edited mapping array
+             * @returns {Object} The new object property mapping
              */
             self.addObjectProp = function(mapping, ontology, classMappingId, propId, rangeClassMappingId) {
-                var newMapping = angular.copy(mapping);
+                var objectEntity;
                 // Check if class mapping exists, range class mapping exists, object property exists in ontology,
                 // and object property range matches the range class mapping
                 var propObj = ontologyManagerService.getEntity(ontology, propId);
-                if (entityExists(newMapping, classMappingId) && entityExists(newMapping, rangeClassMappingId) && propObj && ontologyManagerService.isObjectProperty(propObj)
-                        && propObj[prefixes.rdfs + 'range'][0]['@id'] === getEntityById(newMapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
+                if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propObj && ontologyManagerService.isObjectProperty(propObj)
+                        && _.get(propObj, "['" + prefixes.rdfs + "range'][0]['@id']") === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
-                    var dataEntity = {
-                        '@id': getMappingEntity(newMapping)['@id'] + '/' + uuid.v4()
+                    var objectEntity = {
+                        '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
                     };
-                    var classMapping = getEntityById(newMapping, classMappingId);
+                    var classMapping = getEntityById(mapping, classMappingId);
                     classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
-                    classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(dataEntity));
+                    classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(objectEntity));
                     // Create object mapping
-                    dataEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
-                    dataEntity[prefixes.delim + 'classMapping'] = [{'@id': rangeClassMappingId}];
-                    dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                    newMapping.push(dataEntity);
+                    objectEntity['@type'] = [prefixes.delim + 'ObjectMapping'];
+                    objectEntity[prefixes.delim + 'classMapping'] = [{'@id': rangeClassMappingId}];
+                    objectEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                    mapping.push(objectEntity);
                 }
-                return newMapping;
+
+                return objectEntity;
             }
             /**
              * @ngdoc method
@@ -425,27 +417,24 @@
              *
              * @description
              * Removes a property mapping from a mapping from the specified class mapping. The class mapping and
-             * property mapping must already be in the mapping. Returns a new copy of the mapping.
+             * property mapping must already be in the mapping.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping with the property mapping to remove
              * @param {string} propMappingId The id of the property mapping to remove
-             * @returns {Object[]} The edited mapping array
              */
             self.removeProp = function(mapping, classMappingId, propMappingId) {
-                var newMapping = angular.copy(mapping);
-                if (entityExists(newMapping, propMappingId)) {
+                if (entityExists(mapping, propMappingId)) {
                     // Collect the property mapping and the class mapping
-                    var propMapping = getEntityById(newMapping, propMappingId);
+                    var propMapping = getEntityById(mapping, propMappingId);
                     var propType = self.isObjectMapping(propMapping) ? 'objectProperty' : 'dataProperty';
-                    var classMapping = getEntityById(newMapping, classMappingId);
+                    var classMapping = getEntityById(mapping, classMappingId);
                     // Remove the property mapping
-                    _.pull(newMapping, propMapping);
+                    _.pull(mapping, propMapping);
                     // Remove the property mapping id from the class mapping's properties
                     _.remove(classMapping[prefixes.delim + propType], {'@id': propMappingId});
                     cleanPropertyArray(classMapping, propType);
                 }
-                return newMapping;
             }
             /**
              * @ngdoc method
@@ -455,39 +444,35 @@
              * @description
              * Removes a class mapping from a mapping. The class mapping must already be in the mapping.
              * Also removes every property mapping from the specified class mapping and any object property
-             * mappings from other class mappings that point to it. Returns a new copy of the mapping.
+             * mappings from other class mappings that point to it.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping to remove
-             * @returns {Object[]} The edited mapping array
              */
             self.removeClass = function(mapping, classMappingId) {
-                var newMapping = angular.copy(mapping);
-                if (entityExists(newMapping, classMappingId)) {
+                if (entityExists(mapping, classMappingId)) {
                     // Collect class mapping and any object mappings that use the class mapping
-                    var classMapping = getEntityById(newMapping, classMappingId);
+                    var classMapping = getEntityById(mapping, classMappingId);
                     var classId = self.getClassIdByMapping(classMapping);
-                    var objectMappings = self.getPropsLinkingToClass(newMapping, classMapping['@id']);
+                    var objectMappings = self.getPropsLinkingToClass(mapping, classMapping['@id']);
                     // If there are object mappings that use the class mapping, iterate through them
                     _.forEach(objectMappings, objectMapping => {
                         // Collect the class mapping that uses the object mapping
-                        var classWithObjectMapping = self.findClassWithObjectMapping(newMapping, objectMapping['@id']);
+                        var classWithObjectMapping = self.findClassWithObjectMapping(mapping, objectMapping['@id']);
                         // Remove the object property for the object mapping
                         _.remove(classWithObjectMapping[prefixes.delim + 'objectProperty'], {'@id': objectMapping['@id']});
                         cleanPropertyArray(classWithObjectMapping, 'objectProperty');
                         //Replace class mapping
-                        newMapping.splice(_.findIndex(newMapping, {'@id': classWithObjectMapping['@id']}), 1, classWithObjectMapping);
+                        mapping.splice(_.findIndex(mapping, {'@id': classWithObjectMapping['@id']}), 1, classWithObjectMapping);
                         // Remove object mapping
-                        _.remove(newMapping, objectMapping);
+                        _.remove(mapping, objectMapping);
                     });
                     // Remove all properties of the class mapping and the class mapping itself
                     _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), prop => {
-                        newMapping = self.removeProp(newMapping, classMapping['@id'], prop['@id']);
+                        self.removeProp(mapping, classMapping['@id'], prop['@id']);
                     });
-                    _.remove(newMapping, {'@id': classMapping['@id']});
+                    _.remove(mapping, {'@id': classMapping['@id']});
                 }
-
-                return newMapping;
             }
 
             // Source Ontology methods

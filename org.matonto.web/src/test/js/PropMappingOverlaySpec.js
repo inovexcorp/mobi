@@ -107,14 +107,10 @@ describe('Prop Mapping Overlay directive', function() {
                     var newClass = {'@id': 'class'};
                     var newMapping = [newClass];
                     ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                    mappingManagerSvc.addClass.and.returnValue(newMapping);
+                    mappingManagerSvc.addClass.and.returnValue(newClass);
                     mappingManagerSvc.addObjectProp.and.returnValue(newMapping);
-                    mappingManagerSvc.getAllClassMappings.and.callFake(function(mapping) {
-                        return _.isEqual(mapping, newMapping) ? [newClass] : [];
-                    });
                     controller.set();
                     expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(controller.selectedProp['@id'], mapperStateSvc.sourceOntologies);
-                    expect(mappingManagerSvc.getAllClassMappings.calls.count()).toBe(2);
                     expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
                     expect(mappingManagerSvc.addClass).toHaveBeenCalled();
                     expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();

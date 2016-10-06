@@ -86,7 +86,7 @@ describe('IRI Template Overlay directive', function() {
         });
         it('should correctly set the iri template', function() {
             controller.set();
-            expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId, 
+            expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId,
                 controller.beginsWith + controller.then, controller.endsWith.value);
         });
     });
@@ -110,7 +110,7 @@ describe('IRI Template Overlay directive', function() {
             controller = this.element.controller('iriTemplateOverlay');
             var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with')[0]);
             expect(beginsWith.hasClass('has-error')).toBe(true);
-            
+
             failTests.forEach(function(test) {
                 controller.beginsWith = test;
                 scope.$digest();

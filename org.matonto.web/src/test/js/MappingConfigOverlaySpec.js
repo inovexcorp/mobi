@@ -186,10 +186,8 @@ describe('Mapping Config Overlay directive', function() {
             beforeEach(function() {
                 this.ontologies = [{}];
                 this.classMapping = {'@id': 'classMap'};
-                this.originalMapping = angular.copy(mapperStateSvc.mapping.jsonld);
                 spyOn(controller, 'getOntologyClosure').and.returnValue(this.ontologies);
                 mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
-                mappingManagerSvc.addClass.and.returnValue([{}]);
                 controller.selectedOntologyId = '';
                 controller.selectedBaseClass = undefined;
                 mappingManagerSvc.getSourceOntologyId.and.returnValue('');
@@ -204,7 +202,6 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
                 expect(mapperStateSvc.selectedClassMappingId).not.toBe(this.classMapping['@id']);
                 expect(mapperStateSvc.setAvailableProps).not.toHaveBeenCalled();
-                expect(mapperStateSvc.mapping.jsonld).toEqual(this.originalMapping);
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
             });
             describe('if it changed', function() {
@@ -222,7 +219,6 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.mapping.jsonld).not.toEqual(this.originalMapping);
                 });
                 it('and a configuration had already been set', function() {
                     mappingManagerSvc.getSourceOntologyId.and.returnValue('test');
@@ -237,7 +233,6 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.mapping.jsonld).not.toEqual(this.originalMapping);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
 
                     mapperStateSvc.displayMappingConfigOverlay = true;
@@ -251,7 +246,6 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.mapping.jsonld).not.toEqual(this.originalMapping);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                 });
             });

@@ -96,7 +96,7 @@
                             };
                         });
                         var dataPropMappings = _.filter(dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId), propMapping => dvm.mm.isDataMapping(propMapping));
-                        dvm.state.mapping.jsonld = dvm.mm.removeClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId);
+                        dvm.mm.removeClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId);
                         _.forEach(dataPropMappings, propMapping => _.remove(dvm.state.invalidProps, {'@id': propMapping['@id']}));
                         dvm.state.removeAvailableProps(dvm.state.selectedClassMappingId);
                         _.forEach(classesToUpdate, obj => dvm.state.getAvailableProps(obj.classMappingId).push({'@id': obj.propId, ontologyId: obj.ontologyId}));
@@ -108,7 +108,7 @@
                         var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
                         var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                         dvm.state.getAvailableProps(classMapping['@id']).push({'@id': propId, ontologyId: ontology.id});
-                        dvm.state.mapping.jsonld = dvm.mm.removeProp(dvm.state.mapping.jsonld, classMapping['@id'], dvm.state.selectedPropMappingId);
+                        dvm.mm.removeProp(dvm.state.mapping.jsonld, classMapping['@id'], dvm.state.selectedPropMappingId);
                         _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId});
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];

@@ -125,9 +125,9 @@
                                 dvm.state.invalidProps = [];
                             }
                             dvm.state.sourceOntologies = dvm.getOntologyClosure(dvm.selectedOntologyId);
-                            dvm.state.mapping.jsonld = dvm.mm.setSourceOntology(dvm.state.mapping.jsonld, dvm.selectedOntologyId);
+                            dvm.mm.setSourceOntology(dvm.state.mapping.jsonld, dvm.selectedOntologyId);
                             var ontology = dvm.mm.findSourceOntologyWithClass(dvm.selectedBaseClass['@id'], dvm.state.sourceOntologies);
-                            dvm.state.mapping.jsonld = dvm.mm.addClass(dvm.state.mapping.jsonld, ontology.entities, dvm.selectedBaseClass['@id']);
+                            dvm.mm.addClass(dvm.state.mapping.jsonld, ontology.entities, dvm.selectedBaseClass['@id']);
                             dvm.state.resetEdit();
                             dvm.state.selectedClassMappingId = _.get(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), "[0]['@id']");
                             dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
