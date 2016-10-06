@@ -227,11 +227,11 @@
             self.selectItem = function(entityIRI) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
-                    self.setSelected(entityIRI);
                     self.om.getEntityUsages(self.state.ontologyId, entityIRI)
                         .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
                             response => _.set(self.getActivePage(), 'usages', []));
                 }
+                self.setSelected(entityIRI);
             }
             self.unSelectItem = function() {
                 var activePage = self.getActivePage();
@@ -350,6 +350,22 @@
             function setVariables(ontologyId, entityIRI) {
                 self.ontology = self.om.getOntologyById(ontologyId);
                 self.setSelected(entityIRI);
+            }
+            self.goTo = function(iri) {
+                var entity = self.om.getEntityById(self.listItem.ontologyId, iri);
+                if (self.listItem.type === 'vocabulary') {
+                    commonGoTo('concepts', iri);
+                } else if (self.om.isClass(entity)) {
+                    commonGoTo('classes', iri);
+                } else if (self.om.isProperty(entity)) {
+                    commonGoTo('properties', iri);
+                } else if (self.om.isIndividual(entity)) {
+                    commonGoTo('individuals', iri);
+                }
+            }
+            function commonGoTo(key, iri) {
+                self.setActivePage(key);
+                self.selectItem(iri);
             }
             function initialize() {
                 self.state = self.newState;

@@ -73,38 +73,4 @@ describe('Ontology Utils Manager service', function() {
         spyOn(ontologyUtilsManagerSvc, 'isBlankNodeString').and.returnValue(true);
         expect(ontologyUtilsManagerSvc.isLinkable('_:b')).toEqual(false);
     });
-    describe('goTo calls the proper manager functions with correct parameters', function() {
-        it('when it is a vocabulary', function() {
-            ontologyStateSvc.listItem.type = 'vocabulary';
-            ontologyUtilsManagerSvc.goTo('iri');
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-        });
-        describe('when it is not a vocabulary', function() {
-            beforeEach(function() {
-                ontologyStateSvc.listItem.type = 'ontology';
-            });
-            it('and is a class', function() {
-                ontologyManagerSvc.isClass.and.returnValue(true);
-                ontologyUtilsManagerSvc.goTo('iri');
-                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            });
-            it('and is a property', function() {
-                ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isProperty.and.returnValue(true);
-                ontologyUtilsManagerSvc.goTo('iri');
-                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            });
-            it('and is an individual', function() {
-                ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isProperty.and.returnValue(false);
-                ontologyManagerSvc.isIndividual.and.returnValue(true);
-                ontologyUtilsManagerSvc.goTo('iri');
-                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            });
-        });
-    });
 });

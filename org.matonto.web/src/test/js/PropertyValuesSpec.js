@@ -32,6 +32,7 @@ describe('Property Values directive', function() {
         module('propertyValues');
         injectBeautifyFilter();
         mockResponseObj();
+        mockOntologyState();
         mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyUtilsManagerService_) {
