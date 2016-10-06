@@ -196,8 +196,6 @@ function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
             this.mappingIds = [];
-            this.mapping = undefined;
-            this.sourceOntologies = [];
 
             this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
             this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
@@ -218,7 +216,7 @@ function mockMappingManager() {
             this.isClassMapping = jasmine.createSpy('isClassMapping').and.returnValue(true);
             this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.returnValue([]);
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
-            this.setSourceOntologies = jasmine.createSpy('setSourceOntologies').and.returnValue($q.when());
+            this.getSourceOntologies = jasmine.createSpy('getSourceOntologies').and.returnValue($q.when([]));
             this.findSourceOntologyWithClass = jasmine.createSpy('findSourceOntologyWithClass').and.returnValue({});
             this.findSourceOntologyWithProp = jasmine.createSpy('findSourceOntologyWithProp').and.returnValue({});
             this.getSourceOntologyId = jasmine.createSpy('getSourceOntologyId').and.returnValue('');
@@ -273,6 +271,8 @@ function mockMapperState() {
             this.selectMappingStep = 0;
             this.fileUploadStep = 1;
             this.editMappingStep = 2;
+            this.mapping = undefined;
+            this.sourceOntologies = [];
             this.mappingSearchString = '';
             this.availablePropsByClass = {};
             this.editMapping = false;

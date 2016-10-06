@@ -73,8 +73,8 @@
                     dvm.errorMessage = '';
 
                     dvm.save = function() {
-                        if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
-                            dvm.mm.deleteMapping(dvm.mm.mapping.id)
+                        if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
+                            dvm.mm.deleteMapping(dvm.state.mapping.id)
                                 .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
                         } else {
                             saveMapping();
@@ -84,7 +84,7 @@
                         dvm.state.displayCancelConfirm = true;
                     }
                     function saveMapping() {
-                        dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id)
+                        dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id)
                             .then(() => {
                                 dvm.errorMessage = '';
                                 dvm.state.step = dvm.state.selectMappingStep;

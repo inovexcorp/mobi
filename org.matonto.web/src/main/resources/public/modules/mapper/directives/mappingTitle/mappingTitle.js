@@ -40,7 +40,6 @@
          * @name mappingTitle.directive:mappingTitle
          * @scope
          * @restrict E
-         * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
          * @description 
@@ -51,9 +50,9 @@
          */
         .directive('mappingTitle', mappingTitle);
 
-        mappingTitle.$inject = ['mappingManagerService', 'mapperStateService'];
+        mappingTitle.$inject = ['mapperStateService'];
 
-        function mappingTitle(mappingManagerService, mapperStateService) {
+        function mappingTitle(mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -62,7 +61,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
                 },
                 templateUrl: 'modules/mapper/directives/mappingTitle/mappingTitle.html'
             }

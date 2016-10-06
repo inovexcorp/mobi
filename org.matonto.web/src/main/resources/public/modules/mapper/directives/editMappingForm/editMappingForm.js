@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name editMappingForm
          *
-         * @description 
+         * @description
          * The `editMappingForm` module only provides the `editMappingForm` directive which creates
-         * a form with different sections for editing the current 
+         * a form with different sections for editing the current
          * {@link mappingManager.service:mappingManagerService#mapping mapping}.
          */
         .module('editMappingForm', [])
@@ -43,12 +43,12 @@
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
          *
-         * @description 
-         * `editMappingForm` is a directive that creates a div with a section to view and edit the 
-         * current {@link mappingManager.service:mappingManagerService#mapping mapping} configuration, 
-         * a section to {@link classMappingSelect.directive:classMappingSelect select a class mapping} 
-         * and delete the selected class mapping, and 
-         * {@link classMappingDetails.directive:classMappingDetails class mapping details}. The 
+         * @description
+         * `editMappingForm` is a directive that creates a div with a section to view and edit the
+         * current {@link mappingManager.service:mappingManagerService#mapping mapping} configuration,
+         * a section to {@link classMappingSelect.directive:classMappingSelect select a class mapping}
+         * and delete the selected class mapping, and
+         * {@link classMappingDetails.directive:classMappingDetails class mapping details}. The
          * directive is replaced by the contents of its template.
          */
         .directive('editMappingForm', editMappingForm);
@@ -68,16 +68,16 @@
                     dvm.om = ontologyManagerService;
 
                     dvm.getSourceOntologyName = function() {
-                        var sourceOntology = dvm.mm.getSourceOntology(dvm.mm.mapping.jsonld);
+                        var sourceOntology = dvm.mm.getSourceOntology(dvm.state.mapping.jsonld, dvm.state.sourceOntologies);
                         return sourceOntology ? dvm.om.getEntityName(dvm.om.getOntologyEntity(sourceOntology.entities)) : '';
                     }
                     dvm.getBaseClassName = function() {
-                        var baseClass = dvm.mm.getBaseClass(dvm.mm.mapping.jsonld);
+                        var baseClass = dvm.mm.getBaseClass(dvm.state.mapping.jsonld);
                         return baseClass ? dvm.getClassName(baseClass) : '';
                     }
                     dvm.getClassName = function(classMapping) {
                         var classId = dvm.mm.getClassIdByMapping(classMapping);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId), 'entities'), classId));
+                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies), 'entities'), classId));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/editMappingForm/editMappingForm.html'

@@ -60,22 +60,22 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.newName = $filter('splitIRI')(_.get(dvm.mm.mapping, 'id', '')).end;
+                    dvm.newName = $filter('splitIRI')(_.get(dvm.state.mapping, 'id', '')).end;
 
                     dvm.set = function() {
                         var iri = dvm.mm.getMappingId(dvm.newName);
                         if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.step = dvm.state.fileUploadStep;
-                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(iri);
+                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(iri);
                         }
-                        dvm.mm.mapping.id = iri;
+                        dvm.state.mapping.id = iri;
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {
                         if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.editMapping = false;
                             dvm.state.newMapping = false;
-                            dvm.mm.mapping = undefined;
+                            dvm.state.mapping = undefined;
                         }
                         dvm.state.editMappingName = false;
                     }

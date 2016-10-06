@@ -57,7 +57,7 @@ describe('IRI Template Overlay directive', function() {
                 'localName': [{'@value': localName}]
             };
             mapperStateSvc.selectedClassMappingId = classMapping['@id'];
-            mappingManagerSvc.mapping = {
+            mapperStateSvc.mapping = {
                 jsonld: [classMapping]
             };
             delimitedManagerSvc.dataRows = [['a']];
@@ -78,7 +78,7 @@ describe('IRI Template Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();
@@ -86,13 +86,13 @@ describe('IRI Template Overlay directive', function() {
         });
         it('should correctly set the iri template', function() {
             controller.set();
-            expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId, 
+            expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId, 
                 controller.beginsWith + controller.then, controller.endsWith.value);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             delimitedManagerSvc.dataRows = [[]];
             this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
             scope.$digest();

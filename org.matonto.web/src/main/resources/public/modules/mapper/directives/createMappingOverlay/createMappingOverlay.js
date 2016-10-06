@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name createMappingOverlay
          *
-         * @description 
+         * @description
          * The `createMappingOverlay` module only provides the `createMappingOverlay` directive which creates
          * an overlay with functionality to create a new mapping two different ways.
          */
@@ -42,10 +42,10 @@
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
-         * `createMappingOverlay` is a directive that creates an overlay with functionality to create a  
+         * @description
+         * `createMappingOverlay` is a directive that creates an overlay with functionality to create a
          * new mapping either from scratch, or using a saved mapping as a template. The new mapping name
-         * set in the {@link mappingNameInput.directive:mappingNameInput mappingNameInput} must be unique. 
+         * set in the {@link mappingNameInput.directive:mappingNameInput mappingNameInput} must be unique.
          * The directive is replaced by the contents of its template.
          */
         .directive('createMappingOverlay', createMappingOverlay);
@@ -64,37 +64,38 @@
                     dvm.mm = mappingManagerService;
                     dvm.mappingType = 'new';
                     dvm.errorMessage = '';
-                    dvm.newName = $filter('splitIRI')(_.get(dvm.mm.mapping, 'id', '')).end;
+                    dvm.newName = $filter('splitIRI')(_.get(dvm.state.mapping, 'id', '')).end;
                     dvm.savedMappingId = _.get(dvm.mm.mappingIds, '0', '');
 
                     dvm.cancel = function() {
                         dvm.state.editMapping = false;
                         dvm.state.newMapping = false;
-                        dvm.mm.mapping = undefined;
+                        dvm.state.mapping = undefined;
+                        dvm.state.sourceOntologies = [];
                         dvm.state.displayCreateMappingOverlay = false;
-                        dvm.mm.sourceOntologies = [];
                     }
                     dvm.continue = function() {
                         var deferred = $q.defer();
-                        dvm.mm.mapping.id = dvm.mm.getMappingId(dvm.newName);
+                        dvm.state.mapping.id = dvm.mm.getMappingId(dvm.newName);
                         if (dvm.mappingType === 'new') {
-                            deferred.resolve(dvm.mm.createNewMapping(dvm.mm.mapping.id));
+                            deferred.resolve(dvm.mm.createNewMapping(dvm.state.mapping.id));
                         } else {
                             dvm.mm.getMapping(dvm.savedMappingId).then(mapping => {
-                                deferred.resolve(dvm.mm.copyMapping(mapping, dvm.mm.mapping.id));
+                                deferred.resolve(dvm.mm.copyMapping(mapping, dvm.state.mapping.id));
                             }, error => {
                                 deferred.reject(error);
                             });
                         }
 
                         deferred.promise.then(mapping => {
-                            dvm.mm.mapping.jsonld = mapping;
-                            return dvm.mm.setSourceOntologies(dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld));
-                        }, error => $q.reject(error)).then(() => {
-                            if (dvm.mm.areCompatible()) {
+                            dvm.state.mapping.jsonld = mapping;
+                            return dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
+                        }, error => $q.reject(error)).then(ontologies => {
+                            if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
+                                dvm.state.sourceOntologies = ontologies;
                                 dvm.state.mappingSearchString = '';
                                 dvm.state.step = dvm.state.fileUploadStep;
-                                dvm.state.displayCreateMappingOverlay = false;                             
+                                dvm.state.displayCreateMappingOverlay = false;
                             } else {
                                 onError('The selected mapping is incompatible with its source ontologies.');
                             }
@@ -103,7 +104,7 @@
 
                     function onError(message) {
                         dvm.errorMessage = message;
-                        dvm.mm.mapping.jsonld = [];
+                        dvm.state.mapping.jsonld = [];
                     }
                 },
                 templateUrl: 'modules/mapper/directives/createMappingOverlay/createMappingOverlay.html'

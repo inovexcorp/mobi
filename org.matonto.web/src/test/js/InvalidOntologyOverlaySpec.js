@@ -23,28 +23,24 @@
 describe('Invalid Ontology Overlay directive', function() {
     var $compile,
         scope,
-        mappingManagerSvc,
         mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('invalidOntologyOverlay');
-        mockMappingManager();
         mockMapperState();
-        mockOntologyManager();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
         });
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: ''};
+            mapperStateSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('invalidOntologyOverlay');

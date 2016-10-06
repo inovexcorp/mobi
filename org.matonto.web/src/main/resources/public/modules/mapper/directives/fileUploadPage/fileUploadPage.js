@@ -71,10 +71,10 @@
                     dvm.om = ontologyManagerService;
 
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dataMappingId);
-                        var classId = dvm.mm.getClassIdByMapping(dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId));
-                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId);
-                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId);
+                        var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dataMappingId);
+                        var classId = dvm.mm.getClassIdByMapping(dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, dataMappingId));
+                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
+                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies);
                         var propName = dvm.om.getEntityName(dvm.om.getEntity(propOntology.entities, propId));
                         var className = dvm.om.getEntityName(dvm.om.getEntity(classOntology.entities, classId));
                         return dvm.mm.getPropMappingTitle(className, propName);
@@ -83,8 +83,8 @@
                     	dvm.state.displayCancelConfirm = true;
                     }
                     dvm.edit = function() {
-                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld), '@id', '');
-                        _.forEach(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
+                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.state.mapping.jsonld), '@id', '');
+                        _.forEach(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         dvm.state.step = dvm.state.editMappingStep;
                         if (dvm.state.newMapping) {
                             dvm.state.displayMappingConfigOverlay = true;

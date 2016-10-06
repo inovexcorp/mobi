@@ -53,9 +53,9 @@
          */
         .directive('classMappingSelect', classMappingSelect);
 
-        classMappingSelect.$inject = ['mappingManagerService', 'ontologyManagerService'];
+        classMappingSelect.$inject = ['mappingManagerService', 'ontologyManagerService', 'mapperStateService'];
 
-        function classMappingSelect(mappingManagerService, ontologyManagerService) {
+        function classMappingSelect(mappingManagerService, ontologyManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -68,12 +68,13 @@
                 },
                 controller: function() {
                     var dvm = this;
+                    dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
 
                     dvm.getClassName = function(classMapping) {
                         var classId = dvm.mm.getClassIdByMapping(classMapping);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId), 'entities'), classId));
+                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies), 'entities'), classId));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classMappingSelect/classMappingSelect.html'

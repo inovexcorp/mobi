@@ -46,7 +46,7 @@ describe('Edit Mapping Form directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mapperStateSvc.mapping = {name: '', jsonld: []};
             this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
             scope.$digest();
             controller = this.element.controller('editMappingForm');
@@ -79,18 +79,18 @@ describe('Edit Mapping Form directive', function() {
         });
         describe('should get the name of the base class', function() {
             beforeEach(function() {
-                spyOn(controller, 'getClassName').and.returnValue('');                
+                spyOn(controller, 'getClassName').and.returnValue('');
             });
             it('if it exists', function() {
                 var result = controller.getBaseClassName();
-                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
+                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                 expect(controller.getClassName).toHaveBeenCalled();
                 expect(typeof result).toBe('string');
             });
             it('unless it does not exist', function() {
                 mappingManagerSvc.getBaseClass.and.returnValue(undefined);
                 var result = controller.getBaseClassName();
-                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld);
+                expect(mappingManagerSvc.getBaseClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                 expect(controller.getClassName).not.toHaveBeenCalled();
                 expect(result).toBe('');
             });
@@ -98,7 +98,7 @@ describe('Edit Mapping Form directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mapperStateSvc.mapping = {name: '', jsonld: []};
             this.element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
             scope.$digest();
         });
@@ -130,7 +130,7 @@ describe('Edit Mapping Form directive', function() {
         });
     });
     it('should set the correct state when the edit config link is clicked', function() {
-        mappingManagerSvc.mapping = {name: '', jsonld: []};
+        mapperStateSvc.mapping = {name: '', jsonld: []};
         var element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
         scope.$digest();
 
@@ -139,7 +139,7 @@ describe('Edit Mapping Form directive', function() {
         expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
     });
     it('should set the correct state when delete class button is clicked', function() {
-        mappingManagerSvc.mapping = {name: '', jsonld: []};
+        mapperStateSvc.mapping = {name: '', jsonld: []};
         mapperStateSvc.selectedClassMappingId = 'class';
         var element = $compile(angular.element('<edit-mapping-form></edit-mapping-form>'))(scope);
         scope.$digest();

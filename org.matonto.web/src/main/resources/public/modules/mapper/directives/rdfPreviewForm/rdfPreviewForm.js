@@ -53,9 +53,9 @@
          */
         .directive('rdfPreviewForm', rdfPreviewForm);
 
-        rdfPreviewForm.$inject = ['delimitedManagerService', 'mappingManagerService'];
+        rdfPreviewForm.$inject = ['delimitedManagerService', 'mapperStateService'];
 
-        function rdfPreviewForm(delimitedManagerService, mappingManagerService) {
+        function rdfPreviewForm(delimitedManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -63,8 +63,8 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.state = mapperStateService;
                     dvm.dm = delimitedManagerService;
-                    dvm.mm = mappingManagerService;
                     dvm.serializeFormat = angular.copy(dvm.dm.serializeFormat);
                     dvm.errorMessage = '';
                     dvm.editorOptions = {
@@ -84,7 +84,7 @@
                     }
 
                     dvm.generatePreview = function() {
-                        dvm.dm.previewMap(dvm.mm.mapping.jsonld, dvm.serializeFormat).then(preview => {
+                        dvm.dm.previewMap(dvm.state.mapping.jsonld, dvm.serializeFormat).then(preview => {
                             setMode();
                             dvm.dm.preview = (dvm.serializeFormat === 'jsonld') ? JSON.stringify(preview) : _.toString(preview);
                             dvm.dm.serializeFormat = dvm.serializeFormat;

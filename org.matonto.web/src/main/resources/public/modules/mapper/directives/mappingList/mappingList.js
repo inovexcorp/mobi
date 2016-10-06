@@ -67,14 +67,14 @@
                     dvm.onClick = function(id) {
                         var openedMapping = _.find(openedMappings, {id: id});
                         if (openedMapping) {
-                            dvm.mm.mapping = openedMapping;
+                            dvm.state.mapping = openedMapping;
                         } else {
                             dvm.mm.getMapping(id).then(jsonld => {
                                 var mapping = {
                                     jsonld,
                                     id
                                 };
-                                dvm.mm.mapping = mapping;
+                                dvm.state.mapping = mapping;
                                 openedMappings.push(mapping);
                             }, errorMessage => {
                                 console.log(errorMessage);

@@ -50,7 +50,7 @@ describe('Edit Mapping Page directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<edit-mapping-page></edit-mapping-page>'))(scope);
             scope.$digest();
             controller = this.element.controller('editMappingPage');
@@ -58,14 +58,14 @@ describe('Edit Mapping Page directive', function() {
         describe('should set the correct state for saving a mapping', function() {
             describe('if it already exists', function() {
                 beforeEach(function() {
-                    mappingManagerSvc.mappingIds = [mappingManagerSvc.mapping.id];
+                    mappingManagerSvc.mappingIds = [mapperStateSvc.mapping.id];
                 });
                 it('unless an error occurs', function() {
                     var step = mapperStateSvc.step;
                     mappingManagerSvc.deleteMapping.and.returnValue($q.reject('Error message'));
                     controller.save();
                     $timeout.flush();
-                    expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
+                    expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
                     expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).toBe(step);
                     expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
@@ -76,8 +76,8 @@ describe('Edit Mapping Page directive', function() {
                 it('successfully', function() {
                     controller.save();
                     $timeout.flush();
-                    expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
+                    expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
+                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe('Edit Mapping Page directive', function() {
                     controller.save();
                     $timeout.flush();
                     expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
+                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
                     expect(mapperStateSvc.step).toBe(step);
                     expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
@@ -103,7 +103,7 @@ describe('Edit Mapping Page directive', function() {
                     controller.save();
                     $timeout.flush();
                     expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
+                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -119,7 +119,7 @@ describe('Edit Mapping Page directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<edit-mapping-page></edit-mapping-page>'))(scope);
             scope.$digest();
         });
@@ -166,14 +166,14 @@ describe('Edit Mapping Page directive', function() {
                 expect(angular.element(button).attr('disabled')).toBeTruthy();
             });
 
-            mappingManagerSvc.mapping.jsonld = [{}, {}];
+            mapperStateSvc.mapping.jsonld = [{}, {}];
             scope.$digest();
             _.forEach(_.toArray(buttons), function(button) {
                 expect(angular.element(button).attr('disabled')).toBeFalsy();
             });
 
             mappingManagerSvc.getSourceOntologyId.and.returnValue('id');
-            mappingManagerSvc.mapping.jsonld = [];
+            mapperStateSvc.mapping.jsonld = [];
             scope.$digest();
             _.forEach(_.toArray(buttons), function(button) {
                 expect(angular.element(button).attr('disabled')).toBeFalsy();
@@ -181,7 +181,7 @@ describe('Edit Mapping Page directive', function() {
         });
     });
     it('should call cancel when a cancel button is clicked', function() {
-        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         var element = $compile(angular.element('<edit-mapping-page></edit-mapping-page>'))(scope);
         scope.$digest();
         controller = element.controller('editMappingPage');
@@ -195,7 +195,7 @@ describe('Edit Mapping Page directive', function() {
         });
     });
     it('should call save when a save button is clicked', function() {
-        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         this.element = $compile(angular.element('<edit-mapping-page></edit-mapping-page>'))(scope);
         scope.$digest();
         controller = this.element.controller('editMappingPage');
@@ -208,7 +208,7 @@ describe('Edit Mapping Page directive', function() {
         });
     });
     it('should the the correct state when a save and run button is clicked', function() {
-        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         this.element = $compile(angular.element('<edit-mapping-page></edit-mapping-page>'))(scope);
         scope.$digest();
         controller = this.element.controller('editMappingPage');

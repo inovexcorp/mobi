@@ -24,7 +24,7 @@ describe('RDF Preview Form directive', function() {
     var $compile,
         scope,
         delimitedManagerSvc,
-        mappingManagerSvc,
+        mapperStateSvc,
         $timeout,
         $q,
         controller;
@@ -32,14 +32,14 @@ describe('RDF Preview Form directive', function() {
     beforeEach(function() {
         module('templates');
         module('rdfPreviewForm');
-        mockMappingManager();
+        mockMapperState();
         mockDelimitedManager();
 
-        inject(function(_$compile_, _$rootScope_, _delimitedManagerService_, _mappingManagerService_, _$timeout_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _delimitedManagerService_, _mapperStateService_, _$timeout_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             delimitedManagerSvc = _delimitedManagerService_;
-            mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
             $timeout = _$timeout_;
             $q = _$q_;
         });
@@ -47,17 +47,17 @@ describe('RDF Preview Form directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<rdf-preview-form></rdf-preview-form>'))(scope);
             scope.$digest();
             controller = this.element.controller('rdfPreviewForm');
         });
-        describe('should generate an RDF preview', function() {            
+        describe('should generate an RDF preview', function() {
             it('unless an error occurs', function() {
                 delimitedManagerSvc.previewMap.and.returnValue($q.reject('Error message'));
                 controller.generatePreview();
                 $timeout.flush();
-                expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeFormat);
+                expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.serializeFormat);
                 expect(delimitedManagerSvc.preview).toBe('');
                 expect(controller.errorMessage).toBe('Error message');
             });
@@ -73,7 +73,7 @@ describe('RDF Preview Form directive', function() {
                     controller = this.element.controller('rdfPreviewForm');
                     controller.generatePreview();
                     $timeout.flush();
-                    expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeFormat);
+                    expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.serializeFormat);
                     expect(controller.editorOptions.mode).toBe('application/ld+json');
                     expect(delimitedManagerSvc.preview).toBe(JSON.stringify(this.preview));
                 });
@@ -84,7 +84,7 @@ describe('RDF Preview Form directive', function() {
                     controller = this.element.controller('rdfPreviewForm');
                     controller.generatePreview();
                     $timeout.flush();
-                    expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeFormat);
+                    expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.serializeFormat);
                     expect(controller.editorOptions.mode).toBe('text/turtle');
                     expect(delimitedManagerSvc.preview).toBe(this.preview);
                 });
@@ -95,7 +95,7 @@ describe('RDF Preview Form directive', function() {
                     controller = this.element.controller('rdfPreviewForm');
                     controller.generatePreview();
                     $timeout.flush();
-                    expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, controller.serializeFormat);
+                    expect(delimitedManagerSvc.previewMap).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, controller.serializeFormat);
                     expect(controller.editorOptions.mode).toBe('application/xml');
                     expect(delimitedManagerSvc.preview).toBe(this.preview);
                 });
@@ -104,7 +104,7 @@ describe('RDF Preview Form directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<rdf-preview-form></rdf-preview-form>'))(scope);
             scope.$digest();
         });

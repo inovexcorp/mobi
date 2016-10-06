@@ -54,14 +54,14 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
-                    dvm.fileName = ($filter('splitIRI')(dvm.mm.mapping.id)).end;
+                    dvm.fileName = ($filter('splitIRI')(dvm.state.mapping.id)).end;
                     dvm.format = 'jsonld';
                     dvm.errorMessage = '';
 
                     dvm.run = function() {
                         if (dvm.state.editMapping) {
-                            if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
-                                dvm.mm.deleteMapping(dvm.mm.mapping.id)
+                            if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
+                                dvm.mm.deleteMapping(dvm.state.mapping.id)
                                     .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
                             } else {
                                 saveMapping();
@@ -74,11 +74,11 @@
                         dvm.state.displayRunMappingOverlay = false;
                     }
                     function saveMapping() {
-                        dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id)
+                        dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id)
                             .then(() => runMapping(), errorMessage => dvm.errorMessage = errorMessage);
                     }
                     function runMapping() {
-                        dvm.dm.map(dvm.mm.mapping.id, dvm.format, dvm.fileName);
+                        dvm.dm.map(dvm.state.mapping.id, dvm.format, dvm.fileName);
                         dvm.state.step = dvm.state.selectMappingStep;
                         dvm.state.initialize();
                         dvm.state.resetEdit();

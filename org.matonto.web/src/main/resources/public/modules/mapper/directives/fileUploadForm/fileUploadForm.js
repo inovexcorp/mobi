@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name fileUploadForm
          *
-         * @description 
+         * @description
          * The `fileUploadForm` module only provides the `fileUploadForm` directive which creates
          * a form for uploading delimited data into MatOnto.
          */
@@ -45,20 +45,20 @@
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
          *
-         * @description 
+         * @description
          * `fileUploadForm` is a directive that creates a form for uploaded delimited data into MatOnto
          * using the {@link delimitedManager.service:delimitedManagerService delimitedManagerService}.
-         * If the chosen file is a SV file, the user must select a separator for the columns and selecting 
-         * a new value will automatically upload the file again. Tests whether the selected file is 
+         * If the chosen file is a SV file, the user must select a separator for the columns and selecting
+         * a new value will automatically upload the file again. Tests whether the selected file is
          * compatiable with the current {@link mappingManager.service:mappingManagerService#mapping mapping}
-         * and outputs a list of any invalid data property mappings. The directive is replaced by the contents 
+         * and outputs a list of any invalid data property mappings. The directive is replaced by the contents
          * of its template.
          */
         .directive('fileUploadForm', fileUploadForm);
 
-        fileUploadForm.$inject = ['$q', 'prefixes', 'delimitedManagerService', 'mapperStateService', 'mappingManagerService', 'ontologyManagerService'];
+        fileUploadForm.$inject = ['$q', 'prefixes', 'delimitedManagerService', 'mapperStateService'];
 
-        function fileUploadForm($q, prefixes, delimitedManagerService, mapperStateService, mappingManagerService, ontologyManagerService) {
+        function fileUploadForm($q, prefixes, delimitedManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -68,8 +68,6 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.dm = delimitedManagerService;
-                    dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
                     dvm.errorMessage = '';
                     dvm.fileObj = undefined;
 

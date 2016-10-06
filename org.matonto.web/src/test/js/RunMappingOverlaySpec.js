@@ -51,7 +51,7 @@ describe('Run Mapping Overlay directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('runMappingOverlay');
@@ -66,14 +66,14 @@ describe('Run Mapping Overlay directive', function() {
                 });
                 describe('and it already exists', function() {
                     beforeEach(function() {
-                        mappingManagerSvc.mappingIds = [mappingManagerSvc.mapping.id];
+                        mappingManagerSvc.mappingIds = [mapperStateSvc.mapping.id];
                     });
                     it('unless an error occurs', function() {
                         var step = mapperStateSvc.step;
                         mappingManagerSvc.deleteMapping.and.returnValue($q.reject('Error message'));
                         controller.run();
                         $timeout.flush();
-                        expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
+                        expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
                         expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.map).not.toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(step);
@@ -85,9 +85,9 @@ describe('Run Mapping Overlay directive', function() {
                     it('successfully', function() {
                         controller.run();
                         $timeout.flush();
-                        expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
-                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
-                        expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.format, controller.fileName);
+                        expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
+                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
+                        expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mapperStateSvc.mapping.id, controller.format, controller.fileName);
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe('Run Mapping Overlay directive', function() {
                         controller.run();
                         $timeout.flush();
                         expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
-                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
+                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
                         expect(delimitedManagerSvc.map).not.toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(step);
                         expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
@@ -114,8 +114,8 @@ describe('Run Mapping Overlay directive', function() {
                         controller.run();
                         $timeout.flush();
                         expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
-                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, mappingManagerSvc.mapping.id);
-                        expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.format, controller.fileName);
+                        expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.id);
+                        expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mapperStateSvc.mapping.id, controller.format, controller.fileName);
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe('Run Mapping Overlay directive', function() {
                 controller.run();
                 expect(mappingManagerSvc.deleteMapping).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.format, controller.fileName);
+                expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mapperStateSvc.mapping.id, controller.format, controller.fileName);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                 expect(mapperStateSvc.initialize).toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe('Run Mapping Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
             scope.$digest();
         });
@@ -176,7 +176,7 @@ describe('Run Mapping Overlay directive', function() {
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
-        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         var element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('runMappingOverlay');
@@ -187,7 +187,7 @@ describe('Run Mapping Overlay directive', function() {
         expect(controller.cancel).toHaveBeenCalled();
     });
     it('should call run when the run button is clicked', function() {
-        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         var element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('runMappingOverlay');

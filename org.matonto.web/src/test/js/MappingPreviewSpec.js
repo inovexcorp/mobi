@@ -39,7 +39,7 @@ describe('Mapping Preview directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
-        
+
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -54,7 +54,7 @@ describe('Mapping Preview directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
             scope.$digest();
             controller = this.element.controller('mappingPreview');
@@ -103,7 +103,7 @@ describe('Mapping Preview directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
             scope.$digest();
         });

@@ -50,7 +50,7 @@ describe('Prop Mapping Overlay directive', function() {
 
     describe('should initialize with the correct values', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
         })
         it('if a new property mapping is being created', function() {
             mapperStateSvc.newProp = true;
@@ -65,7 +65,7 @@ describe('Prop Mapping Overlay directive', function() {
             var columnIndex = '0';
             var propMapping = {'@id': 'propMap'};
             propMapping[prefixes.delim + 'columnIndex'] = [{'@value': columnIndex}];
-            mappingManagerSvc.mapping.jsonld.push(propMapping);
+            mapperStateSvc.mapping.jsonld.push(propMapping);
             mapperStateSvc.selectedPropMappingId = propMapping['@id'];
             mappingManagerSvc.getPropIdByMapping.and.returnValue('prop');
             ontologyManagerSvc.getEntity.and.returnValue(prop);
@@ -78,7 +78,7 @@ describe('Prop Mapping Overlay directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('propMappingOverlay');
@@ -89,7 +89,7 @@ describe('Prop Mapping Overlay directive', function() {
             prop[prefixes.rdfs + 'range'] = [{'@id': classObj['@id']}];
             ontologyManagerSvc.getEntity.and.returnValue(classObj);
             var result = controller.getRangeClass(prop);
-            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(classObj['@id'])
+            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(classObj['@id'], mapperStateSvc.sourceOntologies)
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(result).toEqual(classObj);
         });
@@ -107,13 +107,16 @@ describe('Prop Mapping Overlay directive', function() {
                     var newClass = {'@id': 'class'};
                     var newMapping = [newClass];
                     ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                    mappingManagerSvc.addClass.and.returnValue(newMapping);
                     mappingManagerSvc.addObjectProp.and.returnValue(newMapping);
                     mappingManagerSvc.getAllClassMappings.and.callFake(function(mapping) {
                         return _.isEqual(mapping, newMapping) ? [newClass] : [];
                     });
                     controller.set();
-                    expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(controller.selectedProp['@id']);
+                    expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(controller.selectedProp['@id'], mapperStateSvc.sourceOntologies);
                     expect(mappingManagerSvc.getAllClassMappings.calls.count()).toBe(2);
+                    expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
+                    expect(mappingManagerSvc.addClass).toHaveBeenCalled();
                     expect(mappingManagerSvc.addObjectProp).toHaveBeenCalled();
                     expect(mappingManagerSvc.addDataProp).not.toHaveBeenCalled();
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(newClass['@id']);
@@ -126,7 +129,9 @@ describe('Prop Mapping Overlay directive', function() {
                 it('for a data property', function() {
                     ontologyManagerSvc.isObjectProperty.and.returnValue(false);
                     controller.set();
-                    expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(controller.selectedProp['@id']);
+                    expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(controller.selectedProp['@id'], mapperStateSvc.sourceOntologies);
+                    expect(mappingManagerSvc.findSourceOntologyWithClass).not.toHaveBeenCalled();
+                    expect(mappingManagerSvc.addClass).not.toHaveBeenCalled();
                     expect(mappingManagerSvc.addObjectProp).not.toHaveBeenCalled();
                     expect(mappingManagerSvc.addDataProp).toHaveBeenCalled();
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
@@ -142,7 +147,7 @@ describe('Prop Mapping Overlay directive', function() {
                     this.originalIndex = '10';
                     this.propMapping = {'@id': 'prop'};
                     this.propMapping[prefixes.delim + 'columnIndex'] = [{'@value': this.originalIndex}];
-                    mappingManagerSvc.mapping.jsonld.push(this.propMapping);
+                    mapperStateSvc.mapping.jsonld.push(this.propMapping);
                     mapperStateSvc.selectedPropMappingId = this.propMapping['@id'];
                     this.classMappingId = mapperStateSvc.selectedClassMappingId;
                 });

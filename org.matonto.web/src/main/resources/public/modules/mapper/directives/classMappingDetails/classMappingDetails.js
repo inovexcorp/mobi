@@ -69,24 +69,24 @@
                         return !!_.find(dvm.state.invalidProps, {'@id': propMapping['@id']});
                     }
                     dvm.getIriTemplate = function() {
-                        var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                        var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                         var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
                         var localName = _.get(classMapping, "['" + prefixes.delim + "localName'][0]['@value']", '');
                         return prefix + localName;
                     }
                     dvm.getPropName = function(propMapping) {
                         var propId = dvm.mm.getPropIdByMapping(propMapping);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithProp(propId), 'entities'), propId));
+                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies), 'entities'), propId));
                     }
                     dvm.getClassName = function(classMapping) {
                         var classId = dvm.mm.getClassIdByMapping(classMapping);
-                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId), 'entities'), classId));
+                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies), 'entities'), classId));
                     }
                     dvm.getPropValue = function(propMapping) {
                         if (dvm.mm.isDataMapping(propMapping)) {
                             return dvm.dm.getHeader(dvm.getLinkedColumnIndex(propMapping));
                         } else {
-                            return dvm.getClassName(_.find(dvm.mm.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
+                            return dvm.getClassName(_.find(dvm.state.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
                         }
                     }
                     dvm.getLinkedClassId = function(propMapping) {
