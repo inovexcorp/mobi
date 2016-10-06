@@ -31,26 +31,26 @@
 
         function ontologyStateService($rootScope, ontologyManagerService, updateRefsService) {
             var self = this;
+            var om = ontologyManagerService;
             self.states = [];
             self.newState = {active: true};
-            self.om = ontologyManagerService;
             self.ontology = {};
             self.selected = {};
 
             self.afterSave = function(newId) {
                 if (self.state.ontologyId !== newId) {
                     self.state.ontologyId = newId;
-                    self.state.project.entityIRI = self.om.getOntologyIRI(self.ontology);
+                    self.state.project.entityIRI = om.getOntologyIRI(self.ontology);
                 }
                 _.unset(self.state, 'deletedEntities');
             }
 
             self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {
-                _.set(self.om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', isUnsaved);
+                _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', isUnsaved);
             }
 
             self.getUnsaved = function(ontologyId, entityIRI) {
-                return _.get(self.om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', false);
+                return _.get(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', false);
             }
 
             self.hasUnsavedEntities = function(ontology) {
@@ -70,11 +70,11 @@
             }
 
             self.setValid = function(ontologyId, entityIRI, isValid) {
-                _.set(self.om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
+                _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
             }
 
             self.getValid = function(ontologyId, entityIRI) {
-                return _.get(self.om.getEntityById(ontologyId, entityIRI), 'matonto.valid', true);
+                return _.get(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', true);
             }
 
             self.hasInvalidEntities = function(ontology) {
@@ -140,7 +140,7 @@
                 self.setUnsaved(self.state.ontologyId, self.getActiveEntityIRI(), true);
             }
             self.setSelected = function(entityIRI) {
-                self.selected = self.om.getEntityById(self.listItem.ontologyId, entityIRI);
+                self.selected = om.getEntityById(self.listItem.ontologyId, entityIRI);
             }
             self.addState = function(ontologyId, entityIRI, type) {
                 var tabs = {};
@@ -188,7 +188,7 @@
                     self.state = self.newState;
                 } else {
                     self.state = _.find(self.states, {ontologyId});
-                    self.listItem = self.om.getListItemById(ontologyId);
+                    self.listItem = om.getListItemById(ontologyId);
                     setVariables(ontologyId, self.getActiveEntityIRI());
                 }
                 self.state.active = true;
@@ -227,7 +227,7 @@
             self.selectItem = function(entityIRI) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
-                    self.om.getEntityUsages(self.state.ontologyId, entityIRI)
+                    om.getEntityUsages(self.state.ontologyId, entityIRI)
                         .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
                             response => _.set(self.getActivePage(), 'usages', []));
                 }
@@ -348,18 +348,18 @@
                 return result;
             }
             function setVariables(ontologyId, entityIRI) {
-                self.ontology = self.om.getOntologyById(ontologyId);
+                self.ontology = om.getOntologyById(ontologyId);
                 self.setSelected(entityIRI);
             }
             self.goTo = function(iri) {
-                var entity = self.om.getEntityById(self.listItem.ontologyId, iri);
+                var entity = om.getEntityById(self.listItem.ontologyId, iri);
                 if (self.listItem.type === 'vocabulary') {
                     commonGoTo('concepts', iri);
-                } else if (self.om.isClass(entity)) {
+                } else if (om.isClass(entity)) {
                     commonGoTo('classes', iri);
-                } else if (self.om.isProperty(entity)) {
+                } else if (om.isProperty(entity)) {
                     commonGoTo('properties', iri);
-                } else if (self.om.isIndividual(entity)) {
+                } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
                 }
             }
