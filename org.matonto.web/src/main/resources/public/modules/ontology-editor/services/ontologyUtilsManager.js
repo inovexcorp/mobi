@@ -96,5 +96,21 @@
             self.deleteConceptScheme = function() {
                 self.deleteConcept();
             }
+
+            self.isBlankNodeString = function(id) {
+                return _.isString(id) && _.includes(id, '_:b');
+            }
+
+            self.getBlankNodeValue = function(id) {
+                var result;
+                if (self.isBlankNodeString(id)) {
+                    result = _.get(sm.listItem.blankNodes, id, id);
+                }
+                return result;
+            }
+
+            self.isLinkable = function(id) {
+                return _.has(sm.listItem.index, id) && !self.isBlankNodeString(id);
+            }
         }
 })();
