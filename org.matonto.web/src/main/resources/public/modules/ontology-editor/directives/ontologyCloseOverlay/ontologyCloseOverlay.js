@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('ontologyCloseOverlay', ['ontologyManager', 'stateManager'])
+        .module('ontologyCloseOverlay', [])
         .directive('ontologyCloseOverlay', ontologyCloseOverlay);
 
-        ontologyCloseOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];
+        ontologyCloseOverlay.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-        function ontologyCloseOverlay(ontologyManagerService, stateManagerService) {
+        function ontologyCloseOverlay(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,7 @@
                     var dvm = this;
 
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.saveThenClose = function() {
                         var ontology = dvm.om.getOntologyById(dvm.sm.ontologyIdToClose);

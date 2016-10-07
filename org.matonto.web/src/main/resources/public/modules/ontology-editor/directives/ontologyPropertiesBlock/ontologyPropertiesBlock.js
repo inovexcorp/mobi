@@ -27,9 +27,9 @@
         .module('ontologyPropertiesBlock', [])
         .directive('ontologyPropertiesBlock', ontologyPropertiesBlock);
 
-        ontologyPropertiesBlock.$inject = ['stateManagerService', 'ontologyManagerService', 'responseObj', 'prefixes'];
+        ontologyPropertiesBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'responseObj'];
 
-        function ontologyPropertiesBlock(stateManagerService, ontologyManagerService, responseObj, prefixes) {
+        function ontologyPropertiesBlock(ontologyStateService, ontologyManagerService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.properties = _.union(dvm.om.ontologyProperties, dvm.sm.listItem.annotations);
 
@@ -53,9 +53,9 @@
                     }
 
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.sm.key = key;
-                        dvm.sm.index = index;
-                        dvm.sm.showRemoveOverlay = true;
+                        dvm.key = key;
+                        dvm.index = index;
+                        dvm.showRemoveOverlay = true;
                     }
 
                     dvm.editClicked = function(property, index) {

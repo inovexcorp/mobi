@@ -25,7 +25,7 @@ describe('Object Select directive', function() {
         scope,
         element,
         prefixes,
-        stateManagerSvc,
+        ontologyStateSvc,
         responseObj;
 
     beforeEach(function() {
@@ -37,14 +37,14 @@ describe('Object Select directive', function() {
         injectSplitIRIFilter();
         mockOntologyManager();
         mockSettingsManager();
-        mockStateManager();
+        mockOntologyState();
         mockResponseObj();
 
-        inject(function(_ontologyManagerService_, _settingsManagerService_, _responseObj_, _stateManagerService_, _prefixes_) {
+        inject(function(_ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
             ontologyManagerService = _ontologyManagerService_;
             settingsManagerService = _settingsManagerService_;
             responseObj = _responseObj_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
         });
 
@@ -153,7 +153,7 @@ describe('Object Select directive', function() {
         var controller;
 
         beforeEach(function() {
-            stateManagerSvc.state = {ontologyId: 'ontologyId'};
+            ontologyStateSvc.state = {ontologyId: 'ontologyId'};
             controller = element.controller('objectSelect');
         });
         describe('getItemOntologyIri', function() {
@@ -186,11 +186,11 @@ describe('Object Select directive', function() {
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
-                ontologyManagerService.getEntity.and.returnValue({});
+                ontologyManagerService.getEntityById.and.returnValue({});
                 spyOn(controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
-                ontologyManagerService.getEntity.and.returnValue({'@id': 'id'});
+                ontologyManagerService.getEntityById.and.returnValue({'@id': 'id'});
                 var result = controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });
@@ -218,13 +218,13 @@ describe('Object Select directive', function() {
                 it('when getEntityName is undefined', function() {
                     ontologyManagerService.getEntityName.and.returnValue(undefined);
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
                     expect(result).toEqual('test'); // The value of getItemIri
                 });
                 it('when getEntityName is defined', function() {
                     ontologyManagerService.getEntityName.and.returnValue('new');
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
+                    expect(ontologyManagerService.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
                 });
             });
@@ -243,7 +243,7 @@ describe('Object Select directive', function() {
         });
         describe('getBlankNodeValue should return', function() {
             beforeEach(function() {
-                stateManagerSvc.listItem.blankNodes = {
+                ontologyStateSvc.listItem.blankNodes = {
                     '_:b1': 'prop',
                     '_:b2': 'class',
                     '_:b3': 'union',

@@ -27,9 +27,9 @@
         .module('treeItem', [])
         .directive('treeItem', treeItem);
 
-        treeItem.$inject = ['settingsManagerService', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        treeItem.$inject = ['settingsManagerService', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function treeItem(settingsManagerService, ontologyManagerService, stateManagerService, prefixes) {
+        function treeItem(settingsManagerService, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -50,7 +50,7 @@
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     function getCurrentEntityIRI() {
                         return _.get(dvm.currentEntity, 'matonto.originalIRI',
@@ -59,7 +59,7 @@
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(dvm.currentEntity);
+                            return dvm.om.getEntityName(dvm.currentEntity, dvm.sm.state.type);
                         }
                         return getCurrentEntityIRI();
                     }

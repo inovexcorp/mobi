@@ -27,11 +27,9 @@
         .module('conceptHierarchyBlock', [])
         .directive('conceptHierarchyBlock', conceptHierarchyBlock);
 
-        conceptHierarchyBlock.$inject = ['$filter', 'stateManagerService', 'ontologyManagerService',
-            'ontologyUtilsManagerService'];
+        conceptHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function conceptHierarchyBlock($filter, stateManagerService, ontologyManagerService,
-            ontologyUtilsManagerService) {
+        function conceptHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
 

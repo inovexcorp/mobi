@@ -27,20 +27,12 @@
         .module('overviewTab', [])
         .directive('overviewTab', overviewTab);
 
-        overviewTab.$inject = ['stateManagerService', 'ontologyManagerService'];
-
-        function overviewTab(stateManagerService, ontologyManagerService) {
+        function overviewTab() {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/overviewTab/overviewTab.html',
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.sm = stateManagerService;
-                    dvm.om = ontologyManagerService;
-                }
+                scope: {}
             }
         }
 })();

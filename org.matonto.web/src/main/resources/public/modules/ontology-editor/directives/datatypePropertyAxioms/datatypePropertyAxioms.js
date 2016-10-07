@@ -27,9 +27,9 @@
         .module('datatypePropertyAxioms', [])
         .directive('datatypePropertyAxioms', datatypePropertyAxioms);
 
-        datatypePropertyAxioms.$inject = ['stateManagerService', 'prefixes'];
+        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes'];
 
-        function datatypePropertyAxioms(stateManagerService, prefixes) {
+        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,40 +38,31 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.prefixes = prefixes;
-                    dvm.sm = stateManagerService;
-                    dvm.axiomList = [
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'domain',
-                            values: 'subClasses'
-                        },
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'range',
-                            values: 'dataPropertyRange'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'equivalentProperty',
-                            values: 'subDataProperties'
-                        },
-                        {
-                            namespace: prefixes.rdfs,
-                            localName: 'subPropertyOf',
-                            values: 'subDataProperties'
-                        },
-                        {
-                            namespace: prefixes.owl,
-                            localName: 'disjointWith',
-                            values: 'subDataProperties'
-                        }
-                    ];
+                    dvm.sm = ontologyStateService;
+                    dvm.pm = propertyManagerService;
+                    dvm.ro = responseObj;
 
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.sm.key = key;
-                        dvm.sm.index = index;
-                        dvm.sm.showRemoveOverlay = true;
+                        dvm.key = key;
+                        dvm.index = index;
+                        dvm.showRemoveOverlay = true;
+                    }
+
+                    dvm.updateHierarchy = function(axiom, values) {
+                        if (_.get(axiom, 'localName') === 'subPropertyOf') {
+                            _.forEach(values, value => {
+                                dvm.sm.addEntityToHierarchy(dvm.sm.listItem.dataPropertyHierarchy,
+                                    dvm.sm.selected.matonto.originalIRI, dvm.sm.listItem.dataPropertyIndex,
+                                    dvm.ro.getItemIri(value));
+                            });
+                        }
+                    }
+
+                    dvm.removeFromHierarchy = function(axiomObject) {
+                        if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
+                            dvm.sm.deleteEntityFromParentInHierarchy(dvm.sm.listItem.dataPropertyHierarchy,
+                                dvm.sm.selected.matonto.originalIRI, axiomObject['@id'], dvm.sm.listItem.dataPropertyIndex);
+                        }
                     }
                 }
             }

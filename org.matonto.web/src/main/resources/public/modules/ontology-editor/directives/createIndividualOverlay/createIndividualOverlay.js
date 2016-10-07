@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'stateManagerService', 'responseObj', 'prefixes'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes'];
 
-        function createIndividualOverlay($filter, ontologyManagerService, stateManagerService, responseObj, prefixes) {
+        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,7 +42,7 @@
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
                         dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
@@ -87,6 +87,7 @@
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.om.addEntity(dvm.sm.ontology, dvm.individual);
+                        _.set(_.get(listItem, 'index'), dvm.individual['@id'], dvm.sm.ontology.length - 1);
                         // select the new individual
                         dvm.sm.selectItem(dvm.individual['@id']);
                         // hide the overlay

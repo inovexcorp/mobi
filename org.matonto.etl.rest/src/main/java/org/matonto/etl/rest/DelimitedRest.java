@@ -135,5 +135,6 @@ public interface DelimitedRest {
                      @QueryParam("mappingIRI") String mappingIRI,
                      @DefaultValue("jsonld") @QueryParam("format") String format,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                     @DefaultValue(",") @QueryParam("separator") String separator);
+                     @DefaultValue(",") @QueryParam("separator") String separator,
+                     @QueryParam("fileName") String downloadFileName);
 }

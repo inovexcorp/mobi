@@ -65,11 +65,11 @@
                     dvm.downloadFormat = 'jsonld';
 
                     dvm.cancel = function() {
-                        dvm.state.displayDownloadMapping = false;
+                        dvm.state.displayDownloadMappingOverlay = false;
                     }
                     dvm.download = function() {
                         dvm.mm.downloadMapping(dvm.mm.mapping.id, dvm.downloadFormat);
-                        dvm.state.displayDownloadMapping = false;
+                        dvm.state.displayDownloadMappingOverlay = false;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/downloadMappingOverlay/downloadMappingOverlay.html'

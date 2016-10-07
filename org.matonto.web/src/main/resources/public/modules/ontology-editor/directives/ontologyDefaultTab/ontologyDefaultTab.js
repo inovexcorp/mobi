@@ -27,9 +27,9 @@
         .module('ontologyDefaultTab', [])
         .directive('ontologyDefaultTab', ontologyDefaultTab);
 
-        ontologyDefaultTab.$inject = ['ontologyManagerService', 'stateManagerService'];
+        ontologyDefaultTab.$inject = ['ontologyStateService'];
 
-        function ontologyDefaultTab(ontologyManagerService, stateManagerService) {
+        function ontologyDefaultTab(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

@@ -38,7 +38,7 @@ describe('Mapping Overlays directive', function() {
         mockMapperState();
         mockDelimitedManager();
         injectSplitIRIFilter();
-        
+
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -60,8 +60,6 @@ describe('Mapping Overlays directive', function() {
             controller.reset();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toBe(undefined);
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         });
         it('should get the name of a class mapping', function() {
@@ -134,29 +132,29 @@ describe('Mapping Overlays directive', function() {
             scope.$digest();
         });
         it('depending on whether a mapping is being created', function() {
-            mapperStateSvc.displayCreateMapping = true;
+            mapperStateSvc.displayCreateMappingOverlay = true;
             scope.$digest();
             expect(this.element.find('create-mapping-overlay').length).toBe(1);
 
-            mapperStateSvc.displayCreateMapping = false;
+            mapperStateSvc.displayCreateMappingOverlay = false;
             scope.$digest();
             expect(this.element.find('create-mapping-overlay').length).toBe(0);
         });
         it('depending on whether a mapping is being downloaded', function() {
-            mapperStateSvc.displayDownloadMapping = true;
+            mapperStateSvc.displayDownloadMappingOverlay = true;
             scope.$digest();
             expect(this.element.find('download-mapping-overlay').length).toBe(1);
 
-            mapperStateSvc.displayDownloadMapping = false;
+            mapperStateSvc.displayDownloadMappingOverlay = false;
             scope.$digest();
             expect(this.element.find('download-mapping-overlay').length).toBe(0);
         });
         it('depending on whether a mapping configuration is being edited', function() {
-            mapperStateSvc.displayMappingConfig = true;
+            mapperStateSvc.displayMappingConfigOverlay = true;
             scope.$digest();
             expect(this.element.find('mapping-config-overlay').length).toBe(1);
 
-            mapperStateSvc.displayMappingConfig = false;
+            mapperStateSvc.displayMappingConfigOverlay = false;
             scope.$digest();
             expect(this.element.find('mapping-config-overlay').length).toBe(0);
         });

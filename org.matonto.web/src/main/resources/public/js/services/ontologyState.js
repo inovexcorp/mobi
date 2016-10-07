@@ -24,33 +24,33 @@
     'use strict';
 
     angular
-        .module('stateManager', [])
-        .service('stateManagerService', stateManagerService);
+        .module('ontologyState', [])
+        .service('ontologyStateService', ontologyStateService);
 
-        stateManagerService.$inject = ['$rootScope', 'ontologyManagerService', 'updateRefsService'];
+        ontologyStateService.$inject = ['$rootScope', 'ontologyManagerService', 'updateRefsService'];
 
-        function stateManagerService($rootScope, ontologyManagerService, updateRefsService) {
+        function ontologyStateService($rootScope, ontologyManagerService, updateRefsService) {
             var self = this;
+            var om = ontologyManagerService;
             self.states = [];
             self.newState = {active: true};
-            self.om = ontologyManagerService;
             self.ontology = {};
             self.selected = {};
 
             self.afterSave = function(newId) {
                 if (self.state.ontologyId !== newId) {
                     self.state.ontologyId = newId;
-                    self.state.project.entityIRI = self.om.getOntologyIRI(self.ontology);
+                    self.state.project.entityIRI = om.getOntologyIRI(self.ontology);
                 }
                 _.unset(self.state, 'deletedEntities');
             }
 
-            self.setUnsaved = function(ontology, entityIRI, isUnsaved) {
-                _.set(self.om.getEntity(ontology, entityIRI), 'matonto.unsaved', isUnsaved);
+            self.setUnsaved = function(ontologyId, entityIRI, isUnsaved) {
+                _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', isUnsaved);
             }
 
-            self.getUnsaved = function(ontology, entityIRI) {
-                return _.get(self.om.getEntity(ontology, entityIRI), 'matonto.unsaved', false);
+            self.getUnsaved = function(ontologyId, entityIRI) {
+                return _.get(om.getEntityById(ontologyId, entityIRI), 'matonto.unsaved', false);
             }
 
             self.hasUnsavedEntities = function(ontology) {
@@ -69,12 +69,12 @@
                 return _.filter(ontology, {matonto:{created: true}});
             }
 
-            self.setValid = function(ontology, entityIRI, isValid) {
-                _.set(self.om.getEntity(ontology, entityIRI), 'matonto.valid', isValid);
+            self.setValid = function(ontologyId, entityIRI, isValid) {
+                _.set(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', isValid);
             }
 
-            self.getValid = function(ontology, entityIRI) {
-                return _.get(self.om.getEntity(ontology, entityIRI), 'matonto.valid', true);
+            self.getValid = function(ontologyId, entityIRI) {
+                return _.get(om.getEntityById(ontologyId, entityIRI), 'matonto.valid', true);
             }
 
             self.hasInvalidEntities = function(ontology) {
@@ -137,10 +137,10 @@
                 var newIRI = iriBegin + iriThen + iriEnd;
                 updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
                 self.selected['@id'] = newIRI;
-                self.setUnsaved(self.ontology, self.getActiveEntityIRI(), true);
+                self.setUnsaved(self.state.ontologyId, self.getActiveEntityIRI(), true);
             }
             self.setSelected = function(entityIRI) {
-                self.selected = self.om.getEntity(self.ontology, entityIRI);
+                self.selected = om.getEntityById(self.listItem.ontologyId, entityIRI);
             }
             self.addState = function(ontologyId, entityIRI, type) {
                 var tabs = {};
@@ -174,9 +174,6 @@
                             active: true,
                             entityIRI: entityIRI
                         },
-                        schemes: {
-                            active: false
-                        },
                         concepts: {
                             active: false
                         }
@@ -191,8 +188,8 @@
                     self.state = self.newState;
                 } else {
                     self.state = _.find(self.states, {ontologyId});
+                    self.listItem = om.getListItemById(ontologyId);
                     setVariables(ontologyId, self.getActiveEntityIRI());
-                    self.listItem = self.om.getListItemById(ontologyId);
                 }
                 self.state.active = true;
             }
@@ -213,10 +210,16 @@
                 _.remove(self.states, {ontologyId});
             }
             self.getActiveKey = function() {
-                return _.findKey(self.state, ['active', true]);
+                return _.findKey(self.state, ['active', true], 'project');
             }
             self.getActivePage = function() {
                 return self.state[self.getActiveKey()];
+            }
+            self.setActivePage = function(key) {
+                if (_.has(self.state, key)) {
+                    self.getActivePage().active = false;
+                    self.state[key].active = true;
+                }
             }
             self.getActiveEntityIRI = function() {
                 return self.getActivePage().entityIRI;
@@ -224,13 +227,11 @@
             self.selectItem = function(entityIRI) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
-                    self.setSelected(entityIRI);
-                    self.om.getEntityUsages(self.state.ontologyId, entityIRI)
+                    om.getEntityUsages(self.state.ontologyId, entityIRI)
                         .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
                             response => _.set(self.getActivePage(), 'usages', []));
-                } else if (!entityIRI) {
-                    self.selected = undefined;
                 }
+                self.setSelected(entityIRI);
             }
             self.unSelectItem = function() {
                 var activePage = self.getActivePage();
@@ -251,6 +252,46 @@
             }
             self.isSavable = function(ontology, ontologyId) {
                 return self.hasChanges(ontology, ontologyId) && !self.hasInvalidEntities(ontology);
+            }
+            self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
+                var hierarchyItem = {entityIRI};
+                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                if (pathsToEntity.length) {
+                    if (pathsToEntity[0].length > 1) {
+                        var path = pathsToEntity[0];
+                        hierarchyItem = _.find(hierarchy, {entityIRI: path.shift()});
+                        while (path.length > 0) {
+                            hierarchyItem = _.find(hierarchyItem.subEntities, {entityIRI: path.shift()});
+                        }
+                    } else if (_.some(hierarchy, {entityIRI})) {
+                        hierarchyItem = _.remove(hierarchy, hierarchyItem)[0];
+                    }
+                }
+                if (parentIRI) {
+                    _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent =>
+                        parent.subEntities = _.union(_.get(parent, 'subEntities', []), [hierarchyItem]));
+                } else {
+                    hierarchy.push(hierarchyItem);
+                }
+                indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
+            }
+            self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
+                var deletedEntity;
+                _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent => {
+                    if (_.has(parent, 'subEntities')) {
+                        deletedEntity = _.remove(parent.subEntities, {entityIRI})[0];
+                        if (!parent.subEntities.length) {
+                            _.unset(parent, 'subEntities');
+                        }
+                    }
+                });
+                if (_.has(indexObject, entityIRI)) {
+                    _.remove(indexObject[entityIRI], item => item === parentIRI);
+                    if (!indexObject[entityIRI].length) {
+                        _.unset(indexObject, entityIRI);
+                        hierarchy.push(deletedEntity);
+                    }
+                }
             }
             self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
                 var deletedEntity;
@@ -279,6 +320,18 @@
                     }
                 });
             }
+            function getEntities(hierarchy, entityIRI, indexObject) {
+                var results = [];
+                var pathsToEntity = self.getPathsTo(indexObject, entityIRI);
+                _.forEach(pathsToEntity, path => {
+                    var entity = _.find(hierarchy, {entityIRI: path.shift()});
+                    while (path.length > 0) {
+                        entity = _.find(entity.subEntities, {entityIRI: path.shift()});
+                    }
+                    results.push(entity);
+                });
+                return results;
+            }
             self.getPathsTo = function(indexObject, entityIRI) {
                 var result = [];
                 if (_.has(indexObject, entityIRI)) {
@@ -295,8 +348,24 @@
                 return result;
             }
             function setVariables(ontologyId, entityIRI) {
-                self.ontology = self.om.getOntologyById(ontologyId);
+                self.ontology = om.getOntologyById(ontologyId);
                 self.setSelected(entityIRI);
+            }
+            self.goTo = function(iri) {
+                var entity = om.getEntityById(self.listItem.ontologyId, iri);
+                if (self.listItem.type === 'vocabulary') {
+                    commonGoTo('concepts', iri);
+                } else if (om.isClass(entity)) {
+                    commonGoTo('classes', iri);
+                } else if (om.isProperty(entity)) {
+                    commonGoTo('properties', iri);
+                } else if (om.isIndividual(entity)) {
+                    commonGoTo('individuals', iri);
+                }
+            }
+            function commonGoTo(key, iri) {
+                self.setActivePage(key);
+                self.selectItem(iri);
             }
             function initialize() {
                 self.state = self.newState;

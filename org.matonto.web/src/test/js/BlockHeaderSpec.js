@@ -47,7 +47,7 @@ describe('Block header directive', function() {
         it('for a DIV tag', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
-        it('based on .header', function() {
+        it('based on .block-header', function() {
             expect(element.hasClass('block-header')).toBe(true);
         });
     });

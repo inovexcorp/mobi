@@ -24,13 +24,6 @@
     'use strict';
 
     angular
-        /**
-         * @ngdoc overview
-         * @name customHeader
-         *
-         * @description
-         * The `customHeader` module only provides the `customHeader` directive which creates a radio
-         */
         .module('customHeader', ['loginManager'])
         .directive('customHeader', customHeader);
 

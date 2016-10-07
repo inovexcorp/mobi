@@ -73,16 +73,6 @@ describe('File Upload Form directive', function() {
             result = controller.isExcel();
             expect(result).toBe(true);
         });
-        it('should get the name of a data mapping', function() {
-            var result = controller.getDataMappingName('');
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
-            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
-        });
         describe('should upload a file', function() {
             it('unless a file has not been selected', function() {
                 controller.upload();
@@ -145,17 +135,6 @@ describe('File Upload Form directive', function() {
             controller.errorMessage = 'test';
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
-        });
-        it('depending on whether there are invalid columns', function() {
-            mapperStateSvc.invalidProps = [];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.invalid-props').length).toBe(0);
-
-            mapperStateSvc.invalidProps = [{'@id': 'prop', index: 0}];
-            scope.$digest();
-            var invalidProps = angular.element(this.element.querySelectorAll('.invalid-props')[0]);
-            expect(invalidProps).toBeTruthy();
-            expect(invalidProps.querySelectorAll('ul li').length).toBe(mapperStateSvc.invalidProps.length);
         });
     });
 });

@@ -25,14 +25,14 @@
         <block-content>
             <table class="table table-hover">
                 <thead>
-                <tr>
-                    <th ng-repeat="binding in dvm.sparql.data.bindingNames">{{binding}}</th>
-                </tr>
+                    <tr>
+                        <th ng-repeat="binding in dvm.sparql.data.bindingNames">{{binding}}</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="result in dvm.sparql.data.paginatedResults.results">
-                    <td ng-repeat="binding in dvm.sparql.data.bindingNames">{{result[binding].value}}</td>
-                </tr>
+                    <tr ng-repeat="result in dvm.sparql.data.paginatedResults.results">
+                        <td ng-repeat="binding in dvm.sparql.data.bindingNames">{{result[binding].value}}</td>
+                    </tr>
                 </tbody>
             </table>
             <p ng-if="dvm.sparql.errorMessage" class="text-danger message">

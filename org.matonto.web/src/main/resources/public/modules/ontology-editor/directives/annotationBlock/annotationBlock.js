@@ -27,9 +27,9 @@
         .module('annotationBlock', [])
         .directive('annotationBlock', annotationBlock);
 
-        annotationBlock.$inject = ['$filter', 'stateManagerService', 'responseObj'];
+        annotationBlock.$inject = ['ontologyStateService', 'responseObj'];
 
-        function annotationBlock($filter, stateManagerService, responseObj) {
+        function annotationBlock(ontologyStateService, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.openAddOverlay = function() {
                         dvm.sm.editingAnnotation = false;
@@ -51,9 +51,9 @@
                     }
 
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.sm.key = key;
-                        dvm.sm.index = index;
-                        dvm.sm.showRemoveOverlay = true;
+                        dvm.key = key;
+                        dvm.index = index;
+                        dvm.showRemoveOverlay = true;
                     }
 
                     dvm.editClicked = function(annotation, index) {

@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingConfigOverlay
          *
-         * @description 
+         * @description
          * The `mappingConfigOverlay` module only provides the `mappingConfigOverlay` directive which creates
          * an overlay with functionality to edit the configuration of the current
          * {@link mappingManager.service:mappingManagerService#mapping mapping}.
@@ -39,16 +39,15 @@
          * @name mappingConfigOverlay.directive:mappingConfigOverlay
          * @scope
          * @restrict E
-         * @requires  $q
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
-         * `mappingConfigOverlay` is a directive that creates an overlay with functionality to edit the  
+         * @description
+         * `mappingConfigOverlay` is a directive that creates an overlay with functionality to edit the
          * configuration of the current {@link mappingManager.service:mappingManagerService#mapping mapping}.
          * The configuration consists of the source ontology and the base class. If editing a mapping that already
-         * has those two set, a new mapping will be created with the new settings. The directive is replaced by 
+         * has those two set, a new mapping will be created with the new settings. The directive is replaced by
          * the contents of its template.
          */
         .directive('mappingConfigOverlay', mappingConfigOverlay);
@@ -81,10 +80,10 @@
                             _.set(dvm.ontologies, encodeURIComponent(dvm.selectedOntologyId), dvm.mm.sourceOntologies);
                             dvm.classes = getClasses(dvm.mm.sourceOntologies);
                             var classId = dvm.mm.getClassIdByMapping(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld));
-                            dvm.selectedBaseClass = _.find(dvm.classes, {classObj: {'@id': classId}});
+                            dvm.selectedBaseClass = _.get(_.find(dvm.classes, {classObj: {'@id': classId}}), 'classObj');
                         }
                     }
-                    
+
                     dvm.selectOntology = function(ontologyId) {
                         if (_.has(dvm.ontologies, encodeURIComponent(ontologyId))) {
                             dvm.selectedOntologyId = ontologyId;
@@ -119,20 +118,24 @@
                         return _.get(dvm.ontologies, encodeURIComponent(ontologyId));
                     }
                     dvm.set = function() {
-                        if (dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld)) {
-                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(dvm.mm.mapping.id);
+                        var originalSourceOntologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
+                        if (originalSourceOntologyId !== dvm.selectedOntologyId || _.get(dvm.selectedBaseClass, '@id', '') !== dvm.mm.getClassIdByMapping(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld))) {
+                            if (originalSourceOntologyId) {
+                                dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(dvm.mm.mapping.id);
+                            }
+                            dvm.mm.sourceOntologies = dvm.getOntologyClosure(dvm.selectedOntologyId);
+                            dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, dvm.selectedOntologyId);
+                            var ontology = dvm.mm.findSourceOntologyWithClass(dvm.selectedBaseClass['@id']);
+                            dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology.entities, dvm.selectedBaseClass['@id']);
+                            dvm.state.resetEdit();
+                            dvm.state.selectedClassMappingId = _.get(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), "[0]['@id']");
+                            dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
                         }
-                        dvm.mm.sourceOntologies = dvm.getOntologyClosure(dvm.selectedOntologyId);
-                        dvm.mm.mapping.jsonld = dvm.mm.setSourceOntology(dvm.mm.mapping.jsonld, dvm.selectedOntologyId);
-                        var ontology = dvm.mm.findSourceOntologyWithClass(dvm.selectedBaseClass['@id']);
-                        dvm.mm.mapping.jsonld = dvm.mm.addClass(dvm.mm.mapping.jsonld, ontology.entities, dvm.selectedBaseClass['@id']);
-                        dvm.state.resetEdit();
-                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), "[0]['@id']");
-                        dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
-                        dvm.state.displayMappingConfig = false;
+
+                        dvm.state.displayMappingConfigOverlay = false;
                     }
                     dvm.cancel = function() {
-                        dvm.state.displayMappingConfig = false;
+                        dvm.state.displayMappingConfigOverlay = false;
                     }
                     function getClasses(ontologies) {
                         var classes = [];

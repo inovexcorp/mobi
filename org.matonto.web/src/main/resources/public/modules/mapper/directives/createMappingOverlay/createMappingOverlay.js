@@ -71,7 +71,7 @@
                         dvm.state.editMapping = false;
                         dvm.state.newMapping = false;
                         dvm.mm.mapping = undefined;
-                        dvm.state.displayCreateMapping = false;
+                        dvm.state.displayCreateMappingOverlay = false;
                         dvm.mm.sourceOntologies = [];
                     }
                     dvm.continue = function() {
@@ -94,7 +94,7 @@
                             if (dvm.mm.areCompatible()) {
                                 dvm.state.mappingSearchString = '';
                                 dvm.state.step = dvm.state.fileUploadStep;
-                                dvm.state.displayCreateMapping = false;                             
+                                dvm.state.displayCreateMappingOverlay = false;                             
                             } else {
                                 onError('The selected mapping is incompatible with its source ontologies.');
                             }

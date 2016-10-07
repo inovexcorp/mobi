@@ -256,8 +256,10 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     public void mapCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
-        String body = testMap(fileName, MAPPING_IRI, null);
-        isJsonld(body);
+        Response response = testMap(fileName, MAPPING_IRI, null);
+        isJsonld(response.readEntity(String.class));
+        String disposition = response.getStringHeaders().get("Content-Disposition").toString();
+        Assert.assertTrue(disposition.contains(fileName));
     }
 
     @Test
@@ -266,11 +268,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         params.put("format", "turtle");
         params.put("containsHeaders", true);
         params.put("separator", "\t");
+        params.put("fileName", "test");
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
-        String body = testMap(fileName, MAPPING_IRI, params);
-        isNotJsonld(body);
+        Response response = testMap(fileName, MAPPING_IRI, params);
+        isNotJsonld(response.readEntity(String.class));
+        String disposition = response.getStringHeaders().get("Content-Disposition").toString();
+        Assert.assertTrue(disposition.contains(params.get("fileName").toString()));
     }
 
     @Test
@@ -278,20 +283,24 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, MAPPING_IRI, null);
-        isJsonld(body);
+        Response response = testMap(fileName, MAPPING_IRI, null);
+        isJsonld(response.readEntity(String.class));
+        String disposition = response.getStringHeaders().get("Content-Disposition").toString();
+        Assert.assertTrue(disposition.contains(fileName));
     }
     @Test
     public void mapExcelWithParamsTest() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
         params.put("containsHeaders", true);
-
+        params.put("fileName", "test");
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMap(fileName, MAPPING_IRI, params);
-        isNotJsonld(body);
+        Response response = testMap(fileName, MAPPING_IRI, params);
+        isNotJsonld(response.readEntity(String.class));
+        String disposition = response.getStringHeaders().get("Content-Disposition").toString();
+        Assert.assertTrue(disposition.contains(params.get("fileName").toString()));
     }
 
     @Test
@@ -332,8 +341,8 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     public void mapPreviewCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
-        String body = testMapPreview(fileName, "[]", null);
-        isJsonld(body);
+        Response response = testMapPreview(fileName, "[]", null);
+        isJsonld(response.readEntity(String.class));
     }
 
     @Test
@@ -345,8 +354,8 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
-        String body = testMapPreview(fileName, "[]", params);
-        isNotJsonld(body);
+        Response response = testMapPreview(fileName, "[]", params);
+        isNotJsonld(response.readEntity(String.class));
     }
 
     @Test
@@ -354,8 +363,8 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMapPreview(fileName, "[]", null);
-        isJsonld(body);
+        Response response = testMapPreview(fileName, "[]", null);
+        isJsonld(response.readEntity(String.class));
     }
 
     @Test
@@ -366,8 +375,8 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        String body = testMapPreview(fileName, "[]", params);
-        isNotJsonld(body);
+        Response response = testMapPreview(fileName, "[]", params);
+        isNotJsonld(response.readEntity(String.class));
     }
 
     @Test
@@ -396,7 +405,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         }
     }
 
-    private String testMapPreview(String fileName, String jsonld, Map<String, Object> params) {
+    private Response testMapPreview(String fileName, String jsonld, Map<String, Object> params) {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("jsonld", jsonld);
         WebTarget wt = target().path("delimited-files/" + fileName + "/map-preview");
@@ -407,10 +416,10 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         }
         Response response = wt.request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         Assert.assertEquals(200, response.getStatus());
-        return response.readEntity(String.class);
+        return response;
     }
 
-    private String testMap(String fileName, String mappingName, Map<String, Object> params) {
+    private Response testMap(String fileName, String mappingName, Map<String, Object> params) {
         WebTarget wt = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", mappingName);
         if (params != null) {
             for (String k : params.keySet()) {
@@ -419,7 +428,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         }
         Response response = wt.request().get();
         Assert.assertEquals(response.getEntity().toString(), 200, response.getStatus());
-        return response.readEntity(String.class);
+        return response;
     }
 
     private void testResultsRows(Response response, List<String> expectedLines, int rowNum) {
