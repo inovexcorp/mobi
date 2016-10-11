@@ -85,12 +85,30 @@
                 return encodeURIComponent(ontologyId) + '.' + encodeURIComponent(entityIRI);
             }
 
-            self.setOpened = function(ontologyId, entityIRI, isOpened) {
-                _.set(self.state, self.getOpenPath(ontologyId, entityIRI), isOpened);
+            self.setOpened = function(pathString, isOpened) {
+                _.set(self.state, encodeURIComponent(pathString) + '.isOpened', isOpened);
             }
 
-            self.getOpened = function(ontologyId, entityIRI) {
-                return _.get(self.state, self.getOpenPath(ontologyId, entityIRI), false);
+            self.getOpened = function(pathString) {
+                return _.get(self.state, encodeURIComponent(pathString) + '.isOpened', false);
+            }
+
+            self.openAt = function(pathsArray) {
+                var alreadyOpened = _.some(pathsArray, path => {
+                    var pathString = self.listItem.ontologyId;
+                    return _.every(_.slice(path, 0, path.length - 1), pathPart => {
+                        pathString += '.' + pathPart;
+                        return self.getOpened(pathString);
+                    });
+                });
+                if (!alreadyOpened) {
+                    var pathString = self.listItem.ontologyId + '.';
+                    _.forEach(_.slice(_.head(pathsArray), 0, _.head(pathsArray).length - 1), (pathPart, index) => {
+                        pathString += pathPart;
+                        self.setOpened(pathString, true);
+                        pathString += '.';
+                    });
+                }
             }
 
             self.setNoDomainsOpened = function(ontologyId, isOpened) {
@@ -354,18 +372,25 @@
             self.goTo = function(iri) {
                 var entity = om.getEntityById(self.listItem.ontologyId, iri);
                 if (self.listItem.type === 'vocabulary') {
-                    commonGoTo('concepts', iri);
+                    commonGoTo('concepts', iri, 'conceptIndex');
                 } else if (om.isClass(entity)) {
-                    commonGoTo('classes', iri);
-                } else if (om.isProperty(entity)) {
-                    commonGoTo('properties', iri);
+                    commonGoTo('classes', iri, 'classIndex');
+                } else if (om.isDataTypeProperty(entity)) {
+                    commonGoTo('properties', iri, 'dataPropertyIndex');
+                    self.setDataPropertiesOpened(self.listItem.ontologyId, true);
+                } else if (om.isObjectProperty(entity)) {
+                    commonGoTo('properties', iri, 'objectPropertyIndex');
+                    self.setObjectPropertiesOpened(self.listItem.ontologyId, true);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
                 }
             }
-            function commonGoTo(key, iri) {
+            function commonGoTo(key, iri, index) {
                 self.setActivePage(key);
                 self.selectItem(iri);
+                if (index) {
+                    self.openAt(self.getPathsTo(self.listItem[index], iri));
+                }
             }
             function initialize() {
                 self.state = self.newState;

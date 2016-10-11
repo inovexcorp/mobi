@@ -104,7 +104,72 @@ describe('Ontology State service', function() {
             ['node1b','node3b','node3a']
         ];
     });
+    it('setOpened sets the correct property on the state object', function() {
+        var path = 'this.is.the.path';
+        ontologyStateSvc.setOpened(path, true);
+        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.isOpened')).toBe(true);
 
+        ontologyStateSvc.setOpened(path, false);
+        expect(_.get(ontologyStateSvc.state, encodeURIComponent(path) + '.isOpened')).toBe(false);
+    });
+    describe('getOpened gets the correct property value on the state object', function() {
+        it('when path is not found, returns false', function() {
+            var path = 'this.is.the.path';
+            expect(ontologyStateSvc.getOpened(path)).toBe(false);
+        });
+        it('when path is found', function() {
+            var path = 'this.is.the.path';
+            _.forEach([true, false], value => {
+                _.set(ontologyStateSvc.state, encodeURIComponent(path) + '.isOpened', value);
+                expect(ontologyStateSvc.getOpened(path)).toBe(value);
+            });
+        });
+    });
+    describe('openAt', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem = {ontologyId: 'id'};
+        });
+        it('if already opened, does not set anything', function() {
+            var pathsArray = [['path', 'one', 'here'], ['path', 'two', 'here']];
+            ontologyStateSvc.state[ontologyStateSvc.listItem.ontologyId] = {
+                isOpened: true,
+                path: {
+                    isOpened: true,
+                    two: {
+                        isOpened: true
+                    }
+                }
+            };
+            ontologyStateSvc.openAt(pathsArray);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(ontologyStateSvc.listItem.ontologyId) + '.'
+                + encodeURIComponent(_.join(_.slice(pathsArray[0], 0, pathsArray[0].length - 1), '.')) + '.isOpened'))
+                .toBe(undefined);
+        });
+        it('if the whole path to it is not opened, sets the first path provided open', function() {
+            var pathsArray = [['path', 'one', 'here'], ['path', 'two', 'here']];
+            ontologyStateSvc.state[ontologyStateSvc.listItem.ontologyId] = {
+                isOpened: true,
+                path: {
+                    isOpened: false,
+                    two: {
+                        isOpened: true
+                    }
+                }
+            };
+            ontologyStateSvc.openAt(pathsArray);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(ontologyStateSvc.listItem.ontologyId) + '.'
+                + encodeURIComponent(_.join(_.slice(pathsArray[0], 0, pathsArray[0].length - 1), '.')) + '.isOpened'))
+                .toBe(true);
+        });
+        it('if not already opened, sets the first path provided open', function() {
+            var pathsArray = [['path', 'one', 'here'], ['path', 'two', 'here']];
+            delete ontologyStateSvc.state[ontologyStateSvc.listItem.ontologyId];
+            ontologyStateSvc.openAt(pathsArray);
+            expect(_.get(ontologyStateSvc.state, encodeURIComponent(ontologyStateSvc.listItem.ontologyId) + '.'
+                + encodeURIComponent(_.join(_.slice(pathsArray[0], 0, pathsArray[0].length - 1), '.')) + '.isOpened'))
+                .toBe(true);
+        });
+    });
     describe('getPathsTo', function() {
         it('should return all paths to provided node', function() {
             var result = ontologyStateSvc.getPathsTo(indexObject, 'node3a');
@@ -599,12 +664,22 @@ describe('Ontology State service', function() {
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: ''});
             spyOn(ontologyStateSvc, 'setActivePage');
             spyOn(ontologyStateSvc, 'selectItem');
+            spyOn(ontologyStateSvc, 'getPathsTo');
+            spyOn(ontologyStateSvc, 'openAt');
+            ontologyStateSvc.listItem = {
+                classIndex: 'classIndex',
+                conceptIndex: 'conceptIndex',
+                dataPropertyIndex: 'dataPropertyIndex',
+                objectPropertyIndex: 'objectPropertyIndex'
+            }
         });
         it('when it is a vocabulary', function() {
             ontologyStateSvc.listItem = {type: 'vocabulary'};
             ontologyStateSvc.goTo('iri');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+            expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptIndex, 'iri');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.conceptIndex, 'iri'));
         });
         describe('when it is not a vocabulary', function() {
             beforeEach(function() {
@@ -615,21 +690,40 @@ describe('Ontology State service', function() {
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.classIndex, 'iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.classIndex, 'iri'));
             });
-            it('and is a property', function() {
+            it('and is a datatype property', function() {
                 ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isProperty.and.returnValue(true);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyIndex, 'iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.dataPropertyIndex, 'iri'));
+                expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId, true);
+            });
+            it('and is a object property', function() {
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyIndex, 'iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.objectPropertyIndex, 'iri'));
+                expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId, true);
             });
             it('and is an individual', function() {
                 ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isProperty.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
                 ontologyManagerSvc.isIndividual.and.returnValue(true);
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.getPathsTo).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();
             });
         });
     });

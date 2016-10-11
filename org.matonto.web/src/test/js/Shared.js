@@ -472,6 +472,8 @@ function mockOntologyState() {
             this.addDeletedEntity = jasmine.createSpy('addDeletedEntity');
             this.getActiveEntityIRI = jasmine.createSpy('getActiveEntityIRI');
             this.setActivePage = jasmine.createSpy('setActivePage');
+            this.openAt = jasmine.createSpy('openAt');
+            this.goTo = jasmine.createSpy('goTo');
         });
     });
 }

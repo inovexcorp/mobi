@@ -34,15 +34,16 @@
                 restrict: 'E',
                 replace: true,
                 scope: {
-                    hasChildren: '=',
-                    isActive: '=',
-                    isBold: '=',
+                    hasChildren: '<',
+                    isActive: '<',
+                    isBold: '<',
                     onClick: '&'
                 },
                 bindToController: {
                     currentEntity: '=',
                     isOpened: '=',
-                    ontologyId: '='
+                    ontologyId: '=',
+                    path: '='
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
@@ -66,7 +67,7 @@
 
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
-                        dvm.sm.setOpened(dvm.ontologyId, getCurrentEntityIRI(), dvm.isOpened);
+                        dvm.sm.setOpened(dvm.path, dvm.isOpened);
                     }
                 }
             }
