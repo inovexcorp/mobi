@@ -34,7 +34,7 @@
         <li class="container" ng-if="classOpened">
             <ul>
                 <tree-item class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(dvm.sm.ontology, node.entityIRI) track by individual.matonto.originalIRI"
-                           ontology-id="dvm.sm.state.ontologyId" current-entity="individual"
+                           current-entity="individual"
                            is-active="dvm.sm.getActiveEntityIRI() === individual.matonto.originalIRI"
                            on-click="dvm.sm.selectItem(individual.matonto.originalIRI)"></tree-item>
             </ul>
