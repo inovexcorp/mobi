@@ -223,7 +223,6 @@ public class GroupRestImpl implements GroupRest {
                 .filter(userPrincipal -> isInGroup(userPrincipal, groupName))
                 .map(UserPrincipal::getName)
                 .collect(Collectors.toList());
-        logger.info("Deleted group " + groupName);
 
         JSONArray usersJsonArray = JSONArray.fromObject(users);
         return Response.status(200).entity(usersJsonArray.toString()).build();

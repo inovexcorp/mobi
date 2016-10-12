@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name userState
          *
-         * @description 
-         * The `userState` module only provides the `userStateService` service which contains 
-         * various variables to hold the state of the user management page and utility 
+         * @description
+         * The `userState` module only provides the `userStateService` service which contains
+         * various variables to hold the state of the user management page and utility
          * functions to update those variables.
          */
         .module('userState', [])
@@ -38,9 +38,8 @@
          * @ngdoc service
          * @name userState.service:userStateService
          *
-         * @description 
-         * @description 
-         * `userStateService` is a service which contains various variables to hold the 
+         * @description
+         * `userStateService` is a service which contains various variables to hold the
          * state of the user management page and utility functions to update those variables.
          */
         .service('userStateService', userStateService);
@@ -50,56 +49,46 @@
 
             /**
              * @ngdoc property
-             * @name userState.service:userStateService#showGroupsList
+             * @name userState.service:userStateService#filteredGroupList
              * @propertyOf userState.service:userStateService
              * @type {boolean}
              *
-             * @description 
-             * `showGroupsList` holds a boolean indicating whether or not the 
-             * {@link groupsList.directive:groupsList Groups List} should be shown.
+             * @description
+             * `filteredGroupList` holds a boolean indicating whether the
+             * {@link groupsList.directive:groupsList groups list} should be filtered based
+             * on which user is logged in.
              */
-            self.showGroupsList = true;
+            self.filteredGroupList = true;
             /**
              * @ngdoc property
-             * @name userState.service:userStateService#showUsersList
+             * @name userState.service:userStateService#showGroups
              * @propertyOf userState.service:userStateService
              * @type {boolean}
              *
-             * @description 
-             * `showUsersList` holds a boolean indicating whether or not the 
-             * {@link usersList.directive:usersList Users List} should be shown.
+             * @description
+             * `showGroups` holds a boolean indicating whether the
+             * {@link groupsTab.directive:groupsTab groups tab} should be shown.
              */
-            self.showUsersList = false;
+            self.showGroups = true;
             /**
              * @ngdoc property
-             * @name userState.service:userStateService#editGroup
+             * @name userState.service:userStateService#showUsers
              * @propertyOf userState.service:userStateService
              * @type {boolean}
              *
-             * @description 
-             * `editGroup` holds a boolean indicating whether or not a group is being edited
-             * and the {@link groupEditor.directive:groupEditor Group Editor} should be shown.
+             * @description
+             * `showUsers` holds a boolean indicating whether the
+             * {@link usersTab.directive:usersTab users tab} should be shown.
              */
-            self.editGroup = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#editUser
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `editUser` holds a boolean indicating whether or not a user is being edited
-             * and the {@link userEditor.directive:userEditor User Editor} should be shown.
-             */
-            self.editUser = false;
+            self.showUsers = false;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#selectedGroup
              * @propertyOf userState.service:userStateService
              * @type {object}
              *
-             * @description 
-             * `selectedGroup` holds the currently selected group object from the 
+             * @description
+             * `selectedGroup` holds the currently selected group object from the
              * {@link userManager.service:userManagerService#groups groups list}.
              */
             self.selectedGroup = undefined;
@@ -109,82 +98,91 @@
              * @propertyOf userState.service:userStateService
              * @type {object}
              *
-             * @description 
-             * `selectedUser` holds the currently selected user object from the 
+             * @description
+             * `selectedUser` holds the currently selected user object from the
              * {@link userManager.service:userManagerService#users users list}.
              */
             self.selectedUser = undefined;
-
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#showDeleteConfirm
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `showDeleteConfirm` holds a boolean indicating whether or not the delete 
-             * confirmation overlay should be shown.
-             */
-            self.showDeleteConfirm = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#showAddUser
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `showAddUser` holds a boolean indicating whether or not the 
-             * {@link addUserOverlays.directive:addUserOverlays Add User Overlays} should be shown.
-             */
-            self.showAddUser = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#showAddGroup
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `showAddGroup` holds a boolean indicating whether or not the 
-             * {@link addGroupOverlay.directive:addGroupOverlay Add Group Overlay} should be shown.
-             */
-            self.showAddGroup = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#showRemoveMemberConfirm
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description 
-             * `showRemoveMemberConfirm` holds a boolean indicating whether or not the remove 
-             * member confirmation overlay should be shown.
-             */
-            self.showRemoveMemberConfirm = false;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#memberName
              * @propertyOf userState.service:userStateService
              * @type {string}
              *
-             * @description 
+             * @description
              * `memberName` holds the username of the selected group member.
              */
             self.memberName = '';
 
             /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayDeleteConfirm
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayDeleteConfirm` holds a boolean indicating whether or not the delete
+             * confirmation overlay should be shown.
+             */
+            self.displayDeleteConfirm = false;
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayCreateUserOverlay
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayCreateUserOverlay` holds a boolean indicating whether or not the
+             * {@link createUserOverlays.directive:createUserOverlays Create User Overlays} should be shown.
+             */
+            self.displayCreateUserOverlay = false;
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayCreateGroupOverlay
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayCreateGroupOverlay` holds a boolean indicating whether or not the
+             * {@link createGroupOverlay.directive:createGroupOverlay Create Group Overlay} should be shown.
+             */
+            self.displayCreateGroupOverlay = false;
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayChangePasswordOverlay
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayChangePasswordOverlay` holds a boolean indicating whether or not the
+             * {@link changePasswordOverlay.directive:changePasswordOverlay Change Password Overlay} should be shown.
+             */
+            self.displayChangePasswordOverlay = false;
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#displayRemoveMemberConfirm
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayRemoveMemberConfirm` holds a boolean indicating whether or not the remove
+             * member confirmation overlay should be shown.
+             */
+            self.displayRemoveMemberConfirm = false;
+
+            /**
              * @ngdoc method
              * @name userState.service:userStateService#reset
              * @methodOf userState.service:userStateService
-             * 
-             * @description 
+             *
+             * @description
              * Resets all the main state variables back to false and undefined.
              */
             self.reset = function() {
-                self.showGroupsList = false;
-                self.showUsersList = false;
-                self.editGroup = false;
-                self.editUser = false;
                 self.selectedGroup = undefined;
                 self.selectedUser = undefined;
+                self.memberName = '';
+                self.filteredGroupList = true;
             }
         }
 })();

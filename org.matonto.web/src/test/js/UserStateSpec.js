@@ -34,11 +34,9 @@ describe('User State service', function() {
 
     it('should reset variables', function() {
         userStateSvc.reset();
-        expect(userStateSvc.showGroupsList).toBe(false);
-        expect(userStateSvc.showUsersList).toBe(false);
-        expect(userStateSvc.editGroup).toBe(false);
-        expect(userStateSvc.editUser).toBe(false);
-        expect(userStateSvc.selectedGroup).toEqual(undefined);
-        expect(userStateSvc.selectedUser).toEqual(undefined);
+        expect(userStateSvc.selectedGroup).toBeUndefined();
+        expect(userStateSvc.selectedUser).toBeUndefined();
+        expect(userStateSvc.memberName).toBe('');
+        expect(userStateSvc.filteredGroupList).toBe(true);
     });
 });

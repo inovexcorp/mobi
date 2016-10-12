@@ -20,26 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     angular
-        .module('groupsTab', [])
-        .directive('groupsTab', groupsTab);
+        .module('stepProgressBar', [])
+        .directive('stepProgressBar', stepProgressBar);
 
-        groupsTab.$inject = ['userStateService'];
+    function stepProgressBar() {
+        return {
+            restrict: 'E',
+            controllerAs: 'dvm',
+            reaplce: true,
+            scope: {
+                stepNumber: '<',
+                currentStep: '<'
+            },
+            controller: function() {
+                var dvm = this;
 
-        function groupsTab(userStateService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                controller: function() {
-                    var dvm = this;
-                    dvm.state = userStateService;
-                },
-                templateUrl: 'modules/user-management/directives/groupsTab/groupsTab.html'
-            }
-        }
+                dvm.getRange = function(num) {
+                    return _.range(0, num);
+                }
+                dvm.getPercentage = function(totalNum, stepNum) {
+                    return 100/(totalNum - 1) * stepNum;
+                }
+            },
+            templateUrl: 'directives/stepProgressBar/stepProgressBar.html'
+        };
+    }
 })();

@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name groupsPage
          *
-         * @description 
+         * @description
          * The `groupsPage` module only provides the `groupsPage` directive which provides the
-         * {@link groupsList.directive:groupsList groupsList} and 
+         * {@link groupsList.directive:groupsList groupsList} and
          * {@link groupEditor.directive:groupEditor groupEditor} directives.
          */
         .module('groupsPage', [])
@@ -41,23 +41,47 @@
          * @restrict E
          * @requires userState.service:userStateService
          *
-         * @description 
-         * `groupsPage` is a directive that provides the {@link groupsList.directive:groupsList groupsList} 
+         * @description
+         * `groupsPage` is a directive that provides the {@link groupsList.directive:groupsList groupsList}
          * and {@link groupEditor.directive:groupEditor groupEditor} directives depending on the
          * {@link userState.service:userStateService state} of the user management page.
          */
         .directive('groupsPage', groupsPage);
 
-    groupsPage.$inject = ['userStateService'];
+    groupsPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
 
-    function groupsPage(userStateService) {
+    function groupsPage(userStateService, userManagerService, loginManagerService) {
         return {
             restrict: 'E',
+            replace: true,
             controllerAs: 'dvm',
             scope: {},
             controller: function() {
                 var dvm = this;
                 dvm.state = userStateService;
+                dvm.um = userManagerService;
+                dvm.lm = loginManagerService;
+
+                dvm.createGroup = function() {
+                    dvm.state.displayCreateGroupOverlay = true;
+                }
+                dvm.deleteGroup = function() {
+                    dvm.state.displayDeleteConfirm = true;
+                }
+                dvm.editDescription = function() {
+                    console.log('Edit Description');
+                }
+                dvm.removeMember = function() {
+                    dvm.state.displayRemoveMemberConfirm = true;
+                }
+                dvm.addMember = function() {
+                    dvm.um.addUserGroup(dvm.state.memberName, dvm.state.selectedGroup.name).then(response => {
+                        dvm.errorMessage = '';
+                        dvm.state.memberName = '';
+                    }, error => {
+                        dvm.errorMessage = error;
+                    });
+                }
             },
             templateUrl: 'modules/user-management/directives/groupsPage/groupsPage.html'
         };

@@ -39,7 +39,9 @@ describe('User Permissions Input directive', function() {
     describe('in isolated scope', function() {
         beforeEach(function() {
             scope.roles = {};
-            this.element = $compile(angular.element('<user-permissions-input roles="roles"></user-permissions-input>'))(scope);
+            scope.isDisabledWhen = false;
+            scope.onChange = jasmine.createSpy('onChange');
+            this.element = $compile(angular.element('<user-permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></user-permissions-input>'))(scope);
             scope.$digest();
         });
         it('roles should be two way bound', function() {
@@ -51,10 +53,10 @@ describe('User Permissions Input directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            scope.ngModel = false;
-            scope.displayText = '';
+            scope.roles = {};
             scope.isDisabledWhen = false;
-            this.element = $compile(angular.element('<user-permissions-input ng-model="ngModel" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></user-permissions-input>'))(scope);
+            scope.onChange = jasmine.createSpy('onChange');
+            this.element = $compile(angular.element('<user-permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></user-permissions-input>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {

@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name usersPage
          *
-         * @description 
+         * @description
          * The `usersPage` module only provides the `usersPage` directive which provides the
-         * {@link usersList.directive:usersList usersList} and 
+         * {@link usersList.directive:usersList usersList} and
          * {@link userEditor.directive:userEditor userEditor} directives.
          */
         .module('usersPage', [])
@@ -41,24 +41,64 @@
          * @restrict E
          * @requires userState.service:userStateService
          *
-         * @description 
-         * `usersPage` is a directive that provides the {@link usersList.directive:usersList usersList} 
+         * @description
+         * `usersPage` is a directive that provides the {@link usersList.directive:usersList usersList}
          * and {@link userEditor.directive:userEditor userEditor} directives depending on the
          * {@link userState.service:userStateService state} of the user management page.
          */
         .directive('usersPage', usersPage);
 
-    usersPage.$inject = ['userStateService'];
+    usersPage.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];
 
-    function usersPage(userStateService) {
+    function usersPage($q, userStateService, userManagerService, loginManagerService) {
         return {
             restrict: 'E',
+            replace: true,
             controllerAs: 'dvm',
             scope: {},
-            controller: function() {
+            controller: ['$scope', function($scope) {
                 var dvm = this;
                 dvm.state = userStateService;
-            },
+                dvm.um = userManagerService;
+                dvm.lm = loginManagerService;
+                dvm.roles = {admin: dvm.um.isAdmin(_.get(dvm.state.selectedUser, 'username', ''))};
+
+                $scope.$watch('dvm.state.selectedUser', function(newValue, oldValue) {
+                    if (!_.isEqual(newValue, oldValue)) {
+                        dvm.roles.admin = dvm.um.isAdmin(dvm.state.selectedUser.username);
+                    }
+                });
+                dvm.deleteUser = function() {
+                    dvm.state.displayDeleteConfirm = true;
+                }
+                dvm.createUser = function() {
+                    dvm.state.displayCreateUserOverlay = true;
+                }
+                dvm.editProfile = function() {
+                    console.log('Edit profile');
+                }
+                dvm.changePassword = function() {
+                    dvm.state.displayChangePasswordOverlay = true;
+                }
+                dvm.changeRoles = function() {
+                    var requests = [];
+                    if (dvm.roles.admin !== dvm.um.isAdmin(dvm.state.selectedUser.username)) {
+                        if (dvm.roles.admin) {
+                            requests.push(dvm.um.addUserGroup(dvm.state.selectedUser.username, 'admingroup'));
+                        } else {
+                            requests.push(dvm.um.deleteUserGroup(dvm.state.selectedUser.username, 'admingroup'));
+                            requests.push(dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin'));
+                        }
+                    }
+                    if (requests.length) {
+                        $q.all(requests).then(responses => {
+                            dvm.permissionErrorMessage = '';
+                        }, error => {
+                            dvm.permissionErrorMessage = error;
+                        });
+                    }
+                }
+            }],
             templateUrl: 'modules/user-management/directives/usersPage/usersPage.html'
         };
     }

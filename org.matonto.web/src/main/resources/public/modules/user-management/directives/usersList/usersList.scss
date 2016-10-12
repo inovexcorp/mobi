@@ -5,14 +5,14 @@
     .users {
         tr {
             &:hover {
-                cursor: pointer;                
+                cursor: pointer;
             }
             td {
                 &:first-child {
-                    width: 15%;            
+                    width: 15%;
                 }
                 &:last-child {
-                    text-align: right;            
+                    text-align: right;
                 }
             }
         }

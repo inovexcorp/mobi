@@ -20,5 +20,69 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<user-editor ng-if="dvm.state.editUser"></user-editor>
-<users-list ng-if="dvm.state.showUsersList"></users-list>
+<div class="users-page row">
+    <div class="col-xs-4">
+        <block>
+            <block-header>
+                <span>Users</span>
+                <button class="btn btn-link pull-right" ng-click="dvm.createUser()" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)">
+                    <i class="fa fa-plus"></i>Create User
+                </button>
+            </block-header>
+            <block-content>
+                <users-list></users-list>
+            </block-content>
+            <block-footer class="centered">
+                <button class="btn btn-link" ng-click="dvm.deleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.username === dvm.lm.currentUser">
+                    <i class="fa fa-trash"></i>Delete User
+                </button>
+            </block-footer>
+        </block>
+    </div>
+    <div class="col-xs-8">
+        <div class="user-title">
+            <h3>{{dvm.state.selectedUser.username}}</h3>
+        </div>
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="row vertical-half">
+                    <div class="col-xs-12">
+                        <block>
+                            <block-header>
+                                <span>Profile</span>
+                                <!-- <button class="btn btn-link pull-right" ng-click="dvm.editProfile()">
+                                    <i class="fa fa-pencil"></i>Edit
+                                </button> -->
+                            </block-header>
+                            <block-content class="padding">
+                                <p ng-if="dvm.state.selectedUser" class="user-profile">This will be profile information for {{dvm.state.selectedUser.username}}</p>
+                            </block-content>
+                        </block>
+                    </div>
+                </div>
+                <div class="row password-block-row">
+                    <div class="col-xs-12">
+                        <block>
+                            <block-header>
+                                <span>Password</span>
+                            </block-header>
+                            <block-content class="padding">
+                                <button class="btn btn-primary" ng-click="dvm.changePassword()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser)">Change Password</button>
+                            </block-content>
+                        </block>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <block>
+                    <block-header>
+                        <span>Permissions</span>
+                    </block-header>
+                    <block-content class="padding">
+                        <user-permissions-input ng-if="dvm.state.selectedUser" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser)" on-change="dvm.changeRoles()"></user-permissions-input>
+                    </block-content>
+                </block>
+            </div>
+        </div>
+    </div>
+</div>

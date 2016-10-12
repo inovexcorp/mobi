@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name memberTable
          *
-         * @description 
+         * @description
          * The `memberTable` module only provides the `memberTable` directive which creates
          * an editable table of group members.
          */
@@ -43,13 +43,13 @@
          * @requires userState.service:userStateService
          * @requires loginManager.service:loginManagerService
          *
-         * @description 
-         * `memberTable` is a directive that creates a table of the passed members and provides 
-         * functionality for adding members to the and removing members from list. The exact method 
+         * @description
+         * `memberTable` is a directive that creates a table of the passed members and provides
+         * functionality for adding members to the and removing members from list. The exact method
          * of adding and removing is determined by the passed addMember and removeMember functions.
-         * When the "Add Member" link is clicked, a row is added to the table containins a ui-select 
-         * with the available users to add to the member list. Once a user has been selected in the 
-         * ui-select, it will be added to the list. The directive is replaced by the contents of its 
+         * When the "Add Member" link is clicked, a row is added to the table containins a ui-select
+         * with the available users to add to the member list. Once a user has been selected in the
+         * ui-select, it will be added to the list. The directive is replaced by the contents of its
          * template.
          *
          * @param {function} removeMember the method to call when a member is removed from the list
@@ -69,14 +69,14 @@
                 bindToController: {
                     removeMember: '&',
                     addMember: '&',
-                    members: '='
+                    members: '<'
                 },
                 controller: function() {
                     var dvm = this;
                     dvm.state = userStateService;
                     dvm.lm = loginManagerService;
                     dvm.um = userManagerService;
-                    
+
                     dvm.addingMember = false;
                     dvm.selectedUser = undefined;
 

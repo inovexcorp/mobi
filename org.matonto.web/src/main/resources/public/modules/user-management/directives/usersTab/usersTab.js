@@ -27,9 +27,9 @@
         .module('usersTab', [])
         .directive('usersTab', usersTab);
 
-        usersTab.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
+        usersTab.$inject = ['userStateService'];
 
-        function usersTab(userStateService, userManagerService, loginManagerService) {
+        function usersTab(userStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -38,8 +38,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = userStateService;
-                    dvm.um = userManagerService;
-                    dvm.lm = loginManagerService;
                 },
                 templateUrl: 'modules/user-management/directives/usersTab/usersTab.html'
             }

@@ -26,71 +26,70 @@
     angular
         /**
          * @ngdoc overview
-         * @name addUserOverlays
+         * @name createGroupOverlay
          *
          * @description 
-         * The `addUserOverlays` module only provides the `addUserOverlays` directive which creates
-         * overlays for adding a user to MatOnto.
+         * The `createGroupOverlay` module only provides the `createGroupOverlay` directive which creates
+         * an overlay for adding a group to MatOnto.
          */
-        .module('addUserOverlays', [])
+        .module('createGroupOverlay', [])
         /**
          * @ngdoc directive
-         * @name addUserOverlays.directive:addUserOverlays
+         * @name createGroupOverlay.directive:createGroupOverlay
          * @scope
          * @restrict E
          * @requires $q
-         * @requires $timeout
          * @requires userManager.service:userManagerService
          * @requires userState.service:userStateService
+         * @requires loginManager.service:loginManagerService
          *
          * @description 
-         * `addUserOverlays` is a directive that creates overlays with forms to add a user to Matonto.
-         * The first ovelray provides a form for the basic information about the user. The second overlay
-         * provides a form for settings the permissions and roles of the new user.
+         * `createGroupOverlay` is a directive that creates an overlay with a form to add a group to Matonto.
+         * The directive is replaced by the contents of its template.
          */
-        .directive('addUserOverlays', addUserOverlays);
+        .directive('createGroupOverlay', createGroupOverlay);
 
-    addUserOverlays.$inject = ['$q', '$timeout', 'userStateService', 'userManagerService'];
+    createGroupOverlay.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];
 
-    function addUserOverlays($q, $timeout, userStateService, userManagerService) {
+    function createGroupOverlay($q, userStateService, userManagerService, loginManagerService) {
         return {
             restrict: 'E',
             controllerAs: 'dvm',
+            replace: true,
             scope: {},
             controller: function() {
                 var dvm = this;
                 dvm.state = userStateService;
                 dvm.um = userManagerService;
+                dvm.lm = loginManagerService;
+                dvm.members = [dvm.lm.currentUser];
                 dvm.errorMessage = '';
-                $timeout(function() {
-                    dvm.step = 0;                
-                });
-                dvm.roles = {
-                    admin: false
-                };
 
                 dvm.add = function () {
-                    dvm.um.addUser(dvm.username, dvm.password).then(response => {
-                        var requests = [dvm.um.addUserRole(dvm.username, 'user')];
-                        if (dvm.roles.admin) {
-                            requests.push(dvm.um.addUserGroup(dvm.username, 'admingroup'));
-                        }
-                        return $q.all(requests);
+                    dvm.um.addGroup(dvm.name).then(response => {
+                        return $q.all(_.map(dvm.members, member => dvm.um.addUserGroup(member, dvm.name)));
                     }, error => {
                         return $q.reject(error);
-                    }).then(response => {
+                    }).then(responses => {
                         dvm.errorMessage = '';
-                        dvm.step = 2;
-                        dvm.state.showAddUser = false;
+                        dvm.state.displayCreateGroupOverlay = false;
                     }, error => {
                         dvm.errorMessage = error;
                     });
                 };
                 dvm.testUniqueness = function () {
-                    dvm.infoForm.username.$setValidity('uniqueUsername', !_.includes(_.map(dvm.um.users, 'username'), dvm.username));
+                    dvm.form.name.$setValidity('uniqueName', !_.includes(_.map(dvm.um.groups, 'name'), dvm.name));
                 };
+                dvm.addMember = function() {
+                    dvm.members.push(dvm.state.memberName);
+                    dvm.state.memberName = '';
+                }
+                dvm.removeMember = function() {
+                    _.pull(dvm.members, dvm.state.memberName);
+                    dvm.state.memberName = '';
+                }
             },
-            templateUrl: 'modules/user-management/directives/addUserOverlays/addUserOverlays.html'
+            templateUrl: 'modules/user-management/directives/createGroupOverlay/createGroupOverlay.html'
         };
     }
 })();

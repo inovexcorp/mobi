@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Add User Overlays directive', function() {
+describe('Create User Overlays directive', function() {
     var $compile,
         scope,
         userManagerSvc,
@@ -31,18 +31,15 @@ describe('Add User Overlays directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('addUserOverlays');
+        module('createUserOverlays');
         mockUserManager();
         mockUserState();
 
-        inject(function(_userManagerService_, _userStateService_, _$timeout_, _$q_) {
+        inject(function(_userManagerService_, _userStateService_, _$timeout_, _$q_, _$compile_, _$rootScope_) {
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
             $timeout = _$timeout_;
             $q = _$q_;
-        });
-
-        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
@@ -50,16 +47,15 @@ describe('Add User Overlays directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<add-user-overlays></add-user-overlays>'))(scope);
+            this.element = $compile(angular.element('<create-user-overlays></create-user-overlays>'))(scope);
             scope.$digest();
-            $timeout.flush();
-            controller = this.element.controller('addUserOverlays');
+            controller = this.element.controller('createUserOverlays');
         });
         describe('should add a user with the username and password entered', function() {
             beforeEach(function() {
                 controller.username = 'username'
                 controller.password = 'password';
-                userStateSvc.showAddUser = true;
+                userStateSvc.displayCreateUserOverlay = true;
             });
             it('unless an error occurs', function() {
                 userManagerSvc.addUser.and.returnValue($q.reject('Error Message'));
@@ -67,7 +63,7 @@ describe('Add User Overlays directive', function() {
                 $timeout.flush();
                 expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
                 expect(controller.errorMessage).toBe('Error Message');
-                expect(userStateSvc.showAddUser).not.toBe(false);
+                expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
             });
             describe('and the correct roles and groups', function() {
                 it('unless an error occurs', function() {
@@ -78,20 +74,20 @@ describe('Add User Overlays directive', function() {
                     expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
                     expect(userManagerSvc.addUserGroup).not.toHaveBeenCalled();
                     expect(controller.errorMessage).toBe('Error Message');
-                    expect(userStateSvc.showAddUser).not.toBe(false);
+                    expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
 
                     userManagerSvc.addUserRole.and.returnValue($q.when());
                     userManagerSvc.addUserGroup.and.returnValue($q.reject('Error Message'));
                     controller.roles.admin = true;
                     controller.errorMessage = '';
-                    userStateSvc.showAddUser = true;
+                    userStateSvc.displayCreateUserOverlay = true;
                     controller.add();
                     $timeout.flush();
                     expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
                     expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
                     expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(controller.username, 'admingroup');
                     expect(controller.errorMessage).toBe('Error Message');
-                    expect(userStateSvc.showAddUser).not.toBe(false);
+                    expect(userStateSvc.displayCreateUserOverlay).not.toBe(false);
                 });
                 it('successfully', function() {
                     controller.add();
@@ -100,17 +96,17 @@ describe('Add User Overlays directive', function() {
                     expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
                     expect(userManagerSvc.addUserGroup).not.toHaveBeenCalled();
                     expect(controller.errorMessage).toBe('');
-                    expect(userStateSvc.showAddUser).toBe(false);
+                    expect(userStateSvc.displayCreateUserOverlay).toBe(false);
 
                     controller.roles.admin = true;
-                    userStateSvc.showAddUser = true;
+                    userStateSvc.displayCreateUserOverlay = true;
                     controller.add();
                     $timeout.flush();
                     expect(userManagerSvc.addUser).toHaveBeenCalledWith(controller.username, controller.password);
                     expect(userManagerSvc.addUserRole).toHaveBeenCalledWith(controller.username, 'user');
                     expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(controller.username, 'admingroup');
                     expect(controller.errorMessage).toBe('');
-                    expect(userStateSvc.showAddUser).toBe(false);
+                    expect(userStateSvc.displayCreateUserOverlay).toBe(false);
                 });
             });
         });
@@ -129,46 +125,62 @@ describe('Add User Overlays directive', function() {
     });
     describe('fills the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<add-user-overlays></add-user-overlays>'))(scope);
+            this.element = $compile(angular.element('<create-user-overlays></create-user-overlays>'))(scope);
             scope.$digest();
-            $timeout.flush();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('ADD-USER-OVERLAYS');
+            expect(this.element.prop('tagName')).toBe('CREATE-USER-OVERLAYS');
         });
         it('depending on the step', function() {
-            expect(angular.element(this.element.querySelectorAll('.step-number')[0]).text().trim()).toBe('Step 1 of 2');
-            expect(this.element.querySelectorAll('.add-user-info-overlay').length).toBe(1);
-            expect(this.element.querySelectorAll('.add-user-perms-overlay').length).toBe(0);
+            expect(this.element.querySelectorAll('.create-user-info-overlay').length).toBe(1);
+            expect(this.element.querySelectorAll('.create-user-perms-overlay').length).toBe(0);
 
-            controller = this.element.controller('addUserOverlays');
+            controller = this.element.controller('createUserOverlays');
             controller.step = 1;
             scope.$digest();
-            expect(angular.element(this.element.querySelectorAll('.step-number')[0]).text().trim()).toBe('Step 2 of 2');
-            expect(this.element.querySelectorAll('.add-user-info-overlay').length).toBe(0);
-            expect(this.element.querySelectorAll('.add-user-perms-overlay').length).toBe(1);
+            expect(this.element.querySelectorAll('.create-user-info-overlay').length).toBe(0);
+            expect(this.element.querySelectorAll('.create-user-perms-overlay').length).toBe(1);
         });
-        it('with the correct classes based on the username validity', function() {
-            controller = this.element.controller('addUserOverlays');
+        it('with a step progress bar', function() {
+            expect(this.element.find('step-progress-bar').length).toBe(1);
+        });
+        it('with the correct classes based on the info form validity', function() {
+            controller = this.element.controller('createUserOverlays');
+            controller.username = 'username';
+            scope.$digest();
             var inputGroup = angular.element(this.element.querySelectorAll('.username')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(inputGroup.hasClass('has-error')).toBe(false);
+            expect(button.attr('disabled')).toBeFalsy();
 
             controller.infoForm.username.$touched = true;
             controller.infoForm.username.$setValidity('uniqueName', false);
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+        it('with the correct classes based on the permission form validity', function() {
+            controller = this.element.controller('createUserOverlays');
+            controller.step = 1;
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            controller.permissionForm.$setValidity('test', false);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
         });
         it('with a password confirm input', function() {
             expect(this.element.find('password-confirm-input').length).toBe(1);
         });
         it('with a user permissions input', function() {
-            controller = this.element.controller('addUserOverlays');
+            controller = this.element.controller('createUserOverlays');
             controller.step = 1;
             scope.$digest();
             expect(this.element.find('user-permissions-input').length).toBe(1);
         });
         it('depending on whether there is an error', function() {
-            controller = this.element.controller('addUserOverlays');
+            controller = this.element.controller('createUserOverlays');
             controller.step = 1;
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(0);
@@ -177,20 +189,60 @@ describe('Add User Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('with custom buttons to go cancel and continue', function() {
-            var buttons = this.element.find('custom-button');
+        it('with buttons to cancel and go to the next overlay', function() {
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Next'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Next'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Next']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Next']).toContain(angular.element(buttons[1]).text().trim());
         });
-        it('with custom buttons to go cancel and continue', function() {
-            controller = this.element.controller('addUserOverlays');
+        it('with buttons to go back and add', function() {
+            controller = this.element.controller('createUserOverlays');
             controller.step = 1;
             scope.$digest();
-            var buttons = this.element.find('custom-button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
-            expect(['Back', 'Add'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Back', 'Add'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Back', 'Add']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Back', 'Add']).toContain(angular.element(buttons[1]).text().trim());
         });
+    });
+    it('should set the correct state when the cancel button is clicked', function() {
+        var element = $compile(angular.element('<create-user-overlays></create-user-overlays>'))(scope);
+        scope.$digest();
+
+        var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        cancelButton.triggerHandler('click');
+        expect(userStateSvc.displayCreateUserOverlay).toBe(false);
+    });
+    it('should set the correct state when the next button is clicked', function() {
+        var element = $compile(angular.element('<create-user-overlays></create-user-overlays>'))(scope);
+        scope.$digest();
+        controller = element.controller('createUserOverlays');
+
+        var nextButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        nextButton.triggerHandler('click');
+        expect(controller.step).toBe(1);
+    });
+    it('should set the correct state when the back button is clicked', function() {
+        var element = $compile(angular.element('<create-user-overlays></create-user-overlays>'))(scope);
+        scope.$digest();
+        controller = element.controller('createUserOverlays');
+        controller.step = 1;
+        scope.$digest();
+
+        var backButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        backButton.triggerHandler('click');
+        expect(controller.step).toBe(0);
+    });
+    it('should call add when the button is clicked', function() {
+        var element = $compile(angular.element('<create-user-overlays></create-user-overlays>'))(scope);
+        scope.$digest();
+        controller = element.controller('createUserOverlays');
+        controller.step = 1;
+        spyOn(controller, 'add');
+        scope.$digest();
+
+        var addButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        addButton.triggerHandler('click');
+        expect(controller.add).toHaveBeenCalled();
     });
 });

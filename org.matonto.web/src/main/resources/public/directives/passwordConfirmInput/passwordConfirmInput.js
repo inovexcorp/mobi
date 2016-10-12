@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name passwordConfirmInput
          *
-         * @description 
+         * @description
          * The `passwordConfirmInput` module provides the `passwordConfirmInput` directive, which
          * creates two password inputs whose values much match, and the `samePassword` directive,
          * which is used for testing whether the values of the two password inputs match.
@@ -40,9 +40,9 @@
          * @scope
          * @restrict E
          *
-         * @description 
+         * @description
          * `passwordConfirmInput` is a directive that creates two password inputs with validation
-         * to make sure the values of the inputs match each other. TheSecond input is required if 
+         * to make sure the values of the inputs match each other. TheSecond input is required if
          * the first  input has a value, but the first can also be optionally set to required as well.
          * The directive is replaced by the contents of its template.
          *
@@ -57,10 +57,10 @@
          * @name passwordConfirmInput.directive:samePassword
          * @restrict A
          *
-         * @description 
-         * `samePassword` is a directive which tests whether the ngModel value is the same as the 
-         * evaluated value of the password variable. It requires the parent element to have an ngModel. 
-         * If the ngModel value does not match the evaluated value, it sets the samePassword validity 
+         * @description
+         * `samePassword` is a directive which tests whether the ngModel value is the same as the
+         * evaluated value of the password variable. It requires the parent element to have an ngModel.
+         * If the ngModel value does not match the evaluated value, it sets the samePassword validity
          * of the parent element to false.
          */
         .directive('samePassword', samePassword);
@@ -88,9 +88,8 @@
                 controllerAs: 'dvm',
                 scope: {
                     password: '=',
-                    toConfirm: '=',
-                    label: '=',
-                    required: '=?'
+                    label: '<',
+                    required: '<?'
                 },
                 link: function(scope, el, attrs, form) {
                     scope.form = form;

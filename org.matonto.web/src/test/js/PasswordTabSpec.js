@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Change Password Page directive', function() {
+describe('Password Tab directive', function() {
     var $compile,
         scope,
         userManagerSvc,

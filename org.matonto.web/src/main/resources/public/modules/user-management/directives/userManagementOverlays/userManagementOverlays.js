@@ -28,8 +28,8 @@
          * @ngdoc overview
          * @name userManagementOverlays
          *
-         * @description 
-         * The `userManagementOverlays` module only provides the `userManagementOverlays` directive 
+         * @description
+         * The `userManagementOverlays` module only provides the `userManagementOverlays` directive
          * which provides all overlays used in the user management page.
          */
         .module('userManagementOverlays', [])
@@ -41,8 +41,8 @@
          * @requires userState.service:userStateService
          * @requires userManager.service:userManagerService
          *
-         * @description 
-         * `userManagementOverlays` is a directive that creates all of the overlays used in the user 
+         * @description
+         * `userManagementOverlays` is a directive that creates all of the overlays used in the user
          * management page. Those overlays are {@link addGroupOverlay.directive:addGroupOverlay addGroupOverlay},
          * {@link addUserOverlays.directive:addUserOverlays addUserOverlays},
          * and several {@link confirmationOverlay.directive:confirmationOverlay confirmationOverlays}.
@@ -67,7 +67,7 @@
                         dvm.um.deleteGroup(dvm.state.selectedGroup.name).then(response => {
                             dvm.errorMessage = '';
                             dvm.state.selectedGroup = undefined;
-                            dvm.state.showDeleteConfirm = false;
+                            dvm.state.displayDeleteConfirm = false;
                         }, error => {
                             dvm.errorMessage = error;
                         });
@@ -75,7 +75,7 @@
                         dvm.um.deleteUser(dvm.state.selectedUser.username).then(response => {
                             dvm.errorMessage = '';
                             dvm.state.selectedUser = undefined;
-                            dvm.state.showDeleteConfirm = false;
+                            dvm.state.displayDeleteConfirm = false;
                         }, error => {
                             dvm.errorMessage = error;
                         });
@@ -86,7 +86,7 @@
                     dvm.um.deleteUserGroup(dvm.state.memberName, dvm.state.selectedGroup.name).then(response => {
                         dvm.errorMessage = '';
                         dvm.state.memberName = '';
-                        dvm.state.showRemoveMemberConfirm = false;
+                        dvm.state.displayRemoveMemberConfirm = false;
                     }, error => {
                         dvm.errorMessage = error;
                     });

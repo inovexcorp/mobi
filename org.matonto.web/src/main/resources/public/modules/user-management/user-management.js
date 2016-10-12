@@ -26,20 +26,18 @@
     angular
         .module('user-management', [
             /* Custom directives */
-            // 'addGroupOverlay',
-            // 'addUserOverlays',
-            // 'groupEditor',
-            // 'groupsList',
-            // 'groupsPage',
+            'changePasswordOverlay',
+            'createGroupOverlay',
+            'createUserOverlays',
+            'groupsList',
+            'groupsPage',
             'groupsTab',
-            // 'memberTable',
-            // 'userEditor',
-            // 'userManagementOverlays',
-            // 'userManagementSideBar',
+            'memberTable',
+            'userManagementOverlays',
             'userManagementTabset',
-            // 'userPermissionsInput',
-            // 'usersList',
-            // 'usersPage',
+            'userPermissionsInput',
+            'usersList',
+            'usersPage',
             'usersTab',
 
             /* Custom services */

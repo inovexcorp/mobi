@@ -23,42 +23,143 @@
 describe('Groups Page directive', function() {
     var $compile,
         scope,
-        userStateSvc;
+        userStateSvc,
+        userManagerSvc,
+        loginManagerSvc,
+        $timeout,
+        $q;
 
     beforeEach(function() {
         module('templates');
         module('groupsPage');
         mockUserState();
-        
-        inject(function(_userStateService_, _$compile_, _$rootScope_) {
+        mockUserManager();
+        mockLoginManager();
+
+        inject(function(_userStateService_, _userManagerService_, _loginManagerService_, _$timeout_, _$q_, _$compile_, _$rootScope_) {
             userStateSvc = _userStateService_;
+            userManagerSvc = _userManagerService_;
+            userStateSvc = _userStateService_;
+            $timeout = _$timeout_;
+            $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
         });
     });
 
-    describe('contains the correct html', function() {
+    describe('controller methods', function() {
+        beforeEach(function() {
+            this.element = $compile(angular.element('<groups-page></groups-page>'))(scope);
+            scope.$digest();
+            controller = this.element.controller('groupsPage');
+        });
+        it('should set the correct state for creating a group', function() {
+            controller.createGroup();
+            expect(userStateSvc.displayCreateGroupOverlay).toBe(true);
+        });
+        it('should set the correct state for deleting a group', function() {
+            controller.deleteGroup();
+            expect(userStateSvc.displayDeleteConfirm).toBe(true);
+        });
+        it('should set the correct state for removing a member', function() {
+            controller.removeMember();
+            expect(userStateSvc.displayRemoveMemberConfirm).toBe(true);
+        });
+        describe('should add a group member', function() {
+            beforeEach(function() {
+                this.username = userStateSvc.memberName = 'user';
+                userStateSvc.selectedGroup = {name: 'group'};
+            });
+            it('unless an error occurs', function() {
+                userManagerSvc.addUserGroup.and.returnValue($q.reject('Error message'));
+                controller.addMember();
+                $timeout.flush();
+                expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.name);
+                expect(userStateSvc.memberName).toBe(this.username);
+                expect(controller.errorMessage).toBe('Error message');
+            });
+            it('successfully', function() {
+                controller.addMember();
+                $timeout.flush();
+                expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.name);
+                expect(controller.errorMessage).toBe('');
+                expect(userStateSvc.memberName).toBe('');
+            });
+        });
+    });
+    describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             this.element = $compile(angular.element('<groups-page></groups-page>'))(scope);
             scope.$digest();
         });
-        it('depending whether a group is being edited', function() {
-            userStateSvc.editGroup = true;
-            scope.$digest();
-            expect(this.element.find('group-editor').length).toBe(1);
-
-            userStateSvc.editGroup = false;
-            scope.$digest();
-            expect(this.element.find('group-editor').length).toBe(0);
+        it('for wrapping containers', function() {
+            expect(this.element.hasClass('groups-page')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.col-xs-4').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
         });
-        it('depending whether the groups list should be shown', function() {
-            userStateSvc.showGroupsList = true;
-            scope.$digest();
+        it('with blocks', function() {
+            expect(this.element.find('block').length).toBe(3);
+        });
+        it('with a groups list', function() {
             expect(this.element.find('groups-list').length).toBe(1);
-
-            userStateSvc.showGroupsList = false;
-            scope.$digest();
-            expect(this.element.find('groups-list').length).toBe(0);
         });
+        it('with buttons for creating a group and deleting a group', function() {
+            var createButton = this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0];
+            expect(createButton).toBeDefined();
+            expect(angular.element(createButton).text().trim()).toContain('Create');
+
+            var deleteButton = this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0];
+            expect(deleteButton).toBeDefined();
+            expect(angular.element(deleteButton).text().trim()).toContain('Delete');
+        });
+        it('depending on whether a group is selected', function() {
+            userManagerSvc.isAdmin.and.returnValue(true);
+            scope.$digest();
+            var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+            expect(this.element.querySelectorAll('.col-xs-8 .group-description').length).toBe(0);
+            expect(this.element.find('member-table').length).toBe(0);
+            expect(deleteButton.attr('disabled')).toBeTruthy();
+
+            userStateSvc.selectedGroup = {name: 'group', members: []};
+            scope.$digest();
+            expect(this.element.querySelectorAll('.col-xs-8 .group-description').length).toBe(1);
+            expect(this.element.find('member-table').length).toBe(1);
+            expect(deleteButton.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether the current user is an admin', function() {
+            userStateSvc.selectedGroup = {name: 'group', members: []};
+            userManagerSvc.isAdmin.and.returnValue(false);
+            scope.$digest();
+            var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+            var createButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
+            expect(deleteButton.attr('disabled')).toBeTruthy();
+            expect(createButton.attr('disabled')).toBeTruthy();
+
+            userManagerSvc.isAdmin.and.returnValue(true);
+            scope.$digest();
+            expect(deleteButton.attr('disabled')).toBeFalsy();
+            expect(createButton.attr('disabled')).toBeFalsy();
+        });
+    });
+    it('should call createGroup when the button is clicked', function() {
+        var element = $compile(angular.element('<groups-page></groups-page>'))(scope);
+        scope.$digest();
+        controller = element.controller('groupsPage');
+        spyOn(controller, 'createGroup');
+
+        var createButton = angular.element(element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
+        createButton.triggerHandler('click');
+        expect(controller.createGroup).toHaveBeenCalled();
+    });
+    it('should call deleteGroup when the button is clicked', function() {
+        var element = $compile(angular.element('<groups-page></groups-page>'))(scope);
+        scope.$digest();
+        controller = element.controller('groupsPage');
+        spyOn(controller, 'deleteGroup');
+
+        var deleteButton = angular.element(element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+        deleteButton.triggerHandler('click');
+        expect(controller.deleteGroup).toHaveBeenCalled();
     });
 });

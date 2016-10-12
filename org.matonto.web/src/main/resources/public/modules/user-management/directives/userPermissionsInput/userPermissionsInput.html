@@ -22,5 +22,5 @@
   -->
 <div class="user-permissions-input">
     <h3>Role</h3>
-    <checkbox ng-model="roles.admin" display-text="'Admin'"></checkbox>
+    <checkbox ng-model="roles.admin" display-text="'Admin'" is-disabled-when="isDisabledWhen" change-event="onChange()"></checkbox>
 </div>

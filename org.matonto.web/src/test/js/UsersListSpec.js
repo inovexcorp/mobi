@@ -50,12 +50,10 @@ describe('Users List directive', function() {
             scope.$digest();
             controller = this.element.controller('usersList');
         });
-        it('should set the correct state for editing a user', function() {
+        it('should set the selected user when clicked', function() {
             var user = {username: 'user'};
-            controller.editUser(user);
+            controller.onClick(user);
             expect(userStateSvc.selectedUser).toEqual(user);
-            expect(userStateSvc.showUsersList).toBe(false);
-            expect(userStateSvc.editUser).toBe(true);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -65,72 +63,48 @@ describe('Users List directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('users-list')).toBe(true);
-            expect(this.element.querySelectorAll('.users').length).toBe(1);
         });
         it('depending on how many users there are', function() {
-            userManagerSvc.users = [{}];
-            controller = this.element.controller('usersList');
-            scope.$digest();
-            expect(this.element.querySelectorAll('.users tr').length).toBe(userManagerSvc.users.length);
-        });
-        it('depending on which users is selected', function() {
-            controller = this.element.controller('usersList');
-            userManagerSvc.users = [{}];
-            scope.$digest();
-            var userItem = angular.element(this.element.querySelectorAll('.users tr')[0]);
-            expect(userItem.hasClass('active')).toBe(false);
+            expect(this.element.find('li').length).toBe(0);
 
-            userStateSvc.selectedUser = userManagerSvc.users[0];
+            userManagerSvc.users = [{}];
+            controller = this.element.controller('usersList');
             scope.$digest();
-            expect(userItem.hasClass('active')).toBe(true);
+            expect(this.element.find('li').length).toBe(userManagerSvc.users.length);
+        });
+        it('depending on which user is selected', function() {
+            var user = {username: 'user'};
+            userManagerSvc.users = [user];
+            scope.$digest();
+            var userLink = angular.element(this.element.querySelectorAll('li a')[0]);
+            expect(userLink.hasClass('active')).toBe(false);
+
+            userStateSvc.selectedUser = user;
+            scope.$digest();
+            expect(userLink.hasClass('active')).toBe(true);
         });
         it('depending on whether the user in the list is an admin', function() {
             controller = this.element.controller('usersList');
             userManagerSvc.users = [{}];
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.users tr td .admin').length).toBe(0);
+            expect(this.element.querySelectorAll('li .admin').length).toBe(0);
 
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.users tr td .admin').length).toBe(1);
-        });
-        it('depending on whether the current user is an admin', function() {
-            controller = this.element.controller('usersList');
-            userManagerSvc.users = [{}];
-            userManagerSvc.isAdmin.and.returnValue(false);
-            scope.$digest();
-            var editButton = angular.element(this.element.querySelectorAll('.users tr td:last-child button')[0]);
-            expect(editButton.attr('disabled')).toBeTruthy();
-
-            userManagerSvc.isAdmin.and.returnValue(true);
-            scope.$digest();
-            expect(editButton.attr('disabled')).toBeFalsy();
+            expect(this.element.querySelectorAll('li .admin').length).toBe(1);
         });
     });
-    it('should set the selected user when a row is clicked', function() {
+    it('should call onClick when a group is clicked', function() {
+        var user = {username: 'user'};
+        userManagerSvc.users = [user];
         var element = $compile(angular.element('<users-list></users-list>'))(scope);
         scope.$digest();
         controller = element.controller('usersList');
-        var user = {};
-        userManagerSvc.users = [user];
-        scope.$digest();
+        spyOn(controller, 'onClick');
 
-        var userItem = angular.element(element.querySelectorAll('.users tr')[0]);
-        userItem.triggerHandler('click');
-        expect(userStateSvc.selectedUser).toEqual(user);
-    });
-    it('should call editUser when a edit button is clicked', function() {
-        var element = $compile(angular.element('<users-list></users-list>'))(scope);
-        scope.$digest();
-        controller = element.controller('usersList');
-        var user = {};
-        userManagerSvc.users = [user];
-        spyOn(controller, 'editUser');
-        scope.$digest();
-
-        var editButton = angular.element(element.querySelectorAll('.users tr td:last-child button')[0]);
-        editButton.triggerHandler('click');
-        expect(controller.editUser).toHaveBeenCalledWith(user);
+        var userLink = angular.element(element.querySelectorAll('li a')[0]);
+        userLink.triggerHandler('click');
+        expect(controller.onClick).toHaveBeenCalledWith(user);
     });
 });

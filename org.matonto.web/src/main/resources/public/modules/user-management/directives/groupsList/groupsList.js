@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name groupsList
          *
-         * @description 
+         * @description
          * The `groupsList` module only provides the `groupsList` directive which creates
          * an interactable list of all {@link userManager.service:userManagerService#groups groups}.
          */
@@ -42,43 +42,45 @@
          * @requires userState.service:userStateService
          * @requires loginManager.service:loginManagerService
          *
-         * @description 
+         * @description
          * `groupsList` is a directive that creates a table containing different subsets of the
-         * {@link userManager.service:userManagerService#groups groups} list depending on which 
-         * tab is selected. There is a tab for only groups the 
-         * {@link loginManager.service:loginManagerService#currentUser current user} is in and a 
-         * tab for all MatOnto groups. Groups can only be edited by admin users. The directive is 
+         * {@link userManager.service:userManagerService#groups groups} list depending on which
+         * tab is selected. There is a tab for only groups the
+         * {@link loginManager.service:loginManagerService#currentUser current user} is in and a
+         * tab for all MatOnto groups. Groups can only be edited by admin users. The directive is
          * replaced by the contents of its template.
          */
-        .directive('groupsList', groupsList);
+        .directive('groupsList', groupsList)
+        .filter('filterGroups', filterGroups);
 
-        groupsList.$inject = ['userStateService', 'userManagerService', 'loginManagerService'];
+        filterGroups.$inject = ['userStateService', 'loginManagerService'];
 
-        function groupsList(userStateService, userManagerService, loginManagerService) {
+        function filterGroups(userStateService, loginManagerService) {
+            return function(groupList) {
+                var arr = groupList;
+                if (userStateService.filteredGroupList) {
+                    arr = _.filter(arr, group => _.includes(group.members, loginManagerService.currentUser));
+                }
+                return arr;
+            }
+        }
+
+        groupsList.$inject = ['userStateService', 'userManagerService'];
+
+        function groupsList(userStateService, userManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-                    groups: '<'
-                },
+                scope: {},
                 controller: function() {
                     var dvm = this;
                     dvm.state = userStateService;
                     dvm.um = userManagerService;
-                    dvm.lm = loginManagerService;
 
                     dvm.onClick = function(group) {
                         dvm.state.selectedGroup = group;
                     }
-                    /*dvm.editGroup = function(group) {
-                        dvm.state.selectedGroup = group;
-                        dvm.state.showGroupsList = false;
-                        dvm.state.editGroup = true;
-                    }
-                    dvm.getGroups = function() {
-                        return dvm.full ? dvm.um.groups : _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
-                    }*/
                 },
                 templateUrl: 'modules/user-management/directives/groupsList/groupsList.html'
             }

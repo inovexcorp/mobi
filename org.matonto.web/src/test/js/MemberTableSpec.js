@@ -49,7 +49,7 @@ describe('Member Table directive', function() {
         });
     });
 
-    describe('in isolated scope', function() {
+    describe('controller variable', function() {
         beforeEach(function() {
             scope.members = [];
             scope.removeMember = jasmine.createSpy('removeMember');
@@ -58,10 +58,10 @@ describe('Member Table directive', function() {
             scope.$digest();
             controller = this.element.controller('memberTable');
         });
-        it('members should be two way bound', function() {
+        it('members should be one way bound', function() {
             controller.members = [''];
             scope.$digest();
-            expect(scope.members).toEqual(['']);
+            expect(scope.members).toEqual([]);
         });
         it('removeMember should be called in parent scope when invoked', function() {
             controller.removeMember();
@@ -90,7 +90,7 @@ describe('Member Table directive', function() {
             });
         });
         it('should get the list of available users', function() {
-            userManagerSvc.users.push({username: 'user1'});
+            userManagerSvc.users.push({username: 'user1'}, {username: 'user2'});
             var result = controller.getAvailableUsers();
             _.forEach(result, function(user, idx) {
                 expect(scope.members).not.toContain(user.username);
@@ -122,6 +122,7 @@ describe('Member Table directive', function() {
             expect(this.element.querySelectorAll('tr.member').length).toBe(scope.members.length);
         });
         it('depending on whether there are users available to add', function() {
+            userManagerSvc.isAdmin.and.returnValue(true);
             expect(this.element.querySelectorAll('.add-member').length).toBe(0);
 
             userManagerSvc.users.push({username: 'user2'});
@@ -141,6 +142,7 @@ describe('Member Table directive', function() {
             expect(this.element.find('ui-select').length).toBe(1);
         });
         it('depending on whether a user in the list is the current user', function() {
+            userManagerSvc.isAdmin.and.returnValue(true);
             var removeButton = angular.element(this.element.querySelectorAll('.member td:last-child button')[0]);
             loginManagerSvc.currentUser = 'user1';
             scope.$digest();
@@ -169,6 +171,7 @@ describe('Member Table directive', function() {
         scope.members = [];
         scope.removeMember = jasmine.createSpy('removeMember');
         scope.addMember = jasmine.createSpy('addMember');
+        userManagerSvc.isAdmin.and.returnValue(true);
         var element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
         scope.$digest();
         controller = element.controller('memberTable');

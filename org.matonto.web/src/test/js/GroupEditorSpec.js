@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Group Editor directive', function() {
+/*describe('Group Editor directive', function() {
     var $compile,
         scope,
         userManagerSvc,
@@ -92,4 +92,4 @@ describe('Group Editor directive', function() {
             expect(this.element.find('member-table').length).toBe(1);
         });
     });
-});
+});*/

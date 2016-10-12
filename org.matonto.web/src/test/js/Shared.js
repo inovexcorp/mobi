@@ -555,18 +555,15 @@ function mockUserManager() {
 function mockUserState() {
     module(function($provide) {
         $provide.service('userStateService', function($q) {
-            this.showGroupsList = false;
-            this.showUsersList = false;
-            this.editGroup = false;
-            this.editUser = false;
+            this.showGroups = false;
+            this.showUsers = false;
             this.selectedGroup = undefined;
             this.selectedUser = undefined;
-            this.showDeleteConfirm = false;
-            this.showAddUser = false;
-            this.showAddGroup = false;
-            this.showAddMembers = false;
-            this.showRemoveMemberConfirm = false;
             this.memberName = '';
+            this.displayDeleteConfirm = false;
+            this.displayCreateUserOverlay = false;
+            this.displayCreateGroupOverlay = false;
+            this.displayRemoveMemberConfirm = false;
             this.reset = jasmine.createSpy('reset');
         });
     })

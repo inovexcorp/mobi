@@ -38,11 +38,11 @@ describe('User Manager service', function() {
     it('should set the correct initial state for users and groups', function() {
         var users = ['user'];
         var userRoles = ['user'];
-        var userGroups = ['group'];
+        var groupUsers = ['users'];
         var groups = {group: 'group'};
         $httpBackend.whenGET('/matontorest/users').respond(200, users);
         $httpBackend.whenGET('/matontorest/users/user/roles').respond(200, userRoles);
-        $httpBackend.whenGET('/matontorest/users/user/groups').respond(200, userGroups);
+        $httpBackend.whenGET('/matontorest/groups/group/users').respond(200, groupUsers);
         $httpBackend.whenGET('/matontorest/groups').respond(200, groups);
         $httpBackend.flush();
         expect(userManagerSvc.users.length).toBe(users.length);
@@ -67,10 +67,10 @@ describe('User Manager service', function() {
     it('should correctly set the list of groups', function(done) {
         $httpBackend.whenGET('/matontorest/users').respond(200, ['user']);
         $httpBackend.whenGET('/matontorest/users/user/roles').respond(200, []);
-        var userGroups = ['group'];
+        var groupUsers = ['user'];
         var groups = {group: ['group']};
         $httpBackend.whenGET('/matontorest/groups').respond(200, groups);
-        $httpBackend.whenGET('/matontorest/users/user/groups').respond(200, userGroups);
+        $httpBackend.whenGET('/matontorest/groups/group/users').respond(200, groupUsers);
         userManagerSvc.setGroups().then(function(response) {
             var keys = _.keys(groups);
             expect(userManagerSvc.groups.length).toBe(keys.length);
@@ -550,12 +550,12 @@ describe('User Manager service', function() {
             expect(result).toBe(false);
         });
         it('based on group roles', function() {
-            userManagerSvc.users = [{username: 'user', roles: []}];
+            userManagerSvc.users = [{username: 'user'}];
             userManagerSvc.groups = [{name: 'group', roles: ['admin'], members: ['user']}];
             var result = userManagerSvc.isAdmin(this.username);
             expect(result).toBe(true);
 
-            userManagerSvc.groups = [{name: 'group', roles: [], members: ['user']}];
+            userManagerSvc.groups = [{name: 'group', members: ['user']}];
             result = userManagerSvc.isAdmin(this.username);
             expect(result).toBe(false);
         });

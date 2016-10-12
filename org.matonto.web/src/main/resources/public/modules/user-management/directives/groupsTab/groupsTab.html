@@ -20,32 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="groups-tab">
+<div class="groups-tab full-height">
     <tabset class="centered">
-        <tab heading="'My Groups'" active="true">
-            <div class="row">
-                <div class="col-xs-4">
-                    <block>
-                        <block-header>
-                            <span>Groups</span>
-                            <button class="btn btn-link pull-right" ng-click="dvm.createGroup()">
-                                <i class="fa fa-plus"></i>Create Group
-                            </button>
-                        </block-header>
-                        <block-content>
-                            <groups-list groups="dvm.myGroups"></groups-list>
-                        </block-content>
-                    </block>
-                </div>
-                <div class="col-xs-8">
-                    <div class="group-title">
-                        <h3>{{dvm.state.selectedGroup.name}}</h3>
-                    </div>
-                </div>
-            </div>
+        <tab heading="'My Groups'" active="dvm.state.filteredGroupList" on-click="dvm.state.selectedGroup = undefined">
+            <groups-page></groups-page>
         </tab>
-        <tab heading="'All Groups'">
-            <h1>All Groups</h1>
+        <tab heading="'All Groups'" active="!dvm.state.filteredGroupList" on-click="dvm.state.selectedGroup = undefined">
+            <groups-page></groups-page>
         </tab>
     </tabset>
 </div>

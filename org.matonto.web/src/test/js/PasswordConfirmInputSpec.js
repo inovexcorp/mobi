@@ -37,11 +37,10 @@ describe('Password Confirm Input directive', function() {
     describe('in isolated scope', function() {
         beforeEach(function() {
             scope.password = '';
-            scope.toConfirm = '';
             scope.label = '';
             scope.required = false;
             var form = $compile('<form></form>')(scope);
-            this.element = angular.element('<password-confirm-input password="password" required="required" label="label" to-confirm="toConfirm"></password-confirm-input>');
+            this.element = angular.element('<password-confirm-input password="password" required="required" label="label"></password-confirm-input>');
             form.append(this.element);
             this.element = $compile(this.element)(scope);
             scope.$digest();
@@ -52,33 +51,26 @@ describe('Password Confirm Input directive', function() {
             scope.$digest();
             expect(scope.password).toBe('test');
         });
-        it('toConfirm should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.toConfirm = 'test';
-            scope.$digest();
-            expect(scope.toConfirm).toBe('test');
-        });
-        it('label should be two way bound', function() {
+        it('label should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.label = 'test';
             scope.$digest();
-            expect(scope.label).toBe('test');
+            expect(scope.label).toBe('');
         });
-        it('required should be two way bound', function() {
+        it('required should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.required = true;
             scope.$digest();
-            expect(scope.required).toBe(true);
+            expect(scope.required).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             scope.password = '';
-            scope.toConfirm = '';
             scope.label = '';
             scope.required = true;
             var form = $compile('<form></form>')(scope);
-            this.element = angular.element('<password-confirm-input password="password" required="required" label="label" to-confirm="toConfirm"></password-confirm-input>');
+            this.element = angular.element('<password-confirm-input password="password" required="required" label="label"></password-confirm-input>');
             form.append(this.element);
             this.element = $compile(this.element)(scope);
             scope.$digest();
@@ -132,17 +124,18 @@ describe('Password Confirm Input directive', function() {
     });
     it('should show an error depending on if passwords match', function() {
         scope.password = 'test';
-        scope.toConfirm = 'test';
         var form = $compile('<form></form>')(scope);
-        var element = angular.element('<password-confirm-input password="password" required="required" label="label" to-confirm="toConfirm"></password-confirm-input>');
+        var element = angular.element('<password-confirm-input password="password" required="required" label="label"></password-confirm-input>');
         form.append(element);
         element = $compile(element)(scope);
         scope.$digest();
 
         var isolatedScope = element.isolateScope();
+        isolatedScope.toConfirm = scope.password;
+        scope.$digest();
         expect(isolatedScope.form.$valid).toBe(true);
 
-        scope.toConfirm = 'tester';
+        isolatedScope.toConfirm = 'tester';
         scope.$digest();
         expect(isolatedScope.form.$valid).toBe(false);
     });

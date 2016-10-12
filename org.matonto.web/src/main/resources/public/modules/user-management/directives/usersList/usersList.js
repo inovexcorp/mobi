@@ -63,11 +63,9 @@
                 dvm.um = userManagerService;
                 dvm.lm = loginManagerService;
 
-                dvm.editUser = function(user) {
+                dvm.onClick = function(user) {
                     dvm.state.selectedUser = user;
-                    dvm.state.showUsersList = false;
-                    dvm.state.editUser = true;
-                };
+                }
             },
             templateUrl: 'modules/user-management/directives/usersList/usersList.html'
         };

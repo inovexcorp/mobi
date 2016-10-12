@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User Editor directive', function() {
+/*describe('User Editor directive', function() {
     var $compile,
         scope,
         userManagerSvc,
@@ -212,4 +212,4 @@ describe('User Editor directive', function() {
         button.triggerHandler('click');
         expect(controller.save).toHaveBeenCalled();
     });
-});
+});*/

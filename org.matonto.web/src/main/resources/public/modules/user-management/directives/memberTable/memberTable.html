@@ -20,11 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<table class="member-table table table-condensed">
-    <tr ng-repeat="user in dvm.getMembers()" class="member">
+<table class="member-table table table-condensed" click-anywhere-but-here="dvm.addingMember = false">
+    <tr ng-repeat="user in dvm.getMembers() track by user.username" class="member">
       <td>{{user.username}}</td>
       <td>
-        <span><button class="btn btn-default" ng-click="dvm.state.memberName = user.username; dvm.removeMember()" ng-disabled="user.username === dvm.lm.currentUser">
+        <span><button class="btn btn-default btn-link" ng-click="dvm.state.memberName = user.username; dvm.removeMember()" ng-disabled="user.username === dvm.lm.currentUser || !dvm.um.isAdmin(dvm.lm.currentUser)">
           <i class="fa fa-trash-o"></i>
         </button></span>
       </td>
@@ -41,7 +41,7 @@
             </ui-select>
         </td>
     </tr>
-    <tr ng-if="dvm.getAvailableUsers().length > 0" class="add-member">
+    <tr ng-if="dvm.getAvailableUsers().length > 0 && dvm.um.isAdmin(dvm.lm.currentUser)" class="add-member">
         <td colspan="2"><a ng-click="dvm.addingMember = true">+ Add Member</a></td>
     </tr>
 </table>

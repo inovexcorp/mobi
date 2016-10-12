@@ -29,28 +29,27 @@
          * @name loginManager
          * @requires userManager
          *
-         * @description 
+         * @description
          * The `loginManager` module only provides the `loginManagerService` service which
          * provides utilities to log into and log out of MatOnto.
          */
-        .module('loginManager', ['userManager'])
+        .module('loginManager', [])
         /**
          * @ngdoc service
          * @name loginManager.service:loginManagerService
          * @requires $http
          * @requires $q
          * @requires $state
-         * @requires userManager.service:userManagerService
          *
-         * @description 
-         * `loginManagerService` is a service that provides access to the MatOnto login REST 
+         * @description
+         * `loginManagerService` is a service that provides access to the MatOnto login REST
          * endpoints so users can log into and out of MatOnto.
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', 'userManagerService'];
+        loginManagerService.$inject = ['$q', '$http', '$state'];
 
-        function loginManagerService($q, $http, $state, userManagerService) {
+        function loginManagerService($q, $http, $state) {
             var self = this,
                 anon = 'self anon';
 
@@ -60,7 +59,7 @@
              * @propertyOf loginManager.service:loginManagerService
              * @type {string}
              *
-             * @description 
+             * @description
              * `currentUser` holds the username of the user that is currenlty logged into MatOnto.
              */
             self.currentUser = '';
@@ -70,14 +69,14 @@
              * @name loginManager.loginManagerService#login
              * @methodOf loginManager.service:loginManagerService
              *
-             * @description 
+             * @description
              * Makes a call to GET /matontorest/user/login to attempt to log into MatOnto using the
-             * passed credentials. Returns a Promise with the success of the log in attempt. 
+             * passed credentials. Returns a Promise with the success of the log in attempt.
              * If failed, contains an appropriate error message.
-             * 
+             *
              * @param {string} username the username to attempt to log in with
              * @param {string} password the password to attempt to log in with
-             * @return {Promise} A Promise that resolves if the log in attempt succeeded and rejects 
+             * @return {Promise} A Promise that resolves if the log in attempt succeeded and rejects
              * with an error message if the log in attempt failed
              */
             self.login = function(username, password) {
@@ -100,7 +99,7 @@
                         }
                     }, function(response) {
                         if (response.status === 401) {
-                            deferred.reject('This email/password combination is not correct.');                            
+                            deferred.reject('This email/password combination is not correct.');
                         } else {
                             deferred.reject('An error has occured. Please try again later.');
                         }
@@ -114,7 +113,7 @@
              * @name loginManager.loginManagerService#logout
              * @methodOf loginManager.service:loginManagerService
              *
-             * @description 
+             * @description
              * Makes a call to GET /matontorest/user/logout to log out of which ever user account
              * is current. Navigates back to the login page.
              */
@@ -132,16 +131,16 @@
              * @name loginManager.loginManagerService#isAuthenticated
              * @methodOf loginManager.service:loginManagerService
              *
-             * @description 
-             * Test whether a user is currently logged in and if not, navigates to the log in page. Returns 
-             * a Promise with whether or not a user is logged in. 
+             * @description
+             * Test whether a user is currently logged in and if not, navigates to the log in page. Returns
+             * a Promise with whether or not a user is logged in.
              *
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
              * response data if no user is logged in.
              */
             self.isAuthenticated = function () {
                 var handleError = function handleError(data) {
-                    self.currentUser = '';            
+                    self.currentUser = '';
                     $state.go('login');
                     return $q.reject(data);
                 };
@@ -162,9 +161,9 @@
              * @name loginManager.loginManagerService#getCurrentLogin
              * @methodOf loginManager.service:loginManagerService
              *
-             * @description 
-             * Makes a call to GET /matontorest/user/current to retrieve the user that is currently logged 
-             * in. Returns a Promise with the result of the call. 
+             * @description
+             * Makes a call to GET /matontorest/user/current to retrieve the user that is currently logged
+             * in. Returns a Promise with the result of the call.
              *
              * @return {Promise} A Promise with the response data the resolves if the request was successful
              * and rejects if unsuccessful

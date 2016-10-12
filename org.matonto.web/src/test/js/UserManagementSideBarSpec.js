@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User Management Side Bar directive', function() {
+/*describe('User Management Side Bar directive', function() {
     var $compile,
         scope,
         userManagerSvc,
@@ -113,4 +113,4 @@ describe('User Management Side Bar directive', function() {
             expect(this.element.find('left-nav-item').length).toBe(4);
         });
     });
-});
+});*/
