@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name fileUploadPage
          *
-         * @description 
+         * @description
          * The `fileUploadPage` module only provides the `fileUploadPage` directive which creates
-         * a Bootstrap `row` with {@link block.directive:block blocks} for uploading and 
+         * a Bootstrap `row` with {@link block.directive:block blocks} for uploading and
          * {@link previewDataGrid.directive:previewDataGrid previewing} delimited data.
          */
         .module('fileUploadPage', [])
@@ -42,14 +42,15 @@
          * @requires delimitedManager.service:delimitedManagerService
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
+         * @requires ontologyManager.service:ontologyManagerService
          *
-         * @description 
-         * `fileUploadPage` is a directive that creates a Bootstrap `row` div with two columns containing 
-         * {@link block.directive:block blocks} for uploading and previewing delimited data. The left column 
-         * contains a block with a {@link fileUploadForm.directive:fileUploadForm file upload form} and buttons 
-         * to cancel the current workflow or continue. If there are invalid property mapping in the current 
-         * mapping, you can only continue if editing a mapping. The right column contains a 
-         * {@link previewDataGrid.directive:previewDataGrid preview} of the loaded delimited data. The directive 
+         * @description
+         * `fileUploadPage` is a directive that creates a Bootstrap `row` div with two columns containing
+         * {@link block.directive:block blocks} for uploading and previewing delimited data. The left column
+         * contains a block with a {@link fileUploadForm.directive:fileUploadForm file upload form} and buttons
+         * to cancel the current workflow or continue. If there are invalid property mapping in the current
+         * mapping, you can only continue if editing a mapping. The right column contains a
+         * {@link previewDataGrid.directive:previewDataGrid preview} of the loaded delimited data. The directive
          * is replaced by the contents of its template.
          */
         .directive('fileUploadPage', fileUploadPage);
@@ -71,10 +72,10 @@
                     dvm.om = ontologyManagerService;
 
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var propId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dataMappingId);
-                        var classId = dvm.mm.getClassIdByMapping(dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dataMappingId));
-                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId);
-                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId);
+                        var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dataMappingId);
+                        var classId = dvm.mm.getClassIdByMapping(dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, dataMappingId));
+                        var propOntology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
+                        var classOntology = dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies);
                         var propName = dvm.om.getEntityName(dvm.om.getEntity(propOntology.entities, propId));
                         var className = dvm.om.getEntityName(dvm.om.getEntity(classOntology.entities, classId));
                         return dvm.mm.getPropMappingTitle(className, propName);
@@ -83,8 +84,8 @@
                     	dvm.state.displayCancelConfirm = true;
                     }
                     dvm.edit = function() {
-                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.mm.mapping.jsonld), '@id', '');
-                        _.forEach(dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
+                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.state.mapping.jsonld), '@id', '');
+                        _.forEach(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
                         dvm.state.step = dvm.state.editMappingStep;
                         if (dvm.state.newMapping) {
                             dvm.state.displayMappingConfigOverlay = true;
