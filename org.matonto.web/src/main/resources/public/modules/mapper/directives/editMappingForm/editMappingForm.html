@@ -34,7 +34,7 @@
                 <custom-label>Class</custom-label>
                 <div class="class-mapping-select-container">
                         <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
-                        <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId || (dvm.state.selectedClassMappingId === dvm.mm.getBaseClass(dvm.mm.mapping.jsonld)['@id'])"><i class="fa fa-trash"></i></button>
+                        <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId || (dvm.state.selectedClassMappingId === dvm.mm.getBaseClass(dvm.state.mapping.jsonld)['@id'])"><i class="fa fa-trash"></i></button>
                 </div>
         </div>
         <class-mapping-details ng-if="dvm.state.selectedClassMappingId"></class-mapping-details>

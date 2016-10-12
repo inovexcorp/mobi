@@ -23,28 +23,25 @@
 describe('Mapping Title directive', function() {
     var $compile,
         scope,
-        mappingManagerSvc,
         mapperStateSvc,
         controller;
 
     beforeEach(function() {
         module('templates');
         module('mappingTitle');
-        mockMappingManager();
         mockMapperState();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
-            mappingManagerSvc = _mappingManagerService_;
         });
     });
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
             scope.$digest();
         });
@@ -62,11 +59,11 @@ describe('Mapping Title directive', function() {
         });
     });
     it('should set the correct state when the edit button is clicked', function() {
-        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         mapperStateSvc.newMapping = true;
         var element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
         scope.$digest();
-        
+
         var link = angular.element(element.find('a')[0]);
         angular.element(link).triggerHandler('click');
         expect(mapperStateSvc.editMappingName).toBe(true);

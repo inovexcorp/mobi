@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name invalidOntologyOverlay
          *
-         * @description 
+         * @description
          * The `invalidOntologyOverlay` module only provides the `invalidOntologyOverlay` directive which creates
-         * an overlay telling the user that the source ontology for a mapping is incompatible.
+         * an overlay telling the user that the source ontologies for a mapping is incompatible.
          */
         .module('invalidOntologyOverlay', [])
         /**
@@ -38,18 +38,17 @@
          * @name invalidOntologyOverlay.directive:invalidOntologyOverlay
          * @scope
          * @restrict E
-         * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
+         * @description
          * `invalidOntologyOverlay` is a directive that creates an overlay with a message telling the user that the
-         * source ontology for a mapping is incompatible. The directive is replaced by the contents of its template.
+         * source ontologies for a mapping is incompatible. The directive is replaced by the contents of its template.
          */
         .directive('invalidOntologyOverlay', invalidOntologyOverlay);
 
-        invalidOntologyOverlay.$inject = ['mapperStateService', 'mappingManagerService'];
+        invalidOntologyOverlay.$inject = ['mapperStateService'];
 
-        function invalidOntologyOverlay(mapperStateService, mappingManagerService) {
+        function invalidOntologyOverlay(mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -58,7 +57,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
 
                     dvm.close = function() {
                         dvm.state.initialize();

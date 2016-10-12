@@ -22,10 +22,10 @@
   -->
 <div class="class-mapping-select">
     <ui-select ng-model="dvm.bindModel" on-select="onSelect()">
-        <ui-select-match placeholder="{{dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld).length ? 'Select a class' : 'No classes to show'}}">
+        <ui-select-match placeholder="{{dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld).length ? 'Select a class' : 'No classes to show'}}">
             <span title="{{dvm.mm.getClassIdByMapping($select.selected)}}">{{dvm.getClassName($select.selected)}}</span>
         </ui-select-match>
-        <ui-select-choices repeat="classObj['@id'] as classObj in dvm.mm.getAllClassMappings(dvm.mm.mapping.jsonld) | filter:$select.search">
+        <ui-select-choices repeat="classObj['@id'] as classObj in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) | filter:$select.search">
             <span title="{{dvm.mm.getClassIdByMapping(classObj)}}" ng-bind-html="dvm.getClassName(classObj) | highlight:$select.search | trusted"></span>
         </ui-select-choices>
     </ui-select>

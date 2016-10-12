@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name iriTemplateOverlay
          *
-         * @description 
+         * @description
          * The `iriTemplateOverlay` module only provides the `iriTemplateOverlay` directive which creates
          * an overlay with functionality to change the IRI template of the selected class mapping.
          */
@@ -43,11 +43,11 @@
          * @requires  mapperState.service:mapperStateService
          * @requires  delimitedManager.service:delimitedManagerService
          *
-         * @description 
-         * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the 
-         * IRI template of the selected class mapping. The overlay splits the IRI template into part of 
+         * @description
+         * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the
+         * IRI template of the selected class mapping. The overlay splits the IRI template into part of
          * the namespace, the delimiter between the namespace and local name, and the dynamically created
-         * local name. The local name can either be a UUID or a column header. The directive is replaced 
+         * local name. The local name can either be a UUID or a column header. The directive is replaced
          * by the contents of its template.
          */
         .directive('iriTemplateOverlay', iriTemplateOverlay);
@@ -66,7 +66,7 @@
                     dvm.state = mapperStateService;
                     dvm.dm = delimitedManagerService;
 
-                    var classMapping = _.find(dvm.mm.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                    var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                     var prefix = _.get(classMapping, "['" + prefixes.delim + "hasPrefix'][0]['@value']", '');
                     var regex = new RegExp(prefixes.data + '(.*?)\/');
                     var prefixEnd = prefix.replace(regex, '');
@@ -81,7 +81,7 @@
                     dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 
                     dvm.set = function() {
-                        dvm.mm.mapping.jsonld = dvm.mm.editIriTemplate(dvm.mm.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
+                        dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html'

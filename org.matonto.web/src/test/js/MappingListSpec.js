@@ -58,18 +58,18 @@ describe('Mapping List directive', function() {
             controller.onClick('test1');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test1');
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test1'});
+            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1'});
 
             controller.onClick('test2');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test2');
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test2'});
+            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test2'});
 
             mappingManagerSvc.getMapping.calls.reset();
             controller.onClick('test1');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test1'});
+            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1'});
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -92,15 +92,12 @@ describe('Mapping List directive', function() {
             var mappingName = angular.element(this.element.querySelectorAll('li a'));
             expect(mappingName.hasClass('active')).toBe(false);
 
-            mappingManagerSvc.mapping = {id: 'test1'};
+            mapperStateSvc.mapping = {id: 'test1'};
             scope.$digest();
             expect(mappingName.hasClass('active')).toBe(true);
         });
-        /*it('depending on the mapping search string', function() {
+        it('depending on the mapping search string', function() {
             mappingManagerSvc.mappingIds = ['test1', 'test2'];
-            ontologyManagerSvc.getBeautifulIRI.and.callFake(function(iri) {
-                return iri;
-            })
             mapperStateSvc.mappingSearchString = 'test1';
             scope.$digest();
             expect(this.element.find('li').length).toBe(1);
@@ -108,7 +105,7 @@ describe('Mapping List directive', function() {
             mapperStateSvc.mappingSearchString = 'test12';
             scope.$digest();
             expect(this.element.find('li').length).toBe(0);
-        });*/
+        });
     });
     it('should call onClick when a mapping name is clicked', function() {
         mappingManagerSvc.mappingIds = ['test1'];

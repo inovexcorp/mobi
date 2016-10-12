@@ -22,7 +22,7 @@
   -->
 <div class="mapping-config-overlay overlay lg">
     <form class="content" name="dvm.configForm">
-        <h6>{{(dvm.mm.mapping.id | splitIRI).end}} Configuration</h6>
+        <h6>{{(dvm.state.mapping.id | splitIRI).end}} Configuration</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 
         <div class="ontology-select-container">

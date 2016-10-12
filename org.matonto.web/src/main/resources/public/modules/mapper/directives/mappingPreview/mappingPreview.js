@@ -70,7 +70,7 @@
                     dvm.ontologyExists = function() {
                         var objs = angular.copy(dvm.om.list);
                         var ids = _.union(dvm.om.ontologyIds, _.map(objs, 'ontologyId'));
-                        return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld));
+                        return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
                     }
                     dvm.getClassName = function(classMapping) {
                         return dvm.om.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
