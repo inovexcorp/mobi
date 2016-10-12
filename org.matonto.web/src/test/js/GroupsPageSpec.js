@@ -104,6 +104,9 @@ describe('Groups Page directive', function() {
         it('with a groups list', function() {
             expect(this.element.find('groups-list').length).toBe(1);
         });
+        it('with a block search header for the groups list', function() {
+            expect(this.element.querySelectorAll('.col-xs-4 block-search').length).toBe(1);
+        });
         it('with buttons for creating a group and deleting a group', function() {
             var createButton = this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0];
             expect(createButton).toBeDefined();

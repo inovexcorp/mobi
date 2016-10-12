@@ -29,6 +29,7 @@
                     <i class="fa fa-plus"></i>Create Group
                 </button>
             </block-header>
+            <block-search ng-model="dvm.state.groupSearchString" clear-event="dvm.state.groupSearchString = ''"></block-search>
             <block-content>
                 <groups-list></groups-list>
             </block-content>

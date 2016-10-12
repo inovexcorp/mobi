@@ -29,6 +29,7 @@
                     <i class="fa fa-plus"></i>Create User
                 </button>
             </block-header>
+            <block-search ng-model="dvm.state.userSearchString" clear-event="dvm.state.userSearchString = ''"></block-search>
             <block-content>
                 <users-list></users-list>
             </block-content>

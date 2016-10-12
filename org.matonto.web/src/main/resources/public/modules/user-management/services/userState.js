@@ -47,6 +47,8 @@
         function userStateService() {
             var self = this;
 
+            self.groupSearchString = '';
+            self.userSearchString = '';
             /**
              * @ngdoc property
              * @name userState.service:userStateService#filteredGroupList
@@ -183,6 +185,8 @@
                 self.selectedUser = undefined;
                 self.memberName = '';
                 self.filteredGroupList = true;
+                self.groupSearchString = '';
+                self.userSearchString = '';
             }
         }
 })();

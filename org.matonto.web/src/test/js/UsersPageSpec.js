@@ -83,6 +83,9 @@ describe('Users Page directive', function() {
         it('with a users list', function() {
             expect(this.element.find('users-list').length).toBe(1);
         });
+        it('with a block search header for the users list', function() {
+            expect(this.element.querySelectorAll('.col-xs-4 block-search').length).toBe(1);
+        });
         it('with buttons for creating a user and deleting a user', function() {
             var createButton = this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0];
             expect(createButton).toBeDefined();

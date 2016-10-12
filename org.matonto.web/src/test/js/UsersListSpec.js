@@ -67,7 +67,7 @@ describe('Users List directive', function() {
         it('depending on how many users there are', function() {
             expect(this.element.find('li').length).toBe(0);
 
-            userManagerSvc.users = [{}];
+            userManagerSvc.users = [{username: ''}];
             controller = this.element.controller('usersList');
             scope.$digest();
             expect(this.element.find('li').length).toBe(userManagerSvc.users.length);
@@ -85,7 +85,7 @@ describe('Users List directive', function() {
         });
         it('depending on whether the user in the list is an admin', function() {
             controller = this.element.controller('usersList');
-            userManagerSvc.users = [{}];
+            userManagerSvc.users = [{username: ''}];
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
             expect(this.element.querySelectorAll('li .admin').length).toBe(0);
@@ -93,6 +93,17 @@ describe('Users List directive', function() {
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('li .admin').length).toBe(1);
+        });
+        it('depending on the user search string', function() {
+            var user = {username: 'user'};
+            userManagerSvc.users = [user];
+            userStateSvc.userSearchString = user.username;
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(1);
+
+            userStateSvc.userSearchString = 'abc';
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(0);
         });
     });
     it('should call onClick when a group is clicked', function() {

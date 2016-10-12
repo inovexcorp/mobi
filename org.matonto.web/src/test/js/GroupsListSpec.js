@@ -93,6 +93,17 @@ describe('Groups List directive', function() {
             scope.$digest();
             expect(this.element.find('li').length).toBe(userManagerSvc.groups.length - 1);
         });
+        it('depending on the user search string', function() {
+            var group = {name: 'user', members: []};
+            userManagerSvc.groups = [group];
+            userStateSvc.groupSearchString = group.name;
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(1);
+
+            userStateSvc.groupSearchString = 'abc';
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(0);
+        });
     });
     it('should call onClick when a group is clicked', function() {
         var group = {name: 'group', members: []};

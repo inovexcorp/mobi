@@ -555,6 +555,8 @@ function mockUserManager() {
 function mockUserState() {
     module(function($provide) {
         $provide.service('userStateService', function($q) {
+            this.userSearchString = '';
+            this.groupSearchString = '';
             this.showGroups = false;
             this.showUsers = false;
             this.selectedGroup = undefined;

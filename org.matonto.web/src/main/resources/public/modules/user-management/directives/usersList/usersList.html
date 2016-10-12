@@ -22,7 +22,7 @@
   -->
 <div class="users-list tree scroll-without-buttons">
     <ul>
-        <li ng-repeat="user in dvm.um.users">
+        <li ng-repeat="user in dvm.um.users | filter:{username: dvm.state.userSearchString} track by user.username">
             <a ng-click="dvm.onClick(user)" ng-class="{'active': dvm.state.selectedUser.username === user.username}">
                 {{user.username}}
                 <small class="admin" ng-if="dvm.um.isAdmin(user.username)">(Admin)</small>
