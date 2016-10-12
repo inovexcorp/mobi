@@ -145,6 +145,15 @@ describe('User Management Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('create-group-overlay').length).toBe(0);
         });
+        it('depending on whether a password is being changed', function() {
+            userStateSvc.displayChangePasswordOverlay = true;
+            scope.$digest();
+            expect(this.element.find('change-password-overlay').length).toBe(1);
+
+            userStateSvc.displayChangePasswordOverlay = false;
+            scope.$digest();
+            expect(this.element.find('change-password-overlay').length).toBe(0);
+        });
         it('depending on whether deleting an user or group should be confirmed', function() {
             userStateSvc.displayDeleteConfirm = true;
             scope.$digest();

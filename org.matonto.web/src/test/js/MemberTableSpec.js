@@ -122,10 +122,13 @@ describe('Member Table directive', function() {
             expect(this.element.querySelectorAll('tr.member').length).toBe(scope.members.length);
         });
         it('depending on whether there are users available to add', function() {
+            controller = this.element.controller('memberTable');
+            spyOn(controller, 'getAvailableUsers').and.returnValue([]);
             userManagerSvc.isAdmin.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.add-member').length).toBe(0);
 
-            userManagerSvc.users.push({username: 'user2'});
+            controller.getAvailableUsers.and.returnValue([{}]);
             scope.$digest();
             expect(this.element.querySelectorAll('.add-member').length).toBe(1);
         });
@@ -151,6 +154,21 @@ describe('Member Table directive', function() {
             loginManagerSvc.currentUser = 'user2';
             scope.$digest();
             expect(removeButton.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether the current user is an admin', function() {
+            controller = this.element.controller('memberTable');
+            spyOn(controller, 'getAvailableUsers').and.returnValue([{}]);
+            userManagerSvc.isAdmin.and.returnValue(false);
+            loginManagerSvc.currentUser = 'user';
+            scope.$digest();
+            var removeButton = angular.element(this.element.querySelectorAll('.member td:last-child button')[0]);
+            expect(removeButton.attr('disabled')).toBeTruthy();
+            expect(this.element.querySelectorAll('.add-member').length).toBe(0);
+
+            userManagerSvc.isAdmin.and.returnValue(true);
+            scope.$digest();
+            expect(removeButton.attr('disabled')).toBeFalsy();
+            expect(this.element.querySelectorAll('.add-member').length).toBe(1);
         });
     });
     it('should set the correct state and call removeMember when a delete button is clicked', function() {

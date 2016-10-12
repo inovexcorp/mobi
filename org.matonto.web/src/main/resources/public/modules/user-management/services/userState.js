@@ -58,7 +58,7 @@
              * {@link groupsList.directive:groupsList groups list} should be filtered based
              * on which user is logged in.
              */
-            self.filteredGroupList = true;
+            self.filteredGroupList = false;
             /**
              * @ngdoc property
              * @name userState.service:userStateService#showGroups

@@ -20,14 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Users Tab directive', function() {
+describe('User Management Tabset directive', function() {
     var $compile,
         scope,
         userStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('usersTab');
+        module('userManagementTabset');
         mockUserState();
 
         inject(function(_$compile_, _$rootScope_, _userStateService_) {
@@ -39,22 +39,18 @@ describe('Users Tab directive', function() {
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            this.element = $compile(angular.element('<users-tab></users-tab>'))(scope);
+            this.element = $compile(angular.element('<user-management-tabset></user-management-tabset>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('users-tab')).toBe(true);
+            expect(this.element.hasClass('user-management-tabset')).toBe(true);
         });
-        it('with a tabset', function() {
-            var tabset = this.element.find('tabset');
-            expect(tabset.length).toBe(1);
-            expect(tabset.hasClass('centered')).toBe(true);
+        it('with tabsets', function() {
+            expect(this.element.find('tabset').length).toBe(2);
+            expect(this.element.querySelectorAll('tabset.centered').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(1);
-        });
-        it('with a users page', function() {
-            expect(this.element.find('users-page').length).toBe(1);
+            expect(this.element.find('tab').length).toBe(2);
         });
     });
 });

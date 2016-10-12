@@ -50,6 +50,17 @@ describe('User Permissions Input directive', function() {
             scope.$digest();
             expect(scope.roles).toEqual({admin: true});
         });
+        it('isDisabledWhen should be one way bound', function() {
+            var isolatedScope = this.element.isolateScope();
+            isolatedScope.isDisabledWhen = true;
+            scope.$digest();
+            expect(scope.isDisabledWhen).toBe(false);
+        });
+        it('onChange should be called in parent scope when invoked', function() {
+            var isolatedScope = this.element.isolateScope();
+            isolatedScope.onChange();
+            expect(scope.onChange).toHaveBeenCalled();
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

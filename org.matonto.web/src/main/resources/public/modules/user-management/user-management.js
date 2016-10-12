@@ -31,14 +31,12 @@
             'createUserOverlays',
             'groupsList',
             'groupsPage',
-            'groupsTab',
             'memberTable',
             'userManagementOverlays',
             'userManagementTabset',
             'userPermissionsInput',
             'usersList',
             'usersPage',
-            'usersTab',
 
             /* Custom services */
             'userState'
