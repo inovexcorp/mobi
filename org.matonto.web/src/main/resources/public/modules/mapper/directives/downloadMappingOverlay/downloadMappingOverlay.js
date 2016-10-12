@@ -62,7 +62,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.downloadFormat = 'jsonld';
+                    dvm.downloadFormat = 'turtle';
 
                     dvm.cancel = function() {
                         dvm.state.displayDownloadMappingOverlay = false;

@@ -224,7 +224,7 @@ describe('Mapping Manager service', function() {
         var result = mappingManagerSvc.copyMapping(mapping, 'newMapping');
         expect(result.length).toBe(mapping.length);
         expect(_.find(result, {id: 'mapping'})['@id']).toBe('newMapping');
-        _.forEach(changedMapping, entity => {
+        _.forEach(changedMapping, function(entity) {
             var original = _.find(mapping, {'id': entity.id});
             expect(original['@id']).not.toBe(entity['@id']);
             if (_.has(entity, "['" + prefixes.delim + "classMapping']")){

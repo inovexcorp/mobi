@@ -67,7 +67,7 @@
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
                     dvm.fileName = ($filter('splitIRI')(dvm.state.mapping.id)).end;
-                    dvm.format = 'jsonld';
+                    dvm.format = 'turtle';
                     dvm.errorMessage = '';
 
                     dvm.run = function() {

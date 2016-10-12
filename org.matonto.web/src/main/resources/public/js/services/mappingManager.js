@@ -395,7 +395,7 @@
                 if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propObj && ontologyManagerService.isObjectProperty(propObj)
                         && _.get(propObj, "['" + prefixes.rdfs + "range'][0]['@id']") === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
-                    var objectEntity = {
+                    objectEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
                     };
                     var classMapping = getEntityById(mapping, classMappingId);
