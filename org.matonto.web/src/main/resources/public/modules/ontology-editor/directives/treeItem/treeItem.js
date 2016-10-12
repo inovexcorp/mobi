@@ -42,7 +42,6 @@
                 bindToController: {
                     currentEntity: '=',
                     isOpened: '=',
-                    ontologyId: '=',
                     path: '='
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',

@@ -674,7 +674,7 @@ describe('Ontology State service', function() {
             }
         });
         it('when it is a vocabulary', function() {
-            ontologyStateSvc.listItem = {type: 'vocabulary'};
+            ontologyStateSvc.state = {type: 'vocabulary'};
             ontologyStateSvc.goTo('iri');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
@@ -683,7 +683,7 @@ describe('Ontology State service', function() {
         });
         describe('when it is not a vocabulary', function() {
             beforeEach(function() {
-                ontologyStateSvc.listItem = {type: 'ontology'};
+                ontologyStateSvc.state = {type: 'ontology'};
             });
             it('and is a class', function() {
                 ontologyManagerSvc.isClass.and.returnValue(true);
@@ -696,6 +696,7 @@ describe('Ontology State service', function() {
             it('and is a datatype property', function() {
                 ontologyManagerSvc.isClass.and.returnValue(false);
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                spyOn(ontologyStateSvc, 'setDataPropertiesOpened');
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
@@ -703,10 +704,11 @@ describe('Ontology State service', function() {
                 expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.getPathsTo(ontologyStateSvc.listItem.dataPropertyIndex, 'iri'));
                 expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId, true);
             });
-            it('and is a object property', function() {
+            it('and is an object property', function() {
                 ontologyManagerSvc.isClass.and.returnValue(false);
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');

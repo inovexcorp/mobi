@@ -94,25 +94,19 @@
             }
 
             self.openAt = function(pathsArray) {
-                var selectedPath;
-                var alreadyOpened = _.some(pathsArray, path => {
+                var selectedPath = _.find(pathsArray, path => {
                     var pathString = self.listItem.ontologyId;
-                    var result = _.every(_.slice(path, 0, path.length - 1), pathPart => {
+                    return _.every(_.initial(path), pathPart => {
                         pathString += '.' + pathPart;
                         return self.getOpened(pathString);
                     });
-                    if (result) {
-                        selectedPath = path;
-                    }
-                    return result;
                 });
-                if (!alreadyOpened) {
-                    var pathString = self.listItem.ontologyId + '.';
+                if (!selectedPath) {
                     selectedPath = _.head(pathsArray);
-                    _.forEach(_.slice(selectedPath, 0, selectedPath.length - 1), pathPart => {
-                        pathString += pathPart;
+                    var pathString = self.listItem.ontologyId;
+                    _.forEach(_.initial(selectedPath), pathPart => {
+                        pathString += '.' + pathPart;
                         self.setOpened(pathString, true);
-                        pathString += '.';
                     });
                 }
                 $timeout(function() {

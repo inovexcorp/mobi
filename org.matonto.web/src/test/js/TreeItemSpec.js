@@ -52,7 +52,6 @@ describe('Tree Item directive', function() {
         scope.onClick = jasmine.createSpy('onClick');
         scope.currentEntity = {};
         scope.isOpened = true;
-        scope.ontologyId = '';
         scope.isBold = false;
         scope.path = '';
     });
@@ -61,7 +60,7 @@ describe('Tree Item directive', function() {
         var isolatedScope;
 
         beforeEach(function() {
-            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
             scope.$digest();
             isolatedScope = element.isolateScope();
             controller = element.controller('treeItem');
@@ -95,11 +94,6 @@ describe('Tree Item directive', function() {
             scope.$digest();
             expect(controller.isOpened).toEqual(false);
         });
-        it('ontologyId should be two way bound', function() {
-            controller.ontologyId = 'new';
-            scope.$digest();
-            expect(controller.ontologyId).toEqual('new');
-        });
         it('path should be two way bound', function() {
             controller.path = 'new';
             scope.$digest();
@@ -108,7 +102,7 @@ describe('Tree Item directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
         });
         it('for an li', function() {
             scope.$digest();
@@ -184,7 +178,7 @@ describe('Tree Item directive', function() {
             scope.onClick = jasmine.createSpy('onClick');
             scope.currentEntity = {};
             scope.ontologyId = 'id';
-            element = $compile(angular.element('<tree-item path="path" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
             scope.$digest();
             controller = element.controller('treeItem');
         });
@@ -205,7 +199,7 @@ describe('Tree Item directive', function() {
             });
             it('should call getEntityName if pretty', function() {
                 settingsManagerSvc.getTreeDisplay.and.returnValue('pretty');
-                element = $compile(angular.element('<tree-item path="path" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+                element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
                 expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity, ontologyStateSvc.state.type);
             });
