@@ -27,9 +27,9 @@
         .module('ontologyState', [])
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$rootScope', 'ontologyManagerService', 'updateRefsService'];
+        ontologyStateService.$inject = ['$rootScope', '$timeout', 'ontologyManagerService', 'updateRefsService'];
 
-        function ontologyStateService($rootScope, ontologyManagerService, updateRefsService) {
+        function ontologyStateService($rootScope, $timeout, ontologyManagerService, updateRefsService) {
             var self = this;
             var om = ontologyManagerService;
             self.states = [];
@@ -94,21 +94,35 @@
             }
 
             self.openAt = function(pathsArray) {
+                var selectedPath;
                 var alreadyOpened = _.some(pathsArray, path => {
                     var pathString = self.listItem.ontologyId;
-                    return _.every(_.slice(path, 0, path.length - 1), pathPart => {
+                    var result = _.every(_.slice(path, 0, path.length - 1), pathPart => {
                         pathString += '.' + pathPart;
                         return self.getOpened(pathString);
                     });
+                    if (result) {
+                        selectedPath = path;
+                    }
+                    return result;
                 });
                 if (!alreadyOpened) {
                     var pathString = self.listItem.ontologyId + '.';
-                    _.forEach(_.slice(_.head(pathsArray), 0, _.head(pathsArray).length - 1), (pathPart, index) => {
+                    selectedPath = _.head(pathsArray);
+                    _.forEach(_.slice(selectedPath, 0, selectedPath.length - 1), pathPart => {
                         pathString += pathPart;
                         self.setOpened(pathString, true);
                         pathString += '.';
                     });
                 }
+                $timeout(function() {
+                    var $element = document.querySelectorAll('[data-path-to="' + self.listItem.ontologyId + '.'
+                        + _.join(selectedPath, '.') + '"]');
+                    var $hierarchyBlock = document.querySelectorAll('[class*=hierarchy-block] .block-content');
+                    if ($element.length && $hierarchyBlock.length) {
+                        $hierarchyBlock[0].scrollTop = $element[0].offsetTop;
+                    }
+                });
             }
 
             self.setNoDomainsOpened = function(ontologyId, isOpened) {
@@ -371,7 +385,7 @@
             }
             self.goTo = function(iri) {
                 var entity = om.getEntityById(self.listItem.ontologyId, iri);
-                if (self.listItem.type === 'vocabulary') {
+                if (self.state.type === 'vocabulary') {
                     commonGoTo('concepts', iri, 'conceptIndex');
                 } else if (om.isClass(entity)) {
                     commonGoTo('classes', iri, 'classIndex');
