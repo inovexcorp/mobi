@@ -25,7 +25,7 @@
         ng-init="node = node; path = dvm.sm.state.ontologyId + '.' + node.entityIRI"></ul>
     <script type="text/ng-template" id="hierarchy_item">
         <tree-item current-entity="dvm.om.getEntityById(dvm.sm.listItem.ontologyId, node.entityIRI)" path="path"
-                   ontology-id="dvm.sm.state.ontologyId" is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
+                   is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
                    is-opened="dvm.sm.getOpened(path)" has-children="!!node.subEntities && node.subEntities.length"
                    on-click="dvm.sm.selectItem(node.entityIRI)" data-path-to="{{path}}"></tree-item>
         <li class="container" ng-if="dvm.sm.getOpened(path) && !!node.subEntities && node.subEntities.length" ng-init="parentPath = path">

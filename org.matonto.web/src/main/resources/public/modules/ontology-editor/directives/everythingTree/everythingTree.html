@@ -25,7 +25,6 @@
     <ul ng-repeat="clazz in dvm.om.getClasses(dvm.sm.ontology) track by clazz.matonto.originalIRI"
         ng-init="opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, clazz.matonto.originalIRI)">
         <tree-item current-entity="clazz"
-                   ontology-id="dvm.sm.state.ontologyId"
                    is-active="dvm.sm.getActiveEntityIRI() === clazz.matonto.originalIRI"
                    on-click="dvm.sm.selectItem(clazz.matonto.originalIRI)"
                    has-children="dvm.om.hasClassProperties(dvm.sm.ontology, clazz.matonto.originalIRI)"
@@ -34,7 +33,6 @@
             <!-- class properties -->
             <ul>
                 <tree-item ng-repeat="property in dvm.om.getClassProperties(dvm.sm.ontology, clazz.matonto.originalIRI) track by property.matonto.originalIRI"
-                           ontology-id="dvm.sm.state.ontologyId"
                            current-entity="property"
                            is-active="dvm.sm.getActiveEntityIRI() === property.matonto.originalIRI"
                            on-click="dvm.sm.selectItem(property.matonto.originalIRI)"></tree-item>
@@ -52,7 +50,6 @@
         <li class="container" ng-if="noDomainsOpened">
             <ul>
                 <tree-item ng-repeat="property in dvm.om.getNoDomainProperties(dvm.sm.ontology) track by property.matonto.originalIRI"
-                           ontology-id="dvm.sm.state.ontologyId"
                            current-entity="property"
                            is-active="dvm.sm.getActiveEntityIRI() === property.matonto.originalIRI"
                            on-click="dvm.sm.selectItem(property.matonto.originalIRI)"></tree-item>

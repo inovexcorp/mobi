@@ -177,7 +177,6 @@ describe('Tree Item directive', function() {
             scope.isActive = false;
             scope.onClick = jasmine.createSpy('onClick');
             scope.currentEntity = {};
-            scope.ontologyId = 'id';
             element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
             scope.$digest();
             controller = element.controller('treeItem');
