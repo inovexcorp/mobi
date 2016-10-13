@@ -27,15 +27,13 @@
         /**
          * @ngdoc overview
          * @name mappingManager
-         * @requires ontologyManager
-         * @requires prefixes
          *
          * @description
          * The `mappingManager` module only provides the `mappingManagerService` service which
          * provides access to the MatOnto mapping REST endpoints and utility functions for
          * manipulating mapping arrays
          */
-        .module('mappingManager', ['ontologyManager', 'prefixes'])
+        .module('mappingManager', [])
         /**
          * @ngdoc service
          * @name mappingManager.service:mappingManagerService

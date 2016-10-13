@@ -146,8 +146,6 @@
              * to {@link sparqlManager.service:sparqlManagerService#data data}.
              */
             self.queryRdf = function() {
-                $rootScope.showSpinner = true;
-
                 self.currentPage = 0;
                 self.data = {};
                 self.errorMessage = '';
@@ -162,9 +160,10 @@
                     }
                 }
 
+                $rootScope.showSpinner = true;
                 $http.get(prefix, config)
                     .then(onSuccess, onError)
-                    .then(function() {
+                    .then(() => {
                         $rootScope.showSpinner = false;
                     });
             }
@@ -180,10 +179,9 @@
              */
             self.getResults = function(url) {
                 $rootScope.showSpinner = true;
-
                 $http.get(url)
                     .then(onSuccess, onError)
-                    .then(function() {
+                    .then(() => {
                         $rootScope.showSpinner = false;
                     });
             }
@@ -192,7 +190,7 @@
                 return _.get(response, 'statusText') || defaultMessage;
             }
             function onSuccess(response) {
-                if(_.get(response, 'status') === 200) {
+                if (_.get(response, 'status') === 200) {
                     self.data = response.data;
                 } else {
                     self.infoMessage = getMessage(response, 'There was a problem getting the results.');

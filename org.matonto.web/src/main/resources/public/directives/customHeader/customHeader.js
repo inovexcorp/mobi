@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('customHeader', ['loginManager', 'ontologyState', 'ontologyManager', 'mapperState', 'delimitedManager', 'sparqlManager'])
+        .module('customHeader', [])
         .directive('customHeader', customHeader);
 
     customHeader.$inject = ['loginManagerService', 'ontologyStateService', 'ontologyManagerService', 'mapperStateService', 'delimitedManagerService', 'sparqlManagerService'];

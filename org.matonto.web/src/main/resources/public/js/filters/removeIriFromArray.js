@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -29,27 +29,27 @@
          * @name removeIriFromArray
          * @requires responseObj
          *
-         * @description 
+         * @description
          * The `removeIriFromArray` module only provides the `removeIriFromArray` filter
          * which removes objects with a specific id from an array of objects.
          */
-        .module('removeIriFromArray', ['responseObj'])
+        .module('removeIriFromArray', [])
         /**
          * @ngdoc filter
          * @name removeIriFromArray.filter:removeIriFromArray
          * @kind function
          * @requires responseObj.responseObj
          *
-         * @description 
+         * @description
          * Takes an array of objects and removes any elements that have matching ids based on
-         * the passed in toRemove. The passed in toRemove could be a string with an id or an array of 
-         * objects with the components of an id as keys. If the passed in array is not 
+         * the passed in toRemove. The passed in toRemove could be a string with an id or an array of
+         * objects with the components of an id as keys. If the passed in array is not
          * actually an array, returns an empty array.
          *
          * @param {Object[]} arr The array of objects to remove elements from
-         * @param {string|Object[]} toRemove The id value(s) to match with objects in the array. 
+         * @param {string|Object[]} toRemove The id value(s) to match with objects in the array.
          * Expects either a string or an array of objects with the components of the ids
-         * @returns {Object} Either an empty array if the passed in array is not actually an 
+         * @returns {Object} Either an empty array if the passed in array is not actually an
          * array or an array of the elements of the passed in array that do not have matching
          * ids based on the passed in toRemove.
          */
