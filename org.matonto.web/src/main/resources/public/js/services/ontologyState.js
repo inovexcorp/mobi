@@ -36,6 +36,7 @@
             self.newState = {active: true};
             self.ontology = {};
             self.selected = {};
+            self.listItem = {};
 
             self.afterSave = function(newId) {
                 if (self.state.ontologyId !== newId) {
@@ -401,7 +402,11 @@
                 }
             }
             self.reset = function() {
-
+                self.states = [];
+                self.ontology = {};
+                self.selected = {};
+                self.state = self.newState;
+                self.listItem = {};
             }
             function initialize() {
                 self.state = self.newState;
