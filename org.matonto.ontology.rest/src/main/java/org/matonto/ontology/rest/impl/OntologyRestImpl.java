@@ -616,6 +616,13 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(200).entity(response.toString()).build();
     }
 
+    @Override
+    public Response getSearchResults(String ontologyIdStr, String searchText) {
+        TupleQueryResult queryResults = manager.getSearchResults(ontologyIdStr, searchText);
+        JSONObject response = JSONQueryResults.getResponse(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
     /**
      * Gets Annotation JSONArray.
      */

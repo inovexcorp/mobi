@@ -35,8 +35,8 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/propertyValues/propertyValues.html',
                 scope: {
-                    property: '=',
-                    entity: '=',
+                    property: '<',
+                    entity: '<',
                     edit: '&?',
                     remove: '&?'
                 },

@@ -551,4 +551,19 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response getConceptHierarchy(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns the JSON SKOS concept hierarchy for the ontology with requested ontology ID.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @return nested JSON structure that represents the SKOS concept hierarchy for the ontology with requested
+     *         ontology ID.
+     */
+    @GET
+    @Path("{ontologyid}/search-results")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getSearchResults(@PathParam("ontologyid") String ontologyIdStr,
+                              @QueryParam("searchText") String searchText);
 }

@@ -127,4 +127,6 @@ public interface OntologyManager {
     TupleQueryResult getEntityUsages(String ontologyIdStr, String entityIRIStr);
 
     TupleQueryResult getConceptRelationships(String ontologyIdStr);
+
+    TupleQueryResult getSearchResults(String ontologyIdStr, String searchText);
 }

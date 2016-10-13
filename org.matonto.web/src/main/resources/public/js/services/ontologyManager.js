@@ -1694,6 +1694,41 @@
             self.getConceptSchemeIRIs = function(ontology) {
                 return _.map(self.getConceptSchemes(ontology), 'matonto.originalIRI');
             }
+            /**
+             * @ngdoc method
+             * @name getSearchResults
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets the search results for literals that contain the requested search text.
+             *
+             * @param {string} ontologyId The ontology ID of the ontology you want to get from the repository.
+             * @param {string} searchText The text that you are searching for in the ontology entity literal values.
+             * @returns {Promise} A promise containing the SPARQL query results.
+             */
+            self.getSearchResults = function(ontologyId, searchText) {
+                var deferred = $q.defer();
+                var config = {
+                    params: {searchText}
+                };
+                $rootScope.showSpinner = true;
+                $http.get(prefix + encodeURIComponent(ontologyId) + '/search-results', config)
+                    .then(response => {
+                        if(_.get(response, 'status') === 200) {
+                            deferred.resolve(response.data.results.bindings);
+                        } else if (_.get(response, 'status') === 204) {
+                            deferred.resolve([]);
+                        } else {
+                            deferred.reject();
+                        }
+                    }, response => {
+                        deferred.reject(_.get(response, 'statusText','An error has occurred with your search.'));
+                    })
+                    .then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+                return deferred.promise;
+            }
 
             /* Private helper functions */
             function updateModels(response) {

@@ -1,10 +1,6 @@
-@Version("4.6.0.${build}")
-
-package org.matonto.ontology.rest;
-
 /*-
  * #%L
- * org.matonto.ontology.rest
+ * org.matonto.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,5 +20,20 @@ package org.matonto.ontology.rest;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+(function() {
+    'use strict';
 
-import aQute.bnd.annotation.Version;
+    angular
+        .module('infoMessage', [])
+        .directive('infoMessage', infoMessage);
+
+        function infoMessage() {
+            return {
+                restrict: 'E',
+                replace: true,
+                transclude: true,
+                templateUrl: 'directives/infoMessage/infoMessage.html',
+                scope: {}
+            }
+        }
+})();

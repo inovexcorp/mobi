@@ -119,7 +119,7 @@ describe('Ontology State service', function() {
         });
         it('when path is found', function() {
             var path = 'this.is.the.path';
-            _.forEach([true, false], value => {
+            _.forEach([true, false], function(value) {
                 _.set(ontologyStateSvc.state, encodeURIComponent(path) + '.isOpened', value);
                 expect(ontologyStateSvc.getOpened(path)).toBe(value);
             });
