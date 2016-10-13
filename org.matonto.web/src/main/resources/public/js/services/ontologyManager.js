@@ -211,6 +211,18 @@
 
             /**
              * @ngdoc method
+             * @name reset
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Resets all state variables.
+             */
+            self.reset = function() {
+                self.ontologyIds = [];
+                self.list = [];
+            }
+            /**
+             * @ngdoc method
              * @name getAllOntologyIds
              * @methodOf ontologyManager.service:ontologyManagerService
              *

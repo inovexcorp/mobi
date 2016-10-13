@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name loginManager
          *
-         * @description 
+         * @description
          * The `loginManager` module only provides the `loginManagerService` service which
          * provides utilities to log into and log out of MatOnto.
          */
@@ -41,8 +41,8 @@
          * @requires $q
          * @requires $window
          *
-         * @description 
-         * `loginManagerService` is a service that provides access to the MatOnto login REST 
+         * @description
+         * `loginManagerService` is a service that provides access to the MatOnto login REST
          * endpoints so users can log into and out of MatOnto.
          */
         .service('loginManagerService', loginManagerService);
@@ -58,15 +58,15 @@
              * @name loginManager.loginManagerService#login
              * @methodOf loginManager.service:loginManagerService
              *
-             * @description 
+             * @description
              * Makes a call to GET /matontorest/user/login to attempt to log into MatOnto using the
-             * passed credentials and validity state of the login form. Returns a Promise with the 
+             * passed credentials and validity state of the login form. Returns a Promise with the
              * success of the log in attempt. If failed, contains an appropriate error message.
-             * 
+             *
              * @param {boolean} isValid whether or not the login form is valid
              * @param {string} username the username to attempt to log in with
              * @param {string} password the password to attempt to log in with
-             * @return {Promise} A Promise that resolves if the log in attempt succeeded and rejects 
+             * @return {Promise} A Promise that resolves if the log in attempt succeeded and rejects
              * with an error message if the log in attempt failed
              */
             self.login = function(isValid, username, password) {
@@ -89,7 +89,7 @@
                             }
                         }, function(response) {
                             if (response.status === 401) {
-                                deferred.reject('This email/password combination is not correct.');                            
+                                deferred.reject('This email/password combination is not correct.');
                             } else {
                                 deferred.reject('An error has occured. Please try again later.');
                             }
@@ -104,7 +104,7 @@
              * @name loginManager.loginManagerService#logout
              * @methodOf loginManager.service:loginManagerService
              *
-             * @description 
+             * @description
              * Makes a call to GET /matontorest/user/logout to log out of which ever user account
              * is current. Navigates back to the login page.
              */
@@ -121,10 +121,10 @@
              * @name loginManager.loginManagerService#isAuthenticated
              * @methodOf loginManager.service:loginManagerService
              *
-             * @description 
-             * Makes a call to GET /matontorest/user/current to test whether a user is currently logged 
-             * in and if not, navigates to the log in page. Returns a Promise with whether or not a user 
-             * is logged in. 
+             * @description
+             * Makes a call to GET /matontorest/user/current to test whether a user is currently logged
+             * in and if not, navigates to the log in page. Returns a Promise with whether or not a user
+             * is logged in.
              *
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
              * response data if no user is logged in.

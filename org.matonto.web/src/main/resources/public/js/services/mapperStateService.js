@@ -27,6 +27,9 @@
         /**
          * @ngdoc overview
          * @name mapperState
+         * @requires prefixes
+         * @requires mappingManager
+         * @requires ontologyManager
          * @requires delimitedManager
          *
          * @description
@@ -34,7 +37,7 @@
          * contains various variables to hold the state of the mapping tool page and
          * utility functions to update those variables.
          */
-        .module('mapperState', ['delimitedManager'])
+        .module('mapperState', ['prefixes', 'mappingManager', 'ontologyManager', 'delimitedManager'])
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService

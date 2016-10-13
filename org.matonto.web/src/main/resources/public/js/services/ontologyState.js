@@ -400,6 +400,9 @@
                     self.openAt(self.getPathsTo(self.listItem[index], iri));
                 }
             }
+            self.reset = function() {
+
+            }
             function initialize() {
                 self.state = self.newState;
             }

@@ -24,7 +24,7 @@
     'use strict';
 
     angular
-        .module('login', ['loginManager'])
+        .module('login', [])
         .controller('LoginController', LoginController);
 
     LoginController.$inject = ['loginManagerService'];
