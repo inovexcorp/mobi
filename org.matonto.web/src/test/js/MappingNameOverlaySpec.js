@@ -32,6 +32,7 @@ describe('Mapping Name Overlay directive', function() {
         module('mappingNameOverlay');
         mockMappingManager();
         mockMapperState();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
@@ -43,31 +44,33 @@ describe('Mapping Name Overlay directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {
-                name: ''
+            mapperStateSvc.mapping = {
+                id: ''
             };
             this.element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('mappingNameOverlay');
         });
-        it('should set the correct state for setting the name', function() {
+        describe('should set the correct state for setting the name', function() {
             beforeEach(function() {
                 controller.newName = 'test';
-            })
-            it('if it is the initial step', function() {
-                mapperStateSvc.step = 0;
+            });
+            it('if it is the select mapping step', function() {
+                mapperStateSvc.step = mapperStateSvc.selectMappingStep;
                 controller.set();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalled();
-                expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
+                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.getMappingId(controller.newName));
+                expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mapperStateSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
-            it('if it is not the intitial step', function() {
-                mapperStateSvc.step = 1;
+            it('if it is not the select mapping step', function() {
+                mapperStateSvc.step = mapperStateSvc.editMappingStep;
                 controller.set();
-                expect(mapperStateSvc.step).toBe(1);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
-                expect(mappingManagerSvc.mapping.name).toBe(controller.newName);
+                expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mapperStateSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
         });
@@ -75,22 +78,22 @@ describe('Mapping Name Overlay directive', function() {
             beforeEach(function() {
                 mapperStateSvc.editMapping = true;
                 mapperStateSvc.newMapping = true;
-                mappingManagerSvc.mapping = {};
+                mapperStateSvc.mapping = {};
             });
-            it('if it is the intitial step', function() {
-                mapperStateSvc.step = 0;
+            it('if it is the select mapping step', function() {
+                mapperStateSvc.step = mapperStateSvc.selectMappingStep;
                 controller.cancel();
                 expect(mapperStateSvc.editMapping).toBe(false);
                 expect(mapperStateSvc.newMapping).toBe(false);
-                expect(mappingManagerSvc.mapping).toEqual(undefined);
+                expect(mapperStateSvc.mapping).toEqual(undefined);
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
-            it('if it is not the initial step', function() {
-                mapperStateSvc.step = 1;
+            it('if it is not the select mapping step', function() {
+                mapperStateSvc.step = mapperStateSvc.editMappingStep;
                 controller.cancel();
                 expect(mapperStateSvc.editMapping).toBe(true);
                 expect(mapperStateSvc.newMapping).toBe(true);
-                expect(mappingManagerSvc.mapping).toEqual({});
+                expect(mapperStateSvc.mapping).toEqual({});
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
         });
@@ -105,22 +108,53 @@ describe('Mapping Name Overlay directive', function() {
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
         it('depending on the step', function() {
-            mapperStateSvc.step = 0;
+            mapperStateSvc.step = mapperStateSvc.selectMappingStep;
             scope.$digest();
             expect(this.element.find('h6').text()).toContain('Set');
 
-            mapperStateSvc.step = 1;
+            mapperStateSvc.step = mapperStateSvc.editMappingStep;
             scope.$digest();
             expect(this.element.find('h6').text()).toContain('Edit');
         });
         it('with a mapping name input', function() {
             expect(this.element.find('mapping-name-input').length).toBe(1);
         });
-        it('with custom buttons for cancel and set', function() {
-            var buttons = this.element.find('custom-button');
+        it('with buttons for cancel and set', function() {
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Set'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
+        it('depending on the validity of the form', function() {
+            controller = this.element.controller('mappingNameOverlay');
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            controller.mappingNameForm.$setValidity('test', false);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+    });
+    it('should call cancel when the cancel button is clicked', function() {
+        mapperStateSvc.mapping = {id: '', jsonld: []};
+        var element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('mappingNameOverlay');
+        spyOn(controller, 'cancel');
+
+        var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        cancelButton.triggerHandler('click');
+        expect(controller.cancel).toHaveBeenCalled();
+    });
+    it('should call set when the set button is clicked', function() {
+        mapperStateSvc.mapping = {id: '', jsonld: []};
+        var element = $compile(angular.element('<mapping-name-overlay></mapping-name-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('mappingNameOverlay');
+        spyOn(controller, 'set');
+
+        var runButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        runButton.triggerHandler('click');
+        expect(controller.set).toHaveBeenCalled();
     });
 });

@@ -27,9 +27,9 @@
         .module('annotationOverlay', [])
         .directive('annotationOverlay', annotationOverlay);
 
-        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'annotationManagerService', 'stateManagerService'];
+        annotationOverlay.$inject = ['responseObj', 'ontologyManagerService', 'propertyManagerService', 'ontologyStateService'];
 
-        function annotationOverlay(responseObj, ontologyManagerService, annotationManagerService, stateManagerService) {
+        function annotationOverlay(responseObj, ontologyManagerService, propertyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,24 +38,25 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
-                    dvm.am = annotationManagerService;
+                    dvm.pm = propertyManagerService;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
                         dvm.sm.showAnnotationOverlay = false;
                     }
 
-                    dvm.addAnnotation = function(select, value) {
-                        dvm.am.add(dvm.sm.selected, dvm.ro.getItemIri(select), value);
+                    dvm.addAnnotation = function() {
+                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
+                            _.get(dvm.sm.annotationType, '@id'));
                         closeAndMark();
                     }
 
-                    dvm.editAnnotation = function(select, value) {
-                        dvm.am.edit(dvm.sm.selected, dvm.ro.getItemIri(select), value, dvm.sm.annotationIndex);
+                    dvm.editAnnotation = function() {
+                        dvm.pm.edit(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.annotationSelect), dvm.sm.annotationValue,
+                            dvm.sm.annotationIndex, _.get(dvm.sm.annotationType, '@id'));
                         closeAndMark();
                     }
 

@@ -26,7 +26,7 @@ describe('Individual Tree directive', function() {
         scope,
         element,
         controller,
-        stateManagerSvc,
+        ontologyStateSvc,
         ontologyManagerSvc,
         settingsManagerSvc;
 
@@ -34,24 +34,27 @@ describe('Individual Tree directive', function() {
         module('templates');
         module('individualTree');
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockSettingsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_, _settingsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _settingsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             settingsManagerSvc = _settingsManagerService_;
         });
 
-        ontologyManagerSvc.list = [{
-            id: '',
-            ontology: [{}],
-            classesWithIndividuals: ['class1']
-        }];
-        stateManagerSvc.getOpened.and.returnValue(true);
-        stateManagerSvc.getIndividualsOpened.and.returnValue(true);
+        ontologyStateSvc.listItem = {
+            classesWithIndividuals: [{
+                entityIRI: 'class1',
+                subEntities: [{
+                    entityIRI: 'class2'
+                }]
+            }]
+        }
+        ontologyStateSvc.getOpened.and.returnValue(true);
+        ontologyStateSvc.getIndividualsOpened.and.returnValue(true);
         ontologyManagerSvc.getClassIndividuals.and.returnValue(['individual1']);
     });
 
@@ -73,30 +76,15 @@ describe('Individual Tree directive', function() {
         it('depending on the number of classes', function() {
             var classes = element.querySelectorAll('ul.class');
             var links = element.querySelectorAll('ul.class > li a');
-            expect(classes.length).toBe(ontologyManagerSvc.list[0].classesWithIndividuals.length);
-            expect(links.length).toBe(ontologyManagerSvc.list[0].classesWithIndividuals.length);
+            expect(classes.length).toBe(ontologyStateSvc.listItem.classesWithIndividuals.length);
+            expect(links.length).toBe(ontologyStateSvc.listItem.classesWithIndividuals.length*2);
         });
         it('depending on the number of individuals', function() {
-            var individuals = element.querySelectorAll('ul.individual');
-            var treeItems = element.querySelectorAll('ul.individual > tree-item');
-            expect(individuals.length).toBe(ontologyManagerSvc.getClassIndividuals().length);
-            expect(treeItems.length).toBe(ontologyManagerSvc.getClassIndividuals().length);
-        });
-        it('depending on whether an ontology is open', function() {
-            stateManagerSvc.getOpened.and.returnValue(false);
-            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
-            scope.$digest();
-            var container = angular.element(element.querySelectorAll('ul.ontology > .container'));
-            expect(container.length).toBe(0);
-
-            stateManagerSvc.getOpened.and.returnValue(true);
-            element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
-            scope.$digest();
-            container = angular.element(element.querySelectorAll('ul.ontology > .container'));
-            expect(container.length).toBe(1);
+            var individuals = element.querySelectorAll('.individual');
+            expect(individuals.length).toBe(ontologyManagerSvc.getClassIndividuals().length*2);
         });
         it('depending on whether the individuals of a class are open', function() {
-            stateManagerSvc.getIndividualsOpened.and.returnValue(false);
+            ontologyStateSvc.getIndividualsOpened.and.returnValue(false);
             element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
             scope.$digest();
             var container = angular.element(element.querySelectorAll('ul.class > .container'));
@@ -104,7 +92,7 @@ describe('Individual Tree directive', function() {
             expect(container.length).toBe(0);
             expect(icon.hasClass('fa-folder-o')).toBe(true);
 
-            stateManagerSvc.getIndividualsOpened.and.returnValue(true);
+            ontologyStateSvc.getIndividualsOpened.and.returnValue(true);
             element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
             scope.$digest();
             container = angular.element(element.querySelectorAll('ul.class > .container'));
@@ -121,8 +109,8 @@ describe('Individual Tree directive', function() {
                 scope.$digest();
                 controller = element.controller('individualTree');
                 var result = controller.getTreeDisplay({});
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({});
-                expect(result).toBe(ontologyManagerSvc.getEntityName({}));
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type);
+                expect(result).toBe(ontologyManagerSvc.getEntityName({}, ontologyStateSvc.state.type));
             });
             it('for full IRI', function() {
                 var entity = {matonto: {originalIRI: 'test'}};

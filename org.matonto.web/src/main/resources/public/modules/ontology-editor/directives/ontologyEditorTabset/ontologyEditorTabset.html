@@ -1,0 +1,36 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="ontology-editor-tabset">
+    <tabset>
+        <tab ng-repeat="item in dvm.om.list track by item.ontologyId" heading="dvm.om.getEntityName(dvm.om.getOntologyEntity(item.ontology), type)"
+             on-close="dvm.onClose(item.ontologyId)" active="dvm.sm.getState(item.ontologyId).active"
+             on-click="dvm.sm.setState(item.ontologyId)" marked="dvm.sm.hasChanges(item.ontology, item.ontologyId)"
+             ng-init="type = dvm.sm.getState(item.ontologyId).type">
+            <ontology-tab ng-if="type === 'ontology'"></ontology-tab>
+            <vocabulary-tab ng-if="type === 'vocabulary'"></vocabulary-tab>
+        </tab>
+        <tab active="dvm.sm.getState().active" on-click="dvm.sm.setState()" is-last="true">
+            <ontology-default-tab></ontology-default-tab>
+        </tab>
+    </tabset>
+</div>

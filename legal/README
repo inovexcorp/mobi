@@ -10,5 +10,5 @@ MatOnto is covered under the license found in the file `LICENSE.TXT` in the root
 * GNU Lesser General Public License, Version 2.1 - `lgpl_v2.1.txt`
 * GNU Lesser General Public License, Version 3.0 - `lgpl_v3.0.txt`
 * ISC License - `isc_logkit.txt`
-* MIT License - `mit_angularjs.txt`, `mit_angularuuid.txt`, `mit_bootstrap.txt`, `mit_codemirror.txt`, `mit_lodash.txt`, `mit_mockito.txt`, `mit_slf4j.txt`, `mit_uicodemirror.txt`, `mit_uirouter.txt`,  and `mit_uiselect.txt`, 
+* MIT License - `mit_angularjs.txt`, `mit_angularuuid.txt`, `mit_bootstrap.txt`, `mit_codemirror.txt`, `mit_handsontable.txt`, `mit_lodash.txt`, `mit_mockito.txt`, `mit_nghandsontable.txt`, `mit_slf4j.txt`, `mit_uicodemirror.txt`, `mit_uirouter.txt`, and `mit_uiselect.txt`
 * Mozilla Public License, Version 1.1 - `mpl_v1.1.txt`

@@ -24,8 +24,7 @@ describe('Property Values directive', function() {
     var $compile,
         scope,
         element,
-        responseObj,
-        controller;
+        responseObj;
 
 
     beforeEach(function() {
@@ -33,11 +32,14 @@ describe('Property Values directive', function() {
         module('propertyValues');
         injectBeautifyFilter();
         mockResponseObj();
+        mockOntologyState();
+        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             responseObj = _responseObj_;
+            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
     });
 
@@ -90,6 +92,10 @@ describe('Property Values directive', function() {
             expect(values.length).toBe(2);
         });
         it('depending on whether a value is a blank node', function() {
+            ontologyUtilsManagerSvc.isBlankNodeString.and.callFake(function(string) {
+                return string === '_:b0';
+            });
+            scope.$digest();
             var editButtons = element.querySelectorAll('.value-container [title=Edit]');
             expect(editButtons.length).toBe(1);
             var deleteButtons = element.querySelectorAll('.value-container [title=Delete]');
@@ -110,24 +116,6 @@ describe('Property Values directive', function() {
             _.forEach(values, function(value) {
                 expect(angular.element(value).hasClass('ng-hide')).toBe(true);
             });
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)"></property-values>'))(scope);
-            scope.$digest();
-            controller = element.controller('propertyValues');
-        });
-        it('tests whether an id is a blank node', function() {
-            var falseTests = ['', [], {}, true, false, undefined, null, 0, 1];
-            var result;
-            _.forEach(falseTests, function(test) {
-                result = controller.isBlankNode(test);
-                expect(result).toBe(false);
-            });
-            
-            result = controller.isBlankNode('_:b');
-            expect(result).toBe(true);
         });
     });
     it('should call edit when the appropriate button is clicked', function() {

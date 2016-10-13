@@ -1,0 +1,11 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.usages-block {
+    .predicate {
+        color: #08B36E;
+    }
+    .selected {
+        font-weight: bold;
+    }
+}

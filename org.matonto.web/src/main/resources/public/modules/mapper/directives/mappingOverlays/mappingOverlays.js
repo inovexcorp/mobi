@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingOverlays
          *
-         * @description 
+         * @description
          * The `mappingOverlays` module only provides the `mappingOverlays` directive which creates
          * all the overlays used in the mapping tool.
          */
@@ -43,15 +43,16 @@
          * @requires  mapperState.service:mapperStateService
          * @requires  delimitedManager.service:delimitedManagerService
          *
-         * @description 
-         * `mappingOverlays` is a directive that creates all of the overlay used in the mapping tool. 
+         * @description
+         * `mappingOverlays` is a directive that creates all of the overlays used in the mapping tool.
          * Those overlays are {@link mappingNameOverlay.directive:mappingNameOverlay mappingNameOverlay},
-         * {@link fileUploadOverlay.directive:fileUploadOverlay fileUploadOverlay},
-         * {@link ontologySelectOverlay.directive:ontologySelectOverlay ontologySelectOverlay},
-         * {@link startingClassSelectOverlay.directive:startingClassSelectOverlay startingClassSelectOverlay},
-         * {@link ontologyPreviewOverlay.directive:ontologyPreviewOverlay ontologyPreviewOverlay}, 
          * {@link iriTemplateOverlay.directive:iriTemplateOverlay iriTemplateOverlay},
-         * {@link finishOverlay.directive:finishOverlay finishOverlay}, 
+         * {@link invalidOntologyOverlay.directive:invalidOntologyOverlay invalidOntologyOverlay},
+         * {@link createMappingOverlay.directive:createMappingOverlay createMappingOverlay},
+         * {@link downloadMappingOverlay.directive:downloadMappingOverlay downloadMappingOverlay},
+         * {@link mappingConfigOverlay.directive:mappingConfigOverlay mappingConfigOverlay},
+         * {@link propMappingOverlay.directive:propMappingOverlay propMappingOverlay},
+         * {@link runMappingOverlay.directive:runMappingOverlay runMappingOverlay},
          * and several {@link confirmationOverlay.directive:confirmationOverlay confirmationOverlays}.
          */
         .directive('mappingOverlays', mappingOverlays);
@@ -73,47 +74,49 @@
                     dvm.reset = function() {
                         dvm.state.initialize();
                         dvm.state.resetEdit();
-                        dvm.mm.mapping = undefined;
-                        dvm.mm.sourceOntologies = [];
                         dvm.dm.reset();
                     }
-                    dvm.getDeleteEntityName = function() {
-                        var entityId = '';
-                        var ontology = undefined;
-                        if (dvm.isClassMapping(dvm.state.deleteId)) {
-                            entityId = dvm.mm.getClassIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            ontology = dvm.mm.findSourceOntologyWithClass(entityId);
-                        } else {
-                            entityId = dvm.mm.getPropIdByMappingId(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            ontology = dvm.mm.findSourceOntologyWithProp(entityId);
-                        }
-                        return dvm.om.getEntityName(dvm.om.getEntity(ontology.entities, entityId));
+                    dvm.getClassName = function(classMappingId) {
+                        var classId = dvm.mm.getClassIdByMappingId(dvm.state.mapping.jsonld, classMappingId);
+                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithClass(classId, dvm.state.sourceOntologies), 'entities'), classId));
                     }
-                    dvm.isClassMapping = function(entityId) {
-                        var entity = _.find(dvm.mm.mapping.jsonld, {'@id': entityId});
-                        return dvm.mm.isClassMapping(entity);
+                    dvm.getPropName = function(propMappingId) {
+                        var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, propMappingId);
+                        return dvm.om.getEntityName(dvm.om.getEntity(_.get(dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies), 'entities'), propId));
                     }
-                    dvm.deleteEntity = function() {
-                        if (dvm.isClassMapping(dvm.state.deleteId)) {
-                            _.pull(dvm.state.openedClasses, dvm.state.deleteId);
-                            var classesToUpdate = _.map(dvm.mm.getPropsLinkingToClass(dvm.mm.mapping.jsonld, dvm.state.deleteId), prop => dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, prop['@id']));
-                            dvm.mm.mapping.jsonld = dvm.mm.removeClass(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            _.unset(dvm.state.availablePropsByClass, encodeURIComponent(dvm.state.deleteId));
-                            _.forEach(classesToUpdate, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
-                        } else {
-                            var classMapping = dvm.mm.findClassWithDataMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId) 
-                                || dvm.mm.findClassWithObjectMapping(dvm.mm.mapping.jsonld, dvm.state.deleteId);
-                            dvm.mm.mapping.jsonld = dvm.mm.removeProp(dvm.mm.mapping.jsonld, classMapping['@id'], dvm.state.deleteId);
-                            dvm.state.setAvailableProps(classMapping['@id']);
-                        }
-                        dvm.state.changedMapping();
+                    dvm.deleteClass = function() {
+                        var classesToUpdate = _.map(dvm.mm.getPropsLinkingToClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId), prop => {
+                            var propId = dvm.mm.getPropIdByMapping(prop);
+                            var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
+                            var classMapping = dvm.mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, prop['@id']);
+                            return {
+                                ontologyId: ontology.id,
+                                classMappingId: classMapping['@id'],
+                                propId: propId
+                            };
+                        });
+                        var dataPropMappings = _.filter(dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId), propMapping => dvm.mm.isDataMapping(propMapping));
+                        dvm.mm.removeClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId);
+                        _.forEach(dataPropMappings, propMapping => _.remove(dvm.state.invalidProps, {'@id': propMapping['@id']}));
+                        dvm.state.removeAvailableProps(dvm.state.selectedClassMappingId);
+                        _.forEach(classesToUpdate, obj => dvm.state.getAvailableProps(obj.classMappingId).push({'@id': obj.propId, ontologyId: obj.ontologyId}));
                         dvm.state.resetEdit();
-                        dvm.state.deleteId = '';
+                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.state.mapping.jsonld), '@id', '');
+                    }
+                    dvm.deleteProp = function() {
+                        var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dvm.state.selectedPropMappingId);
+                        var ontology = dvm.mm.findSourceOntologyWithProp(propId, dvm.state.sourceOntologies);
+                        var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                        dvm.state.getAvailableProps(classMapping['@id']).push({'@id': propId, ontologyId: ontology.id});
+                        dvm.mm.removeProp(dvm.state.mapping.jsonld, classMapping['@id'], dvm.state.selectedPropMappingId);
+                        _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId});
+                        dvm.state.resetEdit();
+                        dvm.state.selectedClassMappingId = classMapping['@id'];
                     }
                     dvm.deleteMapping = function() {
-                        dvm.mm.deleteMapping(dvm.mm.mapping.name).then(() => {
-                            dvm.mm.mapping = undefined;
-                            dvm.mm.sourceOntologies = [];
+                        dvm.mm.deleteMapping(dvm.state.mapping.id).then(() => {
+                            dvm.state.mapping = undefined;
+                            dvm.state.sourceOntologies = [];
                         }, errorMessage => {
                             console.log(errorMessage);
                         });

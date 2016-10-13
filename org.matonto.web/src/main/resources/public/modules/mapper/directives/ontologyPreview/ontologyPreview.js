@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name ontologyPreview
          *
-         * @description 
+         * @description
          * The `ontologyPreview` module only provides the `ontologyPreview` directive which creates
-         * a preview of the pass in ontology with lists of the imported ontologies and classes 
+         * a preview of the pass in ontology with lists of the imported ontologies and classes
          * defined within the ontology.
          */
         .module('ontologyPreview', [])
@@ -42,14 +42,14 @@
          * @requires  prefixes.service:prefixes
          * @requires  ontologyManager.service:ontologyManagerService
          *
-         * @description 
+         * @description
          * `ontologyPreview` is a directive which creates a div with a preview of the passed ontology.
-         * It lists out all the directly imported ontologies by IRI. It also renders an expandable 
-         * list of all the classes defined within the ontology. The directive is replaced by the 
+         * It lists out all the directly imported ontologies by IRI. It also renders an expandable
+         * list of all the classes defined within the ontology. The directive is replaced by the
          * contents of its template.
          *
-         * @param {object} ontology an ontology object from the 
-         * {@link mappingManager.service:mappingManagerService#sourceOntologies source ontologies} list
+         * @param {object} ontology an ontology object from the
+         * {@link mapperState.service:mapperStateService#sourceOntologies source ontologies} list
          */
         .directive('ontologyPreview', ontologyPreview);
 
@@ -62,7 +62,7 @@
                 replace: true,
                 scope: {},
                 bindToController: {
-                    ontology: '='
+                    ontology: '<'
                 },
                 controller: function() {
                     var dvm = this;
@@ -71,11 +71,10 @@
                     dvm.full = false;
 
                     dvm.createTitle = function() {
-                        return dvm.om.getEntityName(dvm.om.getOntologyEntity(dvm.ontology.entities));
+                        return dvm.om.getEntityName(dvm.om.getOntologyEntity(_.get(dvm.ontology, 'entities')));
                     }
                     dvm.createDescription = function() {
-                        var ontologyEntity = dvm.om.getOntologyEntity(dvm.ontology.entities);
-                        return _.get(ontologyEntity, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(ontologyEntity, "['" + prefixes.dc + "description'][0]['@value']", ''));
+                        return dvm.om.getEntityDescription(dvm.om.getOntologyEntity(_.get(dvm.ontology, 'entities')));
                     }
                     dvm.getImports = function() {
                         var ontologyEntity = dvm.om.getOntologyEntity(dvm.ontology.entities);

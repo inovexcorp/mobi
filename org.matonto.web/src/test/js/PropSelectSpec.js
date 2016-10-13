@@ -51,11 +51,11 @@ describe('Prop Select directive', function() {
             this.element = $compile(angular.element('<prop-select props="props" selected-prop="selectedProp" on-change="onChange()"></prop-select>'))(scope);
             scope.$digest();
         });
-        it('props should be two way bound', function() {
+        it('props should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.props = [{}];
             scope.$digest();
-            expect(scope.props).toEqual([{}]);
+            expect(scope.props).not.toEqual([{}]);
         });
         it('onChange should be called in the parent scope', function() {
             var isolatedScope = this.element.isolateScope();

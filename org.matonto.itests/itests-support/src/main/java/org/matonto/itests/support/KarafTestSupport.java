@@ -57,8 +57,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -112,7 +114,7 @@ public class KarafTestSupport {
     }
 
     @Configuration
-    public Option[] config() throws IOException {
+    public Option[] config() throws IOException, URISyntaxException {
         MavenArtifactUrlReference karafUrl = CoreOptions.maven()
                 .groupId("org.matonto")
                 .artifactId("distribution")
@@ -148,12 +150,12 @@ public class KarafTestSupport {
         return options.toArray(new Option[options.size()]);
     }
 
-    protected File getFileResource(String path) {
+    protected File getFileResource(String path) throws URISyntaxException {
         URL res = this.getClass().getResource(path);
         if (res == null) {
             throw new RuntimeException("File resource " + path + " not found");
         }
-        return new File(res.getFile());
+        return Paths.get(res.toURI()).toFile();
     }
 
     protected InputStream getBundleEntry(BundleContext context, String entry) throws IOException {
@@ -317,7 +319,7 @@ public class KarafTestSupport {
         }
     }
 
-    private void waitForService(String filter, long timeout) throws InvalidSyntaxException, InterruptedException {
+    protected void waitForService(String filter, long timeout) throws InvalidSyntaxException, InterruptedException {
         ServiceTracker st = new ServiceTracker(bundleContext, bundleContext.createFilter(filter), null);
         try {
             st.open();

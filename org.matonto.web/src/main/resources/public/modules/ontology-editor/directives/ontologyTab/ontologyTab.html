@@ -1,0 +1,49 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="ontology-tab">
+    <tabset class="centered">
+        <tab heading="'Project'" active="dvm.sm.state.project.active"
+             on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI)">
+            <project-tab></project-tab>
+        </tab>
+        <tab heading="'Overview'" active="dvm.sm.state.overview.active"
+             on-click="dvm.sm.setSelected(dvm.sm.state.overview.entityIRI)">
+            <overview-tab></overview-tab>
+        </tab>
+        <tab heading="'Classes'" active="dvm.sm.state.classes.active"
+             on-click="dvm.sm.setSelected(dvm.sm.state.classes.entityIRI)">
+            <classes-tab></classes-tab>
+        </tab>
+        <tab heading="'Properties'" active="dvm.sm.state.properties.active"
+             on-click="dvm.sm.setSelected(dvm.sm.state.properties.entityIRI)">
+            <properties-tab></properties-tab>
+        </tab>
+        <tab heading="'Individuals'" active="dvm.sm.state.individuals.active"
+             on-click="dvm.sm.setSelected(dvm.sm.state.individuals.entityIRI)">
+            <individuals-tab></individuals-tab>
+        </tab>
+    </tabset>
+    <button class="btn btn-primary btn-circle circle-save-button" ng-click="dvm.sm.showSaveOverlay = true" ng-if="dvm.sm.isSavable(dvm.sm.ontology, dvm.sm.state.ontologyId)">
+        <i class="fa fa-floppy-o fa-fw"></i>
+    </button>
+</div>

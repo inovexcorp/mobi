@@ -27,9 +27,9 @@
         .module('createClassOverlay', [])
         .directive('createClassOverlay', createClassOverlay);
 
-        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function createClassOverlay($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
+        function createClassOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,7 +42,7 @@
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
                         dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
@@ -56,7 +56,10 @@
                         }],
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
-                        }]
+                        }],
+                        matonto: {
+                            created: true
+                        }
                     }
 
                     dvm.nameChanged = function() {
@@ -75,15 +78,19 @@
                         if (_.isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
                         }
-                        dvm.om.createClass(dvm.sm.state.ontologyId, dvm.clazz)
-                            .then(response => {
-                                dvm.sm.showCreateClassOverlay = false;
-                                dvm.sm.selectItem('class-editor', response.entityIRI,
-                                    dvm.om.getListItemById(response.ontologyId));
-                                dvm.sm.setOpened(response.ontologyId, dvm.om.getOntologyIRI(response.ontologyId), true);
-                            }, errorMessage => {
-                                dvm.error = errorMessage;
-                            });
+                        _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
+                        // add the entity to the ontology
+                        dvm.om.addEntity(dvm.sm.ontology, dvm.clazz);
+                        // update relevant lists
+                        var split = $filter('splitIRI')(dvm.clazz['@id']);
+                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                        _.get(listItem, 'subClasses').push({namespace:split.begin + split.then, localName: split.end});
+                        _.get(listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
+                        _.set(_.get(listItem, 'index'), dvm.clazz['@id'], dvm.sm.ontology.length - 1);
+                        // select the new class
+                        dvm.sm.selectItem(_.get(dvm.clazz, '@id'));
+                        // hide the overlay
+                        dvm.sm.showCreateClassOverlay = false;
                     }
                 }
             }

@@ -31,14 +31,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.jaas.boot.principal.RolePrincipal;
 import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.log4j.Logger;
-import org.matonto.jaas.modules.token.TokenCallback;
 import org.matonto.jaas.utils.TokenUtils;
+import org.matonto.web.security.util.RestSecurityUtils;
 
 import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
@@ -63,20 +59,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
         Subject subject = new Subject();
         String tokenString = TokenUtils.getTokenString(containerRequestContext);
 
-        LoginContext loginContext;
-        try {
-            loginContext = new LoginContext(realm.getName(), subject, callbacks -> {
-                for (Callback callback : callbacks) {
-                    if (callback instanceof TokenCallback) {
-                        ((TokenCallback) callback).setTokenString(tokenString);
-                    } else {
-                        throw new UnsupportedCallbackException(callback);
-                    }
-                }
-            });
-            loginContext.login();
-        } catch (LoginException e) {
-            LOG.debug("Authentication failed.");
+        if (!RestSecurityUtils.authenticateToken(realm.getName(), subject, tokenString)) {
             return null;
         }
 

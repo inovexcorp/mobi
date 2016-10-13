@@ -1,0 +1,25 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.selected-details {
+    padding-bottom: 15px;
+
+    a,
+    span {
+        display: inline-block;
+        vertical-align: bottom;
+        line-height: 20px;
+    }
+
+    .entity-name {
+        font-size: 18px;
+    }
+
+    .delete-entity {
+        float: right;
+
+        i {
+            padding-right: 5px;
+        }
+    }
+}

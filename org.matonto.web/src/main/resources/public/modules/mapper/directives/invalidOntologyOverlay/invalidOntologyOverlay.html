@@ -23,10 +23,10 @@
 <div class="invalid-ontology-overlay overlay">
     <form class="content">
         <h6><i class="fa fa-exclamation-triangle"></i> Incompatible Ontology!</h6>
-        <p class="text-danger">The source ontologies for the {{dvm.mm.mapping.name}} mapping has been changed and is no longer compatible.</p>
+        <p class="text-danger">The source ontology for the {{(dvm.state.mapping.id | splitIRI).end}} mapping and/or its imported ontologies have been changed and are no longer compatible.</p>
 
         <div class="btn-container clearfix">
-            <custom-button on-click="dvm.close()">Close</custom-button>
+            <button class="btn btn-primary pull-right" ng-click="dvm.close()">Close</button>
         </div>
     </form>
 </div>

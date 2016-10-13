@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.26-SNAPSHOT</version>
+        <version>1.3.7-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -193,7 +193,9 @@
 
                         <!-- MatOnto Features -->
                         <feature>matonto-deps</feature>
-                        <feature>matonto</feature>
+                        <feature>matonto-core</feature>
+                        <feature>matonto-cli</feature>
+                        <feature>matonto-web</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>

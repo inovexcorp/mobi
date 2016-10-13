@@ -21,28 +21,32 @@
   #L%
   -->
 <div class="sparql-results">
-    <div class="table-container">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th ng-repeat="binding in dvm.sparql.data.bindingNames">{{binding}}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="result in dvm.sparql.data.paginatedResults.results">
-                    <td ng-repeat="binding in dvm.sparql.data.bindingNames">{{result[binding].value}}</td>
-                </tr>
-            </tbody>
-        </table>
-        <p ng-if="dvm.sparql.errorMessage" class="text-danger message">
-            <i class="fa fa-exclamation-triangle fa-fw"></i>{{dvm.sparql.errorMessage}}
-        </p>
-        <p ng-if="dvm.sparql.infoMessage" class="text-info message">
-            <i class="fa fa-info fa-fw"></i>{{dvm.sparql.infoMessage}}
-        </p>
-        <div class="paging-details">
-            <p ng-if="dvm.sparql.data.paginatedResults" class="page-count">Showing {{(dvm.sparql.data.paginatedResults.start + 1) | number}} to {{(dvm.sparql.data.paginatedResults.start + dvm.sparql.data.paginatedResults.size) | number}} of {{dvm.sparql.data.paginatedResults.totalSize | number}}</p>
-            <pagination links="dvm.sparql.data.paginatedResults.links" current-page="dvm.sparql.currentPage" get-page="dvm.getPage(direction)"></pagination>
-        </div>
-    </div>
+    <block>
+        <block-content>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th ng-repeat="binding in dvm.sparql.data.bindingNames">{{binding}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="result in dvm.sparql.data.paginatedResults.results">
+                        <td ng-repeat="binding in dvm.sparql.data.bindingNames">{{result[binding].value}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p ng-if="dvm.sparql.errorMessage" class="text-danger message">
+                <i class="fa fa-exclamation-triangle fa-fw"></i>{{dvm.sparql.errorMessage}}
+            </p>
+            <p ng-if="dvm.sparql.infoMessage" class="text-info message">
+                <i class="fa fa-info fa-fw"></i>{{dvm.sparql.infoMessage}}
+            </p>
+        </block-content>
+        <block-footer ng-if="dvm.sparql.data.paginatedResults">
+            <div class="paging-details clearfix">
+                <p class="page-count">Showing {{(dvm.sparql.data.paginatedResults.start + 1) | number}} to {{(dvm.sparql.data.paginatedResults.start + dvm.sparql.data.paginatedResults.size) | number}} of {{dvm.sparql.data.paginatedResults.totalSize | number}}</p>
+                <pagination links="dvm.sparql.data.paginatedResults.links" current-page="dvm.sparql.currentPage" get-page="dvm.getPage(direction)"></pagination>
+            </div>
+        </block-footer>
+    </block>
 </div>

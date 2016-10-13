@@ -46,10 +46,10 @@ describe('Ontology Preview directive', function() {
             scope.$digest();
             controller = this.element.controller('ontologyPreview');
         });
-        it('ontology should be two way bound', function() {
+        it('ontology should be one way bound', function() {
             controller.ontology = {id: ''};
             scope.$digest();
-            expect(scope.ontology).toEqual({id: ''});
+            expect(scope.ontology).not.toEqual({id: ''});
         });
     });
     describe('controller methods', function() {
@@ -69,6 +69,7 @@ describe('Ontology Preview directive', function() {
         it('should create a description of the ontology', function() {
             var result = controller.createDescription();
             expect(ontologyManagerSvc.getOntologyEntity).toHaveBeenCalledWith(controller.ontology.entities);
+            expect(ontologyManagerSvc.getEntityDescription).toHaveBeenCalled();
             expect(typeof result).toBe('string');
         });
         it('should get classes from the ontology', function() {

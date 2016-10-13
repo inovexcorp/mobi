@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('ontologyCloseOverlay', ['ontologyManager', 'stateManager'])
+        .module('ontologyCloseOverlay', [])
         .directive('ontologyCloseOverlay', ontologyCloseOverlay);
 
-        ontologyCloseOverlay.$inject = ['ontologyManagerService', 'stateManagerService'];
+        ontologyCloseOverlay.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-        function ontologyCloseOverlay(ontologyManagerService, stateManagerService) {
+        function ontologyCloseOverlay(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,10 +40,12 @@
                     var dvm = this;
 
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.saveThenClose = function() {
-                        dvm.om.saveChanges(dvm.sm.state.ontologyId, dvm.sm.getUnsavedEntities(dvm.sm.ontology))
+                        var ontology = dvm.om.getOntologyById(dvm.sm.ontologyIdToClose);
+                        dvm.om.saveChanges(dvm.sm.ontologyIdToClose, dvm.sm.getUnsavedEntities(ontology),
+                            dvm.sm.getCreatedEntities(ontology), dvm.sm.getState(dvm.sm.ontologyIdToClose).deletedEntities)
                             .then(newId => {
                                 dvm.sm.afterSave(newId);
                                 dvm.close();
@@ -53,8 +55,8 @@
                     }
 
                     dvm.close = function() {
-                        dvm.om.closeOntology(dvm.sm.state.ontologyId);
-                        dvm.sm.clearState(dvm.sm.state.ontologyId);
+                        dvm.sm.deleteState(dvm.sm.ontologyIdToClose);
+                        dvm.om.closeOntology(dvm.sm.ontologyIdToClose);
                         dvm.sm.showCloseOverlay = false;
                     }
                 }

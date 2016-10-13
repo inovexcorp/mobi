@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingList
          *
-         * @description 
+         * @description
          * The `mappingList` module only provides the `mappingList` directive which creates
          * a "boxed" area with a list of saved mappings in the repository.
          */
@@ -41,11 +41,13 @@
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
-         * `mappingList` is a directive that creates a "boxed" div with an unordered list of the 
+         * @description
+         * `mappingList` is a directive that creates a div with an unordered list of the
          * all the saved mappings in the repository. Each mapping name is clickable and sets the
-         * selected mapping for the mapping tool. The directive is replaced by the contents of 
-         * its template.
+         * selected {@link mapperState.service:mapperStateService#mapping mapping} for the mapping
+         * tool. The list will also be filtered by the
+         * {@link mapperState.service:mapperStateService#mappingSearchString mappingSearchString}.
+         * The directive is replaced by the contents of its template.
          */
         .directive('mappingList', mappingList);
 
@@ -63,23 +65,23 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
 
-                    dvm.onClick = function(mappingName) {
-                        var openedMapping = _.find(openedMappings, {name: mappingName});
+                    dvm.onClick = function(id) {
+                        var openedMapping = _.find(openedMappings, {id: id});
                         if (openedMapping) {
-                            dvm.mm.mapping = openedMapping;
+                            dvm.state.mapping = openedMapping;
                         } else {
-                            dvm.mm.getMapping(mappingName).then(jsonld => {
+                            dvm.mm.getMapping(id).then(jsonld => {
                                 var mapping = {
                                     jsonld,
-                                    name: mappingName
+                                    id
                                 };
-                                dvm.mm.mapping = mapping;
+                                dvm.state.mapping = mapping;
                                 openedMappings.push(mapping);
                             }, errorMessage => {
                                 console.log(errorMessage);
                             });
                         }
-                        _.remove(openedMappings, mapping => dvm.mm.previousMappingNames.indexOf(mapping.name) < 0);
+                        _.remove(openedMappings, mapping => dvm.mm.mappingIds.indexOf(mapping.id) < 0);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingList/mappingList.html'

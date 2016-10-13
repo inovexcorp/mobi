@@ -1,0 +1,60 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="property-hierarchy-block">
+    <block>
+        <block-header>
+            <span>Property Hierarchies</span><a ng-click="dvm.sm.showCreatePropertyOverlay = true" class="pull-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
+        </block-header>
+        <block-content class="tree">
+            <ul ng-if="dvm.sm.listItem.dataPropertyHierarchy.length">
+                <li>
+                    <a ng-click="dvm.sm.setDataPropertiesOpened(dvm.sm.state.ontologyId, !dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId)); $event.stopPropagation()">
+                        <i class="fa fa-fw"
+                           ng-class="{'fa-folder-open-o': dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId), 'fa-folder-o': !dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId)}"></i>Datatype Properties
+                    </a>
+                </li>
+                <li class="container" ng-if="dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId)">
+                    <hierarchy-tree hierarchy="dvm.sm.listItem.dataPropertyHierarchy"></hierarchy-tree>
+                </li>
+            </ul>
+            <ul ng-if="dvm.sm.listItem.objectPropertyHierarchy.length">
+                <li>
+                    <a ng-click="dvm.sm.setObjectPropertiesOpened(dvm.sm.state.ontologyId, !dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)); $event.stopPropagation()">
+                        <i class="fa fa-fw"
+                           ng-class="{'fa-folder-open-o': dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId), 'fa-folder-o': !dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)}"></i>Object Properties
+                    </a>
+                </li>
+                <li class="container" ng-if="dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)">
+                    <hierarchy-tree hierarchy="dvm.sm.listItem.objectPropertyHierarchy"></hierarchy-tree>
+                </li>
+            </ul>
+        </block-content>
+        <block-footer class="centered">
+            <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
+        </block-footer>
+    </block>
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Property'" confirm-click="dvm.deleteProperty()"
+                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+        <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+    </confirmation-overlay>
+</div>

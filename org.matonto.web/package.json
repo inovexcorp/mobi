@@ -38,18 +38,19 @@
   "author": "Jordan Lewis",
   "license": "UNLICENSED",
   "dependencies": {
-    "angular": "1.4.8",
-    "angular-animate": "1.4.8",
+    "angular": "1.5.8",
+    "angular-animate": "1.5.8",
     "angular-cookies": "^1.5.0",
     "angular-messages": "^1.5.3",
-    "angular-mocks": "1.4.8",
+    "angular-mocks": "1.5.8",
     "angular-ui-codemirror": "^0.3.0",
     "angular-ui-router": "^0.2.18",
     "angular-uuid": "^0.0.2",
     "bootstrap": "^3.3.6",
     "codemirror": "^5.14.2",
     "font-awesome": "^4.5.0",
+    "handsontable": "^0.27.0",
     "lodash": "^4.6.0",
-    "ui-select": "^0.13.3"
+    "ui-select": "^0.19.3"
   }
 }

@@ -28,22 +28,21 @@
         .directive('objectSelect', objectSelect);
 
         objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService',
-            'stateManagerService', 'prefixes'];
+            'ontologyStateService', 'prefixes'];
 
-        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, stateManagerService,
+        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, ontologyStateService,
             prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 scope: {
-                    displayText: '=',
-                    selectList: '=',
-                    mutedText: '=',
-                    isDisabledWhen: '=',
-                    isRequiredWhen: '=',
-                    multiSelect: '=',
-                    removeModel: '=',
+                    displayText: '<',
+                    selectList: '<',
+                    mutedText: '<',
+                    isDisabledWhen: '<',
+                    isRequiredWhen: '<',
+                    multiSelect: '<?',
                     onChange: '&'
                 },
                 bindToController: {
@@ -54,7 +53,7 @@
                     var dvm = this;
                     $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
@@ -70,15 +69,11 @@
                         var itemIri = dvm.getItemIri(item);
                         var result = itemIri;
                         if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = dvm.om.getEntity(dvm.sm.ontology, itemIri);
+                            var selectedObject = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, itemIri);
                             if (dvm.tooltipDisplay === 'comment') {
-                                result = _.get(selectedObject, "['" + prefixes.rdfs + "comment'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dcterms + "description'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dc + "description'][0]['@value']", itemIri)));
+                                result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {
-                                result = _.get(selectedObject, "['" + prefixes.rdfs + "label'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dcterms + "title'][0]['@value']",
-                                    _.get(selectedObject, "['" + prefixes.dc + "title'][0]['@value']", itemIri)));
+                                result = dvm.om.getEntityName(selectedObject, dvm.sm.state.type) || itemIri;
                             } else if (_.has(selectedObject, '@id')) {
                                 result = selectedObject['@id'];
                             }
@@ -93,7 +88,7 @@
                     dvm.getBlankNodeValue = function(id) {
                         var result;
                         if (dvm.isBlankNode(id)) {
-                            result = _.get(dvm.sm.state.blankNodes, id, id);
+                            result = _.get(dvm.sm.listItem.blankNodes, id, id);
                         }
                         return result;
                     }

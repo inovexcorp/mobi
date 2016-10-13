@@ -27,9 +27,9 @@
         .module('propertyValues', [])
         .directive('propertyValues', propertyValues);
 
-        propertyValues.$inject = ['responseObj'];
+        propertyValues.$inject = ['responseObj', 'ontologyUtilsManagerService', 'ontologyStateService'];
 
-        function propertyValues(responseObj) {
+        function propertyValues(responseObj, ontologyUtilsManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -37,17 +37,15 @@
                 scope: {
                     property: '=',
                     entity: '=',
-                    edit: '&',
-                    remove: '&'
+                    edit: '&?',
+                    remove: '&?'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-
-                    dvm.isBlankNode = function(id) {
-                        return typeof id === 'string' && _.includes(id, '_:b');
-                    }
+                    dvm.um = ontologyUtilsManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

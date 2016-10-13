@@ -120,7 +120,7 @@ public interface DelimitedRest {
      * using an uploaded mapping. The file must be present in the data/tmp/ directory.
      *
      * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param mappingLocalName the local name of the mapping IRI
+     * @param mappingIRI the id of the mapping
      * @param format the RDF serialization to use if getting a preview
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
@@ -132,8 +132,9 @@ public interface DelimitedRest {
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded mapping file")
     Response etlFile(@PathParam("documentName") String fileName,
-                     @QueryParam("mappingName") String mappingLocalName,
+                     @QueryParam("mappingIRI") String mappingIRI,
                      @DefaultValue("jsonld") @QueryParam("format") String format,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                     @DefaultValue(",") @QueryParam("separator") String separator);
+                     @DefaultValue(",") @QueryParam("separator") String separator,
+                     @QueryParam("fileName") String downloadFileName);
 }
