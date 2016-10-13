@@ -56,7 +56,7 @@ public class CLIOrmGenerate implements Action {
     private File outputLocationPath;
 
 
-    @Argument(index = 3, name = "Referenced Ontology Files", description = "Files you want to reference that contain imported any imported ontology you're using.  The format these values should be in is: ${package}:${fileLocation}", multiValued = true)
+    @Argument(index = 3, name = "Referenced Ontology Files", description = "Files you want to reference that contain any imported ontology you're using.  The format these values should be in is: ${package}:${fileLocation}", multiValued = true)
     private List<String> referencedOntologyFilePaths;
 
     @Override

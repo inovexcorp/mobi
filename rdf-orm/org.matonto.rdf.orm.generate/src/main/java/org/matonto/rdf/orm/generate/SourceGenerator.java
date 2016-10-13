@@ -38,6 +38,7 @@ import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import org.matonto.rdf.orm.impl.ThingImpl;
 import org.openrdf.model.IRI;
 import org.openrdf.model.Model;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.RDF;
@@ -564,13 +565,6 @@ public class SourceGenerator {
      */
     private void generateIndividualInterfaces() throws OntologyToJavaException {
         final List<String> issues = new ArrayList<>();
-        final List<IRI> allDomainPredicates = new ArrayList<>();
-        this.model.filter(null, OWL.DATATYPEPROPERTY, null).subjects().forEach(resource -> {
-            final Model submodel = model.filter(resource, RDFS.DOMAIN, null);
-            if (submodel.size() == 0) {
-                allDomainPredicates.add((IRI) resource);
-            }
-        });
 
         identifyClasses().forEach(classIri -> {
             try {
@@ -593,25 +587,27 @@ public class SourceGenerator {
                 final Map<String, IRI> fieldIriMap = new HashMap<>();
                 final Map<String, IRI> rangeMap = new HashMap<>();
 
+
                 // Look for properties on this domain.
-                this.model.filter(null, RDFS.DOMAIN, classIri).stream().filter(stmt -> {
+                final  Collection<Resource> resources = this.model.filter(null, RDFS.DOMAIN, classIri).subjects().stream().filter(subj -> {
                     for (final IRI ancestorIri : ancestors) {
-                        if (this.model.filter(stmt.getSubject(), RDFS.DOMAIN, ancestorIri).size() > 0) {
+                        if (this.model.filter(subj, RDFS.DOMAIN, ancestorIri).size() > 0) {
                             return false;
                         }
                     }
                     return true;
-                }).forEach(stmt -> {
-                    LOG.debug("Adding '" + stmt.getSubject().stringValue() + "' to '" + classIri.stringValue()
+                }).collect(Collectors.toSet());
+                resources.stream().filter(resource -> resource instanceof IRI).forEach(resource -> {
+                    LOG.debug("Adding '" + resource.stringValue() + "' to '" + classIri.stringValue()
                             + "' as it specifies it in its range");
 
                     // Set a static final field for the IRI.
-                    final String fieldName = getName(false, (IRI) stmt.getSubject(), this.model);
-                    final IRI range = getRangeOfProperty((IRI) stmt.getSubject());
+                    final String fieldName = getName(false, (IRI) resource, this.model);
+                    final IRI range = getRangeOfProperty((IRI) resource);
                     clazz.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, fieldName + "_IRI",
-                            JExpr.lit(stmt.getSubject().stringValue())).javadoc()
+                            JExpr.lit(resource.stringValue())).javadoc()
                             .add("IRI of the predicate that this property will represent.<br><br>Domain: " + range);
-                    fieldIriMap.put(fieldName + "_IRI", (IRI) stmt.getSubject());
+                    fieldIriMap.put(fieldName + "_IRI", (IRI) resource);
                     rangeMap.put(fieldName, range);
                 });
                 interfaceFieldIriMap.put(clazz, fieldIriMap);
@@ -664,10 +660,10 @@ public class SourceGenerator {
      */
     private Collection<IRI> identifyClasses() {
         final Model submodel = this.model.filter(null, RDF.TYPE, OWL.CLASS);
-        classIris = new ArrayList<IRI>(submodel.size());
-        submodel.forEach(statement -> {
-            classIris.add((IRI) statement.getSubject());
-        });
+        classIris = new ArrayList<>(submodel.size());
+        submodel.stream()
+                .filter(statement -> statement.getSubject() instanceof IRI)
+                .forEach(statement -> classIris.add((IRI) statement.getSubject()));
         return classIris;
     }
 

@@ -79,6 +79,10 @@
                                     <ontologyFile>${project.basedir}/src/test/resources/crazy2.trig</ontologyFile>
                                     <outputPackage>org.matonto.inherit</outputPackage>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/provo.owl</ontologyFile>
+                                    <outputPackage>org.provo</outputPackage>
+                                </ontology>
                             </generates>
                             <references>
                                 <ontology>
