@@ -443,15 +443,14 @@ A primary source relation is a particular case of derivation of secondary materi
 :atLocation
     a owl:ObjectProperty ;
     rdfs:comment "The Location of any resource."@en, "This property has multiple RDFS domains to suit multiple OWL Profiles. See <a href=\"#owl-profile\">PROV-O OWL Profile</a>." ;
-    # Error with restrictions defined as classes
-    #rdfs:domain [
-    #    a owl:Class ;
-    #    owl:unionOf (:Activity
-    #        :Agent
-    #        :Entity
-    #        :InstantaneousEvent
-    #    )
-    #] ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (:Activity
+            :Agent
+            :Entity
+            :InstantaneousEvent
+        )
+    ] ;
     rdfs:isDefinedBy <http://www.w3.org/ns/prov-o#> ;
     rdfs:label "atLocation" ;
     rdfs:range :Location ;
@@ -563,16 +562,15 @@ A primary source relation is a particular case of derivation of secondary materi
 :hadActivity
     a owl:ObjectProperty ;
     rdfs:comment "The _optional_ Activity of an Influence, which used, generated, invalidated, or was the responsibility of some Entity. This property is _not_ used by ActivityInfluence (use prov:activity instead)."@en, "This property has multiple RDFS domains to suit multiple OWL Profiles. See <a href=\"#owl-profile\">PROV-O OWL Profile</a>." ;
-    rdfs:domain :Influence ; 
-    # Error with restrictions defined as classes
-    #[
-    #    a owl:Class ;
-    #    owl:unionOf (:Delegation
-    #        :Derivation
-    #        :End
-    #        :Start
-    #    )
-    #] ;
+    rdfs:domain :Influence ,
+    [
+        a owl:Class ;
+        owl:unionOf (:Delegation
+            :Derivation
+            :End
+            :Start
+        )
+    ] ;
     rdfs:isDefinedBy <http://www.w3.org/ns/prov-o#> ;
     rdfs:label "hadActivity" ;
     rdfs:range :Activity ;
@@ -636,14 +634,13 @@ A primary source relation is a particular case of derivation of secondary materi
 :hadRole
     a owl:ObjectProperty ;
     rdfs:comment "The _optional_ Role that an Entity assumed in the context of an Activity. For example, :baking prov:used :spoon; prov:qualified [ a prov:Usage; prov:entity :spoon; prov:hadRole roles:mixing_implement ]."@en, "This property has multiple RDFS domains to suit multiple OWL Profiles. See <a href=\"#owl-profile\">PROV-O OWL Profile</a>." ;
-    rdfs:domain :Influence ; 
-    # Error with restrictions defined as classes
-    #[
-    #    a owl:Class ;
-    #    owl:unionOf (:Association
-    #        :InstantaneousEvent
-    #    )
-    #] ;
+    rdfs:domain :Influence ,
+    [
+        a owl:Class ;
+        owl:unionOf (:Association
+            :InstantaneousEvent
+        )
+    ] ;
     rdfs:isDefinedBy <http://www.w3.org/ns/prov-o#> ;
     rdfs:label "hadRole" ;
     rdfs:range :Role ;
@@ -856,14 +853,13 @@ Note how the value of the unqualified influence (prov:wasGeneratedBy :activity1)
 :qualifiedInfluence
     a owl:ObjectProperty ;
     rdfs:comment "Because prov:qualifiedInfluence is a broad relation, the more specific relations (qualifiedCommunication, qualifiedDelegation, qualifiedEnd, etc.) should be used when applicable."@en ;
-    # Error with restrictions defined as classes
-    #rdfs:domain [
-    #    a owl:Class ;
-    #    owl:unionOf (:Activity
-    #        :Agent
-    #        :Entity
-    #    )
-    #] ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (:Activity
+            :Agent
+            :Entity
+        )
+    ] ;
     rdfs:isDefinedBy <http://www.w3.org/ns/prov-o#> ;
     rdfs:label "qualifiedInfluence" ;
     rdfs:range :Influence ;
@@ -1110,23 +1106,22 @@ Note how the value of the unqualified influence (prov:wasGeneratedBy :activity1)
 :wasInfluencedBy
     a owl:ObjectProperty ;
     rdfs:comment "Because prov:wasInfluencedBy is a broad relation, its more specific subproperties (e.g. prov:wasInformedBy, prov:actedOnBehalfOf, prov:wasEndedBy, etc.) should be used when applicable."@en, "This property has multiple RDFS domains to suit multiple OWL Profiles. See <a href=\"#owl-profile\">PROV-O OWL Profile</a>." ;
-    # Error with restrictions defined as classes
-    #rdfs:domain [
-    #    a owl:Class ;
-    #    owl:unionOf (:Activity
-    #        :Agent
-    #        :Entity
-    #    )
-    #] ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (:Activity
+            :Agent
+            :Entity
+        )
+    ] ;
     rdfs:isDefinedBy <http://www.w3.org/ns/prov-o#> ;
     rdfs:label "wasInfluencedBy" ;
-    #rdfs:range [
-    #    a owl:Class ;
-    #    owl:unionOf (:Activity
-    #        :Agent
-    #        :Entity
-    #    )
-    #] ;
+    rdfs:range [
+        a owl:Class ;
+        owl:unionOf (:Activity
+            :Agent
+            :Entity
+        )
+    ] ;
     :category "qualified" ;
     :component "agents-responsibility" ;
     :editorialNote """The sub-properties of prov:wasInfluencedBy can be elaborated in more detail using the Qualification Pattern. For example, the binary relation :baking prov:used :spoon can be qualified by asserting :baking prov:qualifiedUsage [ a prov:Usage; prov:entity :spoon; prov:atLocation :kitchen ] .
@@ -1264,14 +1259,13 @@ If you wish to make comments regarding this document, please send them to public
     a owl:Axiom ;
     owl:annotatedProperty rdfs:range ;
     owl:annotatedSource :wasInfluencedBy ;
-    # Error with restrictions defined as classes
-    #owl:annotatedTarget [
-    #    a owl:Class ;
-    #    owl:unionOf (:Activity
-    #        :Agent
-    #        :Entity
-    #    )
-    #] ;
+    owl:annotatedTarget [
+        a owl:Class ;
+        owl:unionOf (:Activity
+            :Agent
+            :Entity
+        )
+    ] ;
     :definition "influencer: an identifier (o1) for an ancestor entity, activity, or agent that the former depends on;" ;
     :dm "http://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-influence" .
 
@@ -1279,14 +1273,13 @@ If you wish to make comments regarding this document, please send them to public
     a owl:Axiom ;
     owl:annotatedProperty rdfs:domain ;
     owl:annotatedSource :wasInfluencedBy ;
-    # Error with restrictions defined as classes
-    #owl:annotatedTarget [
-    #    a owl:Class ;
-    #    owl:unionOf (:Activity
-    #        :Agent
-    #        :Entity
-    #    )
-    #] ;
+    owl:annotatedTarget [
+        a owl:Class ;
+        owl:unionOf (:Activity
+            :Agent
+            :Entity
+        )
+    ] ;
     :definition "influencee: an identifier (o2) for an entity, activity, or agent; " ;
     :dm "http://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-influence" .
 
