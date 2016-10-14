@@ -28,16 +28,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
-import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.repository.api.Repository;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 import java.io.File;
 import java.io.InputStream;
@@ -57,33 +52,19 @@ import static org.powermock.api.easymock.PowerMock.replay;
 @PrepareForTest({SimpleOntologyValues.class, SimpleOntologyId.class})
 public class SimpleOntologyManagerTest {
 
-    ValueFactory factory;
-    SesameTransformer transformer;
-    Repository repository;
-    ModelFactory modelFactory;
-    OWLOntologyManager owlManager;
-    OWLOntology owlOntology;
-    OntologyId ontologyIdMock;
-    Ontology ontology;
-    IRI idMock;
-    IRI ontologyIRI;
-    IRI versionIRI;
-    org.semanticweb.owlapi.model.IRI owlOntologyIRI;
-    org.semanticweb.owlapi.model.IRI owlVersionIRI;
-    
+    private ValueFactory factory;
+    private OntologyId ontologyIdMock;
+    private IRI idMock;
+    private IRI ontologyIRI;
+    private IRI versionIRI;
+
     @Before
     public void setUp() {
         factory = mock(ValueFactory.class);    
-        transformer = mock(SesameTransformer.class);
-        repository = mock(Repository.class);
-        modelFactory = mock(ModelFactory.class);
-        ontology = mock(Ontology.class);   
-        owlManager = mock(OWLOntologyManager.class);
-        owlOntology = mock(OWLOntology.class);
-        ontologyIdMock = mock(OntologyId.class);       
+        ontologyIdMock = mock(OntologyId.class);
         idMock = mock(IRI.class);
-        owlOntologyIRI = mock(org.semanticweb.owlapi.model.IRI.class);
-        owlVersionIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        org.semanticweb.owlapi.model.IRI owlOntologyIRI = org.semanticweb.owlapi.model.IRI.create("http://test.com/ontology1");
+        org.semanticweb.owlapi.model.IRI owlVersionIRI = org.semanticweb.owlapi.model.IRI.create("http://test.com/ontology1/1.0.0");
 
         ontologyIRI = mock(IRI.class);
         expect(ontologyIRI.stringValue()).andReturn("http://test.com/ontology1").anyTimes();
@@ -94,10 +75,7 @@ public class SimpleOntologyManagerTest {
         expect(versionIRI.getNamespace()).andReturn("http://test.com/ontology1").anyTimes();
         
         replay(ontologyIRI, versionIRI);     
-        
-        expect(owlOntologyIRI.getNamespace()).andReturn(ontologyIRI.getNamespace()).anyTimes();
-        expect(owlVersionIRI.getNamespace()).andReturn(versionIRI.getNamespace()).anyTimes();
-        
+
         mockStatic(SimpleOntologyValues.class);
         expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntologyIRI).anyTimes();
         expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVersionIRI).anyTimes();
@@ -135,7 +113,7 @@ public class SimpleOntologyManagerTest {
     @Test
     public void testCreateOntologyIdWithOntologyIRI() throws Exception {
         expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, owlOntologyIRI, SimpleOntologyValues.class);
+        replay(factory, SimpleOntologyValues.class);
         
         SimpleOntologyManager manager = new SimpleOntologyManager();
         manager.setValueFactory(factory);
@@ -149,7 +127,7 @@ public class SimpleOntologyManagerTest {
     public void testCreateOntologyIdWithOntologyIRIAndVersionIRI() throws Exception {
         expect(factory.createIRI(isA(String.class))).andReturn(versionIRI);
         expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(versionIRI);
-        replay(factory, owlOntologyIRI, owlVersionIRI, SimpleOntologyValues.class);
+        replay(factory, SimpleOntologyValues.class);
         
         SimpleOntologyManager manager = new SimpleOntologyManager();
         manager.setValueFactory(factory);
@@ -163,7 +141,7 @@ public class SimpleOntologyManagerTest {
     public void testCreateOntologyWithOntologyId() throws Exception {
         expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
         expect(ontologyIdMock.getVersionIRI()).andReturn(Optional.of(versionIRI)).anyTimes();
-        replay(ontologyIdMock, owlOntologyIRI, owlVersionIRI, SimpleOntologyValues.class);
+        replay(ontologyIdMock, SimpleOntologyValues.class);
         
         SimpleOntologyManager manager = new SimpleOntologyManager();
         Ontology ontology = manager.createOntology(ontologyIdMock);
@@ -176,7 +154,7 @@ public class SimpleOntologyManagerTest {
         expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
         expect(ontologyIdMock.getVersionIRI()).andReturn(Optional.of(versionIRI)).anyTimes();
         expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, owlOntologyIRI, owlVersionIRI, ontologyIdMock, SimpleOntologyValues.class);
+        replay(factory, ontologyIdMock, SimpleOntologyValues.class);
         
         File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
         SimpleOntologyManager manager = new SimpleOntologyManager();
@@ -189,7 +167,7 @@ public class SimpleOntologyManagerTest {
     public void testCreateOntologyWithInputStream() throws Exception {
         expect(SimpleOntologyValues.matontoIRI(isA(org.semanticweb.owlapi.model.IRI.class))).andReturn(ontologyIRI).anyTimes();
         expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, owlOntologyIRI, owlVersionIRI, SimpleOntologyValues.class);
+        replay(factory, SimpleOntologyValues.class);
         SimpleOntologyManager manager = new SimpleOntologyManager();
         manager.setValueFactory(factory);
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
