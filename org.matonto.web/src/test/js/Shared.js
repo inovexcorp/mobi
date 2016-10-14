@@ -188,6 +188,7 @@ function mockOntologyManager() {
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
             this.getEntityById = jasmine.createSpy('getEntityById');
+            this.initialize = jasmine.createSpy('initialize');
         });
     });
 }

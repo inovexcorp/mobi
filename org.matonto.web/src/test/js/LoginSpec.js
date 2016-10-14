@@ -23,13 +23,15 @@
 describe('Login controller', function() {
     var $controller,
         scope,
-        loginManagerSvc;
+        loginManagerSvc,
+        ontologyManagerSvc;
 
     beforeEach(function() {
         // To mock a module, you create dummy ones so the dependencies of the
         // module get resolved
         angular.module('loginManager', []);
         module('login');
+        mockOntologyManager();
 
         // To mock out the services needed, use this module(function($provide))
         // syntax. This does not actually create services under the dummy modules
@@ -40,17 +42,18 @@ describe('Login controller', function() {
                     if (isValid) {
                         return $q.when();
                     } else {
-                        return $q.reject('An error has occured');
+                        return $q.reject('An error has occurred');
                     }
                 });
             }]);
         });
         // To test out a controller, you need to inject $rootScope and $controller
         // and save them to use
-        inject(function(_loginManagerService_, _$rootScope_, _$controller_) {
+        inject(function(_loginManagerService_, _$rootScope_, _$controller_, _ontologyManagerService_) {
             loginManagerSvc = _loginManagerService_;
             scope = _$rootScope_;
             $controller = _$controller_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
     describe('correctly validates a login combination', function() {
@@ -65,6 +68,7 @@ describe('Login controller', function() {
             controller.login(true);
             scope.$digest();
             expect(controller.errorMessage).toBeFalsy();
+            expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
         });
         it('if invalid', function() {
             // Usually pass in $scope in the object in the second parameter, but since the

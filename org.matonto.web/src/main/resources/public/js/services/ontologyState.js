@@ -34,6 +34,7 @@
             var om = ontologyManagerService;
             self.states = [];
             self.newState = {active: true};
+            self.state = self.newState;
             self.ontology = {};
             self.selected = {};
             self.listItem = {};
@@ -406,11 +407,8 @@
                 self.ontology = {};
                 self.selected = {};
                 self.state = self.newState;
+                self.state.active = true;
                 self.listItem = {};
             }
-            function initialize() {
-                self.state = self.newState;
-            }
-            initialize();
         }
 })();

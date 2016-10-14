@@ -2000,7 +2000,7 @@
                 });
                 return deferred.promise;
             }
-            function initialize() {
+            self.initialize = function() {
                 $rootScope.showSpinner = true;
                 self.getAllOntologyIds()
                     .then(response => {
@@ -2012,6 +2012,5 @@
                         $rootScope.showSpinner = false;
                     });
             }
-            initialize();
         }
 })();
