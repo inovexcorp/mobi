@@ -27,9 +27,7 @@
         .module('projectTab', [])
         .directive('projectTab', projectTab);
 
-        projectTab.$inject = ['stateManagerService', 'ontologyManagerService'];
-
-        function projectTab(stateManagerService, ontologyManagerService) {
+        function projectTab() {
             return {
                 restrict: 'E',
                 replace: true,

@@ -26,7 +26,7 @@ describe('Tree Item directive', function() {
         scope,
         element,
         controller,
-        stateManagerSvc,
+        ontologyStateSvc,
         ontologyManagerSvc,
         settingsManagerSvc;
 
@@ -36,13 +36,13 @@ describe('Tree Item directive', function() {
         injectRegexConstant();
         mockSettingsManager();
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _stateManagerService_, _ontologyManagerService_, _settingsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _settingsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             settingsManagerSvc = _settingsManagerService_;
         });
@@ -52,33 +52,33 @@ describe('Tree Item directive', function() {
         scope.onClick = jasmine.createSpy('onClick');
         scope.currentEntity = {};
         scope.isOpened = true;
-        scope.ontologyId = '';
         scope.isBold = false;
+        scope.path = '';
     });
 
     describe('in isolated scope', function() {
         var isolatedScope;
 
         beforeEach(function() {
-            element = $compile(angular.element('<tree-item is-bold="isBold" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
             scope.$digest();
             isolatedScope = element.isolateScope();
             controller = element.controller('treeItem');
         });
-        it('hasChildren should be two way bound', function() {
+        it('hasChildren should be one way bound', function() {
             isolatedScope.hasChildren = true;
             scope.$digest();
-            expect(scope.hasChildren).toBe(true);
+            expect(scope.hasChildren).toBe(false);
         });
-        it('isActive should be two way bound', function() {
+        it('isActive should be one way bound', function() {
             isolatedScope.isActive = true;
             scope.$digest();
-            expect(scope.isActive).toBe(true);
+            expect(scope.isActive).toBe(false);
         });
-        it('isBold should be two way bound', function() {
+        it('isBold should be one way bound', function() {
             isolatedScope.isBold = true;
             scope.$digest();
-            expect(scope.isBold).toBe(true);
+            expect(scope.isBold).toBe(false);
         });
         it('onClick should be called in parent scope when invoked', function() {
             isolatedScope.onClick();
@@ -94,15 +94,15 @@ describe('Tree Item directive', function() {
             scope.$digest();
             expect(controller.isOpened).toEqual(false);
         });
-        it('ontologyId should be two way bound', function() {
-            controller.ontologyId = 'new';
+        it('path should be two way bound', function() {
+            controller.path = 'new';
             scope.$digest();
-            expect(controller.ontologyId).toEqual('new');
+            expect(controller.path).toEqual('new');
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            element = $compile(angular.element('<tree-item is-bold="isBold" ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item path="path" is-bold="isBold" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
         });
         it('for an li', function() {
             scope.$digest();
@@ -177,8 +177,7 @@ describe('Tree Item directive', function() {
             scope.isActive = false;
             scope.onClick = jasmine.createSpy('onClick');
             scope.currentEntity = {};
-            scope.ontologyId = 'id';
-            element = $compile(angular.element('<tree-item ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+            element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
             scope.$digest();
             controller = element.controller('treeItem');
         });
@@ -199,9 +198,9 @@ describe('Tree Item directive', function() {
             });
             it('should call getEntityName if pretty', function() {
                 settingsManagerSvc.getTreeDisplay.and.returnValue('pretty');
-                element = $compile(angular.element('<tree-item ontology-id="ontologyId" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+                element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity);
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(controller.currentEntity, ontologyStateSvc.state.type);
             });
         });
         describe('toggleOpen', function() {
@@ -209,7 +208,7 @@ describe('Tree Item directive', function() {
                 scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
                 scope.$digest();
                 controller.toggleOpen();
-                expect(stateManagerSvc.setOpened).toHaveBeenCalledWith(controller.ontologyId, controller.currentEntity.matonto.originalIRI, controller.isOpened);
+                expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(controller.path, controller.isOpened);
             });
             it('should return true when not set', function() {
                 controller.isOpened = undefined;

@@ -27,9 +27,9 @@
         .module('everythingTree', [])
         .directive('everythingTree', everythingTree);
 
-        everythingTree.$inject = ['ontologyManagerService', 'stateManagerService'];
+        everythingTree.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-        function everythingTree(ontologyManagerService, stateManagerService) {
+        function everythingTree(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

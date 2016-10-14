@@ -24,18 +24,20 @@
     <block>
         <block-header>Usages</block-header>
         <block-content>
-            <p ng-repeat="binding in dvm.bindings" ng-if="dvm.bindings.length">
-                <span class="subject">{{dvm.getBindingDisplay(binding.s.value)}}</span>
-                <span ng-if="binding.p">
-                    <span class="predicate">{{dvm.getBindingDisplay(binding.p.value)}}</span> <strong class="object">{{dvm.getBindingDisplay(dvm.sm.selected['@id'])}}</strong>
-                </span>
-                <span ng-if="binding.o">
-                    <strong class="predicate">{{dvm.getBindingDisplay(dvm.sm.selected['@id'])}}</strong> <span class="object">{{dvm.getBindingDisplay(binding.o.value)}}</span>
-                </span>
-            </p>
-            <p ng-if="!dvm.bindings.length && dvm.sm.selected" class="text-info message">
-                <i class="fa fa-info fa-fw"></i><span>This entity didn't return any usages.</span>
-            </p>
+            <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+                <h5 ng-click="isClosed = !isClosed" class="clearfix">
+                    <p class="text">{{dvm.getBindingDisplay(key) | beautify}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                </h5>
+                <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
+                    <span class="value-display">
+                        <span ng-repeat="(key, value) in statement" ng-include="'statement_part'" class="{{key}}"></span>
+                    </span>
+                </div>
+            </div>
         </block-content>
     </block>
+    <script type="text/ng-template" id="statement_part">
+        <span ng-if="!dvm.um.isLinkable(value) || value === dvm.sm.selected['@id']" ng-class="{selected: value === dvm.sm.selected['@id']}">{{dvm.getBindingDisplay(value)}}</span>
+        <a ng-if="dvm.um.isLinkable(value) && value !== dvm.sm.selected['@id']" ng-click="dvm.sm.goTo(value)">{{dvm.getBindingDisplay(value)}}</a>
+    </script>
 </div>

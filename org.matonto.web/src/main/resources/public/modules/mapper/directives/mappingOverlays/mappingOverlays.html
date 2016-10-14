@@ -23,10 +23,11 @@
 <mapping-name-overlay ng-if="dvm.state.editMappingName"></mapping-name-overlay>
 <iri-template-overlay ng-if="dvm.state.editIriTemplate"></iri-template-overlay>
 <invalid-ontology-overlay ng-if="dvm.state.invalidOntology"></invalid-ontology-overlay>
-<create-mapping-overlay ng-if="dvm.state.displayCreateMapping"></create-mapping-overlay>
-<download-mapping-overlay ng-if="dvm.state.displayDownloadMapping"></download-mapping-overlay>
-<mapping-config-overlay ng-if="dvm.state.displayMappingConfig"></mapping-config-overlay>
+<create-mapping-overlay ng-if="dvm.state.displayCreateMappingOverlay"></create-mapping-overlay>
+<download-mapping-overlay ng-if="dvm.state.displayDownloadMappingOverlay"></download-mapping-overlay>
+<mapping-config-overlay ng-if="dvm.state.displayMappingConfigOverlay"></mapping-config-overlay>
 <prop-mapping-overlay ng-if="dvm.state.displayPropMappingOverlay"></prop-mapping-overlay>
+<run-mapping-overlay ng-if="dvm.state.displayRunMappingOverlay"></run-mapping-overlay>
 
 <confirmation-overlay ng-if="dvm.state.displayCancelConfirm"
     class="cancel-confirm"
@@ -59,8 +60,8 @@
 
 <confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
     class="delete-mapping"
-    header-text="'Delete ' + (dvm.mm.mapping.id | splitIRI).end"
+    header-text="'Delete ' + (dvm.state.mapping.id | splitIRI).end"
     confirm-click="dvm.state.displayDeleteMappingConfirm = false; dvm.deleteMapping()"
     cancel-click="dvm.state.displayDeleteMappingConfirm = false"
     confirm-text="'Yes'"
-    cancel-text="'No'">Are you sure you want to delete <strong>{{(dvm.mm.mapping.id | splitIRI).end}}</strong>?</confirmation-overlay>
+    cancel-text="'No'">Are you sure you want to delete <strong>{{(dvm.state.mapping.id | splitIRI).end}}</strong>?</confirmation-overlay>

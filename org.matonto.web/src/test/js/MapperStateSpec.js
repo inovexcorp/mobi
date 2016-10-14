@@ -43,7 +43,7 @@ describe('Mapper State service', function() {
             delimitedManagerSvc = _delimitedManagerService_;
         });
 
-        mappingManagerSvc.mapping = {jsonld: [], id: 'mapping'};
+        mapperStateSvc.mapping = {jsonld: [], id: 'mapping'};
     });
 
     it('should initialize important variables', function() {
@@ -54,11 +54,14 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.invalidProps).toEqual([]);
         expect(mapperStateSvc.availableColumns).toEqual([]);
         expect(mapperStateSvc.availablePropsByClass).toEqual({});
+        expect(mapperStateSvc.mapping).toBeUndefined();
+        expect(mapperStateSvc.sourceOntologies).toEqual([]);
     });
     it('should reset edit related variables', function() {
         mapperStateSvc.resetEdit();
         expect(mapperStateSvc.selectedClassMappingId).toBe('');
         expect(mapperStateSvc.selectedPropMappingId).toBe('');
+        expect(mapperStateSvc.highlightIndexes).toEqual([]);
         expect(mapperStateSvc.newProp).toBe(false);
     });
     it('should set all variables for creating a new mapping', function() {
@@ -66,8 +69,8 @@ describe('Mapper State service', function() {
         mapperStateSvc.createMapping();
         expect(mapperStateSvc.editMapping).toBe(true);
         expect(mapperStateSvc.newMapping).toBe(true);
-        expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: ''});
-        expect(mappingManagerSvc.sourceOntologies).toEqual([]);
+        expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: ''});
+        expect(mapperStateSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
     });
     it('should return a list of all the mapped column indexes', function() {
@@ -89,7 +92,7 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availableColumns).toContain('1');
 
         mapperStateSvc.selectedPropMappingId = 'prop'
-        mappingManagerSvc.mapping.jsonld = [{'@id': 'prop', 'columnIndex': [{'@value': '0'}]}];
+        mapperStateSvc.mapping.jsonld = [{'@id': 'prop', 'columnIndex': [{'@value': '0'}]}];
         mapperStateSvc.updateAvailableColumns();
         expect(mapperStateSvc.availableColumns).toContain('0');
         expect(mapperStateSvc.availableColumns).toContain('1');
@@ -107,7 +110,7 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availablePropsByClass.class).toBeUndefined();
     });
     it('should set the list of available properties for a class mapping', function() {
-        mappingManagerSvc.sourceOntologies = [{}];
+        mapperStateSvc.sourceOntologies = [{}];
         var classMapId = 'classMap';
         var classId = 'class';
         var classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];
@@ -116,9 +119,9 @@ describe('Mapper State service', function() {
         mappingManagerSvc.getClassIdByMappingId.and.returnValue(classId);
         spyOn(mapperStateSvc, 'getClassProps').and.returnValue(_.union(classProps, noDomainProps));
         mapperStateSvc.setAvailableProps(classMapId);
-        expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, classMapId);
-        expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, classMapId);
-        expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(mappingManagerSvc.sourceOntologies, classId);
+        expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapId);
+        expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapId);
+        expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(mapperStateSvc.sourceOntologies, classId);
         expect(mapperStateSvc.availablePropsByClass[classMapId]).not.toContain(classProps[0]);
         expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(classProps[1]);
         expect(mapperStateSvc.availablePropsByClass[classMapId] ).not.toContain(noDomainProps[0]);

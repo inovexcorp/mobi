@@ -25,6 +25,7 @@ describe('Class Mapping Select directive', function() {
         scope,
         ontologyManagerSvc,
         mappingManagerSvc,
+        mapperStateSvc,
         controller;
 
     beforeEach(function() {
@@ -34,12 +35,14 @@ describe('Class Mapping Select directive', function() {
         injectHighlightFilter();
         mockOntologyManager();
         mockMappingManager();
+        mockMapperState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
+            mapperStateSvc = _mapperStateService_;
         });
     });
 

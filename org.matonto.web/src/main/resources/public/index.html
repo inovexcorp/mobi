@@ -32,15 +32,15 @@
         <!-- inject:css -->
         <!-- endinject -->
     </head>
-    <body ng-class="{'no-text': $root.noText}">
-        <div ng-hide="$state.current.name === 'login'" class="full-height">
+    <body ng-class="{'collapsed-nav': $root.collapsedNav}">
+        <div ng-if="$state.current.name !== 'login'" class="full-height">
             <nav ui-view="nav"></nav>
             <div class="main-page">
                 <custom-header page-title="$state.current.data.title"></custom-header>
                 <section ui-view="container" class="view-container full-height"></section>
             </div>
         </div>
-        <section ng-hide="$state.current.name !== 'login'" ui-view="container" class="view-container full-height"></section>
+        <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container full-height"></section>
         <footer ui-view="footer"></footer>
         <div class="spinner" ng-show="$root.showSpinner">
             <i class="fa fa-4x fa-spin fa-spinner"></i>

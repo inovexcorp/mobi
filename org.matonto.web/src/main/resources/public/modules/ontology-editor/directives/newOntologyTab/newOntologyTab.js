@@ -27,16 +27,14 @@
         .module('newOntologyTab', [])
         .directive('newOntologyTab', newOntologyTab);
 
-        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function newOntologyTab($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
+        function newOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/newOntologyTab/newOntologyTab.html',
-                scope: {
-                    listItem: '='
-                },
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
@@ -45,7 +43,7 @@
                         + '/';
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.type = 'ontology';
                     dvm.ontology = {
@@ -67,7 +65,7 @@
                     }
 
                     dvm.create = function() {
-                        if (dvm.ontology[prefixes.dcterms + 'description'][0]['@value'] === '') {
+                        if (_.get(dvm.ontology, "['" + prefixes.dcterms + "description'][0]['@value']") === '') {
                             _.unset(dvm.ontology, prefixes.dcterms + 'description');
                         }
                         if (dvm.type === 'vocabulary') {

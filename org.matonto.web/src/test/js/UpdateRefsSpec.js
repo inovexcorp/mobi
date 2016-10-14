@@ -99,7 +99,8 @@ describe('Update Refs service', function() {
             ],
             arr2: [
                 {
-                    'id3': 'remove'
+                    'id3': 'remove',
+                    '$$hashKey': true
                 },
                 {
                     'id4': 'no-remove'
@@ -108,7 +109,8 @@ describe('Update Refs service', function() {
             arr3: ['remove', 'no-remove'],
             arr4: ['remove'],
             'id5': {
-                'id6': 'remove'
+                'id6': 'remove',
+                '$$hashKey': true
             }
         };
         var result = {

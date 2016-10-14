@@ -52,7 +52,7 @@ describe('Class Mapping Details directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             delimitedManagerSvc.dataRows = [['']];
             this.element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
             scope.$digest();
@@ -176,7 +176,7 @@ describe('Class Mapping Details directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
             scope.$digest();
             controller = this.element.controller('classMappingDetails');
@@ -217,7 +217,7 @@ describe('Class Mapping Details directive', function() {
         });
     });
     it('should set the right state for editing the IRI template when the link is clicked', function() {
-        mappingManagerSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: []};
         var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
 
@@ -226,7 +226,7 @@ describe('Class Mapping Details directive', function() {
         expect(mapperStateSvc.editIriTemplate).toBe(true);
     });
     it('should call addProp when the Add Property link is clicked', function() {
-        mappingManagerSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: []};
         var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
         controller = element.controller('classMappingDetails');
@@ -237,7 +237,7 @@ describe('Class Mapping Details directive', function() {
         expect(controller.addProp).toHaveBeenCalled();
     });
     it('should select a property when clicked', function() {
-        mappingManagerSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: []};
         var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
         var property = {'@id': 'prop'};
@@ -246,14 +246,15 @@ describe('Class Mapping Details directive', function() {
         spyOn(controller, 'getPropName').and.returnValue('');
         spyOn(controller, 'getPropValue').and.returnValue('');
         scope.$digest();
-        spyOn(controller, 'getLinkedColumnIndex');
+        spyOn(controller, 'getLinkedColumnIndex').and.returnValue('0');
 
         var propertyButton = angular.element(element.querySelectorAll('.prop-list button')[0]);
         propertyButton.triggerHandler('click');
         expect(mapperStateSvc.selectedPropMappingId).toBe(property['@id']);
+        expect(mapperStateSvc.highlightIndexes).toEqual(['0']);
     });
     it('should call switchClass when a property is double clicked', function() {
-        mappingManagerSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: []};
         var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
         var property = {};
@@ -269,7 +270,7 @@ describe('Class Mapping Details directive', function() {
         expect(controller.switchClass).toHaveBeenCalled();
     });
     it('should call editProp when an edit property link is clicked', function() {
-        mappingManagerSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: []};
         var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
         var property = {};
@@ -285,7 +286,7 @@ describe('Class Mapping Details directive', function() {
         expect(controller.editProp).toHaveBeenCalledWith(property);
     });
     it('should call deleteProp when a delete property link is clicked', function() {
-        mappingManagerSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: []};
         var element = $compile(angular.element('<class-mapping-details></class-mapping-details>'))(scope);
         scope.$digest();
         var property = {};

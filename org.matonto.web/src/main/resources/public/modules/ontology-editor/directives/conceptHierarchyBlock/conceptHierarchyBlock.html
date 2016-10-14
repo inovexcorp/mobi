@@ -32,7 +32,7 @@
             <button class="btn btn-link" ng-disabled="!dvm.sm.selected" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
         </block-footer>
     </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Class'" confirm-click="dvm.deleteEntity()"
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Entity'" confirm-click="dvm.deleteEntity()"
                           cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
         <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id']}}</strong>?</p>
     </confirmation-overlay>

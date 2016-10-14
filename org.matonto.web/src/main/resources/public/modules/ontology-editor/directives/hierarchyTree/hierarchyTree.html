@@ -22,17 +22,15 @@
   -->
 <div class="tree hierarchy-tree">
     <ul ng-repeat="node in hierarchy track by node.entityIRI" ng-include="'hierarchy_item'"
-        ng-init="node = node; opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, node.entityIRI)"></ul>
+        ng-init="node = node; path = dvm.sm.state.ontologyId + '.' + node.entityIRI"></ul>
     <script type="text/ng-template" id="hierarchy_item">
-        <tree-item current-entity="dvm.om.getEntity(dvm.sm.ontology, node.entityIRI)"
-                   ontology-id="dvm.sm.state.ontologyId"
+        <tree-item current-entity="dvm.om.getEntityById(dvm.sm.listItem.ontologyId, node.entityIRI)" path="path"
                    is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
-                   on-click="dvm.sm.selectItem(node.entityIRI)"
-                   has-children="!!node.subEntities && node.subEntities.length"
-                   is-opened="opened"></tree-item>
-        <li class="container" ng-if="opened && !!node.subEntities && node.subEntities.length">
+                   is-opened="dvm.sm.getOpened(path)" has-children="!!node.subEntities && node.subEntities.length"
+                   on-click="dvm.sm.selectItem(node.entityIRI)" data-path-to="{{path}}"></tree-item>
+        <li class="container" ng-if="dvm.sm.getOpened(path) && !!node.subEntities && node.subEntities.length" ng-init="parentPath = path">
             <ul ng-repeat="node in node.subEntities track by node.entityIRI" ng-include="'hierarchy_item'"
-                ng-init="node = node; opened = dvm.sm.getOpened(dvm.sm.state.ontologyId, node.entityIRI)"></ul>
+                ng-init="node = node; path = parentPath + '.' + node.entityIRI"></ul>
         </li>
     </script>
 </div>

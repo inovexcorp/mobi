@@ -26,6 +26,7 @@ describe('File Upload Page directive', function() {
         mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
+        ontologyManagerSvc,
         $timeout,
         controller;
 
@@ -35,44 +36,59 @@ describe('File Upload Page directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             $timeout = _$timeout_;
         });
     });
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
             scope.$digest();
             controller = this.element.controller('fileUploadPage');
         });
-        it('should set the correct state for continuing to edit a mapping', function() {
-            var baseClass = {'@id': 'base'};
-            var classMappings = [{}];
-            mappingManagerSvc.getBaseClass.and.returnValue(baseClass);
-            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
-            controller.edit();
-            expect(mapperStateSvc.selectedClassMappingId).toBe(baseClass['@id']);
-            expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(classMappings.length);
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+        it('should get the name of a data mapping', function() {
+            var result = controller.getDataMappingName('');
+            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, '');
+            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
+            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
+            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
+            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
+            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
+            expect(typeof result).toBe('string');
         });
-        it('should set the correct state for continuing to run a mapping', function() {
-            var mappingId = mappingManagerSvc.mapping.id;
-            controller.run();
-            expect(delimitedManagerSvc.map).toHaveBeenCalledWith(mappingId);
-            expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-            expect(mapperStateSvc.initialize).toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toBeUndefined();
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
-            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+        describe('should set the correct state for continuing to edit a mapping', function() {
+            beforeEach(function() {
+                this.baseClass = {'@id': 'base'};
+                this.classMappings = [{}];
+                mappingManagerSvc.getBaseClass.and.returnValue(this.baseClass);
+                mappingManagerSvc.getAllClassMappings.and.returnValue(this.classMappings);
+            });
+            it('if a new mapping is being created', function() {
+                mapperStateSvc.newMapping = true;
+                controller.edit();
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+                expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
+            });
+            it('if a saved mapping is being edited', function() {
+                mapperStateSvc.newMapping = false;
+                controller.edit();
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
+                expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
+            });
         });
         it('should set the correct state for canceling', function() {
             controller.cancel();
@@ -81,7 +97,7 @@ describe('File Upload Page directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
             scope.$digest();
         });
@@ -125,9 +141,21 @@ describe('File Upload Page directive', function() {
             scope.$digest();
             expect(continueButton.text().trim()).toBe('Continue');
         });
+        it('depending on whether there are invalid columns', function() {
+            mapperStateSvc.editMapping = true;
+            mapperStateSvc.invalidProps = [];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.invalid-props').length).toBe(0);
+
+            mapperStateSvc.invalidProps = [{'@id': 'prop', index: 0}];
+            scope.$digest();
+            var invalidProps = angular.element(this.element.querySelectorAll('.invalid-props')[0]);
+            expect(invalidProps).toBeTruthy();
+            expect(invalidProps.querySelectorAll('ul li').length).toBe(mapperStateSvc.invalidProps.length);
+        });
     });
     it('should call cancel when the cancel button is clicked', function() {
-        mappingManagerSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {id: '', jsonld: []};
         var element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
         scope.$digest();
         controller = element.controller('fileUploadPage');
@@ -139,7 +167,7 @@ describe('File Upload Page directive', function() {
     });
     describe('should call the correct function when clicking the continue button ', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: '', jsonld: []};
+            mapperStateSvc.mapping = {id: '', jsonld: []};
             this.element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
             scope.$digest();
             controller = this.element.controller('fileUploadPage');
@@ -152,10 +180,9 @@ describe('File Upload Page directive', function() {
             expect(controller.edit).toHaveBeenCalled();
         });
         it('if a mapping is not being edited', function() {
-            spyOn(controller, 'run');
             mapperStateSvc.editMapping = false;
             this.continueButton.triggerHandler('click');
-            expect(controller.run).toHaveBeenCalled();
+            expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
         });
     });
 });

@@ -81,7 +81,7 @@ describe('Mapping Select Page directive', function() {
         it('should set the correct state for creating a new mapping', function() {
             controller.createMapping();
             expect(mapperStateSvc.createMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.displayCreateMapping).toBe(true);
+            expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
         })
         it('should set the correct state for deleting a mapping', function() {
             controller.deleteMapping();
@@ -89,16 +89,19 @@ describe('Mapping Select Page directive', function() {
         });
         it('should set the correct state for downloading a mapping', function() {
             controller.downloadMapping();
-            expect(mapperStateSvc.displayDownloadMapping).toBe(true);
+            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(true);
         });
         describe('should load an ontology and continue', function() {
             beforeEach(function() {
-                mappingManagerSvc.mapping = {jsonld: []};
+                this.ontologies = [{}];
+                mapperStateSvc.mapping = {jsonld: []};
+                mappingManagerSvc.getSourceOntologies.and.returnValue($q.when(this.ontologies));
             });
             it('if the ontology and mapping are compatiable', function() {
                 mappingManagerSvc.areCompatible.and.returnValue(true);
                 controller.loadOntologyAndContinue();
                 $timeout.flush();
+                expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.invalidOntology).toBe(false);
             });
@@ -106,6 +109,7 @@ describe('Mapping Select Page directive', function() {
                 mappingManagerSvc.areCompatible.and.returnValue(false);
                 controller.loadOntologyAndContinue();
                 $timeout.flush();
+                expect(mapperStateSvc.sourceOntologies).toEqual([]);
                 expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.invalidOntology).toBe(true);
             });
@@ -127,9 +131,6 @@ describe('Mapping Select Page directive', function() {
         });
         it('with a mapping list', function() {
             expect(this.element.find('mapping-list').length).toBe(1);
-        });
-        it('with a mapping preview', function() {
-            expect(this.element.find('mapping-preview').length).toBe(1);
         });
         it('with a block search header for the mapping list', function() {
             expect(this.element.querySelectorAll('.col-xs-4 block-search').length).toBe(1);
@@ -155,11 +156,13 @@ describe('Mapping Select Page directive', function() {
             var mappingHeader = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .mapping-preview-header')[0]);
             expect(deleteButton.attr('disabled')).toBeTruthy();
             expect(mappingHeader.hasClass('invisible')).toBe(true);
+            expect(this.element.find('mapping-preview').length).toBe(0);
 
-            mappingManagerSvc.mapping = {};
+            mapperStateSvc.mapping = {};
             scope.$digest();
             expect(deleteButton.attr('disabled')).toBeFalsy();
             expect(mappingHeader.hasClass('invisible')).toBe(false);
+            expect(this.element.find('mapping-preview').length).toBe(1);
         });
         it('depending on whether the mapping source ontology exists', function() {
             var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link.edit-btn')[0]);
@@ -187,7 +190,7 @@ describe('Mapping Select Page directive', function() {
         expect(controller.createMapping).toHaveBeenCalled();
     });
     it('should call deleteMapping when the button is clicked', function() {
-        mappingManagerSvc.mapping = {};
+        mapperStateSvc.mapping = {};
         var element = $compile(angular.element('<mapping-select-page></mapping-select-page>'))(scope);
         scope.$digest();
         controller = element.controller('mappingSelectPage');
@@ -208,7 +211,7 @@ describe('Mapping Select Page directive', function() {
         expect(controller.downloadMapping).toHaveBeenCalled();
     });
     it('should call edit when the button is clicked', function() {
-        mappingManagerSvc.mapping = {};
+        mapperStateSvc.mapping = {};
         var element = $compile(angular.element('<mapping-select-page></mapping-select-page>'))(scope);
         scope.$digest();
         controller = element.controller('mappingSelectPage');
@@ -220,7 +223,7 @@ describe('Mapping Select Page directive', function() {
         expect(controller.edit).toHaveBeenCalled();
     });
     it('should call run when the button is clicked', function() {
-        mappingManagerSvc.mapping = {};
+        mapperStateSvc.mapping = {};
         var element = $compile(angular.element('<mapping-select-page></mapping-select-page>'))(scope);
         scope.$digest();
         controller = element.controller('mappingSelectPage');

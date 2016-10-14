@@ -38,7 +38,7 @@ describe('Mapping Overlays directive', function() {
         mockMapperState();
         mockDelimitedManager();
         injectSplitIRIFilter();
-        
+
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -51,7 +51,7 @@ describe('Mapping Overlays directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<mapping-overlays></mapping-overlays>'))(scope);
             scope.$digest();
             controller = this.element.controller('mappingOverlays');
@@ -60,14 +60,12 @@ describe('Mapping Overlays directive', function() {
             controller.reset();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toBe(undefined);
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         });
         it('should get the name of a class mapping', function() {
             var classMappingId = 'class';
             var result = controller.getClassName(classMappingId);
-            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, classMappingId);
+            expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMappingId);
             expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
@@ -76,7 +74,7 @@ describe('Mapping Overlays directive', function() {
         it('if it is a property mapping', function() {
             var propMappingId = 'class';
             var result = controller.getPropName(propMappingId);
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, propMappingId);
+            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, propMappingId);
             expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
             expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
@@ -86,14 +84,20 @@ describe('Mapping Overlays directive', function() {
             var classMappingId = mapperStateSvc.selectedClassMappingId;
             var baseClass = {'@id': 'base'};
             var props = [{'@id': 'prop'}];
+            var dataProps = [{'@id': 'dataProp'}];
+            mapperStateSvc.invalidProps = angular.copy(dataProps);
             mappingManagerSvc.getPropsLinkingToClass.and.returnValue(props);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(dataProps);
+            mappingManagerSvc.isDataMapping.and.returnValue(true);
             mappingManagerSvc.getBaseClass.and.returnValue(baseClass);
             controller.deleteClass();
-            expect(mappingManagerSvc.getPropsLinkingToClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, classMappingId);
+            expect(mappingManagerSvc.getPropsLinkingToClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMappingId);
+            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMappingId);
             expect(mappingManagerSvc.findClassWithObjectMapping.calls.count()).toBe(props.length);
-            expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, classMappingId);
+            expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMappingId);
             expect(mapperStateSvc.getAvailableProps.calls.count()).toBe(props.length);
             expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(classMappingId);
+            expect(mapperStateSvc.invalidProps).not.toContain(dataProps[0]);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(baseClass['@id']);
         });
@@ -102,8 +106,9 @@ describe('Mapping Overlays directive', function() {
             var ontology = {id: 'ontology'};
             var propId = 'prop';
             var availableProps = [];
-            mappingManagerSvc.mapping.jsonld.push(classMapping);
-            var originalMapping = angular.copy(mappingManagerSvc.mapping.jsonld);
+            mapperStateSvc.invalidProps = [{'@id': propId}];
+            mapperStateSvc.mapping.jsonld.push(classMapping);
+            var originalMapping = angular.copy(mapperStateSvc.mapping.jsonld);
             mapperStateSvc.selectedClassMappingId = classMapping['@id'];
             mapperStateSvc.availablePropsByClass = {};
             mapperStateSvc.getAvailableProps.and.returnValue(availableProps);
@@ -114,49 +119,50 @@ describe('Mapping Overlays directive', function() {
             expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
             expect(availableProps).toContain({'@id': propId, ontologyId: ontology.id});
             expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(originalMapping, classMapping['@id'], mapperStateSvc.selectedPropMappingId);
+            expect(mapperStateSvc.invalidProp).not.toContain({'@id': propId});
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
         });
         it('should delete a mapping', function() {
             var id = 'test';
-            mappingManagerSvc.mapping.id = id;
+            mapperStateSvc.mapping.id = id;
             controller.deleteMapping();
             scope.$apply();
             expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(id);
-            expect(mappingManagerSvc.mapping).toEqual(undefined);
-            expect(mappingManagerSvc.sourceOntologies).toEqual([]);
+            expect(mapperStateSvc.mapping).toEqual(undefined);
+            expect(mapperStateSvc.sourceOntologies).toEqual([]);
         });
     });
     describe('contains the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {name: '', jsonld: []};
+            mapperStateSvc.mapping = {name: '', jsonld: []};
             this.element = $compile(angular.element('<mapping-overlays></mapping-overlays>'))(scope);
             scope.$digest();
         });
         it('depending on whether a mapping is being created', function() {
-            mapperStateSvc.displayCreateMapping = true;
+            mapperStateSvc.displayCreateMappingOverlay = true;
             scope.$digest();
             expect(this.element.find('create-mapping-overlay').length).toBe(1);
 
-            mapperStateSvc.displayCreateMapping = false;
+            mapperStateSvc.displayCreateMappingOverlay = false;
             scope.$digest();
             expect(this.element.find('create-mapping-overlay').length).toBe(0);
         });
         it('depending on whether a mapping is being downloaded', function() {
-            mapperStateSvc.displayDownloadMapping = true;
+            mapperStateSvc.displayDownloadMappingOverlay = true;
             scope.$digest();
             expect(this.element.find('download-mapping-overlay').length).toBe(1);
 
-            mapperStateSvc.displayDownloadMapping = false;
+            mapperStateSvc.displayDownloadMappingOverlay = false;
             scope.$digest();
             expect(this.element.find('download-mapping-overlay').length).toBe(0);
         });
         it('depending on whether a mapping configuration is being edited', function() {
-            mapperStateSvc.displayMappingConfig = true;
+            mapperStateSvc.displayMappingConfigOverlay = true;
             scope.$digest();
             expect(this.element.find('mapping-config-overlay').length).toBe(1);
 
-            mapperStateSvc.displayMappingConfig = false;
+            mapperStateSvc.displayMappingConfigOverlay = false;
             scope.$digest();
             expect(this.element.find('mapping-config-overlay').length).toBe(0);
         });
@@ -195,6 +201,15 @@ describe('Mapping Overlays directive', function() {
             mapperStateSvc.invalidOntology = false;
             scope.$digest();
             expect(this.element.find('invalid-ontology-overlay').length).toBe(0);
+        });
+        it('depending on whether a mapping is about to be run', function() {
+            mapperStateSvc.displayRunMappingOverlay = true;
+            scope.$digest();
+            expect(this.element.find('run-mapping-overlay').length).toBe(1);
+
+            mapperStateSvc.displayRunMappingOverlay = false;
+            scope.$digest();
+            expect(this.element.find('run-mapping-overlay').length).toBe(0);
         });
         it('depending on whether a cancel should be confirmed', function() {
             mapperStateSvc.displayCancelConfirm = true;

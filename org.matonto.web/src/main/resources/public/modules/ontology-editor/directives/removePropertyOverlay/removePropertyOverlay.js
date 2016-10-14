@@ -24,39 +24,36 @@
     'use strict';
 
     angular
-        .module('propertyTree', [])
-        .directive('propertyTree', propertyTree);
+        .module('removePropertyOverlay', [])
+        .directive('removePropertyOverlay', removePropertyOverlay);
 
-        propertyTree.$inject = ['ontologyManagerService', 'stateManagerService', 'prefixes'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService'];
 
-        function propertyTree(ontologyManagerService, stateManagerService, prefixes) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/old-directives/propertyTree/propertyTree.html',
-                scope: {
-                    headerText: '@'
-                },
+                templateUrl: 'modules/ontology-editor/directives/removePropertyOverlay/removePropertyOverlay.html',
+                scope: {},
                 bindToController: {
-                    propertyType: '@'
+                    index: '<',
+                    key: '<',
+                    onSubmit: '&?',
+                    overlayFlag: '='
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.sm = ontologyStateService;
+                    dvm.pm = propertyManagerService;
 
-                    dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
-
-                    dvm.getProperties = function(ontology) {
-                        return _.isEqual(dvm.propertyType, 'object') ?
-                            dvm.om.getObjectProperties(ontology) :
-                            dvm.om.getDataTypeProperties(ontology);
-                    }
-
-                    dvm.hasProperties = function(ontology) {
-                        return _.isEqual(dvm.propertyType, 'object') ?
-                            dvm.om.hasObjectProperties(ontology) :
-                            dvm.om.hasDataTypeProperties(ontology);
+                    dvm.removeProperty = function() {
+                        if (dvm.onSubmit) {
+                            dvm.onSubmit({axiomObject: dvm.sm.selected[dvm.key][dvm.index]});
+                        }
+                        dvm.pm.remove(dvm.sm.selected, dvm.key, dvm.index);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
+                        dvm.overlayFlag = false;
                     }
                 }
             }

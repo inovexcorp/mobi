@@ -26,21 +26,21 @@ describe('Ontology Download Overlay directive', function() {
         element,
         controller,
         ontologyManagerSvc,
-        stateManagerSvc;
+        ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontologyDownloadOverlay');
         injectRegexConstant();
         injectSplitIRIFilter();
-        mockStateManager();
+        mockOntologyState();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
         });
     });
 
@@ -102,9 +102,9 @@ describe('Ontology Download Overlay directive', function() {
             controller.serialization = 'serialization';
             controller.fileName = 'fileName';
             controller.download();
-            expect(ontologyManagerSvc.downloadOntologyFile).toHaveBeenCalledWith(stateManagerSvc.downloadId,
+            expect(ontologyManagerSvc.downloadOntologyFile).toHaveBeenCalledWith(ontologyStateSvc.downloadId,
                 'serialization', 'fileName');
-            expect(stateManagerSvc.showDownloadOverlay).toBe(false);
+            expect(ontologyStateSvc.showDownloadOverlay).toBe(false);
         });
     });
 });

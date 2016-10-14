@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name mapperSerializationSelect
          *
-         * @description 
-         * The `mapperSerializationSelect` module only provides the `mapperSerializationSelect` directive 
-         * which creates a select with different serialization formats specifically for the mapping tool. 
+         * @description
+         * The `mapperSerializationSelect` module only provides the `mapperSerializationSelect` directive
+         * which creates a select with different serialization formats specifically for the mapping tool.
          */
         .module('mapperSerializationSelect', [])
         /**
@@ -39,15 +39,15 @@
          * @scope
          * @restrict E
          *
-         * @description 
+         * @description
          * `mapperSerializationSelect` is a directive which creates a select with the following options
-         * for a RDF serialization format: JSON-LD, Turtle, and RDF/XML. The directive is replaced by the 
+         * for a RDF serialization format: JSON-LD, Turtle, and RDF/XML. The directive is replaced by the
          * contents of its template.
          *
          * @param {string} format A string representing an RDF serialization
          */
         .directive('mapperSerializationSelect', mapperSerializationSelect);
-        
+
         function mapperSerializationSelect() {
             return {
                 restrict: 'E',

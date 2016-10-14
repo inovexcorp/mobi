@@ -45,19 +45,19 @@ describe('Download Mapping Overlay directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {id: ''};
+            mapperStateSvc.mapping = {id: ''};
             this.element = $compile(angular.element('<download-mapping-overlay></download-mapping-overlay>'))(scope);
             scope.$digest();
             controller = this.element.controller('downloadMappingOverlay');
         });
         it('should download a mapping', function() {
             controller.download();
-            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id, controller.downloadFormat);
-            expect(mapperStateSvc.displayDownloadMapping).toBe(false);
+            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id, controller.downloadFormat);
+            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(false);
         });
         it('should set the correct state for canceling', function() {
             controller.cancel();
-            expect(mapperStateSvc.displayDownloadMapping).toBe(false);
+            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {

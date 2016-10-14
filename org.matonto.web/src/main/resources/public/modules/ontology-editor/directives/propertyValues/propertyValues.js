@@ -27,9 +27,9 @@
         .module('propertyValues', [])
         .directive('propertyValues', propertyValues);
 
-        propertyValues.$inject = ['responseObj', 'stateManagerService'];
+        propertyValues.$inject = ['responseObj', 'ontologyUtilsManagerService', 'ontologyStateService'];
 
-        function propertyValues(responseObj, stateManagerService) {
+        function propertyValues(responseObj, ontologyUtilsManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,19 +44,8 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
-
-                    dvm.isBlankNode = function(id) {
-                        return typeof id === 'string' && _.includes(id, '_:b');
-                    }
-
-                    dvm.getBlankNodeValue = function(id) {
-                        var result;
-                        if (dvm.isBlankNode(id)) {
-                            result = _.get(dvm.sm.listItem.blankNodes, id, id);
-                        }
-                        return result;
-                    }
+                    dvm.um = ontologyUtilsManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

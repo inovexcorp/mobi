@@ -27,9 +27,9 @@
         .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function createPropertyOverlay($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
+        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,7 +44,7 @@
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
                         dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
@@ -109,6 +109,7 @@
                             _.get(listItem, 'subDataProperties').push({namespace:split.begin + split.then, localName: split.end});
                             _.get(listItem, 'dataPropertyHierarchy').push({'entityIRI': dvm.property['@id']});
                         }
+                        _.set(_.get(listItem, 'index'), dvm.property['@id'], dvm.sm.ontology.length - 1);
                         // select the new class
                         dvm.sm.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay

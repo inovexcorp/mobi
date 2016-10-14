@@ -26,6 +26,7 @@ describe('Mapping Preview directive', function() {
         ontologyManagerSvc,
         mappingManagerSvc,
         mapperStateSvc,
+        delimitedManagerSvc,
         prefixes,
         $timeout,
         controller;
@@ -37,13 +38,15 @@ describe('Mapping Preview directive', function() {
         mockOntologyManager();
         mockMappingManager();
         mockMapperState();
-        
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _prefixes_, _$timeout_) {
+        mockDelimitedManager();
+
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
+            delimitedManagerSvc = _delimitedManagerService_;
             prefixes = _prefixes_;
             $timeout = _$timeout_;
         });
@@ -51,7 +54,7 @@ describe('Mapping Preview directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
             scope.$digest();
             controller = this.element.controller('mappingPreview');
@@ -90,30 +93,24 @@ describe('Mapping Preview directive', function() {
             var result = controller.getColumnIndex(propMapping);
             expect(result).toBe('0');
         });
+        it('should test whether a property mapping is invalid', function() {
+            var result = controller.isInvalid('');
+            expect(result).toBe(false);
+            mapperStateSvc.invalidProps = [{'@id': ''}];
+            result = controller.isInvalid('');
+            expect(result).toBe(true);
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
+            mapperStateSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
             scope.$digest();
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-preview')).toBe(true);
         });
-        it('depending on whether a mapping has been selected', function() {
-            mappingManagerSvc.mapping = undefined;
-            scope.$digest();
-            expect(this.element.querySelectorAll('.lead').length).toBe(1);
-            expect(this.element.querySelectorAll('.class-list').length).toBe(0);
-            expect(this.element.querySelectorAll('.list').length).toBe(0);
-
-            mappingManagerSvc.mapping = {jsonld: []};
-            scope.$digest();
-            expect(this.element.querySelectorAll('.lead').length).toBe(0);
-            expect(this.element.querySelectorAll('.class-list').length).toBe(1);
-            expect(this.element.querySelectorAll('.list').length).toBe(1);
-        });
         it('with the correct classes based on whether the source ontology exists', function() {
-            mappingManagerSvc.mapping = {jsonld: []};
             controller = this.element.controller('mappingPreview');
             spyOn(controller, 'ontologyExists').and.returnValue(true);
             scope.$digest();
@@ -128,7 +125,6 @@ describe('Mapping Preview directive', function() {
         });
         it('with all class and property mappings displayed', function() {
             mappingManagerSvc.isDataMapping.and.returnValue(false);
-            mappingManagerSvc.mapping = {jsonld: []};
             var classMappings = [{}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             var propMappings = [{}];
@@ -141,19 +137,32 @@ describe('Mapping Preview directive', function() {
             });
         });
         it('depending on the type of property mapping', function() {
-            mappingManagerSvc.mapping = {jsonld: []};
+            var classMappings = [{'@id': ''}];
+            var propMappings = [{'@id': '', 'columnIndex': [{'@value': '0'}]}];
+            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
+            mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
+            scope.$digest();
+            expect(delimitedManagerSvc.getHeader).toHaveBeenCalled();
+
+            delimitedManagerSvc.getHeader.calls.reset();
+            mappingManagerSvc.isDataMapping.and.returnValue(false);
+            scope.$digest();
+            expect(delimitedManagerSvc.getHeader).not.toHaveBeenCalled();
+        });
+        it('depending on whether a property mapping is valid', function() {
+            controller = this.element.controller('mappingPreview');
+            spyOn(controller, 'isInvalid').and.returnValue(false);
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': '', 'columnIndex': [{'@value': '0'}]}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
             var propItem = angular.element(this.element.querySelectorAll('.props > li')[0]);
-            expect(propItem.html()).toContain('Column');
+            expect(propItem.hasClass('error-msg')).toBe(false);
 
-            mappingManagerSvc.isDataMapping.and.returnValue(false);
+            controller.isInvalid.and.returnValue(true);
             scope.$digest();
-            propItem = angular.element(this.element.querySelectorAll('.props > li')[0]);
-            expect(propItem.html()).not.toContain('Column');
+            expect(propItem.hasClass('error-msg')).toBe(true);
         });
     });
 });

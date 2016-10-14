@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name mappingSelectPage
          *
-         * @description 
+         * @description
          * The `mappingSelectPage` module only provides the `mappingSelectPage` directive which creates
-         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the selecting and 
+         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the selecting and
          * previewing a mapping.
          */
         .module('mappingSelectPage', [])
@@ -44,12 +44,12 @@
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
          *
-         * @description 
-         * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns containing 
-         * {@link block.directive:block blocks} for selecting and previewing a mapping. The left column contains 
+         * @description
+         * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns containing
+         * {@link block.directive:block blocks} for selecting and previewing a mapping. The left column contains
          * a {@link mappingList.directive:mappingList mappingList} block for selecting the current
-         * {@link mappingManager.service:mappingManagerService#mapping mapping} and buttons for creating a mapping,
-         * deleting a mapping, and searching for a mapping. The right column contains a 
+         * {@link mapperState.service:mapperStateService#mapping mapping} and buttons for creating a mapping,
+         * deleting a mapping, and searching for a mapping. The right column contains a
          * {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons for editing
          * running, and downloading the mapping. The directive is replaced by the contents of its template.
          */
@@ -72,10 +72,11 @@
 
                     dvm.ontologyExists = function() {
                         var ids = _.union(dvm.om.ontologyIds, _.map(dvm.om.list, 'ontologyId'));
-                        return _.includes(ids, dvm.mm.getSourceOntologyId(_.get(dvm.mm.mapping, 'jsonld')));
+                        return _.includes(ids, dvm.mm.getSourceOntologyId(_.get(dvm.state.mapping, 'jsonld')));
                     }
                     dvm.run = function() {
                         dvm.state.mappingSearchString = '';
+                        dvm.state.highlightIndexes = dvm.state.getMappedColumns();
                         dvm.loadOntologyAndContinue();
                     }
                     dvm.edit = function() {
@@ -85,18 +86,19 @@
                     }
                     dvm.createMapping = function() {
                         dvm.state.createMapping();
-                        dvm.state.displayCreateMapping = true;
+                        dvm.state.displayCreateMappingOverlay = true;
                     }
                     dvm.deleteMapping = function() {
                         dvm.state.displayDeleteMappingConfirm = true;
                     }
                     dvm.downloadMapping = function() {
-                        dvm.state.displayDownloadMapping = true;
+                        dvm.state.displayDownloadMappingOverlay = true;
                     }
                     dvm.loadOntologyAndContinue = function() {
-                        dvm.mm.setSourceOntologies(dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld)).then(() => {
-                            if (dvm.mm.areCompatible()) {
-                                dvm.state.step = dvm.state.fileUploadStep;                                
+                        dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld)).then(ontologies => {
+                            if (dvm.mm.areCompatible(dvm.state.mapping, ontologies)) {
+                                dvm.state.sourceOntologies = ontologies;
+                                dvm.state.step = dvm.state.fileUploadStep;
                             } else {
                                 dvm.state.invalidOntology = true;
                             }

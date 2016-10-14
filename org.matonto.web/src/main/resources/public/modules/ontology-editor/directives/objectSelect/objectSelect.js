@@ -28,9 +28,9 @@
         .directive('objectSelect', objectSelect);
 
         objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService',
-            'stateManagerService', 'prefixes'];
+            'ontologyStateService', 'prefixes'];
 
-        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, stateManagerService,
+        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, ontologyStateService,
             prefixes) {
             return {
                 restrict: 'E',
@@ -53,7 +53,7 @@
                     var dvm = this;
                     $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
 
@@ -69,11 +69,11 @@
                         var itemIri = dvm.getItemIri(item);
                         var result = itemIri;
                         if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = dvm.om.getEntity(dvm.sm.ontology, itemIri);
+                            var selectedObject = dvm.om.getEntityById(dvm.sm.listItem.ontologyId, itemIri);
                             if (dvm.tooltipDisplay === 'comment') {
                                 result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {
-                                result = dvm.om.getEntityName(selectedObject) || itemIri;
+                                result = dvm.om.getEntityName(selectedObject, dvm.sm.state.type) || itemIri;
                             } else if (_.has(selectedObject, '@id')) {
                                 result = selectedObject['@id'];
                             }

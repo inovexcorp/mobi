@@ -13,10 +13,23 @@
         border-bottom: 1px solid $gray-lighter;
         cursor: pointer;
         margin: 0;
-        padding: 8px;
+        padding: 8px 34px 8px 8px;
 
-        small {
-            font-size: .875em;
+        .text {
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            small {
+                font-size: .875em;
+            }
+        }
+
+        i.fa {
+            position: absolute;
+            right: 8px;
+            top: 8px;
         }
     }
 

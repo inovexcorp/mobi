@@ -25,27 +25,26 @@
         <block-header>
             <span>Property Hierarchies</span><a ng-click="dvm.sm.showCreatePropertyOverlay = true" class="pull-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
-        <block-content class="tree" ng-init="dataPropertiesOpened = dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId);
-                                             objectPropertiesOpened = dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)">
+        <block-content class="tree">
             <ul ng-if="dvm.sm.listItem.dataPropertyHierarchy.length">
                 <li>
-                    <a ng-click="dataPropertiesOpened = !dataPropertiesOpened; dvm.sm.setDataPropertiesOpened(dvm.sm.state.ontologyId, dataPropertiesOpened); $event.stopPropagation()">
+                    <a ng-click="dvm.sm.setDataPropertiesOpened(dvm.sm.state.ontologyId, !dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId)); $event.stopPropagation()">
                         <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': dataPropertiesOpened, 'fa-folder-o': !dataPropertiesOpened}"></i>Datatype Properties
+                           ng-class="{'fa-folder-open-o': dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId), 'fa-folder-o': !dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId)}"></i>Datatype Properties
                     </a>
                 </li>
-                <li class="container" ng-if="dataPropertiesOpened">
+                <li class="container" ng-if="dvm.sm.getDataPropertiesOpened(dvm.sm.state.ontologyId)">
                     <hierarchy-tree hierarchy="dvm.sm.listItem.dataPropertyHierarchy"></hierarchy-tree>
                 </li>
             </ul>
             <ul ng-if="dvm.sm.listItem.objectPropertyHierarchy.length">
                 <li>
-                    <a ng-click="objectPropertiesOpened = !objectPropertiesOpened; dvm.sm.setObjectPropertiesOpened(dvm.sm.state.ontologyId, objectPropertiesOpened); $event.stopPropagation()">
+                    <a ng-click="dvm.sm.setObjectPropertiesOpened(dvm.sm.state.ontologyId, !dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)); $event.stopPropagation()">
                         <i class="fa fa-fw"
-                           ng-class="{'fa-folder-open-o': objectPropertiesOpened, 'fa-folder-o': !objectPropertiesOpened}"></i>Object Properties
+                           ng-class="{'fa-folder-open-o': dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId), 'fa-folder-o': !dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)}"></i>Object Properties
                     </a>
                 </li>
-                <li class="container" ng-if="objectPropertiesOpened">
+                <li class="container" ng-if="dvm.sm.getObjectPropertiesOpened(dvm.sm.state.ontologyId)">
                     <hierarchy-tree hierarchy="dvm.sm.listItem.objectPropertyHierarchy"></hierarchy-tree>
                 </li>
             </ul>

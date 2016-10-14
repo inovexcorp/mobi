@@ -27,10 +27,10 @@
         .module('ontologyPropertyOverlay', [])
         .directive('ontologyPropertyOverlay', ontologyPropertyOverlay);
 
-        ontologyPropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'stateManagerService', 'REGEX',
-            'annotationManagerService'];
+        ontologyPropertyOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'REGEX',
+            'propertyManagerService'];
 
-        function ontologyPropertyOverlay(responseObj, ontologyManagerService, stateManagerService, REGEX, annotationManagerService) {
+        function ontologyPropertyOverlay(responseObj, ontologyManagerService, ontologyStateService, REGEX, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,15 +41,13 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.am = annotationManagerService;
-                    dvm.ontologyProperties = angular.copy(dvm.om.ontologyProperties);
-                    dvm.annotations = angular.copy(dvm.sm.listItem.annotations);
-                    dvm.properties = _.union(dvm.ontologyProperties, dvm.annotations);
+                    dvm.pm = propertyManagerService;
+                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.sm.listItem.annotations);
 
                     function markAndClose() {
-                        dvm.sm.setUnsaved(dvm.sm.ontology, dvm.sm.selected.matonto.originalIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.selected.matonto.originalIRI, true);
                         dvm.sm.showOntologyPropertyOverlay = false;
                     }
 
@@ -72,22 +70,22 @@
                     }
 
                     dvm.isOntologyProperty = function() {
-                        return !!dvm.sm.ontologyProperty && _.some(dvm.ontologyProperties, property =>
-                            _.isEqual(dvm.ro.getItemIri(dvm.sm.ontologyProperty), dvm.ro.getItemIri(property)));
+                        return !!dvm.sm.ontologyProperty && _.some(dvm.om.ontologyProperties, property =>
+                            dvm.ro.getItemIri(dvm.sm.ontologyProperty) === dvm.ro.getItemIri(property));
                     }
 
                     dvm.isAnnotationProperty = function() {
-                        return !!dvm.sm.ontologyProperty && _.some(dvm.annotations, property =>
-                            _.isEqual(dvm.ro.getItemIri(dvm.sm.ontologyProperty), dvm.ro.getItemIri(property)));
+                        return !!dvm.sm.ontologyProperty && _.some(dvm.sm.listItem.annotations, property =>
+                            dvm.ro.getItemIri(dvm.sm.ontologyProperty) === dvm.ro.getItemIri(property));
                     }
 
                     dvm.addProperty = function() {
-                        dvm.am.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), getValue());
+                        dvm.pm.add(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), getValue());
                         markAndClose();
                     }
 
                     dvm.editProperty = function() {
-                        dvm.am.edit(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), getValue(),
+                        dvm.pm.edit(dvm.sm.selected, dvm.ro.getItemIri(dvm.sm.ontologyProperty), getValue(),
                             dvm.sm.ontologyPropertyIndex);
                         markAndClose();
                     }

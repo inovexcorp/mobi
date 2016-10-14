@@ -27,9 +27,9 @@
         .module('ontologyEditorTabset', [])
         .directive('ontologyEditorTabset', ontologyEditorTabset);
 
-        ontologyEditorTabset.$inject = ['ontologyManagerService', 'stateManagerService'];
+        ontologyEditorTabset.$inject = ['ontologyManagerService', 'ontologyStateService'];
 
-        function ontologyEditorTabset(ontologyManagerService, stateManagerService) {
+        function ontologyEditorTabset(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.onClose = function(ontologyId) {
                         var ontology = dvm.om.getOntologyById(ontologyId);

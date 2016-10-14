@@ -28,10 +28,10 @@
          * @ngdoc overview
          * @name editMappingPage
          *
-         * @description 
+         * @description
          * The `editMappingPage` module only provides the `editMappingPage` directive which creates
-         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the current 
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}.
+         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the current
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('editMappingPage', [])
         /**
@@ -43,22 +43,22 @@
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
          *
-         * @description 
-         * `editMappingPage` is a directive that creates a Bootstrap `row` div with two columns containing 
-         * {@link block.directive:block blocks} for editing the current 
-         * {@link mappingManager.service:mappingManagerService#mapping mapping}. The left column contains 
-         * either a block for {@link editMappingForm.directive:editMappingForm editing} the mapping or a 
-         * block for {@link rdfPreviewForm.directive:rdfPreviewForm previewing} the mapped data using the current 
-         * state of the mapping. The right column contains a 
+         * @description
+         * `editMappingPage` is a directive that creates a Bootstrap `row` div with two columns containing
+         * {@link block.directive:block blocks} for editing the current
+         * {@link mapperState.service:mapperStateService#mapping mapping}. The left column contains
+         * either a block for {@link editMappingForm.directive:editMappingForm editing} the mapping or a
+         * block for {@link rdfPreviewForm.directive:rdfPreviewForm previewing} the mapped data using the current
+         * state of the mapping. The right column contains a
          * {@link previewDataGrid.directive:previewDataGrid preview} of the loaded delimited data. From here,
          * the user can choose to save the mapping and optionally run it against the loaded delimited data.
          * The directive is replaced by the contents of its template.
          */
         .directive('editMappingPage', editMappingPage);
 
-        editMappingPage.$inject = ['$q', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        editMappingPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
 
-        function editMappingPage($q, mapperStateService, mappingManagerService, delimitedManagerService) {
+        function editMappingPage(mapperStateService, mappingManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -70,32 +70,28 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
+                    dvm.errorMessage = '';
 
-                    dvm.save = function(run) {
-                        var deferred = $q.defer();
-                        if (_.includes(dvm.mm.mappingIds, dvm.mm.mapping.id)) {
-                            dvm.mm.deleteMapping(dvm.mm.mapping.id).then(() => {
-                                deferred.resolve();
-                            });
+                    dvm.save = function() {
+                        if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
+                            dvm.mm.deleteMapping(dvm.state.mapping.id)
+                                .then(() => saveMapping(), errorMessage => dvm.errorMessage = errorMessage);
                         } else {
-                            deferred.resolve();
+                            saveMapping();
                         }
-                        deferred.promise.then(() => {
-                            return dvm.mm.upload(dvm.mm.mapping.jsonld, dvm.mm.mapping.id);
-                        }).then(() => {
-                            if (run) {
-                                dvm.dm.map(dvm.mm.mapping.id);
-                            }
-                            dvm.state.step = dvm.state.selectMappingStep;
-                            dvm.state.initialize();
-                            dvm.state.resetEdit();
-                            dvm.mm.mapping = undefined;
-                            dvm.mm.sourceOntologies = [];
-                            dvm.dm.reset();
-                        });
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;
+                    }
+                    function saveMapping() {
+                        dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id)
+                            .then(() => {
+                                dvm.errorMessage = '';
+                                dvm.state.step = dvm.state.selectMappingStep;
+                                dvm.state.initialize();
+                                dvm.state.resetEdit();
+                                dvm.dm.reset();
+                            }, errorMessage => dvm.errorMessage = errorMessage);
                     }
                 }
             }

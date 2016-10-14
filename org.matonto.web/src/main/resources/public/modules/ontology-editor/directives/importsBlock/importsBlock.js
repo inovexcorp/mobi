@@ -27,9 +27,9 @@
         .module('importsBlock', [])
         .directive('importsBlock', importsBlock);
 
-        importsBlock.$inject = ['stateManagerService', 'prefixes'];
+        importsBlock.$inject = ['ontologyStateService', 'prefixes'];
 
-        function importsBlock(stateManagerService, prefixes) {
+        function importsBlock(ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,7 +39,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.prefixes = prefixes;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                 }
             }
         }

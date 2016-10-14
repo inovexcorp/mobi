@@ -9,3 +9,5 @@
 (MIT License) Angular-ui-router (https://github.com/angular-ui/ui-router/blob/master/LICENSE)
 (MIT License) Angular-uuid (https://github.com/munkychop/angular-uuid/blob/master/LICENSE.md)
 (MIT License) Codemirror (https://github.com/codemirror/CodeMirror/blob/master/LICENSE)
+(MIT License) Handsontable (https://github.com/handsontable/handsontable/blob/master/LICENSE)
+(MIT License) ngHandsontable (https://github.com/handsontable/ngHandsontable/blob/master/LICENSE)

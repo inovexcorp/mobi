@@ -27,21 +27,19 @@
         .module('uploadOntologyTab', [])
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        uploadOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function uploadOntologyTab($filter, REGEX, ontologyManagerService, stateManagerService, prefixes) {
+        function uploadOntologyTab($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/uploadOntologyTab/uploadOntologyTab.html',
-                scope: {
-                    listItem: '='
-                },
+                scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.type = 'ontology';
 
                     dvm.upload = function() {

@@ -25,21 +25,6 @@
 
     angular
         .module('ontology-editor', [
-            /* Custom Directives */
-            /*'annotationEditor',
-            'annotationTree',
-            'classEditor',
-            'createOntologyOverlay',
-            'defaultTab',
-            'individualEditor',
-            'ontologyEntityEditors',
-            'ontologyOpenOverlay',
-            'ontologySideBar',
-            'ontologyTrees',
-            'ontologyUploadOverlay',
-            'propertyEditor',
-            'propertyTree',*/
-
             /* New Directives */
             'annotationBlock',
             'annotationOverlay',
@@ -89,11 +74,11 @@
             'propertyHierarchyBlock',
             'relationshipOverlay',
             'relationshipsBlock',
+            'removePropertyOverlay',
             'selectedDetails',
             'serializationSelect',
             'staticIri',
             'stringSelect',
-            'topConceptsBlock',
             'treeItem',
             'uploadOntologyTab',
             'usagesBlock',

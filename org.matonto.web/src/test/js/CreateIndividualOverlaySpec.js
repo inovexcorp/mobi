@@ -26,7 +26,7 @@ describe('Create Individual Overlay directive', function() {
         element,
         controller,
         ontologyManagerSvc,
-        stateManagerSvc,
+        ontologyStateSvc,
         resObj,
         deferred,
         prefixes,
@@ -40,16 +40,16 @@ describe('Create Individual Overlay directive', function() {
         injectTrustedFilter();
         injectHighlightFilter();
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockResponseObj();
         mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _stateManagerService_, _responseObj_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _ontologyStateService_, _responseObj_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
             prefixes = _prefixes_;
             resObj = _responseObj_;
@@ -102,7 +102,7 @@ describe('Create Individual Overlay directive', function() {
         it('with an input for the individual name', function() {
             expect(element.querySelectorAll('input[name="name"]').length).toBe(1);
         });
-        it('with custom buttoms to create and cancel', function() {
+        it('with custom buttons to create and cancel', function() {
             var buttons = element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Create'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
@@ -148,10 +148,10 @@ describe('Create Individual Overlay directive', function() {
             ontologyManagerSvc.getListItemById.and.returnValue({individuals: [], classesWithIndividuals: []})
             controller.individual = {'@id': 'id', '@type': []};
             controller.create();
-            expect(_.indexOf(controller.individual['@type'], prefixes.owl + 'NamedIndividual')).not.toBe(-1);
-            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(stateManagerSvc.ontology, controller.individual);
-            expect(stateManagerSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id']);
-            expect(stateManagerSvc.showCreateIndividualOverlay).toBe(false);
+            expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.ontology, controller.individual);
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id']);
+            expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
         });
     });
 });

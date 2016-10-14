@@ -23,10 +23,8 @@
 describe('File Upload Form directive', function() {
     var $compile,
         scope,
-        mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
-        ontologyManagerSvc,
         $q,
         $timeout,
         controller;
@@ -35,18 +33,14 @@ describe('File Upload Form directive', function() {
         module('templates');
         module('fileUploadForm');
         mockPrefixes();
-        mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
-        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_, _$q_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _mapperStateService_, _delimitedManagerService_, _$q_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             $q = _$q_;
             $timeout = _$timeout_;
         });
@@ -54,7 +48,6 @@ describe('File Upload Form directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<file-upload-form></file-upload-form>'))(scope);
             scope.$digest();
             controller = this.element.controller('fileUploadForm');
@@ -72,16 +65,6 @@ describe('File Upload Form directive', function() {
             scope.$digest();
             result = controller.isExcel();
             expect(result).toBe(true);
-        });
-        it('should get the name of a data mapping', function() {
-            var result = controller.getDataMappingName('');
-            expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mappingManagerSvc.mapping.jsonld, '');
-            expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalled();
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalled();
-            expect(mappingManagerSvc.getPropMappingTitle).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
         });
         describe('should upload a file', function() {
             it('unless a file has not been selected', function() {
@@ -118,7 +101,6 @@ describe('File Upload Form directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<file-upload-form></file-upload-form>'))(scope);
             scope.$digest();
         });
@@ -145,17 +127,6 @@ describe('File Upload Form directive', function() {
             controller.errorMessage = 'test';
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
-        });
-        it('depending on whether there are invalid columns', function() {
-            mapperStateSvc.invalidProps = [];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.invalid-props').length).toBe(0);
-
-            mapperStateSvc.invalidProps = [{'@id': 'prop', index: 0}];
-            scope.$digest();
-            var invalidProps = angular.element(this.element.querySelectorAll('.invalid-props')[0]);
-            expect(invalidProps).toBeTruthy();
-            expect(invalidProps.querySelectorAll('ul li').length).toBe(mapperStateSvc.invalidProps.length);
         });
     });
 });

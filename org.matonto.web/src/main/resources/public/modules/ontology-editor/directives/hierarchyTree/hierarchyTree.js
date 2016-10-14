@@ -27,20 +27,20 @@
         .module('hierarchyTree', [])
         .directive('hierarchyTree', hierarchyTree);
 
-        hierarchyTree.$inject = ['stateManagerService', 'ontologyManagerService'];
+        hierarchyTree.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function hierarchyTree(stateManagerService, ontologyManagerService) {
+        function hierarchyTree(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/hierarchyTree/hierarchyTree.html',
                 scope: {
-                    hierarchy: '='
+                    hierarchy: '<'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
                 }
             }
