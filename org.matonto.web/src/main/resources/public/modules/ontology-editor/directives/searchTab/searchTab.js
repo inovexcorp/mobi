@@ -48,8 +48,8 @@
                             dvm.om.getSearchResults(dvm.sm.listItem.ontologyId, dvm.sm.state.searchText)
                                 .then(results => {
                                     dvm.sm.state.errorMessage = '';
-                                    dvm.sm.state.results = _.groupBy(results, result => _.get(result, 'type.value'));
-                                    dvm.sm.state.infoMessage = results.length ? '' : 'There were no results for your search text.';
+                                    dvm.sm.state.results = results;
+                                    dvm.sm.state.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
                                     dvm.sm.state.highlightText = angular.copy(dvm.sm.state.searchText);
                                 }, errorMessage => {
                                     dvm.sm.state.errorMessage = errorMessage;
@@ -60,9 +60,11 @@
 
                     dvm.onClear = function() {
                         dvm.sm.state.errorMessage = '';
+                        dvm.sm.state.highlightText = '';
                         dvm.sm.state.infoMessage = '';
                         dvm.sm.state.results = {};
                         dvm.sm.state.searchText = '';
+                        dvm.sm.state.selected = {};
                     }
 
                     function setSelected() {

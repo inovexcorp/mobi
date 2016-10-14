@@ -1715,7 +1715,7 @@
                 $http.get(prefix + encodeURIComponent(ontologyId) + '/search-results', config)
                     .then(response => {
                         if(_.get(response, 'status') === 200) {
-                            deferred.resolve(response.data.results.bindings);
+                            deferred.resolve(response.data);
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {

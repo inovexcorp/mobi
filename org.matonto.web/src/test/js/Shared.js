@@ -188,6 +188,7 @@ function mockOntologyManager() {
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
             this.getEntityById = jasmine.createSpy('getEntityById');
+            this.getSearchResults = jasmine.createSpy('getSearchResults');
         });
     });
 }
@@ -474,6 +475,7 @@ function mockOntologyState() {
             this.setActivePage = jasmine.createSpy('setActivePage');
             this.openAt = jasmine.createSpy('openAt');
             this.goTo = jasmine.createSpy('goTo');
+            this.unSelectItem = jasmine.createSpy('unSelectItem');
         });
     });
 }
@@ -490,7 +492,6 @@ function mockOntologyUtilsManager() {
             this.isBlankNodeString = jasmine.createSpy('isBlankNodeString');
             this.getBlankNodeValue = jasmine.createSpy('getBlankNodeValue');
             this.isLinkable = jasmine.createSpy('isLinkable');
-            this.goTo = jasmine.createSpy('goTo');
         });
     });
 }

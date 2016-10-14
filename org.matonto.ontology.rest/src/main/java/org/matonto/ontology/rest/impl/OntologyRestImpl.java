@@ -619,8 +619,25 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getSearchResults(String ontologyIdStr, String searchText) {
         TupleQueryResult queryResults = manager.getSearchResults(ontologyIdStr, searchText);
-        JSONObject response = JSONQueryResults.getResponse(queryResults);
-        return Response.status(200).entity(response.toString()).build();
+        Map<String, Set<String>> results = new HashMap<>();
+        queryResults.forEach(queryResult -> {
+            Value entity = Iterables.get(queryResult, 1).getValue();
+            Value filter = Iterables.get(queryResult, 0).getValue();
+            if (!(entity instanceof BNode) && !(filter instanceof BNode)) {
+                String entityString = entity.stringValue();
+                String filterString = filter.stringValue();
+                if (results.containsKey(filterString)) {
+                    results.get(filterString).add(entityString);
+                } else {
+                    results.put(filterString, new HashSet<String>() {
+                        {
+                            add(entityString);
+                        }
+                    });
+                }
+            }
+        });
+        return Response.status(200).entity(JSONObject.fromObject(results).toString()).build();
     }
 
     /**

@@ -31,10 +31,11 @@
                 <div class="result" ng-repeat="(key, value) in dvm.sm.state.results track by key">
                     <span class="result-header text-muted" ng-click="isClosed = !isClosed"><strong>{{key | prefixation}}</strong><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></span>
                     <ul class="tree" ng-if="!isClosed">
-                        <tree-item ng-repeat="item in value track by item.entity.value"
-                                   current-entity="dvm.om.getEntityById(dvm.sm.listItem.ontologyId, item.entity.value)"
-                                   is-active="dvm.sm.getActiveEntityIRI() === item.entity.value"
-                                   on-click="dvm.sm.selectItem(item.entity.value, false)"></tree-item>
+                        <tree-item ng-repeat="item in value track by item"
+                                   current-entity="dvm.om.getEntityById(dvm.sm.listItem.ontologyId, item)"
+                                   is-active="dvm.sm.getActiveEntityIRI() === item"
+                                   on-click="dvm.sm.selectItem(item, false)"
+                                   ng-dblclick="dvm.sm.goTo(item)"></tree-item>
                     </ul>
                 </div>
             </block-content>
@@ -44,7 +45,7 @@
         <block>
             <block-header>Properties</block-header>
             <block-content>
-                <div ng-repeat="(key, value) in dvm.sm.state.selected track by key" class="property-values">
+                <div class="property-values" ng-repeat="(key, value) in dvm.sm.state.selected track by key">
                     <h5 ng-click="isClosed = !isClosed" class="clearfix">
                         <p class="text"><span ng-bind-html="(key | splitIRI).end | beautify | highlight:dvm.sm.state.highlightText | trusted"></span> <small>&lt;<span ng-bind-html="key | highlight:dvm.sm.state.highlightText | trusted"></span>&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                     </h5>
