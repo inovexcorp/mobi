@@ -211,6 +211,39 @@
 
             /**
              * @ngdoc method
+             * @name reset
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Resets all state variables.
+             */
+            self.reset = function() {
+                self.ontologyIds = [];
+                self.list = [];
+            }
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Initializes the `ontologyManagerService` by setting the list of
+             * {@link ontologyManager.service:ontologyManagerService#ontologyIds ontology ids}.
+             */
+            self.initialize = function() {
+                $rootScope.showSpinner = true;
+                self.getAllOntologyIds()
+                    .then(response => {
+                        self.ontologyIds = _.get(response, 'data', []);
+                    }, response => {
+                        console.log(_.get(response, 'statusText'), 'Something went wrong. Could not load ontology ids.');
+                    })
+                    .then(() => {
+                        $rootScope.showSpinner = false;
+                    });
+            }
+            /**
+             * @ngdoc method
              * @name getAllOntologyIds
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -1988,18 +2021,5 @@
                 });
                 return deferred.promise;
             }
-            function initialize() {
-                $rootScope.showSpinner = true;
-                self.getAllOntologyIds()
-                    .then(response => {
-                        self.ontologyIds = _.get(response, 'data', []);
-                    }, response => {
-                        console.log(response.statusText);
-                    })
-                    .then(() => {
-                        $rootScope.showSpinner = false;
-                    });
-            }
-            initialize();
         }
 })();

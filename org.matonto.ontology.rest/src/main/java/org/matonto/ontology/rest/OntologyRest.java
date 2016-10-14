@@ -45,6 +45,7 @@ public interface OntologyRest {
     @GET
     @Path("ontologyids")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation(value = "Gets all Ontology Resource identifiers")
     Response getAllOntologyIds();
 

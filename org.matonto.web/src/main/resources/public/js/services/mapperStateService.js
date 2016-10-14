@@ -27,14 +27,13 @@
         /**
          * @ngdoc overview
          * @name mapperState
-         * @requires delimitedManager
          *
          * @description
          * The `mapperState` module only provides the `mapperStateService` service which
          * contains various variables to hold the state of the mapping tool page and
          * utility functions to update those variables.
          */
-        .module('mapperState', ['delimitedManager'])
+        .module('mapperState', [])
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService

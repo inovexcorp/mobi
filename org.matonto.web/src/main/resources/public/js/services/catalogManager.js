@@ -27,14 +27,13 @@
         /**
          * @ngdoc overview
          * @name catalogManager
-         * @requires prefixes
          *
-         * @description 
+         * @description
          * The `catalogManager` module only provides the `catalogManagerService` service which
-         * provides access to the MatOnto catalog REST endpoints and utility functions for the 
+         * provides access to the MatOnto catalog REST endpoints and utility functions for the
          * results of those endpoints
          */
-        .module('catalogManager', ['prefixes'])
+        .module('catalogManager', [])
         /**
          * @ngdoc service
          * @name catalogManager.service:catalogManagerService
@@ -43,9 +42,9 @@
          * @requires $q
          * @requires prefixes.service:prefixes
          *
-         * @description 
-         * `catalogManagerService` is a service that provides access to the MatOnto catalog REST 
-         * endpoints and utility functions for the resource and distribution objects that are 
+         * @description
+         * `catalogManagerService` is a service that provides access to the MatOnto catalog REST
+         * endpoints and utility functions for the resource and distribution objects that are
          * returned.
          */
         .service('catalogManagerService', catalogManagerService);
@@ -63,7 +62,7 @@
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {number}
              *
-             * @description 
+             * @description
              * `currentPage` holds the index of the current page of results.
              */
             self.currentPage = 0;
@@ -73,7 +72,7 @@
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {Object}
              *
-             * @description 
+             * @description
              * `results` holds the results of the most recent call to `/matontorest/catalog/resources`.
              * The structure of this object is:
              * ```
@@ -106,8 +105,8 @@
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {Object}
              *
-             * @description 
-             * `selectedResource` holds the resource object of the most recently clicked result in the 
+             * @description
+             * `selectedResource` holds the resource object of the most recently clicked result in the
              * {@link resultsList.directive:resultsList Result List}. The structure of this object is:
              * ```
              * {
@@ -148,7 +147,7 @@
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {Object}
              *
-             * @description 
+             * @description
              * `filters` holds all the filters to apply to the next call to `matontorest/catalog/resources`.
              * All filters in this list are used to populate the {@link filterList.directive:filterList Filter List}.
              */
@@ -161,8 +160,8 @@
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {string}
              *
-             * @description 
-             * `sortBy` holds the IRI of the field to sort the resources by in the next call to 
+             * @description
+             * `sortBy` holds the IRI of the field to sort the resources by in the next call to
              * `matontorest/catalog/resources`.
              */
             self.sortBy = '';
@@ -172,7 +171,7 @@
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {boolean}
              *
-             * @description 
+             * @description
              * `asc` holds the direction of the sort applied to the next call to `matontorest/catalog/resources`.
              */
             self.asc = false;
@@ -182,11 +181,11 @@
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {string}
              *
-             * @description 
+             * @description
              * `errorMessage` holds the latest error message returned by the other methods making HTTP calls.
              */
             self.errorMessage = '';
-            
+
             function initialize() {
                 self.getResourceTypes()
                     .then(function(types) {
@@ -205,11 +204,11 @@
              * @name getResourceTypes
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Calls the GET /matontorest/catalog/resource-types endpoint and returns the
              * array of resource type IRIs.
-             * 
-             * @returns {Promise} A promise that resolves to an array of the IRIs for all 
+             *
+             * @returns {Promise} A promise that resolves to an array of the IRIs for all
              * resource types in the catalog
              */
             self.getResourceTypes = function() {
@@ -224,10 +223,10 @@
              * @name getSortOptions
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Calls the GET /matontorest/catalog/sort-options endpoint and returns the
              * array of resource field IRIs.
-             * 
+             *
              * @return {Promise} A promise that resolves to an array of the IRIs for all
              * supported resource fields to sort by
              */
@@ -243,9 +242,9 @@
              * @name getResources
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Calls the GET /matontorest/catalog/resources endpoint and returns the object
-             * containing paginated results for the resource query. The paginated results object 
+             * containing paginated results for the resource query. The paginated results object
              * has the following structure:
              * ```
              * {
@@ -263,9 +262,9 @@
              *     totalSize: 0
              * }
              * ```
-             * 
-             * @returns {Promise} A promise that either resolves with a paginated results object 
-             * or is rejected with a error message. 
+             *
+             * @returns {Promise} A promise that either resolves with a paginated results object
+             * or is rejected with a error message.
              */
             self.getResources = function() {
                 $rootScope.showSpinner = true;
@@ -293,7 +292,7 @@
              * @name getResultsPage
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Calls the GET /matontorest/catalog/resources endpoint with the passed URL and
              * returns the object containing paginated results for the resource query. The paginated
              * results object has the following structure:
@@ -313,12 +312,12 @@
              *     totalSize: 0
              * }
              * ```
-             * This method is meant to be used with 'links.next' and 'links.prev' URLS from a paginated 
+             * This method is meant to be used with 'links.next' and 'links.prev' URLS from a paginated
              * results object.
-             * 
-             * @param  {string} url A URL for a /matontorest/catalog/resources call. Typically a 
+             *
+             * @param  {string} url A URL for a /matontorest/catalog/resources call. Typically a
              * 'links.next' and 'links.prev' URLS from a paginated results object.
-             * @returns {Promise} A promise that either resolves with a paginated results object 
+             * @returns {Promise} A promise that either resolves with a paginated results object
              * or is rejected with a error message.
              */
             self.getResultsPage = function(url) {
@@ -338,7 +337,7 @@
              * @name getResource
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Calls the GET /matontorest/catalog/resources/{resourceId} endpoint with the passed
              * resource id and returns the matching resource object if it exists. The resource
              * object has the following structure:
@@ -373,7 +372,7 @@
              *     distributions: []
              * }
              * ```
-             * 
+             *
              * @param {string} resourceId The id of the resource to retrieve.
              * @return {Promise} A promise the resolves to the resource if it exists or is rejected to
              * an error message.
@@ -403,10 +402,10 @@
              * @name getResourceDistributions
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Calls the GET /matontorest/catalog/resources/{resourceId}/distributions endpoint and
              * returns the array of distribution objects for that particular resource.
-             * 
+             *
              * @param {string} resourceId The id of the resource to retrieve the distributions of
              * @return {Promise} A promise that resolves to the array of distributions for a resource
              * or is rejected with an error message.
@@ -436,8 +435,8 @@
              * @name getResourceDistribution
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
-             * Calls the GET /matontorest/catalog/resources/{resourceId}/distributions/{distributionId} 
+             * @description
+             * Calls the GET /matontorest/catalog/resources/{resourceId}/distributions/{distributionId}
              * endpoint and returns the matching distribution for the particular resource. The distribution
              * object has the following structure:
              * ```
@@ -474,7 +473,7 @@
              *     bytesSize: 0
              * }
              * ```
-             * 
+             *
              * @param {string} resourceId The id of the resource with the specified distribution
              * @param {string} distributionId The id of the distribution to retrieve
              * @return {Promise} A promise that resolves to the distribution if it exists or is rejected
@@ -488,7 +487,7 @@
                         if (response.status === 204) {
                             deferred.reject('Resource and/or distribution does not exist');
                         } else {
-                            deferred.resolve(response.data);                            
+                            deferred.resolve(response.data);
                         }
                     }, function(error) {
                         deferred.reject(error.statusText);
@@ -503,10 +502,10 @@
              * @name downloadResource
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Retrieves the latest distribution for a resource and calls it's download link
              * (eventually).
-             * 
+             *
              * @param {string} resourceId The id of the resource to download
              */
             self.downloadResource = function(resourceId) {
@@ -526,15 +525,15 @@
              * @name getType
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Retrieves the local name of a resource type IRI.
-             * 
+             *
              * @param {string} type A resource type IRI
              * @return {string} The local name of a resource type IRI
              */
             self.getType = function(type) {
                 if (typeof type === 'string') {
-                    return type.replace(prefixes.catalog, '');                
+                    return type.replace(prefixes.catalog, '');
                 }
                 return '';
             }
@@ -544,9 +543,9 @@
              * @name getDate
              * @methodOf catalogManager.service:catalogManagerService
              *
-             * @description 
+             * @description
              * Creates a Date object from a date object in a resource or distribution object.
-             * 
+             *
              * @param {Object} date A date object from a resource or distribution object.
              * @param {number} date.year A full four digit year
              * @param {number} date.month A month number starting with January = 1

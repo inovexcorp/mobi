@@ -53,10 +53,6 @@
             'propMappingOverlay',
             'propSelect',
             'rdfPreviewForm',
-            'runMappingOverlay',
-
-            /* Custom Services */
-            'delimitedManager',
-            'mapperState'
+            'runMappingOverlay'
         ]);
 })();
