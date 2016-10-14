@@ -120,6 +120,8 @@ function mockOntologyManager() {
             this.ontologyIds = [];
             this.list = [];
             this.propertyTypes = [];
+            this.reset = jasmine.createSpy('reset');
+            this.initialize = jasmine.createSpy('initialize');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getListItemById = jasmine.createSpy('getListItemById').and.returnValue({});
             this.isOntology = jasmine.createSpy('isOntology');
@@ -188,7 +190,6 @@ function mockOntologyManager() {
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
             this.getEntityById = jasmine.createSpy('getEntityById');
-            this.initialize = jasmine.createSpy('initialize');
         });
     });
 }
@@ -198,6 +199,8 @@ function mockMappingManager() {
         $provide.service('mappingManagerService', function($q) {
             this.mappingIds = [];
 
+            this.reset = jasmine.createSpy('reset');
+            this.initialize = jasmine.createSpy('initialize');
             this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
             this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
             this.downloadMapping = jasmine.createSpy('downloadMapping');
@@ -380,10 +383,11 @@ function mockSparqlManager() {
                 }
             }
             this.prefixes = [];
-            this.queryString = this.errorMessage = this.infoMessage = '';
-            this.queryRdf = jasmine.createSpy('queryRdf').and.callFake(function() {
-                return $q.resolve({});
-            });
+            this.queryString = '';
+            this.errorMessage = '';
+            this.infoMessage = '';
+            this.reset = jasmine.createSpy('reset');
+            this.queryRdf = jasmine.createSpy('queryRdf').and.returnValue($q.when({}));
         });
     });
 }
@@ -442,6 +446,7 @@ function mockOntologyState() {
                 individuals: [],
                 index: {}
             };
+            this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
@@ -517,4 +522,14 @@ function mockPropertyManager() {
             this.create = jasmine.createSpy('create').and.returnValue($q.resolve({}));
         });
     });
+}
+
+function mockLoginManager() {
+    module(function($provide) {
+            $provide.service('loginManagerService', function($q) {
+                this.login = jasmine.createSpy('login').and.returnValue($q.when());
+                this.logout = jasmine.createSpy('logout');
+                this.isAuthenticated = jasmine.createSpy('isAuthenticated');
+            });
+        });
 }

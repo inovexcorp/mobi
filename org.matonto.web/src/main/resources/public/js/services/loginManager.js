@@ -47,9 +47,9 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', '$timeout'];
+        loginManagerService.$inject = ['$q', '$http', '$state', '$timeout', 'ontologyManagerService', 'mappingManagerService'];
 
-        function loginManagerService($q, $http, $state, $timeout) {
+        function loginManagerService($q, $http, $state, $timeout, ontologyManagerService, mappingManagerService) {
             var self = this,
                 anon = 'self anon';
 
@@ -139,6 +139,8 @@
                 return $http.get('/matontorest/user/current')
                     .then(function(response) {
                         if (response.status === 200 && response.data.scope !== anon) {
+                            ontologyManagerService.initialize();
+                            mappingManagerService.initialize();
                             return $q.when();
                         } else {
                             return handleError(response.data);

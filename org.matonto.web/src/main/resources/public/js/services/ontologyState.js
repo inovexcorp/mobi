@@ -39,6 +39,14 @@
             self.selected = {};
             self.listItem = {};
 
+            self.reset = function() {
+                self.states = [];
+                self.ontology = {};
+                self.selected = {};
+                self.state = self.newState;
+                self.state.active = true;
+                self.listItem = {};
+            }
             self.afterSave = function(newId) {
                 if (self.state.ontologyId !== newId) {
                     self.state.ontologyId = newId;
@@ -401,14 +409,6 @@
                 if (index) {
                     self.openAt(self.getPathsTo(self.listItem[index], iri));
                 }
-            }
-            self.reset = function() {
-                self.states = [];
-                self.ontology = {};
-                self.selected = {};
-                self.state = self.newState;
-                self.state.active = true;
-                self.listItem = {};
             }
         }
 })();
