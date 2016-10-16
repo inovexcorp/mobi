@@ -77,7 +77,7 @@
         <!-- Owlapi dependencies -->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
-            <artifactId>owlapi-osgidistribution</artifactId>
+            <artifactId>owlapi-distribution</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>org.openrdf.sesame</groupId>

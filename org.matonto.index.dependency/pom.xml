@@ -37,8 +37,6 @@
     <packaging>pom</packaging>
 
     <properties>
-        <guice.version>4.0</guice.version>
-        <logback.version>1.1.2</logback.version>
         <local.url.policy>REQUIRED</local.url.policy>
     </properties>
 
@@ -64,7 +62,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.10</version>
+            <version>${commons-codec.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -73,7 +71,7 @@
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
+            <version>${commons-lang.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -88,12 +86,12 @@
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.9.2</version>
+            <version>${commons-beanutils.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
-            <version>3.2.1</version>
+            <version>${commons-collections.version}</version>
         </dependency>
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
@@ -115,7 +113,7 @@
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-distribution</artifactId>
-            <version>${owlapi.version}</version>
+            <!--<version>${owlapi.version}</version>-->
         </dependency>
         <dependency>
             <groupId>org.tukaani</groupId>
@@ -161,6 +159,16 @@
             <groupId>org.matonto.bundles</groupId>
             <artifactId>trove4j</artifactId>
             <version>3.0.3_1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-rdf-api</artifactId>
+            <version>${commons-rdf-api.version}</version>
         </dependency>
 
         <!-- REST Dependencies -->
