@@ -27,13 +27,12 @@
         /**
          * @ngdoc overview
          * @name textArea
-         * @requires customLabel
          *
          * @description 
          * The `textArea` module only provides the `textArea` directive which creates
          * a textarea element with a customLabel and a custom on change function.
          */
-        .module('textArea', ['customLabel'])
+        .module('textArea', [])
         /**
          * @ngdoc directive
          * @name textArea.directive:textArea

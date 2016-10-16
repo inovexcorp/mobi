@@ -24,25 +24,24 @@
     'use strict';
 
     angular
-        .module('sparqlResultTable', ['sparqlManager'])
+        .module('sparqlResultTable', [])
         .directive('sparqlResultTable', sparqlResultTable);
 
-        sparqlResultTable.$inject = ['$window', '$timeout'];
+        sparqlResultTable.$inject = ['$window', '$timeout', 'sparqlManagerService'];
 
-        function sparqlResultTable($window, $timeout) {
+        function sparqlResultTable($window, $timeout, sparqlManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/sparql/directives/sparqlResultTable/sparqlResultTable.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['sparqlManagerService', function(sparqlManagerService) {
+                controller: function() {
                     var dvm = this;
-
                     dvm.sparql = sparqlManagerService;
 
                     dvm.getPage = function(direction) {
-                        if(direction === 'next') {
+                        if (direction === 'next') {
                             dvm.sparql.currentPage += 1;
                             sparqlManagerService.getResults(dvm.sparql.data.paginatedResults.links.base + dvm.sparql.data.paginatedResults.links.next);
                         } else {
@@ -50,7 +49,7 @@
                             sparqlManagerService.getResults(dvm.sparql.data.paginatedResults.links.base + dvm.sparql.data.paginatedResults.links.prev);
                         }
                     }
-                }]
+                }
             }
         }
 })();

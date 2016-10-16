@@ -27,15 +27,13 @@
         /**
          * @ngdoc overview
          * @name mappingManager
-         * @requires ontologyManager
-         * @requires prefixes
          *
          * @description
          * The `mappingManager` module only provides the `mappingManagerService` service which
          * provides access to the MatOnto mapping REST endpoints and utility functions for
          * manipulating mapping arrays
          */
-        .module('mappingManager', ['ontologyManager', 'prefixes'])
+        .module('mappingManager', [])
         /**
          * @ngdoc service
          * @name mappingManager.service:mappingManagerService
@@ -73,13 +71,35 @@
              */
             self.mappingIds = [];
 
-            initialize();
-
-            function initialize() {
-                $http.get(prefix, {})
+            /**
+             * @ngdoc method
+             * @name reset
+             * @propertyOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Resets all state variables.
+             */
+            self.reset = function() {
+                self.mappingIds = [];
+            }
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @propertyOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Initializes the `mappingManagerService` by setting the list of
+             * {@link mappingManager.service:mappingManagerService#mappingIds mapping ids}.
+             */
+            self.initialize = function() {
+                $rootScope.showSpinner = true;
+                $http.get(prefix)
                     .then(response => {
-                        self.mappingIds = response.data;
-                    });
+                        self.mappingIds = _.get(response, 'data', []);
+                    }, response => {
+                        console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids'));
+                    })
+                    .then(() => $rootScope.showSpinner = false);
             }
 
             // REST endpoint calls
