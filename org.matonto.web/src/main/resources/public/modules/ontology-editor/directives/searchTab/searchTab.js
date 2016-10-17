@@ -50,7 +50,7 @@
                                     dvm.sm.state.errorMessage = '';
                                     dvm.sm.state.results = results;
                                     dvm.sm.state.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
-                                    dvm.sm.state.highlightText = angular.copy(dvm.sm.state.searchText);
+                                    dvm.sm.state.highlightText = dvm.sm.state.searchText;
                                 }, errorMessage => {
                                     dvm.sm.state.errorMessage = errorMessage;
                                     dvm.sm.state.infoMessage = '';

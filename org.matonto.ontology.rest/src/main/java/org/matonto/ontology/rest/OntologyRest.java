@@ -553,12 +553,13 @@ public interface OntologyRest {
     Response getConceptHierarchy(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
-     * Returns the JSON SKOS concept hierarchy for the ontology with requested ontology ID.
+     * Returns the JSON String of the results sorted by entity type.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".
-     * @return nested JSON structure that represents the SKOS concept hierarchy for the ontology with requested
-     *         ontology ID.
+     * @param searchText the String for the text that is searched for in all of the Literals within the ontology with
+     *                   the requested ontology ID.
+     * @return JSON String providing the sorted list of results from the search.
      */
     @GET
     @Path("{ontologyid}/search-results")

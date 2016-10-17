@@ -1707,6 +1707,7 @@
              * @returns {Promise} A promise containing the SPARQL query results.
              */
             self.getSearchResults = function(ontologyId, searchText) {
+                var defaultErrorMessage = 'An error has occurred with your search.';
                 var deferred = $q.defer();
                 var config = {
                     params: {searchText}
@@ -1719,10 +1720,10 @@
                         } else if (_.get(response, 'status') === 204) {
                             deferred.resolve([]);
                         } else {
-                            deferred.reject();
+                            deferred.reject(defaultErrorMessage);
                         }
                     }, response => {
-                        deferred.reject(_.get(response, 'statusText','An error has occurred with your search.'));
+                        deferred.reject(_.get(response, 'statusText', defaultErrorMessage));
                     })
                     .then(() => {
                         $rootScope.showSpinner = false;
