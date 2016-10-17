@@ -227,13 +227,13 @@ gulp.task('move-custom-js', function() {
 });
 
 // Moves all custom non-js files to build folder
-gulp.task('move-custom-not-js', ['html'], function() {
-    return gulp.src(src + '**/*')
-        .pipe(ignore.exclude('**/*.scss'))
-        .pipe(ignore.exclude('**/*.js'))
-        .pipe(ignore.exclude('**/*.html'))
-        .pipe(gulp.dest(dest));
-});
+// gulp.task('move-custom-not-js', ['html'], function() {
+//     return gulp.src(src + '**/*')
+//         .pipe(ignore.exclude('**/*.scss'))
+//         .pipe(ignore.exclude('**/*.js'))
+//         .pipe(ignore.exclude('**/*.html'))
+//         .pipe(gulp.dest(dest));
+// });
 
 // Changes the css files to sass files
 gulp.task('change-to-css', function() {
@@ -243,7 +243,7 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['move-custom-js', 'move-custom-not-js', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+gulp.task('inject-unminified', ['move-custom-js', 'html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
     var allJsFiles = nodeJsFiles(dest + 'js/').concat(jsFiles(dest)),
         allStyleFiles = nodeStyleFiles(dest + 'css/').concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);
@@ -263,7 +263,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);

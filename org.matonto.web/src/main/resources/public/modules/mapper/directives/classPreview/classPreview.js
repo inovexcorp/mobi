@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name classPreview
          *
-         * @description 
+         * @description
          * The `classPreview` module only provides the `classPreview` directive which creates
          * a brief description of the passed class and its properties.
          */
@@ -42,8 +42,8 @@
          * @requires mapperState.service:mapperStateService
          * @requires prefixes.service:prefixes
          *
-         * @description 
-         * `classPreview` is a directive that creates a div with a brief description of the passed 
+         * @description
+         * `classPreview` is a directive that creates a div with a brief description of the passed
          * class and its properties. It displays the name of the class and the list of its properties.
          * The directive is replaced by the contents of its template.
          *

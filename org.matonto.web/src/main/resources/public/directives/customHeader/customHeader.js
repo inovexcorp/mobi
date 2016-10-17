@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('customHeader', ['loginManager'])
+        .module('customHeader', [])
         .directive('customHeader', customHeader);
 
-    customHeader.$inject = ['loginManagerService'];
+    customHeader.$inject = ['loginManagerService', 'ontologyStateService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'sparqlManagerService'];
 
-    function customHeader(loginManagerService) {
+    function customHeader(loginManagerService, ontologyStateService, ontologyManagerService, mapperStateService, mappingManagerService, delimitedManagerService, sparqlManagerService) {
         return {
             restrict: 'E',
             replace: true,
@@ -41,6 +41,13 @@
                 var dvm = this;
 
                 dvm.logout = function() {
+                    ontologyStateService.reset();
+                    ontologyManagerService.reset();
+                    mapperStateService.initialize();
+                    mapperStateService.resetEdit();
+                    mappingManagerService.reset();
+                    delimitedManagerService.reset();
+                    sparqlManagerService.reset();
                     loginManagerService.logout();
                 }
             },

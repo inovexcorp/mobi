@@ -27,16 +27,26 @@
         .module('ontologyState', [])
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$rootScope', 'ontologyManagerService', 'updateRefsService'];
+        ontologyStateService.$inject = ['$rootScope', '$timeout', 'ontologyManagerService', 'updateRefsService'];
 
-        function ontologyStateService($rootScope, ontologyManagerService, updateRefsService) {
+        function ontologyStateService($rootScope, $timeout, ontologyManagerService, updateRefsService) {
             var self = this;
             var om = ontologyManagerService;
             self.states = [];
             self.newState = {active: true};
+            self.state = self.newState;
             self.ontology = {};
             self.selected = {};
+            self.listItem = {};
 
+            self.reset = function() {
+                self.states = [];
+                self.ontology = {};
+                self.selected = {};
+                self.state = self.newState;
+                self.state.active = true;
+                self.listItem = {};
+            }
             self.afterSave = function(newId) {
                 if (self.state.ontologyId !== newId) {
                     self.state.ontologyId = newId;
@@ -85,12 +95,38 @@
                 return encodeURIComponent(ontologyId) + '.' + encodeURIComponent(entityIRI);
             }
 
-            self.setOpened = function(ontologyId, entityIRI, isOpened) {
-                _.set(self.state, self.getOpenPath(ontologyId, entityIRI), isOpened);
+            self.setOpened = function(pathString, isOpened) {
+                _.set(self.state, encodeURIComponent(pathString) + '.isOpened', isOpened);
             }
 
-            self.getOpened = function(ontologyId, entityIRI) {
-                return _.get(self.state, self.getOpenPath(ontologyId, entityIRI), false);
+            self.getOpened = function(pathString) {
+                return _.get(self.state, encodeURIComponent(pathString) + '.isOpened', false);
+            }
+
+            self.openAt = function(pathsArray) {
+                var selectedPath = _.find(pathsArray, path => {
+                    var pathString = self.listItem.ontologyId;
+                    return _.every(_.initial(path), pathPart => {
+                        pathString += '.' + pathPart;
+                        return self.getOpened(pathString);
+                    });
+                });
+                if (!selectedPath) {
+                    selectedPath = _.head(pathsArray);
+                    var pathString = self.listItem.ontologyId;
+                    _.forEach(_.initial(selectedPath), pathPart => {
+                        pathString += '.' + pathPart;
+                        self.setOpened(pathString, true);
+                    });
+                }
+                $timeout(function() {
+                    var $element = document.querySelectorAll('[data-path-to="' + self.listItem.ontologyId + '.'
+                        + _.join(selectedPath, '.') + '"]');
+                    var $hierarchyBlock = document.querySelectorAll('[class*=hierarchy-block] .block-content');
+                    if ($element.length && $hierarchyBlock.length) {
+                        $hierarchyBlock[0].scrollTop = $element[0].offsetTop;
+                    }
+                });
             }
 
             self.setNoDomainsOpened = function(ontologyId, isOpened) {
@@ -166,6 +202,9 @@
                         },
                         individuals: {
                             active: false
+                        },
+                        search: {
+                            active: false
                         }
                     }
                 } else if (type === 'vocabulary') {
@@ -175,6 +214,9 @@
                             entityIRI: entityIRI
                         },
                         concepts: {
+                            active: false
+                        },
+                        search: {
                             active: false
                         }
                     }
@@ -224,12 +266,14 @@
             self.getActiveEntityIRI = function() {
                 return self.getActivePage().entityIRI;
             }
-            self.selectItem = function(entityIRI) {
+            self.selectItem = function(entityIRI, getUsages=true) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
-                    om.getEntityUsages(self.state.ontologyId, entityIRI)
-                        .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
-                            response => _.set(self.getActivePage(), 'usages', []));
+                    if (getUsages) {
+                        om.getEntityUsages(self.state.ontologyId, entityIRI)
+                            .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
+                                response => _.set(self.getActivePage(), 'usages', []));
+                    }
                 }
                 self.setSelected(entityIRI);
             }
@@ -353,23 +397,26 @@
             }
             self.goTo = function(iri) {
                 var entity = om.getEntityById(self.listItem.ontologyId, iri);
-                if (self.listItem.type === 'vocabulary') {
-                    commonGoTo('concepts', iri);
+                if (self.state.type === 'vocabulary') {
+                    commonGoTo('concepts', iri, 'conceptIndex');
                 } else if (om.isClass(entity)) {
-                    commonGoTo('classes', iri);
-                } else if (om.isProperty(entity)) {
-                    commonGoTo('properties', iri);
+                    commonGoTo('classes', iri, 'classIndex');
+                } else if (om.isDataTypeProperty(entity)) {
+                    commonGoTo('properties', iri, 'dataPropertyIndex');
+                    self.setDataPropertiesOpened(self.listItem.ontologyId, true);
+                } else if (om.isObjectProperty(entity)) {
+                    commonGoTo('properties', iri, 'objectPropertyIndex');
+                    self.setObjectPropertiesOpened(self.listItem.ontologyId, true);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
                 }
             }
-            function commonGoTo(key, iri) {
+            function commonGoTo(key, iri, index) {
                 self.setActivePage(key);
                 self.selectItem(iri);
+                if (index) {
+                    self.openAt(self.getPathsTo(self.listItem[index], iri));
+                }
             }
-            function initialize() {
-                self.state = self.newState;
-            }
-            initialize();
         }
 })();

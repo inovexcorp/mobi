@@ -23,10 +23,8 @@
 describe('File Upload Form directive', function() {
     var $compile,
         scope,
-        mappingManagerSvc,
         mapperStateSvc,
         delimitedManagerSvc,
-        ontologyManagerSvc,
         $q,
         $timeout,
         controller;
@@ -35,18 +33,14 @@ describe('File Upload Form directive', function() {
         module('templates');
         module('fileUploadForm');
         mockPrefixes();
-        mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
-        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _ontologyManagerService_, _$q_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_, _mapperStateService_, _delimitedManagerService_, _$q_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             $q = _$q_;
             $timeout = _$timeout_;
         });
@@ -54,7 +48,6 @@ describe('File Upload Form directive', function() {
 
     describe('controller methods', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<file-upload-form></file-upload-form>'))(scope);
             scope.$digest();
             controller = this.element.controller('fileUploadForm');
@@ -108,7 +101,6 @@ describe('File Upload Form directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            mappingManagerSvc.mapping = {jsonld: []};
             this.element = $compile(angular.element('<file-upload-form></file-upload-form>'))(scope);
             scope.$digest();
         });

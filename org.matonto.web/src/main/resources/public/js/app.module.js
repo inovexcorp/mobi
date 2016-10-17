@@ -61,6 +61,7 @@
             'customLabel',
             'errorDisplay',
             'fileInput',
+            'infoMessage',
             'pagination',
             'passwordConfirmInput',
             'radioButton',
@@ -84,7 +85,9 @@
 
             /* Custom Services */
             'catalogManager',
+            'delimitedManager',
             'loginManager',
+            'mapperState',
             'mappingManager',
             'ontologyManager',
             'ontologyState',
@@ -92,6 +95,7 @@
             'propertyManager',
             'responseObj',
             'settingsManager',
+            'sparqlManager',
             'updateRefs',
             'userManager'
         ])

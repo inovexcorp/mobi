@@ -23,61 +23,53 @@
 describe('Login controller', function() {
     var $controller,
         scope,
-        loginManagerSvc;
+        loginManagerSvc,
+        ontologyManagerSvc,
+        mappingManagerSvc,
+        $q,
+        controller;
 
     beforeEach(function() {
-        // To mock a module, you create dummy ones so the dependencies of the
-        // module get resolved
-        angular.module('loginManager', []);
         module('login');
+        mockOntologyManager();
+        mockMappingManager();
+        mockLoginManager();
 
-        // To mock out the services needed, use this module(function($provide))
-        // syntax. This does not actually create services under the dummy modules
-        module(function($provide) {
-            // Use $q to mock out methods that return promises
-            $provide.service('loginManagerService', ['$q', function($q) {
-                this.login = jasmine.createSpy('login').and.callFake(function(username, password) {
-                    if (username !== '') {
-                        return $q.when();
-                    } else {
-                        return $q.reject('An error has occured');
-                    }
-                });
-            }]);
-        });
-        // To test out a controller, you need to inject $rootScope and $controller
-        // and save them to use
-        inject(function(_loginManagerService_, _$rootScope_, _$controller_) {
-            loginManagerSvc = _loginManagerService_;
+        inject(function(_$rootScope_, _$controller_, _loginManagerService_,  _ontologyManagerService_, _mappingManagerService_, _$q_) {
             scope = _$rootScope_;
             $controller = _$controller_;
+            loginManagerSvc = _loginManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
+            $q = _$q_;
         });
+
+        controller = $controller('LoginController', {});
     });
+
     describe('correctly validates a login combination', function() {
-        it('if valid', function() {
-            // Usually pass in $scope in the object in the second parameter, but since the
-            // controller uses the controllerAs syntax, we can access it directly
-            var controller = $controller('LoginController', {});
+        beforeEach(function() {
             controller.form = {
                 username: 'user',
                 password: ''
             };
-            controller.login();
-            scope.$digest();
-            expect(controller.errorMessage).toBeFalsy();
         });
-        it('if invalid', function() {
-            // Usually pass in $scope in the object in the second parameter, but since the
-            // controller uses the controllerAs syntax, we can access it directly
-            var controller = $controller('LoginController', {});
-            controller.form = {
-                username: '',
-                password: ''
-            };
+        it('unless an error occurs', function() {
+            loginManagerSvc.login.and.returnValue($q.reject('Error message'));
             controller.login();
             scope.$digest();
-            expect(controller.errorMessage).toBeTruthy();
+            expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
+            expect(controller.errorMessage).toBe('Error message');
+            expect(ontologyManagerSvc.initialize).not.toHaveBeenCalled();
+            expect(mappingManagerSvc.initialize).not.toHaveBeenCalled();
+        });
+        it('successfully', function() {
+            controller.login();
+            scope.$digest();
+            expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
+            expect(controller.errorMessage).toBe('');
+            expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
+            expect(mappingManagerSvc.initialize).toHaveBeenCalled();
         });
     });
-
 });

@@ -34,7 +34,7 @@
                 <mapping-list></mapping-list>
             </block-content>
             <block-footer class="centered">
-                <button class="btn btn-link" ng-click="dvm.deleteMapping()" ng-disabled="!dvm.mm.mapping">
+                <button class="btn btn-link" ng-click="dvm.deleteMapping()" ng-disabled="!dvm.state.mapping">
                     <i class="fa fa-trash"></i>Delete Mapping
                 </button>
             </block-footer>
@@ -43,8 +43,8 @@
     <div class="col-xs-8">
         <block has-header="true">
             <block-header>
-                <div class="mapping-preview-header" ng-class="{'invisible': !dvm.mm.mapping}">
-                    <span>{{(dvm.mm.mapping.id | splitIRI).end}}</span>
+                <div class="mapping-preview-header" ng-class="{'invisible': !dvm.state.mapping}">
+                    <span>{{(dvm.state.mapping.id | splitIRI).end}}</span>
                     <button class="btn btn-link pull-right download-btn" ng-click="dvm.downloadMapping()">
                         <i class="fa fa-download"></i>Download
                     </button>
@@ -57,11 +57,11 @@
                 </div>
             </block-header>
             <block-content class="padding">
-                <div ng-if="!dvm.mm.mapping">
+                <div ng-if="!dvm.state.mapping">
                     <p class="lead">Welcome to the Mapping Tool!</p>
                     <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
                 </div>
-                <mapping-preview ng-if="dvm.mm.mapping"></mapping-preview>
+                <mapping-preview ng-if="dvm.state.mapping"></mapping-preview>
             </block-content>
         </block>
     </div>

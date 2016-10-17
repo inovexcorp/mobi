@@ -23,7 +23,7 @@
 <div class="mapping-list tree scroll-without-buttons">
     <ul>
         <li ng-repeat="id in dvm.mm.mappingIds | filter:dvm.state.mappingSearchString">
-          <a ng-click="dvm.onClick(id)" ng-class="{'active': id === dvm.mm.mapping.id}" ng-bind-html="(id | splitIRI).end | highlight:dvm.state.mappingSearchString | trusted"></a>
+          <a ng-click="dvm.onClick(id)" ng-class="{'active': id === dvm.state.mapping.id}" ng-bind-html="(id | splitIRI).end | highlight:dvm.state.mappingSearchString | trusted"></a>
         </li>
     </ul>
 </div>

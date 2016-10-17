@@ -45,6 +45,7 @@ public interface OntologyRest {
     @GET
     @Path("ontologyids")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
     @ApiOperation(value = "Gets all Ontology Resource identifiers")
     Response getAllOntologyIds();
 
@@ -551,4 +552,21 @@ public interface OntologyRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     Response getConceptHierarchy(@PathParam("ontologyid") String ontologyIdStr);
+
+    /**
+     * Returns the JSON String of the resulting entities sorted by type from the ontology with the requested ontology ID
+     * that have statements which contain the requested searchText in a Literal Value.
+     *
+     * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
+     *                      an IRI unless String begins with "_:".
+     * @param searchText the String for the text that is searched for in all of the Literals within the ontology with
+     *                   the requested ontology ID.
+     * @return JSON String providing the sorted list of results from the search.
+     */
+    @GET
+    @Path("{ontologyid}/search-results")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getSearchResults(@PathParam("ontologyid") String ontologyIdStr,
+                              @QueryParam("searchText") String searchText);
 }

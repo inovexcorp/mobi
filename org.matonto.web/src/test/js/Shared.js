@@ -120,6 +120,8 @@ function mockOntologyManager() {
             this.ontologyIds = [];
             this.list = [];
             this.propertyTypes = [];
+            this.reset = jasmine.createSpy('reset');
+            this.initialize = jasmine.createSpy('initialize');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getListItemById = jasmine.createSpy('getListItemById').and.returnValue({});
             this.isOntology = jasmine.createSpy('isOntology');
@@ -188,6 +190,7 @@ function mockOntologyManager() {
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.closeOntology = jasmine.createSpy('closeOntology');
             this.getEntityById = jasmine.createSpy('getEntityById');
+            this.getSearchResults = jasmine.createSpy('getSearchResults');
         });
     });
 }
@@ -196,9 +199,9 @@ function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
             this.mappingIds = [];
-            this.mapping = undefined;
-            this.sourceOntologies = [];
 
+            this.reset = jasmine.createSpy('reset');
+            this.initialize = jasmine.createSpy('initialize');
             this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
             this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
             this.downloadMapping = jasmine.createSpy('downloadMapping');
@@ -218,7 +221,7 @@ function mockMappingManager() {
             this.isClassMapping = jasmine.createSpy('isClassMapping').and.returnValue(true);
             this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.returnValue([]);
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
-            this.setSourceOntologies = jasmine.createSpy('setSourceOntologies').and.returnValue($q.when());
+            this.getSourceOntologies = jasmine.createSpy('getSourceOntologies').and.returnValue($q.when([]));
             this.findSourceOntologyWithClass = jasmine.createSpy('findSourceOntologyWithClass').and.returnValue({});
             this.findSourceOntologyWithProp = jasmine.createSpy('findSourceOntologyWithProp').and.returnValue({});
             this.getSourceOntologyId = jasmine.createSpy('getSourceOntologyId').and.returnValue('');
@@ -273,6 +276,8 @@ function mockMapperState() {
             this.selectMappingStep = 0;
             this.fileUploadStep = 1;
             this.editMappingStep = 2;
+            this.mapping = undefined;
+            this.sourceOntologies = [];
             this.mappingSearchString = '';
             this.availablePropsByClass = {};
             this.editMapping = false;
@@ -379,10 +384,11 @@ function mockSparqlManager() {
                 }
             }
             this.prefixes = [];
-            this.queryString = this.errorMessage = this.infoMessage = '';
-            this.queryRdf = jasmine.createSpy('queryRdf').and.callFake(function() {
-                return $q.resolve({});
-            });
+            this.queryString = '';
+            this.errorMessage = '';
+            this.infoMessage = '';
+            this.reset = jasmine.createSpy('reset');
+            this.queryRdf = jasmine.createSpy('queryRdf').and.returnValue($q.when({}));
         });
     });
 }
@@ -441,6 +447,7 @@ function mockOntologyState() {
                 individuals: [],
                 index: {}
             };
+            this.reset = jasmine.createSpy('reset');
             this.setTreeTab = jasmine.createSpy('setTreeTab');
             this.setEditorTab = jasmine.createSpy('setEditorTab');
             this.getEditorTab = jasmine.createSpy('getEditorTab').and.returnValue('');
@@ -472,6 +479,9 @@ function mockOntologyState() {
             this.addDeletedEntity = jasmine.createSpy('addDeletedEntity');
             this.getActiveEntityIRI = jasmine.createSpy('getActiveEntityIRI');
             this.setActivePage = jasmine.createSpy('setActivePage');
+            this.openAt = jasmine.createSpy('openAt');
+            this.goTo = jasmine.createSpy('goTo');
+            this.unSelectItem = jasmine.createSpy('unSelectItem');
         });
     });
 }
@@ -488,7 +498,6 @@ function mockOntologyUtilsManager() {
             this.isBlankNodeString = jasmine.createSpy('isBlankNodeString');
             this.getBlankNodeValue = jasmine.createSpy('getBlankNodeValue');
             this.isLinkable = jasmine.createSpy('isLinkable');
-            this.goTo = jasmine.createSpy('goTo');
         });
     });
 }
@@ -549,7 +558,7 @@ function mockUserManager() {
             this.deleteGroupRole = jasmine.createSpy('deleteGroupRole').and.returnValue($q.when());
             this.isAdmin = jasmine.createSpy('isAdmin');
         });
-    })
+    });
 }
 
 function mockUserState() {
@@ -568,5 +577,5 @@ function mockUserState() {
             this.displayRemoveMemberConfirm = false;
             this.reset = jasmine.createSpy('reset');
         });
-    })
+    });
 }

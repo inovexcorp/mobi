@@ -64,20 +64,24 @@ describe('Create Mapping Overlay directive', function() {
         });
         describe('should set the correct state for continuing', function() {
             beforeEach(function() {
-                mappingManagerSvc.mapping = {id: 'mapping'};
+                mapperStateSvc.mapping = {id: 'mapping'};
                 controller.savedMappingId = '';
+                this.ontologies = [{}];
+                mappingManagerSvc.getSourceOntologies.and.returnValue(this.ontologies);
             });
             it('if a brand new mapping is being created', function() {
+                var ontologies = [];
                 controller.mappingType = 'new';
                 controller.continue();
                 $timeout.flush();
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
-                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mappingManagerSvc.mapping.id);
+                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
                 expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.copyMapping).not.toHaveBeenCalled();
                 expect(mapperStateSvc.mappingSearchString).toBe('');
-                expect(mappingManagerSvc.mapping.jsonld).toBeDefined();
-                expect(mappingManagerSvc.setSourceOntologies).toHaveBeenCalled();
+                expect(mapperStateSvc.mapping.jsonld).toBeDefined();
+                expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalled();
+                expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
             });
@@ -95,9 +99,9 @@ describe('Create Mapping Overlay directive', function() {
                     expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.savedMappingId);
                     expect(mappingManagerSvc.copyMapping).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(mappingManagerSvc.setSourceOntologies).not.toHaveBeenCalled();
+                    expect(mappingManagerSvc.getSourceOntologies).not.toHaveBeenCalled();
                     expect(controller.errorMessage).toBe('Error message');
-                    expect(mappingManagerSvc.mapping.jsonld).toEqual([]);
+                    expect(mapperStateSvc.mapping.jsonld).toEqual([]);
                 });
                 it('unless the source ontologies of the original mapping are not compatible', function() {
                     mappingManagerSvc.areCompatible.and.returnValue(false);
@@ -107,10 +111,11 @@ describe('Create Mapping Overlay directive', function() {
                     expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
                     expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.savedMappingId);
                     expect(mappingManagerSvc.copyMapping).toHaveBeenCalled();
-                    expect(mappingManagerSvc.setSourceOntologies).toHaveBeenCalled();
+                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalled();
+                    expect(mapperStateSvc.sourceOntologies).not.toEqual(this.ontologies);
                     expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
                     expect(controller.errorMessage).toBeTruthy();
-                    expect(mappingManagerSvc.mapping.jsonld).toEqual([]);
+                    expect(mapperStateSvc.mapping.jsonld).toEqual([]);
                 });
                 it('successfully', function() {
                     var mapping = {};
@@ -120,9 +125,10 @@ describe('Create Mapping Overlay directive', function() {
                     expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
                     expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
                     expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.savedMappingId);
-                    expect(mappingManagerSvc.copyMapping).toHaveBeenCalledWith(mapping, mappingManagerSvc.mapping.id);
-                    expect(mappingManagerSvc.mapping.jsonld).toBeDefined();
-                    expect(mappingManagerSvc.setSourceOntologies).toHaveBeenCalled();
+                    expect(mappingManagerSvc.copyMapping).toHaveBeenCalledWith(mapping, mapperStateSvc.mapping.id);
+                    expect(mapperStateSvc.mapping.jsonld).toBeDefined();
+                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalled();
+                    expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
                     expect(mapperStateSvc.mappingSearchString).toBe('');
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                     expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
@@ -133,7 +139,7 @@ describe('Create Mapping Overlay directive', function() {
             controller.cancel();
             expect(mapperStateSvc.editMapping).toBe(false);
             expect(mapperStateSvc.newMapping).toBe(false);
-            expect(mappingManagerSvc.mapping).toBeUndefined();
+            expect(mapperStateSvc.mapping).toBeUndefined();
             expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
         });
     });
