@@ -540,8 +540,10 @@ function mockLoginManager() {
 function mockUserManager() {
     module(function($provide) {
         $provide.service('userManagerService', function($q) {
-            this.user = [];
+            this.users = [];
             this.groups = [];
+            this.reset = jasmine.createSpy('reset');
+            this.initialize = jasmine.createSpy('initialize');
             this.setUsers = jasmine.createSpy('setUsers').and.returnValue($q.when());
             this.setGroups = jasmine.createSpy('setGroups').and.returnValue($q.when());
             this.addUser = jasmine.createSpy('addUser').and.returnValue($q.when());

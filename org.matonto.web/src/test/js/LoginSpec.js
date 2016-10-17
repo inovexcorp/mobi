@@ -26,6 +26,7 @@ describe('Login controller', function() {
         loginManagerSvc,
         ontologyManagerSvc,
         mappingManagerSvc,
+        userManagerSvc,
         $q,
         controller;
 
@@ -34,13 +35,15 @@ describe('Login controller', function() {
         mockOntologyManager();
         mockMappingManager();
         mockLoginManager();
+        mockUserManager();
 
-        inject(function(_$rootScope_, _$controller_, _loginManagerService_,  _ontologyManagerService_, _mappingManagerService_, _$q_) {
+        inject(function(_$rootScope_, _$controller_, _loginManagerService_,  _ontologyManagerService_, _mappingManagerService_, _userManagerService_, _$q_) {
             scope = _$rootScope_;
             $controller = _$controller_;
             loginManagerSvc = _loginManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
+            userManagerSvc = _userManagerService_;
             $q = _$q_;
         });
 
@@ -70,6 +73,7 @@ describe('Login controller', function() {
             expect(controller.errorMessage).toBe('');
             expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
             expect(mappingManagerSvc.initialize).toHaveBeenCalled();
+            expect(userManagerSvc.initialize).toHaveBeenCalled();
         });
     });
 });

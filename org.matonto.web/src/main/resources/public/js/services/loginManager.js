@@ -47,9 +47,9 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state'];
+        loginManagerService.$inject = ['$q', '$http', '$state', 'ontologyManagerService', 'mappingManagerService', 'userManagerService'];
 
-        function loginManagerService($q, $http, $state) {
+        function loginManagerService($q, $http, $state, ontologyManagerService, mappingManagerService, userManagerService) {
             var self = this,
                 anon = 'self anon';
 
@@ -132,7 +132,10 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description
-             * Test whether a user is currently logged in and if not, navigates to the log in page. Returns
+             * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
+             * is logged in, intitializes the {@link ontologyManager.service:ontologyManagerService ontologyManagerService},
+             * {@link mappingManager.service:mappingManagerService mappingManagerService},
+             * and the {@link userManager.service:userManagerService userManagerService}. Returns
              * a Promise with whether or not a user is logged in.
              *
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
@@ -147,6 +150,9 @@
                 return self.getCurrentLogin().then(data => {
                     if (data.scope !== anon) {
                         self.currentUser = data.sub;
+                        ontologyManagerService.initialize();
+                        mappingManagerService.initialize();
+                        userManagerService.initialize();
                         return $q.when();
                     } else {
                         return handleError(data);

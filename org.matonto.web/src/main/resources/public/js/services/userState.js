@@ -47,7 +47,27 @@
         function userStateService() {
             var self = this;
 
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#groupSearchString
+             * @propertyOf userState.service:userStateService
+             * @type {string}
+             *
+             * @description
+             * `groupSearchString` holds a string to be used in filtering the
+             * {@link groupsList.directive:groupsList groups list}.
+             */
             self.groupSearchString = '';
+            /**
+             * @ngdoc property
+             * @name userState.service:userStateService#userSearchString
+             * @propertyOf userState.service:userStateService
+             * @type {string}
+             *
+             * @description
+             * `userSearchString` holds a string to be used in filtering the
+             * {@link usersList.directive:usersList users list}.
+             */
             self.userSearchString = '';
             /**
              * @ngdoc property

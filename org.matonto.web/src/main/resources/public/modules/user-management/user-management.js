@@ -36,9 +36,6 @@
             'userManagementTabset',
             'userPermissionsInput',
             'usersList',
-            'usersPage',
-
-            /* Custom services */
-            'userState'
+            'usersPage'
         ]);
 })();

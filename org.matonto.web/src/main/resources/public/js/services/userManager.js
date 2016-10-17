@@ -79,60 +79,68 @@
              */
             self.users = [];
 
-            function initialize() {
-                self.setUsers().then(response => {
-                    self.setGroups();
-                });
+            /**
+             * @ngdoc method
+             * @name reset
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Resets all state variables.
+             */
+            self.reset = function() {
+                self.users = [];
+                self.groups = [];
             }
-
             /**
              * @ngdoc method
              * @name setUsers
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Sets the {@link userManager.service:userManagerService#users users} list using
-             * the result of the GET /matontorest/users endpoint and the result of the
-             * GET /matontorest/users/roles endpoint for each user.
-             *
-             * @return {Promise} A Promise indicating the success or failure of the process
-             * of setting the {@link userManager.service:userManagerService#users users} list
+             * Initializes the {@link userManager.service:userManagerService#users users} and
+             * {@link userManager.service:userManagerService#groups groups} lists. Uses
+             * the results of the GET /matontorest/users and the GET /matontorest/users/roles
+             * endpoint for each user for the users list. Uses the GET /matontorest/groups
+             * endpoint and the result of the GET /matontorest/groups/{groupName}/users endpoint
+             * for each group for the groups list. If an error occurs in any of the HTTP calls,
+             * logs the error on the console.
              */
-            self.setUsers = function() {
-                return getUsers().then(users => {
-                    self.users = users;
-                    return $q.all(_.map(self.users, user => listUserRoles(user.username)));
-                }).then(responses => {
-                    _.forEach(responses, (response, idx) => {
-                        self.users[idx].roles = response;
-                    });
-                });
-            }
+            self.initialize = function() {
+                $rootScope.showSpinner = true;
+                $http.get(userPrefix)
+                    .then(response => {
+                        self.users = _.map(response.data, user => {return {username: user}});
+                        return $q.all(_.map(self.users, user => listUserRoles(user.username)));
+                    }, response => $q.reject(response))
+                    .then(responses => {
+                        _.forEach(responses, (response, idx) => {
+                            self.users[idx].roles = response;
+                        });
+                    }, response => {
+                        console.log(_.get(response, 'statusText', 'Something went wrong. Could not load users.'));
+                    })
+                    .then(() => $rootScope.showSpinner = false);
 
-            /**
-             * @ngdoc method
-             * @name setGroups
-             * @methodOf userManager.service:userManagerService
-             *
-             * @description
-             * Sets the {@link userManager.service:userManagerService#groups groups} list using
-             * the result of the GET /matontorest/groups endpoint and the result of the
-             * GET /matontorest/groups/{groupName}/users endpoint for each group.
-             *
-             * @return {Promise} A Promise indicating the success or failure of the process
-             * of setting the {@link userManager.service:userManagerService#groups groups} list
-             */
-            self.setGroups = function() {
-                return getGroups().then(groups => {
-                    self.groups = groups;
-                    return $q.all(_.map(self.groups, group => self.getGroupUsers(group.name)));
-                }).then(responses => {
-                    _.forEach(responses, (response, idx) => {
-                        self.groups[idx].members = response;
-                    });
-                });
+                $rootScope.showSpinner = true;
+                $http.get(groupPrefix)
+                    .then(response => {
+                        self.groups = _.map(_.keys(response.data), groupName => {
+                            return {
+                                name: groupName,
+                                roles: response.data[groupName]
+                            };
+                        });
+                        return $q.all(_.map(self.groups, group => self.getGroupUsers(group.name)));
+                    }, response => $q.reject(response))
+                    .then(responses => {
+                        _.forEach(responses, (response, idx) => {
+                            self.groups[idx].members = response;
+                        });
+                    }, response => {
+                        console.log(_.get(response, 'statusText', 'Something went wrong. Could not load groups.'));
+                    })
+                    .then(() => $rootScope.showSpinner = false);
             }
-
             /**
              * @ngdoc method
              * @name addUser
@@ -641,28 +649,6 @@
                 }
             }
 
-            function getUsers() {
-                return $http.get(userPrefix)
-                    .then(response => {
-                        var users = _.map(response.data, user => {return {username: user}});
-                        return $q.when(users);
-                    });
-            }
-
-            function getGroups() {
-                return $http.get(groupPrefix)
-                    .then(response => {
-                        var groupNames = _.keys(response.data);
-                        var groups = _.map(groupNames, groupName => {
-                            return {
-                                name: groupName,
-                                roles: response.data[groupName]
-                            };
-                        });
-                        return $q.when(groups);
-                    });
-            }
-
             function listUserRoles(username) {
                 var deferred = $q.defer();
 
@@ -707,7 +693,5 @@
                     });
                 return deferred.promise;
             }
-
-            initialize();
         }
 })();

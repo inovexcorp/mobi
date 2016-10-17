@@ -28,8 +28,8 @@
          * @ngdoc overview
          * @name profileTab
          *
-         * @description 
-         * The `profileTab` module only provides the `profileTab` directive which creates 
+         * @description
+         * The `profileTab` module only provides the `profileTab` directive which creates
          * a Bootstrap `row` with a form allowing the current user to change their profile
          * information.
          */
@@ -43,10 +43,10 @@
          * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `profileTab` is a directive that creates a Bootstrap `row` with a 
-         * {@link block.directive:block block} that will eventually contain a form allowing the 
-         * current user to change their profile information. However, since profile information 
-         * is not currently being stored, the directive simply displays a welcome message. The 
+         * `profileTab` is a directive that creates a Bootstrap `row` with a
+         * {@link block.directive:block block} that will eventually contain a form allowing the
+         * current user to change their profile information. However, since profile information
+         * is not currently being stored, the directive simply displays a welcome message. The
          * directive is replaced by the content of its template.
          */
         .directive('profileTab', profileTab);

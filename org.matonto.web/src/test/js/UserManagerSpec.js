@@ -38,56 +38,29 @@ describe('User Manager service', function() {
     it('should set the correct initial state for users and groups', function() {
         var users = ['user'];
         var userRoles = ['user'];
-        var groupUsers = ['users'];
+        var groupUsers = ['user'];
         var groups = {group: 'group'};
         $httpBackend.whenGET('/matontorest/users').respond(200, users);
         $httpBackend.whenGET('/matontorest/users/user/roles').respond(200, userRoles);
         $httpBackend.whenGET('/matontorest/groups/group/users').respond(200, groupUsers);
         $httpBackend.whenGET('/matontorest/groups').respond(200, groups);
+        userManagerSvc.initialize();
         $httpBackend.flush();
         expect(userManagerSvc.users.length).toBe(users.length);
-        expect(userManagerSvc.groups.length).toBe(_.keys(groups).length);
-    });
-    it('should correctly set the list of users', function(done) {
-        $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-        var users = ['user'];
-        var userRoles = ['user'];
-        $httpBackend.whenGET('/matontorest/users').respond(200, users);
-        $httpBackend.whenGET('/matontorest/users/user/roles').respond(200, userRoles);
-        userManagerSvc.setUsers().then(function(response) {
-            expect(userManagerSvc.users.length).toBe(users.length);
-            _.forEach(userManagerSvc.users, function(user, idx) {
-                expect(user.username).toBe(users[idx]);
-                expect(user.roles).toEqual(userRoles);
-            });
-            done();
+        _.forEach(userManagerSvc.users, function(user, idx) {
+            expect(user.username).toBe(users[idx]);
+            expect(user.roles).toEqual(userRoles);
         });
-        $httpBackend.flush();
-    });
-    it('should correctly set the list of groups', function(done) {
-        $httpBackend.whenGET('/matontorest/users').respond(200, ['user']);
-        $httpBackend.whenGET('/matontorest/users/user/roles').respond(200, []);
-        var groupUsers = ['user'];
-        var groups = {group: ['group']};
-        $httpBackend.whenGET('/matontorest/groups').respond(200, groups);
-        $httpBackend.whenGET('/matontorest/groups/group/users').respond(200, groupUsers);
-        userManagerSvc.setGroups().then(function(response) {
-            var keys = _.keys(groups);
-            expect(userManagerSvc.groups.length).toBe(keys.length);
-            _.forEach(userManagerSvc.groups, function(group, idx) {
-                expect(group.name).toBe(keys[idx]);
-                expect(group.roles).toEqual(groups[keys[idx]]);
-                expect(group.members).toContain('user');
-            });
-            done();
+        var groupKeys = _.keys(groups);
+        expect(userManagerSvc.groups.length).toBe(groupKeys.length);
+        _.forEach(userManagerSvc.groups, function(group, idx) {
+            expect(group.name).toBe(groupKeys[idx]);
+            expect(group.roles).toEqual(groups[groupKeys[idx]]);
+            expect(group.members).toContain('user');
         });
-        $httpBackend.flush();
     });
     describe('should add a user', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             params = {
                 password: 'password',
                 username: 'username'
@@ -116,11 +89,6 @@ describe('User Manager service', function() {
         });
     });
     describe('should retrieve a user', function() {
-        beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
-        });
         it('unless there is an error', function(done) {
             var username = 'user';
             $httpBackend.whenGET('/matontorest/users/' + username).respond(function(method, url, data, headers) {
@@ -147,9 +115,6 @@ describe('User Manager service', function() {
     });
     describe('should update a user', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.users = [{username: 'username'}];
             params = {
                 currentPassword: 'password',
@@ -194,9 +159,6 @@ describe('User Manager service', function() {
     });
     describe('should delete a user', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.users = [{username: 'username'}];
             userManagerSvc.groups = [{members: ['username']}];
         });
@@ -229,9 +191,6 @@ describe('User Manager service', function() {
     });
     describe('should add a role to a user', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.users = [{username: 'username', roles: []}];
             params = {
                 role: 'role'
@@ -264,9 +223,6 @@ describe('User Manager service', function() {
     });
     describe('should delete a role from a user', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.users = [{username: 'username', roles: ['role']}];
             params = {
                 role: 'role'
@@ -299,9 +255,6 @@ describe('User Manager service', function() {
     });
     describe('should add a user to a group', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.users = [{username: 'username'}];
             userManagerSvc.groups = [{name: 'group', members: []}];
             params = {
@@ -336,9 +289,6 @@ describe('User Manager service', function() {
     });
     describe('should add a user to a group', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.users = [{username: 'username'}];
             userManagerSvc.groups = [{name: 'group', members: ['username']}];
             params = {
@@ -373,9 +323,6 @@ describe('User Manager service', function() {
     });
     describe('should add a group', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             params = {
                 name: 'group'
             };
@@ -403,11 +350,6 @@ describe('User Manager service', function() {
         });
     });
     describe('should retrieve a group', function() {
-        beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
-        });
         it('unless there is an error', function(done) {
             var group = {name: 'group'};
             $httpBackend.whenGET('/matontorest/groups/' + group.name).respond(function(method, url, data, headers) {
@@ -434,9 +376,6 @@ describe('User Manager service', function() {
     });
     describe('should delete a group', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.groups = [{name: 'group', members: ['username']}];
         });
         it('unless there is an error', function(done) {
@@ -465,9 +404,6 @@ describe('User Manager service', function() {
     });
     describe('should add a role to a group', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.groups = [{name: 'group', roles: []}];
             params = {
                 role: 'role'
@@ -500,9 +436,6 @@ describe('User Manager service', function() {
     });
     describe('should remove a role from a group', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             userManagerSvc.groups = [{name: 'group', roles: ['role']}];
             params = {
                 role: 'role'
@@ -535,9 +468,6 @@ describe('User Manager service', function() {
     });
     describe('should test whether the current user is an admin', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/groups').respond(200, {});
-            $httpBackend.whenGET('/matontorest/users').respond(200, []);
-            $httpBackend.flush();
             this.username = 'user';
         });
         it('based on user roles', function() {

@@ -23,6 +23,9 @@
 describe('Login Manager service', function() {
     var $httpBackend,
         loginManagerSvc,
+        ontologyManagerSvc,
+        mappingManagerSvc,
+        userManagerSvc,
         state,
         timeout,
         $q,
@@ -31,6 +34,8 @@ describe('Login Manager service', function() {
     beforeEach(function() {
         module('loginManager');
         mockUserManager();
+        mockOntologyManager();
+        mockMappingManager();
 
         module(function($provide) {
             $provide.service('$state', function() {
@@ -38,8 +43,11 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _userManagerService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _ontologyManagerService_, _mappingManagerService_, _userManagerService_) {
             loginManagerSvc = loginManagerService;
+            ontologyManagerSvc = _ontologyManagerService_;
+            mappingManagerSvc = _mappingManagerService_;
+            userManagerSvc = _userManagerService_;
             $httpBackend = _$httpBackend_;
             state = _$state_;
             timeout = _$timeout_;
@@ -177,6 +185,9 @@ describe('Login Manager service', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
             loginManagerSvc.isAuthenticated().then(function(response) {
                 expect(loginManagerSvc.currentUser).toBe('user');
+                expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
+                expect(mappingManagerSvc.initialize).toHaveBeenCalled();
+                expect(userManagerSvc.initialize).toHaveBeenCalled();
                 expect(state.go).not.toHaveBeenCalled();
                 done();
             });
