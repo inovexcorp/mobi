@@ -62,7 +62,7 @@
 	  <rdfs:range rdf:resource="&xsd;string"/>
 	</owl:DatatypeProperty>
 
-	<owl:DatatypeProperty rdf:about="&dc;title">
+	<!-- <owl:DatatypeProperty rdf:about="&dc;title">
 	  <rdfs:label>title</rdfs:label>
 	  <rdfs:comment>A human-readable name for the subject.</rdfs:comment>
 	  <rdfs:domain rdf:resource="&rdfs;Resource"/>
@@ -74,7 +74,7 @@
 	  <rdfs:comment>A human-readable description for the subject.</rdfs:comment>
 	  <rdfs:domain rdf:resource="&rdfs;Resource"/>
 	  <rdfs:range rdf:resource="&xsd;string"/>
-	</owl:DatatypeProperty>
+	</owl:DatatypeProperty> -->
 
 	<owl:ObjectProperty rdf:about="&rdfs;domain">
 	  <rdfs:label>domain</rdfs:label>

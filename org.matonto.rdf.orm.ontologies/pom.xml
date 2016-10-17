@@ -90,6 +90,14 @@
                                     <outputPackage>org.matonto.ontologies.rdfs</outputPackage>
                                 </ontology>
                                 <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/dcelements_ontology.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.dcelements</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/dcterms_ontology.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.dcterms</outputPackage>
+                                </ontology>
+                                <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/foaf.owl</ontologyFile>
                                     <outputPackage>org.matonto.ontologies.foaf</outputPackage>
                                 </ontology>
