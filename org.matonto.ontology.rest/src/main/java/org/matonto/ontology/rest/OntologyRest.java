@@ -553,7 +553,8 @@ public interface OntologyRest {
     Response getConceptHierarchy(@PathParam("ontologyid") String ontologyIdStr);
 
     /**
-     * Returns the JSON String of the results sorted by entity type.
+     * Returns the JSON String of the resulting entities sorted by type from the ontology with the requested ontology ID
+     * that have statements which contain the requested searchText in a Literal Value.
      *
      * @param ontologyIdStr the String representing the ontology Resource id. NOTE: Assumes id represents
      *                      an IRI unless String begins with "_:".

@@ -543,7 +543,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private JSONObject getHierarchy(TupleQueryResult queryResults) {
-        Map<String, List<String>> results = new HashMap<>();
+        Map<String, Set<String>> results = new HashMap<>();
         Map<String, Set<String>> index = new HashMap<>();
         Set<String> topLevel = new HashSet<>();
         Set<String> lowerLevel = new HashSet<>();
@@ -559,23 +559,19 @@ public class OntologyRestImpl implements OntologyRest {
                     if (results.containsKey(keyString)) {
                         results.get(keyString).add(valueString);
                     } else {
-                        results.put(keyString, new ArrayList<String>() {
-                            {
-                                add(valueString);
-                            }
-                        });
+                        Set<String> newSet = new HashSet<>();
+                        newSet.add(valueString);
+                        results.put(keyString, newSet);
                     }
                     if (index.containsKey(valueString)) {
                         index.get(valueString).add(keyString);
                     } else {
-                        index.put(valueString, new HashSet<String>() {
-                            {
-                                add(keyString);
-                            }
-                        });
+                        Set<String> newSet = new HashSet<>();
+                        newSet.add(keyString);
+                        index.put(valueString, newSet);
                     }
                 } else {
-                    results.put(key.stringValue(), new ArrayList<>());
+                    results.put(key.stringValue(), new HashSet<>());
                 }
             }
         });
@@ -591,7 +587,7 @@ public class OntologyRestImpl implements OntologyRest {
         return response;
     }
 
-    private JSONObject getHierarchyItem(String itemIRI, Map<String, List<String>> results) {
+    private JSONObject getHierarchyItem(String itemIRI, Map<String, Set<String>> results) {
         JSONObject item = new JSONObject();
         item.put("entityIRI", itemIRI);
         if (results.containsKey(itemIRI) && results.get(itemIRI).size() > 0) {
@@ -629,11 +625,9 @@ public class OntologyRestImpl implements OntologyRest {
                 if (results.containsKey(filterString)) {
                     results.get(filterString).add(entityString);
                 } else {
-                    results.put(filterString, new HashSet<String>() {
-                        {
-                            add(entityString);
-                        }
-                    });
+                    Set<String> newSet = new HashSet<>();
+                    newSet.add(entityString);
+                    results.put(filterString, newSet);
                 }
             }
         });
