@@ -75,6 +75,7 @@
             'relationshipOverlay',
             'relationshipsBlock',
             'removePropertyOverlay',
+            'searchTab',
             'selectedDetails',
             'serializationSelect',
             'staticIri',

@@ -42,6 +42,10 @@
              on-click="dvm.sm.setSelected(dvm.sm.state.individuals.entityIRI)">
             <individuals-tab></individuals-tab>
         </tab>
+        <tab heading="'Search'" active="dvm.sm.state.search.active"
+             on-click="dvm.sm.setSelected(dvm.sm.state.search.entityIRI)">
+            <search-tab></search-tab>
+        </tab>
     </tabset>
     <button class="btn btn-primary btn-circle circle-save-button" ng-click="dvm.sm.showSaveOverlay = true" ng-if="dvm.sm.isSavable(dvm.sm.ontology, dvm.sm.state.ontologyId)">
         <i class="fa fa-floppy-o fa-fw"></i>
