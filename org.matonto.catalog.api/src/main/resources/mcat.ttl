@@ -23,89 +23,89 @@
     rdfs:label "Catalog"@en;
     rdfs:comment "A curated collection of metadata about resources."@en.
 
-:hasResource a owl:ObjectProperty;
+:record a owl:ObjectProperty;
     rdfs:subPropertyOf dct:hasPart;
-    rdfs:label "resource"@en;
-    rdfs:comment "A Resource within the described Catalog."@en;
+    rdfs:label "record"@en;
+    rdfs:comment "A Record within the described Catalog."@en;
     rdfs:domain :Catalog;
-    rdfs:range :Resource.
+    rdfs:range :Record.
 
-# Resource
+# Record
 
-:Resource a owl:Class;
-    rdfs:label "Resource"@en;
+:Record a owl:Class;
+    rdfs:label "Record"@en;
     rdfs:comment "A collection of data, published or curated by a single source, and available for access or download in one or more formats."@en.
 
 :keyword a owl:DatatypeProperty;
     rdfs:subPropertyOf dct:subject;
     rdfs:label "keyword"@en;
     rdfs:comment "A keyword describing the resource."@en;
-    rdfs:domain :Resource;
+    rdfs:domain :Record;
     rdfs:range rdfs:Literal.
 
-# Unversioned Resource
+# Unversioned Record
 
-:UnversionedResource a owl:Class;
-    rdfs:subClassOf :Resource;
-    rdfs:label "Unversioned Resource"@en;
-    rdfs:comment "A catalog Resource that is not versioned."@en.
+:UnversionedRecord a owl:Class;
+    rdfs:subClassOf :Record;
+    rdfs:label "Unversioned Record"@en;
+    rdfs:comment "A catalog Record that is not versioned."@en.
 
 :unversionedDistribution a owl:ObjectProperty;
     rdfs:label "unversioned distribution"@en;
     rdfs:comment "A Distribution of the described Unversioned Resource."@en;
-    rdfs:domain :UnversionedResource;
+    rdfs:domain :UnversionedRecord;
     rdfs:range :Distribution.
 
-# Versioned Resource
+# Versioned Record
 
-:VersionedResource a owl:Class;
-    rdfs:subClassOf :Resource;
-    rdfs:label "Versioned Resource"@en;
-    rdfs:comment "A catalog Resource that is versioned."@en.
+:VersionedRecord a owl:Class;
+    rdfs:subClassOf :Record;
+    rdfs:label "Versioned Record"@en;
+    rdfs:comment "A catalog Record that is versioned."@en.
 
 :version a owl:ObjectProperty;
     rdfs:label "version"@en;
-    rdfs:comment "A version, edition, or adaptation of the described Versioned Resource."@en;
-    rdfs:domain :VersionedResource;
+    rdfs:comment "A version, edition, or adaptation of the described Versioned Record."@en;
+    rdfs:domain :VersionedRecord;
     rdfs:range :Version.
 
 :latestVersion a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "latest version"@en;
-    rdfs:comment "The latest available Version on the Versioned Resource."@en;
-    rdfs:domain :VersionedResource;
+    rdfs:comment "The latest available Version on the Versioned Record."@en;
+    rdfs:domain :VersionedRecord;
     rdfs:range :Version.
 
-# Versioned RDF Resource
+# Versioned RDF Record
 
-:VersionedRDFResource a owl:Class;
-    rdfs:subClassOf :VersionedResource;
-    rdfs:label "Versioned Resource"@en;
-    rdfs:comment "A catalog Resource for an RDF resource that is versioned."@en.
+:VersionedRDFRecord a owl:Class;
+    rdfs:subClassOf :VersionedRecord;
+    rdfs:label "Versioned RDF Record"@en;
+    rdfs:comment "A catalog Record for an RDF resource that is versioned."@en.
 
 :branch a owl:ObjectProperty;
     rdfs:label "branch"@en;
-    rdfs:comment "A Branch of the described Versioned RDF Resource."@en;
-    rdfs:domain :VersionedRDFResource;
+    rdfs:comment "A Branch of the described Versioned RDF Record."@en;
+    rdfs:domain :VersionedRDFRecord;
     rdfs:range :Branch.
 
 # Ontology
 
 :Ontology a owl:Class;
-    rdfs:subClassOf :VersionedRDFResource;
+    rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Ontology"@en;
     rdfs:comment "A collection of RDF data that defines an ontology resource."@en.
 
 # Mapping
 
 :Mapping a owl:Class;
-    rdfs:subClassOf :VersionedRDFResource;
+    rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Mapping"@en;
     rdfs:comment "A collection of RDF data that defines a mapping resource."@en.
 
 # Dataset
 
 :Dataset a owl:Class;
-    rdfs:subClassOf :VersionedRDFResource;
+    rdfs:subClassOf :VersionedRDFRecord;
     rdfs:label "Dataset"@en;
     rdfs:comment "A collection of RDF data that defines a dataset resource."@en.
 
@@ -125,11 +125,11 @@
 
 :Version a owl:Class;
     rdfs:label "Version"@en;
-    rdfs:comment "A specific state of the Versioned Resource."@en.
+    rdfs:comment "A specific state of a Versioned Record."@en.
 
 :versionedDistribution a owl:ObjectProperty;
-    rdfs:label "Versioned Distribution"@en;
-    rdfs:comment "A distribution of the described Version of a Resource."@en;
+    rdfs:label "versioned distribution"@en;
+    rdfs:comment "A distribution of the described Version of a Record."@en;
     rdfs:domain :Version;
     rdfs:range :Distribution.
 
@@ -138,7 +138,7 @@
 :Tag a owl:Class;
     rdfs:subClassOf :Version;
     rdfs:label "Tag"@en;
-    rdfs:comment "A tag on a Versioned RDF Resource pointing to a Commit of note."@en.
+    rdfs:comment "A tag on a Versioned RDF Record pointing to a Commit of interest."@en.
 
 :commit a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "commit"@en;
@@ -150,13 +150,13 @@
 
 :Distribution a owl:Class;
     rdfs:label "Distribution"@en;
-    rdfs:comment "Represents a specific available form of a resource. Each resource might be available in different forms, these forms might represent different formats of the resource or different endpoints. Examples of distributions include a downloadable CSV file, an API or an RSS feed."@en.
+    rdfs:comment "Represents a specific available form of a record. Each record might be available in different forms, these forms might represent different formats of the record or different endpoints. Examples of distributions include a downloadable CSV file, an API or an RSS feed."@en.
 
 :accessURL a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "access URL"@en;
     rdfs:domain :Distribution;
     rdfs:range rdfs:Resource;
-    rdfs:comment "Could be any kind of URL that gives access to a distribution of the resource. E.g. landing page, download, feed URL, SPARQL endpoint. Use when your catalog does not have information on which it is or when it is definitely not a download."@en.
+    rdfs:comment "Could be any kind of URL that gives access to a distribution of the record. E.g. landing page, download, feed URL, SPARQL endpoint. Use when your catalog does not have information on which it is or when it is definitely not a download."@en.
 
 :downloadURL a owl:ObjectProperty, owl:FunctionalProperty;
     rdfs:label "download URL"@en;
@@ -169,14 +169,20 @@
 :Commit a owl:Class;
     rdfs:subClassOf prov:Activity;
     rdfs:label "Commit"@en;
-    rdfs:comment "The provenance describing a commit activity made on a Versioned RDF Resource."@en.
+    rdfs:comment "The provenance describing a commit activity made on a Versioned RDF Record."@en.
 
 # In Progress Commit
 
 :InProgressCommit a owl:Class;
     rdfs:subClassOf :Commit;
     rdfs:label "In Progress Commit"@en;
-    rdfs:comment "The provenance describing a commit activity that is currently being made on a Versioned RDF Resource."@en.
+    rdfs:comment "The provenance describing a commit activity that is currently being made on a Versioned RDF Record."@en.
+
+:onBranch a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "on branch"@en;
+    rdfs:comment "The branch that the described In Progress Commit belongs to."@en;
+    rdfs:domain :InProgressCommit;
+    rdfs:range :Branch.
 
 # Revision
 
@@ -203,5 +209,5 @@
 #:distribution a owl:ObjectProperty;
 #    rdfs:label "distribution"@en;
 #    rdfs:comment "A distribution of a Version of a Versioned Resource or an Unversioned Resource."@en;
-#    rdfs:domain [a owl:Class; owl:unionOf(:Version :UnversionedResource)];
+#    rdfs:domain [a owl:Class; owl:unionOf(:Version :UnversionedRecord)];
 #    rdfs:range :Distribution.
