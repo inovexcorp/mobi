@@ -51,7 +51,6 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-model</artifactId>
-            <version>${ontology.openrdf.version}</version>
         </dependency>
     </dependencies>
 
@@ -66,10 +65,6 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Import-Package>
-                            org.openrdf.*;version="[2.7,2.9)",
-                            *
-                        </Import-Package>
                         <Export-Package>
                             org.matonto.ontology.utils.api; provide:=true
                         </Export-Package>

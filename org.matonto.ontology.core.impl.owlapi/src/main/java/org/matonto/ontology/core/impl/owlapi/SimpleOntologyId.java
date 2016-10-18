@@ -77,40 +77,38 @@ public class SimpleOntologyId implements OntologyId {
             throw new MatontoOntologyException("ontology IRI must not be null if version IRI is not null");
         }
         this.factory = builder.factory;
+
         org.semanticweb.owlapi.model.IRI ontologyIRI = null;
         org.semanticweb.owlapi.model.IRI versionIRI = null;
-
         if (builder.versionIRI != null) {
             versionIRI = SimpleOntologyValues.owlapiIRI(builder.versionIRI);
         }
         if (builder.ontologyIRI != null) {
             ontologyIRI = SimpleOntologyValues.owlapiIRI(builder.ontologyIRI);
         }
+
         if (versionIRI != null) {
-            ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(ontologyIRI),
-                    com.google.common.base.Optional.of(versionIRI));
-            this.identifier = factory.createIRI(builder.versionIRI.toString());
+            ontologyId = new OWLOntologyID(ontologyIRI, versionIRI);
+            this.identifier = factory.createIRI(builder.versionIRI.stringValue());
         } else if (ontologyIRI != null) {
-            ontologyId = new OWLOntologyID(com.google.common.base.Optional.of(ontologyIRI),
-                    com.google.common.base.Optional.absent());
-            this.identifier = factory.createIRI(builder.ontologyIRI.toString());
+            ontologyId = new OWLOntologyID(ontologyIRI);
+            this.identifier = factory.createIRI(builder.ontologyIRI.stringValue());
         } else if (builder.identifier != null) {
             this.identifier = builder.identifier;
-            ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(),
-                    com.google.common.base.Optional.absent());
+            ontologyId = new OWLOntologyID();
         } else {
             this.identifier = factory.createIRI(DEFAULT_PREFIX + UUID.randomUUID());
-            ontologyId = new OWLOntologyID(com.google.common.base.Optional.absent(),
-                    com.google.common.base.Optional.absent());
+            ontologyId = new OWLOntologyID();
         }
 
     }
 
     @Override
     public Optional<IRI> getOntologyIRI() {
-        if (ontologyId.getOntologyIRI().isPresent()) {
-            org.semanticweb.owlapi.model.IRI owlIri = ontologyId.getOntologyIRI().get();
-            return Optional.of(SimpleOntologyValues.matontoIRI(owlIri));
+        Optional<org.semanticweb.owlapi.model.IRI> ontIRI = ontologyId.getOntologyIRI();
+
+        if (ontIRI.isPresent()) {
+            return Optional.of(SimpleOntologyValues.matontoIRI(ontIRI.get()));
         } else {
             return Optional.empty();
         }
@@ -119,9 +117,10 @@ public class SimpleOntologyId implements OntologyId {
 
     @Override
     public Optional<IRI> getVersionIRI() {
-        if (ontologyId.getVersionIRI().isPresent()) {
-            org.semanticweb.owlapi.model.IRI versionIri = ontologyId.getVersionIRI().get();
-            return Optional.of(SimpleOntologyValues.matontoIRI(versionIri));
+        Optional<org.semanticweb.owlapi.model.IRI> verIRI = ontologyId.getVersionIRI();
+
+        if (verIRI.isPresent()) {
+            return Optional.of(SimpleOntologyValues.matontoIRI(verIRI.get()));
         } else {
             return Optional.empty();
         }
