@@ -202,6 +202,9 @@
                         },
                         individuals: {
                             active: false
+                        },
+                        search: {
+                            active: false
                         }
                     }
                 } else if (type === 'vocabulary') {
@@ -211,6 +214,9 @@
                             entityIRI: entityIRI
                         },
                         concepts: {
+                            active: false
+                        },
+                        search: {
                             active: false
                         }
                     }
@@ -260,12 +266,14 @@
             self.getActiveEntityIRI = function() {
                 return self.getActivePage().entityIRI;
             }
-            self.selectItem = function(entityIRI) {
+            self.selectItem = function(entityIRI, getUsages=true) {
                 if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
                     _.set(self.getActivePage(), 'entityIRI', entityIRI);
-                    om.getEntityUsages(self.state.ontologyId, entityIRI)
-                        .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
-                            response => _.set(self.getActivePage(), 'usages', []));
+                    if (getUsages) {
+                        om.getEntityUsages(self.state.ontologyId, entityIRI)
+                            .then(bindings => _.set(self.getActivePage(), 'usages', bindings),
+                                response => _.set(self.getActivePage(), 'usages', []));
+                    }
                 }
                 self.setSelected(entityIRI);
             }

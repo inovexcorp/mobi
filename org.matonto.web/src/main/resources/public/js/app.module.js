@@ -58,6 +58,7 @@
             'customLabel',
             'errorDisplay',
             'fileInput',
+            'infoMessage',
             'pagination',
             'radioButton',
             'tab',

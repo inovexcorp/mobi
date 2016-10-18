@@ -103,8 +103,10 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
     private static final String GET_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
+    private static final String GET_SEARCH_RESULTS;
     private static final String GRAPH_BINDING = "graph";
     private static final String ENTITY_BINDING = "entity";
+    private static final String SEARCH_TEXT = "searchText";
 
     static {
         try {
@@ -150,6 +152,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-concept-relationships.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_SEARCH_RESULTS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -608,6 +618,15 @@ public class SimpleOntologyManager implements OntologyManager {
         RepositoryConnection conn = repository.getConnection();
         TupleQuery query = conn.prepareTupleQuery(GET_CONCEPT_RELATIONSHIPS);
         query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getSearchResults(String ontologyIdStr, String searchText) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_SEARCH_RESULTS);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        query.setBinding(SEARCH_TEXT, factory.createLiteral(searchText.toLowerCase()));
         return query.evaluate();
     }
 }
