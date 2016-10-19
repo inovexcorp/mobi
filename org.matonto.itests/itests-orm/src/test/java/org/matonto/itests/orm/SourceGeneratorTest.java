@@ -25,6 +25,8 @@ package org.matonto.itests.orm;
 
 import com.xmlns.foaf._0._1.Agent;
 import com.xmlns.foaf._0._1.AgentFactory;
+import com.xmlns.foaf._0._1.OnlineChatAccount;
+import com.xmlns.foaf._0._1.OnlineChatAccountFactory;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -102,23 +104,6 @@ public class SourceGeneratorTest {
     }
 
     @Test
-    public void generateFoafOntologyStuff() throws Exception {
-        try {
-            final File foaf = new File("src/test/java/generated/test/foaf");
-            if (foaf.exists()) {
-                FileUtils.deleteDirectory(foaf);
-            }
-            SourceGenerator.toSource(
-                    GraphReadingUtility.readOntology(new File("src/test/resources/foaf.rdf"),
-                            "http://xmlns.com/foaf/0.1/"),
-                    "http://xmlns.com/foaf/0.1/", "target/generated-test-sources", new ArrayList<>());
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.getMessage());
-        }
-    }
-
-    @Test
     public void testAgent() {
         final AgentFactory factory = new AgentFactory();
         final Agent a = factory.getExisting(valueFactory.createIRI("urn://matonto.org/orm/test/testAgent"), model,
@@ -135,5 +120,13 @@ public class SourceGeneratorTest {
         assertEquals(valueFactory.createLiteral("tester@gmail.com"), mboxValue);
 
         assertEquals(valueFactory.createIRI("urn://matonto.org/orm/test/account"), mbox.getResource());
+    }
+
+    @Test
+    public void testMultiType(){
+        final OnlineChatAccountFactory factory = new OnlineChatAccountFactory();
+        factory.setValueFactory(valueFactory);
+        OnlineChatAccount account = factory.createNew(valueFactory.createIRI("urn://matonto.org/orm/test/testOCA"),model,valueFactory,valueConverterRegistry);
+        account.getModel().filter(account.getResource(),null,null).forEach(stmt -> System.out.println(stmt));
     }
 }

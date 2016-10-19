@@ -20,9 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<p class="static-iri">
-    <strong class="text-muted">{{dvm.iri}} <a ng-click="dvm.sm.showIriOverlay = true">Edit IRI</a></strong>
-</p>
+<span class="static-iri">
+    <strong class="text-muted">{{dvm.iri}} <a ng-click="dvm.sm.showIriOverlay = true"><i class="fa fa-pencil"></i></a></strong>
+</span>
 <div ng-if="dvm.sm.showIriOverlay" class="overlay">
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
@@ -54,9 +54,11 @@
         </div>
         <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="dvm.iriForm.$invalid" on-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.afterEdit();">Edit</custom-button>
-            <custom-button on-click="dvm.sm.showIriOverlay = false" type="'secondary'">Cancel</custom-button>
-            <custom-button on-click="dvm.resetVariables()" pull="'left'"><i class="fa fa-refresh"></i></custom-button>
+            <button type="button" class="btn btn-primary pull-right"
+                    ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.afterEdit()"
+                    ng-disabled="dvm.iriForm.$invalid">Edit</button>
+            <button type="button" class="btn btn-default pull-right" ng-click="dvm.sm.showIriOverlay = false">Cancel</button>
+            <button type="button" class="btn btn-primary pull-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
         </div>
     </form>
 </div>

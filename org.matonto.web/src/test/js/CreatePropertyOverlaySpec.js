@@ -25,7 +25,7 @@ describe('Create Property Overlay directive', function() {
         scope,
         element,
         ontologyManagerSvc,
-        stateManagerSvc,
+        ontologyStateSvc,
         deferred,
         prefixes;
 
@@ -36,16 +36,17 @@ describe('Create Property Overlay directive', function() {
         injectCamelCaseFilter();
         injectTrustedFilter();
         injectHighlightFilter();
+        injectSplitIRIFilter();
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _stateManagerService_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
             prefixes = _prefixes_;
         });
@@ -105,54 +106,26 @@ describe('Create Property Overlay directive', function() {
             controller.onEdit('begin', 'then', 'end');
             expect(controller.property['@id']).toBe('begin' + 'then' + 'end');
         });
-        describe('create', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.createObjectProperty.and.returnValue(deferred.promise);
-                ontologyManagerSvc.createDataTypeProperty.and.returnValue(deferred.promise);
-                controller.property = {
-                    '@id': 'property-iri'
-                }
-                controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
-                controller.property[prefixes.rdfs + 'range'] = [];
-                controller.property[prefixes.rdfs + 'domain'] = [];
-                controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+        it('create calls the correct manager functions', function() {
+            ontologyManagerSvc.getListItemById.and.returnValue({
+                subObjectProperties: [],
+                objectPropertyHierarchy: [],
+                subDataProperties: [],
+                dataPropertyHierarchy: []
             });
-            describe('calls the correct manager function', function() {
-                it('when isObjectProperty is true', function() {
-                    controller.property['@type'] = [prefixes.owl + 'ObjectProperty'];
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                    controller.create();
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
-                    expect(ontologyManagerSvc.createObjectProperty).toHaveBeenCalledWith(
-                        stateManagerSvc.state.ontologyId, controller.property);
-                });
-                it('when isObjectProperty is false', function() {
-                    controller.property['@type'] = [prefixes.owl + 'DataTypeProperty'];
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    controller.create();
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
-                    expect(ontologyManagerSvc.createDataTypeProperty).toHaveBeenCalledWith(
-                        stateManagerSvc.state.ontologyId, controller.property);
-                });
-            });
-            describe('when', function() {
-                beforeEach(function() {
-                    controller.create();
-                });
-                it('resolved, sets the correct variables', function() {
-                    deferred.resolve({entityIRI: 'entityIRI', ontologyId: 'ontologyId'});
-                    scope.$apply();
-                    expect(stateManagerSvc.showCreatePropertyOverlay).toBe(false);
-                    expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith('ontologyId');
-                    expect(stateManagerSvc.selectItem).toHaveBeenCalledWith('property-editor', 'entityIRI',
-                        ontologyManagerSvc.getListItemById('ontologyId'));
-                });
-                it('rejected, sets the correct variable', function() {
-                    deferred.reject('error');
-                    scope.$apply();
-                    expect(controller.error).toBe('error');
-                });
-            });
+            controller.property = {'@id': 'property-iri'}
+            controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
+            controller.property[prefixes.rdfs + 'range'] = [];
+            controller.property[prefixes.rdfs + 'domain'] = [];
+            controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+            controller.create();
+            expect(_.get(controller.property, 'matonto.originalIRI')).toEqual(controller.property['@id']);
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.ontology,
+                controller.property);
+            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(controller.property);
+            expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(ontologyStateSvc.state.ontologyId);
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.property['@id']);
+            expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
         });
     });
 });

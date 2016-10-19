@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.28-SNAPSHOT</version>
+        <version>1.3.10-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -80,24 +80,24 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas</artifactId>
-            <version>1.0.46</version>
+            <version>1.2.10</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.1.27</version>
+            <version>1.2.10</version>
         </dependency>
 
         <!-- REST Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.rest</artifactId>
-            <version>1.1.15</version>
+            <version>1.2.10</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.rest</artifactId>
-            <version>1.1.26</version>
+            <version>1.2.10</version>
         </dependency>
     </dependencies>
 
@@ -159,6 +159,33 @@
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/classes/build/modules/nav</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/public/modules/nav</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>*.html</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
 

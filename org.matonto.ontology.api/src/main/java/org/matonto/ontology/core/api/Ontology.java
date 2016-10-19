@@ -26,6 +26,7 @@ package org.matonto.ontology.core.api;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
@@ -103,6 +104,13 @@ public interface Ontology {
      * @return ontology annotations
      */
     Set<Annotation> getAllAnnotations();
+
+    /**
+     * Gets all the annotation properties defined in the ontology.
+     *
+     * @return ontology annotation properties
+     */
+    Set<AnnotationProperty> getAllAnnotationProperties();
 
     Set<OClass> getAllClasses();
 

@@ -31,6 +31,7 @@ var src = './src/main/resources/public/',
 // NOTE: This is where we determine the order in which JS files are loaded
 var jsFiles = function(prefix) {
         return [
+            prefix + 'js/vendor/*.js',
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
             prefix + 'js/services/annotationManager.js',
@@ -49,6 +50,9 @@ var jsFiles = function(prefix) {
             prefix + 'lodash/**/lodash.min.js',
             prefix + 'codemirror/**/codemirror.js',
             prefix + 'codemirror/**/sparql.js',
+            prefix + 'codemirror/**/turtle.js',
+            prefix + 'codemirror/**/xml.js',
+            prefix + 'codemirror/**/javascript.js',
             prefix + 'codemirror/**/matchbrackets.js',
             prefix + 'angular/**/angular.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
@@ -58,7 +62,8 @@ var jsFiles = function(prefix) {
             prefix + 'angular-cookies/**/angular-cookies.min.js',
             prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
             prefix + 'angular-messages/**/angular-messages.min.js',
-            prefix + 'ui-select/**/select.min.js'
+            prefix + 'ui-select/**/select.min.js',
+            prefix + 'handsontable/**/handsontable.full.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -73,7 +78,8 @@ var jsFiles = function(prefix) {
             prefix + 'bootstrap/**/bootstrap.min.css',
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',
-            prefix + 'codemirror/**/codemirror.css'
+            prefix + 'codemirror/**/codemirror.css',
+            prefix + 'handsontable/**/handsontable.full.css'
         ]
     };
 
@@ -183,7 +189,7 @@ gulp.task('images', function() {
                 interlaced: true
             })
         ))
-        .pipe(gulp.dest(dest + 'img'));
+        .pipe(gulp.dest(dest + 'images'));
 });
 
 // Moves all of the html files to build folder
@@ -220,13 +226,13 @@ gulp.task('move-custom-js', function() {
 });
 
 // Moves all custom non-js files to build folder
-gulp.task('move-custom-not-js', ['html'], function() {
-    return gulp.src(src + '**/*')
-        .pipe(ignore.exclude('**/*.scss'))
-        .pipe(ignore.exclude('**/*.js'))
-        .pipe(ignore.exclude('**/*.html'))
-        .pipe(gulp.dest(dest));
-});
+// gulp.task('move-custom-not-js', ['html'], function() {
+//     return gulp.src(src + '**/*')
+//         .pipe(ignore.exclude('**/*.scss'))
+//         .pipe(ignore.exclude('**/*.js'))
+//         .pipe(ignore.exclude('**/*.html'))
+//         .pipe(gulp.dest(dest));
+// });
 
 // Changes the css files to sass files
 gulp.task('change-to-css', function() {
@@ -236,7 +242,7 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['move-custom-js', 'move-custom-not-js', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+gulp.task('inject-unminified', ['move-custom-js', 'html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
     var allJsFiles = nodeJsFiles(dest + 'js/').concat(jsFiles(dest)),
         allStyleFiles = nodeStyleFiles(dest + 'css/').concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);
@@ -256,7 +262,7 @@ gulp.task('icons-unminified', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+gulp.task('prod', ['jasmine-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
 
 // Default Task (un-minified)
-gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-custom-not-js', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['jasmine-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);

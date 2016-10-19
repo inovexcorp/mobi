@@ -23,137 +23,131 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.mock;
-import static org.junit.Assert.assertEquals;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
-
-import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.ontology.core.api.OntologyId;
-import org.matonto.ontology.core.api.OntologyManager;
-import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ValueFactory;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Optional;
+
+import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.mock;
+import static org.junit.Assert.assertEquals;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.replay;
+
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyIdTest {
 
-    BNode bNodeMock;
-    OntologyManager ontologyManager;
-    ValueFactory factory;
-    IRI ontologyIRI;
-    IRI versionIRI;
-    org.semanticweb.owlapi.model.IRI owlOntologyIRI;
-    org.semanticweb.owlapi.model.IRI owlVersionIRI;
-    
+    private IRI idMock;
+    private ValueFactory factory;
+    private IRI ontologyIRI;
+    private IRI versionIRI;
+    private String ontologyIRIString = "http://test.com/ontology1";
+    private String versionIRIString = "http://test.com/ontology1/1.0.0";
+
     @Before
     public void setUp() {
-        bNodeMock = mock(BNode.class);
+        idMock = mock(IRI.class);
         factory = mock(ValueFactory.class);
-        ontologyManager = mock(OntologyManager.class);       
-        owlOntologyIRI = mock(org.semanticweb.owlapi.model.IRI.class);
-        owlVersionIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+
+        org.semanticweb.owlapi.model.IRI owlOntIRI = org.semanticweb.owlapi.model.IRI.create(ontologyIRIString);
+        org.semanticweb.owlapi.model.IRI owlVerIRI = org.semanticweb.owlapi.model.IRI.create(versionIRIString);
 
         ontologyIRI = mock(IRI.class);
-        expect(ontologyIRI.stringValue()).andReturn("http://test.com/ontology1").anyTimes();
-        expect(ontologyIRI.getNamespace()).andReturn("http://test.com/ontology1").anyTimes();
+        expect(ontologyIRI.stringValue()).andReturn(ontologyIRIString).anyTimes();
+        expect(ontologyIRI.getNamespace()).andReturn(ontologyIRIString).anyTimes();
 
         versionIRI = mock(IRI.class);
-        expect(versionIRI.stringValue()).andReturn("http://test.com/ontology1/1.0.0").anyTimes();
-        expect(versionIRI.getNamespace()).andReturn("http://test.com/ontology1").anyTimes();
+        expect(versionIRI.stringValue()).andReturn(versionIRIString).anyTimes();
+        expect(versionIRI.getNamespace()).andReturn(ontologyIRIString).anyTimes();
         
         replay(ontologyIRI, versionIRI);
-        
-        
-        expect(owlOntologyIRI.getNamespace()).andReturn(ontologyIRI.getNamespace()).anyTimes();
-        expect(owlVersionIRI.getNamespace()).andReturn(versionIRI.getNamespace()).anyTimes();
-        
+
         mockStatic(SimpleOntologyValues.class);
-        expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntologyIRI).anyTimes();
-        expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVersionIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).andReturn(ontologyIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlVersionIRI)).andReturn(versionIRI).anyTimes();
+        expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntIRI).anyTimes();
+        expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVerIRI).anyTimes();
+        expect(SimpleOntologyValues.matontoIRI(owlOntIRI)).andReturn(ontologyIRI).anyTimes();
+        expect(SimpleOntologyValues.matontoIRI(owlVerIRI)).andReturn(versionIRI).anyTimes();
+
+        expect(factory.createIRI(ontologyIRIString)).andReturn(ontologyIRI).anyTimes();
+        expect(factory.createIRI(versionIRIString)).andReturn(versionIRI).anyTimes();
     }
     
     @Test
     public void testConstructorWithNoInputValue() {
-        expect(factory.createBNode()).andReturn(bNodeMock);
-        replay(factory, bNodeMock);
+        expect(factory.createIRI(anyString())).andReturn(idMock);
+        replay(factory, idMock);
         OntologyId ontologyId = new SimpleOntologyId.Builder(factory).build();
         
-        assertEquals(bNodeMock, ontologyId.getOntologyIdentifier());
+        assertEquals(idMock, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
     
     @Test
     public void testConstructorWithOnlyId() {
-        replay(factory, bNodeMock);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(bNodeMock).build();
+        replay(factory, idMock);
+        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).build();
         
-        assertEquals(bNodeMock, ontologyId.getOntologyIdentifier());
+        assertEquals(idMock, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
     
     @Test
     public void testConstructorWithOnlySpecificId() {
-        expect(bNodeMock.stringValue()).andReturn("http://test.com/BNode");
-        replay(factory, bNodeMock);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(bNodeMock).build();
+        expect(idMock.stringValue()).andReturn("http://test.com/iri1");
+        replay(factory, idMock);
+        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).build();
         
-        assertEquals(bNodeMock, ontologyId.getOntologyIdentifier());
-        assertEquals("http://test.com/BNode", ontologyId.getOntologyIdentifier().stringValue());
+        assertEquals(idMock, ontologyId.getOntologyIdentifier());
+        assertEquals("http://test.com/iri1", ontologyId.getOntologyIdentifier().stringValue());
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
     
     @Test
     public void testConstructorWithIdAndOntologyIRI() {
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI);
-        replay(factory, bNodeMock, owlOntologyIRI, SimpleOntologyValues.class);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(bNodeMock).ontologyIRI(ontologyIRI).build();
+        replay(factory, idMock, SimpleOntologyValues.class);
+        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).ontologyIRI(ontologyIRI).build();
         
         assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
-        assertEquals("http://test.com/ontology1", ontologyId.getOntologyIdentifier().stringValue());
-        assertEquals("http://test.com/ontology1", ontologyId.getOntologyIRI().get().stringValue());
+        assertEquals(ontologyIRIString, ontologyId.getOntologyIdentifier().stringValue());
+        assertEquals(ontologyIRIString, ontologyId.getOntologyIRI().get().stringValue());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
     
     @Test
     public void testConstructorWithOntologyIRIAndVersionIRIAndNoID() {
-        expect(factory.createIRI(isA(String.class))).andReturn(versionIRI);
-        replay(factory, bNodeMock, owlOntologyIRI, owlVersionIRI, SimpleOntologyValues.class);
+        replay(factory, idMock, SimpleOntologyValues.class);
         OntologyId ontologyId = new SimpleOntologyId.Builder(factory).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
         
         assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
-        assertEquals("http://test.com/ontology1/1.0.0", ontologyId.getOntologyIdentifier().stringValue());
+        assertEquals(versionIRIString, ontologyId.getOntologyIdentifier().stringValue());
         assertEquals(ontologyIRI, ontologyId.getOntologyIRI().get());
-        assertEquals("http://test.com/ontology1", ontologyId.getOntologyIRI().get().stringValue());
+        assertEquals(ontologyIRIString, ontologyId.getOntologyIRI().get().stringValue());
         assertEquals(versionIRI, ontologyId.getVersionIRI().get());
-        assertEquals("http://test.com/ontology1/1.0.0", ontologyId.getVersionIRI().get().stringValue());
+        assertEquals(versionIRIString, ontologyId.getVersionIRI().get().stringValue());
     }
     
     @Test
     public void testConstructorWithOntologyIRIAndVersionIRIAndID() {
-        expect(factory.createIRI(isA(String.class))).andReturn(versionIRI);
-        replay(factory, bNodeMock, owlOntologyIRI, owlVersionIRI, SimpleOntologyValues.class);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(bNodeMock).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+        replay(factory, idMock, SimpleOntologyValues.class);
+        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
         
         assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
-        assertEquals("http://test.com/ontology1/1.0.0", ontologyId.getOntologyIdentifier().stringValue());
+        assertEquals(versionIRIString, ontologyId.getOntologyIdentifier().stringValue());
         assertEquals(ontologyIRI, ontologyId.getOntologyIRI().get());
-        assertEquals("http://test.com/ontology1", ontologyId.getOntologyIRI().get().stringValue());
+        assertEquals(ontologyIRIString, ontologyId.getOntologyIRI().get().stringValue());
         assertEquals(versionIRI, ontologyId.getVersionIRI().get());
-        assertEquals("http://test.com/ontology1/1.0.0", ontologyId.getVersionIRI().get().stringValue());
+        assertEquals(versionIRIString, ontologyId.getVersionIRI().get().stringValue());
     }
     
 }

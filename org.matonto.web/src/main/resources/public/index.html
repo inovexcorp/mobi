@@ -23,33 +23,29 @@
   -->
 
 <html ng-app="app">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="images/favicon.ico">
-    <title ng-bind="$state.current.data.title + ' | MatOnto'"></title>
-
-    <!-- inject:css -->
-    <!-- endinject -->
-</head>
-<!-- REMOVE BETA CLASS ONCE OUT OF BETA -->
-<body class="beta" ng-class="{'show-words': ($root.showWords && $state.current.name !== 'login')}">
-
-    <!-- REMOVE BETA BANNER <P> ONCE OUT OF BETA -->
-    <p class="beta-banner"><i class="fa fa-fw fa-exclamation-circle"></i><strong>Warning:</strong> This is an alpha version of the software.</p>
-
-    <!-- Basic header, container, and footer for all states -->
-    <nav ui-view="header" ng-hide="$state.current.name === 'login'"></nav>
-    <div ui-view="container" class="view-container full-height"></div>
-    <footer ui-view="footer"></footer>
-
-    <!-- spinner -->
-    <div class="spinner" ng-show="$root.showSpinner">
-        <i class="fa fa-4x fa-spin fa-spinner"></i>
-    </div>
-
-    <!-- inject:js -->
-    <!-- endinject -->
-</body>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="images/favicon.ico">
+        <title ng-bind="$state.current.data.title + ' | MatOnto'"></title>
+        <!-- inject:css -->
+        <!-- endinject -->
+    </head>
+    <body ng-class="{'collapsed-nav': $root.collapsedNav}">
+        <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="full-height">
+            <nav ui-view="nav"></nav>
+            <div class="main-page">
+                <custom-header page-title="$state.current.data.title"></custom-header>
+                <section ui-view="container" class="view-container full-height"></section>
+            </div>
+        </div>
+        <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container full-height"></section>
+        <footer ui-view="footer"></footer>
+        <div class="spinner" ng-show="$root.showSpinner">
+            <i class="fa fa-4x fa-spin fa-spinner"></i>
+        </div>
+        <!-- inject:js -->
+        <!-- endinject -->
+    </body>
 </html>

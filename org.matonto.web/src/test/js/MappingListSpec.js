@@ -24,8 +24,7 @@ describe('Mapping List directive', function() {
     var $compile,
         scope,
         mappingManagerSvc,
-        mapperStateSvc,
-        ontologyManagerSvc;
+        mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,14 +32,18 @@ describe('Mapping List directive', function() {
         mockPrefixes();
         mockMappingManager();
         mockMapperState();
-        mockOntologyManager();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
+        module(function($provide) {
+            $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
+            $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
+        });
+
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
@@ -55,18 +58,18 @@ describe('Mapping List directive', function() {
             controller.onClick('test1');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test1');
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test1'});
+            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1'});
 
             controller.onClick('test2');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith('test2');
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test2'});
+            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test2'});
 
             mappingManagerSvc.getMapping.calls.reset();
             controller.onClick('test1');
             scope.$apply();
             expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
-            expect(mappingManagerSvc.mapping).toEqual({jsonld: [], id: 'test1'});
+            expect(mapperStateSvc.mapping).toEqual({jsonld: [], id: 'test1'});
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -76,7 +79,7 @@ describe('Mapping List directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-list')).toBe(true);
-            expect(this.element.querySelectorAll('.boxed').length).toBe(1);
+            expect(this.element.hasClass('tree')).toBe(true);
         });
         it('with the correct number of mapping list items', function() {
             mappingManagerSvc.mappingIds = ['test1'];
@@ -89,9 +92,19 @@ describe('Mapping List directive', function() {
             var mappingName = angular.element(this.element.querySelectorAll('li a'));
             expect(mappingName.hasClass('active')).toBe(false);
 
-            mappingManagerSvc.mapping = {id: 'test1'};
+            mapperStateSvc.mapping = {id: 'test1'};
             scope.$digest();
             expect(mappingName.hasClass('active')).toBe(true);
+        });
+        it('depending on the mapping search string', function() {
+            mappingManagerSvc.mappingIds = ['test1', 'test2'];
+            mapperStateSvc.mappingSearchString = 'test1';
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(1);
+
+            mapperStateSvc.mappingSearchString = 'test12';
+            scope.$digest();
+            expect(this.element.find('li').length).toBe(0);
         });
     });
     it('should call onClick when a mapping name is clicked', function() {

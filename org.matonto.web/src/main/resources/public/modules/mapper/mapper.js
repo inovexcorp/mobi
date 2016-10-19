@@ -26,34 +26,33 @@
     angular
         .module('mapper', [
             /* Custom Directives */
-            'classList',
+            'classMappingDetails',
+            'classMappingSelect',
             'classPreview',
             'columnSelect',
-            'editClassForm',
-            'editPropForm',
-            'filePreviewTable',
-            'fileUploadOverlay',
-            'finishOverlay',
+            'createMappingOverlay',
+            'downloadMappingOverlay',
+            'editMappingForm',
+            'editMappingPage',
+            'fileUploadPage',
+            'fileUploadForm',
             'invalidOntologyOverlay',
             'iriTemplateOverlay',
-            'mapperSideBar',
-            'mappingEditor',
+            'mapperSerializationSelect',
+            'mapperTabset',
+            'mappingConfigOverlay',
             'mappingList',
             'mappingNameInput',
             'mappingNameOverlay',
             'mappingOverlays',
             'mappingPreview',
-            'newPropForm',
+            'mappingSelectPage',
+            'mappingTitle',
             'ontologyPreview',
-            'ontologyPreviewOverlay',
-            'ontologySelectOverlay',
+            'previewDataGrid',
+            'propMappingOverlay',
             'propSelect',
-            'rangeClassDescription',
-            'rdfPreview',
-            'startingClassSelectOverlay',
-
-            /* Custom Services */
-            'delimitedManager',
-            'mapperState'
+            'rdfPreviewForm',
+            'runMappingOverlay'
         ]);
 })();

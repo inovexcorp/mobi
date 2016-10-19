@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name mappingNameOverlay
          *
-         * @description 
+         * @description
          * The `mappingNameOverlay` module only provides the `mappingNameOverlay` directive which creates
          * an overlay with a {@link mappingNameInput.directive:mappingNameInput mappingNameInput} to edit a mapping name.
          */
@@ -41,16 +41,17 @@
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
-         * @description 
-         * `mappingNameOverlay` is a directive that creates an overlay containing a 
-         * {@link mappingNameInput.directive:mappingNameInput mappingNameInput} to edit the currently selected mapping's 
-         * name. The directive is replaced by the contents of its template.
+         * @description
+         * `mappingNameOverlay` is a directive that creates an overlay containing a
+         * {@link mappingNameInput.directive:mappingNameInput mappingNameInput} to edit the currently selected
+         * {@link mapperState.service:mapperStateService#mapping mapping's} name. The directive is replaced by
+         * the contents of its template.
          */
         .directive('mappingNameOverlay', mappingNameOverlay);
 
-        mappingNameOverlay.$inject = ['mappingManagerService', 'mapperStateService', 'ontologyManagerService']
+        mappingNameOverlay.$inject = ['$filter', 'mappingManagerService', 'mapperStateService']
 
-        function mappingNameOverlay(mappingManagerService, mapperStateService, ontologyManagerService) {
+        function mappingNameOverlay($filter, mappingManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -60,23 +61,22 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.om = ontologyManagerService;
-                    dvm.newName = dvm.om.getBeautifulIRI(_.get(dvm.mm.mapping, 'id', ''));
+                    dvm.newName = $filter('splitIRI')(_.get(dvm.state.mapping, 'id', '')).end;
 
                     dvm.set = function() {
                         var iri = dvm.mm.getMappingId(dvm.newName);
-                        if (dvm.state.step === 0) {
+                        if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.step = dvm.state.fileUploadStep;
-                            dvm.mm.mapping.jsonld = dvm.mm.createNewMapping(iri);
+                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(iri);
                         }
-                        dvm.mm.mapping.id = iri;
+                        dvm.state.mapping.id = iri;
                         dvm.state.editMappingName = false;
                     }
                     dvm.cancel = function() {
-                        if (dvm.state.step === 0) {
+                        if (dvm.state.step === dvm.state.selectMappingStep) {
                             dvm.state.editMapping = false;
                             dvm.state.newMapping = false;
-                            dvm.mm.mapping = undefined;
+                            dvm.state.mapping = undefined;
                         }
                         dvm.state.editMappingName = false;
                     }

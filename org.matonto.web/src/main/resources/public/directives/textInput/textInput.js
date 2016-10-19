@@ -27,13 +27,12 @@
         /**
          * @ngdoc overview
          * @name textInput
-         * @requires  customLabel
          *
          * @description 
          * The `textInput` module only provides the `textInput` directive which creates
          * a text input field with a customLabel and a custom on change function.
          */
-        .module('textInput', ['customLabel'])
+        .module('textInput', [])
         /**
          * @ngdoc directive
          * @name textInput.directive:textInput
@@ -66,8 +65,10 @@
                 scope: {
                     bindModel: '=ngModel',
                     changeEvent: '&',
-                    displayText: '=',
-                    mutedText: '='
+                    displayText: '<',
+                    mutedText: '<',
+                    required: '<',
+                    name: '<'
                 },
                 templateUrl: 'directives/textInput/textInput.html'
             }

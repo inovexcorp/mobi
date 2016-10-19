@@ -27,31 +27,30 @@
         .module('treeItem', [])
         .directive('treeItem', treeItem);
 
-        treeItem.$inject = ['settingsManagerService', 'ontologyManagerService', 'stateManagerService', 'prefixes'];
+        treeItem.$inject = ['settingsManagerService', 'ontologyManagerService', 'ontologyStateService', 'prefixes'];
 
-        function treeItem(settingsManagerService, ontologyManagerService, stateManagerService, prefixes) {
+        function treeItem(settingsManagerService, ontologyManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 scope: {
-                    hasChildren: '=',
-                    isActive: '=',
-                    isBold: '=',
+                    hasChildren: '<',
+                    isActive: '<',
+                    isBold: '<',
                     onClick: '&'
                 },
                 bindToController: {
                     currentEntity: '=',
                     isOpened: '=',
-                    ontologyId: '='
+                    path: '='
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
-
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     function getCurrentEntityIRI() {
                         return _.get(dvm.currentEntity, 'matonto.originalIRI',
@@ -60,14 +59,14 @@
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(dvm.currentEntity);
+                            return dvm.om.getEntityName(dvm.currentEntity, dvm.sm.state.type);
                         }
                         return getCurrentEntityIRI();
                     }
 
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
-                        dvm.sm.setOpened(dvm.ontologyId, getCurrentEntityIRI(), dvm.isOpened);
+                        dvm.sm.setOpened(dvm.path, dvm.isOpened);
                     }
                 }
             }

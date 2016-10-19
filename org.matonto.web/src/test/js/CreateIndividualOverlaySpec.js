@@ -26,7 +26,7 @@ describe('Create Individual Overlay directive', function() {
         element,
         controller,
         ontologyManagerSvc,
-        stateManagerSvc,
+        ontologyStateSvc,
         resObj,
         deferred,
         prefixes,
@@ -36,17 +36,20 @@ describe('Create Individual Overlay directive', function() {
         module('templates');
         module('createIndividualOverlay');
         injectCamelCaseFilter();
+        injectSplitIRIFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockOntologyManager();
-        mockStateManager();
+        mockOntologyState();
         mockResponseObj();
         mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _stateManagerService_, _responseObj_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _$timeout_, _ontologyManagerService_, _ontologyStateService_, _responseObj_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
             deferred = _$q_.defer();
             prefixes = _prefixes_;
             resObj = _responseObj_;
@@ -93,14 +96,14 @@ describe('Create Individual Overlay directive', function() {
         it('with a static iri', function() {
             expect(element.find('static-iri').length).toBe(1);
         });
-        it('with a string select', function() {
-            expect(element.find('string-select').length).toBe(1);
+        it('with a ui-select', function() {
+            expect(element.find('ui-select').length).toBe(1);
         });
         it('with an input for the individual name', function() {
             expect(element.querySelectorAll('input[name="name"]').length).toBe(1);
         });
-        it('with custom buttoms to create and cancel', function() {
-            var buttons = element.find('custom-button');
+        it('with custom buttons to create and cancel', function() {
+            var buttons = element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Create'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Create'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
@@ -141,27 +144,14 @@ describe('Create Individual Overlay directive', function() {
             expect(controller.iriHasChanged).toBe(true);
             expect(controller.individual['@id']).toBe('begin' + 'then' + 'end');
         });
-        describe('should create an individual', function() {
-            beforeEach(function() {
-                ontologyManagerSvc.createIndividual.and.returnValue(deferred.promise);
-            });
-            it('unless an error occurs', function() {
-                deferred.reject('error');
-                controller.create();
-                $timeout.flush();
-                expect(controller.error).toBe('error');
-            });
-            it('successfully', function() {
-                var response = {entityIRI: 'iri', ontologyId: 'id'};
-                deferred.resolve(response);
-                controller.create();
-                $timeout.flush();
-                expect(stateManagerSvc.showCreateIndividualOverlay).toBe(false);
-                expect(ontologyManagerSvc.getListItemById).toHaveBeenCalledWith(response.ontologyId);
-                expect(stateManagerSvc.selectItem).toHaveBeenCalled();
-                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(response.ontologyId);
-                expect(stateManagerSvc.setOpened).toHaveBeenCalled();
-            });
+        it('should create an individual', function() {
+            ontologyManagerSvc.getListItemById.and.returnValue({individuals: [], classesWithIndividuals: []})
+            controller.individual = {'@id': 'id', '@type': []};
+            controller.create();
+            expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
+            expect(ontologyManagerSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.ontology, controller.individual);
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id']);
+            expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
         });
     });
 });

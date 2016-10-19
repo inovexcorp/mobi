@@ -1,0 +1,43 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="usages-block">
+    <block>
+        <block-header>Usages</block-header>
+        <block-content>
+            <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+                <h5 ng-click="isClosed = !isClosed" class="clearfix">
+                    <p class="text">{{dvm.getBindingDisplay(key) | beautify}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                </h5>
+                <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
+                    <span class="value-display">
+                        <span ng-repeat="(key, value) in statement" ng-include="'statement_part'" class="{{key}}"></span>
+                    </span>
+                </div>
+            </div>
+        </block-content>
+    </block>
+    <script type="text/ng-template" id="statement_part">
+        <span ng-if="!dvm.um.isLinkable(value) || value === dvm.sm.selected['@id']" ng-class="{selected: value === dvm.sm.selected['@id']}">{{dvm.getBindingDisplay(value)}}</span>
+        <a ng-if="dvm.um.isLinkable(value) && value !== dvm.sm.selected['@id']" ng-click="dvm.sm.goTo(value)">{{dvm.getBindingDisplay(value)}}</a>
+    </script>
+</div>

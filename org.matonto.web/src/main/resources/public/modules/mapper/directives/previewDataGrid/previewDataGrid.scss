@@ -1,0 +1,18 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.preview-data-grid {
+	.table-header {
+		font-weight: 600;
+	}
+	.text {
+		color: inherit;
+	}
+	.header {
+		background-color: $gray-lighter;
+		font-weight: bold;
+	}
+	.highlight-col {
+		background-color: #A1DAED;
+	}
+}

@@ -21,11 +21,21 @@
   #L%
   -->
 <!-- sparql.html -->
-<div class="sparql clearfix full-height">
-    <sparql-side-bar></sparql-side-bar>
-
-    <div class="row full-height">
-        <sparql-editor></sparql-editor>
-        <sparql-result-table></sparql-result-table>
-    </div>
+<div class="sparql clearfix">
+    <tabset>
+        <tabset class="centered">
+            <tab heading="'SPARQL Editor'" active="true">
+                <div class="row">
+                    <div class="col-xs-12 block-container">
+                        <block>
+                            <block-content>
+                                <sparql-editor></sparql-editor>
+                            </block-content>
+                        </block>
+                    </div>
+                    <sparql-result-table class="col-xs-12 block-container"></sparql-result-table>
+                </div>
+            </tab>
+        </tabset>
+    </tabset>
 </div>

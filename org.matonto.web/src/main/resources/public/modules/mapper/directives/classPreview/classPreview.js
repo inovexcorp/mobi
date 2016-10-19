@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name classPreview
          *
-         * @description 
+         * @description
          * The `classPreview` module only provides the `classPreview` directive which creates
          * a brief description of the passed class and its properties.
          */
@@ -39,51 +39,48 @@
          * @scope
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires mapperState.service:mapperStateService
          * @requires prefixes.service:prefixes
          *
-         * @description 
-         * `classPreview` is a directive that creates a div with a brief description of the passed 
+         * @description
+         * `classPreview` is a directive that creates a div with a brief description of the passed
          * class and its properties. It displays the name of the class and the list of its properties.
          * The directive is replaced by the contents of its template.
          *
-         * @param {object} classObj the class object from an ontology to preview
+         * @param {Object} classObj the class object from an ontology to preview
+         * @param {Object[]} ontologies A list of ontologies containing the class and to pull properties
+         * from.
          */
         .directive('classPreview', classPreview);
 
-        classPreview.$inject = ['prefixes', 'ontologyManagerService', 'mappingManagerService'];
+        classPreview.$inject = ['prefixes', 'ontologyManagerService', 'mapperStateService'];
 
-        function classPreview(prefixes, ontologyManagerService, mappingManagerService) {
+        function classPreview(prefixes, ontologyManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
                 scope: {},
                 bindToController: {
-                    classObj: '='
+                    classObj: '<',
+                    ontologies: '<'
                 },
                 controller: function() {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
-                    dvm.mm = mappingManagerService;
+                    dvm.state = mapperStateService;
                     dvm.numPropPreview = 5;
                     dvm.full = false;
 
-                    dvm.createTitle = function() {
-                        return dvm.om.getEntityName(dvm.classObj);
-                    }
-                    dvm.createDescription = function() {
-                        return _.get(dvm.classObj, "['" + prefixes.rdfs + "comment'][0]['@value']", _.get(dvm.classObj, "['" + prefixes.dc + "description'][0]['@value']", ''));
-                    }
                     dvm.getProps = function() {
-                        var ontology = dvm.mm.findSourceOntologyWithClass(dvm.classObj['@id']);
-                        return dvm.om.getClassProperties(ontology.entities, dvm.classObj['@id']);
+                        return dvm.state.getClassProps(dvm.ontologies, dvm.classObj['@id']);
                     }
                     dvm.getPropList = function() {
                         var props = dvm.getProps();
                         if (!dvm.full) {
                             props = _.take(props, dvm.numPropPreview);
                         }
-                        return _.map(props, prop => dvm.om.getEntityName(prop));
+                        return _.map(props, prop => dvm.om.getBeautifulIRI(prop['@id']));
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classPreview/classPreview.html'

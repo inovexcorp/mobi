@@ -27,10 +27,9 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
-
 import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.rdf.api.*;
 import org.matonto.rdf.api.BNode;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -38,7 +37,6 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-import org.openrdf.model.*;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.slf4j.Logger;
@@ -104,10 +102,10 @@ public class SimpleSesameTransformer implements SesameTransformer {
         if (statement == null) {
             return null;
         } else if (!statement.getContext().isPresent()) {
-            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameURI(statement.getPredicate()),
+            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameIRI(statement.getPredicate()),
                     sesameValue(statement.getObject()));
         } else {
-            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameURI(statement.getPredicate()),
+            return SESAME_VF.createStatement(sesameResource(statement.getSubject()), sesameIRI(statement.getPredicate()),
                     sesameValue(statement.getObject()), sesameResource(statement.getContext().get()));
         }
     }
@@ -130,7 +128,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
         if (resource == null) {
             return null;
         } else if (resource instanceof IRI) {
-            return sesameURI((IRI) resource);
+            return sesameIRI((IRI) resource);
         } else {
             return SESAME_VF.createBNode(((BNode) resource).getID());
         }
@@ -140,8 +138,8 @@ public class SimpleSesameTransformer implements SesameTransformer {
     public Resource matontoResource(org.openrdf.model.Resource resource) {
         if (resource == null) {
             return null;
-        } else if (resource instanceof URI) {
-            return matontoIRI((URI) resource);
+        } else if (resource instanceof org.openrdf.model.IRI) {
+            return matontoIRI((org.openrdf.model.IRI) resource);
         } else {
             return matontoVF.createBNode(((org.openrdf.model.BNode) resource).getID());
         }
@@ -149,20 +147,20 @@ public class SimpleSesameTransformer implements SesameTransformer {
 
 
     @Override
-    public URI sesameURI(IRI iri) {
+    public org.openrdf.model.IRI sesameIRI(IRI iri) {
         if (iri == null) {
             return null;
         } else {
-            return SESAME_VF.createURI(iri.stringValue());
+            return SESAME_VF.createIRI(iri.stringValue());
         }
     }
 
     @Override
-    public IRI matontoIRI(URI sesameURI) {
-        if (sesameURI == null) {
+    public IRI matontoIRI(org.openrdf.model.IRI sesameIRI) {
+        if (sesameIRI == null) {
             return null;
         } else {
-            return matontoVF.createIRI(sesameURI.stringValue());
+            return matontoVF.createIRI(sesameIRI.stringValue());
         }
     }
 
@@ -171,7 +169,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
         if (value == null) {
             return null;
         } else if (value instanceof IRI) {
-            return sesameURI((IRI) value);
+            return sesameIRI((IRI) value);
         } else if (value instanceof BNode) {
             return sesameResource((BNode) value);
         } else {
@@ -180,7 +178,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
             if (literal.getLanguage().isPresent()) {
                 return SESAME_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {
-                URI datatype = SESAME_VF.createURI(literal.getDatatype().stringValue());
+                org.openrdf.model.IRI datatype = SESAME_VF.createIRI(literal.getDatatype().stringValue());
                 return SESAME_VF.createLiteral(literal.stringValue(), datatype);
             }
         }
@@ -190,22 +188,18 @@ public class SimpleSesameTransformer implements SesameTransformer {
     public Value matontoValue(org.openrdf.model.Value value) {
         if (value == null) {
             return null;
-        } else if (value instanceof URI) {
-            return matontoIRI((URI) value);
+        } else if (value instanceof org.openrdf.model.IRI) {
+            return matontoIRI((org.openrdf.model.IRI) value);
         } else if (value instanceof org.openrdf.model.BNode) {
             return matontoResource((org.openrdf.model.BNode) value);
         } else {
             // Else it's a Sesame Literal
             org.openrdf.model.Literal literal = (org.openrdf.model.Literal) value;
-            if (literal.getLanguage() != null) {
-                return matontoVF.createLiteral(literal.stringValue(), literal.getLanguage());
+            if (literal.getLanguage().isPresent()) {
+                return matontoVF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {
-                if(literal.getDatatype()!=null) {
-                    IRI datatype = matontoVF.createIRI(literal.getDatatype().stringValue());
-                    return matontoVF.createLiteral(literal.stringValue(), datatype);
-                } else {
-                    return matontoVF.createLiteral(literal.stringValue());
-                }
+                IRI datatype = matontoVF.createIRI(literal.getDatatype().stringValue());
+                return matontoVF.createLiteral(literal.stringValue(), datatype);
             }
         }
     }

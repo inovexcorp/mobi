@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.1.28-SNAPSHOT</version>
+        <version>1.3.10-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -38,7 +38,6 @@
     <packaging>bundle</packaging>
 
     <properties>
-        <jackson.version>2.6.3</jackson.version>
         <powermock.version>1.6.4</powermock.version>
     </properties>
 
@@ -46,22 +45,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.1.15</version>
+            <version>1.3.7</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.0.34</version>
+            <version>1.3.7</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.0.34</version>
+            <version>1.2.10</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.0.34</version>
+            <version>1.2.10</version>
         </dependency>
 
         <dependency>
@@ -73,24 +72,12 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-queryresultio-api</artifactId>
-            <version>${ontology.openrdf.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-queryresultio-binary</artifactId>
-            <version>${ontology.openrdf.version}</version>
         </dependency>
 
         <!-- Owlapi dependencies -->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
-            <artifactId>owlapi-osgidistribution</artifactId>
+            <artifactId>owlapi-distribution</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>org.openrdf.sesame</groupId>
@@ -102,12 +89,10 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
 
 
@@ -115,7 +100,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.0.34</version>
+            <version>1.2.10</version>
 		    <scope>test</scope>
 	    </dependency>
         <dependency>
@@ -154,7 +139,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.0.34</version>
+            <version>1.2.10</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -170,10 +155,6 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto Ontology Core OWLAPI Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Import-Package>
-                            org.openrdf.*;version="[2.7,2.9)",
-                            *
-                        </Import-Package>
                         <Export-Package>
                             org.matonto.ontology.core.api; provide:=true,
                             org.matonto.ontology.core.api.axiom; provide:=true,

@@ -1,0 +1,46 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.class-mapping-details {
+	display: flex;
+	flex-direction: column;
+
+	.class-mapping-props {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+
+		.prop-list {
+			flex: 1;
+			overflow-y: auto;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+
+			.list-group-item {
+				outline: 0;
+				border-radius: 0;
+
+				.prop-actions a {
+					margin-left: 10px;
+				}
+				&.invalid {
+					background-color: $brand-danger-light;
+
+					&.active {
+						background-color: $brand-danger;
+					}
+				}
+				&.active {
+					.prop-actions a {
+						color: white;
+
+						&:hover,
+						&:focus {
+							color: lightgrey;
+						}
+					}
+				}
+			}
+		}
+	}
+}

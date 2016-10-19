@@ -1,0 +1,23 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.mapping-config-overlay {
+	.content {
+		.ontology-select-container,
+		.base-class-select-container {
+			float: left;
+			width: 50%;
+			max-height: 400px;
+			display: flex;
+			flex-direction: column;
+		}
+		.ontology-preview,
+		.class-preview {
+			overflow: auto;
+			flex: 1;
+		}
+		.btn-container {
+			clear: both;
+		}
+	}
+}
