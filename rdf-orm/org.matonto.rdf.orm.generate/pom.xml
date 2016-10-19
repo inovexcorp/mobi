@@ -78,13 +78,15 @@
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                    <excludeDependencies>sun.nio.cs</excludeDependencies>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>MatOnto RDF ORM Generate</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>
-                            org.matonto.rdf.orm.generate
-                        </Export-Package>
+                        <Private-Package>com.sun.codemodel.*</Private-Package>
+                        <Export-Package>org.matonto.rdf.orm.generate</Export-Package>
+                        <Import-Package>sun.nio.cs;resolution:=optional, *</Import-Package>
+                        <Embed-Dependency>codemodel;inline=true</Embed-Dependency>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
