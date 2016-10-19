@@ -182,11 +182,6 @@
             <artifactId>rdf.orm.ontologies</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>versioning.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
