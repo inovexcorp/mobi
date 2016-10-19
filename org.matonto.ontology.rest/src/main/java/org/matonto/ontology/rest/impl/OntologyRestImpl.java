@@ -35,13 +35,17 @@ import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.persistence.utils.Values;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.BNode;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
@@ -52,15 +56,26 @@ import org.openrdf.rio.helpers.JSONLDSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -502,12 +517,34 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getOntologyClassHierarchy(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getSubClassesOf(ontologyIdStr);
-        JSONArray response = getHierarchy(queryResults);
+        JSONObject response = getHierarchy(queryResults);
         return Response.status(200).entity(response.toString()).build();
     }
 
-    private JSONArray getHierarchy(TupleQueryResult queryResults) {
-        Map<String, List<String>> results = new HashMap<>();
+    @Override
+    public Response getOntologyObjectPropertyHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getSubObjectPropertiesOf(ontologyIdStr);
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getOntologyDataPropertyHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getSubDatatypePropertiesOf(ontologyIdStr);
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getConceptHierarchy(String ontologyIdStr) {
+        TupleQueryResult queryResults = manager.getConceptRelationships(ontologyIdStr);
+        JSONObject response = getHierarchy(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    private JSONObject getHierarchy(TupleQueryResult queryResults) {
+        Map<String, Set<String>> results = new HashMap<>();
+        Map<String, Set<String>> index = new HashMap<>();
         Set<String> topLevel = new HashSet<>();
         Set<String> lowerLevel = new HashSet<>();
         queryResults.forEach(queryResult -> {
@@ -522,27 +559,35 @@ public class OntologyRestImpl implements OntologyRest {
                     if (results.containsKey(keyString)) {
                         results.get(keyString).add(valueString);
                     } else {
-                        results.put(keyString, new ArrayList<String>() {
-                            {
-                                add(valueString);
-                            }
-                        });
+                        Set<String> newSet = new HashSet<>();
+                        newSet.add(valueString);
+                        results.put(keyString, newSet);
+                    }
+                    if (index.containsKey(valueString)) {
+                        index.get(valueString).add(keyString);
+                    } else {
+                        Set<String> newSet = new HashSet<>();
+                        newSet.add(keyString);
+                        index.put(valueString, newSet);
                     }
                 } else {
-                    results.put(key.stringValue(), new ArrayList<>());
+                    results.put(key.stringValue(), new HashSet<>());
                 }
             }
         });
         topLevel.removeAll(lowerLevel);
-        JSONArray response = new JSONArray();
+        JSONObject response = new JSONObject();
+        JSONArray hierarchy = new JSONArray();
         topLevel.forEach(classIRI -> {
             JSONObject item = getHierarchyItem(classIRI, results);
-            response.add(item);
+            hierarchy.add(item);
         });
+        response.put("hierarchy", hierarchy);
+        response.put("index", JSONObject.fromObject(index));
         return response;
     }
 
-    private JSONObject getHierarchyItem(String itemIRI, Map<String, List<String>> results) {
+    private JSONObject getHierarchyItem(String itemIRI, Map<String, Set<String>> results) {
         JSONObject item = new JSONObject();
         item.put("entityIRI", itemIRI);
         if (results.containsKey(itemIRI) && results.get(itemIRI).size() > 0) {
@@ -556,21 +601,56 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response getClassesWithIndividuals(String ontologyIdStr) {
         TupleQueryResult queryResults = manager.getClassesWithIndividuals(ontologyIdStr);
-        JSONArray response = new JSONArray();
-        queryResults.forEach(queryResult -> response.add(Iterables.get(queryResult, 0).getValue().stringValue()));
+        JSONObject response = getHierarchy(queryResults);
         return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getEntityUsages(String ontologyIdStr, String entityIRIStr) {
+        TupleQueryResult queryResults = manager.getEntityUsages(ontologyIdStr, entityIRIStr);
+        JSONObject response = JSONQueryResults.getResponse(queryResults);
+        return Response.status(200).entity(response.toString()).build();
+    }
+
+    @Override
+    public Response getSearchResults(String ontologyIdStr, String searchText) {
+        TupleQueryResult queryResults = manager.getSearchResults(ontologyIdStr, searchText);
+        Map<String, Set<String>> results = new HashMap<>();
+        queryResults.forEach(queryResult -> {
+            Value entity = Iterables.get(queryResult, 1).getValue();
+            Value filter = Iterables.get(queryResult, 0).getValue();
+            if (!(entity instanceof BNode) && !(filter instanceof BNode)) {
+                String entityString = entity.stringValue();
+                String filterString = filter.stringValue();
+                if (results.containsKey(filterString)) {
+                    results.get(filterString).add(entityString);
+                } else {
+                    Set<String> newSet = new HashSet<>();
+                    newSet.add(entityString);
+                    results.put(filterString, newSet);
+                }
+            }
+        });
+        return Response.status(200).entity(JSONObject.fromObject(results).toString()).build();
     }
 
     /**
      * Gets Annotation JSONArray.
      */
     private JSONObject getAnnotationArray(@Nonnull Ontology ontology) {
-        List<IRI> iris = ontology.getAllAnnotations()
+        Set<IRI> iris = new HashSet<>();
+
+        iris.addAll(ontology.getAllAnnotations()
                 .stream()
                 .map(Annotation::getProperty)
                 .map(Entity::getIRI)
-                .collect(Collectors.toList());
-        
+                .collect(Collectors.toSet()));
+
+        iris.addAll(ontology.getAllAnnotationProperties()
+                .stream()
+                .map(AnnotationProperty::getIRI)
+                .collect(Collectors.toSet()));
+
         JSONObject object = new JSONObject();
         object.put("annotationProperties", iriListToJsonArray(iris));
         return object;
@@ -699,7 +779,7 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
-    private JSONArray iriListToJsonArray(@Nonnull List<IRI> iris) {
+    private JSONArray iriListToJsonArray(@Nonnull Collection<IRI> iris) {
         if (iris.isEmpty()) {
             return new JSONArray();
         }

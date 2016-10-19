@@ -27,9 +27,9 @@
         .module('objectPropertyOverlay', [])
         .directive('objectPropertyOverlay', objectPropertyOverlay);
 
-        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'stateManagerService'];
+        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService'];
 
-        function objectPropertyOverlay($filter, responseObj, ontologyManagerService, stateManagerService) {
+        function objectPropertyOverlay($filter, responseObj, ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,16 +38,14 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.om = ontologyManagerService;
                     dvm.ro = responseObj;
-                    dvm.sm = stateManagerService;
-
-                    dvm.individuals = $filter('removeIriFromArray')(dvm.sm.state.individuals, dvm.sm.state.entityIRI);
+                    dvm.sm = ontologyStateService;
+                    dvm.individuals = $filter('removeIriFromArray')(dvm.sm.listItem.individuals, dvm.sm.getActiveEntityIRI());
                     dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.sm.propertyValue);
 
                     function closeAndMark() {
-                        dvm.sm.setUnsaved(dvm.sm.state.ontology, dvm.sm.state.entityIRI, true);
+                        dvm.sm.setUnsaved(dvm.sm.listItem.ontologyId, dvm.sm.getActiveEntityIRI(), true);
                         dvm.sm.showObjectPropertyOverlay = false;
                     }
 

@@ -22,12 +22,12 @@
   -->
 <div class="mapping-name-overlay overlay">
     <form class="content" name="dvm.mappingNameForm">
-        <h6>{{dvm.state.step === 0 ? 'Set' : 'Edit'}} Mapping Name</h6>
+        <h6>{{dvm.state.step === dvm.state.selectMappingStep ? 'Set' : 'Edit'}} Mapping Name</h6>
         <mapping-name-input name="dvm.newName"></mapping-name-input>
         
         <div class="btn-container clearfix">
-            <custom-button on-click="dvm.cancel()" type="'secondary'" pull="'left'">Cancel</custom-button>
-            <custom-button on-click="dvm.set()" is-disabled-when="dvm.mappingNameForm.$invalid">Set</custom-button>
+            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="dvm.mappingNameForm.$invalid">Set</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
         </div>
     </form>
 </div>

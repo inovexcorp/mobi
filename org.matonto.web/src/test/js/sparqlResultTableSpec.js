@@ -72,9 +72,17 @@ describe('SPARQL Result Table directive', function() {
         it('for a div', function() {
             expect(element.prop('tagName')).toBe('DIV');
         });
-        it('based on table-container', function() {
-            var container = element.querySelectorAll('.table-container');
-            expect(container.length).toBe(1);
+        it('based on block', function() {
+            var block = element.find('block');
+            expect(block.length).toBe(1);
+        });
+        it('based on block-content', function() {
+            var blockFooter = element.find('block-content');
+            expect(blockFooter.length).toBe(1);
+        });
+        it('based on block-footer', function() {
+            var blockFooter = element.find('block-footer');
+            expect(blockFooter.length).toBe(1);
         });
         it('based on table', function() {
             var table = element.querySelectorAll('.table');
@@ -99,40 +107,24 @@ describe('SPARQL Result Table directive', function() {
             expect(tbody.querySelectorAll('tr').length).toBe(scope.sparqlManagerService.data.paginatedResults.results.length);
         });
         it('shows error message if populated', function() {
-            var errorP = element.querySelectorAll('.text-danger');
+            var errorP = element.find('error-display');
             expect(errorP.length).toBe(0);
 
             scope.sparqlManagerService.errorMessage = 'Error message';
             scope.$digest();
 
-            errorP = element.querySelectorAll('.text-danger');
+            errorP = element.find('error-display');
             expect(errorP.length).toBe(1);
         });
         it('shows info message if populated', function() {
-            var errorP = element.querySelectorAll('.text-info');
+            var errorP = element.find('info-message');
             expect(errorP.length).toBe(0);
 
             scope.sparqlManagerService.infoMessage = 'Info message';
             scope.$digest();
 
-            errorP = element.querySelectorAll('.text-info');
+            errorP = element.find('info-message');
             expect(errorP.length).toBe(1);
-        });
-    });
-    describe('link function code', function() {
-        it('resize() is called when window is resized', function() {
-            var totalHeight = 200;
-            var topHeight = 100;
-            var paginationHeight = 0;
-            var html = '<div class="sparql" style="height: ' + totalHeight + 'px;"></div><div class="sparql-editor" style="height: ' + topHeight + 'px;"></div>';
-            angular.element(document.body).append(html);
-            var element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
-            scope.$digest();
-
-            expect(element.attr('style')).toBe(undefined);
-            angular.element($window).triggerHandler('resize');
-            expect(element.attr('style')).toContain('height: ' + (totalHeight - topHeight) + 'px;');
-            expect(element.attr('style')).toContain('padding-bottom: ' + (paginationHeight + 10) + 'px;');
         });
     });
 });

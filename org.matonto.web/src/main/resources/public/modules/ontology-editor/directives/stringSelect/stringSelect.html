@@ -26,8 +26,7 @@
         <ui-select-match placeholder="{{'Select ' + displayText}}">
             <span title="{{$item}}">{{($item | splitIRI).end}}</span>
         </ui-select-match>
-        <!-- TODO: check by ui-disable-choice="dvm.disableChoice(item)" doesn't work properly -->
-        <ui-select-choices group-by="dvm.getItemNamespace"
+        <ui-select-choices group-by="dvm.getItemNamespace" ui-disable-choice="dvm.disableChoice(item)"
                            repeat="item in selectList | removeIriFromArray:bindModel | filter:$select.search">
             <div ng-bind-html="(item | splitIRI).end | highlight:$select.search | trusted"></div>
         </ui-select-choices>

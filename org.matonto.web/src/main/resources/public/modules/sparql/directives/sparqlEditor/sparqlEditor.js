@@ -27,22 +27,22 @@
         .module('sparqlEditor', ['sparqlManager', 'prefixes'])
         .directive('sparqlEditor', sparqlEditor);
 
-        function sparqlEditor() {
+        sparqlEditor.$inject = ['sparqlManagerService', 'prefixes'];
+
+        function sparqlEditor(sparqlManagerService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/sparql/directives/sparqlEditor/sparqlEditor.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['sparqlManagerService', 'prefixes', function(sparqlManagerService, prefixes) {
+                controller: function() {
                     var dvm = this;
-
                     dvm.sparql = sparqlManagerService;
 
                     dvm.prefixList = _.map(prefixes, function(value, key) {
                         return key + ': <' + value + '>';
                     });
-
                     dvm.editorOptions = {
                         mode: 'application/sparql-query',
                         indentUnit: 4,
@@ -51,7 +51,7 @@
                         lineWrapping: true,
                         matchBrackets: true
                     }
-                }]
+                }
             }
         }
 })();

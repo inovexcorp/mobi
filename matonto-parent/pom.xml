@@ -27,7 +27,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.1.28-SNAPSHOT</version>
+    <version>1.3.9-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -52,14 +52,25 @@
         <bndlib.version>3.1.0</bndlib.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <ontology.openrdf.version>2.8.6</ontology.openrdf.version>
-        <openrdf.version>4.0.1</openrdf.version>
-        <owlapi.version>4.1.3</owlapi.version>
-        <karaf.version>4.0.2</karaf.version>
+        <openrdf.version>4.0.2</openrdf.version>
+        <owlapi.version>5.0.3</owlapi.version>
+        <karaf.version>4.0.6</karaf.version>
         <httpclient.version>4.5.2</httpclient.version>
         <jaxrs.version>2.0.1</jaxrs.version>
         <swagger.version>1.5.7</swagger.version>
         <osgi.version>6.0.0</osgi.version>
         <servlet.version>3.1.0</servlet.version>
+        <jackson.version>2.6.3</jackson.version>
+        <guice.version>4.0</guice.version>
+        <poi.version>3.14_1</poi.version>
+        <opencsv.version>3.7</opencsv.version>
+        <commons-io.version>2.4</commons-io.version>
+        <commons-codec.version>1.10</commons-codec.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <commons-beanutils.version>1.9.2</commons-beanutils.version>
+        <commons-collections.version>3.2.1</commons-collections.version>
+        <logback.version>1.1.2</logback.version>
+        <commons-rdf-api.version>0.1.0-incubating</commons-rdf-api.version>
     </properties>
 
     <dependencyManagement>
@@ -104,8 +115,18 @@
             <!-- OWLAPI Dependencies -->
             <dependency>
                 <groupId>net.sourceforge.owlapi</groupId>
-                <artifactId>owlapi-osgidistribution</artifactId>
+                <artifactId>owlapi-distribution</artifactId>
                 <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
 
             <!-- Karaf Dependencies -->
@@ -152,12 +173,12 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.4</version>
+                <version>${commons-io.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.opencsv</groupId>
                 <artifactId>opencsv</artifactId>
-                <version>3.7</version>
+                <version>${opencsv.version}</version>
             </dependency>
             <dependency>
                 <groupId>log4j</groupId>
@@ -202,7 +223,7 @@
             <dependency>
                 <groupId>org.apache.servicemix.bundles</groupId>
                 <artifactId>org.apache.servicemix.bundles.poi</artifactId>
-                <version>3.14_1</version>
+                <version>${poi.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.nimbusds</groupId>
@@ -424,4 +445,11 @@
             <url>http://nexus.matonto.org/repository/matonto-public/</url>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>matonto.hanover.releases</id>
+            <url>http://nexus.matonto.org/repository/matonto-public/</url>
+        </pluginRepository>
+    </pluginRepositories>
 </project>

@@ -41,19 +41,16 @@ describe('Delimited Manager service', function() {
     });
 
     it('should upload a delimited file', function(done) {
-        //Do httpBackend when or expect
         $httpBackend.expectPOST('/matontorest/delimited-files', 
             function(data) {
                 return data instanceof FormData;
             }, function(headers) {
                 return headers['Content-Type'] === undefined;
             }).respond(200, '');
-        //Call method
         delimitedManagerSvc.upload({}).then(function(value) {
             expect(value).toEqual('');
             done();
         });
-        //Call httpBackend.flush()
         $httpBackend.flush();
     });
     describe('should retrieve a preview of an uploaded delimited file', function() {
@@ -75,10 +72,9 @@ describe('Delimited Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('with headers', function() {
+        it('successfully', function() {
             delimitedManagerSvc.fileName = 'test';
             delimitedManagerSvc.separator = ',';
-            delimitedManagerSvc.containsHeaders = true;
             var rowEnd = 5;
             var preview = [[''], [''], [''], [''], ['']];
             var params = createQueryString({
@@ -89,31 +85,12 @@ describe('Delimited Manager service', function() {
                 .respond(200, preview);
             delimitedManagerSvc.previewFile(rowEnd);
             $httpBackend.flush();
-            expect(typeof delimitedManagerSvc.filePreview).toBe('object');
-            expect(delimitedManagerSvc.filePreview.headers).toEqual(preview[0]);
-            expect(delimitedManagerSvc.filePreview.rows.length).toBe(preview.length - 1);
-        });
-        it('without headers', function() {
-            delimitedManagerSvc.fileName = 'test';
-            delimitedManagerSvc.separator = '\t';
-            delimitedManagerSvc.containsHeaders = false;
-            var rowEnd = 5;
-            var preview = [[''], [''], [''], [''], ['']];
-            var params = createQueryString({
-                'rowCount': rowEnd, 
-                'separator': encodeURIComponent(delimitedManagerSvc.separator)
-            });
-            $httpBackend.expectGET('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + params, undefined)
-                .respond(200, preview);
-            delimitedManagerSvc.previewFile(rowEnd);
-            $httpBackend.flush();
-            expect(typeof delimitedManagerSvc.filePreview).toBe('object');
-            expect(delimitedManagerSvc.filePreview.headers).not.toEqual(preview[0]);
-            expect(delimitedManagerSvc.filePreview.headers.length).toBe(preview[0].length);
-            expect(delimitedManagerSvc.filePreview.rows.length).toBe(preview.length);
+            expect(_.isArray(delimitedManagerSvc.dataRows)).toBe(true);
+            expect(delimitedManagerSvc.dataRows.length).toBe(preview.length);
         });
     });
     it('should return mapped data from an uploaded delimited file', function() {
+        var fileName = 'test';
         delimitedManagerSvc.fileName = 'test';
         delimitedManagerSvc.separator = ',';
         delimitedManagerSvc.containsHeaders = true;
@@ -123,9 +100,10 @@ describe('Delimited Manager service', function() {
             'format': format,
             'mappingIRI': mappingId,
             'containsHeaders': delimitedManagerSvc.containsHeaders, 
-            'separator': delimitedManagerSvc.separator
+            'separator': delimitedManagerSvc.separator,
+            'fileName': fileName
         });
-        delimitedManagerSvc.map(mappingId, format);
+        delimitedManagerSvc.map(mappingId, format, fileName);
         expect(windowSvc.location).toEqual('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map' + params);
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {
@@ -175,5 +153,35 @@ describe('Delimited Manager service', function() {
             });
             $httpBackend.flush();
         });
+    });
+    describe('should retrieve the header name of a column based on the index', function() {
+        beforeEach(function() {
+            this.index = 0;
+        })
+        it('if there are no data rows', function() {
+            delimitedManagerSvc.dataRows = undefined;
+            var result = delimitedManagerSvc.getHeader(this.index);
+            expect(result).toContain(`${this.index}`);
+        });
+        it('if the data rows contain a header row', function() {
+            delimitedManagerSvc.dataRows = [['']];
+            delimitedManagerSvc.containsHeaders = true;
+            var result = delimitedManagerSvc.getHeader(this.index);
+            expect(result).toBe(delimitedManagerSvc.dataRows[0][this.index]);
+        });
+        it('if the data rows do not contain a header row', function() {
+            delimitedManagerSvc.dataRows = [['']];
+            delimitedManagerSvc.containsHeaders = false;
+            var result = delimitedManagerSvc.getHeader(this.index);
+            expect(result).toContain(`${this.index}`);
+        });
+    });
+    it('should reset important variables', function() {
+        delimitedManagerSvc.reset();
+        expect(delimitedManagerSvc.dataRows).toBe(undefined);
+        expect(delimitedManagerSvc.fileName).toBe('');
+        expect(delimitedManagerSvc.separator).toBe(',');
+        expect(delimitedManagerSvc.containsHeaders).toBe(true);
+        expect(delimitedManagerSvc.preview).toBe('');
     });
 });

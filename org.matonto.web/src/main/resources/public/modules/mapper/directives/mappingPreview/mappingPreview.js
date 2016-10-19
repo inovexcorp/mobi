@@ -38,10 +38,11 @@
          * @name mappingPreview.directive:mappingPreview
          * @scope
          * @restrict E
-         * @requires  $q
+         * @requires  prefixes.service:prefixes
          * @requires  ontologyManager.service:ontologyManagerService
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
+         * @requires  delimitedManager.service:delimitedManagerService
          *
          * @description 
          * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with 
@@ -51,9 +52,9 @@
          */
         .directive('mappingPreview', mappingPreview);
 
-        mappingPreview.$inject = ['$q', 'prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService'];
+        mappingPreview.$inject = ['prefixes', 'mappingManagerService', 'mapperStateService', 'ontologyManagerService', 'delimitedManagerService'];
 
-        function mappingPreview($q, prefixes, mappingManagerService, mapperStateService, ontologyManagerService) {
+        function mappingPreview(prefixes, mappingManagerService, mapperStateService, ontologyManagerService, delimitedManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,39 +65,12 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.om = ontologyManagerService;
+                    dvm.dm = delimitedManagerService;
 
-                    dvm.useMapping = function() {
-                        var deferred = $q.defer();
-                        dvm.state.editMapping = true;
-                        dvm.state.newMapping = false;
-                        var ontologyId = dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld);
-                        var ontology = _.find(dvm.om.list, {ontologyId: ontologyId});
-                        if (ontology) {
-                            var obj = _.pick(ontology, ['ontologyId', 'ontology']);
-                            deferred.resolve({id: obj.ontologyId, entities: obj.ontology});
-                        } else {
-                            dvm.mm.getOntology(ontologyId).then(ontology => {
-                                deferred.resolve(ontology);
-                            });
-                        }
-                        deferred.promise.then(ontology => {
-                            dvm.om.getImportedOntologies(ontology.id).then(imported => {
-                                var importedOntologies = _.map(imported, obj => {
-                                    return {id: obj.id, entities: obj.ontology};
-                                });
-                                dvm.mm.sourceOntologies = _.concat(ontology, importedOntologies);
-                                if (dvm.mm.areCompatible()) {
-                                    dvm.state.step = dvm.state.fileUploadStep;                                
-                                } else {
-                                    dvm.state.invalidOntology = true;
-                                }
-                            });
-                        });
-                    }
                     dvm.ontologyExists = function() {
                         var objs = angular.copy(dvm.om.list);
                         var ids = _.union(dvm.om.ontologyIds, _.map(objs, 'ontologyId'));
-                        return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.mm.mapping.jsonld));
+                        return _.includes(ids, dvm.mm.getSourceOntologyId(dvm.state.mapping.jsonld));
                     }
                     dvm.getClassName = function(classMapping) {
                         return dvm.om.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
@@ -105,7 +79,10 @@
                         return dvm.om.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
                     }
                     dvm.getColumnIndex = function(propMapping) {
-                        return parseInt(propMapping[prefixes.delim + 'columnIndex'][0]['@value'], 10);
+                        return propMapping[prefixes.delim + 'columnIndex'][0]['@value'];
+                    }
+                    dvm.isInvalid = function(propMappingId) {
+                        return _.some(dvm.state.invalidProps, {'@id': propMappingId});
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingPreview/mappingPreview.html'

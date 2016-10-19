@@ -22,13 +22,9 @@
   -->
 <div class="overlay sm">
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <!-- section header -->
         <h6>Download Ontology</h6>
-        
-        <!-- serialization -->
+        <custom-label>Serialization</custom-label>
         <serialization-select ng-model="dvm.serialization"></serialization-select>
-
-        <!-- file name -->
         <div ng-class="{'has-error': dvm.form.fileName.$error.pattern}" class="form-group">
             <label class="control-label">File Name</label>
             <input class="form-control" name="fileName" ng-model="dvm.fileName" ng-pattern="dvm.fileNamePattern" required />
@@ -36,11 +32,9 @@
                 <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
             </p>
         </div>
-
-        <!-- buttons -->
         <div class="btn-container clearfix">
-            <custom-button is-disabled-when="!dvm.serialization || dvm.form.$invalid" on-click="dvm.download()">Download</custom-button>
-            <custom-button on-click="dvm.sm.showDownloadOverlay = false" type="'secondary'">Cancel</custom-button>
+            <button class="btn btn-primary pull-right" ng-disabled="!dvm.serialization || dvm.form.$invalid" ng-click="dvm.download()">Download</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.sm.showDownloadOverlay = false">Cancel</button>
         </div>
     </form>
 </div>

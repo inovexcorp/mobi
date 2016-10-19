@@ -1,0 +1,36 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="tree hierarchy-tree">
+    <ul ng-repeat="node in hierarchy track by node.entityIRI" ng-include="'hierarchy_item'"
+        ng-init="node = node; path = dvm.sm.state.ontologyId + '.' + node.entityIRI"></ul>
+    <script type="text/ng-template" id="hierarchy_item">
+        <tree-item current-entity="dvm.om.getEntityById(dvm.sm.listItem.ontologyId, node.entityIRI)" path="path"
+                   is-active="dvm.sm.getActiveEntityIRI() === node.entityIRI"
+                   is-opened="dvm.sm.getOpened(path)" has-children="!!node.subEntities && node.subEntities.length"
+                   on-click="dvm.sm.selectItem(node.entityIRI)" data-path-to="{{path}}"></tree-item>
+        <li class="container" ng-if="dvm.sm.getOpened(path) && !!node.subEntities && node.subEntities.length" ng-init="parentPath = path">
+            <ul ng-repeat="node in node.subEntities track by node.entityIRI" ng-include="'hierarchy_item'"
+                ng-init="node = node; path = parentPath + '.' + node.entityIRI"></ul>
+        </li>
+    </script>
+</div>

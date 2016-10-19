@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'stateManagerService', 'responseObj', 'prefixes'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'responseObj', 'prefixes'];
 
-        function createIndividualOverlay($filter, ontologyManagerService, stateManagerService, responseObj, prefixes) {
+        function createIndividualOverlay($filter, ontologyManagerService, ontologyStateService, responseObj, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,7 +42,7 @@
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.prefix = _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId), 'iriBegin',
                         dvm.om.getOntologyIRI(dvm.sm.ontology)) + _.get(dvm.om.getListItemById(dvm.sm.state.ontologyId),
@@ -50,7 +50,10 @@
 
                     dvm.individual = {
                         '@id': dvm.prefix,
-                        '@type': []
+                        '@type': [],
+                        matonto: {
+                            created: true
+                        }
                     };
 
                     dvm.subClasses = _.map(dvm.sm.state.subClasses, obj => dvm.ro.getItemIri(obj));
@@ -66,23 +69,29 @@
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
                     }
 
+                    dvm.getItemOntologyIri = function(item) {
+                        return _.get(item, 'ontologyId', dvm.sm.state.ontologyId);
+                    }
+
                     dvm.create = function() {
+                        _.set(dvm.individual, 'matonto.originalIRI', dvm.individual['@id']);
+                        // update relevant lists
+                        var split = $filter('splitIRI')(dvm.individual['@id']);
+                        var listItem = dvm.om.getListItemById(dvm.sm.state.ontologyId);
+                        _.get(listItem, 'individuals').push({namespace:split.begin + split.then, localName: split.end});
+                        var classesWithIndividuals = _.get(listItem, 'classesWithIndividuals');
+                        _.forEach(dvm.individual['@type'], type => {
+                            _.set(listItem, 'classesWithIndividuals', _.union(classesWithIndividuals,
+                                [{ entityIRI: type }]));
+                        });
+                        // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-                        dvm.om.createIndividual(dvm.sm.state.ontologyId, dvm.individual)
-                            .then(response => {
-                                dvm.sm.showCreateIndividualOverlay = false;
-                                dvm.sm.selectItem('individual-editor', response.entityIRI,
-                                    dvm.om.getListItemById(response.ontologyId));
-                                dvm.sm.setOpened(response.ontologyId, dvm.om.getOntologyIRI(response.ontologyId), true);
-                                _.forEach(dvm.individual['@type'], type => {
-                                    if (!_.isEqual(type, prefixes.owl + 'NamedIndividual')
-                                        && !_.includes(dvm.sm.state.classesWithIndividuals, type)) {
-                                        dvm.sm.state.classesWithIndividuals.push(type);
-                                    }
-                                });
-                            }, errorMessage => {
-                                dvm.error = errorMessage;
-                            });
+                        dvm.om.addEntity(dvm.sm.ontology, dvm.individual);
+                        _.set(_.get(listItem, 'index'), dvm.individual['@id'], dvm.sm.ontology.length - 1);
+                        // select the new individual
+                        dvm.sm.selectItem(dvm.individual['@id']);
+                        // hide the overlay
+                        dvm.sm.showCreateIndividualOverlay = false;
                     }
                 }
             }

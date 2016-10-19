@@ -1,0 +1,26 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.ontology-editor-tabset {
+    height: 100%;
+
+    > .tabset > .tabset-headings {
+        background-color: $highlight-blue;
+
+        .heading {
+            &.is-last .heading-text {
+                font-family: FontAwesome;
+                vertical-align: middle;
+                width: auto;
+
+                &:before {
+                    content: '\f067';
+                }
+            }
+
+            .heading-text {
+                width: 100px;
+            }
+        }
+    }
+}

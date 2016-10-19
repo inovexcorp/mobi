@@ -27,9 +27,9 @@
         .module('individualTree', [])
         .directive('individualTree', individualTree);
 
-        individualTree.$inject = ['ontologyManagerService', 'stateManagerService', 'settingsManagerService'];
+        individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'settingsManagerService'];
 
-        function individualTree(ontologyManagerService, stateManagerService, settingsManagerService) {
+        function individualTree(ontologyManagerService, ontologyStateService, settingsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,13 +39,12 @@
                 controller: function() {
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
-
                     dvm.om = ontologyManagerService;
-                    dvm.sm = stateManagerService;
+                    dvm.sm = ontologyStateService;
 
                     dvm.getTreeDisplay = function(entity) {
                         if (treeDisplay === 'pretty') {
-                            return dvm.om.getEntityName(entity);
+                            return dvm.om.getEntityName(entity, dvm.sm.state.type);
                         }
                         return _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', ''));
                     }

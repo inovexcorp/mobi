@@ -23,8 +23,11 @@ package org.matonto.ontology.utils.api;
  * #L%
  */
 
-import org.matonto.rdf.api.*;
-import org.openrdf.model.URI;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.Value;
 
 public interface SesameTransformer {
 
@@ -40,9 +43,9 @@ public interface SesameTransformer {
 
     Resource matontoResource(org.openrdf.model.Resource resource);
 
-    URI sesameURI(IRI iri);
+    org.openrdf.model.IRI sesameIRI(IRI iri);
 
-    IRI matontoIRI(URI sesameURI);
+    IRI matontoIRI(org.openrdf.model.IRI sesameURI);
 
     org.openrdf.model.Value sesameValue(Value value);
 

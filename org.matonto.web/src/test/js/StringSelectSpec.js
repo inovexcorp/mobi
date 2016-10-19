@@ -65,20 +65,20 @@ describe('String Select directive', function() {
         beforeEach(function() {
             isolatedScope = element.isolateScope();
         });
-        it('displayText should be two way bound', function() {
+        it('displayText should be one way bound', function() {
             isolatedScope.displayText = 'new value';
             scope.$digest();
-            expect(scope.displayText).toEqual('new value');
+            expect(scope.displayText).toEqual('');
         });
-        it('mutedText should be two way bound', function() {
+        it('mutedText should be one way bound', function() {
             isolatedScope.mutedText = 'new value';
             scope.$digest();
-            expect(scope.mutedText).toEqual('new value');
+            expect(scope.mutedText).toEqual('');
         });
-        it('selectList should be two way bound', function() {
+        it('selectList should be one way bound', function() {
             isolatedScope.selectList = ['new value'];
             scope.$digest();
-            expect(scope.selectList).toEqual(['new value']);
+            expect(scope.selectList).toEqual([]);
         });
     });
     describe('controller bound variables', function() {
@@ -115,12 +115,12 @@ describe('String Select directive', function() {
             expect(result).toEqual(splitIRIFilter('string').begin + splitIRIFilter('string').then);
         });
         describe('disableChoice', function() {
-            it('when item is not DataTypeProperty or ObjectProperty, returns false', function() {
+            it('when item is not DatatypeProperty or ObjectProperty, returns false', function() {
                 expect(controller.disableChoice('')).toBe(false);
             });
-            describe('when item is DataTypeProperty', function() {
+            describe('when item is DatatypeProperty', function() {
                 beforeEach(function() {
-                    item = prefixes.owl + 'DataTypeProperty';
+                    item = prefixes.owl + 'DatatypeProperty';
                 });
                 it('and ObjectProperty is selected, returns true', function() {
                     controller.bindModel = [prefixes.owl + 'ObjectProperty'];
@@ -134,11 +134,11 @@ describe('String Select directive', function() {
                 beforeEach(function() {
                     item = prefixes.owl + 'ObjectProperty';
                 });
-                it('and DataTypeProperty is selected, returns true', function() {
-                    controller.bindModel = [prefixes.owl + 'DataTypeProperty'];
+                it('and DatatypeProperty is selected, returns true', function() {
+                    controller.bindModel = [prefixes.owl + 'DatatypeProperty'];
                     expect(controller.disableChoice(item)).toBe(true);
                 });
-                it('and DataTypeProperty is not selected, returns false', function() {
+                it('and DatatypeProperty is not selected, returns false', function() {
                     expect(controller.disableChoice(item)).toBe(false);
                 });
             });
