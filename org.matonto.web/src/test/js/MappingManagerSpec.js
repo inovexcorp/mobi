@@ -57,20 +57,31 @@ describe('Mapping Manager service', function() {
         });
     });
 
-    it('should set the correct initial state for previous mapping ids', function() {
-        var mappings = ['mapping1', 'mapping2'];
-        $httpBackend.whenGET('/matontorest/mappings').respond(200, mappings);
-        $httpBackend.flush();
-        expect(mappingManagerSvc.mappingIds.length).toBe(mappings.length);
-        _.forEach(mappingManagerSvc.mappingIds, function(name) {
-            expect(typeof name).toBe('string');
+    it('should reset the service', function() {
+        mappingManagerSvc.mappingIds = [''];
+        mappingManagerSvc.reset();
+        expect(mappingManagerSvc.mappingIds).toEqual([]);
+    });
+    describe('should initialize the list of saved mapping ids', function() {
+        beforeEach(function() {
+            this.mappings = ['mapping1', 'mapping2'];
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET('/matontorest/mappings').respond(function(method, url, data, headers) {
+                return [400, '', {}, 'Error Message'];
+            });
+            mappingManagerSvc.initialize();
+            $httpBackend.flush();
+            expect(mappingManagerSvc.mappingIds).toEqual([]);
+        });
+        it('successfully', function() {
+            $httpBackend.whenGET('/matontorest/mappings').respond(200, this.mappings);
+            mappingManagerSvc.initialize();
+            $httpBackend.flush();
+            expect(mappingManagerSvc.mappingIds).toEqual(this.mappings);
         });
     });
     describe('should upload a mapping', function() {
-        beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-        });
         it('unless an error occurs', function(done) {
             $httpBackend.expectPOST('/matontorest/mappings',
                 function(data) {
@@ -128,8 +139,6 @@ describe('Mapping Manager service', function() {
     });
     describe('should retrieve a mapping by id', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
             this.id = 'mappingname';
         });
         it('unless an error occurs', function(done) {
@@ -163,8 +172,6 @@ describe('Mapping Manager service', function() {
     });
     describe('should delete a mapping by id', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
             this.id = 'mappingname';
         });
         it('unless an error occurs', function(done) {
@@ -452,10 +459,6 @@ describe('Mapping Manager service', function() {
         expect(result).toBe('prop');
     });
     describe('should get an ontology in the correct structure', function() {
-        beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
-        });
         it('unless an error occurs', function(done) {
             ontologyManagerSvc.getOntology.and.returnValue($q.reject({statusText: 'Error message'}));
             mappingManagerSvc.getOntology('').then(function() {
@@ -492,8 +495,6 @@ describe('Mapping Manager service', function() {
     });
     describe('should get the list of source ontologies from the imports closure of the specified ontology', function() {
         beforeEach(function() {
-            $httpBackend.whenGET('/matontorest/mappings').respond(200, []);
-            $httpBackend.flush();
             this.mapping = {jsonld: []};
             this.ontology = {id: 'ontology', entities: []};
             this.importedOntology = {id: 'imported', entities: []};

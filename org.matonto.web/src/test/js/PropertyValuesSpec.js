@@ -53,17 +53,17 @@ describe('Property Values directive', function() {
             element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)"></property-values>'))(scope);
             scope.$digest();
         });
-        it('property should be two way bound', function() {
+        it('property should be one way bound', function() {
             var isolatedScope = element.isolateScope();
             isolatedScope.property = 'test';
             scope.$digest();
-            expect(scope.property).toBe('test');
+            expect(scope.property).toBe('');
         });
-        it('entity should be two way bound', function() {
+        it('entity should be one way bound', function() {
             var isolatedScope = element.isolateScope();
             isolatedScope.entity = {test: 'test'};
             scope.$digest();
-            expect(scope.entity).toEqual({test: 'test'});
+            expect(scope.entity).toEqual({});
         });
         it('edit should be called in the parent scope', function() {
             var isolatedScope = element.isolateScope();

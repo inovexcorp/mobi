@@ -33,7 +33,7 @@
         <!-- endinject -->
     </head>
     <body ng-class="{'collapsed-nav': $root.collapsedNav}">
-        <div ng-if="$state.current.name !== 'login'" class="full-height">
+        <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="full-height">
             <nav ui-view="nav"></nav>
             <div class="main-page">
                 <custom-header page-title="$state.current.data.title"></custom-header>

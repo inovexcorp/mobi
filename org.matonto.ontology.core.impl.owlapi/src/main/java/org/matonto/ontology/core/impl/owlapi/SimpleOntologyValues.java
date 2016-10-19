@@ -27,7 +27,15 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
-import org.matonto.ontology.core.api.*;
+import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.AnonymousIndividual;
+import org.matonto.ontology.core.api.Entity;
+import org.matonto.ontology.core.api.FacetRestriction;
+import org.matonto.ontology.core.api.Individual;
+import org.matonto.ontology.core.api.NamedIndividual;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
+import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
@@ -49,7 +57,6 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotation
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Resource;
@@ -59,7 +66,6 @@ import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWLFacet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationPropertyImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnonymousIndividualImpl;
@@ -73,12 +79,12 @@ import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
 
+import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nonnull;
+import java.util.stream.Stream;
 
 @Component (immediate = true)
 public class SimpleOntologyValues {
@@ -209,6 +215,7 @@ public class SimpleOntologyValues {
      * .
      */
     public static Annotation matontoAnnotation(OWLAnnotation owlAnno) {
+        // TODO: ??? Fix this.
         if (owlAnno == null) {
             return null;
         }
@@ -261,6 +268,7 @@ public class SimpleOntologyValues {
      * .
      */
     public static OWLAnnotation owlapiAnnotation(Annotation anno) {
+        // TODO: ??? Fix this.
         if (anno == null) {
             return null;
         }
@@ -269,13 +277,13 @@ public class SimpleOntologyValues {
             Value value = anno.getValue();
             if (value instanceof IRI) {
                 org.semanticweb.owlapi.model.IRI iri = owlapiIRI((IRI) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, iri, new HashSet<>());
+                return new OWLAnnotationImpl(owlAnnoProperty, iri, Stream.empty());
             } else if (value instanceof Literal) {
                 OWLLiteral literal = owlapiLiteral((Literal) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, literal, new HashSet<>());
+                return new OWLAnnotationImpl(owlAnnoProperty, literal, Stream.empty());
             } else if (value instanceof SimpleAnonymousIndividual) {
                 OWLAnonymousIndividual individual = owlapiAnonymousIndividual((SimpleAnonymousIndividual) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, individual, new HashSet<>());
+                return new OWLAnnotationImpl(owlAnnoProperty, individual, Stream.empty());
             } else {
                 throw new MatontoOntologyException("Invalid annotation value");
             }
@@ -290,13 +298,13 @@ public class SimpleOntologyValues {
             Value value = anno.getValue();
             if (value instanceof IRI) {
                 org.semanticweb.owlapi.model.IRI iri = owlapiIRI((IRI)value);
-                return new OWLAnnotationImpl(owlAnnoProperty, iri, owlAnnos);
+                return new OWLAnnotationImpl(owlAnnoProperty, iri, owlAnnos.stream());
             } else if (value instanceof Literal) {
                 OWLLiteral literal = owlapiLiteral((Literal) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, literal, owlAnnos);
+                return new OWLAnnotationImpl(owlAnnoProperty, literal, owlAnnos.stream());
             } else if (value instanceof SimpleAnonymousIndividual) {
                 OWLAnonymousIndividual individual = owlapiAnonymousIndividual((SimpleAnonymousIndividual)value);
-                return new OWLAnnotationImpl(owlAnnoProperty, individual, owlAnnos);
+                return new OWLAnnotationImpl(owlAnnoProperty, individual, owlAnnos.stream());
             } else {
                 throw new MatontoOntologyException("Invalid annotation value");
             }
@@ -356,8 +364,8 @@ public class SimpleOntologyValues {
         if (owlId == null) {
             return null;
         }
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> ontologyIRI = owlId.getOntologyIRI();
-        com.google.common.base.Optional<org.semanticweb.owlapi.model.IRI> versionIRI = owlId.getVersionIRI();
+        Optional<org.semanticweb.owlapi.model.IRI> ontologyIRI = owlId.getOntologyIRI();
+        Optional<org.semanticweb.owlapi.model.IRI> versionIRI = owlId.getVersionIRI();
         if (versionIRI.isPresent()) {
             return new SimpleOntologyId.Builder(factory).ontologyIRI(matontoIRI(ontologyIRI.get()))
                 .versionIRI(matontoIRI(versionIRI.get())).build();
@@ -381,11 +389,10 @@ public class SimpleOntologyValues {
             Optional<IRI> ontologyIRI = simpleId.getOntologyIRI();
             Optional<IRI> versionIRI = simpleId.getVersionIRI();
             if (versionIRI.isPresent()) {
-                return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(ontologyIRI.get())),
-                    com.google.common.base.Optional.of(owlapiIRI(versionIRI.get())));
+                return new OWLOntologyID(Optional.of(owlapiIRI(ontologyIRI.get())),
+                        Optional.of(owlapiIRI(versionIRI.get())));
             } else if (ontologyIRI.isPresent()) {
-                return new OWLOntologyID(com.google.common.base.Optional.of(owlapiIRI(ontologyIRI.get())),
-                    com.google.common.base.Optional.absent());
+                return new OWLOntologyID(Optional.of(owlapiIRI(ontologyIRI.get())), Optional.empty());
             } else {
                 return new OWLOntologyID();
             }

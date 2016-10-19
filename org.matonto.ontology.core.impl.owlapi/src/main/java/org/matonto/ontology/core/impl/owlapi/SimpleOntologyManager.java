@@ -40,8 +40,13 @@ import org.matonto.persistence.utils.Models;
 import org.matonto.persistence.utils.Statements;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.*;
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
@@ -52,16 +57,28 @@ import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 import javax.annotation.Nonnull;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 
 @Component (provide = OntologyManager.class,
@@ -86,8 +103,10 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
     private static final String GET_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
+    private static final String GET_SEARCH_RESULTS;
     private static final String GRAPH_BINDING = "graph";
     private static final String ENTITY_BINDING = "entity";
+    private static final String SEARCH_TEXT = "searchText";
 
     static {
         try {
@@ -133,6 +152,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-concept-relationships.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_SEARCH_RESULTS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -272,7 +299,7 @@ public class SimpleOntologyManager implements OntologyManager {
             OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
                     .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
             parser.parse(new RioMemoryTripleSource(sesameModel), onto, config);
-        } catch (OWLOntologyCreationException | IOException e) {
+        } catch (OWLOntologyCreationException e) {
             throw new MatontoOntologyException("Unable to create an ontology object", e);
         } catch (RepositoryException e) {
             throw new MatontoOntologyException("Error in repository connection", e);
@@ -591,6 +618,15 @@ public class SimpleOntologyManager implements OntologyManager {
         RepositoryConnection conn = repository.getConnection();
         TupleQuery query = conn.prepareTupleQuery(GET_CONCEPT_RELATIONSHIPS);
         query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        return query.evaluate();
+    }
+
+    @Override
+    public TupleQueryResult getSearchResults(String ontologyIdStr, String searchText) {
+        RepositoryConnection conn = repository.getConnection();
+        TupleQuery query = conn.prepareTupleQuery(GET_SEARCH_RESULTS);
+        query.setBinding(GRAPH_BINDING, factory.createIRI(ontologyIdStr));
+        query.setBinding(SEARCH_TEXT, factory.createLiteral(searchText.toLowerCase()));
         return query.evaluate();
     }
 }

@@ -107,23 +107,23 @@ describe('SPARQL Result Table directive', function() {
             expect(tbody.querySelectorAll('tr').length).toBe(scope.sparqlManagerService.data.paginatedResults.results.length);
         });
         it('shows error message if populated', function() {
-            var errorP = element.querySelectorAll('.text-danger');
+            var errorP = element.find('error-display');
             expect(errorP.length).toBe(0);
 
             scope.sparqlManagerService.errorMessage = 'Error message';
             scope.$digest();
 
-            errorP = element.querySelectorAll('.text-danger');
+            errorP = element.find('error-display');
             expect(errorP.length).toBe(1);
         });
         it('shows info message if populated', function() {
-            var errorP = element.querySelectorAll('.text-info');
+            var errorP = element.find('info-message');
             expect(errorP.length).toBe(0);
 
             scope.sparqlManagerService.infoMessage = 'Info message';
             scope.$digest();
 
-            errorP = element.querySelectorAll('.text-info');
+            errorP = element.find('info-message');
             expect(errorP.length).toBe(1);
         });
     });

@@ -58,6 +58,7 @@
             'customLabel',
             'errorDisplay',
             'fileInput',
+            'infoMessage',
             'pagination',
             'radioButton',
             'tab',
@@ -78,6 +79,9 @@
 
             /* Custom Services */
             'catalogManager',
+            'delimitedManager',
+            'loginManager',
+            'mapperState',
             'mappingManager',
             'ontologyManager',
             'ontologyState',
@@ -85,6 +89,7 @@
             'propertyManager',
             'responseObj',
             'settingsManager',
+            'sparqlManager',
             'updateRefs'
         ])
         .constant('_', window._)
