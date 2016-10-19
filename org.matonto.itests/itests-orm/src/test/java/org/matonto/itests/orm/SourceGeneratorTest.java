@@ -45,6 +45,7 @@ import org.matonto.rdf.orm.generate.SourceGenerator;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -101,8 +102,6 @@ public class SourceGeneratorTest {
                 valueFactory.createLiteral("tester@gmail.com"),
                 valueFactory.createIRI("urn://matonto.org/orm/test/account"));
     }
-
-
 
     @Test
     public void testAgent() {
