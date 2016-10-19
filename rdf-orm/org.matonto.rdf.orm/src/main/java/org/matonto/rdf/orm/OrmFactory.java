@@ -5,6 +5,8 @@ import org.matonto.rdf.orm.conversion.ValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -153,6 +155,11 @@ public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
      * @return The IRI string for the type this {@link OrmFactory} works with
      */
     IRI getTypeIRI();
+
+    /**
+     * @return The {@link List} of {@link IRI}s from the hierarchy
+     */
+    Set<IRI> getParentTypeIRIs();
 
     /**
      * @return The type of {@link Thing} extension implementation that this

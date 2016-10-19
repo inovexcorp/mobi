@@ -198,6 +198,17 @@ public class SourceGenerator {
                 getTypeIri.body()
                         ._return(JExpr.ref("valueFactory").invoke("createIRI").arg(interfaze.staticRef("TYPE")));
 
+                // Get the parent type IRIs by adding a hash set of all the parent interface IRIs.
+                final JMethod getParentTypeIRIs = factory.method(JMod.PUBLIC, codeModel.ref(Set.class).narrow(org.matonto.rdf.api.IRI.class),"getParentTypeIRIs");
+                getParentTypeIRIs.annotate(Override.class);
+                JBlock body = getParentTypeIRIs.body();
+                JVar set = body.decl(JMod.FINAL, codeModel.ref(Set.class).narrow(org.matonto.rdf.api.IRI.class),"set",JExpr._new(codeModel.ref(HashSet.class).narrow(org.matonto.rdf.api.IRI.class)));
+                Set<JClass> tracking = new HashSet<JClass>();
+                tracking.add(codeModel.ref(Thing.class));
+                recurseAddParentTypeIris(interfaze,body,set,tracking);
+                body._return(JExpr.ref("set"));
+
+
                 final JMethod setModelFactory = factory.method(JMod.PUBLIC, codeModel.VOID, "setModelFactory");
                 setModelFactory.annotate(Override.class);
                 setModelFactory.annotate(Reference.class);
@@ -227,6 +238,16 @@ public class SourceGenerator {
             throw new OntologyToJavaException("Could not generate POJOs from ontology due to the following issues:\n\t"
                     + StringUtils.join(issues, "\n\t") + "\n\n");
         }
+    }
+
+    private void recurseAddParentTypeIris(JClass interfaze, JBlock body, JVar set, Set<JClass> alreadyHas){
+        interfaze._implements().forEachRemaining(item->{
+            if(!alreadyHas.contains(item)) {
+                body.add(set.invoke("add").arg(JExpr.ref("valueFactory").invoke("createIRI").arg(item.staticRef("TYPE"))));
+                alreadyHas.add(item);
+                recurseAddParentTypeIris(item, body, set,alreadyHas);
+            }
+        });
     }
 
     private void recurseImplementations(JDefinedClass impl, JClass interfaceClass) {
@@ -528,7 +549,6 @@ public class SourceGenerator {
      * Generate each individual interface with its static final predicate
      * fields.
      *
-     * @param issues
      * @throws OntologyToJavaException
      */
     private void generateIndividualInterfaces() throws OntologyToJavaException {
