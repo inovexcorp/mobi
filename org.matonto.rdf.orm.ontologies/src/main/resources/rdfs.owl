@@ -17,37 +17,37 @@
 	xmlns:rdfs='&rdfs;'
 	xmlns:xsd='&xsd;'
 	xmlns:dc='&dc;'>
-	
+
 	<owl:Ontology rdf:about='&rdfs;RDFS'>
-		<owl:versionInfo>1.1</owl:versionInfo>		
+		<owl:versionInfo>1.1</owl:versionInfo>
 		<rdfs:comment>RDFS Classes</rdfs:comment>
 	</owl:Ontology>
-	
+
 	<owl:Class rdf:about="&rdfs;Resource">
 	  <rdfs:label>Resource</rdfs:label>
 	  <rdfs:comment>The class resource, everything.</rdfs:comment>
 	</owl:Class>
-	
+
 	<owl:Class rdf:about="&rdfs;Class">
 	  <rdfs:subClassOf rdf:resource="&rdfs;Resource"/>
 	  <rdfs:label>Class</rdfs:label>
-	  <rdfs:comment>The class of classes.</rdfs:comment>	 	  
+	  <rdfs:comment>The class of classes.</rdfs:comment>
 	</owl:Class>
-	
+
 	<owl:ObjectProperty rdf:about="&rdfs;subClassOf">
 	  <rdfs:label>subClassOf</rdfs:label>
 	  <rdfs:comment>The subject is a subclass of a class.</rdfs:comment>
 	  <rdfs:range rdf:resource="&rdfs;Class"/>
 	  <rdfs:domain rdf:resource="&rdfs;Class"/>
 	</owl:ObjectProperty>
-	
+
 	<owl:ObjectProperty rdf:about="&rdfs;subPropertyOf">
 	  <rdfs:label>subPropertyOf</rdfs:label>
 	  <rdfs:comment>The subject is a subproperty of a property.</rdfs:comment>
 	  <rdfs:range rdf:resource="&rdf;Property"/>
 	  <rdfs:domain rdf:resource="&rdf;Property"/>
 	</owl:ObjectProperty>
-	
+
 	<owl:DatatypeProperty rdf:about="&rdfs;comment">
 	  <rdfs:label>comment</rdfs:label>
 	  <rdfs:comment>A description of the subject resource.</rdfs:comment>
@@ -61,42 +61,42 @@
 	  <rdfs:domain rdf:resource="&rdfs;Resource"/>
 	  <rdfs:range rdf:resource="&xsd;string"/>
 	</owl:DatatypeProperty>
-	
-	<owl:DatatypeProperty rdf:about="&dc;title">
+
+	<!-- <owl:DatatypeProperty rdf:about="&dc;title">
 	  <rdfs:label>title</rdfs:label>
 	  <rdfs:comment>A human-readable name for the subject.</rdfs:comment>
 	  <rdfs:domain rdf:resource="&rdfs;Resource"/>
 	  <rdfs:range rdf:resource="&xsd;string"/>
 	</owl:DatatypeProperty>
-	
+
 	<owl:DatatypeProperty rdf:about="&dc;description">
 	  <rdfs:label>description</rdfs:label>
 	  <rdfs:comment>A human-readable description for the subject.</rdfs:comment>
 	  <rdfs:domain rdf:resource="&rdfs;Resource"/>
 	  <rdfs:range rdf:resource="&xsd;string"/>
-	</owl:DatatypeProperty>
-	
+	</owl:DatatypeProperty> -->
+
 	<owl:ObjectProperty rdf:about="&rdfs;domain">
 	  <rdfs:label>domain</rdfs:label>
 	  <rdfs:comment>A domain of the subject property.</rdfs:comment>
 	  <rdfs:range rdf:resource="&rdfs;Class"/>
 	  <rdfs:domain rdf:resource="&rdf;Property"/>
 	</owl:ObjectProperty>
-	
+
 	<owl:ObjectProperty rdf:about="&rdfs;range">
 	  <rdfs:label>range</rdfs:label>
 	  <rdfs:comment>A range of the subject property.</rdfs:comment>
 	  <rdfs:range rdf:resource="&rdfs;Class"/>
 	  <rdfs:domain rdf:resource="&rdf;Property"/>
 	</owl:ObjectProperty>
-	
+
 	<owl:ObjectProperty rdf:about="&rdfs;seeAlso">
 	  <rdfs:label>seeAlso</rdfs:label>
 	  <rdfs:comment>Further information about the subject resource.</rdfs:comment>
 	  <rdfs:range rdf:resource="&rdfs;Resource"/>
 	  <rdfs:domain   rdf:resource="&rdfs;Resource"/>
 	</owl:ObjectProperty>
-	
+
 	<owl:ObjectProperty rdf:about="&rdfs;isDefinedBy">
 	  <rdfs:subPropertyOf rdf:resource="&rdfs;seeAlso"/>
 	  <rdfs:label>isDefinedBy</rdfs:label>
@@ -104,27 +104,26 @@
 	  <rdfs:range rdf:resource="&rdfs;Resource"/>
 	  <rdfs:domain rdf:resource="&rdfs;Resource"/>
 	</owl:ObjectProperty>
-	
+
 	<owl:Class rdf:about="&rdfs;Literal">
 	  <rdfs:label>Literal</rdfs:label>
 	  <rdfs:comment>The class of literal values, eg. textual strings and integers.</rdfs:comment>
 	  <rdfs:subClassOf rdf:resource="&rdfs;Resource"/>
 	</owl:Class>
 
-	<!-- TODO: Subclassing Issue
 	<owl:Class rdf:about="&rdfs;Container">
 	  <rdfs:label>Container</rdfs:label>
 	  <rdfs:subClassOf rdf:resource="&rdfs;Resource"/>
 	  <rdfs:comment>The class of RDF containers.</rdfs:comment>
 	</owl:Class>
-	
+
 	<owl:Class rdf:about="&rdfs;ContainerMembershipProperty">
 	  <rdfs:label>ContainerMembershipProperty</rdfs:label>
 	  <rdfs:comment>The class of container membership properties, rdf:_1, rdf:_2, ...,
 	                    all of which are sub-properties of 'member'.</rdfs:comment>
 	  <rdfs:subClassOf rdf:resource="&rdf;Property"/>
 	</owl:Class>
-	-->
+
 
 	<owl:ObjectProperty rdf:about="&rdfs;member">
 	  <rdfs:label>member</rdfs:label>
@@ -133,14 +132,13 @@
 	  <rdfs:range rdf:resource="&rdfs;Resource"/>
 	</owl:ObjectProperty>
 
-    <!-- TODO: Subclassing Issue
-	<owl:Class rdf:about="&rdfs;Datatype">		
+	<owl:Class rdf:about="&rdfs;Datatype">
 	  <rdfs:label>Datatype</rdfs:label>
 	  <rdfs:comment>The class of RDF datatypes.</rdfs:comment>
 	  <rdfs:subClassOf rdf:resource="&rdfs;Class"/>
 	</owl:Class>
-	-->
-	
+
+
 	<owl:Class rdf:about="&rdf;Property">
 	   <rdfs:subClassOf rdf:resource="&rdfs;Resource"/>
 	 <rdfs:label>Property</rdfs:label>
@@ -150,41 +148,40 @@
 			<owl:Restriction owl:cardinality="1">
 				<owl:onProperty rdf:resource="&rdfs;domain"/>
 			</owl:Restriction>
-		</rdfs:subClassOf>	
+		</rdfs:subClassOf>
 		<rdfs:subClassOf>
 			<owl:Restriction owl:cardinality="1">
 				<owl:onProperty rdf:resource="&rdfs;range"/>
 			</owl:Restriction>
 		</rdfs:subClassOf>-->
 	</owl:Class>
-	
+
 	<owl:ObjectProperty rdf:about="&rdf;type">
-	  <rdfs:label>type</rdfs:label>	
+	  <rdfs:label>type</rdfs:label>
 	  <rdfs:comment>The subject is an instance of a class.</rdfs:comment>
 	  <rdfs:range rdf:resource="&rdfs;Class"/>
 	  <rdfs:domain rdf:resource="&rdfs;Resource"/>
 	</owl:ObjectProperty>
 
-	<!-- TODO: Subclassing Issue
 	<owl:Class rdf:about="&rdf;Bag">
 	  <rdfs:label>Bag</rdfs:label>
 	  <rdfs:comment>The class of unordered containers.</rdfs:comment>
 	  <rdfs:subClassOf rdf:resource="&rdfs;Container"/>
 	</owl:Class>
-	
+
 	<owl:Class rdf:about="&rdf;Seq">
 	  <rdfs:label>Seq</rdfs:label>
 	  <rdfs:comment>The class of ordered containers.</rdfs:comment>
 	  <rdfs:subClassOf rdf:resource="&rdfs;Container"/>
 	</owl:Class>
-	
+
 	<owl:Class rdf:about="&rdf;Alt">
 	  <rdfs:label>Alt</rdfs:label>
 	  <rdfs:comment>The class of containers of alternatives.</rdfs:comment>
 	  <rdfs:subClassOf rdf:resource="&rdfs;Container"/>
 	</owl:Class>
-	-->
-	
+
+
 	<owl:ObjectProperty rdf:about="&rdf;value">
 	  <rdfs:label>value</rdfs:label>
 	  <rdfs:comment>Idiomatic property used for structured values.</rdfs:comment>
@@ -192,7 +189,6 @@
 	  <rdfs:range rdf:resource="&rdfs;Resource"/>
 	</owl:ObjectProperty>
 
-	<!-- TODO: Subclassing Issue
 	<owl:Class rdf:about="&rdf;List">
 	  <rdfs:label>List</rdfs:label>
 	  <rdfs:comment>The class of RDF Lists.</rdfs:comment>
@@ -217,6 +213,6 @@
 	  <rdfs:domain rdf:resource="&rdf;List"/>
 	  <rdfs:range rdf:resource="&rdf;List"/>
 	</owl:ObjectProperty>
-	-->
+
 
 </rdf:RDF>
