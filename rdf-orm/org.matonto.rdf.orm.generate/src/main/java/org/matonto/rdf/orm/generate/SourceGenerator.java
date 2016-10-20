@@ -27,7 +27,6 @@ import aQute.bnd.annotation.component.Reference;
 import com.sun.codemodel.*;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.AbstractOrmFactory;
@@ -39,6 +38,7 @@ import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import org.matonto.rdf.orm.impl.ThingImpl;
 import org.openrdf.model.IRI;
 import org.openrdf.model.Model;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.RDF;
@@ -68,11 +68,18 @@ public class SourceGenerator {
     private Map<JDefinedClass, Map<String, IRI>> interfaceFieldRangeMap = new HashMap<>();
     private Map<JDefinedClass, Map<JMethod, JFieldVar>> classMethodIriMap = new HashMap<>();
     private Map<JDefinedClass, JDefinedClass> interfaceImplMap = new HashMap<>();
+    private final List<ReferenceOntology> referenceOntologies = new ArrayList<>();
 
-    public SourceGenerator(final Model ontologyGraph, final String outputPackage)
+    public SourceGenerator(final Model ontologyGraph, final String outputPackage, final Collection<ReferenceOntology> referenceOntologies)
             throws OntologyToJavaException, IOException {
+        if (referenceOntologies != null) {
+            this.referenceOntologies.addAll(referenceOntologies);
+        }
         this.model = ontologyGraph;
         this.packageName = outputPackage;
+        // LOG if we're not referencing an imported ontology.
+        checkImports(this.model, this.referenceOntologies);
+        this.referenceOntologies.stream().forEach(ont -> checkImports(ont.getOntologyModel(), this.referenceOntologies));
         // Built interfaces...
         generateIndividualInterfaces();
         // Link the interfaces inheritence-wise.
@@ -83,12 +90,30 @@ public class SourceGenerator {
         generateImplementations();
         // Build factories.
         generateFactories();
-        // TODO - Generate ValueConverters for generated types.
     }
 
-    public static void toSource(final Model model, final String outputPackage, final String location)
+    /**
+     * Simple method to LOG some warnings if we aren't importing referenced ontologies.
+     */
+    private static void checkImports(final Model checkingModel, final List<ReferenceOntology> referenceOntologies) {
+        checkingModel.filter(null, OWL.IMPORTS, null).stream().forEach(stmt -> {
+            boolean contains = false;
+            for (ReferenceOntology refOnt : referenceOntologies) {
+                Optional<org.openrdf.model.Resource> resource = refOnt.getOntologyModel().filter(null, RDF.TYPE, OWL.ONTOLOGY).stream().filter(ontStmt -> ontStmt.getSubject().equals(stmt.getObject())).map(ontStmt -> ontStmt.getSubject()).findFirst();
+                if (resource.isPresent()) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) {
+                LOG.warn(String.format("Potential error: Generate ontology '%s' specifies that it imports '%s', but it isn't referenced", stmt.getSubject().stringValue(), stmt.getObject().stringValue()));
+            }
+        });
+    }
+
+    public static void toSource(final Model model, final String outputPackage, final String location, final Collection<ReferenceOntology> referencedOntologies)
             throws OntologyToJavaException, IOException {
-        final SourceGenerator generator = new SourceGenerator(model, outputPackage);
+        final SourceGenerator generator = new SourceGenerator(model, outputPackage, referencedOntologies);
         generator.build(location);
     }
 
@@ -107,16 +132,13 @@ public class SourceGenerator {
      * This method will simply convert a given IRI to its name by pulling off
      * the end of the IRI.
      *
-     * @param capitalize
-     *            Whether or not to capitalize the first letter of the name
-     * @param iri
-     *            The {@link IRI} to process
-     * @param model
-     *            The {@link Model} to process statements from (should contain
-     *            the ontology)
+     * @param capitalize Whether or not to capitalize the first letter of the name
+     * @param iri        The {@link IRI} to process
+     * @param model      The {@link Model} to process statements from (should contain
+     *                   the ontology)
      * @return The name of the field we'll use
      */
-    private static String getName(final boolean capitalize, final IRI iri, final Model model) {
+    public static String getName(final boolean capitalize, final IRI iri, final Model model) {
         final String classIriString = iri.stringValue();
         String className = classIriString.contains("#") ? classIriString.substring(classIriString.lastIndexOf('#') + 1)
                 : classIriString.contains("/") ? classIriString.substring(classIriString.lastIndexOf('/') + 1) : null;
@@ -131,8 +153,7 @@ public class SourceGenerator {
      * Simple method to strip whitespaces from the name. It will also ensure it
      * is a valid class or field name.
      *
-     * @param input
-     *            The input string
+     * @param input The input string
      * @return The stripped and cleaned output name
      */
     private static String stripWhiteSpace(final String input) {
@@ -287,7 +308,6 @@ public class SourceGenerator {
                         codeModel.ref(Class.class).narrow(interfaceClass.wildcard()), DEFAULT_IMPL_FIELD,
                         impl.dotclass()).javadoc().add("The default implementation for this interface");
             } catch (Exception e) {
-                e.printStackTrace();
                 issues.add("Issue generating implementation for '" + classIri.stringValue() + "': " + e.getMessage());
             }
         });
@@ -298,7 +318,7 @@ public class SourceGenerator {
     }
 
     private void generateFieldAccessorsForEachInterfaceMethod(final JDefinedClass impl,
-            final JDefinedClass interfaceClass) {
+                                                              final JDefinedClass interfaceClass) {
         interfaceClass.methods().forEach(interfaceMethod -> {
             LOG.debug("Adding " + interfaceMethod.name() + " to the implementation class: " + interfaceClass.name());
             // Generate getter.
@@ -307,14 +327,13 @@ public class SourceGenerator {
             }
             // Generate setter.
             else if (interfaceMethod.name().startsWith("set")) {
-                // TODO
                 generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
             }
         });
     }
 
     private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
-            final JDefinedClass interfaceClass) {
+                                            final JDefinedClass interfaceClass) {
         if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
             final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
             method.param(interfaceMethod.params().get(0).type(), "arg");
@@ -337,12 +356,12 @@ public class SourceGenerator {
             // JDocComment jdoc = method.javadoc();
             // jdoc.add("");
         } else {
-            LOG.warn("Avoided dupliace setter method: " + interfaceMethod.name() + " on class: " + impl.name());
+            LOG.warn("Avoided duplicate setter method: " + interfaceMethod.name() + " on class: " + impl.name());
         }
     }
 
     private void generateFieldGetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
-            final JDefinedClass interfaceClass) {
+                                            final JDefinedClass interfaceClass) {
         if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
             final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
             method._throws(OrmException.class);
@@ -352,7 +371,7 @@ public class SourceGenerator {
             // jdoc.add("");
             convertValueBody(interfaceClass, interfaceMethod, impl, method);
         } else {
-            LOG.warn("Avoided dupliace getter method: " + interfaceMethod.name() + " on class: " + impl.name());
+            LOG.warn("Avoided duplicate getter method: " + interfaceMethod.name() + " on class: " + impl.name());
         }
     }
 
@@ -368,7 +387,7 @@ public class SourceGenerator {
         basicDoc.addParam("subjectIri").add("The subject of this " + interfaceClazz.name());
         basicDoc.addParam("valueFactory").add("The value factory to use for this " + interfaceClazz.name());
         basicDoc.addParam("backingModel").add("The backing dataset/model of this " + interfaceClazz.name());
-        basicDoc.addParam("valueConversionRegistry")
+        basicDoc.addParam("valueConverterRegistry")
                 .add("The ValueConversionRegistry for this " + interfaceClazz.name());
 
         final JMethod constructor2 = impl.constructor(JMod.PUBLIC);
@@ -378,7 +397,7 @@ public class SourceGenerator {
                 .arg(constructor2.param(JMod.FINAL, ValueConverterRegistry.class, "valueConversionRegistry"));
         JDocComment basicDoc2 = constructor2.javadoc();
         basicDoc2.add("Construct a new " + interfaceClazz.name() + " with the subject IRI and the backing dataset");
-        basicDoc2.addParam("subjectIri").add("The subject of this " + interfaceClazz.name());
+        basicDoc2.addParam("subjectIriStr").add("The subject of this " + interfaceClazz.name());
         basicDoc2.addParam("valueFactory").add("The value factory to use for this " + interfaceClazz.name());
         basicDoc2.addParam("backingModel").add("The backing dataset/model of this " + interfaceClazz.name());
         basicDoc2.addParam("valueConversionRegistry")
@@ -428,7 +447,7 @@ public class SourceGenerator {
     }
 
     private JMethod generateGetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
-            final String name, final String fieldName, final IRI propertyIri, final JClass type) {
+                                                     final String name, final String fieldName, final IRI propertyIri, final JClass type) {
         final JMethod method = clazz.method(JMod.PUBLIC, type,
                 generateMethodName(type.equals(boolean.class) ? "is" : "get", name));
         method._throws(OrmException.class);
@@ -440,7 +459,7 @@ public class SourceGenerator {
     }
 
     private JMethod generateSetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
-            final String name, final String fieldName, final IRI propertyIri, final JClass type) {
+                                                     final String name, final String fieldName, final IRI propertyIri, final JClass type) {
         final JMethod method = clazz.method(JMod.PUBLIC, codeModel.VOID, generateMethodName("set", name));
         method._throws(OrmException.class);
         method.param(type, "arg");
@@ -510,7 +529,23 @@ public class SourceGenerator {
                     final IRI extending = (IRI) stmt.getObject();
                     if (!extending.equals(OWL.THING)) {
                         LOG.debug("Class '" + iri.stringValue() + "' extends '" + extending + "'");
-                        clazz._implements(interfaces.get(extending));
+                        if (interfaces.containsKey(extending)) {
+                            clazz._implements(interfaces.get(extending));
+                        } else {
+                            referenceOntologies.stream().forEach(refOnt -> {
+                                if (refOnt.containsClass(extending)) {
+                                    if (refOnt.getSourceGenerator() == null) {
+                                        try {
+                                            refOnt.generateSource(referenceOntologies);
+                                        }catch(Exception e){
+                                            issues.add("Problem generating referenced data: "+e.getMessage());
+                                        }
+                                    }
+                                    clazz._implements(refOnt.getSourceGenerator().getCodeModel()._getClass(refOnt.getClassName(extending)));
+                                    this.classMethodIriMap.putAll(refOnt.getSourceGenerator().getClassMethodIriMap());
+                                }
+                            });
+                        }
                     }
                 } else if (value instanceof org.openrdf.model.Resource) {
                     // TODO - handle blank nodes somehow
@@ -530,10 +565,8 @@ public class SourceGenerator {
      * This method will take a root IRI identifying a class, and then populate a
      * list with the complete ancestry of that class.
      *
-     * @param root
-     *            The IRI to climb the ancestry tree of
-     * @param parents
-     *            The parent entities
+     * @param root    The IRI to climb the ancestry tree of
+     * @param parents The parent entities
      */
     private void getAncestors(final IRI root, final List<IRI> parents) {
         List<IRI> firstLevel = this.model.filter(root, RDFS.SUBCLASSOF, null).stream()
@@ -553,13 +586,6 @@ public class SourceGenerator {
      */
     private void generateIndividualInterfaces() throws OntologyToJavaException {
         final List<String> issues = new ArrayList<>();
-        final List<IRI> allDomainPredicates = new ArrayList<>();
-        this.model.filter(null, OWL.DATATYPEPROPERTY, null).subjects().forEach(resource -> {
-            final Model submodel = model.filter(resource, RDFS.DOMAIN, null);
-            if (submodel.size() == 0) {
-                allDomainPredicates.add((IRI) resource);
-            }
-        });
 
         identifyClasses().forEach(classIri -> {
             try {
@@ -582,25 +608,27 @@ public class SourceGenerator {
                 final Map<String, IRI> fieldIriMap = new HashMap<>();
                 final Map<String, IRI> rangeMap = new HashMap<>();
 
+
                 // Look for properties on this domain.
-                this.model.filter(null, RDFS.DOMAIN, classIri).stream().filter(stmt -> {
+                final  Collection<Resource> resources = this.model.filter(null, RDFS.DOMAIN, classIri).subjects().stream().filter(subj -> {
                     for (final IRI ancestorIri : ancestors) {
-                        if (this.model.filter(stmt.getSubject(), RDFS.DOMAIN, ancestorIri).size() > 0) {
+                        if (this.model.filter(subj, RDFS.DOMAIN, ancestorIri).size() > 0) {
                             return false;
                         }
                     }
                     return true;
-                }).forEach(stmt -> {
-                    LOG.debug("Adding '" + stmt.getSubject().stringValue() + "' to '" + classIri.stringValue()
+                }).collect(Collectors.toSet());
+                resources.stream().filter(resource -> resource instanceof IRI).forEach(resource -> {
+                    LOG.debug("Adding '" + resource.stringValue() + "' to '" + classIri.stringValue()
                             + "' as it specifies it in its range");
 
                     // Set a static final field for the IRI.
-                    final String fieldName = getName(false, (IRI) stmt.getSubject(), this.model);
-                    final IRI range = getRangeOfProperty((IRI) stmt.getSubject());
+                    final String fieldName = getName(false, (IRI) resource, this.model);
+                    final IRI range = getRangeOfProperty((IRI) resource);
                     clazz.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, fieldName + "_IRI",
-                            JExpr.lit(stmt.getSubject().stringValue())).javadoc()
+                            JExpr.lit(resource.stringValue())).javadoc()
                             .add("IRI of the predicate that this property will represent.<br><br>Domain: " + range);
-                    fieldIriMap.put(fieldName + "_IRI", (IRI) stmt.getSubject());
+                    fieldIriMap.put(fieldName + "_IRI", (IRI) resource);
                     rangeMap.put(fieldName, range);
                 });
                 interfaceFieldIriMap.put(clazz, fieldIriMap);
@@ -621,8 +649,7 @@ public class SourceGenerator {
     /**
      * Gets the range of a given property IRI.
      *
-     * @param propertyIri
-     *            The property to fetch the range of
+     * @param propertyIri The property to fetch the range of
      * @return The IRI representing the range of the property
      */
     private IRI getRangeOfProperty(final IRI propertyIri) {
@@ -637,10 +664,9 @@ public class SourceGenerator {
     /**
      * Determines whether or not a supplied property IRI is functional.
      *
-     * @param propertyIri
-     *            The {@link IRI} of the property to check
+     * @param propertyIri The {@link IRI} of the property to check
      * @return Whether or not the {@link IRI} is the subject in a statement
-     *         saying it is a owl:FunctionalProperty.
+     * saying it is a owl:FunctionalProperty.
      */
     private boolean isPropertyFunctional(final IRI propertyIri) {
         return !this.model.filter(propertyIri, RDF.TYPE, OWL.FUNCTIONALPROPERTY).isEmpty();
@@ -651,14 +677,14 @@ public class SourceGenerator {
      * owl:Class.
      *
      * @return The {@link Collection} of {@link IRI}s that are classes in the
-     *         ontology
+     * ontology
      */
     private Collection<IRI> identifyClasses() {
         final Model submodel = this.model.filter(null, RDF.TYPE, OWL.CLASS);
-        classIris = new ArrayList<IRI>(submodel.size());
-        submodel.forEach(statement -> {
-            classIris.add((IRI) statement.getSubject());
-        });
+        classIris = new ArrayList<>(submodel.size());
+        submodel.stream()
+                .filter(statement -> statement.getSubject() instanceof IRI)
+                .forEach(statement -> classIris.add((IRI) statement.getSubject()));
         return classIris;
     }
 
@@ -672,13 +698,17 @@ public class SourceGenerator {
     }
 
     private JBlock convertValueBody(final JDefinedClass interfaceClass, final JMethod interfaceMethod,
-            final JDefinedClass implClass, final JMethod implMethod) {
+                                    final JDefinedClass implClass, final JMethod implMethod) {
         final boolean returnsSet = interfaceMethod.type().fullName().startsWith("java.util.Set");
 
         JType returnType = (returnsSet) ? codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Value.class)
                 : codeModel.ref(Optional.class).narrow(org.matonto.rdf.api.Value.class);
-        JExpression callGet = JExpr.invoke(returnsSet ? "getProperties" : "getProperty").arg(JExpr.ref("valueFactory")
-                .invoke("createIRI").arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)));
+
+
+        JExpression callGet = classMethodIriMap.containsKey(interfaceClass) ?
+                JExpr.invoke(returnsSet ? "getProperties" : "getProperty").arg(JExpr.ref("valueFactory")
+                        .invoke("createIRI").arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod)))
+                : null;
 
         final JVar value = implMethod.body().decl(JMod.FINAL, returnType, "value", callGet);
 
@@ -714,4 +744,27 @@ public class SourceGenerator {
         return null;
     }
 
+    public JCodeModel getCodeModel() {
+        return codeModel;
+    }
+
+    public Map<JDefinedClass, JDefinedClass> getInterfaceImplMap() {
+        return interfaceImplMap;
+    }
+
+    public Map<JDefinedClass, Map<String, IRI>> getInterfaceFieldIriMap() {
+        return interfaceFieldIriMap;
+    }
+
+    public Map<JDefinedClass, Map<JMethod, JFieldVar>> getClassMethodIriMap() {
+        return classMethodIriMap;
+    }
+
+    public Map<JDefinedClass, Map<String, IRI>> getInterfaceFieldRangeMap() {
+        return interfaceFieldRangeMap;
+    }
+
+    public Map<IRI, JDefinedClass> getInterfaces() {
+        return interfaces;
+    }
 }
