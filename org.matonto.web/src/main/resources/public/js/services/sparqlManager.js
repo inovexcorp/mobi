@@ -198,6 +198,10 @@
             }
             function onError(response) {
                 self.errorMessage = getMessage(response, 'A server error has occurred. Please try again later.');
+                // self.errorMessage = _.get(response, 'statusMessage');
+                if (response.responseText) {//&& response.headers.get('Content-Type') == 'application/json') {
+                    self.errorDetails = _.get(JSON.parse(response.responseText), 'detailedMessage');
+                }
             }
         }
 })();

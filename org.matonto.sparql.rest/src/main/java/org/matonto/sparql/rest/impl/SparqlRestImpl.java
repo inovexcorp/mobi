@@ -36,15 +36,16 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.jaxb.MatOntoRestResponse;
 import org.matonto.rest.util.jaxb.PaginatedResults;
 import org.matonto.sparql.rest.SparqlRest;
 import org.matonto.sparql.rest.jaxb.SparqlPaginatedResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 
 @Component(immediate = true)
 public class SparqlRestImpl implements SparqlRest {
@@ -69,8 +70,20 @@ public class SparqlRestImpl implements SparqlRest {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             return query.evaluate();
         } catch (MalformedQueryException ex) {
-            throw ErrorUtils.sendError("Query is invalid. Please change the query and re-execute.",
-                    Response.Status.BAD_REQUEST);
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+
+            MatOntoRestResponse restResponse = new MatOntoRestResponse();
+            restResponse.setSuccess(false);
+            restResponse.setStatus(Response.Status.BAD_REQUEST.getStatusCode());
+            restResponse.setStatusText(statusText);
+            restResponse.setDetailedMessage(ex.getMessage());
+
+            Response response = Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(JSONObject.fromObject(restResponse).toString())
+                    .build();
+
+            throw ErrorUtils.sendError(ex, statusText, response);
         }
     }
 

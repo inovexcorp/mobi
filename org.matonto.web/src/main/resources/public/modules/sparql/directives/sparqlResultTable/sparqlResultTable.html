@@ -37,6 +37,7 @@
             </table>
             <error-display ng-if="dvm.sparql.errorMessage" class="message">{{dvm.sparql.errorMessage}}</error-display>
             <info-message ng-if="dvm.sparql.infoMessage" class="message">{{dvm.sparql.infoMessage}}</info-message>
+            <pre ng-if="dvm.sparql.errorMessage">{{dvm.sparql.errorDetails}}</pre>
         </block-content>
         <block-footer ng-if="dvm.sparql.data.paginatedResults">
             <div class="paging-details clearfix">
