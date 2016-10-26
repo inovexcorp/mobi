@@ -196,7 +196,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
     public T createNew(Resource resource, Model model, ValueFactory valueFactory,
                        ValueConverterRegistry valueConverterRegistry) {
         model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI),
-                valueFactory.createLiteral(typeIriString)));
+                valueFactory.createIRI(typeIriString)));
         getParentTypeIRIs().stream().forEach(iri->{
             model.add(valueFactory.createStatement(resource, valueFactory.createIRI(OrmFactory.RDF_TYPE_IRI), iri));
         });
