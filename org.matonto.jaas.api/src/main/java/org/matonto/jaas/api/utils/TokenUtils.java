@@ -1,4 +1,4 @@
-package org.matonto.jaas.utils;
+package org.matonto.jaas.api.utils;
 
 /*-
  * #%L

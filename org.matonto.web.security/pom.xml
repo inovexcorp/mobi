@@ -45,8 +45,13 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>jaas</artifactId>
-            <version>1.2.10</version>
+            <artifactId>jaas.api</artifactId>
+            <version>1.3.11-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas.modules</artifactId>
+            <version>1.3.11-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>

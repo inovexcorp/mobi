@@ -23,8 +23,10 @@ package org.matonto.web.authentication;
  * #L%
  */
 
-import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.log4j.Logger;
+import org.matonto.jaas.api.config.MatontoConfiguration;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.Role;
 import org.matonto.web.security.util.RestSecurityUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -53,13 +55,18 @@ public abstract class AuthHttpContext implements HttpContext {
 
     private final ConcurrentMap<String, URL> resourceCache = new ConcurrentHashMap<>();
 
-    protected JaasRealm realm;
+    protected MatontoConfiguration configuration;
+    protected EngineManager engineManager;
 
-    private final static String REQUIRED_ROLE = "user";
-    private final static String ROLE_CLASS = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
+    private final static String REQUIRED_ROLE = "http://matonto.org/roles/user";
+    private final static String USER_CLASS = "org.matonto.org.jaas.principals.UserPrincipal";
 
-    public void setRealm(JaasRealm realm) {
-        this.realm = realm;
+    public void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    public void setConfiguration(MatontoConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     /**
@@ -121,15 +128,19 @@ public abstract class AuthHttpContext implements HttpContext {
 
     public Optional<Subject> doAuthenticate(final String username, final String password) {
         Subject subject = new Subject();
-        String realmName = realm.getName();
 
-        if (!RestSecurityUtils.authenticateUser(realmName, subject, username, password)) {
+        if (!RestSecurityUtils.authenticateUser("matonto", subject, username, password, configuration)) {
+            log.info("Authentication failed");
             return Optional.empty();
         }
 
+        Principal user = subject.getPrincipals().stream()
+                .filter(p -> p.getClass().getName().equals(USER_CLASS))
+                .findFirst()
+                .get();
         boolean found = false;
-        for (Principal p : subject.getPrincipals()) {
-            if (p.getClass().getName().equals(ROLE_CLASS) && p.getName().equals(REQUIRED_ROLE)) {
+        for (Role role : engineManager.getUserRoles(user.getName())) {
+            if (role.getResource().stringValue().equals(REQUIRED_ROLE)) {
                 found = true;
                 break;
             }

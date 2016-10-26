@@ -195,6 +195,16 @@
             <artifactId>rdf.orm.ontologies</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas.proxy</artifactId>
+            <version>1.3.11-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

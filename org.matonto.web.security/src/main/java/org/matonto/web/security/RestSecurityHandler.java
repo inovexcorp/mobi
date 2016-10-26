@@ -27,31 +27,35 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
 import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.karaf.jaas.boot.principal.RolePrincipal;
-import org.apache.karaf.jaas.config.JaasRealm;
 import org.apache.log4j.Logger;
-import org.matonto.jaas.utils.TokenUtils;
+import org.matonto.jaas.api.config.MatontoConfiguration;
+import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.Role;
+import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.web.security.util.RestSecurityUtils;
 
 import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Component(immediate = true)
 public class RestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
-
+    private final static String USER_CLASS = "org.matonto.jaas.api.principals.UserPrincipal";
     private static final Logger LOG = Logger.getLogger(RestSecurityHandler.class.getName());
 
-    protected JaasRealm realm;
-    private final static String ROLE_CLASS = "org.apache.karaf.jaas.boot.principal.RolePrincipal";
+    protected MatontoConfiguration matOntoConfiguration;
+    protected EngineManager engineManager;
 
-    @Reference(target = "(realmId=matonto)")
-    protected void setRealm(JaasRealm realm) {
-        this.realm = realm;
+    @Reference
+    protected void setMatOntoConfiguration(MatontoConfiguration configuration) {
+        this.matOntoConfiguration = configuration;
+    }
+
+    @Reference
+    protected void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 
     @Override
@@ -59,18 +63,14 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
         Subject subject = new Subject();
         String tokenString = TokenUtils.getTokenString(containerRequestContext);
 
-        if (!RestSecurityUtils.authenticateToken(realm.getName(), subject, tokenString)) {
+        if (!RestSecurityUtils.authenticateToken("matonto", subject, tokenString, matOntoConfiguration)) {
             return null;
         }
 
-        Set<String> roles = subject.getPrincipals().stream()
-                .filter(p -> p.getClass().getName().equals(ROLE_CLASS))
-                .map(Principal::getName)
-                .collect(Collectors.toSet());
-
-        // Return all roles as comma separated String because this security provider forces us
-        // to return a Principal instead of a Subject. Lame.
-        return new RolePrincipal(StringUtils.join(roles, ","));
+        Optional<Principal> principal = subject.getPrincipals().stream()
+                .filter(p -> p.getClass().getName().equals(USER_CLASS))
+                .findFirst();
+        return principal.get();
     }
 
     @Override
@@ -80,9 +80,9 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
     @Override
     public boolean isUserInRole(Principal principal, String role) {
-        if (principal.getClass().getName().equals(ROLE_CLASS)) {
-            for (String userRole : principal.getName().split(",")) {
-                if (userRole.equals(role)) {
+        if (principal.getClass().getName().equals(USER_CLASS)) {
+            for (Role roleObj : engineManager.getUserRoles(principal.getName())) {
+                if (roleObj.getResource().stringValue().equals(role)) {
                     return true;
                 }
             }
