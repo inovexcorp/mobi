@@ -23,49 +23,35 @@ package org.matonto.jaas.engines;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.metatype.Configurable;
+import aQute.bnd.annotation.component.Reference;
 import org.apache.log4j.Logger;
 import org.matonto.jaas.api.engines.Engine;
 import org.matonto.jaas.api.engines.EngineManager;
-import org.matonto.jaas.api.engines.EngineManagerConfig;
-import org.matonto.jaas.api.ontologies.usermanagement.Group;
-import org.matonto.jaas.api.ontologies.usermanagement.Role;
-import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.matonto.jaas.api.ontologies.usermanagement.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component(
         immediate = true,
-        name = SimpleEngineManager.COMPONENT_NAME,
-        designateFactory = EngineManagerConfig.class
+        name = SimpleEngineManager.COMPONENT_NAME
     )
 public class SimpleEngineManager implements EngineManager {
     public static final String COMPONENT_NAME = "org.matonto.jaas.api.engines.EngineManager";
     private final Logger log = Logger.getLogger(SimpleEngineManager.class);
     protected Map<String, Engine> engines = new HashMap<>();
 
-    @Activate
-    protected void start(BundleContext context, Map<String, Object> props) {
-        log.info("Activating SimpleEngineManager");
-        EngineManagerConfig config = Configurable.createConfigurable(EngineManagerConfig.class, props);
-        for (String engineName : config.engines()) {
-            if (!engines.containsKey(engineName)) {
-                ServiceReference ref = context.getServiceReference(engineName);
-                if (ref != null) {
-                    log.info("Adding engine " + engineName);
-                    engines.put(engineName, (Engine) context.getService(ref));
-                } else {
-                    log.info("Engine " + engineName + " could not be found");
-                }
-            }
-        }
+    private final String userNamespace = "http://matonto.org/users/";
+    private final String groupNamespace = "http://matonto.org/groups/";
+    private final String roleNamespace = "http://matonto.org/roles/";
+
+    @Reference(type = '*', dynamic = true)
+    public void addEngine(Engine engine) {
+        engines.put(engine.getClass().getName(), engine);
+    }
+
+    public void removeEngine(Engine engine) {
+        engines.remove(engine.getClass().getName());
     }
 
     @Override
@@ -85,80 +71,102 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Set<User> getUsers(String engine) {
-        return null;
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).getUsers();
+        }
+        return new HashSet<>();
     }
 
     @Override
     public boolean storeUser(String engine, User user) {
-        return false;
+        return engines.containsKey(engine) && engines.get(engine).storeUser(user);
     }
 
     @Override
     public Optional<User> retrieveUser(String engine, String userId) {
-        return null;
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).retrieveUser(userId);
+        }
+        return Optional.empty();
     }
 
     @Override
     public boolean deleteUser(String engine, String userId) {
-        return false;
+        return engines.containsKey(engine) && engines.get(engine).deleteUser(userId);
     }
 
     @Override
-    public boolean updateUser(String engine, String userId, User newUser) {
-        return false;
+    public boolean updateUser(String engine, User newUser) {
+        return engines.containsKey(engine) && engines.get(engine).updateUser(newUser);
     }
 
     @Override
     public boolean userExists(String engine, String userId) {
-        if (engines.containsKey(engine)) {
-            return ((Engine) engines.get(engine)).userExists(userId);
+        return engines.containsKey(engine) && engines.get(engine).userExists(userId);
+    }
+
+    @Override
+    public boolean userExists(String userId) {
+        for (Engine engine : engines.values()) {
+            if (engine.userExists(userId)) {
+                return true;
+            }
         }
         return false;
     }
 
     @Override
-    public boolean userExists(String userId) {
-        return false;
-    }
-
-    @Override
     public Set<Group> getGroups(String engine) {
-        return null;
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).getGroups();
+        }
+        return new HashSet<>();
     }
 
     @Override
     public boolean storeGroup(String engine, Group group) {
-        return false;
+        return engines.containsKey(engine) && engines.get(engine).storeGroup(group);
     }
 
     @Override
     public Optional<Group> retrieveGroup(String engine, String groupId) {
-        return null;
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).retrieveGroup(groupId);
+        }
+        return Optional.empty();
     }
 
     @Override
     public boolean deleteGroup(String engine, String groupId) {
-        return false;
+        return engines.containsKey(engine) && engines.get(engine).deleteGroup(groupId);
     }
 
     @Override
-    public boolean updateGroup(String engine, String groupId, Group newGroup) {
-        return false;
+    public boolean updateGroup(String engine, Group newGroup) {
+        return engines.containsKey(engine) && engines.get(engine).updateGroup(newGroup);
     }
 
     @Override
     public boolean groupExists(String engine, String groupId) {
-        return false;
+        return engines.containsKey(engine) && engines.get(engine).groupExists(groupId);
     }
 
     @Override
     public boolean groupExists(String groupId) {
+        for (Engine engine : engines.values()) {
+            if (engine.groupExists(groupId)) {
+                return true;
+            }
+        }
         return false;
     }
 
     @Override
     public Set<Role> getUserRoles(String engine, String userId) {
-        return null;
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).getUserRoles(userId);
+        }
+        return new HashSet<>();
     }
 
     @Override
@@ -168,6 +176,6 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public boolean checkPassword(String engine, String userId, String password) {
-        return false;
+        return engines.containsKey(engine) && engines.get(engine).checkPassword(userId, password);
     }
 }

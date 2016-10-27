@@ -45,7 +45,7 @@ public interface EngineManager {
 
     boolean deleteUser(String engine, String userId);
 
-    boolean updateUser(String engine, String userId, User newUser);
+    boolean updateUser(String engine, User newUser);
 
     boolean userExists(String engine, String userId);
 
@@ -59,7 +59,7 @@ public interface EngineManager {
 
     boolean deleteGroup(String engine, String groupId);
 
-    boolean updateGroup(String engine, String groupId, Group newGroup);
+    boolean updateGroup(String engine, Group newGroup);
 
     boolean groupExists(String engine, String groupId);
 

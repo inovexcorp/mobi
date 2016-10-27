@@ -39,7 +39,7 @@ public interface Engine {
 
     boolean deleteUser(String userId);
 
-    boolean updateUser(String userId, User newUser);
+    boolean updateUser(User newUser);
 
     boolean userExists(String userId);
 
@@ -51,7 +51,7 @@ public interface Engine {
 
     boolean deleteGroup(String groupId);
 
-    boolean updateGroup(String groupId, Group newGroup);
+    boolean updateGroup(Group newGroup);
 
     boolean groupExists(String groupId);
 

@@ -27,23 +27,28 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.*;
-import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.api.ValueFactory;
+import org.matonto.ontologies.foaf.Agent;
+import org.matonto.ontologies.foaf.AgentFactory;
+import org.matonto.rdf.api.*;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import org.matonto.rdf.orm.conversion.impl.*;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RdfEngineTest {
     private Repository repo;
@@ -54,10 +59,14 @@ public class RdfEngineTest {
     private UserFactory userFactory = new UserFactory();
     private GroupFactory groupFactory = new GroupFactory();
     private RoleFactory roleFactory = new RoleFactory();
+    private AgentFactory agentFactory = new AgentFactory();
 
     private String userId = "http://matonto.org/users/tester";
     private String password = "test";
     private String groupId = "http://matonto.org/groups/testers";
+    private String userRoleId = "http://matonto.org/roles/user";
+    private String adminRoleId = "http://matonto.org/roles/admin";
+    private boolean setUp = false;
 
     @Before
     public void setUp() throws Exception {
@@ -73,10 +82,14 @@ public class RdfEngineTest {
         roleFactory.setModelFactory(mf);
         roleFactory.setValueFactory(vf);
         roleFactory.setValueConverterRegistry(vcr);
+        agentFactory.setModelFactory(mf);
+        agentFactory.setValueFactory(vf);
+        agentFactory.setValueConverterRegistry(vcr);
 
         vcr.registerValueConverter(userFactory);
         vcr.registerValueConverter(groupFactory);
         vcr.registerValueConverter(roleFactory);
+        vcr.registerValueConverter(agentFactory);
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -94,14 +107,30 @@ public class RdfEngineTest {
         engine.setUserFactory(userFactory);
         engine.setGroupFactory(groupFactory);
         engine.setRoleFactory(roleFactory);
+        engine.setAgentFactory(agentFactory);
 
-        User testUser = userFactory.createNew(vf.createIRI(userId));
-        testUser.setPassword(vf.createLiteral(password));
-        Group testGroup = groupFactory.createNew(vf.createIRI(groupId));
-        RepositoryConnection conn = repo.getConnection();
-        conn.add(testUser.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
-        conn.add(testGroup.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
-        conn.close();
+        if (!setUp) {
+            Role userRole = roleFactory.createNew(vf.createIRI(userRoleId));
+            Role adminRole = roleFactory.createNew(vf.createIRI(adminRoleId));
+            Set<Role> roles = new HashSet<>();
+            roles.add(userRole);
+            User testUser = userFactory.createNew(vf.createIRI(userId));
+            testUser.setPassword(vf.createLiteral(password));
+            testUser.setHasUserRole(roles);
+            Group testGroup = groupFactory.createNew(vf.createIRI(groupId));
+            roles.add(adminRole);
+            testGroup.setHasGroupRole(roles);
+            Set<Agent> members = new HashSet<>();
+            members.add(testUser);
+            testGroup.setMember(members);
+            RepositoryConnection conn = repo.getConnection();
+            conn.add(userRole.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
+            conn.add(adminRole.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
+            conn.add(testUser.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
+            conn.add(testGroup.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
+            conn.close();
+            setUp = true;
+        }
 
         engine.activate();
     }
@@ -111,12 +140,40 @@ public class RdfEngineTest {
         repo.shutDown();
     }
 
-    /*@Test
+    @Test
     public void testGetUsers() throws Exception {
         Set<User> users = engine.getUsers();
         
         Assert.assertTrue(!users.isEmpty());
-    }*/
+    }
+
+    @Test
+    public void testStoreUser() throws Exception {
+        Resource newUserId = vf.createIRI("http://matonto.org/users/newuser");
+        User newUser = userFactory.createNew(newUserId);
+        boolean result = engine.storeUser(newUser);
+
+        Assert.assertTrue(result);
+        RepositoryConnection connection = repo.getConnection();
+        RepositoryResult<Statement> statements = connection.getStatements(newUserId, null, null);
+        Assert.assertTrue(statements.hasNext());
+        connection.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testStoreUserThatAlreadyExists() {
+        User user = userFactory.createNew(vf.createIRI(userId));
+        engine.storeUser(user);
+    }
+
+    @Test
+    public void testUserExists() throws Exception {
+        boolean result = engine.userExists(userId);
+        Assert.assertTrue(result);
+
+        result = engine.userExists("http://matonto.org/users/error");
+        Assert.assertFalse(result);
+    }
 
     @Test
     public void testRetrieveUser() throws Exception {
@@ -129,12 +186,88 @@ public class RdfEngineTest {
         Assert.assertTrue(user.getPassword().get().stringValue().equals(password));
     }
 
-    /*@Test
+    @Test
+    public void testRetrieveUserThatDoesNotExist() throws Exception {
+        Optional<User> userOptional = engine.retrieveUser("http://matonto.org/users/error");
+        Assert.assertFalse(userOptional.isPresent());
+    }
+
+    @Test
+    public void testUpdateUser() throws Exception {
+        User newUser = userFactory.createNew(vf.createIRI(userId));
+        newUser.setPassword(vf.createLiteral("123"));
+        newUser.setUsername(vf.createLiteral("user"));
+        boolean result = engine.updateUser(newUser);
+
+        Assert.assertTrue(result);
+        Model userModel = mf.createModel();
+        RepositoryConnection connection = repo.getConnection();
+        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(userId), null, null);
+        statements.forEach(userModel::add);
+        connection.close();
+        Assert.assertFalse(userModel.isEmpty());
+        User savedUser = userFactory.getExisting(vf.createIRI(userId), userModel);
+        Assert.assertTrue(savedUser.getPassword().isPresent() && savedUser.getPassword().get().stringValue().equals("123"));
+        Assert.assertTrue(savedUser.getUsername().isPresent() && savedUser.getUsername().get().stringValue().equals("user"));
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testUpdateUserThatDoesNotExist() {
+        User newUser = userFactory.createNew(vf.createIRI("http://matonto.org/users/error"));
+        engine.updateUser(newUser);
+    }
+
+    @Test
+    public void testDeleteUser() throws Exception {
+        boolean result = engine.deleteUser(userId);
+        Assert.assertTrue(result);
+        RepositoryConnection connection = repo.getConnection();
+        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(userId), null, null);
+        Assert.assertTrue(!statements.hasNext());
+        statements = connection.getStatements(null, null, vf.createIRI(userId));
+        Assert.assertTrue(!statements.hasNext());
+        connection.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testDeleteUserThatDoesNotExist() {
+        engine.deleteUser("http://matonto.org/users/error");
+    }
+
+    @Test
     public void testGetGroups() throws Exception {
         Set<Group> groups= engine.getGroups();
 
         Assert.assertTrue(!groups.isEmpty());
-    }*/
+    }
+
+    @Test
+    public void testStoreGroup() throws Exception {
+        Resource newGroupId = vf.createIRI("http://matonto.org/users/newgroup");
+        Group newGroup = groupFactory.createNew(newGroupId);
+        boolean result = engine.storeGroup(newGroup);
+
+        Assert.assertTrue(result);
+        RepositoryConnection connection = repo.getConnection();
+        RepositoryResult<Statement> statements = connection.getStatements(newGroupId, null, null);
+        Assert.assertTrue(statements.hasNext());
+        connection.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testStoreGroupThatAlreadyExists() {
+        Group group= groupFactory.createNew(vf.createIRI(groupId));
+        engine.storeGroup(group);
+    }
+
+    @Test
+    public void testGroupExists() throws Exception {
+        boolean result = engine.groupExists(groupId);
+        Assert.assertTrue(result);
+
+        result = engine.groupExists("http://matonto.org/groups/error");
+        Assert.assertFalse(result);
+    }
 
     @Test
     public void testRetrieveGroup() throws Exception {
@@ -143,5 +276,64 @@ public class RdfEngineTest {
         Assert.assertTrue(groupOptional.isPresent());
         Group group = groupOptional.get();
         Assert.assertTrue(group.getResource().stringValue().equals(groupId));
+    }
+
+    @Test
+    public void testRetrieveGroupThatDoesNotExist() throws Exception {
+        Optional<Group> groupOptional= engine.retrieveGroup("http://matonto.org/groups/error");
+        Assert.assertFalse(groupOptional.isPresent());
+    }
+
+    @Test
+    public void testUpdateGroup() throws Exception {
+        Group newGroup = groupFactory.createNew(vf.createIRI(groupId));
+        boolean result = engine.updateGroup(newGroup);
+
+        Assert.assertTrue(result);
+        Model groupModel = mf.createModel();
+        RepositoryConnection connection = repo.getConnection();
+        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId), null, null);
+        statements.forEach(groupModel::add);
+        connection.close();
+        Assert.assertFalse(groupModel.isEmpty());
+        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId), groupModel);
+        Assert.assertTrue(savedGroup.getMember().isEmpty());
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testUpdateGroupThatDoesNotExist() {
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://matonto.org/groups/error"));
+        engine.updateGroup(newGroup);
+    }
+
+    @Test
+    public void testDeleteGroup() throws Exception {
+        boolean result = engine.deleteGroup(groupId);
+        Assert.assertTrue(result);
+        RepositoryConnection connection = repo.getConnection();
+        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId), null, null);
+        Assert.assertTrue(!statements.hasNext());
+        connection.close();
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testDeleteGroupThatDoesNotExist() {
+        engine.deleteGroup("http://matonto.org/group/error");
+    }
+
+    @Test
+    public void testGetUserRoles() throws Exception {
+        Set<Role> roles = engine.getUserRoles(userId);
+        Assert.assertFalse(roles.isEmpty());
+        Set<Resource> roleIds = roles.stream()
+                .map(Thing::getResource)
+                .collect(Collectors.toSet());
+        Assert.assertTrue(roleIds.contains(vf.createIRI(userRoleId)));
+        Assert.assertTrue(roleIds.contains(vf.createIRI(adminRoleId)));
+    }
+
+    @Test(expected = MatOntoException.class)
+    public void testGetUserRolesThatDoesNotExist() {
+        engine.getUserRoles("http://matonto.org/users/error");
     }
 }
