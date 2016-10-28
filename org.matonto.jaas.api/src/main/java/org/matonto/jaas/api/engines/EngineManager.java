@@ -33,9 +33,9 @@ import java.util.Set;
 public interface EngineManager {
     boolean containsEngine(String engine);
 
-    User createUser(String username, String password);
+    User createUser(String engine, UserConfig userConfig);
 
-    Group createGroup(String title);
+    Group createGroup(String engine, GroupConfig groupConfig);
 
     Set<User> getUsers(String engine);
 

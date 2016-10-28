@@ -33,6 +33,8 @@ import java.util.Set;
 public interface Engine {
     Set<User> getUsers();
 
+    User createUser(UserConfig userConfig);
+
     boolean storeUser(User user);
 
     Optional<User> retrieveUser(String userId);
@@ -44,6 +46,8 @@ public interface Engine {
     boolean userExists(String userId);
 
     Set<Group> getGroups();
+
+    Group createGroup(GroupConfig groupConfig);
 
     boolean storeGroup(Group group);
 

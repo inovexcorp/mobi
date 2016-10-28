@@ -23,11 +23,15 @@ package org.matonto.jaas.engines;
  * #L%
  */
 
+import org.apache.karaf.jaas.modules.Encryption;
+import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.exception.MatOntoException;
+import org.matonto.jaas.api.engines.GroupConfig;
+import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.*;
 import org.matonto.ontologies.foaf.Agent;
 import org.matonto.ontologies.foaf.AgentFactory;
@@ -42,13 +46,13 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RdfEngineTest {
     private Repository repo;
@@ -60,6 +64,7 @@ public class RdfEngineTest {
     private GroupFactory groupFactory = new GroupFactory();
     private RoleFactory roleFactory = new RoleFactory();
     private AgentFactory agentFactory = new AgentFactory();
+    private ThingFactory thingFactory = new ThingFactory();
 
     private String userId = "http://matonto.org/users/tester";
     private String password = "test";
@@ -67,6 +72,7 @@ public class RdfEngineTest {
     private String userRoleId = "http://matonto.org/roles/user";
     private String adminRoleId = "http://matonto.org/roles/admin";
     private boolean setUp = false;
+    private Map<String, Object> options = new HashMap<>();
 
     @Before
     public void setUp() throws Exception {
@@ -85,11 +91,15 @@ public class RdfEngineTest {
         agentFactory.setModelFactory(mf);
         agentFactory.setValueFactory(vf);
         agentFactory.setValueConverterRegistry(vcr);
+        thingFactory.setModelFactory(mf);
+        thingFactory.setValueFactory(vf);
+        thingFactory.setValueConverterRegistry(vcr);
 
         vcr.registerValueConverter(userFactory);
         vcr.registerValueConverter(groupFactory);
         vcr.registerValueConverter(roleFactory);
         vcr.registerValueConverter(agentFactory);
+        vcr.registerValueConverter(thingFactory);
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -107,21 +117,19 @@ public class RdfEngineTest {
         engine.setUserFactory(userFactory);
         engine.setGroupFactory(groupFactory);
         engine.setRoleFactory(roleFactory);
-        engine.setAgentFactory(agentFactory);
+        engine.setThingFactory(thingFactory);
 
         if (!setUp) {
             Role userRole = roleFactory.createNew(vf.createIRI(userRoleId));
             Role adminRole = roleFactory.createNew(vf.createIRI(adminRoleId));
-            Set<Role> roles = new HashSet<>();
-            roles.add(userRole);
+            Set<Role> roles = Stream.of(userRole).collect(Collectors.toSet());
             User testUser = userFactory.createNew(vf.createIRI(userId));
             testUser.setPassword(vf.createLiteral(password));
             testUser.setHasUserRole(roles);
             Group testGroup = groupFactory.createNew(vf.createIRI(groupId));
             roles.add(adminRole);
             testGroup.setHasGroupRole(roles);
-            Set<Agent> members = new HashSet<>();
-            members.add(testUser);
+            Set<Agent> members = Stream.of(testUser).collect(Collectors.toSet());
             testGroup.setMember(members);
             RepositoryConnection conn = repo.getConnection();
             conn.add(userRole.getModel(), vf.createIRI("http://matonto.org/usermanagement"));
@@ -132,7 +140,13 @@ public class RdfEngineTest {
             setUp = true;
         }
 
-        engine.activate();
+        options.put("encryption.enabled", false);
+        options.put("encryption.name", "basic");
+        options.put("encryption.prefix", "{CRYPT}");
+        options.put("encryption.suffix", "{CRYPT}");
+        options.put("encryption.algorithm", "MD5");
+        options.put("encryption.encoding", "hexadecimal");
+        engine.start(options);
     }
 
     @After
@@ -143,8 +157,26 @@ public class RdfEngineTest {
     @Test
     public void testGetUsers() throws Exception {
         Set<User> users = engine.getUsers();
-        
         Assert.assertTrue(!users.isEmpty());
+    }
+
+    @Test
+    public void testCreateUser() throws Exception {
+        Set<String> roles = Stream.of("user").collect(Collectors.toSet());
+        UserConfig config = new UserConfig.Builder("user", "password", roles).email("example@example.com")
+                .firstName("John").lastName("Doe").build();
+        User user = engine.createUser(config);
+
+        Assert.assertTrue(user.getResource().stringValue().contains("user"));
+        Assert.assertTrue(user.getUsername().isPresent() && user.getUsername().get().stringValue().equals("user"));
+        Assert.assertTrue(user.getPassword().isPresent() && user.getPassword().get().stringValue().equals("password"));
+        Assert.assertTrue(user.getHasUserRole().size() == roles.size());
+        Assert.assertTrue(!user.getMbox().isEmpty() && user.getMbox().size() == 1);
+        Assert.assertTrue(user.getMbox().stream().map(thing -> thing.getResource().stringValue()).collect(Collectors.toSet()).contains("mailto:example@example.com"));
+        Assert.assertTrue(!user.getFirstName().isEmpty() && user.getFirstName().size() == 1);
+        Assert.assertTrue(user.getFirstName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("John"));
+        Assert.assertTrue(!user.getLastName().isEmpty() && user.getLastName().size() == 1);
+        Assert.assertTrue(user.getLastName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("Doe"));
     }
 
     @Test
@@ -237,8 +269,24 @@ public class RdfEngineTest {
     @Test
     public void testGetGroups() throws Exception {
         Set<Group> groups= engine.getGroups();
-
         Assert.assertTrue(!groups.isEmpty());
+    }
+
+    @Test
+    public void testCreateGroup() throws Exception {
+        Set<String> members = Stream.of("tester").collect(Collectors.toSet());
+        Set<String> roles = Stream.of("user").collect(Collectors.toSet());
+        GroupConfig config = new GroupConfig.Builder("group").description("Test")
+                .members(members).roles(roles).build();
+        Group group = engine.createGroup(config);
+
+        Assert.assertTrue(group.getResource().stringValue().contains("group"));
+        Assert.assertTrue(group.getMember().size() == members.size());
+        Assert.assertTrue(group.getHasGroupRole().size() == roles.size());
+        Assert.assertTrue(group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
+                && group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals("group"));
+        Assert.assertTrue(group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
+                && group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).get().stringValue().equals("Test"));
     }
 
     @Test
@@ -335,5 +383,14 @@ public class RdfEngineTest {
     @Test(expected = MatOntoException.class)
     public void testGetUserRolesThatDoesNotExist() {
         engine.getUserRoles("http://matonto.org/users/error");
+    }
+
+    @Test
+    public void testCheckPasswordWithoutEncryption() throws Exception {
+        boolean result = engine.checkPassword(userId, password);
+        Assert.assertTrue(result);
+
+        result = engine.checkPassword(userId, "password");
+        Assert.assertFalse(result);
     }
 }

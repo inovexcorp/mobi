@@ -28,9 +28,13 @@ import aQute.bnd.annotation.component.Reference;
 import org.apache.log4j.Logger;
 import org.matonto.jaas.api.engines.Engine;
 import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.engines.GroupConfig;
+import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.*;
+import org.matonto.rdf.orm.Thing;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component(
         immediate = true,
@@ -40,10 +44,6 @@ public class SimpleEngineManager implements EngineManager {
     public static final String COMPONENT_NAME = "org.matonto.jaas.api.engines.EngineManager";
     private final Logger log = Logger.getLogger(SimpleEngineManager.class);
     protected Map<String, Engine> engines = new HashMap<>();
-
-    private final String userNamespace = "http://matonto.org/users/";
-    private final String groupNamespace = "http://matonto.org/groups/";
-    private final String roleNamespace = "http://matonto.org/roles/";
 
     @Reference(type = '*', dynamic = true)
     public void addEngine(Engine engine) {
@@ -60,21 +60,19 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public User createUser(String username, String password) {
-        return null;
-    }
-
-    @Override
-    public Group createGroup(String title) {
-        return null;
-    }
-
-    @Override
     public Set<User> getUsers(String engine) {
         if (engines.containsKey(engine)) {
             return engines.get(engine).getUsers();
         }
         return new HashSet<>();
+    }
+
+    @Override
+    public User createUser(String engine, UserConfig userConfig) {
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).createUser(userConfig);
+        }
+        return null;
     }
 
     @Override
@@ -121,6 +119,14 @@ public class SimpleEngineManager implements EngineManager {
             return engines.get(engine).getGroups();
         }
         return new HashSet<>();
+    }
+
+    @Override
+    public Group createGroup(String engine, GroupConfig groupConfig) {
+        if (engines.containsKey(engine)) {
+            return engines.get(engine).createGroup(groupConfig);
+        }
+        return null;
     }
 
     @Override
@@ -171,7 +177,17 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Set<Role> getUserRoles(String userId) {
-        return null;
+        Set<Role> roles = new HashSet<>();
+        for (Engine engine : engines.values()) {
+            engine.getUserRoles(userId).stream()
+                    .filter(role -> !roles.stream()
+                            .map(Thing::getResource)
+                            .collect(Collectors.toSet()).contains(role.getResource()))
+                    .forEach(roles::add);
+
+        }
+
+        return roles;
     }
 
     @Override

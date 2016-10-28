@@ -24,29 +24,37 @@ package org.matonto.jaas.engines;
  */
 
 import aQute.bnd.annotation.component.*;
+import aQute.bnd.annotation.metatype.Configurable;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.karaf.jaas.modules.Encryption;
+import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
 import org.apache.log4j.Logger;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.Engine;
+import org.matonto.jaas.api.engines.GroupConfig;
+import org.matonto.jaas.api.engines.UserConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.*;
 import org.matonto.ontologies.foaf.Agent;
 import org.matonto.ontologies.foaf.AgentFactory;
 import org.matonto.rdf.api.*;
 import org.matonto.rdf.orm.Thing;
+import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.repository.config.RepositoryConsumerConfig;
 import org.matonto.repository.exception.RepositoryException;
+import org.openrdf.model.vocabulary.DCTERMS;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component(
         name = RdfEngine.COMPONENT_NAME,
-        designateFactory = RepositoryConsumerConfig.class,
-        configurationPolicy = ConfigurationPolicy.require)
+        designateFactory = RdfEngineConfig.class,
+        configurationPolicy = ConfigurationPolicy.require
+)
 public class RdfEngine implements Engine {
     static final String COMPONENT_NAME = "org.matonto.jaas.engines.RdfEngine";
     private static final Logger logger = Logger.getLogger(RdfEngine.class);
@@ -55,33 +63,38 @@ public class RdfEngine implements Engine {
     private final String USER_ROLE = "http://matonto.org/roles/user";
     private final String ADMIN_USER = "http://matonto.org/users/admin";
     private Resource userContext;
+    private EncryptionSupport encryptionSupport;
     private Repository repository;
     private ValueFactory factory;
     private ModelFactory modelFactory;
     private UserFactory userFactory;
     private GroupFactory groupFactory;
     private RoleFactory roleFactory;
-    private AgentFactory agentFactory;
+    private ThingFactory thingFactory;
 
     @Activate
-    public void activate() {
+    public void start(Map<String, Object> props) {
         logger.info("Activating " + COMPONENT_NAME);
+        RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
+        setEncryption(config);
         initUserManagerResources();
 
         RepositoryConnection conn = repository.getConnection();
         conn.begin();
         if (!resourceExists(factory.createIRI(ADMIN_ROLE))) {
-            conn.add(roleFactory.createNew(factory.createIRI(ADMIN_ROLE)).getModel());
+            Role adminRole = roleFactory.createNew(factory.createIRI(ADMIN_ROLE));
+            adminRole.setProperty(factory.createLiteral("admin"), factory.createIRI(DCTERMS.TITLE.stringValue()));
+            conn.add(adminRole.getModel(), userContext);
         }
         if (!resourceExists(factory.createIRI(USER_ROLE))) {
-            conn.add(roleFactory.createNew(factory.createIRI(USER_ROLE)).getModel());
+            Role adminRole = roleFactory.createNew(factory.createIRI(USER_ROLE));
+            adminRole.setProperty(factory.createLiteral("user"), factory.createIRI(DCTERMS.TITLE.stringValue()));
+            conn.add(adminRole.getModel(), userContext);
         }
         if (!resourceExists(factory.createIRI(ADMIN_USER))) {
             Role adminRole = roleFactory.createNew(factory.createIRI(ADMIN_ROLE));
             Role userRole = roleFactory.createNew(factory.createIRI(USER_ROLE));
-            Set<Role> roles = new HashSet<>();
-            roles.add(adminRole);
-            roles.add(userRole);
+            Set<Role> roles = Stream.of(adminRole, userRole).collect(Collectors.toSet());
             User admin = userFactory.createNew(factory.createIRI(ADMIN_USER));
             admin.setPassword(factory.createLiteral("admin"));
             admin.setHasUserRole(roles);
@@ -97,8 +110,10 @@ public class RdfEngine implements Engine {
     }
 
     @Modified
-    public void modified() {
+    public void modified(Map<String, Object> props) {
         logger.info("Modifying the " + COMPONENT_NAME);
+        RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
+        setEncryption(config);
         initUserManagerResources();
     }
 
@@ -133,8 +148,8 @@ public class RdfEngine implements Engine {
     }
 
     @Reference
-    protected void setAgentFactory(AgentFactory agentFactory) {
-        this.agentFactory = agentFactory;
+    protected void setThingFactory(ThingFactory thingFactory) {
+        this.thingFactory = thingFactory;
     }
 
     @Override
@@ -149,6 +164,49 @@ public class RdfEngine implements Engine {
             throw new MatOntoException("Error in repository connection", e);
         }
         return users;
+    }
+
+    @Override
+    public User createUser(UserConfig userConfig) {
+        User user = userFactory.createNew(factory.createIRI("http://matonto.org/users/" + userConfig.getUsername()));
+        user.setUsername(factory.createLiteral(userConfig.getUsername()));
+        String password = userConfig.getPassword();
+        Encryption encryption = encryptionSupport.getEncryption();
+        if (encryption != null) {
+            password = encryptionSupport.getEncryption().encryptPassword(password);
+            if (encryptionSupport.getEncryptionPrefix() != null) {
+                password = encryptionSupport.getEncryptionPrefix() + password;
+            }
+            if (encryptionSupport.getEncryptionSuffix() != null) {
+                password = password + encryptionSupport.getEncryptionSuffix();
+            }
+        }
+        user.setPassword(factory.createLiteral(password));
+        Set<Role> roles = userConfig.getRoles().stream()
+                .map(roleStr -> factory.createIRI("http://matonto.org/roles/" + roleStr))
+                .filter(role -> role.equals(factory.createIRI(ADMIN_ROLE)) || role.equals(factory.createIRI(USER_ROLE)))
+                .map(role1 -> roleFactory.createNew(role1))
+                .collect(Collectors.toSet());
+        if (!roles.isEmpty()) {
+            user.setHasUserRole(roles);
+        }
+
+        if (!userConfig.getEmail().equals("")) {
+            Set<Thing> email = new HashSet<>();
+            email.add(thingFactory.createNew(factory.createIRI("mailto:" + userConfig.getEmail())));
+            user.setMbox(email);
+        }
+        if (!userConfig.getFirstName().equals("")) {
+            Set<Literal> firstName = new HashSet<>();
+            firstName.add(factory.createLiteral(userConfig.getFirstName()));
+            user.setFirstName(firstName);
+        }
+        if (!userConfig.getLastName().equals("")) {
+            Set<Literal> lastName = new HashSet<>();
+            lastName.add(factory.createLiteral(userConfig.getLastName()));
+            user.setLastName(lastName);
+        }
+        return user;
     }
 
     @Override
@@ -228,6 +286,40 @@ public class RdfEngine implements Engine {
             throw new MatOntoException("Error in repository connection", e);
         }
         return groups;
+    }
+
+    @Override
+    public Group createGroup(GroupConfig groupConfig) {
+        Group group = groupFactory.createNew(factory.createIRI("http://matonto.org/groups/" + groupConfig.getTitle()));
+        group.setProperty(factory.createLiteral(groupConfig.getTitle()),
+                factory.createIRI(DCTERMS.TITLE.stringValue()));
+
+        if (groupConfig.getMembers() != null) {
+            Set<Agent> members = groupConfig.getMembers().stream()
+                    .map(userStr -> "http://matonto.org/users/" + userStr)
+                    .filter(this::userExists)
+                    .map(userId -> userFactory.createNew(factory.createIRI(userId)))
+                    .collect(Collectors.toSet());
+            if (!members.isEmpty()) {
+                group.setMember(members);
+            }
+        }
+        if (groupConfig.getRoles() != null) {
+            Set<Role> roles = groupConfig.getRoles().stream()
+                    .map(roleStr -> factory.createIRI("http://matonto.org/roles/" + roleStr))
+                    .filter(role -> role.equals(factory.createIRI(ADMIN_ROLE))
+                            || role.equals(factory.createIRI(USER_ROLE)))
+                    .map(role1 -> roleFactory.createNew(role1))
+                    .collect(Collectors.toSet());
+            if (!roles.isEmpty()) {
+                group.setHasGroupRole(roles);
+            }
+        }
+        if (!groupConfig.getDescription().equals("")) {
+            group.setProperty(factory.createLiteral(groupConfig.getDescription()),
+                    factory.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+        }
+        return group;
     }
 
     @Override
@@ -321,11 +413,50 @@ public class RdfEngine implements Engine {
 
     @Override
     public boolean checkPassword(String userId, String password) {
-        return false;
+        if (!userExists(userId)) {
+            throw new MatOntoException("User with that id does not exist");
+        }
+        Optional<User> userOptional = retrieveUser(userId);
+        if (!userOptional.isPresent()) {
+            throw new MatOntoException("Could not retrieve user");
+        }
+        User user = userOptional.get();
+        if (!user.getPassword().isPresent()) {
+            throw new MatOntoException("Error retrieving user info");
+        }
+        String savedPassword = user.getPassword().get().stringValue();
+
+        Encryption encryption = encryptionSupport.getEncryption();
+        if (encryption == null) {
+            return savedPassword.equals(password);
+        } else {
+            String encryptionPrefix = encryptionSupport.getEncryptionPrefix();
+            String encryptionSuffix = encryptionSupport.getEncryptionSuffix();
+            boolean prefix = encryptionPrefix == null || savedPassword.startsWith(encryptionPrefix);
+            boolean suffix = encryptionSuffix == null || savedPassword.endsWith(encryptionSuffix);
+            if (prefix && suffix) {
+                savedPassword = savedPassword.substring(encryptionPrefix != null ? encryptionPrefix.length() : 0,
+                        savedPassword.length() - (encryptionSuffix != null ? encryptionSuffix.length() : 0));
+                return encryption.checkPassword(password, savedPassword);
+            } else {
+                return password.equals(savedPassword);
+            }
+        }
     }
 
     private void initUserManagerResources() {
         userContext = factory.createIRI("http://matonto.org/usermanagement");
+    }
+
+    private void setEncryption(RdfEngineConfig config) {
+        Map<String, Object> options = new HashMap<>();
+        options.put("encryption.name", config.encryptionName());
+        options.put("encryption.enabled", config.encryptionEnabled());
+        options.put("encryption.prefix", config.encryptionPrefix());
+        options.put("encryption.suffix", config.encryptionSuffix());
+        options.put("encryption.algorithm", config.encryptionAlgorithm());
+        options.put("encryption.encoding", config.encryptionEncoding());
+        this.encryptionSupport = new EncryptionSupport(options);
     }
 
     private boolean resourceExists(Resource resource) {
