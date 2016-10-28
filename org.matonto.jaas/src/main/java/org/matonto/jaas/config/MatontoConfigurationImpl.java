@@ -86,9 +86,9 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
 
             /*return new AppConfigurationEntry[] {
                     new AppConfigurationEntry(PasswordLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, passwordOptions),
+                            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, passwordOptions),
                     new AppConfigurationEntry(TokenLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, tokenOptions)
+                            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, tokenOptions)
             };*/
             return new AppConfigurationEntry[] {
                     new AppConfigurationEntry(ProxyLoginModule.class.getName(),

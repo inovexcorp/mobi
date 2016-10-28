@@ -27,7 +27,9 @@ import org.apache.log4j.Logger;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
+import org.matonto.jaas.api.principals.UserPrincipal;
 import org.matonto.web.security.util.RestSecurityUtils;
+import org.openrdf.model.vocabulary.DCTERMS;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.wiring.BundleWire;
@@ -48,6 +50,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 public abstract class AuthHttpContext implements HttpContext {
 
@@ -58,8 +61,7 @@ public abstract class AuthHttpContext implements HttpContext {
     protected MatontoConfiguration configuration;
     protected EngineManager engineManager;
 
-    private final static String REQUIRED_ROLE = "http://matonto.org/roles/user";
-    private final static String USER_CLASS = "org.matonto.org.jaas.principals.UserPrincipal";
+    private final static String REQUIRED_ROLE = "user";
 
     public void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
@@ -130,17 +132,19 @@ public abstract class AuthHttpContext implements HttpContext {
         Subject subject = new Subject();
 
         if (!RestSecurityUtils.authenticateUser("matonto", subject, username, password, configuration)) {
-            log.info("Authentication failed");
             return Optional.empty();
         }
 
-        Principal user = subject.getPrincipals().stream()
-                .filter(p -> p.getClass().getName().equals(USER_CLASS))
-                .findFirst()
-                .get();
+        List<Principal> principals = subject.getPrincipals().stream()
+                .filter(p -> p instanceof UserPrincipal)
+                .collect(Collectors.toList());
+        if (principals.isEmpty()) {
+            log.debug("No UserPrincipals found");
+            return Optional.empty();
+        }
         boolean found = false;
-        for (Role role : engineManager.getUserRoles(user.getName())) {
-            if (role.getResource().stringValue().equals(REQUIRED_ROLE)) {
+        for (Role role : engineManager.getUserRoles(principals.get(0).getName())) {
+            if (role.getResource().stringValue().contains(REQUIRED_ROLE)) {
                 found = true;
                 break;
             }

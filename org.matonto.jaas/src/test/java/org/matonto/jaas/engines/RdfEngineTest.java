@@ -23,8 +23,6 @@ package org.matonto.jaas.engines;
  * #L%
  */
 
-import org.apache.karaf.jaas.modules.Encryption;
-import org.apache.karaf.jaas.modules.encryption.EncryptionSupport;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,9 +64,11 @@ public class RdfEngineTest {
     private AgentFactory agentFactory = new AgentFactory();
     private ThingFactory thingFactory = new ThingFactory();
 
-    private String userId = "http://matonto.org/users/tester";
+    private String username = "tester";
+    private String userId = "http://matonto.org/users/" + username;
     private String password = "test";
-    private String groupId = "http://matonto.org/groups/testers";
+    private String groupName = "testers";
+    private String groupId = "http://matonto.org/groups/" + groupName;
     private String userRoleId = "http://matonto.org/roles/user";
     private String adminRoleId = "http://matonto.org/roles/admin";
     private boolean setUp = false;
@@ -163,13 +163,13 @@ public class RdfEngineTest {
     @Test
     public void testCreateUser() throws Exception {
         Set<String> roles = Stream.of("user").collect(Collectors.toSet());
-        UserConfig config = new UserConfig.Builder("user", "password", roles).email("example@example.com")
+        UserConfig config = new UserConfig.Builder(username, password, roles).email("example@example.com")
                 .firstName("John").lastName("Doe").build();
         User user = engine.createUser(config);
 
-        Assert.assertTrue(user.getResource().stringValue().contains("user"));
-        Assert.assertTrue(user.getUsername().isPresent() && user.getUsername().get().stringValue().equals("user"));
-        Assert.assertTrue(user.getPassword().isPresent() && user.getPassword().get().stringValue().equals("password"));
+        Assert.assertTrue(user.getResource().stringValue().equals(userId));
+        Assert.assertTrue(user.getUsername().isPresent() && user.getUsername().get().stringValue().equals(username));
+        Assert.assertTrue(user.getPassword().isPresent() && user.getPassword().get().stringValue().equals(password));
         Assert.assertTrue(user.getHasUserRole().size() == roles.size());
         Assert.assertTrue(!user.getMbox().isEmpty() && user.getMbox().size() == 1);
         Assert.assertTrue(user.getMbox().stream().map(thing -> thing.getResource().stringValue()).collect(Collectors.toSet()).contains("mailto:example@example.com"));
@@ -200,7 +200,7 @@ public class RdfEngineTest {
 
     @Test
     public void testUserExists() throws Exception {
-        boolean result = engine.userExists(userId);
+        boolean result = engine.userExists(username);
         Assert.assertTrue(result);
 
         result = engine.userExists("http://matonto.org/users/error");
@@ -209,7 +209,7 @@ public class RdfEngineTest {
 
     @Test
     public void testRetrieveUser() throws Exception {
-        Optional<User> userOptional = engine.retrieveUser(userId);
+        Optional<User> userOptional = engine.retrieveUser(username);
 
         Assert.assertTrue(userOptional.isPresent());
         User user = userOptional.get();
@@ -251,7 +251,7 @@ public class RdfEngineTest {
 
     @Test
     public void testDeleteUser() throws Exception {
-        boolean result = engine.deleteUser(userId);
+        boolean result = engine.deleteUser(username);
         Assert.assertTrue(result);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(userId), null, null);
@@ -276,15 +276,15 @@ public class RdfEngineTest {
     public void testCreateGroup() throws Exception {
         Set<String> members = Stream.of("tester").collect(Collectors.toSet());
         Set<String> roles = Stream.of("user").collect(Collectors.toSet());
-        GroupConfig config = new GroupConfig.Builder("group").description("Test")
+        GroupConfig config = new GroupConfig.Builder(groupName).description("Test")
                 .members(members).roles(roles).build();
         Group group = engine.createGroup(config);
 
-        Assert.assertTrue(group.getResource().stringValue().contains("group"));
+        Assert.assertTrue(group.getResource().stringValue().equals(groupId));
         Assert.assertTrue(group.getMember().size() == members.size());
         Assert.assertTrue(group.getHasGroupRole().size() == roles.size());
         Assert.assertTrue(group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
-                && group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals("group"));
+                && group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals(groupName));
         Assert.assertTrue(group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
                 && group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).get().stringValue().equals("Test"));
     }
@@ -310,7 +310,7 @@ public class RdfEngineTest {
 
     @Test
     public void testGroupExists() throws Exception {
-        boolean result = engine.groupExists(groupId);
+        boolean result = engine.groupExists(groupName);
         Assert.assertTrue(result);
 
         result = engine.groupExists("http://matonto.org/groups/error");
@@ -319,7 +319,7 @@ public class RdfEngineTest {
 
     @Test
     public void testRetrieveGroup() throws Exception {
-        Optional<Group> groupOptional = engine.retrieveGroup(groupId);
+        Optional<Group> groupOptional = engine.retrieveGroup(groupName);
 
         Assert.assertTrue(groupOptional.isPresent());
         Group group = groupOptional.get();
@@ -356,7 +356,7 @@ public class RdfEngineTest {
 
     @Test
     public void testDeleteGroup() throws Exception {
-        boolean result = engine.deleteGroup(groupId);
+        boolean result = engine.deleteGroup(groupName);
         Assert.assertTrue(result);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId), null, null);
@@ -371,7 +371,7 @@ public class RdfEngineTest {
 
     @Test
     public void testGetUserRoles() throws Exception {
-        Set<Role> roles = engine.getUserRoles(userId);
+        Set<Role> roles = engine.getUserRoles(username);
         Assert.assertFalse(roles.isEmpty());
         Set<Resource> roleIds = roles.stream()
                 .map(Thing::getResource)
@@ -387,10 +387,10 @@ public class RdfEngineTest {
 
     @Test
     public void testCheckPasswordWithoutEncryption() throws Exception {
-        boolean result = engine.checkPassword(userId, password);
+        boolean result = engine.checkPassword(username, password);
         Assert.assertTrue(result);
 
-        result = engine.checkPassword(userId, "password");
+        result = engine.checkPassword(username, "password");
         Assert.assertFalse(result);
     }
 }

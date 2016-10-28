@@ -81,16 +81,16 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public Optional<User> retrieveUser(String engine, String userId) {
+    public Optional<User> retrieveUser(String engine, String username) {
         if (engines.containsKey(engine)) {
-            return engines.get(engine).retrieveUser(userId);
+            return engines.get(engine).retrieveUser(username);
         }
         return Optional.empty();
     }
 
     @Override
-    public boolean deleteUser(String engine, String userId) {
-        return engines.containsKey(engine) && engines.get(engine).deleteUser(userId);
+    public boolean deleteUser(String engine, String username) {
+        return engines.containsKey(engine) && engines.get(engine).deleteUser(username);
     }
 
     @Override
@@ -99,14 +99,14 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean userExists(String engine, String userId) {
-        return engines.containsKey(engine) && engines.get(engine).userExists(userId);
+    public boolean userExists(String engine, String username) {
+        return engines.containsKey(engine) && engines.get(engine).userExists(username);
     }
 
     @Override
-    public boolean userExists(String userId) {
+    public boolean userExists(String username) {
         for (Engine engine : engines.values()) {
-            if (engine.userExists(userId)) {
+            if (engine.userExists(username)) {
                 return true;
             }
         }
@@ -135,16 +135,16 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public Optional<Group> retrieveGroup(String engine, String groupId) {
+    public Optional<Group> retrieveGroup(String engine, String groupName) {
         if (engines.containsKey(engine)) {
-            return engines.get(engine).retrieveGroup(groupId);
+            return engines.get(engine).retrieveGroup(groupName);
         }
         return Optional.empty();
     }
 
     @Override
-    public boolean deleteGroup(String engine, String groupId) {
-        return engines.containsKey(engine) && engines.get(engine).deleteGroup(groupId);
+    public boolean deleteGroup(String engine, String groupName) {
+        return engines.containsKey(engine) && engines.get(engine).deleteGroup(groupName);
     }
 
     @Override
@@ -153,14 +153,14 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean groupExists(String engine, String groupId) {
-        return engines.containsKey(engine) && engines.get(engine).groupExists(groupId);
+    public boolean groupExists(String engine, String groupName) {
+        return engines.containsKey(engine) && engines.get(engine).groupExists(groupName);
     }
 
     @Override
-    public boolean groupExists(String groupId) {
+    public boolean groupExists(String groupName) {
         for (Engine engine : engines.values()) {
-            if (engine.groupExists(groupId)) {
+            if (engine.groupExists(groupName)) {
                 return true;
             }
         }
@@ -168,18 +168,18 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public Set<Role> getUserRoles(String engine, String userId) {
+    public Set<Role> getUserRoles(String engine, String username) {
         if (engines.containsKey(engine)) {
-            return engines.get(engine).getUserRoles(userId);
+            return engines.get(engine).getUserRoles(username);
         }
         return new HashSet<>();
     }
 
     @Override
-    public Set<Role> getUserRoles(String userId) {
+    public Set<Role> getUserRoles(String username) {
         Set<Role> roles = new HashSet<>();
         for (Engine engine : engines.values()) {
-            engine.getUserRoles(userId).stream()
+            engine.getUserRoles(username).stream()
                     .filter(role -> !roles.stream()
                             .map(Thing::getResource)
                             .collect(Collectors.toSet()).contains(role.getResource()))
@@ -191,7 +191,7 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
-    public boolean checkPassword(String engine, String userId, String password) {
-        return engines.containsKey(engine) && engines.get(engine).checkPassword(userId, password);
+    public boolean checkPassword(String engine, String username, String password) {
+        return engines.containsKey(engine) && engines.get(engine).checkPassword(username, password);
     }
 }

@@ -41,33 +41,33 @@ public interface EngineManager {
 
     boolean storeUser(String engine, User user);
 
-    Optional<User> retrieveUser(String engine, String userId);
+    Optional<User> retrieveUser(String engine, String username);
 
-    boolean deleteUser(String engine, String userId);
+    boolean deleteUser(String engine, String username);
 
     boolean updateUser(String engine, User newUser);
 
-    boolean userExists(String engine, String userId);
+    boolean userExists(String engine, String username);
 
-    boolean userExists(String userId);
+    boolean userExists(String username);
 
     Set<Group> getGroups(String engine);
 
     boolean storeGroup(String engine, Group group);
 
-    Optional<Group> retrieveGroup(String engine, String groupId);
+    Optional<Group> retrieveGroup(String engine, String groupName);
 
-    boolean deleteGroup(String engine, String groupId);
+    boolean deleteGroup(String engine, String groupName);
 
     boolean updateGroup(String engine, Group newGroup);
 
-    boolean groupExists(String engine, String groupId);
+    boolean groupExists(String engine, String groupName);
 
-    boolean groupExists(String groupId);
+    boolean groupExists(String groupName);
 
-    Set<Role> getUserRoles(String engine, String userId);
+    Set<Role> getUserRoles(String engine, String username);
 
-    Set<Role> getUserRoles(String userId);
+    Set<Role> getUserRoles(String username);
 
-    boolean checkPassword(String engine, String userId, String password);
+    boolean checkPassword(String engine, String username, String password);
 }

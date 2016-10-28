@@ -56,7 +56,7 @@ public class PasswordLoginModule implements LoginModule {
 
     @Override
     public boolean login() throws LoginException {
-        LOG.info("Verifying password...");
+        LOG.debug("Verifying password...");
 
         if (!engineManager.containsEngine(engineName)) {
             String msg = "Engine " + engineName + " is not registered with SimpleEngineManager";
@@ -98,8 +98,8 @@ public class PasswordLoginModule implements LoginModule {
         }
 
         this.userId = user;
-        LOG.info("Successfully logged in " + user);
-        return false;
+        LOG.debug("Successfully logged in " + user);
+        return true;
     }
 
     @Override
