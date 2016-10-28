@@ -25,6 +25,7 @@ package org.matonto.jaas.config;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.log4j.Logger;
 import org.matonto.jaas.api.config.LoginModuleConfig;
@@ -56,6 +57,11 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
         this.context = context;
     }
 
+    @Modified
+    protected void modified(BundleContext context) {
+        this.context = context;
+    }
+
     @Reference
     public void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
@@ -72,11 +78,11 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
             tokenOptions.put(ProxyLoginModule.MODULE, TokenLoginModule.class.getName());
 
             Map<String, Object> passwordOptions = new HashMap<>();
-            tokenOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
-            tokenOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
-            tokenOptions.put(ProxyLoginModule.BUNDLE_CONTEXT, context);
-            tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
-            tokenOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());
+            passwordOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
+            passwordOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
+            passwordOptions.put(ProxyLoginModule.BUNDLE_CONTEXT, context);
+            passwordOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
+            passwordOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());
 
             /*return new AppConfigurationEntry[] {
                     new AppConfigurationEntry(PasswordLoginModule.class.getName(),

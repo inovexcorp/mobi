@@ -51,7 +51,7 @@ public class PasswordLoginModule implements LoginModule {
         this.callbackHandler = callbackHandler;
         engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
         engineName = options.get(LoginModuleConfig.ENGINE) + "";
-        LOG.info("Initialized TokenLoginModule engineName=" + engineName);
+        LOG.info("Initialized PasswordLoginModule engineName=" + engineName);
     }
 
     @Override
@@ -65,8 +65,8 @@ public class PasswordLoginModule implements LoginModule {
         }
 
         Callback[] callbacks = new Callback[2];
-        callbacks[0] = new NameCallback("");
-        callbacks[1] = new PasswordCallback("", false);
+        callbacks[0] = new NameCallback("Username: ");
+        callbacks[1] = new PasswordCallback("Password: ", false);
 
         try {
             callbackHandler.handle(callbacks);

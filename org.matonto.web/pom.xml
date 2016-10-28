@@ -77,6 +77,8 @@
             <groupId>org.apache.karaf.jaas</groupId>
             <artifactId>org.apache.karaf.jaas.config</artifactId>
         </dependency>
+
+        <!-- Security Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
@@ -150,6 +152,7 @@
                         <Bundle-Name>MatOnto Web</Bundle-Name>
                         <Export-Package />
                         <Import-Package>
+                            org.matonto.jaas.proxy,
                             org.matonto.ontology.rest,
                             org.matonto.etl.rest,
                             *

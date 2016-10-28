@@ -53,7 +53,7 @@ public class RestSecurityUtils {
             }, configuration);
             loginContext.login();
         } catch (LoginException e) {
-            LOG.debug("Authentication failed.");
+            LOG.debug("Authentication failed.", e);
             return false;
         }
         return true;
@@ -75,7 +75,7 @@ public class RestSecurityUtils {
             }, configuration);
             loginContext.login();
         } catch (LoginException e) {
-            LOG.debug("Authentication failed.");
+            LOG.debug("Authentication failed.", e);
             return false;
         }
         return true;
