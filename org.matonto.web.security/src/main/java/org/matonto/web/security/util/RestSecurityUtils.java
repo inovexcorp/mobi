@@ -24,7 +24,9 @@ package org.matonto.web.security.util;
  */
 
 import org.apache.log4j.Logger;
+import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.modules.token.TokenCallback;
+import org.matonto.jaas.proxy.ProxyLoginModule;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -41,7 +43,9 @@ public class RestSecurityUtils {
 
     public static boolean authenticateToken(String realm, Subject subject, String tokenString, Configuration configuration) {
         LoginContext loginContext;
+//        ClassLoader ccl = Thread.currentThread().getContextClassLoader();
         try {
+//            Thread.currentThread().setContextClassLoader(LoginModuleConfig.class.getClassLoader());
             loginContext = new LoginContext(realm, subject, callbacks -> {
                 for (Callback callback : callbacks) {
                     if (callback instanceof TokenCallback) {
@@ -55,13 +59,17 @@ public class RestSecurityUtils {
         } catch (LoginException e) {
             LOG.debug("Authentication failed.");
             return false;
-        }
+        } /*finally {
+            Thread.currentThread().setContextClassLoader(ccl);
+        }*/
         return true;
     }
 
     public static boolean authenticateUser(String realm, Subject subject, String username, String password, Configuration configuration) {
         LoginContext loginContext;
+//        ClassLoader ccl = Thread.currentThread().getContextClassLoader();
         try {
+//            Thread.currentThread().setContextClassLoader(LoginModuleConfig.class.getClassLoader());
             loginContext = new LoginContext(realm, subject, callbacks -> {
                 for (Callback callback : callbacks) {
                     if (callback instanceof NameCallback) {
@@ -77,7 +85,9 @@ public class RestSecurityUtils {
         } catch (LoginException e) {
             LOG.debug("Authentication failed.");
             return false;
-        }
+        } /*finally {
+            Thread.currentThread().setContextClassLoader(ccl);
+        }*/
         return true;
     }
 }

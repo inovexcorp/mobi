@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.Role;
+import org.matonto.jaas.api.principals.UserPrincipal;
 import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.web.security.util.RestSecurityUtils;
 
@@ -38,11 +39,12 @@ import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class RestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
-    private final static String USER_CLASS = "org.matonto.jaas.api.principals.UserPrincipal";
     private static final Logger LOG = Logger.getLogger(RestSecurityHandler.class.getName());
 
     protected MatontoConfiguration matOntoConfiguration;
@@ -67,10 +69,14 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
             return null;
         }
 
-        Optional<Principal> principal = subject.getPrincipals().stream()
-                .filter(p -> p.getClass().getName().equals(USER_CLASS))
-                .findFirst();
-        return principal.get();
+        List<Principal> principals = subject.getPrincipals().stream()
+                .filter(p -> p instanceof UserPrincipal)
+                .collect(Collectors.toList());
+        if (principals.isEmpty()) {
+            LOG.debug("No UserPrincipals found.");
+            return null;
+        }
+        return principals.get(0);
     }
 
     @Override
@@ -80,9 +86,9 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
     @Override
     public boolean isUserInRole(Principal principal, String role) {
-        if (principal.getClass().getName().equals(USER_CLASS)) {
+        if (principal instanceof UserPrincipal) {
             for (Role roleObj : engineManager.getUserRoles(principal.getName())) {
-                if (roleObj.getResource().stringValue().equals(role)) {
+                if (roleObj.getResource().stringValue().contains(role)) {
                     return true;
                 }
             }

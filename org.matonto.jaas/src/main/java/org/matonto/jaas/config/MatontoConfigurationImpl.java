@@ -72,17 +72,17 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
             tokenOptions.put(ProxyLoginModule.MODULE, TokenLoginModule.class.getName());
 
             Map<String, Object> passwordOptions = new HashMap<>();
-            tokenOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
-            tokenOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
-            tokenOptions.put(ProxyLoginModule.BUNDLE_CONTEXT, context);
-            tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
-            tokenOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());
+            passwordOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
+            passwordOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
+            passwordOptions.put(ProxyLoginModule.BUNDLE_CONTEXT, context);
+            passwordOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
+            passwordOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());
 
             /*return new AppConfigurationEntry[] {
                     new AppConfigurationEntry(PasswordLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, passwordOptions),
+                            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, passwordOptions),
                     new AppConfigurationEntry(TokenLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, tokenOptions)
+                            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, tokenOptions)
             };*/
             return new AppConfigurationEntry[] {
                     new AppConfigurationEntry(ProxyLoginModule.class.getName(),

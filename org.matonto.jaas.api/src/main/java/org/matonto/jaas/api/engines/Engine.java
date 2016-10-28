@@ -37,13 +37,13 @@ public interface Engine {
 
     boolean storeUser(User user);
 
-    Optional<User> retrieveUser(String userId);
+    Optional<User> retrieveUser(String username);
 
-    boolean deleteUser(String userId);
+    boolean deleteUser(String username);
 
     boolean updateUser(User newUser);
 
-    boolean userExists(String userId);
+    boolean userExists(String username);
 
     Set<Group> getGroups();
 
@@ -51,15 +51,15 @@ public interface Engine {
 
     boolean storeGroup(Group group);
 
-    Optional<Group> retrieveGroup(String groupId);
+    Optional<Group> retrieveGroup(String groupName);
 
-    boolean deleteGroup(String groupId);
+    boolean deleteGroup(String groupName);
 
     boolean updateGroup(Group newGroup);
 
-    boolean groupExists(String groupId);
+    boolean groupExists(String groupName);
 
-    Set<Role> getUserRoles(String userId);
+    Set<Role> getUserRoles(String username);
 
-    boolean checkPassword(String userId, String password);
+    boolean checkPassword(String username, String password);
 }

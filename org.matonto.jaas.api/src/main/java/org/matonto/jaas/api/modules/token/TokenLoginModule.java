@@ -59,7 +59,7 @@ public class TokenLoginModule implements LoginModule {
         this.callbackHandler = callbackHandler;
         engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
         engineName = options.get(LoginModuleConfig.ENGINE) + "";
-        LOG.info("Initialized TokenLoginModule engineName=" + engineName);
+        LOG.debug("Initialized TokenLoginModule engineName=" + engineName);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class TokenLoginModule implements LoginModule {
         }
 
         this.userId = user;
-        LOG.info("Successfully logged in " + user);
+        LOG.debug("Successfully logged in " + user);
         return true;
     }
 
