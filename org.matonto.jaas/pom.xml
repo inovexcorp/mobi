@@ -99,7 +99,8 @@
                         <Bundle-Name>MatOnto Jaas</Bundle-Name>
                         <Export-Package>
                             org.matonto.jaas.utils,
-                            org.matonto.jaas.modules.token
+                            org.matonto.jaas.modules.token,
+                            org.matonto.jaas.ontologies.usermanagement
                         </Export-Package>
                         <Import-Package>
                             org.apache.karaf.jaas.modules.properties,

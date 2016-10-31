@@ -1,35 +1,353 @@
-@prefix matontocat: <http://matonto.org/ontologies/catalog#> .
+@prefix mcat: <http://matonto.org/ontologies/catalog#> .
 @prefix dc: <http://purl.org/dc/terms/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
 
-<http://matonto.org/test/PublishedResource/1> a matontocat:Ontology ;
-    dc:title "Test Resource 1" ;
-    dc:description "Test Description" ;
-    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
-    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
-    dc:identifier "Test Identifier" ;
-    dcat:keyword "Test" , "Keywords" ;
-    dcat:distribution <http://matonto.org/test/Distribution/1> , <http://matonto.org/test/Distribution/2> .
+GRAPH <http://matonto.org/test/records#update>
+{
+    <http://matonto.org/test/records#update> a mcat:OntologyRecord ;
+        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        dc:title "Update" ;
+        dc:identifier "Identifier" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime .
+}
 
-<http://matonto.org/test/Distribution/1> a dcat:Distribution ;
-    dc:title "Test Distribution 1" ;
-    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
-    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+GRAPH <http://matonto.org/test/records#remove>
+{
+    <http://matonto.org/test/records#remove> a mcat:MappingRecord ;
+        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        dc:title "Remove" ;
+        dc:identifier "Identifier" ;
+        dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-02-02T00:00:00Z"^^xsd:dateTime .
+}
 
-<http://matonto.org/test/Distribution/2> a dcat:Distribution ;
-    dc:title "Test Distribution 2" ;
-    dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
-    dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+GRAPH <http://matonto.org/test/records#unversioned>
+{
+    <http://matonto.org/test/records#unversioned> a mcat:UnversionedRecord ;
+        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        dc:title "Unversioned" ;
+        dc:identifier "Identifier" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:unversionedDistribution <http://matonto.org/test/distributions#test> .
+}
 
-<http://matonto.org/test/PublishedResource/2> a matontocat:PublishedResource, matontocat:Ontology ;
-    dc:title "Test Resource 2" ;
-    dc:description "Test Description" ;
-    dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
-    dc:modified "2016-02-02T00:00:00Z"^^xsd:dateTime .
+GRAPH <http://matonto.org/test/records#versionedRDF>
+{
+    <http://matonto.org/test/records#versionedRDF> a mcat:VersionedRDFRecord ;
+        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        dc:title "Versioned RDF" ;
+        dc:identifier "Identifier" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:branch <http://matonto.org/test/branches#test> .
+}
 
-<http://matonto.org/test/PublishedResource/3> a matontocat:Mapping ;
-    dc:title "Test Resource 3" ;
-    dc:description "Test Description" ;
-    dc:issued "2016-01-30T00:00:00Z"^^xsd:dateTime ;
-    dc:modified "2016-01-31T00:00:00Z"^^xsd:dateTime .
+GRAPH <http://matonto.org/test/records#get>
+{
+    <http://matonto.org/test/records#get> a mcat:VersionedRecord ;
+        mcat:catalog <http://matonto.org/test/catalog-published> ;
+        dc:title "Get" ;
+        dc:description "Description" ;
+        dc:identifier "Identifier" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:version <http://matonto.org/test/versions#test> ;
+        mcat:version <http://matonto.org/test/versions#test2> ;
+        mcat:version <http://matonto.org/test/versions#test3> ;
+        mcat:version <http://matonto.org/test/versions#remove> ;
+        mcat:latestVersion <http://matonto.org/test/versions#test> .
+}
+
+GRAPH <http://matonto.org/test/versions#test>
+{
+    <http://matonto.org/test/versions#test> a mcat:Version ;
+        dc:title "Version" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:versionedDistribution <http://matonto.org/test/distributions#test2> .
+}
+
+GRAPH <http://matonto.org/test/versions#test2>
+{
+    <http://matonto.org/test/versions#test2> a mcat:Version ;
+        dc:title "Version 2" ;
+        dc:issued "2016-10-10T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/versions#test3>
+{
+    <http://matonto.org/test/versions#test3> a mcat:Version ;
+        dc:title "Version 3" ;
+        dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/versions#remove>
+{
+    <http://matonto.org/test/versions#remove> a mcat:Version ;
+        dc:title "Version to Remove" ;
+        dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/distributions#test>
+{
+    <http://matonto.org/test/distributions#test> a mcat:Distribution ;
+        dc:title "Distribution" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/distributions#test2>
+{
+    <http://matonto.org/test/distributions#test2> a mcat:Distribution ;
+        dc:title "Distribution 2" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/branches#test>
+{
+    <http://matonto.org/test/branches#test> a mcat:Branch ;
+        dc:title "Branch" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/commits#test>
+{
+    <http://matonto.org/test/commits#test> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#revision> .
+
+    <http://matonto.org/test/revisions#revision> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test> ;
+        mcat:deletions <http://matonto.org/test/deletions#test> .
+}
+
+GRAPH <http://matonto.org/test/additions#test>
+{
+    <http://matonto.org/test/add> dc:title "Add" ;
+}
+
+GRAPH <http://matonto.org/test/deletions#test>
+{
+    <http://matonto.org/test/delete> dc:title "Delete" ;
+}
+
+GRAPH <http://matonto.org/test/tags#test>
+{
+    <http://matonto.org/test/tags#test> a mcat:Tag ;
+        dc:title "Tag" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-02T00:00:00Z"^^xsd:dateTime .
+}
+
+GRAPH <http://matonto.org/test/commits#test0>
+{
+    <http://matonto.org/test/commits#test0> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated <http://matonto.org/test/revisions#revision0> .
+
+    <http://matonto.org/test/revisions#revision0> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test0> ;
+        mcat:deletions <http://matonto.org/test/deletions#test0> .
+}
+
+GRAPH <http://matonto.org/test/additions#test0>
+{
+    <http://matonto.org/test/ontology> a owl:Ontology ;
+        dc:title "Title" .
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+
+GRAPH <http://matonto.org/test/commits#test1>
+{
+    <http://matonto.org/test/commits#test1> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test0> ;
+        prov:generated <http://matonto.org/test/revisions#revision1> .
+
+    <http://matonto.org/test/revisions#revision1> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test1> ;
+        mcat:deletions <http://matonto.org/test/deletions#test1> .
+}
+
+GRAPH <http://matonto.org/test/additions#test1>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/deletions#test1>
+{
+    <http://matonto.org/test/ontology> dc:title "Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#test2>
+{
+    <http://matonto.org/test/commits#test2> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test1> ;
+        prov:generated <http://matonto.org/test/revisions#revision2> .
+
+    <http://matonto.org/test/revisions#revision2> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test2> ;
+        mcat:deletions <http://matonto.org/test/deletions#test2> .
+}
+
+GRAPH <http://matonto.org/test/additions#test2>
+{
+    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+}
+
+GRAPH <http://matonto.org/test/deletions#test2>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#test4a>
+{
+    <http://matonto.org/test/commits#test4a> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test2> ;
+        prov:generated <http://matonto.org/test/revisions#revision4a> .
+
+    <http://matonto.org/test/revisions#revision4a> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test4a> ;
+        mcat:deletions <http://matonto.org/test/deletions#test4a> .
+}
+
+GRAPH <http://matonto.org/test/additions#test4a>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/deletions#test4a>
+{
+    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#test4b>
+{
+    <http://matonto.org/test/commits#test4b> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test2> ;
+        prov:generated <http://matonto.org/test/revisions#revision4b> .
+
+    <http://matonto.org/test/revisions#revision4b> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test4b> ;
+        mcat:deletions <http://matonto.org/test/deletions#test4b> .
+}
+
+GRAPH <http://matonto.org/test/additions#test4b>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/deletions#test4b>
+{
+    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#test3>
+{
+    <http://matonto.org/test/commits#test3> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test4a> ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test4b> ;
+        prov:generated <http://matonto.org/test/revisions#revision3> .
+
+    <http://matonto.org/test/revisions#revision3> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test3> ;
+        mcat:deletions <http://matonto.org/test/deletions#test3> .
+}
+
+GRAPH <http://matonto.org/test/additions#test3>
+{
+    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+}
+
+GRAPH <http://matonto.org/test/deletions#test3>
+{
+    <http://matonto.org/test/ontology> dc:title "New Title" .
+}
+
+GRAPH <http://matonto.org/test/commits#test5a>
+{
+    <http://matonto.org/test/commits#test5a> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test3> ;
+        prov:generated <http://matonto.org/test/revisions#revision5a> .
+
+    <http://matonto.org/test/revisions#revision5a> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test5a> ;
+        mcat:deletions <http://matonto.org/test/deletions#test5a> .
+}
+
+GRAPH <http://matonto.org/test/additions#test5a>
+{
+    <http://matonto.org/test/ontology> dc:title "Title 5a" .
+    <http://matonto.org/test/class> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/commits#test6a>
+{
+    <http://matonto.org/test/commits#test6a> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test5a> ;
+        prov:generated <http://matonto.org/test/revisions#revision6a> .
+
+    <http://matonto.org/test/revisions#revision6a> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test6a> ;
+        mcat:deletions <http://matonto.org/test/deletions#test6a> .
+}
+
+GRAPH <http://matonto.org/test/additions#test6a>
+{
+    <http://matonto.org/test/ontology> dc:title "Title 6a" .
+}
+
+GRAPH <http://matonto.org/test/deletions#test6a>
+{
+    <http://matonto.org/test/class0> a owl:Class .
+}
+
+GRAPH <http://matonto.org/test/deletions#test6a>
+{
+    <http://matonto.org/test/ontology> dc:title "Another New Title" .
+    <http://matonto.org/test/ontology> dc:title "Title 5a" .
+}
+
+GRAPH <http://matonto.org/test/commits#test5b>
+{
+    <http://matonto.org/test/commits#test5b> a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:wasInformedBy <http://matonto.org/test/commits#test3> ;
+        prov:generated <http://matonto.org/test/revisions#revision5b> .
+
+    <http://matonto.org/test/revisions#revision5b> a mcat:Revision ;
+        mcat:additions <http://matonto.org/test/additions#test5b> ;
+        mcat:deletions <http://matonto.org/test/deletions#test5b> .
+}
+
+GRAPH <http://matonto.org/test/additions#test5b>
+{
+    <http://matonto.org/test/ontology> dc:title "Title 5b" .
+    <http://matonto.org/test/class2> a owl:Class .
+}

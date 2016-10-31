@@ -54,6 +54,11 @@
             <version>1.3.10</version>
         </dependency>
         <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas</artifactId>
+            <version>1.3.11-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
@@ -71,10 +76,11 @@
                         <Bundle-Name>MatOnto Catalog API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.catalog.api,
+                            org.matonto.catalog.api.*,
                             org.matonto.catalog.config,
                             org.matonto.catalog.util
                         </Export-Package>
+                        <Service-Component>*</Service-Component>
                         <_metatype>*</_metatype>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

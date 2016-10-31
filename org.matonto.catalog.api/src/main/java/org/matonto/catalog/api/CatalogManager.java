@@ -23,8 +23,13 @@ package org.matonto.catalog.api;
  * #L%
  */
 
+import org.matonto.catalog.api.builder.DistributionConfig;
+import org.matonto.catalog.api.builder.RecordConfig;
+import org.matonto.catalog.api.ontologies.mcat.*;
+import org.matonto.jaas.ontologies.usermanagement.User;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.orm.OrmFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -48,225 +53,158 @@ public interface CatalogManager {
     Catalog getUnpublishedCatalog();
 
     /**
-     * Retrieves a set of all the Records contained within the provided Catalog object.
-     *
-     * @param catalog The Catalog object with the desired Records.
-     * @return The Set of Records within the provided Catalog.
-     */
-    Set<Record> getRecords(Catalog catalog);
-
-    /**
      * Searches the provided Catalog for Records that match the provided PaginatedSearchParams.
      *
-     * @param catalog The Catalog object to find the Records.
+     * @param catalogId The Resource identifying the Catalog to find the Records in.
      * @param searchParams Search parameters.
      * @return The PaginatedSearchResults for a page matching the search criteria.
      */
-    PaginatedSearchResults<Record> findRecord(Catalog catalog, PaginatedSearchParams searchParams);
+    PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams);
 
     /**
-     * Creates an UnversionedRecord with the provided metadata.
+     * Gets a Set of all Resources identifying Records which exist within the Catalog identified by the provided
+     * Resource.
      *
-     * @param title The title text.
-     * @param description The description text.
-     * @param identifier The identifying text.
-     * @param keywords The associated keywords.
-     * @param publishers The publishers.
-     * @return An UnversionedRecord consisting of all the provided metadata.
+     * @param catalogId The Resource identifying the Catalog that you would like to get the Records from.
+     * @return The Set of all Records contained within the Catalog identified by the provided Resource.
      */
-    UnversionedRecord createUnversionedRecord(String title, String description, String identifier, Set<String> keywords,
-                                   Set<User> publishers);
+    Set<Resource> getRecordIds(Resource catalogId);
 
     /**
-     * Creates a VersionedRecord with the provided metadata.
+     * Creates an Object that extends Record using provided RecordBuilder and Factory.
      *
-     * @param title The title text.
-     * @param description The description text.
-     * @param identifier The identifying text.
-     * @param keywords The associated keywords.
-     * @param publishers The publishers.
-     * @return A VersionedRecord consisting of all the provided metadata.
+     * @param config The RecordConfig containing the Record's metadata.
+     * @param factory The OrmFactory for creating the entity.
+     * @param <T> The type of Record that you wish to create.
+     * @return The Record Object of type T consisting of all the provided metadata.
      */
-    VersionedRecord createVersionedRecord(String title, String description, String identifier, Set<String> keywords,
-                                              Set<User> publishers);
-
-    /**
-     * Creates an OntologyRecord with the provided metadata.
-     *
-     * @param title The title text.
-     * @param description The description text.
-     * @param identifier The identifying text.
-     * @param keywords The associated keywords.
-     * @param publishers The publishers.
-     * @return An OntologyRecord consisting of all the provided metadata.
-     */
-    OntologyRecord createOntologyRecord(String title, String description, String identifier, Set<String> keywords,
-                                          Set<User> publishers);
-
-    /**
-     * Creates a MappingRecord with the provided metadata.
-     *
-     * @param title The title text.
-     * @param description The description text.
-     * @param identifier The identifying text.
-     * @param keywords The associated keywords.
-     * @param publishers The publishers.
-     * @return A MappingRecord consisting of all the provided metadata.
-     */
-    MappingRecord createMappingRecord(String title, String description, String identifier, Set<String> keywords,
-                                         Set<User> publishers);
-
-    /**
-     * Creates a DatasetRecord with the provided metadata.
-     *
-     * @param title The title text.
-     * @param description The description text.
-     * @param identifier The identifying text.
-     * @param keywords The associated keywords.
-     * @param publishers The publishers.
-     * @return A DatasetRecord consisting of all the provided metadata.
-     */
-    DatasetRecord createDatasetRecord(String title, String description, String identifier, Set<String> keywords,
-                                      Set<User> publishers);
+    <T extends Record> T createRecord(RecordConfig config, OrmFactory<T> factory);
 
     /**
      * Adds a Record to the provided Catalog object.
      *
-     * @param catalog The Catalog object to add the Record to.
-     * @param record The Record to add to the Catalog.
+     * @param catalogId The Resource identifying the catalog to add the Record to.
+     * @param record The Object which extends Record to add to the Catalog.
      * @return True if the Record was successfully added; otherwise, false.
      */
-    boolean addRecord(Catalog catalog, Record record);
+    boolean addRecord(Resource catalogId, Record record);
 
     /**
-     * Replaces the Record with the provided recordId with the newRecord.
+     * Uses the provided Record to find the Resource of the existing Record and replaces it.
      *
-     * @param recordId The Resource identifying the Record you want to update.
+     * @param catalogId The Resource identifying the catalog which contains desired Record.
      * @param newRecord The Record with the desired changes.
      * @return True if the Record was successfully updated; otherwise, false.
      */
-    boolean updateRecord(Resource recordId, Record newRecord);
+    boolean updateRecord(Resource catalogId, Record newRecord);
 
     /**
      * Removes the Record from the provided Catalog.
      *
-     * @param catalog The Catalog which contains the Record you want to remove.
-     * @param record The Record which you want to remove.
+     * @param catalogId The Resource identifying the catalog which contains the record you want to remove.
+     * @param recordId The Resource identifying the Record which you want to remove.
      * @return True if the Record was successfully removed; otherwise, false.
      */
-    boolean removeRecord(Catalog catalog, Record record);
+    boolean removeRecord(Resource catalogId, Resource recordId);
 
     /**
      * Gets the Record from the provided Catalog.
      *
-     * @param catalog The Catalog which optionally contains the Record you want to get.
+     * @param catalogId The Resource identifying the catalog which optionally contains the Record you want to get.
      * @param recordId The Resource identifying the Record you want to get.
      * @return An Optional with a Record with the recordId if it was found
      */
-    Optional<Record> getRecord(Catalog catalog, Resource recordId);
+    Optional<Record> getRecord(Resource catalogId, Resource recordId);
 
     /**
      * Creates a Distribution with the provided metadata.
      *
-     * @param title The title text.
-     * @param description The description text.
-     * @param format The format identifier.
-     * @param accessURL The accessURL for the Distribution.
-     * @param downloadURL The downloadURL for the Distribution.
+     * @param config The DistributionConfig which contains the needed metadata to create the Distribution.
      * @return Distribution created with the provided metadata.
      */
-    Distribution createDistribution(String title, String description, String format, Resource accessURL,
-                                    Resource downloadURL);
+    Distribution createDistribution(DistributionConfig config);
 
     /**
-     * Adds the provided Distribution to the provided UnversionedResource.
+     * Adds the provided Distribution to the UnversionedResource identified by the provided Resource.
      *
      * @param distribution The Distribution to add to the UnversionedResource.
-     * @param unversionedRecord The UnversionedRecord which will get a new Distribution.
+     * @param unversionedRecordId The Resource identifying the UnversionedRecord which will get a new Distribution.
      * @return True if the Distribution was successfully added; otherwise, false.
      */
-    boolean addDistribution(Distribution distribution, UnversionedRecord unversionedRecord);
+    boolean addDistributionToUnversionedRecord(Distribution distribution, Resource unversionedRecordId);
 
     /**
-     * Adds the provided Distribution to the provided Version.
+     * Adds the provided Distribution to the Version identified by the provided Resource.
      *
      * @param distribution The Distribution to add to the Version.
-     * @param version The Version which will get a new Distribution.
+     * @param versionId The Resource identifying the Version which will get a new Distribution.
      * @return True if the Distribution was successfully added; otherwise, false.
      */
-    boolean addDistribution(Distribution distribution, Version version);
+    boolean addDistributionToVersion(Distribution distribution, Resource versionId);
 
     /**
-     * Replaces the Distribution with the provided distributionId with the newDistribution.
+     * Uses the Distribution provided to find the Resource of the existing Distribution to update.
      *
-     * @param distributionId The Resource identifying the Distribution you want to update.
      * @param newDistribution The Distribution with the desired changes.
-     * @return True if the
+     * @return True if the Distribution was successfully updated; otherwise, false.
      */
-    boolean updateDistribution(Resource distributionId, Distribution newDistribution);
+    boolean updateDistribution(Distribution newDistribution);
 
     /**
      * Removes the Distribution with the provided distributionId from the provided UnversionedRecord.
      *
      * @param distributionId The Resource identifying the Distribution you want to remove.
-     * @param unversionedRecord The UnversionedRecord to remove the Distribution from.
+     * @param unversionedRecordId The Resource identifying the UnversionedRecord to remove the Distribution from.
      * @return True if the Distribution was successfully removed; otherwise, false.
      */
-    boolean removeDistribution(Resource distributionId, UnversionedRecord unversionedRecord);
+    boolean removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId);
 
     /**
      * Removes the Distribution with the provided distributionId from the provided Version.
      *
      * @param distributionId The Resource identifying the Distribution you want to remove.
-     * @param version The Version to remove the Distribution from.
+     * @param versionId The Resource identifying the Version to remove the Distribution from.
      * @return True if the Distribution was successfully removed; otherwise, false.
      */
-    boolean removeDistribution(Resource distributionId, Version version);
+    boolean removeDistributionFromVersion(Resource distributionId, Resource versionId);
 
     /**
-     * Creates a Version with the provided metadata.
+     * Creates an Object which extends Version with the provided metadata using the provided factory.
      *
      * @param title The title text.
      * @param description The description text.
+     * @param factory The factory used to create T.
+     * @param <T> An Object which extends Version.
      * @return Version created with the provided metadata.
      */
-    Version createVersion(String title, String description);
+    <T extends Version> T createVersion(String title, String description, OrmFactory<T> factory);
 
     /**
-     * Creates a Tag with the provided metadata.
-     *
-     * @param title The title text.
-     * @param description The description text.
-     * @return Tag created with the provided metadata.
-     */
-    Tag createTag(String title, String description);
-
-    /**
-     * Adds the provided Version to the provided VersionedRecord.
+     * Adds the provided Version to the provided VersionedRecord. This also updates the latestVersion to be this
+     * Version.
      *
      * @param version The Version to add to the VersionedRecord.
-     * @param versionedRecord The VersionedRecord which will get a new Version.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which will get a new Version.
      * @return True if the Version was successfully added; otherwise, false.
      */
-    boolean addVersion(Version version, VersionedRecord versionedRecord);
+    boolean addVersion(Version version, Resource versionedRecordId);
 
     /**
-     * Replaces the Version with the provided versionId with the newVersion.
+     * Uses the Version provided to find the Resource of the existing Version to update.
      *
-     * @param versionId The Resource identifying the Version you want to update.
      * @param newVersion The Version with the desired changes.
      * @return True if the Version was successfully updated; otherwise, false.
      */
-    boolean updateVersion(Resource versionId, Version newVersion);
+    boolean updateVersion(Version newVersion);
 
     /**
      * Removes the Version with the provided versionId from the provided VersionedRecord.
      *
      * @param versionId The Resource identifying the Version you want to remove.
-     * @param versionedRecord The VersionedRecord to remove the Version from.
+     * @param versionedRecordId The Resource identifying the VersionedRecord to remove the Version from.
      * @return True if the Version was successfully removed; otherwise, false.
      */
-    boolean removeVersion(Resource versionId, VersionedRecord versionedRecord);
+    boolean removeVersion(Resource versionId, Resource versionedRecordId);
 
     /**
      * Creates a Branch with the provided metadata.
@@ -281,28 +219,27 @@ public interface CatalogManager {
      * Adds the provided Branch to the provided VersinedRDFRecord.
      *
      * @param branch The Branch to add to the VersionedRDFRecord.
-     * @param versionedRDFRecord The VersionedRDFRecord which will get a new Branch.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
      * @return True if the Branch was successfully added; otherwise, false.
      */
-    boolean addBranch(Branch branch, VersionedRDFRecord versionedRDFRecord);
+    boolean addBranch(Branch branch, Resource versionedRDFRecordId);
 
     /**
-     * Replaces the Branch with the provided branchId with the newBranch.
+     * Uses the Branch provided to find the Resource of the existing Branch to update.
      *
-     * @param branchId The Resource identifying the Branch you want to update.
      * @param newBranch The Branch with the desired changes.
      * @return True if the Branch was successfully updated; otherwise, false.
      */
-    boolean updateBranch(Resource branchId, Branch newBranch);
+    boolean updateBranch(Branch newBranch);
 
     /**
      * Removes the Branch with the provided branchId from the provided VersionedRDFRecord.
      *
      * @param branchId The Resource identifying the Branch you want to remove.
-     * @param versionedRDFRecord The VersionedRDFRecord to remove the Branch from.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord to remove the Branch from.
      * @return True if the Branch was successfully removed; otherwise, false.
      */
-    boolean removeBranch(Resource branchId, VersionedRDFRecord versionedRDFRecord);
+    boolean removeBranch(Resource branchId, Resource versionedRDFRecordId);
 
     /**
      * Creates a Commit from the provided InProgressCommit along with the message.
@@ -319,46 +256,56 @@ public interface CatalogManager {
      *
      * @param parents The Commit(s) that this InProgressCommit was informed by.
      * @param user The User that this InProgressCommit is associated with.
-     * @param branch The Branch that this InProgressCommit is on.
-     * @return InProgressCommit created using the provided metadata.
+     * @param branchId The Resource identifying the Branch that this InProgressCommit is on.
+     * @return Optional with an InProgressCommit created using the provided metadata if the identified branch exists.
      */
-    InProgressCommit createInProgressCommit(Set<Commit> parents, User user, Branch branch);
+    Optional<InProgressCommit> createInProgressCommit(Set<Commit> parents, User user, Resource branchId);
 
     /**
      * Adds the provided statements to the provided Commit as additions. These statements were added and will be used
      * when creating the completed named graph.
      *
      * @param statements The statements which were added to the named graph.
-     * @param commit The Commit that these statements are associated with.
+     * @param commitId The Resource identifying the Commit that these statements are associated with.
      * @return True if the statements were successfully added to the correct named graph; otherwise, false.
      */
-    boolean addAdditions(Model statements, Commit commit);
+    boolean addAdditions(Model statements, Resource commitId);
 
     /**
      * Adds the provided statements to the provided Commit as deletions. These statements were deleted and will be used
      * when creating the completed named graph.
      *
      * @param statements The statements which were added to the named graph.
-     * @param commit The Commit that these statements are associated with.
+     * @param commitId The Resource identifying the Commit that these statements are associated with.
      * @return True if the statements were successfully added to the correct named graph; otherwise, false.
      */
-    boolean addDeletions(Model statements, Commit commit);
+    boolean addDeletions(Model statements, Resource commitId);
 
     /**
-     * Stores the provided Commit in the Repository.
+     * Adds the provided Commit to the Branch identified by the provided Resource in the Repository.
      *
      * @param commit The Commit to store in the Repository.
-     * @return True if the Commit was successfully stored; otherwise, false.
+     * @param branchId The Resource identifying the Branch to add the Commit to.
+     * @return True if the Commit was successfully added to the Branch; otherwise, false.
      */
-    boolean storeCommit(Commit commit);
+    boolean addCommitToBranch(Commit commit, Resource branchId);
 
     /**
-     * Removes the Commit identified by the provided Resource.
+     * Adds the provided Commit to the Tag identified by the provided Resource in the Repository.
      *
-     * @param commitId The Resource identifying the Commit to delete.
-     * @return
+     * @param commit The Commit to store in the Repository.
+     * @param tagId The Resource identifying the Tag to add the Commit to.
+     * @return True if the Commit was successfully added to the Branch; otherwise, false.
      */
-    boolean removeCommit(Resource commitId);
+    boolean addCommitToTag(Commit commit, Resource tagId);
+
+    /**
+     * Adds the provided InProgressCommit to the Repository.
+     *
+     * @param inProgressCommit The InProgressCommit to add to the Repository.
+     * @return True if the InProgressCommit is successfully added to the Repository; otherwise, false.
+     */
+    boolean addInProgressCommit(InProgressCommit inProgressCommit);
 
     /**
      * Gets the Commit identified by the provided Resource.
@@ -369,35 +316,28 @@ public interface CatalogManager {
     Optional<Commit> getCommit(Resource commitId);
 
     /**
-     * Checks to see if the provided Resource to identify a Commit actually exists within the Repository.
-     *
-     * @param commitId The Resource identifying the Commit.
-     * @return True if the Commit identified by the provided Resource actually exists; otherwise, false.
-     */
-    boolean commitExists(Resource commitId);
-
-    /**
      * Gets the commit chain (set of commits) which ends at the provided Commit.
      *
-     * @param commit The ending Commit for the desired chain.
+     * @param commitId The Resource identifying the Commit for the desired chain.
      * @return Set of Commits which make up the commit chain for the provided Commit.
      */
-    Set<Commit> getCommitChain(Commit commit);
+    Set<Commit> getCommitChain(Resource commitId);
 
     /**
      * Gets the Model which represents the resource for the provided Commit.
      *
-     * @param commit The Commit identifying the spot in the Resource's history that you wish to retrieve.
+     * @param commitId The Resource identifying the Commit identifying the spot in the Resource's history that you wish
+     *                 to retrieve.
      * @return Model which represents the Resource at the Commit's point in history.
      */
-    Model getCompiledResource(Commit commit);
+    Optional<Model> getCompiledResource(Resource commitId);
 
     /**
      * Gets all of the conflicted between the two provided Commits.
      *
-     * @param commit1 The first Commit.
-     * @param commit2 The second Commit.
+     * @param commitId1 The first Commit.
+     * @param commitId2 The second Commit.
      * @return Map of Strings with associated Maps
      */
-    // Optional<Map<String, Map<String, List<Model>>>> getConflicts(Commit commit1, Commit commit2);
+    Optional<Map<String, Map<String, List<Model>>>> getConflicts(Resource commitId1, Resource commitId2);
 }
