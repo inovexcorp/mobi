@@ -84,7 +84,7 @@
             <plugin>
                 <groupId>org.matonto.orm</groupId>
                 <artifactId>rdf-orm-maven-plugin</artifactId>
-                <version>1.3.10</version>
+                <version>${project.version}</version>
                 <executions>
                     <execution>
                         <id>generateOrmSources</id>
