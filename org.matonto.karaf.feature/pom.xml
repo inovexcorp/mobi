@@ -187,11 +187,6 @@
             <artifactId>jaas.api</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>jaas.proxy</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

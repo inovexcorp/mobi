@@ -138,10 +138,6 @@
                         <Export-Package>
                             org.matonto.jaas.*;provide=true
                         </Export-Package>
-                        <!--<Import-Package>
-                            org.apache.karaf.jaas.modules.properties,
-                            *
-                        </Import-Package>-->
                         <_metatype>*</_metatype>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
@@ -149,40 +145,6 @@
                     </instructions>
                 </configuration>
             </plugin>
-            <!--<plugin>
-                <groupId>org.matonto.orm</groupId>
-                <artifactId>rdf-orm-maven-plugin</artifactId>
-                <version>${project.version}</version>
-                <executions>
-                    <execution>
-                        <id>generateOrmSources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate-orm</goal>
-                        </goals>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <generates>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/matonto_user_management.ttl</ontologyFile>
-                                    <outputPackage>org.matonto.jaas.ontologies.usermanagement</outputPackage>
-                                </ontology>
-                            </generates>
-                            <references>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/foaf.owl</ontologyFile>
-                                    <outputPackage>org.matonto.ontologies.foaf</outputPackage>
-                                </ontology>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/prov-o.ttl</ontologyFile>
-                                    <outputPackage>org.matonto.ontologies.provo</outputPackage>
-                                </ontology>
-                            </references>
-                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>-->
         </plugins>
     </build>
 </project>

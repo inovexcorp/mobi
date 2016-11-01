@@ -84,12 +84,6 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
             passwordOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
             passwordOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());
 
-            /*return new AppConfigurationEntry[] {
-                    new AppConfigurationEntry(PasswordLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, passwordOptions),
-                    new AppConfigurationEntry(TokenLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, tokenOptions)
-            };*/
             return new AppConfigurationEntry[] {
                     new AppConfigurationEntry(ProxyLoginModule.class.getName(),
                             AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, passwordOptions),

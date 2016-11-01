@@ -62,8 +62,6 @@
                         <Export-Package>
                             org.matonto.jaas.proxy
                         </Export-Package>
-                        <Fragment-Host>system.bundle; extension:=framework</Fragment-Host>
-                        <Import-Package>!*</Import-Package>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
